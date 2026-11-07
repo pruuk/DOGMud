@@ -37,8 +37,8 @@ func TestBroadcastTips(t *testing.T) {
 	if got := events.DrainQueuedMessagesForTest(9302); len(got) != 0 {
 		t.Errorf("player with tips off got %q", got)
 	}
-	if got := events.DrainQueuedMessagesForTest(9303); len(got) != 0 {
-		t.Errorf("deafened player got %q", got)
+	if got := events.DrainQueuedMessagesForTest(9303); len(got) != 1 || !strings.Contains(got[0], "First tip.") {
+		t.Errorf("deafened player got %q, want the tip (owner 2026-11-07)", got)
 	}
 
 	BroadcastTips(events.NewRound{RoundNumber: 2 * tipIntervalRounds})

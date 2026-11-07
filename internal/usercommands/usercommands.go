@@ -81,10 +81,10 @@ var (
 		`bauble`:          {Bauble, true, true, true}, // Admin only: bauble catalog (docs/baubles)
 		`bug`:             {Bug, true, true, false},
 		`biome`:           {Biome, true, true, false},
-		`ban`:             {Ban, true, true, true},   // Admin only — account/IP ban
-		`boot`:            {Boot, true, true, true},  // Admin only — force-disconnect a player by name
-		`unban`:           {Unban, true, true, true}, // Admin only — lift a ban
-		`broadcast`:       {Broadcast, true, true, false},
+		`ban`:             {Ban, true, true, true},       // Admin only — account/IP ban
+		`boot`:            {Boot, true, true, true},      // Admin only — force-disconnect a player by name
+		`unban`:           {Unban, true, true, true},     // Admin only — lift a ban
+		`broadcast`:       {Broadcast, true, true, true}, // Admin only: an announcement to everyone (owner 2026-11-07)
 		`chat`:            {Chat, true, true, false},
 		`newbie`:          {Newbie, true, true, false},
 		`trade`:           {Trade, true, true, false},
@@ -235,6 +235,7 @@ var (
 		`sit`:             {Sit, false, false, false},   // can't sit in combat (#637)
 		`rest`:            {Sit, false, false, false},   // the same command as sit, for players and mobs alike (owner 2026-11-07)
 		`sleep`:           {Sleep, false, false, false}, // Can't sleep in combat (actions.Sleep enforces)
+		`wake`:            {Wake, false, false, false},  // wake <name> (owner 2026-11-07)
 		`stand`:           {Stand, true, true, false},   // Can stand when downed
 		`suggest`:         {Suggest, true, true, false},
 		`storage`:         {Storage, false, false, false}, // Can't manipulate storage in combat

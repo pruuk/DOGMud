@@ -2,14 +2,15 @@
 
 The <ansi fg="command">chat</ansi> command talks on the world-wide <ansi fg="cyan">chat</ansi>
 channel — everyone online who has the channel on will hear you. This is the
-general out-of-character channel. (The old <ansi fg="command">broadcast</ansi>
-command is an alias for it.)
+general out-of-character channel. You can also use
+<ansi fg="command">`</ansi> as a shortcut.
 
 Turn any channel on or off with <ansi fg="command">channels</ansi>.
 
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">chat anyone around?</ansi>
+  <ansi fg="command">` anyone around?</ansi>
 
   Output to everyone with chat on:
 

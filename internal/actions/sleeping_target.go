@@ -1,6 +1,10 @@
 package actions
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -30,10 +34,12 @@ func TargetAsleep(c *characters.Character) bool {
 // state.
 //
 // Deliberately a refusal rather than a wake-up: sleeping is meant to mean
-// something, and a shop that trades at 3am with its keeper snoring in the
-// corner makes the schedule system decorative. The player is not dead-ended,
-// though — `shout` already wakes every sleeper in the room (see
-// usercommands/shout.go), so the message points at that. Damage, a failed
+// something. The player is not dead-ended, though: `wake <name>` wakes the
+// sleeper, so the message points at that, aimed at the player's sight
+// (wakeAim). With no sight wake reaches no one, so the message points at
+// `shout wake up` instead (`shout` wakes everyone in the room; bare `shout`
+// prints a silly `You shout, ""`, hence the words). Shopkeepers asleep in their own shop wake for customers on their own
+// (usercommands/shop_wake.go), so they rarely reach this refusal. Damage, a failed
 // steal, a light source entering, and the end of the sleep schedule segment
 // also wake them.
 //
@@ -45,18 +51,58 @@ func RefuseIfAsleep(c *characters.Character, name string, user *users.UserRecord
 		return false
 	}
 	if user != nil {
-		// Suggest shout WITH words. Bare `shout` wakes them but prints the
-		// rather silly `You shout, ""`, and "try shout" was read as an
-		// instruction to type exactly that.
-		line := refusal.TargetAsleepText(name)
+		room := rooms.LoadRoom(user.Character.RoomId)
+		sight := messaging.SightFull
+		if room != nil {
+			sight = messaging.ParticipantSight(user.Character, room)
+		}
+		line := refusal.TargetAsleepText(name, wakeAim(user, room, c, name, sight))
 		// A player who aimed at a shape never learned the sleeper's name
 		// (#454): hide it at their sight in their own room.
-		if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
-			line = messaging.HideNames(line, []string{name}, messaging.ParticipantSight(user.Character, room))
+		if room != nil {
+			line = messaging.HideNames(line, []string{name}, sight)
 		}
 		user.SendText(messaging.CategoryRefusal, line)
 	}
 	return true
+}
+
+// wakeAim is what the player types after `wake` to reach sleeper at sight:
+// the name in lower case at clear sight, and at shapes the figure they make
+// the sleeper out as (`figure`, `2.figure`, forms AimBySight takes). It is ""
+// with no sight, where wake reaches no one, or when the sleeper is not among
+// their figures; the hint then names shout.
+func wakeAim(user *users.UserRecord, room *rooms.Room, sleeper *characters.Character, name string, sight messaging.SightDecision) string {
+	switch sight {
+	case messaging.SightFull:
+		return strings.ToLower(name)
+	case messaging.SightShapes:
+		for i, figure := range aimFigures(user.Character, user.UserId, room) {
+			if !figureIs(figure, sleeper) {
+				continue
+			}
+			if i == 0 {
+				return aimWord
+			}
+			return fmt.Sprintf(`%d.%s`, i+1, aimWord)
+		}
+	}
+	return ``
+}
+
+// figureIs reports whether figure, an aimFigures entry ("@<userId>" or
+// "#<mobInstanceId>"), is c.
+func figureIs(figure string, c *characters.Character) bool {
+	if !aimIdForm(figure) {
+		return false
+	}
+	id, _ := strconv.Atoi(figure[1:])
+	if figure[0] == '@' {
+		u := users.GetByUserId(id)
+		return u != nil && u.Character == c
+	}
+	m := mobs.GetInstance(id)
+	return m != nil && &m.Character == c
 }
 
 // RefuseMobIfAsleep is the mob-shaped convenience wrapper around

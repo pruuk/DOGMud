@@ -20,9 +20,9 @@ import (
 
 func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
-	// Shut (every keeper asleep, or the only keeper here off shift), as for
-	// list, buy, sell and offer.
-	if actions.RefuseIfShopClosed(room, user) {
+	// Shut (the only keeper here off shift), as for list, buy, sell and
+	// offer; a sleeping keeper wakes for the customer first (shopOpenFor).
+	if !shopOpenFor(room, user) {
 		return true, nil
 	}
 
