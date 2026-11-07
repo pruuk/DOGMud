@@ -24,7 +24,12 @@ func TestWhileUnderAttack(t *testing.T) {
 }
 
 func TestTargetAsleepText(t *testing.T) {
+	assert.Equal(t, `<ansi fg="mobname">Mira</ansi> is fast asleep. Try <ansi fg="command">wake mira</ansi>.`,
+		TargetAsleepText("Mira", "mira"))
+	assert.Equal(t, `<ansi fg="mobname">Mira</ansi> is fast asleep. Try <ansi fg="command">wake 2.figure</ansi>.`,
+		TargetAsleepText("Mira", "2.figure"))
 	assert.Equal(t, `<ansi fg="mobname">Mira</ansi> is fast asleep. You could make some noise. Try <ansi fg="command">shout wake up</ansi>.`,
-		TargetAsleepText("Mira"))
-	fits80(t, TargetAsleepText("Bartholomew Finch"))
+		TargetAsleepText("Mira", ""))
+	fits80(t, TargetAsleepText("Bartholomew Finch", "bartholomew finch"))
+	fits80(t, TargetAsleepText("Bartholomew Finch", ""))
 }

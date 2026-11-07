@@ -28,7 +28,16 @@ The `internal/usercommands` package implements the complete command system for p
   one command in `keepsSleep` (`usercommands.go`): the dispatcher's
   cancel-on-action wake skips it, so a sleeping player who types sit or rest
   stays asleep and is told to type `wake` (owner ruling 2026-10-19).
-- **Communication**: `say`, `shout`, `whisper`, `emote`, `broadcast` - Player communication
+- **Communication**: `say`, `shout`, `whisper`, `emote`, `broadcast` - Player communication.
+  `broadcast` is admin-only (owner 2026-11-07): an announcement to every online
+  player, deafened included, queued as an `events.Broadcast` plus one targeted
+  `events.Communication` per player for the web client's Broadcasts tab. The
+  `` ` `` shortcut belongs to `chat`, not `broadcast`.
+- **Wake** (`wake.go`): `wake <name>` wakes a sleeping NPC or player in the
+  room. The name aims by sight through `actions.AimBySight` (a name at clear
+  sight, `figure` or `2.figure` at shapes), every line names each party by its
+  reader's sight, and a hidden waker is revealed (`wakeIsNoisy`). Waking a
+  keeper in their own shop also relights their lantern (`relightLantern`).
 - **Observation**: `look`, `inspect`, `consider`, `online` (`who` is its alias in `keywords.yaml`, #421) - Information gathering.
   The admin `online` table swaps Title for UserId, Zone and RoomId, and
   `fitOnlineEntries` keeps it within 80 columns: it trims the Zone cell
@@ -832,7 +841,17 @@ neither quotes a price sell then refuses. All five shop verbs (list, buy,
 sell, offer, appraise) refuse a closed shop through one gate,
 `actions.RefuseIfShopClosed`: every keeper asleep, or the only keeper here
 off shift (`mobs.Mob.OffShift`, owner ruling 2026-10-17), after the
-no-merchant check and before the dim-light check.
+no-merchant check and before the dim-light check. The verbs reach that gate
+through `shopOpenFor` (`shop_wake.go`), which first wakes a keeper asleep in
+their own shop (`wakeKeeper`, hidden customer or not), then applies
+`actions.RefuseIfShopClosed`. So the asleep refusal is left for a keeper
+asleep outside their own shop.
+
+**`shop_wake.go`** (owner 2026-11-07): `keeperInOwnShop` (a shopkeeper in the
+home room their shop belongs to), `sleepingKeepers(room)`, `wakeKeeper`
+(wakes, relights with `relightLantern`, tells the room), `wakeKeepersOnEntry`
+(a player who is not hidden walks in) and `shopOpenFor`. `go.go` calls
+`wakeKeepersOnEntry` on arrival, but not when the mover is sneaking.
 
 ### Crafting: instant-complete narration (`craft.go`)
 

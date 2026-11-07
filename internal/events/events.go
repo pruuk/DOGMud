@@ -285,6 +285,67 @@ func DrainQueuedCharacterDiedForTest() []CharacterDied {
 	return found
 }
 
+// DrainQueuedCommunicationsForTest removes every queued Communication event and
+// returns them in queue order. FOR TEST USE ONLY.
+func DrainQueuedCommunicationsForTest() []Communication {
+	qLock.Lock()
+	defer qLock.Unlock()
+
+	type seen struct {
+		order uint64
+		ev    Communication
+	}
+	var found []seen
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		if c, ok := pe.event.(Communication); ok {
+			found = append(found, seen{order: pe.order, ev: c})
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+
+	sort.Slice(found, func(i, j int) bool { return found[i].order < found[j].order })
+	out := make([]Communication, 0, len(found))
+	for _, f := range found {
+		out = append(out, f.ev)
+	}
+	return out
+}
+
+// DrainQueuedBroadcastEventsForTest removes every queued Broadcast event and
+// returns the whole events in queue order (DrainQueuedBroadcastsForTest returns
+// only their Text). FOR TEST USE ONLY.
+func DrainQueuedBroadcastEventsForTest() []Broadcast {
+	qLock.Lock()
+	defer qLock.Unlock()
+
+	type seen struct {
+		order uint64
+		ev    Broadcast
+	}
+	var found []seen
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		if b, ok := pe.event.(Broadcast); ok {
+			found = append(found, seen{order: pe.order, ev: b})
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+
+	sort.Slice(found, func(i, j int) bool { return found[i].order < found[j].order })
+	out := make([]Broadcast, 0, len(found))
+	for _, f := range found {
+		out = append(out, f.ev)
+	}
+	return out
+}
+
 // DrainQueuedMenuChangedForTest removes the MenuChanged events for userId from
 // the global queue and returns them in the order they were queued.
 //

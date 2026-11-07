@@ -23,7 +23,7 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	// Shut for the night or off shift: see buy.go.
-	if actions.RefuseIfShopClosed(room, user) {
+	if !shopOpenFor(room, user) {
 		return true, nil
 	}
 

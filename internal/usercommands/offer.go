@@ -32,9 +32,9 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// Offer deals only with a merchant mob. With none here it says so at
 	// every light (it used to say nothing at all when lit, and the sight
 	// refusal when dim, which hinted at a merchant who was not there). A
-	// keeper here asleep or off shift says so first (actions.RefuseIfShopClosed,
-	// the gate list, buy, sell and appraise share).
-	if actions.RefuseIfShopClosed(room, user) {
+	// sleeping keeper wakes for the customer, and one off shift says so first
+	// (shopOpenFor, the gate list, buy, sell and appraise share).
+	if !shopOpenFor(room, user) {
 		return true, nil
 	}
 	if len(room.GetMobs(rooms.FindMerchant)) == 0 {

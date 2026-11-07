@@ -356,22 +356,22 @@
             <!-- COMM window (tabs) — moved from hidden div into chat panel -->
             <div id="comm-output" class="tabs">
               <div class="tab-buttons subtabs" role="group" aria-label="Chat channels">
-                <button type="button" id="comm-tab-say" class="tab-button subtab active" aria-pressed="true" data-tab="comm-say" data-label="Say" data-unread="0">Say</button>
-                <button type="button" id="comm-tab-whisper" class="tab-button subtab" aria-pressed="false" data-tab="comm-whisper" data-label="Whisper" data-unread="0">Whisper</button>
-                <button type="button" id="comm-tab-party" class="tab-button subtab" aria-pressed="false" data-tab="comm-party" data-label="Party" data-unread="0">Party</button>
-                <button type="button" id="comm-tab-broadcast" class="tab-button subtab" aria-pressed="false" data-tab="comm-broadcast" data-label="Broadcasts" data-unread="0">Broadcasts</button>
-                <button type="button" id="comm-tab-chat" class="tab-button subtab" aria-pressed="false" data-tab="comm-chat" data-label="Chat" data-unread="0">Chat</button>
-                <button type="button" id="comm-tab-newbie" class="tab-button subtab" aria-pressed="false" data-tab="comm-newbie" data-label="Newbie" data-unread="0">Newbie</button>
-                <button type="button" id="comm-tab-trade" class="tab-button subtab" aria-pressed="false" data-tab="comm-trade" data-label="Trade" data-unread="0">Trade</button>
+                <button type="button" id="comm-tab-say" class="tab-button subtab active" aria-pressed="true" data-tab="comm-say" data-label="Say" data-unread="0" title="What people say in the room you are in. To talk, type say hello.">Say</button>
+                <button type="button" id="comm-tab-whisper" class="tab-button subtab" aria-pressed="false" data-tab="comm-whisper" data-label="Whisper" data-unread="0" title="Private messages between you and one player, wherever they are. Type whisper &lt;name&gt; &lt;message&gt;. reply &lt;message&gt; answers the last one.">Whisper</button>
+                <button type="button" id="comm-tab-party" class="tab-button subtab" aria-pressed="false" data-tab="comm-party" data-label="Party" data-unread="0" title="Only your party hears this. Type party say &lt;message&gt;. No party yet? party create, then party invite &lt;name&gt;.">Party</button>
+                <button type="button" id="comm-tab-broadcast" class="tab-button subtab" aria-pressed="false" data-tab="comm-broadcast" data-label="Broadcasts" data-unread="0" title="Game tips and announcements. No one can post here. set tips turns tips off or on.">Broadcasts</button>
+                <button type="button" id="comm-tab-chat" class="tab-button subtab" aria-pressed="false" data-tab="comm-chat" data-label="Chat" data-unread="0" title="Everyone online, for general talk. Type chat &lt;message&gt;. Shouts from nearby show here too. channels turns a channel off.">Chat</button>
+                <button type="button" id="comm-tab-newbie" class="tab-button subtab" aria-pressed="false" data-tab="comm-newbie" data-label="Newbie" data-unread="0" title="Everyone online. Ask anything about the game, and other players will help. No question is too small. Type newbie &lt;message&gt;.">Newbie</button>
+                <button type="button" id="comm-tab-trade" class="tab-button subtab" aria-pressed="false" data-tab="comm-trade" data-label="Trade" data-unread="0" title="Everyone online, for buying and selling. Type trade &lt;message&gt;.">Trade</button>
               </div>
               <div class="tab-contents">
-                <div id="comm-say" class="chat-window say tab-content active"></div>
-                <div id="comm-whisper" class="chat-window whisper tab-content"></div>
-                <div id="comm-party" class="chat-window party tab-content"></div>
-                <div id="comm-broadcast" class="chat-window broadcast tab-content"></div>
-                <div id="comm-chat" class="chat-window chat tab-content"></div>
-                <div id="comm-newbie" class="chat-window newbie tab-content"></div>
-                <div id="comm-trade" class="chat-window trade tab-content"></div>
+                <div id="comm-say" class="chat-window say tab-content active"><div class="chat-hint">What people say in the room you are in. To talk, type <code>say hello</code>.</div></div>
+                <div id="comm-whisper" class="chat-window whisper tab-content"><div class="chat-hint">Private messages between you and one player, wherever they are. Type <code>whisper &lt;name&gt; &lt;message&gt;</code>. <code>reply &lt;message&gt;</code> answers the last one.</div></div>
+                <div id="comm-party" class="chat-window party tab-content"><div class="chat-hint">Only your party hears this. Type <code>party say &lt;message&gt;</code>. No party yet? <code>party create</code>, then <code>party invite &lt;name&gt;</code>.</div></div>
+                <div id="comm-broadcast" class="chat-window broadcast tab-content"><div class="chat-hint">Game tips and announcements. No one can post here. <code>set tips</code> turns tips off or on.</div></div>
+                <div id="comm-chat" class="chat-window chat tab-content"><div class="chat-hint">Everyone online, for general talk. Type <code>chat &lt;message&gt;</code>. Shouts from nearby show here too. <code>channels</code> turns a channel off.</div></div>
+                <div id="comm-newbie" class="chat-window newbie tab-content"><div class="chat-hint">Everyone online. Ask anything about the game, and other players will help. No question is too small. Type <code>newbie &lt;message&gt;</code>.</div></div>
+                <div id="comm-trade" class="chat-window trade tab-content"><div class="chat-hint">Everyone online, for buying and selling. Type <code>trade &lt;message&gt;</code>.</div></div>
               </div>
             </div>
           </div>
@@ -629,8 +629,10 @@
                 var fromSource  = obj.Channel.source;
                 var message     = obj.Channel.text;
 
-                var tab   = document.getElementById("comm-tab-" + channelName);
-                var panel = document.getElementById("comm-" + channelName);
+                // Shouts go into the Chat window (Calabe 2026-11-07).
+                var windowName = channelName === 'shout' ? 'chat' : channelName;
+                var tab   = document.getElementById("comm-tab-" + windowName);
+                var panel = document.getElementById("comm-" + windowName);
 
                 if (!tab || !panel) return;
 
@@ -648,13 +650,16 @@
                 var p = document.createElement('p');
                 var nameSpan = document.createElement('span');
                 nameSpan.className = 'text-name ' + srcClass;
-                nameSpan.textContent = (fromName != null ? fromName : '');
+                nameSpan.textContent = (fromName != null ? fromName : '') + (channelName === 'shout' ? ' shouts' : '');
                 var bodySpan = document.createElement('span');
                 bodySpan.className = 'text-body ' + srcClass;
                 bodySpan.textContent = (message != null ? message : '');
                 p.appendChild(nameSpan);
                 p.appendChild(document.createTextNode(': '));
                 p.appendChild(bodySpan);
+                // The channel's hint goes once it has a line (#808).
+                var hint = panel.querySelector('.chat-hint');
+                if (hint) panel.removeChild(hint);
                 panel.appendChild(p);
 
                 // Trim overflow — cap at 200 messages per channel
@@ -2662,10 +2667,14 @@
             // 1.2 on the brass, the rim 6.09.
             connected:    { dot: '', lamp: 'var(--lamp-green)', color: '',           status: 'connected',        disabled: false },
             reconnecting: { dot: '↻', color: 'var(--conn-reconnecting)',  status: 'reconnecting',     disabled: true  },
-            leaving:      { dot: '●', color: 'var(--conn-reconnecting)',  status: 'leaving the game', disabled: true  }
+            leaving:      { dot: '●', color: 'var(--conn-reconnecting)',  status: 'leaving the game', disabled: true  },
+            // Connected but still at the login prompt: the same amber circle
+            // as leaving, so green only means a character is in the game
+            // (Malia 2026-11-07, #818). markInGame() turns it green.
+            login:        { dot: '●', color: 'var(--conn-reconnecting)',  status: 'not logged in',    disabled: false }
         };
         function setSessionState(state) { // "connecting" | "connected" | "leaving" | "reconnecting" | "offline"
-            var s = SESSION_STATES[state] || SESSION_STATES.offline;
+            var s = SESSION_STATES[(state === 'connected' && !inGame) ? 'login' : state] || SESSION_STATES.offline;
             var label = state === 'leaving' ? 'Leaving…'
                       : (state === 'connected' && inGame) ? 'Leave Game' : 'Enter Game';
             sessionConfirm.style.display = 'none';

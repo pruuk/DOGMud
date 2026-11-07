@@ -29,7 +29,6 @@ var (
 		"bash":           {Bash, false},
 		"befriend":       {Befriend, false},
 		"break":          {Break, false},
-		"broadcast":      {Broadcast, false},
 		"buy":            {Buy, false},
 		"cancel":         {Cancel, false},
 		"cast":           {Cast, false},

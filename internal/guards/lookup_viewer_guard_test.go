@@ -84,6 +84,7 @@ var lookupRegistry = map[string]lookupEntry{
 	"internal/usercommands/skill.skullduggery.steal.go|parseStealArgs": {viewer: 1},
 	"internal/usercommands/talk.go|Talk":                               {viewer: 1},
 	"internal/usercommands/target.go|Target":                           {viewer: 1, plain: 1, why: whySelf},
+	"internal/usercommands/wake.go|Wake":                               {viewer: 1},
 	"modules/aicompanion/commands.go|AICompanionModule.cmdAskFor":      {viewer: 1},
 	"modules/follow/follow.go|FollowModule.followMobCommand":           {plain: 1, why: whyMob},
 	"modules/follow/follow.go|FollowModule.followUserCommand":          {viewer: 1},
