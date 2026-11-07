@@ -2564,6 +2564,24 @@
 
         const connectButton = document.getElementById('connect-button');
 
+        // The browser's own full screen (Calabe 2026-11-07): this frame asks for
+        // it, inside the player's tap, so the address and status bars go. If
+        // the browser says no, the game text says why rather than nothing
+        // happening.
+        function requestGameFullScreen() {
+            var root = document.documentElement;
+            var req = root.requestFullscreen || root.webkitRequestFullscreen;
+            if (!req) return;
+            var refused = function (e) {
+                term.writeln('Your browser did not allow full screen' +
+                    (e && e.message ? ': ' + e.message : '.'));
+            };
+            try {
+                var p = req.call(root);
+                if (p && p.catch) p.catch(refused);
+            } catch (e) { refused(e); }
+        }
+
         // Full screen lives on the outer page (webclient.html). Opened on its
         // own, this page has no site around it, so the button stays hidden.
         (function () {
@@ -2583,7 +2601,9 @@
                     button.setAttribute('aria-label', label);
                 });
                 button.addEventListener('click', function () {
-                    outer.setFullScreen(!outer.isFullScreen());
+                    var next = !outer.isFullScreen();
+                    if (next) requestGameFullScreen();
+                    outer.setFullScreen(next);
                 });
                 return;
             }
@@ -2661,6 +2681,19 @@
 
         sessionButton.addEventListener('click', function () {
             const open = socket && socket.readyState === WebSocket.OPEN;
+            // On a phone, Enter Game also takes the game full screen, hiding
+            // the browser's address bar (Calabe 2026-11-07). The game usually
+            // connects on its own at load, so this runs on every Enter Game
+            // tap, not only one that opens the connection. Leave Game does not.
+            if (!(open && inGame)) {
+                try {
+                    var outerFrame = window.parent !== window ? window.parent.WebclientFrame : null;
+                    if (outerFrame && outerFrame.wantsFullScreenOnConnect()) {
+                        requestGameFullScreen();
+                        outerFrame.setFullScreen(true);
+                    }
+                } catch (e) {}
+            }
             if (open && inGame) {
                 sessionButton.style.display = 'none';
                 sessionConfirm.style.display = '';
@@ -2774,16 +2807,6 @@
             if (socket && socket.readyState !== WebSocket.CLOSED) {
                 return;
             }
-
-            // On a phone this tap also takes the game full screen, hiding the
-            // browser's address bar (Calabe 2026-11-07). The browser allows
-            // that only from a tap, so it rides on this one.
-            try {
-                if (window.parent !== window && window.parent.WebclientFrame &&
-                        window.parent.WebclientFrame.enterOnConnect) {
-                    window.parent.WebclientFrame.enterOnConnect();
-                }
-            } catch (e) {}
 
             // An automatic retry keeps saying Reconnecting.
             if (!pendingReconnectToken) { setSessionState('connecting'); }

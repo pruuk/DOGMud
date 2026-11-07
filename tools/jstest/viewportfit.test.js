@@ -111,14 +111,22 @@ check('not on a laptop or tablet', VF.enterFullScreenOnConnect(false, null, true
 check('not where the browser cannot', VF.enterFullScreenOnConnect(true, null, false, false), false);
 check('not when already full screen', VF.enterFullScreenOnConnect(true, '1', true, true), false);
 
-check('the outer page asks the browser to go full screen',
-    /root\.requestFullscreen \|\| root\.webkitRequestFullscreen/.test(outer), true);
+check('the game frame may go full screen',
+    /<iframe id="webclient-frame"[^>]*allow="fullscreen"[^>]*allowfullscreen/.test(outer), true);
+check('the game frame asks for full screen itself, inside the tap',
+    /function requestGameFullScreen\(\) \{\s*var root = document\.documentElement;\s*var req = root\.requestFullscreen \|\| root\.webkitRequestFullscreen;/.test(game), true);
+check('a refused full screen is reported in the game text',
+    /Your browser did not allow full screen/.test(game), true);
+check('the Full screen button asks for it',
+    /if \(next\) requestGameFullScreen\(\);\s*outer\.setFullScreen\(next\);/.test(game), true);
 check('the outer page follows the back gesture leaving full screen',
     /'fullscreenchange', 'webkitfullscreenchange'/.test(outer), true);
 check('the button reads the real state', /isFullScreen: shown/.test(outer), true);
-check('Enter Game takes a phone full screen',
-    /WebclientFrame\.enterOnConnect\(\)/.test(game) &&
-    game.indexOf('WebclientFrame.enterOnConnect()') < game.indexOf("socket = new WebSocket("), true);
+var sessionAt = game.indexOf("sessionButton.addEventListener('click'");
+var sessionHandler = game.slice(sessionAt, game.indexOf('connectButton.click();', sessionAt));
+check('every Enter Game tap on a phone can go full screen, before the connected check returns',
+    /wantsFullScreenOnConnect\(\)\) \{\s*requestGameFullScreen\(\);/.test(sessionHandler) &&
+    sessionHandler.indexOf('wantsFullScreenOnConnect') < sessionHandler.indexOf('if (open) {'), true);
 var sidewaysAt = dashCss.indexOf('@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {');
 var sideways = sidewaysAt === -1 ? '' : dashCss.slice(sidewaysAt, dashCss.indexOf('\n}', sidewaysAt));
 check('a phone held sideways gets 30px sub-tabs', /\.subtab \{ min-height: 30px;/.test(sideways), true);

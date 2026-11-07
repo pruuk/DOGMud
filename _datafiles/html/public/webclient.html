@@ -38,11 +38,12 @@
     }
 
     // Full screen hides the site around the frame and leaves the frame alone,
-    // so the game stays connected. It also asks the browser to go full screen,
-    // which hides its address and status bars (Calabe 2026-11-07); the browser
-    // allows that only from a tap, so it rides on the player's tap on the
-    // button or on Enter Game. The session bar's button and the header's link
-    // both come through here.
+    // so the game stays connected. The browser's own full screen, which hides
+    // its address and status bars (Calabe 2026-11-07), is asked for by the
+    // game frame itself, on the player's tap (webclient-pure.html): the frame
+    // holds the whole game, and the tap happens there. This page keeps the
+    // header, the remembered choice and the button's state. The session bar's
+    // button and the header's link both come through here.
     window.WebclientFrame = (function () {
         const KEY = 'dogmud.fullscreen';
         const root = document.documentElement;
@@ -59,16 +60,10 @@
             return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) &&
                 !!(root.requestFullscreen || root.webkitRequestFullscreen);
         }
+        // The frame in full screen counts: this page then reports the frame
+        // as its full screen element.
         function browserOn() {
             return !!(document.fullscreenElement || document.webkitFullscreenElement);
-        }
-        // A refused request (no tap, or the browser says no) leaves the page
-        // as it was; the button keeps reading "Full screen".
-        function browserEnter() {
-            try {
-                const p = (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
-                if (p && p.catch) p.catch(function () {});
-            } catch (e) {}
         }
         function browserExit() {
             try {
@@ -91,7 +86,6 @@
         }
         function setFullScreen(next) {
             writePref(next ? '1' : '0');
-            if (next && browserCan() && !browserOn()) browserEnter();
             if (!next && browserOn()) browserExit();
             apply(next);
         }
@@ -107,13 +101,12 @@
             },
             setFullScreen: setFullScreen,
             isFullScreen: shown,
-            // Called from the Enter Game tap.
-            enterOnConnect: function () {
-                if (ViewportFit.enterFullScreenOnConnect(
-                        ViewportFit.isPhone(window.screen.width, window.screen.height),
-                        readPref(), browserCan(), browserOn())) {
-                    setFullScreen(true);
-                }
+            // Asked by the frame on an Enter Game tap: should this tap also
+            // go full screen?
+            wantsFullScreenOnConnect: function () {
+                return ViewportFit.enterFullScreenOnConnect(
+                    ViewportFit.isPhone(window.screen.width, window.screen.height),
+                    readPref(), browserCan(), browserOn());
             },
             onChange: function (fn) { listener = fn; fn(shown()); }
         };
@@ -145,5 +138,5 @@
         event.returnValue = 'Leave/Disconnect from the MUD?';
     });
 </script>
-<iframe id="webclient-frame" border="0" src="/webclient-pure.html"></iframe>
+<iframe id="webclient-frame" border="0" src="/webclient-pure.html" allow="fullscreen" allowfullscreen></iframe>
 {{template "footer" .}}
