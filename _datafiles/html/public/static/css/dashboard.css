@@ -836,6 +836,14 @@ html.keyboard-open #dash-drawer {
   border-bottom: 1px solid var(--panel-border);
   flex-shrink: 0;
 }
+/* The last row: an empty spacer takes the space left over, so a tab that
+   wraps alone (Trade in a narrow Chat) keeps its own size instead of
+   stretching across the whole panel (Calabe 2026-11-07). Full rows still
+   fill edge to edge, as before. */
+.subtabs::after {
+  content: "";
+  flex: 999 1 auto;
+}
 .subtab {
   flex: 1 0 auto;
   min-height: 34px;
