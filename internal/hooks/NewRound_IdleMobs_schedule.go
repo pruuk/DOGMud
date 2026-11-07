@@ -62,9 +62,11 @@ type schedulePlan struct {
 // shopHasCustomer reports whether a shopkeeper has a player who is not
 // hidden in the room: a keeper does not doze off with a customer in the shop
 // (owner 2026-11-07). Once the room has no such player and the wake grace
-// has run, the schedule puts them back to sleep.
+// has run, the schedule puts them back to sleep. Only in their own shop (the
+// home room it belongs to): a keeper bedding down elsewhere, Kerra in her
+// bedroom, sleeps on schedule whoever is there.
 func shopHasCustomer(mob *mobs.Mob) bool {
-	if !mob.HasShop() {
+	if !mob.HasShop() || mob.Character.RoomId != mob.HomeRoomId {
 		return false
 	}
 	room := rooms.LoadRoom(mob.Character.RoomId)

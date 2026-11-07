@@ -145,11 +145,16 @@ func TestScheduleTick_ShopkeeperStaysUpForACustomer(t *testing.T) {
 	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{1234: shop},
 		map[string]*rooms.ZoneConfig{"SleepyZone": {Name: "SleepyZone", RoomId: 1234}}))
 
-	keeper := &mobs.Mob{ScheduleId: "sleepy_test"}
+	keeper := &mobs.Mob{ScheduleId: "sleepy_test", HomeRoomId: 1234}
 	keeper.Character.RoomId = 1234
 	keeper.Character.Shop = characters.Shop{{ItemId: 1, Quantity: 1}}
 	plain := &mobs.Mob{ScheduleId: "sleepy_test"}
 	plain.Character.RoomId = 1234
+	// A keeper whose shop is elsewhere (Kerra in her bedroom) is no
+	// shopkeeper here (review 2026-11-07).
+	away := &mobs.Mob{ScheduleId: "sleepy_test", HomeRoomId: 999}
+	away.Character.RoomId = 1234
+	away.Character.Shop = characters.Shop{{ItemId: 1, Quantity: 1}}
 
 	if !scheduleTickPlan(keeper, 23).WantsSleep {
 		t.Fatal("an empty shop: the keeper should sleep on schedule")
@@ -165,6 +170,9 @@ func TestScheduleTick_ShopkeeperStaysUpForACustomer(t *testing.T) {
 	}
 	if !scheduleTickPlan(plain, 23).WantsSleep {
 		t.Error("a mob with no shop sleeps on schedule even with a player present")
+	}
+	if !scheduleTickPlan(away, 23).WantsSleep {
+		t.Error("a keeper asleep away from their shop sleeps on schedule even with a player present")
 	}
 }
 

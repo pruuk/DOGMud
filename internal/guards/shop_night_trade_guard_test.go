@@ -270,6 +270,13 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 						}
 						p.room.RemoveMob(inst.InstanceId)
 						inst.Character.Conditions.AddCondition(15, false)
+						// Back asleep: run the tree again so the lantern goes
+						// dark and the hour ends in the state it started in.
+						if lamp := inst.Character.Equipment.Light; lamp.ItemId > 0 && lamp.HasBehavior() {
+							behaviortree.TryItemBehavior(behaviortree.EventContext{EventType: "item_idle"}, behaviortree.ItemSubject{
+								UUID: lamp.UUID, ItemId: lamp.ItemId, MobInstanceId: inst.InstanceId,
+								RoomId: p.room.RoomId, Slot: "light"})
+						}
 					}
 				}
 
