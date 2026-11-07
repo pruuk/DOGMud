@@ -33,21 +33,22 @@ channels), MUD Coders Guild.
 
 ## Logo / banner assets
 
-Generated 2026-07-28 (chrysalis + three moons emblem, matches the web
-client's leather aesthetic), in
-`_datafiles/html/public/static/images/branding/`:
+Redrawn 2026-11-07 from Malia's logo (#820), on the website teal `#085044`,
+in `_datafiles/html/public/static/images/branding/`:
 
-- `emblem_1024.png` — master square emblem (downscale to any size a site asks for)
-- `logo_256.png` / `logo_100.png` — ready-made small squares
-- `banner_468x60.png` — classic listing banner (emblem + title + dogmud.org)
+- `emblem_1024.png` — the full logo, master square (downscale to any size a site asks for)
+- `logo_256.png` — the full logo, small square
+- `logo_100.png` — D.O.G. (`logo_dog.png`), since the full logo's words cannot be read at 100px
+- `banner_468x60.png` — classic listing banner: the crowned moons, the stacked
+  wordmark, then "play free in your browser" and dogmud.org in nav gold `#dfcc94`
 
 Once deployed they are also web-served, e.g.
 `https://www.dogmud.org/static/images/branding/banner_468x60.png` for sites
 that want a hosted image URL.
 
-**2026-11-02:** these predate Malia's logo (`logo_full.png`, `logo_dog.png`).
-Refreshing them is an open decision; keep the names, since listing sites
-hotlink them. Brand rules: [`BRAND_STANDARDS.md`](BRAND_STANDARDS.md).
+Until 2026-11-07 they showed the old chrysalis emblem (2026-07-28). Keep the
+names, since listing sites hotlink them; a site may show the old picture for
+a while from its cache. Brand rules: [`BRAND_STANDARDS.md`](BRAND_STANDARDS.md).
 
 ## Short blurb (~45 words — Grapevine, MudStats)
 
