@@ -1130,6 +1130,21 @@ html.keyboard-open #dash-drawer {
 /* Tab strip: the shared .subtab style (see Sub-tabs above). */
 
 /* Add-bar — thin strip with a brass "+ New" button */
+/* "Log in first: ..." under + New in the Automation tab, shown when the
+   player tries Automation while nobody is logged in (#819). The panel's own
+   text and background colours, so it reads in Dark and Light mode. */
+.auto-login-msg {
+  margin: 0;
+  padding: 6px 8px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+.auto-login-msg[hidden] { display: none; }
+
 .auto-addbar {
   display: flex;
   align-items: center;
@@ -1448,6 +1463,19 @@ html.keyboard-open #dash-drawer {
   resize: vertical;
   min-height: 52px;
 }
+
+/* "Log in first: ..." above Save, shown when Save is pressed after the
+   connection dropped (#819). Light vellum on the editor's dark panel, the
+   same as its title (the editor is dark in Light mode too). */
+.auto-modal-msg {
+  margin: 0;
+  padding: 8px 12px;
+  border-top: 1px solid var(--panel-border);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--vellum);
+}
+.auto-modal-msg[hidden] { display: none; }
 
 .auto-modal-foot {
   display: flex;

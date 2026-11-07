@@ -394,6 +394,9 @@
               <button type="button" class="auto-tab subtab" aria-pressed="false" data-tab="aliases">Aliases</button>
             </div>
             <div class="auto-addbar"><span class="auto-add" title="Add">+ New</span></div>
+            <!-- "Log in first ..." right where the player tapped, shown while
+                 nobody is logged in (#819); hidden again once they are. -->
+            <p id="auto-login-msg" class="auto-login-msg" role="alert" hidden></p>
             <div id="auto-list" class="auto-list"></div>
           </div>
         </section>
@@ -1384,6 +1387,11 @@
             var list = document.getElementById("auto-list");
             if (!list) return;
 
+            // Logged in now: the "Log in first" note in the Automation tab
+            // goes away (#819).
+            var loginNote = document.getElementById("auto-login-msg");
+            if (loginNote && automationReady) loginNote.hidden = true;
+
             // Clear previous content safely
             while (list.firstChild) { list.removeChild(list.firstChild); }
 
@@ -1977,6 +1985,14 @@
         // for tick rows, click on the toggle to enable/disable, or click the
         // row body to fire all tick commands immediately.
         document.getElementById("auto-list").addEventListener("click", function(e) {
+            // Logged out: switching, firing or test-firing an entry would send
+            // nothing useful (or send text to the login prompt), so say why
+            // and stop. The rows can still show from the last session.
+            if (e.target.closest(".auto-tog, .auto-row, .auto-chip") && automationNeedsLogin()) {
+                e.stopPropagation();
+                return;
+            }
+
             // ── Tick enable toggle ────────────────────────────────────────────
             var togTarget = e.target.closest(".auto-tog");
             if (togTarget) {
@@ -2647,6 +2663,28 @@
             if (inGame) return;
             inGame = true;
             if (!leavingGame) setSessionState('connected');
+        }
+
+        // Automation (Ticks, Triggers, Macros, Aliases) is saved to the
+        // character, so it only works while one is in the game. When nobody is
+        // logged in (often after a phone dropped its connection and the page
+        // went back to the login prompt), every Automation action asks this
+        // first: it tells the player in the game text and returns true, and the
+        // action sends nothing. Without it, Macros and Aliases would send their
+        // text to the login prompt as if typed as a username (#819).
+        // "Logged in" here is automationReady: the character's Automation has
+        // arrived from the server, which it sends on every login (even when
+        // empty), and stopAutomation() clears it when the connection closes.
+        const AUTOMATION_LOGIN_MESSAGE = 'Log in first: Automation is saved to your character.';
+        function automationNeedsLogin() {
+            if (automationReady) return false;
+            // In the Automation tab, where the player tapped.
+            var note = document.getElementById('auto-login-msg');
+            if (note) { note.textContent = AUTOMATION_LOGIN_MESSAGE; note.hidden = false; }
+            // And in the game text, on a line of its own: the login prompt
+            // leaves the cursor at the end of "username (or new):".
+            term.write('\r\n' + AUTOMATION_LOGIN_MESSAGE + '\r\n');
+            return true;
         }
 
         // quit is not instant: it starts a five round meditation (condition 0)
@@ -3793,6 +3831,8 @@
           <span class="auto-modal-close" id="auto-modal-x">✕</span>
         </div>
         <div class="auto-modal-body"></div>
+        <!-- Shown when Save is pressed after the connection dropped (#819). -->
+        <p class="auto-modal-msg" role="alert" hidden></p>
         <div class="auto-modal-foot">
           <button class="auto-modal-cancel">Cancel</button>
           <button class="auto-modal-save">Save</button>
@@ -4033,7 +4073,16 @@
                 _onSave = null;
             }
 
+            var loginMsg = modal.querySelector(".auto-modal-msg");
+
             function doSave() {
+                // The connection dropped while the editor was open: keep the
+                // window and what was typed, say why, and send nothing.
+                if (!automationReady) {
+                    loginMsg.textContent = AUTOMATION_LOGIN_MESSAGE;
+                    loginMsg.hidden = false;
+                    return;
+                }
                 if (typeof _onSave === "function") _onSave();
                 doClose();
             }
@@ -4047,6 +4096,10 @@
 
             // Public API — attached to window so Task 7 code can call it
             window.openAutoModal  = function(title, bodyEl, onSave) {
+                // Logged out: do not open an editor whose work could not be
+                // saved (covers "+ New" and Edit in all four tabs).
+                if (automationNeedsLogin()) return;
+                loginMsg.hidden = true;
                 titleEl.textContent = title;
                 while (bodySlot.firstChild) bodySlot.removeChild(bodySlot.firstChild);
                 bodySlot.appendChild(bodyEl);
@@ -4809,6 +4862,8 @@
 
             // Remove: send delete command directly (no modal needed)
             window.autoRemoveRow = function(type, key) {
+                // Logged out: a delete could not reach the character.
+                if (automationNeedsLogin()) return;
                 if (type === "macro") {
                     var num = parseInt(key.replace(/^=/, ""), 10);
                     if (!isNaN(num)) SendData("set =" + num + " ");

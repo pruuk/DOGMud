@@ -184,6 +184,32 @@ var rows2 = autoList.children.filter(function (c) { return /auto-row/.test(c.cla
 var empty2 = autoList.children.filter(function (c) { return c.className === 'auto-empty'; });
 check('D2 queued tick shows when no triggers are configured', rows2.length === 1 && empty2.length === 1, autoList.children.map(function (c) { return c.className; }).join(','));
 
+// E. Logged out, Automation sends nothing and says why (#819). While logged
+// in (automationReady), the helper stays out of the way.
+var termLines = [];
+global.term = { write: function (s) { termLines.push(s); }, writeln: function (s) { termLines.push(s + '\r\n'); } };
+// Ends at the next comment, not at a newline marker: a Windows checkout has
+// \r\n line endings, which a '\n        }\n' marker never matches.
+(0, eval)(extract('const AUTOMATION_LOGIN_MESSAGE', '// quit is not instant')
+    .replace('const AUTOMATION_LOGIN_MESSAGE', 'var AUTOMATION_LOGIN_MESSAGE'));
+(0, eval)('stopAutomation();');
+check('E1 logged out: the helper stops the action', automationNeedsLogin() === true, 'returned false');
+check('E1 logged out: the player is told why, on a line of its own',
+    termLines.join('').indexOf('\r\n' + AUTOMATION_LOGIN_MESSAGE + '\r\n') >= 0, JSON.stringify(termLines));
+termLines = [];
+(0, eval)('automationReady = true;');
+check('E2 logged in: the helper lets the action through', automationNeedsLogin() === false, 'returned true');
+check('E2 logged in: no message', termLines.length === 0, JSON.stringify(termLines));
+// Every way Automation sends asks the helper first.
+check('E3 opening an editor (+ New, Edit) checks first',
+    /window\.openAutoModal\s+= function\(title, bodyEl, onSave\) \{[\s\S]{0,200}if \(automationNeedsLogin\(\)\) return;/.test(html), 'not wired');
+check('E3 Save in an open editor checks first and keeps the editor open',
+    /function doSave\(\) \{[\s\S]{0,300}if \(!automationReady\) \{[\s\S]{0,200}return;\s*\}/.test(html), 'not wired');
+check('E3 switches, chips and test-fires check first',
+    /getElementById\("auto-list"\)\.addEventListener\("click", function\(e\) \{[\s\S]{0,400}automationNeedsLogin\(\)/.test(html), 'not wired');
+check('E3 deletes check first',
+    /window\.autoRemoveRow = function\(type, key\) \{[\s\S]{0,150}if \(automationNeedsLogin\(\)\) return;/.test(html), 'not wired');
+
 (0, eval)('stopAutomation();');
 console.log(failures ? failures + ' FAILED' : 'all ok');
 process.exit(failures ? 1 : 0);

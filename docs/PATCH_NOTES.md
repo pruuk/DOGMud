@@ -1,5 +1,13 @@
 # DOGMud Patch Notes
 
+## 2026-11-07: Automation waits for you to log in
+
+- If your connection drops and the web client goes back to the login prompt,
+  the Automation tab no longer loses what you add or change there. It tells
+  you to log in first, and a macro or alias is no longer sent to the login
+  prompt as if you had typed it. If you were in the middle of an edit, your
+  words stay in the window so you can log in and save them.
+
 ## 2026-11-07: Bigger buttons with a mouse
 
 - On a laptop or desktop, the fold and pop-out buttons on each panel's title
