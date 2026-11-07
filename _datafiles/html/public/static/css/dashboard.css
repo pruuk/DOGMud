@@ -124,6 +124,11 @@
   font-family: var(--font-heading);
   font-size: 0.82rem; color: var(--vellum);
 }
+/* With a mouse, the tab names grow a little so they sit well next to
+   the 24px ▾ and ⧉ buttons below (#730). Touch screens keep 0.82rem. */
+@media (pointer: fine) {
+  .dash-panel-head .ph-title { font-size: 0.95rem; }
+}
 
 /* Parchment cards: vellum fill + gold outline + dark text, for
    contrast against the dark leather cards. (session strip / command input /
@@ -171,6 +176,11 @@
    40px buttons, and title bars without buttons do not change. */
 @media (pointer: coarse) {
   .dash-panel-head .ph-btn { width: 44px; height: 44px; line-height: 42px; font-size: 18px; margin: -2px 0; }
+}
+/* With a mouse, the ▾ and ⧉ buttons are 24px, the smallest size the
+   accessibility rules allow for something you click (#730). */
+@media (pointer: fine) {
+  .dash-panel-head .ph-btn { width: 24px; height: 24px; line-height: 22px; font-size: 14px; }
 }
 .dash-panel-body { flex: 1 1 auto; min-height: 0; overflow: auto; position: relative; }
 
@@ -1132,6 +1142,11 @@ html.keyboard-open #dash-drawer {
   filter: brightness(0.85);
   transition: filter 0.08s;
   user-select: none;
+}
+/* With a mouse, "+ New" is at least 24px tall with easier-to-read text,
+   the smallest size the accessibility rules allow (#730). */
+@media (pointer: fine) {
+  .auto-add { font-size: 13px; min-height: 24px; display: inline-flex; align-items: center; }
 }
 .auto-add:hover {
   filter: brightness(1);
