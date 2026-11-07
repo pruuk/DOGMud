@@ -500,6 +500,12 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 			}
 
+			// A sleeping shopkeeper wakes for a customer who is not hidden
+			// (owner ruling 2026-11-07), light or no light. Before the light
+			// wake below, so a keeper woken by a lit arrival still relights
+			// their lantern and says so.
+			wakeKeepersOnEntry(destRoom, user)
+
 			// Chunk 3.3: a player arriving with a light source wakes any
 			// sleepers in the destination room. False positives possible if
 			// the room was already lit; acceptable for chunk 3.3 scope (most
