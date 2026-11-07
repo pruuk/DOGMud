@@ -21,8 +21,9 @@ import (
 // Refusal lines the sit command sends a player. A mob actor's SendText does
 // nothing, so a mob is refused silently.
 const (
-	// SitRefuseAsleep: `wake` is a command alias of noop, so typing it runs
-	// the player dispatcher's cancel-on-action wake. sit and rest are exempt
+	// SitRefuseAsleep: bare `wake` (usercommands.Wake with no name) does
+	// nothing itself, so typing it runs only the player dispatcher's
+	// cancel-on-action wake. sit and rest are exempt
 	// from that wake (usercommands.keepsSleep), or this line could never be
 	// reached by a player (owner ruling 2026-10-19).
 	SitRefuseAsleep     = `You're asleep. Type 'wake' to wake up.`
