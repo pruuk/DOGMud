@@ -618,8 +618,13 @@ h1, h2, h3, h4 { font-family: var(--font-heading); }
    the home page hero. Letters in the logo golds #d9ac46 / #c3932d (palette
    spec, "Logo golds"); made for dark surfaces and the teal bar. */
 .brand-logo { display: flex; align-items: center; padding: 2px 0; }
-.brand-logo img { display: block; height: 56px; width: auto; }
-@media (max-width: 768px) { .brand-logo img { height: 48px; } }
+/* The logo follows the screen's height, never squashed (height only; the
+   width keeps its shape): a phone held sideways has little height, and the
+   bar was taking 76px of its 310 (Calabe 2026-11-07). Full size from 560px
+   tall. */
+.brand-logo img { display: block; height: clamp(28px, 10vh, 56px); width: auto; }
+@media (max-width: 768px) { .brand-logo img { height: clamp(28px, 10vh, 48px); } }
+@media (max-height: 500px) { header { padding-top: 4px; padding-bottom: 4px; } }
 .hero-logo img { display: block; margin: 0 auto; width: min(560px, 86vw); max-width: 100%; height: auto; }
 /* Light mode swaps in the light-page version (letters #6f5418 / #473019,
    6.0 and 10.4 on the cream page); the gold letters wash out there (1.8). */
