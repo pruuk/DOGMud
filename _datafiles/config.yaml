@@ -2126,6 +2126,7 @@ Balance:
   MobReactionDelayMin: 0.25       # Minimum reaction delay (seconds)
   MobReactionDelayMax: 2.0        # Maximum reaction delay (seconds)
   MobBTreeReactionBase: 2.0       # Base delay before perception reduction (seconds)
+  ScheduleWakeGraceRounds: 50     # Rounds a woken scheduled mob stays up before its schedule may put it back to sleep (a shopkeeper also stays up while a customer is in the shop)
 
   # ── GOSSIP SYSTEM ───────────────────────────────────────────────────────────
   GossipIntervalRounds: 75  # Rounds between gossip broadcasts for "gossiper" mobs; 0 turns gossip off, 1 to 19 read as 75
