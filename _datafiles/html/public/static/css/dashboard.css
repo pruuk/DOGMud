@@ -1424,6 +1424,19 @@ html.keyboard-open #dash-drawer {
   min-height: 52px;
 }
 
+/* "Log in first: ..." above Save, shown when Save is pressed after the
+   connection dropped (#819). Light vellum on the editor's dark panel, the
+   same as its title (the editor is dark in Light mode too). */
+.auto-modal-msg {
+  margin: 0;
+  padding: 8px 12px;
+  border-top: 1px solid var(--panel-border);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--vellum);
+}
+.auto-modal-msg[hidden] { display: none; }
+
 .auto-modal-foot {
   display: flex;
   justify-content: flex-end;
