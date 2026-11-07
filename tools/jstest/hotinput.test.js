@@ -261,7 +261,7 @@ check('typing is left alone while a modal is open', focuses(key('n'), PLAIN_DIV,
 
 // --- phone keyboard hides after an in-game send ----------------------------
 //
-// docs/superpowers/plans/2026-11-02-webclient-phone-keyboard.md. True only
+// docs/superpowers/plans/completed/2026-11-02-webclient-phone-keyboard.md. True only
 // on a touch-only phone-width screen when an in-game command was sent (owner
 // ruling on #768, 2026-11-07). Login prompts, password prompts and numbered
 // menu answers keep the keyboard, as do tablets, desktops, and a send that

@@ -3,7 +3,7 @@
 > **Written after the work** (2026-11-02), to put the skipped plan step back
 > into the repo. No BAR was run before execution; a BAR of the shipped diff
 > follows. Spec:
-> [`../specs/2026-11-01-webclient-rework-design.md`](../specs/2026-11-01-webclient-rework-design.md).
+> [`../../specs/completed/2026-11-01-webclient-rework-design.md`](../../specs/completed/2026-11-01-webclient-rework-design.md).
 
 **Commits** (`feat/game-settings`, PR #768): `acaa0edf5` palette logo golds,
 `3081f1482` logo in top bar and hero, `5b15be32c` favicons, `fbf3f8338`

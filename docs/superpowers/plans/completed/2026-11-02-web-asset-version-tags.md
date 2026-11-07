@@ -8,7 +8,7 @@
 > **Written after the work** (2026-11-02), to put the skipped plan step back
 > into the repo. No BAR was run before execution; a BAR of the shipped diff
 > follows. Spec:
-> [`../specs/2026-11-01-webclient-rework-design.md`](../specs/2026-11-01-webclient-rework-design.md).
+> [`../../specs/completed/2026-11-01-webclient-rework-design.md`](../../specs/completed/2026-11-01-webclient-rework-design.md).
 
 **Commit:** `6452ab436` on `feat/game-settings` (PR #768). Supersedes the
 fixed favicon tag of `fbf3f8338`.

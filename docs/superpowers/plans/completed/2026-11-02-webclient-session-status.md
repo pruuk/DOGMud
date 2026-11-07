@@ -1,6 +1,6 @@
 # Session bar: the status circle moves into the Enter Game button
 
-> Spec: [`../specs/2026-11-01-webclient-rework-design.md`](../specs/2026-11-01-webclient-rework-design.md)
+> Spec: [`../../specs/completed/2026-11-01-webclient-rework-design.md`](../../specs/completed/2026-11-01-webclient-rework-design.md)
 > ("Session bar status"). Status: approved by Malia; BAR done (below);
 > built and checked by her on localhost 2026-11-02.
 

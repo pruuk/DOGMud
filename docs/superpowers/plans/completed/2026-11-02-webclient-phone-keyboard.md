@@ -1,6 +1,6 @@
 # Phone keyboard hides after each send
 
-> Spec: [`../specs/2026-11-01-webclient-rework-design.md`](../specs/2026-11-01-webclient-rework-design.md),
+> Spec: [`../../specs/completed/2026-11-01-webclient-rework-design.md`](../../specs/completed/2026-11-01-webclient-rework-design.md),
 > "Phone reading", slice A, the keyboard part (Malia, 2026-11-02: "plan to
 > have the keyboard hide after each send"). The readable-text part of slice A
 > gets its own plan. Status: BAR done (findings at the end, folded in);
