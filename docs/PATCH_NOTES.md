@@ -8,6 +8,14 @@
   prompt as if you had typed it. If you were in the middle of an edit, your
   words stay in the window so you can log in and save them.
 
+## 2026-11-07: Loose ends
+
+- A mutation without a picture of its own now shows the cocoon picture, as
+  it was always meant to, instead of a broken image.
+- `rest` and `sit` are the same command for everyone.
+- If your character was saved somewhere that no longer exists, you now
+  wake up at the start instead of nowhere.
+
 ## 2026-11-07: A new look for the website and the web client
 
 - The game has its own logo: three moons, the middle one crowned. You will see

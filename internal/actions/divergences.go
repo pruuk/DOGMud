@@ -51,6 +51,12 @@ var userOnlyCommands = map[string]string{
 	"spawn":        "admin",
 	"spell":        "admin",
 	"syslogs":      "admin",
+	"ban":          "admin",
+	"unban":        "admin",
+	"boot":         "admin",
+	"bauble":       "admin",
+	"cartcheck":    "admin",
+	"petitions":    "admin: the moderation queue",
 	"teleport":     "admin",
 	"undeafen":     "admin",
 	"unmute":       "admin",
@@ -119,6 +125,10 @@ var userOnlyCommands = map[string]string{
 	"suggest":         "ui",
 	"time":            "ui", // module: time
 	"title":           "ui",
+	"tutorial":        "ui",
+	"weather":         "ui",
+	"channels":        "ui: turns a player's chat channels on and off",
+	"mail":            "ui: the player's mailbox",
 
 	// --- Player-only mechanics ---
 	"ask":        "player-mechanic",
@@ -143,6 +153,14 @@ var userOnlyCommands = map[string]string{
 	"target":     "player-mechanic",
 	"use":        "player-mechanic",
 	"zombieact":  "player-mechanic",
+	"chat":       "player-mechanic: a world-wide chat channel; NPCs speak with say and shout",
+	"newbie":     "player-mechanic: a world-wide chat channel",
+	"trade":      "player-mechanic: a world-wide chat channel",
+	"petition":   "player-mechanic: a player contacting staff",
+	"hood":       "player-mechanic: raising a worn hood",
+	"unhood":     "player-mechanic: lowering a worn hood",
+	"stow":       "player-mechanic: the player's storage",
+	"loot":       "player-mechanic: companions loot through companion-loot under their owner's rights",
 
 	// Hidden: re-run by the instance-zone amount prompt (#375 R14).
 	"portalstake": "player-mechanic",
@@ -222,7 +240,10 @@ var mobOnlyCommands = map[string]string{
 // absent on the other that is not listed in the intentional allowlists above.
 //
 // Call this once at server startup after both registries are fully populated.
-func AuditCommandParity(userCmds []string, mobCmds []string) {
+// It returns the gaps it warned about, so a test can hold the real registries
+// to the allowlists (internal/guards/command_parity_guard_test.go).
+func AuditCommandParity(userCmds []string, mobCmds []string) []string {
+	gaps := []string{}
 
 	userSet := make(map[string]struct{}, len(userCmds))
 	for _, c := range userCmds {
@@ -244,8 +265,9 @@ func AuditCommandParity(userCmds []string, mobCmds []string) {
 		if _, allowed := userOnlyCommands[cmd]; allowed {
 			continue // intentional user-only divergence
 		}
-		mudlog.Warn("CommandParity",
-			"msg", fmt.Sprintf("user command %q has no mob equivalent and is not in the user-only allowlist", cmd))
+		msg := fmt.Sprintf("user command %q has no mob equivalent and is not in the user-only allowlist", cmd)
+		mudlog.Warn("CommandParity", "msg", msg)
+		gaps = append(gaps, msg)
 		warnings++
 	}
 
@@ -257,8 +279,9 @@ func AuditCommandParity(userCmds []string, mobCmds []string) {
 		if _, allowed := mobOnlyCommands[cmd]; allowed {
 			continue // intentional mob-only divergence
 		}
-		mudlog.Warn("CommandParity",
-			"msg", fmt.Sprintf("mob command %q has no user equivalent and is not in the mob-only allowlist", cmd))
+		msg := fmt.Sprintf("mob command %q has no user equivalent and is not in the mob-only allowlist", cmd)
+		mudlog.Warn("CommandParity", "msg", msg)
+		gaps = append(gaps, msg)
 		warnings++
 	}
 
@@ -267,4 +290,5 @@ func AuditCommandParity(userCmds []string, mobCmds []string) {
 			"msg", fmt.Sprintf("registries balanced — %d user commands, %d mob commands, no unexpected gaps",
 				len(userCmds), len(mobCmds)))
 	}
+	return gaps
 }

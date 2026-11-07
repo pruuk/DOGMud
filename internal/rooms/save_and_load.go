@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"sort"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/casing"
@@ -512,6 +513,34 @@ func SaveZoneConfig(zoneConfig *ZoneConfig) error {
 	return nil
 }
 
+// noEntranceByDesign lists rooms no exit leads into because players reach
+// them another way, so the boot's "No Entrance" check stays quiet about them
+// (owner 2026-11-07; a room field saying how a room is reached would be the
+// longer-term form). A room missing from this list with no way in is still
+// reported: it may be unreachable content.
+var noEntranceByDesign = map[int]string{
+	6258: "Newcomer Antechamber: the tutorial places new players here (config TutorialRooms)",
+	5107: "Instance Jail Cell: a template; players are put into instanced copies of it",
+	6423: "ferry: boarded and carried by the ferry behaviour (behaviortree/actions_ferry.go)",
+	6424: "ferry: boarded and carried by the ferry behaviour (behaviortree/actions_ferry.go)",
+	6425: "ferry: boarded and carried by the ferry behaviour (behaviortree/actions_ferry.go)",
+}
+
+// unexpectedNoEntrance is what the last load reported: rooms no exit leads
+// into that are not on noEntranceByDesign.
+var unexpectedNoEntrance = map[int]string{}
+
+// RoomsWithoutEntrance returns the room ids the last load warned had no way
+// in, sorted.
+func RoomsWithoutEntrance() []int {
+	ids := make([]int, 0, len(unexpectedNoEntrance))
+	for id := range unexpectedNoEntrance {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	return ids
+}
+
 // Goes through all of the rooms and caches key information
 func loadAllRoomZones() error {
 	start := time.Now()
@@ -572,13 +601,18 @@ func loadAllRoomZones() error {
 
 	}
 
+	unexpectedNoEntrance = map[int]string{}
 	for roomId, filePath := range roomsWithoutEntrances {
 
 		if filePath == `` {
 			delete(roomsWithoutEntrances, roomId)
 			continue
 		}
+		if _, reachedAnotherWay := noEntranceByDesign[roomId]; reachedAnotherWay {
+			continue
+		}
 
+		unexpectedNoEntrance[roomId] = filePath
 		mudlog.Warn("No Entrance", "roomId", roomId, "filePath", filePath)
 	}
 

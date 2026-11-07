@@ -59,6 +59,7 @@ var commandHelpAliases = map[string]string{
 	"tailsweep":  "trip",
 	"rep":        "report",
 	"unhood":     "hood",
+	"rest":       "sit", // one command under two names (owner 2026-11-07); keywords help-aliases sends help rest to sit
 }
 
 // commandHelpSkip lists internal/debug commands that don't need

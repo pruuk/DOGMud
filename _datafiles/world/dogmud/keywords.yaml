@@ -354,7 +354,6 @@ command-aliases:
   put:                ['place']
   history:            ['log']
   noop:               ['wake']
-  sit:                ['rest']
   syslogs:            ['syslog']
   'party chat':       ['pchat', 'psay']
   'bank deposit':     ['deposit']
