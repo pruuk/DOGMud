@@ -55,6 +55,7 @@ var userOnlyCommands = map[string]string{
 	"unban":        "admin",
 	"boot":         "admin",
 	"bauble":       "admin",
+	"broadcast":    "admin: an announcement to everyone (owner 2026-11-07)",
 	"cartcheck":    "admin",
 	"petitions":    "admin: the moderation queue",
 	"teleport":     "admin",

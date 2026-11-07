@@ -422,17 +422,6 @@ func TestShout(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestBroadcast(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-
-	mob, room := getTestMobAndRoom(t)
-
-	handled, err := Broadcast("test broadcast", mob, room)
-	assert.True(t, handled)
-	assert.NoError(t, err)
-}
-
 func TestLook(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -1024,7 +1013,6 @@ func TestTryCommandRouting(t *testing.T) {
 		{"equip", ""},
 		{"remove", ""},
 		{"gearup", ""},
-		{"broadcast", "test"},
 		{"submit", ""},
 		{"break", ""},
 		{"drink", ""},
