@@ -1110,6 +1110,21 @@ html.keyboard-open #dash-drawer {
 /* Tab strip: the shared .subtab style (see Sub-tabs above). */
 
 /* Add-bar — thin strip with a brass "+ New" button */
+/* "Log in first: ..." under + New in the Automation tab, shown when the
+   player tries Automation while nobody is logged in (#819). The panel's own
+   text and background colours, so it reads in Dark and Light mode. */
+.auto-login-msg {
+  margin: 0;
+  padding: 6px 8px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+.auto-login-msg[hidden] { display: none; }
+
 .auto-addbar {
   display: flex;
   align-items: center;

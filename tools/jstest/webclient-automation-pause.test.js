@@ -187,13 +187,14 @@ check('D2 queued tick shows when no triggers are configured', rows2.length === 1
 // E. Logged out, Automation sends nothing and says why (#819). While logged
 // in (automationReady), the helper stays out of the way.
 var termLines = [];
-global.term = { writeln: function (s) { termLines.push(s); } };
+global.term = { write: function (s) { termLines.push(s); }, writeln: function (s) { termLines.push(s + '\r\n'); } };
 (0, eval)(extract('const AUTOMATION_LOGIN_MESSAGE', 'function automationNeedsLogin()')
     .replace('const AUTOMATION_LOGIN_MESSAGE', 'var AUTOMATION_LOGIN_MESSAGE')
     + extract('function automationNeedsLogin()', '\n        }\n') + '\n        }\n');
 (0, eval)('stopAutomation();');
 check('E1 logged out: the helper stops the action', automationNeedsLogin() === true, 'returned false');
-check('E1 logged out: the player is told why', termLines.indexOf(AUTOMATION_LOGIN_MESSAGE) >= 0, JSON.stringify(termLines));
+check('E1 logged out: the player is told why, on a line of its own',
+    termLines.join('').indexOf('\r\n' + AUTOMATION_LOGIN_MESSAGE + '\r\n') >= 0, JSON.stringify(termLines));
 termLines = [];
 (0, eval)('automationReady = true;');
 check('E2 logged in: the helper lets the action through', automationNeedsLogin() === false, 'returned true');

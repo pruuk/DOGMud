@@ -394,6 +394,9 @@
               <button type="button" class="auto-tab subtab" aria-pressed="false" data-tab="aliases">Aliases</button>
             </div>
             <div class="auto-addbar"><span class="auto-add" title="Add">+ New</span></div>
+            <!-- "Log in first ..." right where the player tapped, shown while
+                 nobody is logged in (#819); hidden again once they are. -->
+            <p id="auto-login-msg" class="auto-login-msg" role="alert" hidden></p>
             <div id="auto-list" class="auto-list"></div>
           </div>
         </section>
@@ -1378,6 +1381,11 @@
         function renderAutomation() {
             var list = document.getElementById("auto-list");
             if (!list) return;
+
+            // Logged in now: the "Log in first" note in the Automation tab
+            // goes away (#819).
+            var loginNote = document.getElementById("auto-login-msg");
+            if (loginNote && automationReady) loginNote.hidden = true;
 
             // Clear previous content safely
             while (list.firstChild) { list.removeChild(list.firstChild); }
@@ -2665,7 +2673,12 @@
         const AUTOMATION_LOGIN_MESSAGE = 'Log in first: Automation is saved to your character.';
         function automationNeedsLogin() {
             if (automationReady) return false;
-            term.writeln(AUTOMATION_LOGIN_MESSAGE);
+            // In the Automation tab, where the player tapped.
+            var note = document.getElementById('auto-login-msg');
+            if (note) { note.textContent = AUTOMATION_LOGIN_MESSAGE; note.hidden = false; }
+            // And in the game text, on a line of its own: the login prompt
+            // leaves the cursor at the end of "username (or new):".
+            term.write('\r\n' + AUTOMATION_LOGIN_MESSAGE + '\r\n');
             return true;
         }
 
