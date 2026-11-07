@@ -208,10 +208,6 @@ check('the Legend button is inside the map button row',
     controlsAt >= 0 && toggleAt > controlsAt && toggleAt < page.indexOf('</div>', controlsAt), true);
 check('the old Map legend line is gone', /<summary>Map legend<\/summary>/.test(page), false);
 
-// The Map may shrink to 150px (master's value) so a short laptop window
-// with a few quests does not scroll the whole page (#768 review item 5).
-check('the Map can shrink to 150px', /#panel-map\s+\{ flex: 1 1 0; min-height: 150px; \}/.test(css), true);
-
 // The Chat tab has no typing box of its own: players chat from the command
 // box (Malia 2026-11-06).
 check('the Chat tab has no typing box', page.indexOf('chat-input') === -1, true);
@@ -251,6 +247,9 @@ check('the repeatable quest styles are found', repeatRules.split('\n').length, 3
 check('repeatable quests are not see-through', /opacity/.test(repeatRules), false);
 check('the repeatable heading and tag use the quest hint colour',
     /\.qrepeat \{[^}]*color: var\(--quest-progress\)/.test(css) && /\.qgroup \{[^}]*color: var\(--quest-progress\)/.test(css), true);
+// The Map may shrink to 150px (master's value) so a short laptop window
+// with a few quests does not scroll the whole page (#768 review item 5).
+check('the Map can shrink to 150px', /#panel-map\s+\{ flex: 1 1 0; min-height: 150px; \}/.test(css), true);
 check('a folded tab drops its own height',
     /min-height: 0 !important;\s*height: auto !important;/.test(css), true);
 
