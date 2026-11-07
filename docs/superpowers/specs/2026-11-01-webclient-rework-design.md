@@ -211,7 +211,8 @@ for warnings; phone, tablet and desktop checked in both modes before review.
 - The session bar's "Connected" text was smaller than its 15px buttons:
   Done: the status is a circle in the button ("Session bar status"). Yes and
   Stay keep their bold labels (Malia, 2026-11-02).
-- Hide the Light option until round 3? (asked, unanswered)
+- Hide the Light option until round 3? No: Light stays visible (Calabe,
+  2026-11-07).
 - Readable game text on phones: left to slice B (server wraps to the
   screen's width; Calabe's work), Malia 2026-11-02. Issue #776.
 - Small map issues Malia noticed after the map strip: dropped from the open

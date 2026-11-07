@@ -38,10 +38,14 @@
     }
 
     // Full screen hides the site around the frame and leaves the frame alone,
-    // so the game stays connected. The session bar's button and the header's
-    // link both come through here.
+    // so the game stays connected. It also asks the browser to go full screen,
+    // which hides its address and status bars (Calabe 2026-11-07); the browser
+    // allows that only from a tap, so it rides on the player's tap on the
+    // button or on Enter Game. The session bar's button and the header's link
+    // both come through here.
     window.WebclientFrame = (function () {
         const KEY = 'dogmud.fullscreen';
+        const root = document.documentElement;
         let on = false;
         let listener = null;
 
@@ -51,6 +55,30 @@
         function writePref(value) {
             try { window.localStorage.setItem(KEY, value); } catch (e) {}
         }
+        function browserCan() {
+            return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) &&
+                !!(root.requestFullscreen || root.webkitRequestFullscreen);
+        }
+        function browserOn() {
+            return !!(document.fullscreenElement || document.webkitFullscreenElement);
+        }
+        // A refused request (no tap, or the browser says no) leaves the page
+        // as it was; the button keeps reading "Full screen".
+        function browserEnter() {
+            try {
+                const p = (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
+                if (p && p.catch) p.catch(function () {});
+            } catch (e) {}
+        }
+        function browserExit() {
+            try {
+                const p = (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+                if (p && p.catch) p.catch(function () {});
+            } catch (e) {}
+        }
+        function shown() {
+            return ViewportFit.fullScreenShown(on, browserCan(), browserOn());
+        }
         function apply(next) {
             on = next;
             const display = on ? 'none' : '';
@@ -59,16 +87,35 @@
                 if (el) el.style.display = display;
             });
             resizeClientIFrame();
-            if (listener) listener(on);
+            if (listener) listener(shown());
         }
+        function setFullScreen(next) {
+            writePref(next ? '1' : '0');
+            if (next && browserCan() && !browserOn()) browserEnter();
+            if (!next && browserOn()) browserExit();
+            apply(next);
+        }
+        // Leaving with the back gesture or Esc: the button reads "Full screen"
+        // again; the header stays as it was.
+        ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (name) {
+            document.addEventListener(name, function () { if (listener) listener(shown()); });
+        });
         return {
             start: function () {
                 apply(ViewportFit.wantFullScreen(readPref(),
                     ViewportFit.isPhone(window.screen.width, window.screen.height)));
             },
-            setFullScreen: function (next) { writePref(next ? '1' : '0'); apply(next); },
-            isFullScreen: function () { return on; },
-            onChange: function (fn) { listener = fn; fn(on); }
+            setFullScreen: setFullScreen,
+            isFullScreen: shown,
+            // Called from the Enter Game tap.
+            enterOnConnect: function () {
+                if (ViewportFit.enterFullScreenOnConnect(
+                        ViewportFit.isPhone(window.screen.width, window.screen.height),
+                        readPref(), browserCan(), browserOn())) {
+                    setFullScreen(true);
+                }
+            },
+            onChange: function (fn) { listener = fn; fn(shown()); }
         };
     })();
 

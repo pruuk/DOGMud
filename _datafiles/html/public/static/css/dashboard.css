@@ -862,6 +862,26 @@ html.keyboard-open #dash-drawer {
 @media (pointer: coarse) {
   .subtab { min-height: 44px; }
 }
+/* A phone held sideways (Calabe and Malia 2026-11-07, on her phone): the
+   44px sub-tabs took three rows of a short screen and left Chat no room for
+   messages. Sideways on a touch screen under 500px tall they are 30px, still
+   above the 24px minimum target, with smaller words and padding so more fit
+   on a row. The panel title buttons shrink to match, and the tab name pill
+   under the game tabs goes (the pressed circle already shows which is open).
+   A deliberate exception to the 44px rule, recorded in BRAND_STANDARDS.md. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  .subtabs { gap: 4px; padding: 4px 4px 5px; }
+  .subtab { min-height: 30px; padding: 2px 8px; font-size: 0.82rem; }
+  .dash-panel-head .ph-btn { width: 32px; height: 30px; line-height: 28px; font-size: 15px; margin: 0; }
+  .drawer-close { min-width: 32px; min-height: 30px; margin: 0; padding: 2px 8px; }
+  #dash-drawer .dash-panel-head .ph-collapse { width: 32px; height: 30px; }
+  #dash-drawer .dash-panel-head .ph-collapse::before { font-size: 20px; padding-bottom: 3px; }
+  .gtabs-rail { margin-bottom: 6px; }
+  .gtab-pill { display: none; }
+  #dashboard[data-mode="phone"],
+  #dash-tabbar,
+  #dash-drawer { --tabname-h: 0px; }
+}
 @media (forced-colors: active) {
   .subtab.active { outline: 3px solid Highlight; }
 }

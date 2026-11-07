@@ -2775,6 +2775,16 @@
                 return;
             }
 
+            // On a phone this tap also takes the game full screen, hiding the
+            // browser's address bar (Calabe 2026-11-07). The browser allows
+            // that only from a tap, so it rides on this one.
+            try {
+                if (window.parent !== window && window.parent.WebclientFrame &&
+                        window.parent.WebclientFrame.enterOnConnect) {
+                    window.parent.WebclientFrame.enterOnConnect();
+                }
+            } catch (e) {}
+
             // An automatic retry keeps saying Reconnecting.
             if (!pendingReconnectToken) { setSessionState('connecting'); }
 

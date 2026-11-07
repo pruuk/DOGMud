@@ -97,5 +97,36 @@ check('the bare page ignores zoom', /ViewportFit\.visibleHeight\(vv\)/.test(game
 check('a page framed by another site cannot break the toggle code',
     /try \{[^}]*window\.parent\.WebclientFrame[^}]*\} catch/.test(game), true);
 
+// Full screen means the browser's bars are gone too, where the browser can
+// do that (Calabe 2026-11-07).
+check('header hidden but address bar showing reads as not full screen', VF.fullScreenShown(true, true, false), false);
+check('header hidden and browser full screen reads as full screen', VF.fullScreenShown(true, true, true), true);
+check('browser full screen with the header showing is not our full screen', VF.fullScreenShown(false, true, true), false);
+check('a browser that cannot go full screen: hiding the header is full screen', VF.fullScreenShown(true, false, false), true);
+check('a browser that cannot: header showing is not', VF.fullScreenShown(false, false, false), false);
+
+check('Enter Game on a phone goes full screen', VF.enterFullScreenOnConnect(true, null, true, false), true);
+check('a player who left full screen keeps that', VF.enterFullScreenOnConnect(true, '0', true, false), false);
+check('not on a laptop or tablet', VF.enterFullScreenOnConnect(false, null, true, false), false);
+check('not where the browser cannot', VF.enterFullScreenOnConnect(true, null, false, false), false);
+check('not when already full screen', VF.enterFullScreenOnConnect(true, '1', true, true), false);
+
+check('the outer page asks the browser to go full screen',
+    /root\.requestFullscreen \|\| root\.webkitRequestFullscreen/.test(outer), true);
+check('the outer page follows the back gesture leaving full screen',
+    /'fullscreenchange', 'webkitfullscreenchange'/.test(outer), true);
+check('the button reads the real state', /isFullScreen: shown/.test(outer), true);
+check('Enter Game takes a phone full screen',
+    /WebclientFrame\.enterOnConnect\(\)/.test(game) &&
+    game.indexOf('WebclientFrame.enterOnConnect()') < game.indexOf("socket = new WebSocket("), true);
+var sidewaysAt = dashCss.indexOf('@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {');
+var sideways = sidewaysAt === -1 ? '' : dashCss.slice(sidewaysAt, dashCss.indexOf('\n}', sidewaysAt));
+check('a phone held sideways gets 30px sub-tabs', /\.subtab \{ min-height: 30px;/.test(sideways), true);
+check('a phone held sideways hides the tab name pill', /\.gtab-pill \{ display: none; \}/.test(sideways), true);
+
+var manifest = JSON.parse(fs.readFileSync(path.join(PUBLIC, 'static', 'manifest.json'), 'utf8'));
+check('home screen icon opens without the address bar', manifest.display, 'standalone');
+check('home screen icon opens the game', manifest.start_url, '/webclient');
+
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);
