@@ -352,6 +352,7 @@
           <div class="dash-panel-head"><span class="ph-title">Chat</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body">
+            <p class="chat-fs-hint">Turn on Full screen for more room to read Chat.</p>
             <!-- COMM window (tabs) — moved from hidden div into chat panel -->
             <div id="comm-output" class="tabs">
               <div class="tab-buttons subtabs" role="group" aria-label="Chat channels">
@@ -2564,6 +2565,24 @@
 
         const connectButton = document.getElementById('connect-button');
 
+        // The browser's own full screen (Calabe 2026-11-07): this frame asks for
+        // it, inside the player's tap, so the address and status bars go. If
+        // the browser says no, the game text says why rather than nothing
+        // happening.
+        function requestGameFullScreen() {
+            var root = document.documentElement;
+            var req = root.requestFullscreen || root.webkitRequestFullscreen;
+            if (!req) return;
+            var refused = function (e) {
+                term.writeln('Your browser did not allow full screen' +
+                    (e && e.message ? ': ' + e.message : '.'));
+            };
+            try {
+                var p = req.call(root);
+                if (p && p.catch) p.catch(refused);
+            } catch (e) { refused(e); }
+        }
+
         // Full screen lives on the outer page (webclient.html). Opened on its
         // own, this page has no site around it, so the button stays hidden.
         (function () {
@@ -2574,6 +2593,8 @@
             if (outer) {
                 button.style.display = '';
                 outer.onChange(function (on) {
+                    // The sideways Chat line about Full screen hides while it is on.
+                    document.documentElement.classList.toggle('fullscreen-on', on);
                     // The visible words and the spoken name start the same, so
                     // voice control can say what it sees (WCAG 2.5.3).
                     var shown = on ? 'Exit full screen' : 'Full screen';
@@ -2583,7 +2604,9 @@
                     button.setAttribute('aria-label', label);
                 });
                 button.addEventListener('click', function () {
-                    outer.setFullScreen(!outer.isFullScreen());
+                    var next = !outer.isFullScreen();
+                    if (next) requestGameFullScreen();
+                    outer.setFullScreen(next);
                 });
                 return;
             }
@@ -2661,6 +2684,19 @@
 
         sessionButton.addEventListener('click', function () {
             const open = socket && socket.readyState === WebSocket.OPEN;
+            // On a phone, Enter Game also takes the game full screen, hiding
+            // the browser's address bar (Calabe 2026-11-07). The game usually
+            // connects on its own at load, so this runs on every Enter Game
+            // tap, not only one that opens the connection. Leave Game does not.
+            if (!(open && inGame)) {
+                try {
+                    var outerFrame = window.parent !== window ? window.parent.WebclientFrame : null;
+                    if (outerFrame && outerFrame.wantsFullScreenOnConnect()) {
+                        requestGameFullScreen();
+                        outerFrame.setFullScreen(true);
+                    }
+                } catch (e) {}
+            }
             if (open && inGame) {
                 sessionButton.style.display = 'none';
                 sessionConfirm.style.display = '';

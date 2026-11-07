@@ -91,7 +91,12 @@ All colours come from the palette spec. The roles that define the brand:
   brass circles on a dark umber bar with a teal rim, one sliding name pill.
 - **Panels:** gold outline on every card, one teal line under every panel
   title. Pop-out windows are a wide-screen feature only.
-- **Touch:** at least 44px tall targets on touch screens.
+- **Touch:** at least 44px tall targets on touch screens. One exception
+  (Calabe and Malia, 2026-11-07, tested on her phone): on a phone (touch,
+  under 600px wide or under 500px tall, either way up) 44px sub-tabs took
+  most of an open Chat tab, so there the sub-tabs and the panel title
+  buttons are 30px, still above the 24px minimum target (WCAG 2.5.8). Held
+  sideways, the tab name pill is also hidden.
 
 ## 5. Icons
 
@@ -100,7 +105,7 @@ All colours come from the palette spec. The roles that define the brand:
 | `favicon-moons.ico` | 16, 32, 48 | browser tabs; also served at `/favicon.ico` (`internal/web/web.go`) |
 | `favicon-moons.png` | 32 | browser tabs |
 | `apple-touch-icon.png` | 180 | phone home screen |
-| `icon-192.png`, `icon-512.png` | 192, 512 | Android, listed in `static/manifest.json` |
+| `icon-192.png`, `icon-moons-512.png` | 192, 512 | Android, listed in `static/manifest.json` (the 512 was `icon-512.png` until 2026-11-07, when its 43px see-through strip at the bottom was filled with the panel brown) |
 
 All from Malia's `moonsofgaius.svg` (three moons, no crown) on the panel
 brown `#201913`, moons pulled in from the rounded corners. In-game icons are

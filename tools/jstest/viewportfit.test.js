@@ -97,5 +97,54 @@ check('the bare page ignores zoom', /ViewportFit\.visibleHeight\(vv\)/.test(game
 check('a page framed by another site cannot break the toggle code',
     /try \{[^}]*window\.parent\.WebclientFrame[^}]*\} catch/.test(game), true);
 
+// Full screen means the browser's bars are gone too, where the browser can
+// do that (Calabe 2026-11-07).
+check('header hidden but address bar showing reads as not full screen', VF.fullScreenShown(true, true, false), false);
+check('header hidden and browser full screen reads as full screen', VF.fullScreenShown(true, true, true), true);
+check('browser full screen with the header showing is not our full screen', VF.fullScreenShown(false, true, true), false);
+check('a browser that cannot go full screen: hiding the header is full screen', VF.fullScreenShown(true, false, false), true);
+check('a browser that cannot: header showing is not', VF.fullScreenShown(false, false, false), false);
+
+check('Enter Game on a phone goes full screen', VF.enterFullScreenOnConnect(true, null, true, false), true);
+check('a player who left full screen keeps that', VF.enterFullScreenOnConnect(true, '0', true, false), false);
+check('not on a laptop or tablet', VF.enterFullScreenOnConnect(false, null, true, false), false);
+check('not where the browser cannot', VF.enterFullScreenOnConnect(true, null, false, false), false);
+check('not when already full screen', VF.enterFullScreenOnConnect(true, '1', true, true), false);
+
+check('the game frame may go full screen',
+    /<iframe id="webclient-frame"[^>]*allow="fullscreen"[^>]*allowfullscreen/.test(outer), true);
+check('the game frame asks for full screen itself, inside the tap',
+    /function requestGameFullScreen\(\) \{\s*var root = document\.documentElement;\s*var req = root\.requestFullscreen \|\| root\.webkitRequestFullscreen;/.test(game), true);
+check('a refused full screen is reported in the game text',
+    /Your browser did not allow full screen/.test(game), true);
+check('the Full screen button asks for it',
+    /if \(next\) requestGameFullScreen\(\);\s*outer\.setFullScreen\(next\);/.test(game), true);
+check('the outer page follows the back gesture leaving full screen',
+    /'fullscreenchange', 'webkitfullscreenchange'/.test(outer), true);
+check('the button reads the real state', /isFullScreen: shown/.test(outer), true);
+var sessionAt = game.indexOf("sessionButton.addEventListener('click'");
+var sessionHandler = game.slice(sessionAt, game.indexOf('connectButton.click();', sessionAt));
+check('every Enter Game tap on a phone can go full screen, before the connected check returns',
+    /wantsFullScreenOnConnect\(\)\) \{\s*requestGameFullScreen\(\);/.test(sessionHandler) &&
+    sessionHandler.indexOf('wantsFullScreenOnConnect') < sessionHandler.indexOf('if (open) {'), true);
+function mediaBlock(head) {
+    var at = dashCss.indexOf(head + ' {');
+    return at === -1 ? '' : dashCss.slice(at, dashCss.indexOf('\n}', at));
+}
+var phones = mediaBlock('@media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px)');
+var sideways = mediaBlock('@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px)');
+check('a phone either way up gets 30px sub-tabs', /\.subtab \{ min-height: 30px;/.test(phones), true);
+check('a phone either way up gets 30px title buttons', /\.dash-panel-head \.ph-btn \{ width: 32px; height: 30px;/.test(phones), true);
+check('a phone held sideways hides the tab name pill', /\.gtab-pill \{ display: none; \}/.test(sideways), true);
+check('a phone held sideways out of full screen says Full screen gives Chat room',
+    /html:not\(\.fullscreen-on\) \.chat-fs-hint \{ display: block; \}/.test(sideways) &&
+    game.indexOf('<p class="chat-fs-hint">Turn on Full screen for more room to read Chat.</p>') !== -1, true);
+check('the frame knows when full screen is on',
+    /classList\.toggle\('fullscreen-on', on\)/.test(game), true);
+
+var manifest = JSON.parse(fs.readFileSync(path.join(PUBLIC, 'static', 'manifest.json'), 'utf8'));
+check('home screen icon opens without the address bar', manifest.display, 'standalone');
+check('home screen icon opens the game', manifest.start_url, '/webclient');
+
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

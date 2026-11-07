@@ -48,10 +48,29 @@
         return typeof visibleH === 'number' && layoutH - visibleH > 120;
     }
 
+    // Whether the Full screen button should read as on. Where the browser can
+    // go full screen, that means it really is: the site header hidden AND the
+    // browser's own bars gone. A phone starts with the header hidden but its
+    // address bar showing, so it reads "Full screen" until the player taps it
+    // (Calabe 2026-11-07). Where the browser cannot (iPhone Safari), hiding
+    // the header is all full screen can do.
+    function fullScreenShown(layoutOn, browserCan, browserOn) {
+        return browserCan ? (layoutOn && browserOn) : layoutOn;
+    }
+
+    // Whether tapping Enter Game should also take a phone full screen
+    // (Calabe 2026-11-07). The browser only allows it from a tap, so it cannot
+    // happen at load. A player who chose to leave full screen keeps that.
+    function enterFullScreenOnConnect(phone, pref, browserCan, browserOn) {
+        return phone && pref !== '0' && browserCan && !browserOn;
+    }
+
     return {
         keyboardOpen: keyboardOpen,
         isPhone: isPhone,
         wantFullScreen: wantFullScreen,
+        fullScreenShown: fullScreenShown,
+        enterFullScreenOnConnect: enterFullScreenOnConnect,
         frameHeight: frameHeight,
         visibleHeight: visibleHeight
     };
