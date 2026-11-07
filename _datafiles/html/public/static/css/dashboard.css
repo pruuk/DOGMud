@@ -257,30 +257,43 @@
 @media (pointer: coarse) {
   #map-controls .rgsvg-brass { min-width: 44px; height: 44px; }
 }
+/* The "Legend ▾" button: plain gold words at the right end of the map's
+   button row (Malia 2026-11-06), not a brass button, so it reads as "show
+   the key" rather than a map action. ▾ when the key is open, ▸ when folded.
+   If the row is too narrow, it drops to a line of its own. */
+.map-controls { flex-wrap: wrap; align-items: center; }
+/* In a very narrow column the four map buttons wrap too, instead of the
+   + button being cut off at the edge. */
+#map-controls .rgsvg-controls { flex-wrap: wrap; }
+.map-legend-toggle {
+  order: 2;            /* after Fit, Center, −, + */
+  margin-left: auto;   /* pushed to the right end of the row */
+  min-height: 32px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #dfcc94;
+}
+.map-legend-arrow { color: #b5a26c; }
+.map-legend-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
+@media (pointer: coarse) { .map-legend-toggle { min-height: 44px; } }
+/* The key itself, under the button row. */
 .map-legend {
   flex: 0 0 auto;
   border-top: 1px solid var(--panel-border);
-  padding: 4px 10px 6px;
+  padding: 6px 10px;
   font-family: var(--font-body);
   font-size: 0.82rem;
   color: #cec6aa;
 }
-.map-legend summary {
-  cursor: pointer;
-  color: #dfcc94;
-  font-weight: 600;
-  min-height: 28px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.map-legend summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
-/* An arrow says it folds: '▾' open, '▸' folded (the default marker is hidden,
-   as display:flex drops it in some browsers and not others). */
-.map-legend summary::-webkit-details-marker { display: none; }
-.map-legend summary { list-style: none; }
-.map-legend summary::before { content: "▸"; color: #b5a26c; }
-.map-legend[open] summary::before { content: "▾"; }
+.map-legend[hidden] { display: none; }
 .map-legend ul {
   list-style: none;
   margin: 2px 0 0;
@@ -291,7 +304,6 @@
 }
 .map-legend li { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .map-legend svg { width: 20px; height: 15px; flex: none; }
-@media (pointer: coarse) { .map-legend summary { min-height: 44px; } }
 #panel-quests { flex: 0 0 auto; }
 #panel-quests .dash-panel-body { max-height: 220px; overflow: auto; }
 .quests-empty { color: var(--quest-dim); font: italic 12px var(--font-body); padding: 4px 2px; }

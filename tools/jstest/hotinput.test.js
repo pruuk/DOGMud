@@ -199,6 +199,15 @@ check('Settings closes back to its button only from the keyboard',
     && /closeSettings\(fromKeyboard\(e\)\)/.test(page)
     && !/getElementById\('settings-close'\)\.addEventListener\('click', function \(\) \{\s*closeSettings\(true\)/.test(page), true);
 
+// The map's "Legend" button sits in the Fit / Center / zoom row and opens
+// the key below it; the old full-width "Map legend" line is gone (Malia
+// 2026-11-06).
+var controlsAt = page.indexOf('<div id="map-controls"');
+var toggleAt = page.indexOf('id="map-legend-toggle"');
+check('the Legend button is inside the map button row',
+    controlsAt >= 0 && toggleAt > controlsAt && toggleAt < page.indexOf('</div>', controlsAt), true);
+check('the old Map legend line is gone', /<summary>Map legend<\/summary>/.test(page), false);
+
 // The Chat tab has no typing box of its own: players chat from the command
 // box (Malia 2026-11-06).
 check('the Chat tab has no typing box', page.indexOf('chat-input') === -1, true);

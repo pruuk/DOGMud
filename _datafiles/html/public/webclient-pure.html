@@ -273,11 +273,15 @@
             <div id="map-render"></div>
             <!-- The map's Fit / Center / zoom buttons, under the map rather than over
                  its rooms (2026-11-02): RoomGridSVG puts them here (controlsHost). -->
-            <div id="map-controls" class="map-controls"></div>
+            <!-- The "Legend ▾" button shares this row, at its right end
+                 (Malia 2026-11-06); it opens and folds the key below. -->
+            <div id="map-controls" class="map-controls">
+              <button type="button" id="map-legend-toggle" class="map-legend-toggle"
+                      aria-expanded="true" aria-controls="map-legend">Legend <span class="map-legend-arrow" aria-hidden="true">▾</span></button>
+            </div>
             <!-- The map's key, under the map rather than drawn over the rooms
-                 (2026-11-02). <details> folds it away on small screens. -->
-            <details class="map-legend" open>
-              <summary>Map legend</summary>
+                 (2026-11-02). The Legend button above opens and folds it. -->
+            <div id="map-legend" class="map-legend">
               <ul>
                 <li><svg viewBox="0 0 16 12" aria-hidden="true"><circle cx="8" cy="3.5" r="2" fill="#6dac9d"/><path d="M4.5 10.5 Q8 5 11.5 10.5 Z" fill="#6dac9d"/></svg>Party member</li>
                 <li><svg viewBox="0 0 16 12" aria-hidden="true"><circle cx="8" cy="6" r="5" fill="#2a1d12" stroke="#b5a26c" stroke-width="1.2"/><text x="8" y="8.4" text-anchor="middle" font-size="7" font-weight="bold" fill="#b5a26c">$</text></svg>Bank / Shop / Store</li>
@@ -286,7 +290,7 @@
                 <li><svg viewBox="0 0 16 12" aria-hidden="true"><circle cx="8" cy="6" r="4.6" fill="#2a1d12" stroke="#cb9f42" stroke-width="1.8"/><circle cx="8" cy="6" r="1.7" fill="#e6b058"/></svg>Quest destination</li>
                 <li><svg viewBox="0 0 16 12" aria-hidden="true"><line x1="1.5" y1="6" x2="11" y2="6" stroke="#e6b058" stroke-width="1.8"/><path d="M10 2.5 L14.5 6 L10 9.5 Z" fill="#e6b058"/></svg>Next step</li>
               </ul>
-            </details>
+            </div>
           </div>
         </section>
 
@@ -565,6 +569,22 @@
                 // ask the server for a whole one (#650, RoomGridSVG.requestResync).
                 onResync: function () { SendGMCP("Zone.Map.Resync", {}); } };
             gr = new RoomGridSVG('#map-render', mapOptions);
+        })();
+
+        // The "Legend ▾" button in the map's button row opens and folds the
+        // map's key underneath it. On a short window (under 800px tall) the
+        // key starts folded, so the map keeps more of its card.
+        (function initMapLegend() {
+            var btn = document.getElementById('map-legend-toggle');
+            var legend = document.getElementById('map-legend');
+            if (!btn || !legend) return;
+            function show(open) {
+                legend.hidden = !open;
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                btn.querySelector('.map-legend-arrow').textContent = open ? '▾' : '▸';
+            }
+            show(window.innerHeight >= 800);
+            btn.addEventListener('click', function () { show(legend.hidden); });
         })();
 
         /////////////////////////////////////////////

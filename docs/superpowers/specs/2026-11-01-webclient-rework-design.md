@@ -182,6 +182,12 @@ for slice B.*
   box; a keyboard close (Esc, or Enter/Space on ✕ or Settings) still returns
   focus to the Settings button. Malia reproduced the bug on her laptop; the
   Automation tabs did not lose typing in her test, so they are unchanged.
+- Map (Malia 2026-11-06): an even 10px gap above and below the leather, the
+  map box in the leather's own shape so Fit / Center sits right under it.
+  "Legend ▾" (gold words, not brass) moves into the Fit / Center / − / + row
+  at its right end and opens the key below; the key starts folded on windows
+  under 800px tall. In a very narrow column the row wraps rather than cut
+  off a button.
 - Code is written so a person can maintain it: edit what exists first, and
   give every change a plain-English comment (Malia).
 - Still to decide: a description of each Chat button (hover on a laptop; a
