@@ -1,5 +1,13 @@
 # DOGMud Patch Notes
 
+## 2026-11-07: Bigger buttons with a mouse
+
+- On a laptop or desktop, the fold and pop-out buttons on each panel's title
+  bar are bigger and easier to click, and the panel names are a little
+  larger to match.
+- The "+ New" button in Automation is bigger too, with easier-to-read text.
+- Phones and tablets are unchanged.
+
 ## 2026-11-07: The status light waits for you to log in
 
 - The light on the Enter Game button stays amber while you are at the login
