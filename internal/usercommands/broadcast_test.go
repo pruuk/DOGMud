@@ -31,8 +31,10 @@ func TestBroadcastIsAnAdminAnnouncementEveryoneGets(t *testing.T) {
 	require.Contains(t, b[0].Text, `Calabe`)
 	require.True(t, b[0].IsCommunication && b[0].SourceIsMod, "a mod's communication reaches deafened players")
 
+	comms := events.DrainQueuedCommunicationsForTest()
+	require.Len(t, comms, 2, "exactly one Comm per online player")
 	got := map[int]string{}
-	for _, c := range events.DrainQueuedCommunicationsForTest() {
+	for _, c := range comms {
 		require.Equal(t, `broadcast`, c.CommType)
 		got[c.TargetUserId] = c.Name + `: ` + c.Message
 	}
@@ -45,8 +47,10 @@ func TestBroadcastWithNothingToSayPostsNothing(t *testing.T) {
 	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{9813: admin}))
 	events.DrainQueuedBroadcastEventsForTest()
 	events.DrainQueuedMessagesForTest(9813)
+	events.DrainQueuedCommunicationsForTest()
 	_, err := Broadcast(`   `, admin, nil, 0)
 	require.NoError(t, err)
 	require.Empty(t, events.DrainQueuedBroadcastEventsForTest())
+	require.Empty(t, events.DrainQueuedCommunicationsForTest())
 	require.Contains(t, strings.Join(events.DrainQueuedMessagesForTest(9813), ""), `Usage`)
 }

@@ -111,7 +111,7 @@ func HandleBroadcast(e events.Event) events.ListenerReturn {
 
 	textOut = strings.ReplaceAll(textOut, "\n", "")
 	textOut = strings.ReplaceAll(textOut, "\r", "")
-	textOut = strings.Replace(textOut, `(broadcast) `, `(broadcast) **`, 1)
+	textOut = strings.Replace(textOut, `(announcement) `, `(announcement) **`, 1)
 	textOut = strings.Replace(textOut, `:`, `:** `, 1)
 
 	message := fmt.Sprintf(`:speech_balloon: %s`, textOut)
