@@ -1,5 +1,10 @@
 # DOGMud Patch Notes
 
+## 2026-11-07: The status light waits for you to log in
+
+- The light on the Enter Game button stays amber while you are at the login
+  prompt, and turns green only once your character is in the game.
+
 ## 2026-11-07: Waking up
 
 - Each Chat channel says what it is for until its first message arrives.

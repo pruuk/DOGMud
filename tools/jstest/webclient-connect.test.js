@@ -75,7 +75,7 @@ var code = 'var socket = null, leavingGame = false, leaveFallback = null, inGame
     + 'var connectButton = document.getElementById("connect-button");\n'
     + 'var sessionButton = document.getElementById("btn-session");\n'
     + 'var sessionConfirm = document.getElementById("sess-confirm");\n'
-    + extract('var SESSION_STATES = {', "sessionButton.addEventListener('click'")
+    + extract('function markInGame() {', "sessionButton.addEventListener('click'")
     + extract("connectButton.addEventListener('click'", "textInput.addEventListener('keydown'");
 (0, eval)(code);
 
@@ -109,8 +109,17 @@ connect.click();
 check('a click while connecting opens no second socket', sockets.length === 1, 'sockets ' + sockets.length);
 
 sockets[0].open();
-check('the bar says connected once open', label.textContent === ', connected', 'label ' + label.textContent);
+// Open but at the login prompt: amber, not green (#818).
+var dot = session.querySelector('.sess-dot');
+check('the bar says not logged in at the login prompt', label.textContent === ', not logged in', 'label ' + label.textContent);
+check('the light is amber at the login prompt', dot.style.color === 'var(--conn-reconnecting)' && !dot.style.background,
+    'color ' + dot.style.color + ', background ' + dot.style.background);
 check('Enter Game comes back once open', session.disabled === false, 'disabled ' + session.disabled);
+
+// The first Char push means a character is in the world: green.
+markInGame();
+check('the bar says connected once in the game', label.textContent === ', connected', 'label ' + label.textContent);
+check('the light is green once in the game', dot.style.background === 'var(--lamp-green)', 'background ' + dot.style.background);
 
 // The socket fails to connect, or closes: the player can try again.
 connect.disabled = false;

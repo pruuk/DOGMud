@@ -2667,10 +2667,14 @@
             // 1.2 on the brass, the rim 6.09.
             connected:    { dot: '', lamp: 'var(--lamp-green)', color: '',           status: 'connected',        disabled: false },
             reconnecting: { dot: '↻', color: 'var(--conn-reconnecting)',  status: 'reconnecting',     disabled: true  },
-            leaving:      { dot: '●', color: 'var(--conn-reconnecting)',  status: 'leaving the game', disabled: true  }
+            leaving:      { dot: '●', color: 'var(--conn-reconnecting)',  status: 'leaving the game', disabled: true  },
+            // Connected but still at the login prompt: the same amber circle
+            // as leaving, so green only means a character is in the game
+            // (Malia 2026-11-07, #818). markInGame() turns it green.
+            login:        { dot: '●', color: 'var(--conn-reconnecting)',  status: 'not logged in',    disabled: false }
         };
         function setSessionState(state) { // "connecting" | "connected" | "leaving" | "reconnecting" | "offline"
-            var s = SESSION_STATES[state] || SESSION_STATES.offline;
+            var s = SESSION_STATES[(state === 'connected' && !inGame) ? 'login' : state] || SESSION_STATES.offline;
             var label = state === 'leaving' ? 'Leaving…'
                       : (state === 'connected' && inGame) ? 'Leave Game' : 'Enter Game';
             sessionConfirm.style.display = 'none';
