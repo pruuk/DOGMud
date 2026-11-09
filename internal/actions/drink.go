@@ -82,7 +82,7 @@ func LandBloomClean(actor Actor) {
 	char.BloomAbstinentRounds = 0
 	// Warning is not a category the pipeline wraps (messaging.shouldWrap).
 	actor.SendText(messaging.CategoryWarning, util.SplitStringNL(
-		`The craving has finally loosened its grip. You feel clean, or as close to it as you're likely to get.`, 80))
+		`The craving has finally loosened its grip. You feel clean, or as close to it as you're likely to get.`, actorWrapWidth(actor)))
 }
 
 // purgingDraughtItemId is the item ID for the Purging Draught (30052), the
@@ -433,7 +433,7 @@ func Quaff(actor DrinkActor, rest string) DrinkResult {
 		// so the line is wrapped here, the way the command package wrapped prose.
 		actor.SendText(messaging.CategoryWarning, util.SplitStringNL(
 			`The draught tears through you. Every trace of potion work is `+
-				`scoured out, and you are left shaking and hollow.`, 80))
+				`scoured out, and you are left shaking and hollow.`, actorWrapWidth(actor)))
 	}
 
 	// ── Bloom Wafer special-case ──────────────────────────────────────────────

@@ -7,6 +7,13 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+// actorWrapWidth is the width a line for actor alone wraps at. A mob's user id
+// 0 finds no user, and a nil user's WrapWidth is the default 80; a mob's
+// SendText drops the line anyway.
+func actorWrapWidth(actor Actor) int {
+	return users.GetByUserId(actor.GetUserId()).WrapWidth()
+}
+
 // RenderRoster renders the room roster ("Also here: ...", the
 // descriptions/who template) for userId and wraps it to that user's line
 // width (80 when there is no user record).

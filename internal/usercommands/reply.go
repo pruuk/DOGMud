@@ -35,7 +35,7 @@ func Reply(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	rest = util.EscapeAnsiTags(rest)
 
 	replyMsg := fmt.Sprintf(`<ansi fg="white">***</ansi> <ansi fg="black-bold"><ansi fg="username">%s</ansi> whispers, "%s"</ansi> <ansi fg="white">***</ansi>`, user.Character.Name, rest)
-	targetUser.SendText(messaging.CategoryWhisper, util.SplitStringNL(replyMsg, 80))
+	targetUser.SendText(messaging.CategoryWhisper, util.SplitStringNL(replyMsg, targetUser.WrapWidth()))
 
 	// Track reply chain — target can reply back
 	targetUser.LastWhisperFrom = user.UserId
