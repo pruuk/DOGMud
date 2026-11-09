@@ -122,8 +122,8 @@ func TestClientDisplay_UnchangedValueWritesNothing(t *testing.T) {
 // however green the direct calls are.
 func TestClientDisplay_ListenerIsRegistered(t *testing.T) {
 	id := clientDisplayConn(t, 80)
-	t.Cleanup(events.SwapListenersForTest())
-	registerClientDisplayListener()
+	// No swap and no register call: the listener must already be on the bus
+	// from the package's init, or this fails.
 
 	events.DoListeners(GMCPClientDisplay{ConnectionId: id, Payload: []byte(`{"cols":61}`)})
 
