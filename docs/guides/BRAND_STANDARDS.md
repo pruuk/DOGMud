@@ -115,10 +115,13 @@ never emoji, which look different on every device.
 ## 6. Listing sites (legacy assets)
 
 `banner_468x60.png`, `emblem_1024.png`, `logo_100.png` and `logo_256.png` in
-the branding folder predate Malia's logo (the 2026-07-28 chrysalis emblem).
-MUD listing sites hotlink them, so **never rename or delete them**. Refreshing
-them to the new logo (same names, new pictures) is an open decision for
-Malia; see [`ADVERTISING_LISTINGS.md`](ADVERTISING_LISTINGS.md).
+the branding folder are for MUD listing sites, which hotlink them, so **never
+rename or delete them**; new art replaces them in place. Redrawn 2026-11-07
+(#820, Malia) on the website teal `#085044`, since they send people to the
+website: the full logo at 1024 and 256, D.O.G. at 100, and a banner with the
+crowned moons, the wordmark and dogmud.org in nav gold `#dfcc94` (logo gold
+is 4.43 on teal, under 4.5 for words). Before that they showed the 2026-07-28
+chrysalis emblem. See [`ADVERTISING_LISTINGS.md`](ADVERTISING_LISTINGS.md).
 
 ## 7. Shipping a brand change
 
