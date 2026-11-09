@@ -32,7 +32,7 @@ func skipStages(cat Category) normalizeStage {
 		// ride CategoryEmote, which stays fully exempt below.
 		return stageCapitalize | stageAAnAgreement | stageDupWordCollapse |
 			stageNameCanon
-	case CategoryRoomDescription, CategoryRoomEntry, CategoryRoomExit,
+	case CategoryRoomDescription, CategoryRoomIdle, CategoryRoomEntry, CategoryRoomExit,
 		CategoryWeather, CategoryTimeOfDay, CategoryLight, CategorySplash,
 		CategoryNPCDialogue, CategoryDialogueHint,
 		CategoryMobIdle,

@@ -154,7 +154,7 @@ func shouldWrap(cat Category) bool {
 		// NPC and ambient prose.
 		CategoryNPCDialogue, CategoryDialogueHint, CategoryMobIdle,
 		CategoryMobEmote, CategoryRoomEntry, CategoryRoomExit,
-		CategoryWeather, CategoryTimeOfDay, CategoryLight,
+		CategoryWeather, CategoryTimeOfDay, CategoryLight, CategoryRoomIdle,
 		// Sent to a whole room, so each reader's own width applies. No sender
 		// may wrap these first.
 		CategorySpeech, CategoryShout, CategoryEmote,

@@ -36,7 +36,7 @@ func sendRoomIdleLine(room *rooms.Room, msg string, singleLine bool) {
 		Exclude:   already,
 		Key:       ambient.LineKey(`room`, room.RoomId, msg),
 	})
-	sendVisualRoomText(room, messaging.CategoryRoomDescription, msg, plan.Exclude...)
+	sendVisualRoomText(room, messaging.CategoryRoomIdle, msg, plan.Exclude...)
 	if singleLine {
 		ambient.MarkSingleLineHeard(room.RoomId, plan.Delivered)
 	}
