@@ -509,7 +509,7 @@ func (u *UserRecord) sendTextAt(cat messaging.Category, txt string, priority int
 		Category:  cat,
 		Text:      txt,
 		Channel:   messaging.ChannelAudio,
-		LineWidth: u.GetLineWidth(),
+		LineWidth: u.WrapWidth(),
 	})
 	if rendered == "" {
 		return

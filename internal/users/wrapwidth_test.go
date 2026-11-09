@@ -1,11 +1,37 @@
 package users
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/connections"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 )
+
+// The pipeline reads WrapWidth: a narrow web reader's narration folds there.
+func TestSendText_WrapsAtWrapWidth(t *testing.T) {
+	const webConn uint64 = 97103
+	connections.RegisterTestWebsocketConnection(webConn)
+	t.Cleanup(func() { connections.UnregisterTestConnection(webConn) })
+	cs := connections.GetClientSettings(webConn)
+	cs.Display.ScreenWidth = 40
+	connections.OverwriteClientSettings(webConn, cs)
+	u := NewTestUser(9712, "reader", "Reader", webConn)
+	events.DrainQueuedMessagesForTest(u.UserId)
+
+	u.SendText(messaging.CategoryTip, "Healing up slow? Some rooms are sanctuaries, temples and certain camps, and they regenerate your health much faster than ordinary rooms do.")
+
+	msgs := events.DrainQueuedMessagesForTest(u.UserId)
+	require.Len(t, msgs, 1)
+	lines := strings.Split(strings.TrimRight(msgs[0], "\n"), "\n")
+	require.Greater(t, len(lines), 2)
+	for _, line := range lines {
+		require.LessOrEqual(t, util.VisibleWidth(line), 40, "%q", line)
+	}
+}
 
 func TestWrapWidth(t *testing.T) {
 	const webConn, telnetConn uint64 = 97101, 97102
