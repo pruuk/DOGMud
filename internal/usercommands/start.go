@@ -107,7 +107,7 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				`wrong, type <ansi fg="command">bug</ansi> and tell us what happened. If you `+
 				`think of something that would make the world better, type `+
 				`<ansi fg="command">suggest</ansi>. We read every one.`,
-			user.GetLineWidth())+term.CRLFStr)
+			user.WrapWidth())+term.CRLFStr)
 	}
 
 	switch onboardingRoute(question.Response) {

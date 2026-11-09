@@ -31,7 +31,7 @@ func Motd(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		text = m
 	}
 
-	user.SendText(messaging.CategoryBroadcast, motdBox(text, user.GetLineWidth()))
+	user.SendText(messaging.CategoryBroadcast, motdBox(text, user.WrapWidth()))
 
 	return true, nil
 }

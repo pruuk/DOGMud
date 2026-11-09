@@ -192,7 +192,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		// reader (2026-10-17 newbie-duo playtest: Tarn's quest 41 line read
 		// 83 wide when nothing wrapped it).
 		messaging.SendTrio(messaging.Trio{
-			Actor:    messaging.Say(messaging.CategorySystem, messaging.WrapAnsi(rewardLines.Actor, questUser.GetLineWidth())),
+			Actor:    messaging.Say(messaging.CategorySystem, messaging.WrapAnsi(rewardLines.Actor, questUser.WrapWidth())),
 			Actee:    messaging.NoLine,
 			Observer: messaging.Say(messaging.CategoryEmote, rewardLines.Observer),
 		}, messaging.Audience{

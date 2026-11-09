@@ -29,7 +29,7 @@ func Inbox(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	border := `<ansi fg="mail-border">` + strings.Repeat(`_`, user.GetLineWidth()) + `</ansi>`
+	border := `<ansi fg="mail-border">` + strings.Repeat(`_`, user.WrapWidth()) + `</ansi>`
 	user.SendText(messaging.CategoryScreen, border)
 
 	for idx, msg := range user.Inbox {

@@ -28,7 +28,7 @@ func RenderRoster(details rooms.RoomTemplateDetails, userId int) string {
 	if text == "" {
 		return ""
 	}
-	return messaging.WrapAnsi(text, users.GetByUserId(userId).GetLineWidth())
+	return messaging.WrapAnsi(text, users.GetByUserId(userId).WrapWidth())
 }
 
 // RenderGround renders the "On the Ground: ..." list (the
@@ -46,5 +46,5 @@ func RenderGround(groundStuff []string, isDark bool, isNight bool, userId int) s
 	if text == "" {
 		return ""
 	}
-	return messaging.WrapAnsi(text, users.GetByUserId(userId).GetLineWidth())
+	return messaging.WrapAnsi(text, users.GetByUserId(userId).WrapWidth())
 }

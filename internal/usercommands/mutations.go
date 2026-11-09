@@ -28,7 +28,7 @@ func Mutations(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	// CategorySystem is never wrapped by the pipeline, so each prose line
 	// wraps itself to the reader's width, continuation lines keeping the
 	// line's indent (util.SplitStringNL's prefix, as admin.server.go uses).
-	width := user.GetLineWidth()
+	width := user.WrapWidth()
 	indented := func(indent, text string) string {
 		return indent + util.SplitStringNL(text, width-len(indent), indent)
 	}

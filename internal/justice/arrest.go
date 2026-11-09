@@ -413,7 +413,7 @@ func ExecuteArrest(player *characters.Character, userId int, faction string, isM
 			fmt.Sprintf("A guard seizes you and hauls you to the holding cell. "+
 				"You have been placed under arrest by the %s. "+
 				`Type <ansi fg="command">fine</ansi> to see what you owe.`, factionName),
-			u.GetLineWidth()))
+			u.WrapWidth()))
 		if spec := conditions.GetConditionSpec(jailedConditionId); spec != nil {
 			line := spec.AuthoredStartLine(
 				u.Character.GetCharacterName(true),

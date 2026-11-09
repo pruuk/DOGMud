@@ -148,7 +148,7 @@ func SendQuestLogLine(user *users.UserRecord, ok bool, line string) {
 	if !ok {
 		cat = messaging.CategoryRefusal
 	}
-	user.SendText(cat, messaging.WrapAnsi(line, user.GetLineWidth()))
+	user.SendText(cat, messaging.WrapAnsi(line, user.WrapWidth()))
 }
 
 func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
