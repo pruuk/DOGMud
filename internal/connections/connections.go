@@ -374,6 +374,25 @@ func RegisterTestConnection(id ConnectionId) {
 	}
 }
 
+// RegisterTestWebsocketConnection registers a mock websocket connection for
+// testing purposes: IsWebSocket reports true because wsConn is set. The
+// websocket underneath is an empty value that was never dialled, so a test
+// must not write to it or close it; remove it with UnregisterTestConnection.
+func RegisterTestWebsocketConnection(id ConnectionId) {
+	lock.Lock()
+	defer lock.Unlock()
+
+	if id == 0 {
+		id = 1
+	}
+
+	netConnections[id] = &ConnectionDetails{
+		connectionId:   id,
+		wsConn:         &websocket.Conn{},
+		clientSettings: ClientSettings{},
+	}
+}
+
 // UnregisterTestConnection removes a test connection (for cleanup)
 func UnregisterTestConnection(id ConnectionId) {
 	lock.Lock()
