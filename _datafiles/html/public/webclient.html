@@ -138,5 +138,6 @@
         event.returnValue = 'Leave/Disconnect from the MUD?';
     });
 </script>
-<iframe id="webclient-frame" border="0" src="/webclient-pure.html" allow="fullscreen" allowfullscreen></iframe>
+<!-- title: the name screen readers announce for the game frame (#730). -->
+<iframe id="webclient-frame" title="{{ .CONFIG.Server.MudName }} game" border="0" src="/webclient-pure.html" allow="fullscreen" allowfullscreen></iframe>
 {{template "footer" .}}

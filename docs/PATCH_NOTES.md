@@ -1,5 +1,10 @@
 # DOGMud Patch Notes
 
+## 2026-11-07: Clearer for screen readers
+
+- Screen readers now know the web client is in English and announce the
+  game window by name.
+
 ## 2026-11-07: Automation waits for you to log in
 
 - If your connection drops and the web client goes back to the login prompt,
