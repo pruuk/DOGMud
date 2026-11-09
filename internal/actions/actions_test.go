@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
@@ -115,34 +116,38 @@ func TestEmoteAliasesPopulated(t *testing.T) {
 	assert.NotContains(t, EmoteAliases, "rest")
 }
 
-// TestFormatSayTextLineWrapping verifies that very long say messages are
-// wrapped at 80 characters per line (via util.SplitStringNL).
-func TestFormatSayTextLineWrapping(t *testing.T) {
-	longText := strings.Repeat("word ", 30) // Creates a very long message
-	formatted := FormatSayText("Speaker", longText, "username", "saytext")
-	// Check that the output contains newlines (line wrapping)
-	lines := strings.Split(formatted, "\n")
-	// With proper wrapping, we should have multiple lines
-	assert.Greater(t, len(lines), 1, "long say text should be wrapped across multiple lines")
-	// Each line should not exceed 80 characters (accounting for ANSI codes)
+// assertWrapsOnlyInThePipeline checks a formatted room line carries no line
+// break of its own, and that the pipeline folds it to the reader's width.
+func assertWrapsOnlyInThePipeline(t *testing.T, cat messaging.Category, formatted string) {
+	t.Helper()
+	assert.NotContains(t, formatted, "\n", "the formatter must leave the wrap to the pipeline")
+	rendered := messaging.RenderForRecipient(messaging.RenderInput{
+		Category:      cat,
+		Text:          formatted,
+		Channel:       messaging.ChannelVisual,
+		SightDecision: messaging.SightFull,
+		LineWidth:     80,
+	})
+	lines := strings.Split(rendered, "\n")
+	assert.Greater(t, len(lines), 1, "a long line should fold across several lines")
 	for _, line := range lines {
-		// Remove ANSI codes to check actual visual length
-		cleanLine := stripANSICodes(line)
-		assert.LessOrEqual(t, len(cleanLine), 80, "wrapped line should not exceed 80 visible characters")
+		assert.LessOrEqual(t, len(stripANSICodes(line)), 80, "wrapped line should not exceed 80 visible characters")
 	}
 }
 
-// TestFormatEmoteTextLineWrapping verifies that very long emote messages are
-// wrapped at 80 characters per line.
+// TestFormatSayTextLineWrapping: a say line is wrapped once, per reader, by
+// the pipeline, so the formatter itself must not wrap it.
+func TestFormatSayTextLineWrapping(t *testing.T) {
+	longText := strings.Repeat("word ", 30) // Creates a very long message
+	assertWrapsOnlyInThePipeline(t, messaging.CategorySpeech,
+		FormatSayText("Speaker", longText, "username", "saytext"))
+}
+
+// TestFormatEmoteTextLineWrapping is the same rule for an emote.
 func TestFormatEmoteTextLineWrapping(t *testing.T) {
 	longEmote := strings.Repeat("emote ", 25) // Creates a very long emote
-	formatted := FormatEmoteText("Actor", longEmote, "mobname")
-	lines := strings.Split(formatted, "\n")
-	assert.Greater(t, len(lines), 1, "long emote text should be wrapped across multiple lines")
-	for _, line := range lines {
-		cleanLine := stripANSICodes(line)
-		assert.LessOrEqual(t, len(cleanLine), 80, "wrapped line should not exceed 80 visible characters")
-	}
+	assertWrapsOnlyInThePipeline(t, messaging.CategoryEmote,
+		FormatEmoteText("Actor", longEmote, "mobname"))
 }
 
 // stripANSICodes removes ANSI color codes from a string to measure visible length.

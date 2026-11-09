@@ -437,8 +437,8 @@ func playerSay(user *users.UserRecord, room *rooms.Room, text string) {
 	if !user.Muted {
 		actions.Say(&actions.UserActor{User: user, Room: room}, text)
 	}
-	user.SendText(messaging.CategorySpeech, util.SplitStringNL(
-		fmt.Sprintf(`You say, "<ansi fg="saytext">%s</ansi>"`, text), 80))
+	user.SendText(messaging.CategorySpeech,
+		fmt.Sprintf(`You say, "<ansi fg="saytext">%s</ansi>"`, text))
 }
 
 func npcSay(mob *mobs.Mob, room *rooms.Room, text string) {

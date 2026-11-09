@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 var emoteWrapTags = regexp.MustCompile(`<[^>]*>`)
@@ -71,12 +72,11 @@ func emoteWrapProblems(plain string, width int) []string {
 }
 
 // #430: a long mob emote came out as three lines with one word stranded on
-// the middle one ("...buys what" / "others" / "will not"). FormatEmoteText
-// hard-wraps at 80 with CRLF for the player emote category, which the
-// pipeline leaves alone; a mob emote goes out as CategoryMobEmote, which the
-// pipeline wraps again, and the second wrap counted the stray carriage
-// return as a column. FormatMobEmoteText leaves the wrap to the pipeline, so
-// the line is wrapped once at whatever width the reader has.
+// the middle one ("...buys what" / "others" / "will not"). The formatter
+// hard-wrapped at 80 with CRLF and the pipeline wrapped the line again, and
+// the second wrap counted the stray carriage return as a column. The
+// formatters now leave the wrap to the pipeline, so the line is wrapped once
+// at whatever width the reader has.
 func TestMobEmote_WrapsOnceAtTheReadersWidth(t *testing.T) {
 	for _, width := range []int{80, 60} {
 		for _, emote := range longMobEmotes {
@@ -88,21 +88,24 @@ func TestMobEmote_WrapsOnceAtTheReadersWidth(t *testing.T) {
 	}
 }
 
-// The old path, FormatEmoteText's own 80-column wrap followed by the
+// The old path, an 80-column CRLF wrap in the formatter followed by the
 // pipeline's, fails the same check at both widths: at 80 it strands a word
 // on a middle line, at 60 it makes three lines where one wrap makes two.
-// This is what proves the check above can fail; if FormatMobEmoteText ever
-// wraps again, the test above sees this output.
+// This is what proves the check above can fail; if a formatter ever wraps
+// again, the test above sees this output.
 func TestMobEmote_DoubleWrapPathIsCaught(t *testing.T) {
+	doubleWrapped := func(emote string) string {
+		return util.SplitStringNL(FormatMobEmoteText("Sly Tam", emote), 80)
+	}
 	for _, width := range []int{80, 60} {
 		for _, emote := range longMobEmotes {
-			plain := renderMobEmoteLine(FormatEmoteText("Sly Tam", emote, "mobname"), width)
+			plain := renderMobEmoteLine(doubleWrapped(emote), width)
 			if len(emoteWrapProblems(plain, width)) == 0 {
 				t.Errorf("width %d: double-wrapped emote passed the check: %q", width, plain)
 			}
 		}
 	}
-	stranded := renderMobEmoteLine(FormatEmoteText("Sly Tam", longMobEmotes[0], "mobname"), 80)
+	stranded := renderMobEmoteLine(doubleWrapped(longMobEmotes[0]), 80)
 	if lines := strings.Split(strings.ReplaceAll(stranded, "\r", ""), "\n"); len(lines) != 3 || lines[1] != "others" {
 		t.Errorf("double wrap at 80 should strand %q on the middle line, got %q", "others", stranded)
 	}

@@ -43,7 +43,7 @@ func Say(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	result := actions.Say(&actions.UserActor{User: user, Room: room}, rest)
 
 	selfMsg := fmt.Sprintf(`You say, "<ansi fg="saytext">%s</ansi>"`, result.Text)
-	user.SendText(messaging.CategorySpeech, util.SplitStringNL(selfMsg, 80))
+	user.SendText(messaging.CategorySpeech, selfMsg)
 
 	// Quest engine: command notification, sent only once something was
 	// actually said. The tutorial's "type say hello" step listens here rather

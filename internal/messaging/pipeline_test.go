@@ -108,6 +108,12 @@ var wrapAllowlist = map[Category]bool{
 	CategoryTimeOfDay:    true,
 	CategoryLight:        true,
 
+	// Sent to a whole room, so each reader's own width applies (web client
+	// base, plan 1).
+	CategorySpeech: true,
+	CategoryShout:  true,
+	CategoryEmote:  true,
+
 	// Other narration plus tips.
 	CategoryLoot:            true,
 	CategoryEquipment:       true,
@@ -123,9 +129,10 @@ var wrapAllowlist = map[Category]bool{
 // TestShouldWrapMatchesPinnedAllowlist pins shouldWrap's exact
 // membership against wrapAllowlist. A mismatch means one of the two
 // changed without the other; update both deliberately. It also asserts
-// the admitted count is exactly 48 (46 before CategoryCraft, #515, and
-// CategoryCraftSeen, owner ruling C), so the pin itself cannot be edited
-// without updating its own count.
+// the admitted count is exactly 51 (46 before CategoryCraft, #515, and
+// CategoryCraftSeen, owner ruling C; 48 before Speech, Shout and Emote,
+// web client base plan 1), so the pin itself cannot be edited without
+// updating its own count.
 func TestShouldWrapMatchesPinnedAllowlist(t *testing.T) {
 	admitted := 0
 	for c := CategoryDefault; c < categoryMax; c++ {
@@ -138,8 +145,8 @@ func TestShouldWrapMatchesPinnedAllowlist(t *testing.T) {
 			admitted++
 		}
 	}
-	if admitted != 48 {
-		t.Errorf("expected exactly 48 categories admitted to wrap, got %d", admitted)
+	if admitted != 51 {
+		t.Errorf("expected exactly 51 categories admitted to wrap, got %d", admitted)
 	}
 }
 
@@ -153,10 +160,7 @@ func TestMixedAndPreformattedCategoriesNeverWrap(t *testing.T) {
 		CategoryRoomDescription: "renders a side-by-side block, prose left and minimap right",
 		CategorySplash:          "rendered ASCII art",
 		CategorySkillProgress:   "a banner with its own formatting",
-		CategorySpeech:          "already wrapped at a hardcoded 80 by say.go, ignoring LineWidth",
-		CategoryWhisper:         "already wrapped at a hardcoded 80 by whisper.go, ignoring LineWidth",
-		CategoryShout:           "already wrapped at a hardcoded 80 by shout.go, ignoring LineWidth",
-		CategoryEmote:           "already wrapped at a hardcoded 80 by reply.go, ignoring LineWidth",
+		CategoryWhisper:         "goes to one known reader, and each sender wraps it to that reader's WrapWidth",
 		CategoryDefault:         "the fail-safe default: an unclassified category keeps today's behavior",
 		CategoryRefusal:         "refusals rode CategorySystem, which never wraps (M7, #371)",
 		CategoryScreen:          "a laid-out screen (the map, the achievements list) that rode CategorySystem",

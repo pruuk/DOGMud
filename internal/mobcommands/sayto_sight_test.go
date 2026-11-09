@@ -61,9 +61,10 @@ func TestMobSayToOnly_BlindedAddresseeHearsNoSpeakerName(t *testing.T) {
 	require.Empty(t, mobSpeechHeard(1), "sayto-only reaches the addressee alone")
 }
 
-// An addressed line wraps at 80 columns the way a plain NPC say does
-// (actions.FormatSayText): Cleric Hadwen's rite (9100) speaks long lines
-// through sayto, one to each asker, since the 2026-10-17 newbie-duo fix.
+// An addressed line wraps in the pipeline, at each reader's width, the way a
+// plain NPC say does: Cleric Hadwen's rite (9100) speaks long lines through
+// sayto, one to each asker, since the 2026-10-17 newbie-duo fix. These
+// readers have no saved width, so 80.
 func TestMobSayTo_LongLineWrapsAt80(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()

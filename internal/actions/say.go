@@ -8,7 +8,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // SayResult contains the results of a Say action for the wrapper to use.
@@ -66,9 +65,9 @@ func Say(actor Actor, text string) SayResult {
 // FormatSayText formats the say message for room display.
 // nameColor is "username" for players, "mobname" for mobs.
 // textColor is "saytext" for players, "saytext-mob" for mobs.
+// The line is left unwrapped: CategorySpeech wraps per reader in the pipeline.
 func FormatSayText(name string, text string, nameColor string, textColor string) string {
-	msg := fmt.Sprintf(`<ansi fg="%s">%s</ansi> says, "<ansi fg="%s">%s</ansi>"`, nameColor, name, textColor, text)
-	return util.SplitStringNL(msg, 80)
+	return fmt.Sprintf(`<ansi fg="%s">%s</ansi> says, "<ansi fg="%s">%s</ansi>"`, nameColor, name, textColor, text)
 }
 
 // sayEchoText is what a neighbouring room hears of a say.

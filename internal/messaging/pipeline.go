@@ -124,10 +124,10 @@ func RenderForRecipient(in RenderInput) string {
 //   - CategorySplash is rendered ASCII art.
 //   - CategorySkillProgress is a banner with its own formatting, and
 //     skipStages already excludes it for the same reason.
-//   - Speech, Whisper, Shout and Emote are ALREADY wrapped, at a
-//     hardcoded 80 that ignores the reader's LineWidth (say.go,
-//     shout.go, reply.go, whisper.go). Adding them here would wrap the
-//     same text twice at two different widths.
+//   - CategoryWhisper goes to one known reader, so each sender wraps it
+//     itself to that reader's WrapWidth (usercommands/whisper.go, reply.go,
+//     mobcommands/whisper.go). Adding it here would wrap the same text
+//     twice.
 //   - Error and Warning are Group A system output, which M7 owns.
 //   - GrappleHigh, Login, OOC and Toxin have zero production senders, so
 //     any policy here would be unreachable.
@@ -155,6 +155,9 @@ func shouldWrap(cat Category) bool {
 		CategoryNPCDialogue, CategoryDialogueHint, CategoryMobIdle,
 		CategoryMobEmote, CategoryRoomEntry, CategoryRoomExit,
 		CategoryWeather, CategoryTimeOfDay, CategoryLight,
+		// Sent to a whole room, so each reader's own width applies. No sender
+		// may wrap these first.
+		CategorySpeech, CategoryShout, CategoryEmote,
 		// Other narration plus tips.
 		CategoryLoot, CategoryEquipment, CategoryConditionApply,
 		CategoryConditionExpire, CategoryMutation, CategoryTip,

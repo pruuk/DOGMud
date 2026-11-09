@@ -11,7 +11,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // ShoutResult reports a shout to its wrapper.
@@ -48,9 +47,8 @@ func Shout(actor Actor, text string) ShoutResult {
 	if actor.IsPlayer() {
 		nameColor, textColor = "username", "yellow"
 	}
-	line := fmt.Sprintf(`<ansi fg="%s">%s</ansi> shouts, "<ansi fg="%s">%s</ansi>"`,
-		nameColor, actor.GetName(), textColor, text)
-	sendSpoken(actor, room, messaging.CategoryShout, util.SplitStringNL(line, 80), isSneaking)
+	sendSpoken(actor, room, messaging.CategoryShout,
+		formatShoutText(actor.GetName(), text, nameColor, textColor), isSneaking)
 
 	// The web client's Chat window shows shouts too (owner 2026-11-07); gmcp
 	// builds each listener's line from this.
@@ -80,6 +78,13 @@ func Shout(actor Actor, text string) ShoutResult {
 	wakeSleepers(actor, room)
 
 	return ShoutResult{Text: text}
+}
+
+// formatShoutText is the room line of a shout, left unwrapped:
+// CategoryShout wraps per reader in the pipeline.
+func formatShoutText(name, text, nameColor, textColor string) string {
+	return fmt.Sprintf(`<ansi fg="%s">%s</ansi> shouts, "<ansi fg="%s">%s</ansi>"`,
+		nameColor, name, textColor, text)
 }
 
 // wakeSleepers wakes every sleeper in room but the actor. Chunk 3.3: a shout
