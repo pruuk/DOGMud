@@ -62,7 +62,7 @@ func Shout(actor Actor, text string) ShoutResult {
 	})
 
 	// Next door hears the words and no name, from either speaker. A player's
-	// line stays player chatter (deafen-filtered, byte-identical to before);
+	// line stays player chatter (deafen-filtered, wrapped per reader by the listener);
 	// a mob's is authored and unfiltered. Standard, temporary and
 	// mutator-added exits, each neighbour once.
 	room.ForEachAdjacentRoom(func(otherRoom *rooms.Room, sourceExit string) {

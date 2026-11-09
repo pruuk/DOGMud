@@ -4,6 +4,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -93,7 +94,7 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 					}
 				}
 
-				textOut := templates.AnsiParse(message.Text)
+				textOut := templates.AnsiParse(roomMessageTextFor(message, user))
 				if user.ScreenReader {
 					textOut = util.StripCharsForScreenReaders(textOut)
 				}
@@ -108,4 +109,15 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 	}
 	return events.Continue
 
+}
+
+// roomMessageTextFor is what user reads of a RoomId-keyed message. Player
+// chatter on this branch (a shout from next door, the AI companion's `ask`
+// line) arrives unrendered, so it wraps here, once per reader. Every other
+// RoomId message keeps the lines it was sent with.
+func roomMessageTextFor(message events.Message, user *users.UserRecord) string {
+	if !message.IsCommunication {
+		return message.Text
+	}
+	return messaging.WrapAnsi(message.Text, user.WrapWidth())
 }
