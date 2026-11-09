@@ -422,6 +422,18 @@ func (g *GMCPModule) HandleIAC(connectionId uint64, iacCmd []byte) bool {
 		case `Zone.Map.Resync`:
 			events.AddToQueue(GMCPZoneResync{ConnectionId: connectionId})
 
+		// ---- web client text width (web client base, plan 1) ----
+		// The client's column count, after it settles. The width is read off
+		// the connection by the wrap sweep and the payload is untrusted, so
+		// defer to MainWorker like the ops above; see gmcp.ClientDisplay.go.
+		// Copy the payload: it aliases the IAC read buffer, which is reused
+		// after HandleIAC returns.
+		case `Client.Display`:
+			events.AddToQueue(GMCPClientDisplay{
+				ConnectionId: connectionId,
+				Payload:      append([]byte(nil), payload...),
+			})
+
 		// ---- admin web room-builder (admin web-building 1b) ----
 		// Build.* mutates rooms and rebuilds mappers, which write the shared
 		// room manager. HandleIAC runs on the per-connection goroutine, so doing
