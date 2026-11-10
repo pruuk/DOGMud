@@ -26,9 +26,54 @@ type questRecord struct {
 	Description string
 	Progress    string // "Roots gathered: 2 of 5" for a count or explore step, else ""
 	Guide       string // the destination line (questengine.GuideLine), else ""
-	Completion  string
-	BarFull     string
-	BarEmpty    string
+	// Completion, BarFull, BarEmpty and done are set together, only by
+	// withProgress, so the percentage and the bar at every width come from
+	// one number (TestQuestProgressHasOneSource).
+	Completion string
+	BarFull    string
+	BarEmpty   string
+	// done is the completion, 0 to 1, so a narrow form can draw the same bar
+	// shorter (BarFullAt).
+	done float64
+}
+
+// questBarCells is the bar's width in the 80- and 42-column quest lists.
+const questBarCells = 25
+
+// withProgress is r showing completion done: its percentage and its bar.
+func (r questRecord) withProgress(done float64) questRecord {
+	r.done = done
+	r.Completion = fmt.Sprintf(`%d%%`, int(math.Floor(done*100)))
+	r.BarFull, r.BarEmpty = util.ProgressBar(done, questBarCells)
+	return r
+}
+
+// questsScreen is the data of the character/quests template.
+type questsScreen struct {
+	QuestsTotal int
+	QuestsFound int
+	Records     []questRecord
+}
+
+// BarFullAt and BarEmptyAt are the row's progress bar drawn cells wide, for
+// a narrow form (the 30-column quest list draws 20 cells). A row with no bar,
+// a quest set aside, has none at any width.
+func (r questRecord) BarFullAt(cells int) string {
+	full, _ := r.barAt(cells)
+	return full
+}
+
+// BarEmptyAt is the empty part of the bar BarFullAt draws.
+func (r questRecord) BarEmptyAt(cells int) string {
+	_, empty := r.barAt(cells)
+	return empty
+}
+
+func (r questRecord) barAt(cells int) (string, string) {
+	if r.BarFull == `` && r.BarEmpty == `` {
+		return ``, ``
+	}
+	return util.ProgressBar(r.done, cells)
 }
 
 // The finished-repeatable status lines in "quests all" (#375 P6).
@@ -65,9 +110,8 @@ func finishedRepeatRows(c *characters.Character, progress map[int]string, showHi
 		case c.QuestCooldownActive(q.QuestId):
 			line = repeatWaitLine
 		}
-		full, empty := util.ProgressBar(1, 25)
 		rows = append(rows, questRecord{Id: q.QuestId, Name: q.Name, Repeatable: true,
-			Description: line, Completion: "100%", BarFull: full, BarEmpty: empty})
+			Description: line}.withProgress(1))
 	}
 	return rows
 }
@@ -96,7 +140,6 @@ func activeQuestRecord(user *users.UserRecord, questInfo *quests.Quest, questSte
 	}
 
 	completion := float64(completedSteps) / float64(totalSteps)
-	barFull, barEmpty := util.ProgressBar(completion, 25)
 
 	return questRecord{
 		Id:          questInfo.QuestId,
@@ -106,10 +149,7 @@ func activeQuestRecord(user *users.UserRecord, questInfo *quests.Quest, questSte
 		Description: description,
 		Progress:    progress,
 		Guide:       guide,
-		Completion:  fmt.Sprintf(`%d%%`, int(math.Floor(completion*100))),
-		BarFull:     barFull,
-		BarEmpty:    barEmpty,
-	}, completion
+	}.withProgress(completion), completion
 }
 
 // questsSubcommand splits `quests abandon <name>` / `quests focus <name>`;
@@ -178,16 +218,10 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 
-	type QuestInfo struct {
-		QuestsTotal int
-		QuestsFound int
-		Records     []questRecord
-	}
-
 	showHidden := questsShowHidden(rest, user)
 	showComplete := rest == `all` || rest == `all+`
 
-	qInfo := QuestInfo{}
+	qInfo := questsScreen{}
 	allQuests := []questRecord{}
 	var completion float64
 

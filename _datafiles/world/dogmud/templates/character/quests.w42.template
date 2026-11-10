@@ -1,0 +1,14 @@
+{{- /* The quest list at 42 columns: per quest its name, its 25-cell bar
+and percentage on a line of their own, then the step, progress and guide
+lines, all wrapped 3 in. Drawn to 42 whatever the reader's width. */ -}}
+{{ $w := 42 }}{{ $count := printf "Quests ( %d out of %d shown )" .QuestsFound .QuestsTotal }}── <ansi fg="black-bold">.:</ansi><ansi fg="20">{{ $count }}</ansi> {{ repeat "─" (sub $w 6 (len $count)) }}
+{{ $nlLen := sub (len .Records) 1 }}{{ range $idx, $qInfo := .Records }}   <ansi fg="questname">{{ wraptext (print $qInfo.Name (or (and $qInfo.Repeatable " (repeatable)") "") (or (and $qInfo.Following " (following)") "")) (sub $w 3) "   " }}</ansi>
+{{ if or $qInfo.BarFull $qInfo.BarEmpty }}   <ansi fg="green">{{ $qInfo.BarFull }}</ansi><ansi fg="black-bold">{{ $qInfo.BarEmpty }}</ansi> <ansi fg="cyan-bold">{{ $qInfo.Completion }}</ansi>
+{{ end }}   <ansi fg="white-bold">{{ wraptext $qInfo.Description (sub $w 3) "   " }}</ansi>{{ if $qInfo.Progress }}
+   <ansi fg="white">{{ wraptext $qInfo.Progress (sub $w 3) "   " }}</ansi>{{ end }}{{ if $qInfo.Guide }}
+   <ansi fg="240">{{ wraptext $qInfo.Guide (sub $w 3) "   " }}</ansi>{{ end }}
+{{ if lt $idx $nlLen }}
+{{ end }}{{ end }}{{ repeat "─" $w }}
+{{ if ne .QuestsFound .QuestsTotal }} <ansi fg="240">To see all quests (including completed),
+ use <ansi fg="command">quests all</ansi>.</ansi>
+{{ end }}

@@ -1,0 +1,17 @@
+{{- /* The title screen at 30 columns: labels 1 in with one space before
+the value; what does not fit beside a label goes under it, 2 past it. The
+stat bars move under their names and keep their 20 cells. */ -}}
+{{- define "tier" }} <ansi fg="yellow">{{ .label }}</ansi> {{ .value }}{{ if le (add 3 (len .label) (len .value) (len .paren)) .w }} {{ else }}
+   {{ end }}<ansi fg="black-bold">{{ .paren }}</ansi>{{ end -}}
+{{ $w := 30 }}── <ansi fg="black-bold">.:</ansi><ansi fg="20">Title</ansi> {{ repeat "─" (sub $w 11) }}
+{{ if le (add 16 (len .FullTitle)) $w }} <ansi fg="yellow-bold">Current Title:</ansi> <ansi fg="white-bold">{{ .FullTitle }}</ansi>{{ else }} <ansi fg="yellow-bold">Current Title:</ansi>
+   <ansi fg="white-bold">{{ wraptext .FullTitle (sub $w 3) "   " }}</ansi>{{ end }}
+
+{{ template "tier" (map "w" $w "label" "Mutation Tier:" "value" .MutTier "paren" (printf "(%s presence)" .MutLoad)) }}
+{{ template "tier" (map "w" $w "label" "Skill Tier:" "value" .SkillTier "paren" (printf "(%s)" .SkillPct)) }}
+ <ansi fg="yellow">Archetype:</ansi> {{ .Archetype }}
+
+ <ansi fg="yellow">Stat Profile:</ansi>
+{{ range $idx, $stat := .TopStats }}  {{ $stat.Name }}
+    {{ $stat.Bar }}
+{{ end }}{{ repeat "─" $w }}

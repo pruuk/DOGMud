@@ -1,6 +1,9 @@
 package guards
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -60,13 +63,15 @@ var templateClassNames = map[string][]string{
 	// Wrapped to the reader by the caller (actions/roster.go) or the
 	// pipeline (CategoryLogout).
 	"wrapped": {"descriptions/who", "descriptions/ontheground", "player-despawn"},
+	// Fit at every width, held by internal/usercommands' own test
+	// (TestNarrowTemplateScreensFitEveryWidth): the data its commands pass
+	// is of types private to that package.
+	"fits in usercommands": {"character/conditions", "character/quests", "character/title"},
 	// Narrow forms come in plan 3b.
-	"plan 3b": {"character/conditions", "character/cooldowns",
-		"character/description", "character/description-corpse",
-		"character/inventory", "character/inventory-look", "character/pet",
-		"character/quests", "character/skills", "character/skillup",
-		"character/statup", "character/status", "character/storage",
-		"character/title", "descriptions/biome", "descriptions/identify",
+	"plan 3b": {"character/description", "character/description-corpse",
+		"character/inventory-look", "character/pet",
+		"character/skillup", "character/statup",
+		"descriptions/biome", "descriptions/identify",
 		"descriptions/insidecontainer", "descriptions/track",
 		"descriptions/exits", "descriptions/fixtures", "descriptions/room",
 		"descriptions/room-title", "descriptions/rune", "descriptions/sign",
@@ -89,10 +94,15 @@ var templateClassPrefixes = map[string]string{
 }
 
 // templateFixture is data that makes a template as wide as it gets in play.
-// wrapped says the template goes out on a category the pipeline wraps to the
-// reader, so the guard wraps it the same way before measuring.
+// setup, when set, seeds the registries the data reads, restored when the
+// test ends. more are further data the template is rendered with too, such
+// as a second mode of the same screen. wrapped says the template goes out on
+// a category the pipeline wraps to the reader, so the guard wraps it the same
+// way before measuring.
 type templateFixture struct {
+	setup   func(t *testing.T)
 	data    func() any
+	more    []func() any
 	wrapped bool
 }
 
@@ -115,6 +125,12 @@ var templateFits = map[string]templateFixture{
 			})
 	}},
 	"character/questup": {data: func() any { return "You have found a new quest: The Long Road Home." }, wrapped: true},
+	// The character screens (character_screens_test.go).
+	"character/status":    {setup: seedCharacterScreenRegistries, data: statusScreenFixture, more: []func() any{statusScreenLongName}},
+	"character/inventory": {data: inventoryScreenFixture(false), more: []func() any{inventoryScreenFixture(true)}},
+	"character/skills":    {data: skillsScreenFixture},
+	"character/cooldowns": {data: cooldownsScreenFixture},
+	"character/storage":   {data: storageScreenFixture},
 }
 
 // templateClasses names every class that holds name.
@@ -214,6 +230,127 @@ func TestTemplateFormsAreNamedForAKnownWidth(t *testing.T) {
 	}
 }
 
+// Every narrow form closes each colour tag it opens, so no colour runs on
+// into the lines after it. A form is checked as written, tags in template
+// strings included, so a tag opened in one action and closed in another
+// still balances.
+func TestTemplateFormsBalanceTheirColourTags(t *testing.T) {
+	opens, closes := regexp.MustCompile(`<ansi[\s>]`), regexp.MustCompile(`</ansi>`)
+	checked := 0
+	for _, root := range templateFolders(t) {
+		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() || !templateFormFile.MatchString(filepath.ToSlash(path)) {
+				return err
+			}
+			raw, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			checked++
+			o, c := len(opens.FindAllIndex(raw, -1)), len(closes.FindAllIndex(raw, -1))
+			if o != c {
+				t.Errorf("%s opens %d <ansi> tags and closes %d", path, o, c)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if checked < 20 {
+		t.Fatalf("checked only %d form files; the walk is not reaching them", checked)
+	}
+}
+
+// The "fits in usercommands" class is held, not just named: each template in
+// it has a 42 and a 30 form, and internal/usercommands' narrow_forms_test.go
+// lists it in narrowTemplateScreens, which TestNarrowTemplateScreensFitEveryWidth
+// renders at every width in narrowWidths, which must hold 30 and 42. The second part is read from that file's source,
+// since a test in another package cannot be called from here.
+func TestFitsInUsercommandsClassIsHeld(t *testing.T) {
+	_, forms := templateBases(t)
+	held := templateClassNames["fits in usercommands"]
+	if len(held) == 0 {
+		t.Fatal(`the "fits in usercommands" class is empty; the check proves nothing`)
+	}
+	for _, name := range held {
+		have := map[int]bool{}
+		for _, w := range forms[name] {
+			have[w] = true
+		}
+		for _, w := range []int{42, 30} {
+			if !have[w] {
+				t.Errorf("%s is in \"fits in usercommands\" but has no .w%d.template", name, w)
+			}
+		}
+	}
+
+	path := filepath.Join(repoRoot(t), "internal", "usercommands", "narrow_forms_test.go")
+	f, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	listed := map[string]bool{}
+	widths := map[string]bool{}
+	renders, atWidths := false, false
+	ast.Inspect(f, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.ValueSpec:
+			if len(x.Names) == 1 && x.Names[0].Name == "narrowWidths" && len(x.Values) == 1 {
+				if lit, ok := x.Values[0].(*ast.CompositeLit); ok {
+					for _, el := range lit.Elts {
+						if b, ok := el.(*ast.BasicLit); ok {
+							widths[b.Value] = true
+						}
+					}
+				}
+			}
+			if len(x.Names) == 1 && x.Names[0].Name == "narrowTemplateScreens" && len(x.Values) == 1 {
+				if lit, ok := x.Values[0].(*ast.CompositeLit); ok {
+					for _, el := range lit.Elts {
+						if kv, ok := el.(*ast.KeyValueExpr); ok {
+							if key, ok := kv.Key.(*ast.BasicLit); ok {
+								listed[strings.Trim(key.Value, "`\"")] = true
+							}
+						}
+					}
+				}
+			}
+		case *ast.FuncDecl:
+			if x.Name.Name == "TestNarrowTemplateScreensFitEveryWidth" {
+				ast.Inspect(x.Body, func(m ast.Node) bool {
+					if r, ok := m.(*ast.RangeStmt); ok {
+						if id, ok := r.X.(*ast.Ident); ok && id.Name == "narrowTemplateScreens" {
+							renders = true
+						}
+						if id, ok := r.X.(*ast.Ident); ok && id.Name == "narrowWidths" {
+							atWidths = true
+						}
+					}
+					return true
+				})
+			}
+		}
+		return true
+	})
+	if !renders {
+		t.Errorf("%s: TestNarrowTemplateScreensFitEveryWidth no longer ranges over narrowTemplateScreens", path)
+	}
+	if !atWidths {
+		t.Errorf("%s: TestNarrowTemplateScreensFitEveryWidth no longer ranges over narrowWidths", path)
+	}
+	for _, w := range []string{"30", "42"} {
+		if !widths[w] {
+			t.Errorf("%s: narrowWidths does not hold %s, so the fit test never renders the forms there", path, w)
+		}
+	}
+	for _, name := range held {
+		if !listed[name] {
+			t.Errorf("%s is in \"fits in usercommands\" but %s's narrowTemplateScreens does not render it", name, path)
+		}
+	}
+}
+
 // templateRenderSetup renders the live world's templates with its English
 // labels, as the server does.
 func templateRenderSetup(t *testing.T) {
@@ -240,24 +377,31 @@ func TestFittingTemplatesFitAtEveryWidth(t *testing.T) {
 	}
 	sort.Strings(names)
 	for _, name := range names {
-		for _, width := range templateWidths {
-			fixture := templateFits[name]
-			out, err := templates.ProcessAtWidth(name, fixture.data(), width)
-			if err != nil {
-				t.Errorf("%s at %d: %v", name, width, err)
-				continue
+		fixture := templateFits[name]
+		t.Run(name, func(t *testing.T) {
+			if fixture.setup != nil {
+				fixture.setup(t)
 			}
-			if fixture.wrapped {
-				out = messaging.WrapAnsi(out, width)
+			for i, data := range append([]func() any{fixture.data}, fixture.more...) {
+				for _, width := range templateWidths {
+					out, err := templates.ProcessAtWidth(name, data(), width)
+					if err != nil {
+						t.Errorf("%s (data %d) at %d: %v", name, i, width, err)
+						continue
+					}
+					if fixture.wrapped {
+						out = messaging.WrapAnsi(out, width)
+					}
+					if strings.TrimSpace(out) == "" {
+						t.Errorf("%s (data %d) at %d rendered nothing; the fixture proves nothing", name, i, width)
+						continue
+					}
+					if got := templates.WidestLine(out); got > width {
+						t.Errorf("%s (data %d) at %d columns has a line %d wide:\n%s", name, i, width, got, out)
+					}
+				}
 			}
-			if strings.TrimSpace(out) == "" {
-				t.Errorf("%s at %d rendered nothing; the fixture proves nothing", name, width)
-				continue
-			}
-			if got := templates.WidestLine(out); got > width {
-				t.Errorf("%s at %d columns has a line %d wide:\n%s", name, width, got, out)
-			}
-		}
+		})
 	}
 }
 

@@ -14,6 +14,24 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// statBar is one stat of the title screen's stat profile.
+type statBar struct {
+	Name  string
+	Value int
+	Bar   string
+}
+
+// titleScreen is the data of the character/title template.
+type titleScreen struct {
+	FullTitle string
+	MutTier   string
+	MutLoad   string
+	SkillTier string
+	SkillPct  string
+	Archetype string
+	TopStats  []statBar
+}
+
 func Title(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	char := user.Character
@@ -71,12 +89,6 @@ func Title(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	// Stat lean - show top 3 stats
-	type statBar struct {
-		Name  string
-		Value int
-		Bar   string
-	}
-
 	statVals := []statBar{
 		{"Strength", char.Stats.Strength.Value, ""},
 		{"Dexterity", char.Stats.Dexterity.Value, ""},
@@ -106,17 +118,7 @@ func Title(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		statVals[i].Bar = fmt.Sprintf(`<ansi fg="green">%s</ansi><ansi fg="black-bold">%s</ansi>`, barFull, barEmpty)
 	}
 
-	type TitleDisplay struct {
-		FullTitle string
-		MutTier   string
-		MutLoad   string
-		SkillTier string
-		SkillPct  string
-		Archetype string
-		TopStats  []statBar
-	}
-
-	data := TitleDisplay{
+	data := titleScreen{
 		FullTitle: fullTitle,
 		MutTier:   mutTierDisplay,
 		MutLoad:   mutLoadDesc,

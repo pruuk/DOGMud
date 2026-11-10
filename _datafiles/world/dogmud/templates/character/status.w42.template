@@ -1,0 +1,85 @@
+{{- /* The status sheet at 42 columns: each section a titled rule and its
+label: value pairs, two to a line with the second at column 22. A section
+with a value too long for its column lists one pair per line. One closing
+rule follows the last section. Prose after a label (the surrender policy,
+the broken limb line) continues 2 past the label (owner, 2026-11-10). The
+form is drawn to 42 whatever the reader's width, so a reader narrower than
+that gets the 30-column form. */ -}}
+{{- define "pair" }} <ansi fg="yellow">{{ padRight 13 .a }}</ansi>{{ .va }}{{ if .b }}{{ repeat " " (sub 8 (visiblewidth .va)) }}<ansi fg="yellow">{{ padRight 13 .b }}</ansi>{{ .vb }}{{ end }}{{ end -}}
+{{- define "one" }} <ansi fg="yellow">{{ padRight 13 .a }}</ansi>{{ .va }}{{ end -}}
+{{ $w := 42 }}{{ $c := .Character }}{{ $title := title .Character }}
+{{ if le (add 9 (len $c.Name) (len $title)) $w }} <ansi fg="black-bold">.:</ansi> <ansi fg="username">{{ $c.Name }}</ansi> the {{ $title }}{{ else }} <ansi fg="black-bold">.:</ansi> <ansi fg="username">{{ $c.Name }}</ansi> the
+    {{ wraptext $title (sub $w 4) "    " }}{{ end }}
+{{- $a1 := statQuality $c.Stats.Strength.Value }}{{ $a2 := statQuality $c.Stats.Dexterity.Value }}
+{{- $a3 := statQuality $c.Stats.Perception.Value }}{{ $a4 := statQuality $c.Stats.Vitality.Value }}
+{{- $a5 := statQuality $c.Stats.Willpower.Value }}{{ $a6 := statQuality $c.Stats.Charisma.Value }}
+{{- $right := sub $w 35 }}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Attributes</ansi> {{ repeat "─" (sub $w 16) }}
+{{ if and (le (len $a1) 6) (le (len $a3) 6) (le (len $a5) 6) (le (len $a2) $right) (le (len $a4) $right) (le (len $a6) $right) -}}
+{{ template "pair" (map "a" "Strength:" "va" $a1 "b" "Dexterity:" "vb" $a2) }}
+{{ template "pair" (map "a" "Perception:" "va" $a3 "b" "Vitality:" "vb" $a4) }}
+{{ template "pair" (map "a" "Willpower:" "va" $a5 "b" "Charisma:" "vb" $a6) }}
+{{ else -}}
+{{ template "one" (map "a" "Strength:" "va" $a1) }}
+{{ template "one" (map "a" "Dexterity:" "va" $a2) }}
+{{ template "one" (map "a" "Perception:" "va" $a3) }}
+{{ template "one" (map "a" "Vitality:" "va" $a4) }}
+{{ template "one" (map "a" "Willpower:" "va" $a5) }}
+{{ template "one" (map "a" "Charisma:" "va" $a6) }}
+{{ end -}}
+{{- $v1 := vitalQuality $c.Health ($c.EffectivePoolMaxNamed "health") }}{{ $v2 := reservationQuality ($c.ReservationBandName "health") }}
+{{- $v3 := vitalQuality $c.Stamina ($c.EffectivePoolMaxNamed "stamina") }}{{ $v4 := reservationQuality ($c.ReservationBandName "stamina") }}
+{{- $v5 := vitalQuality $c.Conviction ($c.EffectivePoolMaxNamed "conviction") }}{{ $v6 := reservationQuality ($c.ReservationBandName "conviction") }}
+{{- $v7 := toxicityQuality $c.ToxicityBandName }}{{ $v8 := encumbranceQuality $c.GetCarriedWeight $c.CarryCapacity -}}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Vitals</ansi> {{ repeat "─" (sub $w 12) }}
+{{ if and (le (visiblewidth $v1) 6) (le (visiblewidth $v3) 6) (le (visiblewidth $v5) 6) (le (visiblewidth $v7) 6) (le (visiblewidth $v2) $right) (le (visiblewidth $v4) $right) (le (visiblewidth $v6) $right) (le (visiblewidth $v8) $right) -}}
+{{ template "pair" (map "a" "Health:" "va" $v1 "b" "HP reserve:" "vb" $v2) }}
+{{ template "pair" (map "a" "Stamina:" "va" $v3 "b" "SP reserve:" "vb" $v4) }}
+{{ template "pair" (map "a" "Conviction:" "va" $v5 "b" "CP reserve:" "vb" $v6) }}
+{{ template "pair" (map "a" "Toxicity:" "va" $v7 "b" "Encumbrance:" "vb" $v8) }}
+{{ else -}}
+{{ template "one" (map "a" "Health:" "va" $v1) }}
+{{ template "one" (map "a" "HP reserve:" "va" $v2) }}
+{{ template "one" (map "a" "Stamina:" "va" $v3) }}
+{{ template "one" (map "a" "SP reserve:" "va" $v4) }}
+{{ template "one" (map "a" "Conviction:" "va" $v5) }}
+{{ template "one" (map "a" "CP reserve:" "va" $v6) }}
+{{ template "one" (map "a" "Toxicity:" "va" $v7) }}
+{{ template "one" (map "a" "Encumbrance:" "va" $v8) }}
+{{ end -}}
+{{- $d1 := defenseQuality (effectiveMitigation $c "physical") }}{{ $d2 := defenseQuality (effectiveMitigation $c "magical") }}
+{{- $d3 := defenseQuality (effectiveMitigation $c "conviction") -}}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Defenses</ansi> {{ repeat "─" (sub $w 14) }}
+{{ if and (le (len $d1) 6) (le (len $d2) $right) -}}
+{{ template "pair" (map "a" "Physical:" "va" $d1 "b" "Magical:" "vb" $d2) }}
+{{ else -}}
+{{ template "one" (map "a" "Physical:" "va" $d1) }}
+{{ template "one" (map "a" "Magical:" "va" $d2) }}
+{{ end -}}
+{{ template "one" (map "a" "Conviction:" "va" $d3) }}
+{{- $i1 := $c.SpeciesDisplay }}{{ $i2 := numberFormat $c.Gold }}{{ $i3 := numberFormat $c.Bank }}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi> {{ repeat "─" (sub $w 10) }}
+{{ if and (le (len $i1) 6) (le (len $i2) $right) -}}
+{{ template "pair" (map "a" "Species:" "va" $i1 "b" "Gold:" "vb" $i2) }}
+{{ else -}}
+{{ template "one" (map "a" "Species:" "va" $i1) }}
+{{ template "one" (map "a" "Gold:" "va" $i2) }}
+{{ end -}}
+{{ template "one" (map "a" "Bank:" "va" $i3) }}
+{{ repeat "─" $w }}
+ <ansi fg="yellow">Submission policy:</ansi> {{ $c.SubmissionPolicy }}
+ {{ wraptext (print "<ansi fg=\"yellow\">Surrender policy:</ansi> " $c.SurrenderPolicy.Describe) (sub $w 3) "   " }}
+{{- if $c.Conditions.HasCondition 83 }}
+ <ansi fg="red-bold">{{ wraptext (printf "Broken limb: %d rounds remaining" ($c.Conditions.TriggersLeft 83)) (sub $w 3) "   " }}</ansi>
+{{- end }}
+{{- if $c.Mutations }}
+ <ansi fg="black-bold">.:</ansi><ansi fg="20">Mutations</ansi><ansi fg="black-bold">:.</ansi>
+{{- range $id, $level := $c.Mutations }}
+{{- if and (le (len $id) 25) (le (add 29 (len (mutationLevel $level))) $w) }}
+   <ansi fg="yellow">{{ printf "%-25s" $id }}</ansi> <ansi fg="magenta">{{ mutationLevel $level }}</ansi>
+{{- else }}
+   <ansi fg="yellow">{{ wraptext $id (sub $w 3) "   " }}</ansi>
+      <ansi fg="magenta">{{ mutationLevel $level }}</ansi>
+{{- end }}
+{{- end }}
+{{- end }}

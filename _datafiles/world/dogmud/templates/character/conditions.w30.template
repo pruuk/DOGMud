@@ -1,0 +1,8 @@
+{{- /* The conditions at 30 columns: per condition its name 1 in, then its
+description wrapped 3 in, then how long it lasts. */ -}}
+{{ $w := 30 }}── <ansi fg="black-bold">.:</ansi><ansi fg="20">Conditions</ansi> {{ repeat "─" (sub $w 16) }}
+{{ if eq (len .) 0 }} None
+{{ else }}{{ range $key, $val := . }} <ansi fg="yellow-bold">{{ wraptext $val.Name (sub $w 1) " " }}</ansi>
+   {{ wraptext $val.Description (sub $w 3) "   " }}{{ if not .Permanent }}
+   {{ durationQuality $val.RoundsLeft }}{{ end }}
+{{ end }}{{ end }}{{ repeat "─" $w }}

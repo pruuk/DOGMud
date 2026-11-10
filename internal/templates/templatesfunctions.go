@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/language"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -133,7 +134,11 @@ var (
 		// (forms.go). Rendered with no reader, it is FullWidth.
 		"screenwidth": func() int { return FullWidth },
 		"min":         func(a, b int) int { return min(a, b) },
-		"ansiparse":   TplAnsiParse,
+		// visiblewidth is the columns s takes on screen, colour tags not
+		// counted, so a narrow form can ask whether a coloured value fits.
+		"visiblewidth": util.VisibleWidth,
+		"wraptext":     wrapText,
+		"ansiparse":    TplAnsiParse,
 		"conditionname": func(conditionId int) string {
 			conditionSpec := conditions.GetConditionSpec(conditionId)
 			if conditionSpec == nil {
@@ -457,6 +462,20 @@ var (
 		},
 	}
 )
+
+// wrapText wraps s to width columns with messaging.WrapAnsi, the game's one
+// wrapper: it breaks only at spaces, so "(following)" never loses its
+// bracket to the line above as splitstring's can, and it reopens a colour
+// tag on each line. Every line after the first starts with prefix.
+//
+//	{{ wraptext .Description 36 "      " }}
+func wrapText(s string, width int, prefix ...string) string {
+	pad := ""
+	if len(prefix) > 0 {
+		pad = prefix[0]
+	}
+	return strings.ReplaceAll(messaging.WrapAnsi(s, width), "\n", "\n"+pad)
+}
 
 // Usage:
 //

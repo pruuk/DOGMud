@@ -1,27 +1,26 @@
 === status (CategorySystem) ===
 <ansi fg="system"></ansi>
 <ansi fg="system"> <ansi fg="black-bold">.:</ansi> <ansi fg="username">Fixturewick</ansi> the Novice Warrior</ansi>
-<ansi fg="system">┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Attributes</ansi></ansi>
-<ansi fg="system">──────────────────────────────────────────────────────────────┐</ansi>
-<ansi fg="system">│ <ansi fg="yellow">Strength: </ansi>modest <ansi fg="yellow">Dexterity: </ansi>poor <ansi fg="yellow">Perception: </ansi>feeble │</ansi>
-<ansi fg="system">│ <ansi fg="yellow">Vitality: </ansi>feeble <ansi fg="yellow">Willpower: </ansi>feeble <ansi fg="yellow">Charisma: </ansi>feeble │</ansi>
-<ansi fg="system">└─────────────────────────────────────────────────────────────────────────────┘</ansi>
-<ansi fg="system">┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Vitals</ansi></ansi>
-<ansi fg="system">──────────────────────────────────────────────────────────────────┐</ansi>
-<ansi fg="system">│ <ansi fg="yellow">Health: </ansi><ansi fg="green">full</ansi> <ansi fg="yellow">Stamina: </ansi><ansi fg="green">full</ansi> <ansi fg="yellow">Conviction: </ansi><ansi fg="green">full</ansi> │</ansi>
-<ansi fg="system">│ <ansi fg="yellow">HP reserve: </ansi><ansi fg="green">none</ansi> <ansi fg="yellow">SP reserve: </ansi><ansi fg="green">none</ansi> <ansi fg="yellow">CP reserve: </ansi><ansi fg="green">none</ansi> │</ansi>
-<ansi fg="system">│ <ansi fg="yellow">Toxicity: </ansi><ansi fg="green">clear</ansi> <ansi fg="yellow">Encumbrance: </ansi><ansi fg="green">light</ansi> │</ansi>
-<ansi fg="system">└─────────────────────────────────────────────────────────────────────────────┘</ansi>
-<ansi fg="system">┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Defenses</ansi></ansi>
-<ansi fg="system">────────────────────────────────────────────────────────────────┐</ansi>
-<ansi fg="system">│ <ansi fg="yellow">Physical: </ansi>none <ansi fg="yellow">Magical: </ansi>none <ansi fg="yellow">Conviction: </ansi>none │</ansi>
-<ansi fg="system">└─────────────────────────────────────────────────────────────────────────────┘</ansi>
-<ansi fg="system">┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi></ansi>
-<ansi fg="system">────────────────────────────────────────────────────────────────────┐</ansi>
-<ansi fg="system">│ <ansi fg="yellow">Species: </ansi>Ghostly Spirit<ansi fg="yellow">Gold: </ansi>250 <ansi fg="yellow">Bank: </ansi>100 │</ansi>
-<ansi fg="system">└─────────────────────────────────────────────────────────────────────────────┘</ansi>
-<ansi fg="system"><ansi fg="yellow">Submission policy:</ansi> subdue <ansi fg="yellow">Surrender policy:</ansi> tap out</ansi>
-<ansi fg="system">below 15% health.</ansi>
+<ansi fg="system">── <ansi fg="black-bold">.:</ansi><ansi fg="20">Attributes</ansi> ──────────────────────────</ansi>
+<ansi fg="system"> <ansi fg="yellow">Strength:    </ansi>modest  <ansi fg="yellow">Dexterity:   </ansi>poor</ansi>
+<ansi fg="system"> <ansi fg="yellow">Perception:  </ansi>feeble  <ansi fg="yellow">Vitality:    </ansi>feeble</ansi>
+<ansi fg="system"> <ansi fg="yellow">Willpower:   </ansi>feeble  <ansi fg="yellow">Charisma:    </ansi>feeble</ansi>
+<ansi fg="system">── <ansi fg="black-bold">.:</ansi><ansi fg="20">Vitals</ansi> ──────────────────────────────</ansi>
+<ansi fg="system"> <ansi fg="yellow">Health:      </ansi><ansi fg="green">full</ansi>    <ansi fg="yellow">HP reserve:  </ansi><ansi fg="green">none</ansi></ansi>
+<ansi fg="system"> <ansi fg="yellow">Stamina:     </ansi><ansi fg="green">full</ansi>    <ansi fg="yellow">SP reserve:  </ansi><ansi fg="green">none</ansi></ansi>
+<ansi fg="system"> <ansi fg="yellow">Conviction:  </ansi><ansi fg="green">full</ansi>    <ansi fg="yellow">CP reserve:  </ansi><ansi fg="green">none</ansi></ansi>
+<ansi fg="system"> <ansi fg="yellow">Toxicity:    </ansi><ansi fg="green">clear</ansi>   <ansi fg="yellow">Encumbrance: </ansi><ansi fg="green">light</ansi></ansi>
+<ansi fg="system">── <ansi fg="black-bold">.:</ansi><ansi fg="20">Defenses</ansi> ────────────────────────────</ansi>
+<ansi fg="system"> <ansi fg="yellow">Physical:    </ansi>none    <ansi fg="yellow">Magical:     </ansi>none</ansi>
+<ansi fg="system"> <ansi fg="yellow">Conviction:  </ansi>none</ansi>
+<ansi fg="system">── <ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi> ────────────────────────────────</ansi>
+<ansi fg="system"> <ansi fg="yellow">Species:     </ansi>Ghostly Spirit</ansi>
+<ansi fg="system"> <ansi fg="yellow">Gold:        </ansi>250</ansi>
+<ansi fg="system"> <ansi fg="yellow">Bank:        </ansi>100</ansi>
+<ansi fg="system">──────────────────────────────────────────</ansi>
+<ansi fg="system"> <ansi fg="yellow">Submission policy:</ansi> subdue</ansi>
+<ansi fg="system"> <ansi fg="yellow">Surrender policy:</ansi> tap out below 15%</ansi>
+<ansi fg="system">   health.</ansi>
 === item list (CategorySystem) ===
 <ansi fg="system"> <ansi fg="red-bold">1</ansi>. <ansi fg="yellow-bold">Iron Sword</ansi>       <ansi fg="red-bold">2</ansi>. <ansi fg="yellow-bold">Healing Draught</ansi> </ansi>
 <ansi fg="system"> <ansi fg="red-bold">3</ansi>. <ansi fg="yellow-bold">Leather Boots</ansi>    <ansi fg="red-bold">4</ansi>. <ansi fg="yellow-bold">Silver Ring</ansi>     </ansi>
