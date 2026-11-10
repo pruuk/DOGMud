@@ -24,8 +24,10 @@ func wrapGoldenVisible(s string) []string {
 	return strings.Split(wrapGoldenTag.ReplaceAllString(s, ""), "\n")
 }
 
-// preSweepLines is the wrap every sender applied before the sweep, pinned
-// here as the reference.
+// preSweepLines is util.SplitStringNL, the wrap every sender applied before
+// the sweep, pinned here as the reference. Since the sweep it no longer puts
+// a word over the limit ahead of its own sentence or leaves a space after it;
+// nothing else about it has changed.
 func preSweepLines(line string) []string {
 	return wrapGoldenVisible(util.SplitStringNL(line, 80))
 }
@@ -94,9 +96,9 @@ func TestWrapGolden_AcceptedDifferences(t *testing.T) {
 		newWrap []string
 	}{
 		{
-			"a word over 80 no longer jumps ahead of its own sentence",
+			"a word over 80 takes its opening quote with it",
 			wrapGoldenSay(long + ` then more words`),
-			[]string{long, `Kesh says, " then more words"`},
+			[]string{`Kesh says, "`, long, `then more words"`},
 			[]string{`Kesh says,`, `"` + long, `then more words"`},
 		},
 		{
