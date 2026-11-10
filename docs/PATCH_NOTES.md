@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-11-09: Cleaner line breaks
+
+- Long game messages no longer break in the middle of a word.
+- If you have set your own line width with `set linewidth`, it now applies to
+  speech, room descriptions, whispers and menus as well.
+
 ## 2026-11-07: Clearer for screen readers
 
 - Screen readers now know the web client is in English and announce the
