@@ -71,11 +71,6 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	return true, nil
 }
 
-// setScreenWidth is the width the set status screen lays itself out to. The
-// screen rides CategoryScreen, which neither normalizes nor wraps, so it
-// wraps its own long values (the description, a long fight prompt).
-const setScreenWidth = 80
-
 // wrapPrompt wraps a raw prompt string to width, breaking only at a space or
 // just before a `{` so no {token} is split across lines. Continuation lines
 // start with indent. A single piece wider than width stays whole.
@@ -106,9 +101,12 @@ func wrapPrompt(prompt string, width int, indent string) string {
 // displaySetStatus is the `set` status screen: one "label: value" row per
 // setting, sent as one block on CategoryScreen (#614). On CategorySystem the
 // normalizer stopped every label and value ("ScreenReader:.", "OFF.") and
-// each sat on its own line.
+// each sat on its own line. CategoryScreen neither normalizes nor wraps, so
+// the screen wraps its own long values (the description, a long fight prompt)
+// to the reader's width.
 func displaySetStatus(user *users.UserRecord) {
 	c := configs.GetTextFormatsConfig()
+	width := user.WrapWidth()
 
 	var rows []string
 	row := func(label, value string) {
@@ -116,7 +114,7 @@ func displaySetStatus(user *users.UserRecord) {
 	}
 	promptRow := func(label, prompt string) {
 		indent := strings.Repeat(` `, len(label)+2)
-		row(label, wrapPrompt(prompt, setScreenWidth-len(indent), indent))
+		row(label, wrapPrompt(prompt, width-len(indent), indent))
 	}
 	onOff := func(on bool) string {
 		if on {
@@ -131,7 +129,7 @@ func displaySetStatus(user *users.UserRecord) {
 
 	rows = append(rows, `<ansi fg="yellow-bold">description:</ansi>`)
 	if user.Character.Description != `` {
-		rows = append(rows, `<ansi fg="yellow">`+util.SplitStringNL(user.Character.Description, setScreenWidth)+`</ansi>`)
+		rows = append(rows, `<ansi fg="yellow">`+util.SplitStringNL(user.Character.Description, width)+`</ansi>`)
 	}
 	rows = append(rows, ``)
 
@@ -280,7 +278,7 @@ func cmdSetFprompt(user *users.UserRecord, rest string, setTarget string, args [
 		if customPrompt == nil {
 			rows = append(rows, `  <ansi fg="8">[system default - toggle-driven]</ansi>`)
 		} else {
-			rows = append(rows, `  `+wrapPrompt(customPrompt.(string), setScreenWidth-2, `  `))
+			rows = append(rows, `  `+wrapPrompt(customPrompt.(string), user.WrapWidth()-2, `  `))
 		}
 		rows = append(rows, ``, `<ansi fg="yellow">Toggle Settings</ansi> <ansi fg="8">(set fprompt tog <name> to change):</ansi>`)
 		toggleList := []struct{ name, desc string }{

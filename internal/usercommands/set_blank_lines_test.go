@@ -61,8 +61,8 @@ func TestSetScreens_LaidOutRowsWithNoStops(t *testing.T) {
 			if strings.HasSuffix(trimmed, ".") && !sentences[trimmed] && !strings.HasSuffix(trimmed, "traveller.") {
 				t.Errorf("%s line %d gained a stop: %q", name, i, line)
 			}
-			if w := utf8.RuneCountInString(line); w > setScreenWidth {
-				t.Errorf("%s line %d is %d columns, over %d: %q", name, i, w, setScreenWidth, line)
+			if w := utf8.RuneCountInString(line); w > u.WrapWidth() {
+				t.Errorf("%s line %d is %d columns, over %d: %q", name, i, w, u.WrapWidth(), line)
 			}
 			if strings.Count(line, "{") != strings.Count(line, "}") {
 				t.Errorf("%s line %d splits a prompt {token} across lines: %q", name, i, line)

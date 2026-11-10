@@ -52,3 +52,17 @@ func TestWhisperAndReply_WrapAtTheReadersWidth(t *testing.T) {
 		assert.LessOrEqual(t, utf8.RuneCountInString(line), 40, "%q", line)
 	}
 }
+
+// The set screen lays out to the reader, as a bare 80 used to pretend they all were.
+func TestSetScreen_WrapsToTheReadersWidth(t *testing.T) {
+	u := users.NewTestUser(8803, "narrow", "Narrow", 18803)
+	u.LineWidth = 40
+	u.Character.Description = wrapTestLongLine
+	u.SetConfigOption(`fprompt`, shippedFightPrompt)
+
+	lines := renderedSetLines(t, u, func() { displaySetStatus(u) })
+	require.Greater(t, len(lines), 5)
+	for i, line := range lines {
+		assert.LessOrEqual(t, utf8.RuneCountInString(line), 40, "line %d: %q", i, line)
+	}
+}
