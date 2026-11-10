@@ -114,7 +114,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	descParts := descriptionWithModifiers(r, details.Description)
 
 	if len(tinymap) > 0 {
-		desclineWidth := 80 - 7 // 7 is the width of the tinymap
+		desclineWidth := user.WrapWidth() - 7 // 7 is the width of the tinymap
 		padding := 1
 		description := wrapDescriptionParts(descParts, desclineWidth-padding, nouns)
 
@@ -133,7 +133,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		details.Description = strings.Join(description, "\n")
 	} else {
 
-		roomDesc := wrapDescriptionParts(descParts, 80, nouns)
+		roomDesc := wrapDescriptionParts(descParts, user.WrapWidth(), nouns)
 
 		details.Description = strings.Join(roomDesc, "\n")
 	}

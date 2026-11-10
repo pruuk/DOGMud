@@ -2073,7 +2073,7 @@ func (r *Room) HasVisited(id int, vType VisitorType) bool {
 
 func (r *Room) GetDescriptionFormatted(lineSplit int, highlightNouns bool) string {
 
-	desc := util.SplitStringNL(r.GetDescription(), 80)
+	desc := util.SplitStringNL(r.GetDescription(), lineSplit)
 
 	if highlightNouns {
 		for noun, _ := range r.Nouns {
