@@ -481,7 +481,7 @@ func sortRowsByCol(rows [][]string, col int) {
 func renderShopTable(user *users.UserRecord, title, colorPattern, sellerName, sellerTag string, headers []string, rows [][]string, helpText string) {
 	saleItemsData := templates.GetTable(fmt.Sprintf(`%s by <ansi fg="%s">%s</ansi>`, colorpatterns.ApplyColorPattern(title, colorPattern), sellerTag, sellerName), headers, rows)
 	tplTxt, _ := templates.Process("tables/shoplist", saleItemsData, user.UserId, user.UserId)
-	user.SendText(messaging.CategorySystem, tplTxt)
+	user.SendText(messaging.CategoryScreen, tplTxt)
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s%s`, helpText, term.CRLFStr))
 }
 

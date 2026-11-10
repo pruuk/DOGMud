@@ -69,7 +69,7 @@ func Character(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		if len(nameToAlt) > 0 {
 			altTblTxt := getAltTable(nameToAlt, hiredOutChars, user.UserId)
 			user.SendBlankLine(messaging.CategorySystem)
-			user.SendText(messaging.CategorySystem, altTblTxt)
+			user.SendText(messaging.CategoryScreen, altTblTxt)
 		}
 	}
 
@@ -196,7 +196,7 @@ func cmdCharacterDelete(user *users.UserRecord, cmdPrompt *prompt.Prompt, altNam
 	if len(nameToAlt) > 0 {
 		altTblTxt := getAltTable(nameToAlt, hiredOutChars, user.UserId)
 		user.SendBlankLine(messaging.CategorySystem)
-		user.SendText(messaging.CategorySystem, altTblTxt)
+		user.SendText(messaging.CategoryScreen, altTblTxt)
 	}
 
 	match, rawResponse, done := selectAltByName(cmdPrompt, altNames, `Enter the name of the character you wish to delete:`)
@@ -251,7 +251,7 @@ func cmdCharacterChange(user *users.UserRecord, room *rooms.Room, cmdPrompt *pro
 	if len(nameToAlt) > 0 {
 		altTblTxt := getAltTable(nameToAlt, hiredOutChars, user.UserId)
 		user.SendBlankLine(messaging.CategorySystem)
-		user.SendText(messaging.CategorySystem, altTblTxt)
+		user.SendText(messaging.CategoryScreen, altTblTxt)
 	}
 
 	match, rawResponse, done := selectAltByName(cmdPrompt, altNames, `Enter the name of the character you wish to change to:`)
@@ -331,7 +331,7 @@ func cmdCharacterView(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 	if len(nameToAlt) > 0 {
 		altTblTxt := getAltTable(nameToAlt, hiredOutChars, user.UserId)
 		user.SendBlankLine(messaging.CategorySystem)
-		user.SendText(messaging.CategorySystem, altTblTxt)
+		user.SendText(messaging.CategoryScreen, altTblTxt)
 	}
 
 	match, rawResponse, done := selectAltByName(cmdPrompt, altNames, `Enter the name of the character you wish to view:`)

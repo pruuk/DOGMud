@@ -492,7 +492,7 @@ func renderTrailToPlayer(actor Actor, visitors []TrackingInfo) {
 	}
 	uid := actor.GetUserId()
 	trackTxt, _ := templates.Process("descriptions/track", visitors, uid)
-	actor.SendText(messaging.CategorySystem, trackTxt)
+	actor.SendText(messaging.CategoryScreen, trackTxt)
 }
 
 // findUserInRoomByName looks up a user in the room by prefix match.

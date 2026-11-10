@@ -49,7 +49,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		}
 
 		storageTxt, _ := templates.Process("character/storage", slotNames, user.UserId)
-		user.SendText(messaging.CategorySystem, storageTxt)
+		user.SendText(messaging.CategoryScreen, storageTxt)
 
 		return true, nil
 	}

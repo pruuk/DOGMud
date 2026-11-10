@@ -68,7 +68,7 @@ func Alias(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	aliasTableData := templates.GetTable(`Built in Aliases`, headers, rows, tableFormatting)
 	aliasTxt, _ := templates.Process("tables/generic", aliasTableData, user.UserId)
-	user.SendText(messaging.CategorySystem, aliasTxt)
+	user.SendText(messaging.CategoryScreen, aliasTxt)
 
 	if len(user.Aliases) > 0 {
 
@@ -81,7 +81,7 @@ func Alias(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 		aliasTableData := templates.GetTable(`Custom Aliases`, headers, rows, tableFormatting)
 		aliasTxt, _ := templates.Process("tables/generic", aliasTableData, user.UserId)
-		user.SendText(messaging.CategorySystem, aliasTxt)
+		user.SendText(messaging.CategoryScreen, aliasTxt)
 	}
 
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow"><ansi fg="command">help alias</ansi> for more information on setting custom aliases.</ansi>`)

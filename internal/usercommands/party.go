@@ -457,7 +457,7 @@ func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
 
 		partyTableData := templates.GetTable(`Party Members`, headers, rows, formatting...)
 		partyTxt, _ := templates.Process("tables/generic", partyTableData, user.UserId)
-		user.SendText(messaging.CategorySystem, partyTxt)
+		user.SendText(messaging.CategoryScreen, partyTxt)
 
 		if isInvited {
 			user.SendText(messaging.CategorySystem, `Type <ansi fg="command">party accept/decline</ansi> to finalize your party membership.`)

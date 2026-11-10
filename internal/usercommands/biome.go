@@ -20,7 +20,7 @@ func Biome(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	biomeTxt, _ := templates.Process("descriptions/biome", biome, user.UserId)
-	user.SendText(messaging.CategorySystem, biomeTxt)
+	user.SendText(messaging.CategoryScreen, biomeTxt)
 
 	return true, nil
 }

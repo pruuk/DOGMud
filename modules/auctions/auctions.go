@@ -294,7 +294,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 		historyTableData := templates.GetTable(`Past Auctions`, headers, rows, formatting)
 
 		tplTxt, _ := templates.Process("tables/generic", historyTableData, user.UserId)
-		user.SendText(messaging.CategorySystem, tplTxt)
+		user.SendText(messaging.CategoryScreen, tplTxt)
 
 		return true, nil
 	}

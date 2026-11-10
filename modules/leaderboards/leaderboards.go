@@ -160,7 +160,7 @@ func (l *LeaderboardModule) leaderboardCommand(rest string, user *users.UserReco
 		searchResultsTable := templates.GetTable(title, headers, rows, formatting)
 		tplTxt, _ := templates.Process("tables/generic", searchResultsTable, user.UserId)
 		user.SendText(messaging.CategorySystem, "\n")
-		user.SendText(messaging.CategorySystem, tplTxt)
+		user.SendText(messaging.CategoryScreen, tplTxt)
 
 	}
 	return true, nil
