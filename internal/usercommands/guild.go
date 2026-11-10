@@ -30,7 +30,12 @@ func Guild(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	if len(args) > 0 {
 		sub = strings.ToLower(args[0])
 	}
-	remainder := strings.TrimSpace(strings.Join(args[1:], " "))
+	// A bare "guild" has no arguments, and args[1:] of an empty list panics
+	// (#846), so the remainder is read only when there is one.
+	remainder := ""
+	if len(args) > 1 {
+		remainder = strings.TrimSpace(strings.Join(args[1:], " "))
+	}
 
 	switch sub {
 	case "", "info":

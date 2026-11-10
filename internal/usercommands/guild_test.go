@@ -3,9 +3,29 @@ package usercommands
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/guilds"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
+
+// A bare "guild" shows the same screen as "guild info" (#846). It used to read
+// args[1:] of an empty argument list and panic, so the player saw nothing.
+func TestBareGuildDoesNotPanic(t *testing.T) {
+	u := &users.UserRecord{UserId: 98461, Character: characters.New()}
+	for _, rest := range []string{"", "   ", "info"} {
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Errorf("guild %q panicked: %v", rest, r)
+				}
+			}()
+			if handled, err := Guild(rest, u, nil, 0); !handled || err != nil {
+				t.Errorf("guild %q: handled %v, err %v", rest, handled, err)
+			}
+		}()
+	}
+}
 
 func TestGuildChatRecipients(t *testing.T) {
 	g := &guilds.Guild{Tag: "QC", Members: []guilds.GuildMember{

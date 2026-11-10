@@ -1,5 +1,10 @@
 # DOGMud Patch Notes
 
+## 2026-11-10: Guild screen
+
+- Typing `guild` on its own shows your guild again, the same as `guild info`.
+  It used to show nothing.
+
 ## 2026-11-10: Tables that fit
 
 - A table too wide for your screen, such as a long history or a crowded
