@@ -123,8 +123,8 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 				if isMob {
 					nameTag = "mobname"
 				}
-				// Two lines: CategorySystem is never wrapped, and the one-line
-				// form ran to 91 columns. "Right here" also holds underground,
+				// Two lines: the one-line form ran to 91 columns.
+				// "Right here" also holds underground,
 				// where the old "in the open" did not (#261).
 				actor.SendText(messaging.CategorySystem,
 					fmt.Sprintf(`You read <ansi fg="%s">%s</ansi>'s sign in the scuffed ground.`, nameTag, name))

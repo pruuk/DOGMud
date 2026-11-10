@@ -63,7 +63,6 @@ var wrapWidthConversions = map[string]bool{
 // budget (online.go) and a hint's length check (sight_aim.go) never reach a
 // wrap function, so they need no entry here.
 var wrapWidthExempt = map[string]string{
-	"internal/usercommands/setdesc.go|72":              "echoes the description at the 72 columns the character template shows it; a template layout, plan 3's to change",
 	"internal/usercommands/admin.server.go|lineLength": "the admin config dump, laid out to 158 columns less the longest key name; staff tooling on a wide screen",
 }
 

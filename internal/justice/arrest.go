@@ -405,15 +405,13 @@ func ExecuteArrest(player *characters.Character, userId int, faction string, isM
 	// travels the event that would narrate it and is ours to send, alongside
 	// the arrest-context line.
 	if u := users.GetByUserId(userId); u != nil {
-		// The seizure comes first, then the cell door (#241). CategorySystem
-		// is never wrapped by the pipeline (it carries tables), so this line
-		// wraps itself to the reader's width (#430). It names `fine`, which
+		// The seizure comes first, then the cell door (#241). The pipeline
+		// wraps this line to the reader's width (#430). It names `fine`, which
 		// names `payfine`, so a new prisoner sees the way out (#298).
-		u.SendText(messaging.CategorySystem, messaging.WrapAnsi(
+		u.SendText(messaging.CategorySystem,
 			fmt.Sprintf("A guard seizes you and hauls you to the holding cell. "+
 				"You have been placed under arrest by the %s. "+
-				`Type <ansi fg="command">fine</ansi> to see what you owe.`, factionName),
-			u.WrapWidth()))
+				`Type <ansi fg="command">fine</ansi> to see what you owe.`, factionName))
 		if spec := conditions.GetConditionSpec(jailedConditionId); spec != nil {
 			line := spec.AuthoredStartLine(
 				u.Character.GetCharacterName(true),

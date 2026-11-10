@@ -80,9 +80,9 @@ func LandBloomClean(actor Actor) {
 	char := actor.GetCharacter()
 	char.RemoveCondition(bloomWithdrawalConditionId)
 	char.BloomAbstinentRounds = 0
-	// Warning is not a category the pipeline wraps (messaging.shouldWrap).
-	actor.SendText(messaging.CategoryWarning, util.SplitStringNL(
-		`The craving has finally loosened its grip. You feel clean, or as close to it as you're likely to get.`, actorWrapWidth(actor)))
+	// The pipeline wraps Warning to the reader's width (messaging.shouldWrap).
+	actor.SendText(messaging.CategoryWarning,
+		`The craving has finally loosened its grip. You feel clean, or as close to it as you're likely to get.`)
 }
 
 // purgingDraughtItemId is the item ID for the Purging Draught (30052), the
@@ -429,11 +429,11 @@ func Quaff(actor DrinkActor, rest string) DrinkResult {
 	// cannot pay a toxicity price for the thing that removes toxicity.
 	if itemSpec.ItemId == purgingDraughtItemId {
 		applyPurgeEffects(actor)
-		// Warning is not a category the pipeline wraps (messaging.shouldWrap),
-		// so the line is wrapped here, the way the command package wrapped prose.
-		actor.SendText(messaging.CategoryWarning, util.SplitStringNL(
+		// The pipeline wraps Warning to the reader's width
+		// (messaging.shouldWrap), so the line is sent whole.
+		actor.SendText(messaging.CategoryWarning,
 			`The draught tears through you. Every trace of potion work is `+
-				`scoured out, and you are left shaking and hollow.`, actorWrapWidth(actor)))
+				`scoured out, and you are left shaking and hollow.`)
 	}
 
 	// ── Bloom Wafer special-case ──────────────────────────────────────────────

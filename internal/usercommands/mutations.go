@@ -25,9 +25,10 @@ func Mutations(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	user.SendText(messaging.CategorySystem, `<ansi fg="magenta"> .:. <ansi fg="yellow">Your Mutations</ansi> .:.</ansi>`)
 	user.SendBlankLine(messaging.CategorySystem)
 
-	// CategorySystem is never wrapped by the pipeline, so each prose line
-	// wraps itself to the reader's width, continuation lines keeping the
-	// line's indent (util.SplitStringNL's prefix, as admin.server.go uses).
+	// Each prose line lays itself out to the reader's width, continuation
+	// lines keeping the line's indent (util.SplitStringNL's prefix, as
+	// admin.server.go uses). The pipeline has no hanging indent, and the
+	// finished lines fit the reader, so it leaves them as they are.
 	width := user.WrapWidth()
 	indented := func(indent, text string) string {
 		return indent + util.SplitStringNL(text, width-len(indent), indent)

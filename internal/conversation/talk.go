@@ -77,7 +77,7 @@ const TalkSightLine = "You can't make out who that is well enough to start a con
 // TalkShapesLine refuses every talk aim from a player who makes out shapes
 // only. It says what the player needs, more light, rather than the shared aim
 // hint's "Try talk figure", which only reaches TalkSightLine (playtest seat
-// C, #375). Two lines: refusals are not wrapped.
+// C, #375). Two lines: what the player sees, then what they need.
 const TalkShapesLine = "You can only make out shapes here.\n" +
 	"You need more light to see who someone is before you can talk to them."
 

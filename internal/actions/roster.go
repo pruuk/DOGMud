@@ -7,22 +7,15 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// actorWrapWidth is the width a line for actor alone wraps at. A mob's user id
-// 0 finds no user, and a nil user's WrapWidth is the default 80; a mob's
-// SendText drops the line anyway.
-func actorWrapWidth(actor Actor) int {
-	return users.GetByUserId(actor.GetUserId()).WrapWidth()
-}
-
 // RenderRoster renders the room roster ("Also here: ...", the
 // descriptions/who template) for userId and wraps it to that user's line
 // width (80 when there is no user record).
 //
-// The roster goes out as CategoryRoomDescription (look) or CategorySystem
+// The roster goes out as CategoryRoomDescription (look) or CategoryScreen
 // (search), and the messaging pipeline wraps neither: one carries the
-// side-by-side description and minimap block, the other tables. So a busy
-// room printed one line well past 80 columns (#430). Every roster send goes
-// through here.
+// side-by-side description and minimap block, the other a laid-out screen. So
+// a busy room printed one line well past 80 columns (#430). Every roster send
+// goes through here.
 func RenderRoster(details rooms.RoomTemplateDetails, userId int) string {
 	text, _ := templates.Process("descriptions/who", details, userId)
 	if text == "" {
@@ -33,8 +26,8 @@ func RenderRoster(details rooms.RoomTemplateDetails, userId int) string {
 
 // RenderGround renders the "On the Ground: ..." list (the
 // descriptions/ontheground template) for userId and wraps it like
-// RenderRoster: it goes out on the same two unwrapped categories, and a room
-// with a few corpses printed one 116-column line (#382 playtest). Every
+// RenderRoster: look sends it on the unwrapped CategoryRoomDescription, and a
+// room with a few corpses printed one 116-column line (#382 playtest). Every
 // ground send goes through here. An empty list renders nothing.
 func RenderGround(groundStuff []string, isDark bool, isNight bool, userId int) string {
 	details := map[string]any{

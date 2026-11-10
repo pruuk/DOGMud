@@ -20,6 +20,7 @@ func removeAndCollect(t *testing.T, itemId int, name string) []string {
 	t.Helper()
 
 	user, room := getTestUserAndRoom(t)
+	readOnOneLineForTest(t, user)
 
 	// NewTestUser writes the pool maxima straight to .Value, which is DERIVED:
 	// the Validate() inside the remove path recomputes it from .Base and would

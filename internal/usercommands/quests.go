@@ -140,15 +140,14 @@ func shelvedRows(c *characters.Character) []questRecord {
 }
 
 // SendQuestLogLine sends a quest log action's reply (#375 phase 5): a system
-// line on success, a refusal otherwise, wrapped to the reader's width because
-// CategorySystem is never wrapped by the pipeline (it carries tables), and the
-// abandon line runs past 80 columns.
+// line on success, a refusal otherwise. The pipeline wraps both to the
+// reader's width, and the abandon line runs past 80 columns.
 func SendQuestLogLine(user *users.UserRecord, ok bool, line string) {
 	cat := messaging.CategorySystem
 	if !ok {
 		cat = messaging.CategoryRefusal
 	}
-	user.SendText(cat, messaging.WrapAnsi(line, user.WrapWidth()))
+	user.SendText(cat, line)
 }
 
 func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {

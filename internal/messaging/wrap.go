@@ -35,10 +35,15 @@ func ansiTagLen(s string) int {
 	return len(ansiOpenPrefix) + end + 1
 }
 
-// runeColumns is the display columns one rune takes. ASCII is always one,
-// control characters included, which is what the wrapper has always counted
-// for it; anything else is the width util.VisibleWidth would give it.
+// runeColumns is the display columns one rune takes. A carriage return takes
+// none: text pre-formatted elsewhere arrives with CRLF line ends, and counting
+// the CR stranded a word on a line of its own (#430). Every other ASCII byte
+// is one, control characters included; anything else is the width
+// util.VisibleWidth would give it.
 func runeColumns(r rune) int {
+	if r == '\r' {
+		return 0
+	}
 	if r < utf8.RuneSelf {
 		return 1
 	}
@@ -50,6 +55,11 @@ func runeColumns(r rune) int {
 // Open tags carry across line breaks: a break inside N nested spans
 // closes all N before the newline and reopens all N, outermost first,
 // on the next line.
+//
+// Only a line wider than maxWidth is folded. A line that fits is copied byte
+// for byte, its padding and indent included, so a table or a box narrower than
+// the reader survives. A fold rejoins that line's words with single spaces. An
+// embedded newline is always a hard break.
 //
 // On malformed input (orphan tags, unmatched closers), falls back to
 // a byte-count wrap to avoid panicking. The visual output is uglier
@@ -115,6 +125,82 @@ func WrapAnsi(text string, maxWidth int) (wrapped string) {
 		}
 	}
 
+	// commitPending folds the tag ops seen so far into the stack that governs
+	// future wrap decisions.
+	commitPending := func() {
+		for _, op := range pending {
+			if op.close {
+				if len(openTags) > 0 {
+					openTags = openTags[:len(openTags)-1]
+				}
+			} else {
+				openTags = append(openTags, op.tag)
+			}
+		}
+		pending = pending[:0]
+	}
+
+	// Every tag ends in '>', so a '<' past the last one is plain text. Before
+	// it, the search for an open tag's '>' always succeeds and the walk then
+	// jumps over what was searched, so WrapAnsi does constant work at a stray
+	// less-than sign and one linear pass overall.
+	lastTagEnd := strings.LastIndexByte(text, '>')
+
+	// nextTagLen is the length of the ansi tag at text[at:], or 0 for none. A
+	// found tag is added to pending, for the caller to commit when its text
+	// lands on a line.
+	nextTagLen := func(at int) int {
+		if text[at] != '<' || at >= lastTagEnd {
+			return 0
+		}
+		tagLen := ansiTagLen(text[at:])
+		if tagLen > 0 {
+			tag := text[at : at+tagLen]
+			if strings.HasPrefix(tag, `</`) {
+				pending = append(pending, tagOp{close: true})
+			} else {
+				pending = append(pending, tagOp{close: false, tag: tag})
+			}
+		}
+		return tagLen
+	}
+
+	// copyFittingLine copies the logical line starting at start to line, byte
+	// for byte, when it fits in maxWidth, and returns where it ends (its
+	// newline, or the end of the text). A line too wide for that is left for
+	// the fold below and nothing is changed.
+	copyFittingLine := func(start int) (end int, fits bool) {
+		cols := 0
+		at := start
+		for at < len(text) && text[at] != '\n' {
+			if tagLen := nextTagLen(at); tagLen > 0 {
+				at += tagLen
+				continue
+			}
+			r, size := utf8.DecodeRuneInString(text[at:])
+			cols += runeColumns(r)
+			if cols > maxWidth {
+				pending = pending[:0]
+				return 0, false
+			}
+			at += size
+		}
+		line.WriteString(text[start:at])
+		commitPending()
+		return at, true
+	}
+
+	// hardBreak ends the current line at an embedded newline.
+	hardBreak := func() {
+		closeAll(&line)
+		out.WriteString(line.String())
+		out.WriteByte('\n')
+		line.Reset()
+		col = 0
+		lineHasContent = false
+		reopenAll(&line)
+	}
+
 	flushWord := func() {
 		// Add space before word if line already has content and there's room.
 		// The wrap/no-wrap decision below uses openTags as committed by the
@@ -139,41 +225,35 @@ func WrapAnsi(text string, maxWidth int) (wrapped string) {
 		curWord.Reset()
 		curWordW = 0
 
-		// Now that the word has committed to line, fold its tag ops into
-		// the stack that governs future wrap decisions.
-		for _, op := range pending {
-			if op.close {
-				if len(openTags) > 0 {
-					openTags = openTags[:len(openTags)-1]
-				}
-			} else {
-				openTags = append(openTags, op.tag)
-			}
-		}
-		pending = pending[:0]
+		// Now that the word has committed to line, its tag ops count.
+		commitPending()
 	}
 
-	// Every tag ends in '>', so a '<' past the last one is plain text. Before
-	// it, the search for an open tag's '>' always succeeds and the walk then
-	// jumps over what was searched, so WrapAnsi does constant work at a stray
-	// less-than sign and one linear pass overall.
-	lastTagEnd := strings.LastIndexByte(text, '>')
-
 	i := 0
+	atLineStart := true
 	for i < len(text) {
-		// ANSI tag?
-		if text[i] == '<' && i < lastTagEnd {
-			if tagLen := ansiTagLen(text[i:]); tagLen > 0 {
-				tag := text[i : i+tagLen]
-				if strings.HasPrefix(tag, `</`) {
-					pending = append(pending, tagOp{close: true})
-				} else {
-					pending = append(pending, tagOp{close: false, tag: tag})
+		if atLineStart {
+			atLineStart = false
+			if end, fits := copyFittingLine(i); fits {
+				i = end
+				if i < len(text) {
+					hardBreak()
+					i++
+					atLineStart = true
 				}
-				curWord.WriteString(tag)
-				i += tagLen
 				continue
 			}
+		}
+		// ANSI tag?
+		if tagLen := nextTagLen(i); tagLen > 0 {
+			curWord.WriteString(text[i : i+tagLen])
+			i += tagLen
+			continue
+		}
+		// The CR of a CRLF belongs to the line end, which the deliverer writes.
+		if text[i] == '\r' && i+1 < len(text) && text[i+1] == '\n' {
+			i++
+			continue
 		}
 		// Whitespace boundary?
 		if text[i] == ' ' || text[i] == '\n' {
@@ -181,13 +261,8 @@ func WrapAnsi(text string, maxWidth int) (wrapped string) {
 				flushWord()
 			}
 			if text[i] == '\n' {
-				closeAll(&line)
-				out.WriteString(line.String())
-				out.WriteByte('\n')
-				line.Reset()
-				col = 0
-				lineHasContent = false
-				reopenAll(&line)
+				hardBreak()
+				atLineStart = true
 			}
 			i++
 			continue

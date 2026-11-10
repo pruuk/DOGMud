@@ -89,10 +89,10 @@ func TestMobEmote_WrapsOnceAtTheReadersWidth(t *testing.T) {
 }
 
 // The old path, an 80-column CRLF wrap in the formatter followed by the
-// pipeline's, fails the same check at both widths: at 80 it strands a word
-// on a middle line, at 60 it makes three lines where one wrap makes two.
-// This is what proves the check above can fail; if a formatter ever wraps
-// again, the test above sees this output.
+// pipeline's, fails the same check at both widths: at 80 it leaves the
+// formatter's carriage return on the line, at 60 it makes three lines where
+// one wrap makes two. This is what proves the check above can fail; if a
+// formatter ever wraps again, the test above sees this output.
 func TestMobEmote_DoubleWrapPathIsCaught(t *testing.T) {
 	doubleWrapped := func(emote string) string {
 		return util.SplitStringNL(FormatMobEmoteText("Sly Tam", emote), 80)
@@ -105,8 +105,8 @@ func TestMobEmote_DoubleWrapPathIsCaught(t *testing.T) {
 			}
 		}
 	}
-	stranded := renderMobEmoteLine(doubleWrapped(longMobEmotes[0]), 80)
-	if lines := strings.Split(strings.ReplaceAll(stranded, "\r", ""), "\n"); len(lines) != 3 || lines[1] != "others" {
-		t.Errorf("double wrap at 80 should strand %q on the middle line, got %q", "others", stranded)
+	refolded := renderMobEmoteLine(doubleWrapped(longMobEmotes[0]), 60)
+	if lines, want := strings.Split(strings.ReplaceAll(refolded, "\r", ""), "\n"), greedyLineCount(refolded, 60); len(lines) <= want {
+		t.Errorf("double wrap at 60 should make more than the %d lines one wrap makes, got %q", want, refolded)
 	}
 }

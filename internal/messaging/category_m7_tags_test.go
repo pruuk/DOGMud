@@ -23,7 +23,8 @@ func TestM7TagCategoriesKeepSystemTreatment(t *testing.T) {
 	for c, name := range m7TagCategories {
 		require.Equal(t, name, c.String())
 		require.Equal(t, skipStages(CategorySystem), skipStages(c), "%s must normalise as System", name)
-		require.False(t, shouldWrap(c), "%s must not wrap: System never did", name)
+		// Admin output is staff tooling laid out to a wide screen.
+		require.Equal(t, c != CategoryAdmin, shouldWrap(c), "%s wrap policy", name)
 		for _, v := range []Verbosity{VerbosityFull, VerbosityMedium, VerbosityLight} {
 			require.False(t, v.Suppresses(c), "verbosity %v suppresses %s", v, name)
 		}

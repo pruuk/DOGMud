@@ -486,7 +486,7 @@ func guildChatSend(user *users.UserRecord, msg string) {
 	for _, uid := range guildChatRecipients(g, user.UserId) {
 		if u := users.GetByUserId(uid); u != nil {
 			line := fmt.Sprintf(`<ansi fg="cyan">(guild)</ansi> <ansi fg="username">%s</ansi>: <ansi fg="white">%s</ansi>`, user.Character.Name, msg)
-			u.SendText(messaging.CategoryBroadcast, util.SplitStringNL(line, u.WrapWidth()))
+			u.SendText(messaging.CategoryBroadcast, line)
 		}
 	}
 	user.SendText(messaging.CategoryBroadcast, fmt.Sprintf(`<ansi fg="cyan">(guild)</ansi> You: <ansi fg="white">%s</ansi>`, msg))

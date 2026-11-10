@@ -13,9 +13,12 @@ import (
 // let a real payload shape through mangled if nobody ever ran one
 // through it.
 //
-// Five shapes are run through RenderForRecipient at LineWidth: 20,
-// far narrower than any fixture's content, so the wrap stage would
-// have every reason to fire if it were mistakenly admitted:
+// Five shapes are run through RenderForRecipient. Three categories are
+// excluded from the wrap stage and run at LineWidth: 20, far narrower
+// than any fixture's content, so the stage would have every reason to
+// fire if it were mistakenly admitted. System and Broadcast are admitted,
+// so they run at 80, wider than the fixture, where the stage must leave
+// a line that fits alone:
 //
 //  1. CategorySystem    - a column table (inventory-style listing).
 //  2. CategoryBroadcast - a box-drawn banner, using the box-drawing
@@ -77,11 +80,13 @@ func TestPreformattedCategoriesPassThroughUnwrapped(t *testing.T) {
 	fixtures := []struct {
 		name     string
 		category Category
+		width    int
 		text     string
 	}{
 		{
 			name:     "system column table",
 			category: CategorySystem,
+			width:    80,
 			text: "Item              Qty   Value\n" +
 				"---------------   ---   -----\n" +
 				"healing draught     3     45g\n" +
@@ -90,6 +95,7 @@ func TestPreformattedCategoriesPassThroughUnwrapped(t *testing.T) {
 		{
 			name:     "broadcast box banner",
 			category: CategoryBroadcast,
+			width:    80,
 			text: " ╔════════════════════════════╗\n" +
 				" ║ Server Notice: reboot at 3am ║\n" +
 				" ╚════════════════════════════╝",
@@ -97,6 +103,7 @@ func TestPreformattedCategoriesPassThroughUnwrapped(t *testing.T) {
 		{
 			name:     "room description side-by-side minimap",
 			category: CategoryRoomDescription,
+			width:    20,
 			text: "You stand in a wide stone hall.   | . . # . .\n" +
 				"Torches line the walls, guttering. | . @ . # .\n" +
 				"A cold draft comes from the north. | . . . . .",
@@ -104,6 +111,7 @@ func TestPreformattedCategoriesPassThroughUnwrapped(t *testing.T) {
 		{
 			name:     "splash ascii art",
 			category: CategorySplash,
+			width:    20,
 			text: "   /\\_/\\\n" +
 				"  ( o.o )\n" +
 				"   > ^ <",
@@ -111,6 +119,7 @@ func TestPreformattedCategoriesPassThroughUnwrapped(t *testing.T) {
 		{
 			name:     "skill progress banner",
 			category: CategorySkillProgress,
+			width:    20,
 			text: "[==========          ] Swordsmanship\n" +
 				"[====================] Unarmed Combat",
 		},
@@ -122,7 +131,7 @@ func TestPreformattedCategoriesPassThroughUnwrapped(t *testing.T) {
 				Category:  f.category,
 				Text:      f.text,
 				Channel:   ChannelAudio,
-				LineWidth: 20,
+				LineWidth: f.width,
 			})
 
 			wantLines := strings.Split(f.text, "\n")

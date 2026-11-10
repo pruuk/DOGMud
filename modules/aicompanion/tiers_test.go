@@ -679,10 +679,8 @@ func TestRelayFallbackNoticeOncePerSession(t *testing.T) {
 	if plain := strings.Join(strings.Fields(told[0]), ` `); strings.Contains(plain, `500`) || strings.Contains(plain, `boom`) || !strings.Contains(plain, `your key's provider did not answer`) {
 		t.Fatalf("plain words, never the error: %q", told[0])
 	}
-	for _, line := range strings.Split(told[0], "\n") {
-		if len([]rune(line)) > 80 {
-			t.Fatalf("the notice wraps at 80 columns: %q", told[0])
-		}
+	if strings.Contains(told[0], "\n") {
+		t.Fatalf("the pipeline wraps the notice for its reader, so it arrives whole here: %q", told[0])
 	}
 	m.relays.ready(5, `player-model`, false)
 	m.routeResult(route{kind: routeServer}, 5, apiframework.Ticket{}, errors.New(`x`), now)

@@ -185,14 +185,11 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		if room := rooms.LoadRoom(questUser.Character.RoomId); room != nil {
 			rewardRoom = room
 		}
-		// CategorySystem is never wrapped by the pipeline, so the completing
-		// player's line wraps itself to their width (as justice/arrest.go
-		// does, #430); reward lines are authored prose and run long. The
-		// room's line rides CategoryEmote, which the pipeline wraps for each
-		// reader (2026-10-17 newbie-duo playtest: Tarn's quest 41 line read
-		// 83 wide when nothing wrapped it).
+		// Reward lines are authored prose and run long; the pipeline wraps
+		// both for each reader (2026-10-17 newbie-duo playtest: Tarn's quest
+		// 41 line read 83 wide when nothing wrapped it).
 		messaging.SendTrio(messaging.Trio{
-			Actor:    messaging.Say(messaging.CategorySystem, messaging.WrapAnsi(rewardLines.Actor, questUser.WrapWidth())),
+			Actor:    messaging.Say(messaging.CategorySystem, rewardLines.Actor),
 			Actee:    messaging.NoLine,
 			Observer: messaging.Say(messaging.CategoryEmote, rewardLines.Observer),
 		}, messaging.Audience{

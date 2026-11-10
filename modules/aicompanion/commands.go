@@ -548,8 +548,7 @@ func (m *AICompanionModule) cmdCourt(rest string, user *users.UserRecord, room *
 		return true, nil
 	}
 	if msg := m.courtStep(c, user); msg != `` {
-		// The system category is never wrapped for the reader.
-		user.SendText(messaging.CategorySystem, messaging.WrapAnsi(msg, user.WrapWidth()))
+		user.SendText(messaging.CategorySystem, msg)
 	}
 	return true, nil
 }
@@ -564,7 +563,7 @@ func (m *AICompanionModule) cmdBoundary(rest string, user *users.UserRecord, roo
 		refusal.NoCompanion(user)
 		return true, nil
 	}
-	user.SendText(messaging.CategorySystem, messaging.WrapAnsi(m.setBoundary(c, strings.ToLower(strings.TrimSpace(rest))), user.WrapWidth()))
+	user.SendText(messaging.CategorySystem, m.setBoundary(c, strings.ToLower(strings.TrimSpace(rest))))
 	return true, nil
 }
 
@@ -664,8 +663,8 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 		if len(labels) == 0 {
 			user.SendText(messaging.CategoryRefusal, `They have nothing to tell your companion right now.`)
 		} else {
-			user.SendText(messaging.CategoryRefusal, util.SplitStringNL(
-				`Name one topic for your companion to ask about: `+strings.Join(labels, ` / `), user.WrapWidth()))
+			user.SendText(messaging.CategoryRefusal,
+				`Name one topic for your companion to ask about: `+strings.Join(labels, ` / `))
 		}
 		return true, nil
 	}
@@ -761,10 +760,8 @@ func (m *AICompanionModule) cmdAI(rest string, user *users.UserRecord, room *roo
 	if c, ok := m.ctrls[user.UserId]; ok {
 		name = c.profile.Name
 	}
-	// The system category is never wrapped for the reader, so every line
-	// here is wrapped to the reader's width before it is sent.
 	tell := func(format string, args ...any) {
-		user.SendText(messaging.CategorySystem, messaging.WrapAnsi(fmt.Sprintf(format, args...), user.WrapWidth()))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(format, args...))
 	}
 	where := `OpenAI`
 	if m.playerKeysOffered() {

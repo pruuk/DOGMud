@@ -32,9 +32,9 @@ type moveIdentities struct {
 // moveCategories lets each rendered role ride its own messaging.Category.
 //
 // Each special move's personal lines ride the move's own category, the same
-// as its room line (#449): CategorySystem never wraps (messaging.shouldWrap),
-// so a long actor or actee line ran past 80 columns while the command's
-// defence lines, already on the move category, wrapped. A Category decides a
+// as its room line (#449): CategorySystem did not wrap then, so a long actor
+// or actee line ran past 80 columns while the command's defence lines,
+// already on the move category, wrapped. A Category decides a
 // line's colour (messaging/pipeline.go applyCategoryColor) and whether it
 // wraps; combat verbosity (messaging.Verbosity.Suppresses) is applied only to
 // the round's combat drains in internal/hooks, never to SendTrio's seats, so

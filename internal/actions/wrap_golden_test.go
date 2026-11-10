@@ -120,10 +120,16 @@ func TestWrapGolden_AcceptedDifferences(t *testing.T) {
 			[]string{`Kesh says, "A tin thimble, pressed a little out of shape. The dimples on its`, `top"`},
 		},
 		{
-			"a run of spaces collapses to one",
+			"a run of spaces in a line that fits is kept",
 			wrapGoldenSay(`hello    there`),
 			[]string{`Kesh says, "hello    there"`},
-			[]string{`Kesh says, "hello there"`},
+			[]string{`Kesh says, "hello    there"`},
+		},
+		{
+			"a run of spaces collapses to one only in a line that folds",
+			wrapGoldenSay(`hello    there, the pool answers first, it is older than the town and more patient than I am.`),
+			[]string{`Kesh says, "hello    there, the pool answers first, it is older than the town`, `and more patient than I am."`},
+			[]string{`Kesh says, "hello there, the pool answers first, it is older than the town and`, `more patient than I am."`},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
