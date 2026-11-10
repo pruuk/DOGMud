@@ -1,0 +1,7 @@
+{{- $tableData := . -}}
+{{- $headers := .Header -}}
+<ansi fg="black-bold">.:</ansi> <ansi fg="table-title">{{ splitstring .Title (sub screenwidth 3) "   " }}</ansi>
+<ansi fg="white">{{ range $i, $col := .Header }}{{ if $i }}  {{ end }}{{ $tableData.GetHeaderCell $i }}{{ end }}</ansi>
+{{ range $rowIndex, $row := .Rows }}
+{{- range $i, $col := $row }}{{ if $i }}  {{ end }}<ansi fg="{{ lowercase (index $headers $i) }}">{{ $tableData.GetCell $rowIndex $i }}</ansi>{{ end }}
+{{ end }}
