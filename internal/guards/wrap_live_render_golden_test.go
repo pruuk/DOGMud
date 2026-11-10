@@ -282,7 +282,10 @@ func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 	// checked-in golden keeps the comparison platform-independent, the same
 	// belt-and-braces reasoning m2_routing_guard_test.go documents for its
 	// own golden.
-	got := strings.ReplaceAll(sb.String(), "\r\n", "\n")
+	// Every carriage return goes, not only CRLF pairs: a Windows checkout's
+	// templates are CRLF, and WrapAnsi closes a tag at the line break, which
+	// strands a lone CR inside it. A golden recorded there must match Linux.
+	got := strings.ReplaceAll(sb.String(), "\r", "")
 
 	if *updateLiveRender {
 		if err := os.WriteFile(wrapLiveRenderGoldenPath, []byte(got), 0o644); err != nil {
@@ -299,7 +302,7 @@ func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 	// Windows checkout rewrites line endings, and .gitattributes pins
 	// *.golden to LF on checkout, but that only applies on checkout — a
 	// golden reaching this test any other way could still arrive CRLF.
-	want := strings.ReplaceAll(string(raw), "\r\n", "\n")
+	want := strings.ReplaceAll(string(raw), "\r", "")
 
 	if got != want {
 		pos, ctxWant, ctxGot := firstDiffContext(want, got)
