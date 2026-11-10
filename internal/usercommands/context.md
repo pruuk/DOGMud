@@ -477,6 +477,25 @@ Type more of its name." (a numbered search such as `2.the` is taken as typed).
 "Set aside. Talk to <giver> to take it up again." and no bar; plain `quests`
 does not show them.
 
+### Narrow forms of the character screens (web client base plan 3b)
+
+`character/quests` gets a `questsScreen`. A `questRecord`'s percentage and
+bar are set only by `withProgress(done)`, which keeps the completion too, so
+the 30-column form draws the same bar 20 cells wide (`BarFullAt`,
+`BarEmptyAt`; a set-aside row has no bar at any width) and it never
+disagrees with the percentage. `TestQuestProgressHasOneSource` fails any
+other code in the package that sets those fields. `character/title` gets a `titleScreen` of `statBar`s. `companion.go`
+lays out its own narrow forms (`companionList`, `companionDetail`): the
+80-column screen goes to any reader it fits, else the form drawn to 42 or 30
+columns, chosen by `companionNarrowWidth` as `templates.Process` chooses a
+template's forms. Every heading in a companion form sits on a rule the
+full form width (`companionRule`); a heading too long for that goes on its
+own line or lines with a full-width rule under it. `narrow_forms_test.go` renders conditions, quests, title
+and companion at 30, 42 and 80 and pins their 80-column output to goldens
+recorded from master (`testdata/narrow_forms_80/`, `-update-narrow-forms`).
+The other character screens are held in `internal/guards`
+(`character_screens_test.go`).
+
 ## Message categories (messaging M7 slice 4, #371)
 
 `CategorySystem` keeps reports, tables, help and confirmations of the acting
