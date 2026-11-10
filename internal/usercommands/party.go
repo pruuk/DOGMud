@@ -238,8 +238,7 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 		// The invitation is words from a person: "Someone" to a reader who
 		// cannot see who, as speech reads (HideSpeakerNames).
 		invitedUser.SendText(messaging.CategoryGroup, messaging.HideSpeakerNames(
-			// Two lines: CategoryGroup is not wrapped by the pipeline, and
-			// as one line it ran past 80 columns (2026-10-17).
+			// Two lines: the invitation, then what to type (2026-10-17).
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> invited you to their party.`+"\n"+`Type <ansi fg="command">party accept</ansi> or <ansi fg="command">party decline</ansi> to respond.`, user.Character.Name),
 			[]string{user.Character.Name}, messaging.ParticipantSight(invitedUser.Character, room)))
 	} else {
@@ -458,7 +457,7 @@ func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
 
 		partyTableData := templates.GetTable(`Party Members`, headers, rows, formatting...)
 		partyTxt, _ := templates.Process("tables/generic", partyTableData, user.UserId)
-		user.SendText(messaging.CategorySystem, partyTxt)
+		user.SendText(messaging.CategoryScreen, partyTxt)
 
 		if isInvited {
 			user.SendText(messaging.CategorySystem, `Type <ansi fg="command">party accept/decline</ansi> to finalize your party membership.`)
@@ -815,7 +814,7 @@ func cmdPartyChat(user *users.UserRecord, currentParty *parties.Party, rest stri
 		}
 		if u := users.GetByUserId(uId); u != nil {
 			msg := fmt.Sprintf(`<ansi fg="magenta">(party)</ansi> <ansi fg="username">%s</ansi> says, "<ansi fg="yellow">%s</ansi>"`, user.Character.Name, rest)
-			u.SendText(messaging.CategoryBroadcast, util.SplitStringNL(msg, 80))
+			u.SendText(messaging.CategoryBroadcast, msg)
 		}
 	}
 

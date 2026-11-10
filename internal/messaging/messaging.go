@@ -162,6 +162,15 @@ const (
 	// value shifts.
 	CategoryScreen
 
+	// A room's idle flavor line, sent to everyone in the room. It rode
+	// CategoryRoomDescription, which never wraps, so the sender wrapped it at
+	// one width for every reader. Appended so no existing value shifts;
+	// normalised and colored as CategoryRoomDescription is (alias room-idle,
+	// same value as room-description). At 80 columns the wrap's owner changes
+	// and, because WrapAnsi counts a line's trailing punctuation differently
+	// from the sender's old wrap, some lines break one word later.
+	CategoryRoomIdle
+
 	// categoryMax is the exclusive upper bound of the Category enum.
 	// Used by tests to iterate the full range; do not consume in
 	// production code.
@@ -310,6 +319,8 @@ func (c Category) String() string {
 		return "group"
 	case CategoryScreen:
 		return "screen"
+	case CategoryRoomIdle:
+		return "room-idle"
 	}
 	return "Unknown"
 }

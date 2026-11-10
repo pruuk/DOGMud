@@ -54,7 +54,7 @@ func TestRender_DimLineIsDimmerOnTheTelnetPort(t *testing.T) {
 	}
 	for _, cat := range []messaging.Category{messaging.CategoryScreen, messaging.CategoryAdmin} {
 		tagged := messaging.RenderForRecipient(messaging.RenderInput{
-			Category: cat, Text: menu.Render(m), Channel: messaging.ChannelAudio, LineWidth: 80,
+			Category: cat, Text: menu.Render(m, 80), Channel: messaging.ChannelAudio, LineWidth: 80,
 		})
 		out := ansitags.Parse(tagged)
 		dim := fgBefore(t, out, "What do you carve?")

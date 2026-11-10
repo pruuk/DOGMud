@@ -23,7 +23,7 @@ func DeleteCharacter(rest string, user *users.UserRecord, room *rooms.Room, flag
 			` for someone else to claim. This cannot be undone.</ansi> Continue?`,
 		`Yes, delete my account`, `No, keep it`)
 	if !q1.Done {
-		user.SendText(messaging.CategoryScreen, menu.Render(*q1.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*q1.Menu, user.WrapWidth()))
 		return true, nil
 	}
 	if q1.Response != `yes` {

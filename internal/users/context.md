@@ -586,6 +586,16 @@ if present).
 - connections.SendTo()             // Send messages to user
 ```
 
+### Wrap width (`wrapwidth.go`)
+
+`func (u *UserRecord) WrapWidth() int` is the only source of a wrap width.
+A websocket session wraps at the smallest of `Display.GetScreenWidth()`,
+`MaxAutoWrapWidth` (80) and `LineWidth` when set, never below `MinWrapWidth`
+(30). Everything else, and a nil receiver, gets `GetLineWidth()`, so
+`set linewidth` above 80 still works on telnet and can only narrow a web
+session. `TestOnlyWrapWidthReadsTheSavedLineWidth` in `internal/guards` keeps
+it the only reader of `GetLineWidth` that wraps.
+
 ### Game menu session (#375 phase 0)
 
 A player has at most one open game menu (`activeMenu`, with its

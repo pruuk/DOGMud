@@ -30,8 +30,8 @@ func TestRefusalAliasMatchesSystem(t *testing.T) {
 
 // TestCategoryRefusalKeepsSystemTreatment pins M7's promise (#371): moving a
 // refusal off CategorySystem changes nothing a player sees. Same alias
-// value (checked in the data test below), same normalisation, never wrapped,
-// never suppressed.
+// value (checked in the data test below), same normalisation, wrapped as
+// CategorySystem is, never suppressed.
 func TestCategoryRefusalKeepsSystemTreatment(t *testing.T) {
 	if CategoryRefusal.String() != "refusal" {
 		t.Fatalf("CategoryRefusal.String() = %q, want refusal", CategoryRefusal.String())
@@ -39,8 +39,8 @@ func TestCategoryRefusalKeepsSystemTreatment(t *testing.T) {
 	if skipStages(CategoryRefusal) != skipStages(CategorySystem) {
 		t.Error("CategoryRefusal must normalise exactly as CategorySystem")
 	}
-	if shouldWrap(CategoryRefusal) {
-		t.Error("CategoryRefusal must not wrap: CategorySystem never did")
+	if shouldWrap(CategoryRefusal) != shouldWrap(CategorySystem) {
+		t.Error("CategoryRefusal must wrap exactly as CategorySystem does")
 	}
 	for _, v := range []Verbosity{VerbosityFull, VerbosityMedium, VerbosityLight} {
 		if v.Suppresses(CategoryRefusal) {

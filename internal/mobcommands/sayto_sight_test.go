@@ -61,27 +61,38 @@ func TestMobSayToOnly_BlindedAddresseeHearsNoSpeakerName(t *testing.T) {
 	require.Empty(t, mobSpeechHeard(1), "sayto-only reaches the addressee alone")
 }
 
-// An addressed line wraps at 80 columns the way a plain NPC say does
-// (actions.FormatSayText): Cleric Hadwen's rite (9100) speaks long lines
-// through sayto, one to each asker, since the 2026-10-17 newbie-duo fix.
-func TestMobSayTo_LongLineWrapsAt80(t *testing.T) {
+// An addressed line wraps in the pipeline, at each reader's width, the way a
+// plain NPC say does: Cleric Hadwen's rite (9100) speaks long lines through
+// sayto, one to each asker, since the 2026-10-17 newbie-duo fix. Aliceia has
+// no saved width, so 80. Bobrick reads at 200 and must get each line whole:
+// a sender that wrapped first, at any fixed width, would break it for him.
+func TestMobSayTo_LongLineWrapsAtEachReadersWidth(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	mob, room := mobSpeechRoom(t)
+	users.GetByUserId(2).LineWidth = 200 // seedAllRegistries' cleanup drops this user
 
 	long := "the pool answers first, it is older than the town and more patient than I am, so look into the water and wait"
 	_, err := SayTo("alice "+long, mob, room)
 	require.NoError(t, err)
 	_, err = SayTo("bob "+long, mob, room)
 	require.NoError(t, err)
-	for _, uid := range []int{1, 2} {
-		heard := mobSpeechHeard(uid)
-		require.NotEmpty(t, heard)
-		for _, msg := range heard {
-			for _, line := range strings.Split(strings.ReplaceAll(msg, "\r", ""), "\n") {
-				require.LessOrEqual(t, len(line), 80, "user %d heard an unwrapped line: %q", uid, line)
-			}
+
+	aliceia := mobSpeechHeard(1)
+	require.Len(t, aliceia, 2)
+	for _, msg := range aliceia {
+		lines := strings.Split(strings.ReplaceAll(msg, "\r", ""), "\n")
+		require.Greater(t, len(lines), 1, "a line this long must wrap at 80: %q", msg)
+		for _, line := range lines {
+			require.LessOrEqual(t, len(line), 80, "Aliceia heard an unwrapped line: %q", line)
 		}
+	}
+
+	bobrick := mobSpeechHeard(2)
+	require.Len(t, bobrick, 2)
+	for _, msg := range bobrick {
+		require.NotContains(t, strings.TrimSpace(msg), "\n", "a reader at 200 got a line broken before the pipeline")
+		require.Greater(t, len(msg), 80, "the line must be long enough to tell the two widths apart: %q", msg)
 	}
 }
 

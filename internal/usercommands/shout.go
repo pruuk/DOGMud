@@ -48,7 +48,7 @@ func Shout(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	actions.Shout(&actions.UserActor{User: user, Room: room}, rest)
 
 	selfMsg := fmt.Sprintf(`You shout, "<ansi fg="yellow">%s</ansi>"`, rest)
-	user.SendText(messaging.CategoryShout, util.SplitStringNL(selfMsg, 80))
+	user.SendText(messaging.CategoryShout, selfMsg)
 
 	return true, nil
 }

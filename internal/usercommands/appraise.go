@@ -104,7 +104,7 @@ func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> appraises <ansi fg="itemname">%s</ansi>.`, user.Character.Name, itemSpec.Name), user.UserId)
 
 		inspectTxt, _ := templates.Process("descriptions/identify", details, user.UserId)
-		user.SendText(messaging.CategorySystem, inspectTxt)
+		user.SendText(messaging.CategoryScreen, inspectTxt)
 
 		break
 	}

@@ -21,7 +21,6 @@ const (
 )
 
 const (
-	lineWidth    = 80
 	numberColor  = "command"
 	markerColor  = "yellow-bold"
 	dimColor     = "8"
@@ -45,8 +44,8 @@ type Entry struct {
 type Menu struct {
 	Heading string
 	// Body is optional paragraphs between the heading and the entries,
-	// each wrapped at the 80-column width (an offer card's objective and
-	// reward). The labels lint does not read it.
+	// each wrapped to the width given to Render (an offer card's objective
+	// and reward). The labels lint does not read it.
 	Body       []string
 	Entries    []Entry
 	Leave      string // label of the final numbered leave entry; "" for none
@@ -71,9 +70,10 @@ func (m Menu) all() []Entry {
 	return append(out, Entry{Label: m.Leave})
 }
 
-// Render draws the menu at the 80-column wrap. Callers send it on
-// messaging.CategoryScreen (player menus) or CategoryAdmin (builders).
-func Render(m Menu) string {
+// Render draws the menu for a reader width columns wide (their
+// UserRecord.WrapWidth). Callers send it on messaging.CategoryScreen (player
+// menus) or CategoryAdmin (builders).
+func Render(m Menu, width int) string {
 	var b strings.Builder
 	if m.Heading != "" {
 		b.WriteString(m.Heading)
@@ -81,7 +81,7 @@ func Render(m Menu) string {
 	}
 	if len(m.Body) > 0 {
 		for _, para := range m.Body {
-			for _, line := range wrap(para, lineWidth) {
+			for _, line := range wrap(para, width) {
 				b.WriteString(line)
 				b.WriteString("\n")
 			}
@@ -95,12 +95,12 @@ func Render(m Menu) string {
 		} else {
 			numW := len(strconv.Itoa(len(entries)))
 			for i, e := range entries {
-				renderEntry(&b, i+1, numW, e)
+				renderEntry(&b, i+1, numW, e, width)
 			}
 		}
 		b.WriteString("\n")
 	}
-	b.WriteString(footer(m))
+	b.WriteString(strings.Join(wrap(footer(m), width), "\n"))
 	return b.String()
 }
 
@@ -130,7 +130,7 @@ func labelText(e Entry) string {
 	return fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, lineColor(e), e.Label)
 }
 
-func renderEntry(b *strings.Builder, n, numW int, e Entry) {
+func renderEntry(b *strings.Builder, n, numW int, e Entry, width int) {
 	b.WriteString(leftMargin)
 	b.WriteString(numberText(n, numW))
 	b.WriteString(" ")
@@ -141,7 +141,7 @@ func renderEntry(b *strings.Builder, n, numW int, e Entry) {
 		return
 	}
 	indent := strings.Repeat(" ", len(leftMargin)+numW+2+markerColumn)
-	for _, line := range wrap(e.Detail, lineWidth-len(indent)) {
+	for _, line := range wrap(e.Detail, width-len(indent)) {
 		b.WriteString(indent)
 		fmt.Fprintf(b, `<ansi fg="%s">%s</ansi>`, lineColor(e), line)
 		b.WriteString("\n")

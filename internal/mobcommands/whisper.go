@@ -50,7 +50,7 @@ func Whisper(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	line := fmt.Sprintf(`<ansi fg="white">***</ansi> <ansi fg="mobname">%s</ansi> whispers to you, "<ansi fg="saytext-mob">%s</ansi>" <ansi fg="white">***</ansi>`,
 		mob.Character.Name, text)
 	line = messaging.HideSpeakerNames(line, []string{mob.Character.Name}, sight)
-	toUser.SendText(messaging.CategoryWhisper, util.SplitStringNL(line, 80))
+	toUser.SendText(messaging.CategoryWhisper, util.SplitStringNL(line, toUser.WrapWidth()))
 
 	sender := mob.Character.Name
 	if sight != messaging.SightFull {

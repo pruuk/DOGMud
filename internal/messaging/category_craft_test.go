@@ -46,18 +46,18 @@ func TestCraftLinesWrapAt80(t *testing.T) {
 	}
 }
 
-// TestCraftLinesWouldNotWrapOnSystem proves the probe above can fail: the
-// same line on CategorySystem, where these lines rode before #515, comes
-// out as one line wider than 80.
-func TestCraftLinesWouldNotWrapOnSystem(t *testing.T) {
+// TestCraftLinesWouldNotWrapOnAnUnwrappedCategory proves the probe above can
+// fail: the same line on a category the pipeline does not wrap comes out as
+// one line wider than 80.
+func TestCraftLinesWouldNotWrapOnAnUnwrappedCategory(t *testing.T) {
 	got := RenderForRecipient(RenderInput{
-		Category:  CategorySystem,
+		Category:  CategoryAdmin,
 		Text:      craftLongLines[0],
 		Channel:   ChannelAudio,
 		LineWidth: 80,
 	})
 	if lines := splitLines(got); len(lines) != 1 || displayWidth(lines[0]) <= 80 {
-		t.Fatalf("expected CategorySystem to leave the 88-column line whole, got:\n%q", got)
+		t.Fatalf("expected CategoryAdmin to leave the 88-column line whole, got:\n%q", got)
 	}
 }
 

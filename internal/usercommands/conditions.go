@@ -28,7 +28,7 @@ type conditionEntry struct {
 // them out of the first list. The enum is gone; records are the conditions.
 func Conditions(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	tplTxt, _ := templates.Process("character/conditions", conditionEntries(user.Character), user.UserId)
-	user.SendText(messaging.CategorySystem, tplTxt)
+	user.SendText(messaging.CategoryScreen, tplTxt)
 	return true, nil
 }
 

@@ -1,11 +1,13 @@
 package hooks
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -101,6 +103,26 @@ func TestRoomIdle_RepeatReachesEachListenerOnce(t *testing.T) {
 		require.Equal(t, 1, countContaining(got, "cart rattles past"), "user %d: the repeated line reaches once: %v", uid, got)
 		require.Equal(t, 1, countContaining(got, "dog barks"), "user %d: a different line still reaches: %v", uid, got)
 	}
+}
+
+// A room idle line reaches everyone in the room, so it wraps for each of them,
+// and it keeps the look of the room description it rode before.
+func TestRoomIdle_WrapsForEachReader(t *testing.T) {
+	roomIdleFixture(t, []string{"unused"}, 0, 0)
+	users.GetByUserId(1).LineWidth = 40
+	long := "A cart rattles past on the far side of the square, its load shifting and groaning under a stained canvas cover."
+
+	sendRoomIdleLine(rooms.LoadRoom(1), long, false)
+
+	narrow := events.DrainQueuedMessagesForTest(1)
+	wide := events.DrainQueuedMessagesForTest(2)
+	require.Len(t, narrow, 1)
+	require.Len(t, wide, 1)
+	require.Contains(t, narrow[0], `fg="`+messaging.CategoryRoomIdle.String()+`"`)
+	for _, line := range strings.Split(strings.TrimRight(plainText(narrow[0]), "\n"), "\n") {
+		require.LessOrEqual(t, len([]rune(line)), 40, "%q", line)
+	}
+	require.Equal(t, 1, strings.Count(strings.TrimRight(plainText(wide[0]), "\n"), "\n"), "two lines at 80: %q", wide[0])
 }
 
 func TestRoomIdleChancePer10k(t *testing.T) {

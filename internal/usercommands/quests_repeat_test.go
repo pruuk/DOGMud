@@ -103,6 +103,7 @@ func TestQuestsCommand_OnlyFinishedRepeatablesPointsAtQuestsAll(t *testing.T) {
 	t.Cleanup(util.ResetRoundCountForTest)
 	util.SetRoundCountForTest(1000)
 	user, room := aimScene(t, aimFull)
+	readOnOneLineForTest(t, user)
 	useDogmudTemplates(t)
 	t.Cleanup(quests.SeedQuestsForTest(repeatTestQuest(0, false)))
 	user.Character.QuestProgress = map[int]string{}

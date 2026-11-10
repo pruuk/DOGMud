@@ -89,12 +89,13 @@ func RenderForRecipient(in RenderInput) string {
 	// Stage 5: color (stubbed; T2 lands a no-op, T4 wires data).
 	text = applyCategoryColor(in.Category, text)
 
-	// Stage 6: wrap, for the narration categories shouldWrap admits.
-	// Pre-formatted output (tables, banners, ASCII art, side-by-side
-	// templates) is excluded by category; see shouldWrap for the full
-	// list and the reason for each exclusion. WrapAnsi also remains
-	// callable directly by sites that wrap themselves, such as motd.go's
-	// box-bordered banner.
+	// Stage 6: wrap, for the categories shouldWrap admits. Layouts that
+	// must never fold (banners, ASCII art, side-by-side templates, screens)
+	// are excluded by category; see shouldWrap for the full list and the
+	// reason for each exclusion. WrapAnsi also remains callable directly by
+	// a layout that wraps its own inner column, such as motd.go's
+	// box-bordered banner, whose finished lines fit the reader and pass
+	// this stage unchanged.
 	if shouldWrap(in.Category) {
 		text = wrap(text, in.LineWidth)
 	}
@@ -114,23 +115,27 @@ func RenderForRecipient(in RenderInput) string {
 //
 // DELIBERATELY ABSENT, and each one has a reason:
 //
-//   - CategorySystem and CategoryBroadcast are MIXED BUCKETS. System
-//     carries one-line refusals alongside the score sheet, inventory,
-//     who, help, the admin DynamicList tables and the ASCII map.
-//     Broadcast carries free channel chat alongside the hand-drawn MOTD
-//     box. Neither can be folded without shattering the other half.
+//   - CategoryAdmin is staff tooling, read on a wide screen and laid out to
+//     it: the admin config dump alone runs to 158 columns.
+//   - CategoryScreen is a laid-out screen (help, the map, the achievements
+//     list, menus) that fits itself to the reader where it needs to.
 //   - CategoryRoomDescription renders a side-by-side block, prose left
 //     and minimap right. TestRoomDescriptionSkipsWrap pins it.
 //   - CategorySplash is rendered ASCII art.
 //   - CategorySkillProgress is a banner with its own formatting, and
 //     skipStages already excludes it for the same reason.
-//   - Speech, Whisper, Shout and Emote are ALREADY wrapped, at a
-//     hardcoded 80 that ignores the reader's LineWidth (say.go,
-//     shout.go, reply.go, whisper.go). Adding them here would wrap the
-//     same text twice at two different widths.
-//   - Error and Warning are Group A system output, which M7 owns.
+//   - CategoryWhisper goes to one known reader, so each sender wraps it
+//     itself to that reader's WrapWidth (usercommands/whisper.go, reply.go,
+//     mobcommands/whisper.go). Adding it here would wrap the same text
+//     twice.
+//   - CategoryDefault is the fail-safe itself.
 //   - GrappleHigh, Login, OOC and Toxin have zero production senders, so
 //     any policy here would be unreachable.
+//
+// A category that also carries tables can still be admitted (System,
+// Broadcast): WrapAnsi copies a line that fits unchanged, padding included,
+// so a table narrower than the reader passes untouched. A row wider than
+// the reader folds, which is what the reader's screen would do to it anyway.
 func shouldWrap(cat Category) bool {
 	switch cat {
 	// Combat — hits.
@@ -154,7 +159,10 @@ func shouldWrap(cat Category) bool {
 		// NPC and ambient prose.
 		CategoryNPCDialogue, CategoryDialogueHint, CategoryMobIdle,
 		CategoryMobEmote, CategoryRoomEntry, CategoryRoomExit,
-		CategoryWeather, CategoryTimeOfDay, CategoryLight,
+		CategoryWeather, CategoryTimeOfDay, CategoryLight, CategoryRoomIdle,
+		// Sent to a whole room, so each reader's own width applies. No sender
+		// may wrap these first.
+		CategorySpeech, CategoryShout, CategoryEmote,
 		// Other narration plus tips.
 		CategoryLoot, CategoryEquipment, CategoryConditionApply,
 		CategoryConditionExpire, CategoryMutation, CategoryTip,
@@ -163,7 +171,13 @@ func shouldWrap(cat Category) bool {
 		// The crafter's own work lines (#515): recipe prose runs long.
 		CategoryCraft,
 		// The room's lines about a crafter (owner ruling C).
-		CategoryCraftSeen:
+		CategoryCraftSeen,
+		// Output a player reads as sentences. Each can also carry a table or a
+		// box, and WrapAnsi leaves a line that fits exactly as it came, so
+		// only a line wider than the reader folds. No sender may wrap these
+		// first.
+		CategorySystem, CategoryWarning, CategoryError, CategoryRefusal,
+		CategoryUsage, CategoryGroup, CategoryBroadcast:
 		return true
 	}
 	return false

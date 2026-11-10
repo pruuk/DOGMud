@@ -32,6 +32,39 @@ func renderedSetLines(t *testing.T, u *users.UserRecord, show func()) []string {
 	return strings.Split(strings.TrimRight(text, "\n"), "\n")
 }
 
+func containsLine(lines []string, want string) bool {
+	for _, line := range lines {
+		if line == want {
+			return true
+		}
+	}
+	return false
+}
+
+// CategoryScreen never wraps, so the fprompt screen lays out its own lines to
+// the reader: the header, the toggle rows and the closing sentence.
+func TestSetFprompt_FitsANarrowReader(t *testing.T) {
+	u := users.NewTestUser(8803, "narrow", "Narrow", 18803)
+	u.LineWidth = 30
+
+	lines := renderedSetLines(t, u, func() { _, _ = cmdSetFprompt(u, `fprompt`, `fprompt`, nil) })
+	for i, line := range lines {
+		if w := utf8.RuneCountInString(line); w > 30 {
+			t.Errorf("line %d is %d columns, over 30: %q", i, w, line)
+		}
+	}
+	joined := strings.Join(strings.Fields(strings.Join(lines, " ")), " ")
+	for _, want := range []string{
+		"Toggle Settings (set fprompt tog <name> to change):",
+		"Target health description",
+		"Type help set-prompt for more info on customizing prompts.",
+	} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("the screen lost %q:\n%s", want, strings.Join(lines, "\n"))
+		}
+	}
+}
+
 // #614: the set screens rode CategorySystem, whose normalizer stopped every
 // label and value ("ScreenReader:.", "OFF.", "UTF-8.", "0%."), and each label
 // and value sat on its own line. They are now laid-out blocks on
@@ -61,8 +94,8 @@ func TestSetScreens_LaidOutRowsWithNoStops(t *testing.T) {
 			if strings.HasSuffix(trimmed, ".") && !sentences[trimmed] && !strings.HasSuffix(trimmed, "traveller.") {
 				t.Errorf("%s line %d gained a stop: %q", name, i, line)
 			}
-			if w := utf8.RuneCountInString(line); w > setScreenWidth {
-				t.Errorf("%s line %d is %d columns, over %d: %q", name, i, w, setScreenWidth, line)
+			if w := utf8.RuneCountInString(line); w > u.WrapWidth() {
+				t.Errorf("%s line %d is %d columns, over %d: %q", name, i, w, u.WrapWidth(), line)
 			}
 			if strings.Count(line, "{") != strings.Count(line, "}") {
 				t.Errorf("%s line %d splits a prompt {token} across lines: %q", name, i, line)
@@ -70,6 +103,17 @@ func TestSetScreens_LaidOutRowsWithNoStops(t *testing.T) {
 			if i > 0 && trimmed == "" && strings.TrimSpace(lines[i-1]) == "" {
 				t.Errorf("%s line %d is a second blank line in a row", name, i)
 			}
+		}
+	}
+
+	fprompt := renderedSetLines(t, u, func() { _, _ = cmdSetFprompt(u, `fprompt`, `fprompt`, nil) })
+	for _, want := range []string{
+		"Toggle Settings (set fprompt tog <name> to change):",
+		"  targethealth   [ON]  Target health description",
+		"Type help set-prompt for more info on customizing prompts.",
+	} {
+		if !containsLine(fprompt, want) {
+			t.Errorf("at 80 columns the fprompt screen must keep the line %q:\n%s", want, strings.Join(fprompt, "\n"))
 		}
 	}
 

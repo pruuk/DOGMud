@@ -347,7 +347,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendBlankLine(messaging.CategoryRoomDescription)
 		user.SendText(messaging.CategoryRoomDescription, fmt.Sprintf(`You look at the <ansi fg="noun">%s</ansi>:`, noun))
 		user.SendBlankLine(messaging.CategoryRoomDescription)
-		user.SendText(messaging.CategoryRoomDescription, util.SplitStringNL(desc, 80))
+		user.SendText(messaging.CategoryRoomDescription, util.SplitStringNL(desc, user.WrapWidth()))
 		user.SendBlankLine(messaging.CategoryRoomDescription)
 		return true, nil
 	}
@@ -382,7 +382,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		for noun := range lookItem.GetSpec().Nouns {
 			itemDesc = strings.Replace(itemDesc, noun, `<ansi fg="noun">`+noun+`</ansi>`, 1)
 		}
-		user.SendText(messaging.CategoryRoomDescription, util.SplitStringNL(itemDesc, 80))
+		user.SendText(messaging.CategoryRoomDescription, util.SplitStringNL(itemDesc, user.WrapWidth()))
 
 		// Show potion aging info based on alchemy skill
 		lookSpec := lookItem.GetSpec()
@@ -464,7 +464,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			)
 		}
 
-		user.SendText(messaging.CategoryRoomDescription, util.SplitStringNL(foundDesc, 80))
+		user.SendText(messaging.CategoryRoomDescription, util.SplitStringNL(foundDesc, user.WrapWidth()))
 
 		user.SendBlankLine(messaging.CategoryRoomDescription)
 
@@ -659,7 +659,7 @@ func lookAtFloorItem(user *users.UserRecord, room *rooms.Room, floorItem items.I
 	}
 
 	user.SendText(messaging.CategoryRoomDescription,
-		util.SplitStringNL(floorItem.LongDescriptionFor(user.UserId), 80),
+		util.SplitStringNL(floorItem.LongDescriptionFor(user.UserId), user.WrapWidth()),
 	)
 	if floorItem.BaubleBelongsTo(room.RoomId) {
 		user.SendText(messaging.CategoryRoomDescription,

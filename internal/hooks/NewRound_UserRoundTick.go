@@ -212,7 +212,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 								// or lit. It is ambient: the listener budget and
 								// the once-per-visit rule for a one-line room
 								// apply (#317).
-								sendRoomIdleLine(room, util.SplitStringNL(msg, 80), idleMsgCt == 1)
+								sendRoomIdleLine(room, msg, idleMsgCt == 1)
 							}
 
 						}

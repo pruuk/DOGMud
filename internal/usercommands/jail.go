@@ -42,8 +42,7 @@ func Fine(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, "Your sentence is all but served. You'll be released shortly.")
 		return true, nil
 	}
-	// Two lines: CategorySystem is never wrapped by the pipeline, so one
-	// sentence pair ran past 80 columns (#250).
+	// Two lines: the fine, then how it changes (#250).
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(
 		`Your fine to walk free now is <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(fine)))
 	user.SendText(messaging.CategorySystem,

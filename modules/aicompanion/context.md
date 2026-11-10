@@ -370,7 +370,7 @@ Roadmap and phase plan: `docs/aicompanion/`.
   `aicompanion mind <character>` and a status line per companion with its
   `tier=relay|server|none`; the player's `companion-ai` (consent, the
   `strangers on|off` toggle, and which tier is answering, `tierWords`).
-  Its lines are wrapped at 80 columns before sending, since the system
+  Its lines are wrapped to the reader's width before sending, since the system
   category is never wrapped for the reader. `companion-ask <who>` runs the
   owner's typed name through `actions.AimBySight` before it looks the NPC
   up (#454), so in the dark a name that is there and one that is not read

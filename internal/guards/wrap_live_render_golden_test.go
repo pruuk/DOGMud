@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -72,14 +73,17 @@ const dogmudDataFilesRoot = "_datafiles/world/dogmud"
 // callers do, is what actually reflects what a player receives.
 //
 // WHY A NEWLINE COUNT ALONE IS NOT SUFFICIENT.
-// WrapAnsi rejoins words with a single space regardless of how many spaces
-// separated them in the source. A real DynamicList table once went from 494
-// bytes to 436 at width 55 with its NEWLINE COUNT UNCHANGED — the wrap
-// stage had silently eaten the column padding that lined up the rows,
-// without folding a single line. A line-count-only assertion would have
-// passed while the table was ruined. Only a full checked-in golden of the
-// pipeline's byte output catches that, plus any future stage that starts
-// touching this text.
+// When it folds a line, WrapAnsi rejoins that line's words with a single
+// space regardless of how many spaces separated them in the source. A real
+// DynamicList table once went from 494 bytes to 436 at width 55 with its
+// NEWLINE COUNT UNCHANGED, because the wrap stage then ate the padding of
+// lines it did not fold. A line-count-only assertion would have passed while
+// the table was ruined. WrapAnsi now copies a line that fits, and only a full
+// checked-in golden of the pipeline's byte output pins that, plus any future
+// stage that starts touching this text.
+//
+// CategorySystem and CategoryBroadcast wrap now, at the reader's width. Lines
+// at or under the width (55 here) must come through as laid out.
 func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 	wrapLiveRenderGoldenPath := testdataPath(wrapLiveRenderGoldenName)
 	prevDataFiles := configs.GetFilePathsConfig().DataFiles.String()
@@ -147,6 +151,39 @@ func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 	}))
 	sb.WriteString("\n")
 
+	// The real sheet is laid out to 79 columns, so at a telnet reader's 80 every
+	// row that fits must arrive exactly as the template drew it, padding and
+	// all. The golden above records the narrow case, where it folds. A row the
+	// template itself overflows (a long species name pushes Info to 81) folds
+	// like any other long line, so it is the one row not compared.
+	plainStatus := func(s string) []string {
+		s = strings.ReplaceAll(motdAnsiTagRE.ReplaceAllString(s, ""), "\r\n", "\n")
+		return strings.Split(strings.TrimSuffix(strings.TrimRight(s, "\n"), "."), "\n")
+	}
+	wantStatus := plainStatus(statusRendered)
+	gotStatus := plainStatus(messaging.RenderForRecipient(messaging.RenderInput{
+		Category:  messaging.CategorySystem,
+		Text:      statusRendered,
+		Channel:   messaging.ChannelAudio,
+		LineWidth: 80,
+	}))
+	if len(gotStatus) != len(wantStatus) {
+		t.Fatalf("the status sheet changed shape at 80:\nwant %q\ngot  %q", wantStatus, gotStatus)
+	}
+	compared := 0
+	for i, want := range wantStatus {
+		if utf8.RuneCountInString(want) > 80 {
+			continue
+		}
+		compared++
+		if gotStatus[i] != want {
+			t.Errorf("status row %d fits at 80 and must not change:\nwant %q\ngot  %q", i, want, gotStatus[i])
+		}
+	}
+	if compared < 15 {
+		t.Fatalf("only %d status rows fit at 80: the fixture no longer says anything", compared)
+	}
+
 	// ── Fixture 2: templates.DynamicList, the real column packer behind ────
 	// the admin item and mob listings (internal/usercommands/admin.item.go,
 	// admin.mob.go). Six entries, mirroring how admin.item.go derives its
@@ -193,7 +230,7 @@ func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 	// motd.go's own comments and arithmetic rather than inventing a new
 	// shape:
 	//
-	//   lw := user.GetLineWidth()          -> lineWidth (55) here
+	//   motdBox(text, user.WrapWidth())     -> lw is lineWidth (55) here
 	//   innerWidth := lw - 3                -> chars between the corners
 	//   padWidth := lw - 4                  -> ` ║ ` (3) + `║` (1) = 4 frame chars
 	//   wrapWidth := padWidth - 1           -> lw - 5, leaves a gutter space
@@ -245,7 +282,10 @@ func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 	// checked-in golden keeps the comparison platform-independent, the same
 	// belt-and-braces reasoning m2_routing_guard_test.go documents for its
 	// own golden.
-	got := strings.ReplaceAll(sb.String(), "\r\n", "\n")
+	// Every carriage return goes, not only CRLF pairs: a Windows checkout's
+	// templates are CRLF, and WrapAnsi closes a tag at the line break, which
+	// strands a lone CR inside it. A golden recorded there must match Linux.
+	got := strings.ReplaceAll(sb.String(), "\r", "")
 
 	if *updateLiveRender {
 		if err := os.WriteFile(wrapLiveRenderGoldenPath, []byte(got), 0o644); err != nil {
@@ -262,17 +302,16 @@ func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 	// Windows checkout rewrites line endings, and .gitattributes pins
 	// *.golden to LF on checkout, but that only applies on checkout — a
 	// golden reaching this test any other way could still arrive CRLF.
-	want := strings.ReplaceAll(string(raw), "\r\n", "\n")
+	want := strings.ReplaceAll(string(raw), "\r", "")
 
 	if got != want {
 		pos, ctxWant, ctxGot := firstDiffContext(want, got)
 		t.Fatalf(
 			"live render pipeline output does not match %s (first difference at byte %d)\n\n"+
 				"want context:\n%s\n\ngot context:\n%s\n\n"+
-				"If CategorySystem or CategoryBroadcast was added to shouldWrap's "+
-				"allowlist (internal/messaging/pipeline.go), REVERT that: those two "+
-				"categories are deliberately excluded because they carry pre-formatted "+
-				"tables, box banners and ASCII art that wrapping mangles.\n\n"+
+				"CategorySystem and CategoryBroadcast wrap, but WrapAnsi must copy a "+
+				"line that fits unchanged (internal/messaging/wrap.go); if padding "+
+				"collapsed on a line at or under the width, fix that.\n\n"+
 				"Otherwise, if this change is deliberate, re-record with:\n"+
 				"  go test ./internal/guards/ -run TestLiveRenderedOutputSurvivesThePipeline -update-live-render -v",
 			wrapLiveRenderGoldenPath, pos, ctxWant, ctxGot,

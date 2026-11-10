@@ -195,7 +195,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		typeMenu.Default = string(newItemSpec.Type)
 		question := cmdPrompt.AskMenu(typeMenu)
 		if !question.Done {
-			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 			return true, nil
 		}
 
@@ -210,7 +210,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		if newItemSpec.Type == `` {
 			question.RejectResponse()
 
-			user.SendText(messaging.CategoryAdmin, menu.Render(typeMenu))
+			user.SendText(messaging.CategoryAdmin, menu.Render(typeMenu, user.WrapWidth()))
 
 			return true, nil
 		}
@@ -339,7 +339,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		subTypeMenu.Default = string(newItemSpec.Subtype)
 		question := cmdPrompt.AskMenu(subTypeMenu)
 		if !question.Done {
-			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 			return true, nil
 		}
 
@@ -354,7 +354,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		if newItemSpec.Subtype == `` {
 			question.RejectResponse()
 
-			user.SendText(messaging.CategoryAdmin, menu.Render(subTypeMenu))
+			user.SendText(messaging.CategoryAdmin, menu.Render(subTypeMenu, user.WrapWidth()))
 
 			return true, nil
 		}
@@ -370,7 +370,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		}
 		question := cmdPrompt.AskMenu(usesMenu)
 		if !question.Done {
-			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 			return true, nil
 		}
 
@@ -473,7 +473,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 
 			user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">SubType:</ansi>     <ansi fg="white-bold">`+string(newItemSpec.Subtype)+`</ansi>`)
 
-			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 			return true, nil
 		}
 

@@ -107,6 +107,13 @@ var wrapAllowlist = map[Category]bool{
 	CategoryWeather:      true,
 	CategoryTimeOfDay:    true,
 	CategoryLight:        true,
+	CategoryRoomIdle:     true, // web client base, plan 1
+
+	// Sent to a whole room, so each reader's own width applies (web client
+	// base, plan 1).
+	CategorySpeech: true,
+	CategoryShout:  true,
+	CategoryEmote:  true,
 
 	// Other narration plus tips.
 	CategoryLoot:            true,
@@ -118,13 +125,25 @@ var wrapAllowlist = map[Category]bool{
 	CategoryLogout:          true,
 	CategoryCraft:           true, // #515
 	CategoryCraftSeen:       true, // owner ruling C, 2026-10-13
+
+	// A line that fits passes untouched, so a narrow table or box survives
+	// here; only a line wider than the reader folds (web client base).
+	CategorySystem:    true,
+	CategoryWarning:   true,
+	CategoryError:     true,
+	CategoryRefusal:   true,
+	CategoryUsage:     true,
+	CategoryGroup:     true,
+	CategoryBroadcast: true,
 }
 
 // TestShouldWrapMatchesPinnedAllowlist pins shouldWrap's exact
 // membership against wrapAllowlist. A mismatch means one of the two
 // changed without the other; update both deliberately. It also asserts
-// the admitted count is exactly 48 (46 before CategoryCraft, #515, and
-// CategoryCraftSeen, owner ruling C), so the pin itself cannot be edited
+// the admitted count is exactly 59 (46 before CategoryCraft, #515, and
+// CategoryCraftSeen, owner ruling C; 48 before Speech, Shout, Emote and
+// RoomIdle, web client base plan 1; 52 before System, Warning, Error,
+// Refusal, Usage, Group and Broadcast), so the pin itself cannot be edited
 // without updating its own count.
 func TestShouldWrapMatchesPinnedAllowlist(t *testing.T) {
 	admitted := 0
@@ -138,8 +157,8 @@ func TestShouldWrapMatchesPinnedAllowlist(t *testing.T) {
 			admitted++
 		}
 	}
-	if admitted != 48 {
-		t.Errorf("expected exactly 48 categories admitted to wrap, got %d", admitted)
+	if admitted != 59 {
+		t.Errorf("expected exactly 59 categories admitted to wrap, got %d", admitted)
 	}
 }
 
@@ -148,18 +167,13 @@ func TestShouldWrapMatchesPinnedAllowlist(t *testing.T) {
 // the list cannot quietly admit one of these.
 func TestMixedAndPreformattedCategoriesNeverWrap(t *testing.T) {
 	neverWrap := map[Category]string{
-		CategorySystem:          "mixed bucket: refusals alongside the score sheet, inventory, who, help, admin DynamicList tables and the ASCII map",
-		CategoryBroadcast:       "mixed bucket: free channel chat alongside the hand-drawn MOTD box",
+		CategoryAdmin:           "staff tooling laid out to a wide screen",
 		CategoryRoomDescription: "renders a side-by-side block, prose left and minimap right",
 		CategorySplash:          "rendered ASCII art",
 		CategorySkillProgress:   "a banner with its own formatting",
-		CategorySpeech:          "already wrapped at a hardcoded 80 by say.go, ignoring LineWidth",
-		CategoryWhisper:         "already wrapped at a hardcoded 80 by whisper.go, ignoring LineWidth",
-		CategoryShout:           "already wrapped at a hardcoded 80 by shout.go, ignoring LineWidth",
-		CategoryEmote:           "already wrapped at a hardcoded 80 by reply.go, ignoring LineWidth",
+		CategoryWhisper:         "goes to one known reader, and each sender wraps it to that reader's WrapWidth",
 		CategoryDefault:         "the fail-safe default: an unclassified category keeps today's behavior",
-		CategoryRefusal:         "refusals rode CategorySystem, which never wraps (M7, #371)",
-		CategoryScreen:          "a laid-out screen (the map, the achievements list) that rode CategorySystem",
+		CategoryScreen:          "a laid-out screen (the map, the achievements list) that fits itself",
 	}
 
 	for cat, reason := range neverWrap {
@@ -248,10 +262,10 @@ func TestTipWrapsAtRecipientLineWidth(t *testing.T) {
 	}
 }
 
-// TestSystemNeverWraps guards the mixed bucket. CategorySystem carries the
-// score sheet, inventory, who, help, the admin DynamicList tables and the
-// ASCII map alongside one-line refusals, so folding it would shatter every
-// one of those layouts.
+// TestSystemKeepsATableThatFits guards the mixed bucket. CategorySystem
+// carries tables alongside its sentences, and it wraps only because a line
+// that fits the reader is left alone; a table narrower than the reader must
+// arrive as it was laid out.
 //
 // This does not assert byte-exact passthrough. The pipeline legitimately
 // adds a category colour tag (stage 5) and, today, a normalization period
@@ -266,7 +280,7 @@ func TestTipWrapsAtRecipientLineWidth(t *testing.T) {
 // both: the output has the same number of lines as the input, and each
 // input line's padding survives intact as an exact substring of the
 // output.
-func TestSystemNeverWraps(t *testing.T) {
+func TestSystemKeepsATableThatFits(t *testing.T) {
 	table := "Item              Qty   Value\n" +
 		"---------------   ---   -----\n" +
 		"healing draught     3     45g"
@@ -275,7 +289,7 @@ func TestSystemNeverWraps(t *testing.T) {
 		Category:  CategorySystem,
 		Text:      table,
 		Channel:   ChannelAudio,
-		LineWidth: 20,
+		LineWidth: 80,
 	})
 
 	inputLines := splitLines(table)

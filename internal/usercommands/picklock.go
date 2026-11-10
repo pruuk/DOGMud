@@ -187,7 +187,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	cmdPrompt.NonModal = true
 
 	if isNew {
-		user.SendText(messaging.CategorySystem, GetLockRender(sequence, keyring_sequence, user.UserId))
+		user.SendText(messaging.CategoryScreen, GetLockRender(sequence, keyring_sequence, user.UserId))
 	}
 
 	entered := ``
@@ -197,7 +197,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	question := cmdPrompt.AskMenu(picklockMenu())
 	if !question.Done {
-		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 	}
 
@@ -258,7 +258,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		return true, nil
 	}
 
-	user.SendText(messaging.CategorySystem, GetLockRender(sequence, entered, user.UserId))
+	user.SendText(messaging.CategoryScreen, GetLockRender(sequence, entered, user.UserId))
 
 	if sequenceMatches(entered, sequence) {
 
@@ -309,7 +309,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	// The question was reset above, so show the choices again.
-	user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
+	user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu, user.WrapWidth()))
 	return true, nil
 }
 

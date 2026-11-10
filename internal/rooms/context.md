@@ -853,6 +853,13 @@ Comprehensive test coverage in `*_test.go` files covering:
 - Ephemeral room creation and cleanup
 - Visitor tracking and room state management
 
+## Width
+
+Every sender passes `UserRecord.WrapWidth()` as the pipeline's width.
+`GetDetails` wraps the description to the viewer's `WrapWidth()`, and to
+that less the minimap's 7 columns beside a minimap. `GetDescriptionFormatted`
+uses the width it is given.
+
 ## Special Considerations
 - **Memory management**: Rooms automatically unload when empty to conserve memory
 - **Ephemeral limits**: Maximum of 100 chunks with 250 rooms each for temporary content

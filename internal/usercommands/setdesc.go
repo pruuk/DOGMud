@@ -33,8 +33,7 @@ func SetDesc(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	rest = util.EscapeAnsiTags(rest)
 	user.Character.Description = rest
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(
-		"Your description has been set to:\n%s",
-		util.SplitStringNL(rest, 72)))
+		"Your description has been set to:\n%s", rest))
 
 	return true, nil
 }

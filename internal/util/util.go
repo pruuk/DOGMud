@@ -244,6 +244,10 @@ func SplitString(input string, lineWidth int) []string {
 
 		l := len(words)
 
+		// True from an over-long word until the next visible text, which must
+		// start its line without the space that followed the word.
+		afterLongWord := false
+
 		skip := false
 		for idx, word := range words {
 			if skip {
@@ -261,8 +265,27 @@ func SplitString(input string, lineWidth int) []string {
 				skip = false
 			}
 
+			if afterLongWord {
+				word = strings.TrimLeft(word, " ")
+				if word == "" {
+					continue
+				}
+				wordLen = VisibleWidth(word)
+				afterLongWord = wordLen == 0
+			}
+
 			if wordLen > lineWidth {
-				result = append(result, word)
+				// The sentence so far goes first, so the word keeps its place.
+				// Anything invisible held back (a color tag) rides on the word
+				// rather than printing as an empty line.
+				if VisibleWidth(strings.TrimRight(currentLine, " ")) > 0 {
+					result = append(result, strings.TrimRight(currentLine, " "))
+					currentLine = ""
+				}
+				result = append(result, strings.TrimRight(currentLine+word, " "))
+				currentLine = ""
+				currentLen = 0
+				afterLongWord = true
 				continue
 			}
 
@@ -280,7 +303,12 @@ func SplitString(input string, lineWidth int) []string {
 		}
 
 		if currentLine != "" {
-			result = append(result, currentLine)
+			if afterLongWord {
+				// Only tags since the over-long word: they belong on its line.
+				result[len(result)-1] += currentLine
+			} else {
+				result = append(result, currentLine)
+			}
 			currentLine = ""
 			currentLen = 0
 		}

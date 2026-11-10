@@ -123,6 +123,7 @@ func TestAmbientBandolier_TickReleaseLineNamesTheReason(t *testing.T) {
 	defer seedPeakAmbient()()
 
 	u := users.NewTestUser(753, "peak", "Peak", 7753)
+	u.LineWidth = 200 // the wording under test, on one line
 	u.Character.Equipment.Belt = items.New(peakVitalisId)
 	sour := items.New(peakPitId)
 	sour.CraftedRound = 1 // far past its spoil point at the round below

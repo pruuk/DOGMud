@@ -32,6 +32,7 @@ func searchEyes(t *testing.T, alice *users.UserRecord, perception int) {
 
 func TestSearch_PlainSearchUncoversAQuestSearchSpot(t *testing.T) {
 	alice, room := interactScene(t)
+	readOnOneLineForTest(t, alice)
 	searchEyes(t, alice, 100000)
 	fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
 		999460, "search_at", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})

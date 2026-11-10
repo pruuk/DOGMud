@@ -35,8 +35,8 @@ send the text. Part of the quest-arc phase 0 work (#375).
 
 - `Heading`, `Entries`.
 - `Body`: optional paragraphs between the heading and the entries (#375 phase
-  2: the offer card's objective and reward). Each is wrapped at 80 columns on
-  its own line(s); `Render` puts a blank line after the heading and one after
+  2: the offer card's objective and reward). Each is wrapped to `Render`'s
+  width on its own line(s); `Render` puts a blank line after the heading and one after
   the last paragraph. `LintLabels` does not read it.
 - `Leave`: label of the final numbered leave entry; `""` for none.
 - `LeaveAliases`: extra exact words that pick Leave, checked before the
@@ -51,12 +51,13 @@ send the text. Part of the quest-arc phase 0 work (#375).
 
 ## Render
 
-`Render(m)` draws at the 80-column wrap. Callers send the result on
+`Render(m, width)` draws for a reader `width` columns wide, always
+`UserRecord.WrapWidth()` in production. Callers send the result on
 `messaging.CategoryScreen` (player menus) or `CategoryAdmin` (builders).
 
 - Each line is a 2-space margin, the right-aligned number, a 4-wide marker
   column, then the label. Numbers are padded to the width of the largest.
-- `Detail` wraps at 80 columns under the label, indented past the marker
+- `Detail` wraps to the width under the label, indented past the marker
   column.
 - `Dim` entries render grey (colour 8); every other label and `Detail` line
   renders in the `menu-label` alias (white, 15). Menus ride the grey
@@ -68,7 +69,8 @@ send the text. Part of the quest-arc phase 0 work (#375).
   `Detail` is dropped.
 - The footer is `Footer` when set; otherwise "Type a number, or press Enter
   for N." when `Default` names an entry; otherwise "Type a number, or press
-  Enter to leave." when `Leave` is set; otherwise "Type a number."
+  Enter to leave." when `Leave` is set; otherwise "Type a number." It wraps
+  to the width given to `Render`, as `Body` and `Detail` do.
 
 ## Resolve
 

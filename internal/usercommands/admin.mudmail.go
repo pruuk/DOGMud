@@ -108,7 +108,7 @@ func Mudmail(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		tplTxt, _ := templates.Process("mail/message", msg, user.UserId)
 		user.SendText(messaging.CategoryAdmin, tplTxt)
 
-		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 	}
 

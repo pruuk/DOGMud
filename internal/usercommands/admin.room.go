@@ -146,7 +146,7 @@ func room_Edit_Containers(rest string, user *users.UserRecord, room *rooms.Room,
 
 	question := cmdPrompt.AskMenu(containerMenu(containerOptions))
 	if !question.Done {
-		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 	}
 
@@ -176,7 +176,7 @@ func room_Edit_Containers(rest string, user *users.UserRecord, room *rooms.Room,
 		// Since they picked a container that exists, lets get the question of delete out of the way immediately.
 		question := cmdPrompt.AskConfirm(`Delete this container?`, `Yes, delete it`, `No, keep it`)
 		if !question.Done {
-			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 			return true, nil
 		}
 
@@ -326,7 +326,7 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 	}
 	question := cmdPrompt.AskMenu(lockedMenu)
 	if !question.Done {
-		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 		return lock, true
 	}
 
@@ -368,7 +368,7 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 		}
 		question = cmdPrompt.AskMenu(trapMenu)
 		if !question.Done {
-			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 			return lock, true
 		}
 
@@ -426,7 +426,7 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 
 			question := cmdPrompt.AskMenu(trapConditionMenu(conditionOptions), `0`)
 			if !question.Done {
-				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 				return lock, true
 			}
 
@@ -445,7 +445,7 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 					user.SendText(messaging.CategoryAdmin, "Invalid selection.")
 					question.RejectResponse()
 
-					user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+					user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 					return lock, true
 				}
 
@@ -477,7 +477,7 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 
 				// Re-ask so the stored menu carries the updated [x] marks.
 				question = cmdPrompt.AskMenu(trapConditionMenu(conditionOptions), `0`)
-				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 				return lock, true
 
 			}
@@ -519,7 +519,7 @@ func editContainerRecipes(cmdPrompt *prompt.Prompt, user *users.UserRecord, reci
 	}
 	question := cmdPrompt.AskMenu(recipesMenu)
 	if !question.Done {
-		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 		return recipes, true
 	}
 
@@ -593,14 +593,14 @@ func editContainerRecipes(cmdPrompt *prompt.Prompt, user *users.UserRecord, reci
 
 			question := cmdPrompt.AskMenu(recipeMenu(recipeOptions))
 			if !question.Done {
-				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 				return recipes, true
 			}
 
 			recipeSelected, ok := optionByResponse(recipeOptions, question.Response)
 			if !ok {
 				question.RejectResponse()
-				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 				return recipes, true
 			}
 			recipeNow = recipeSelected.Id.(int)
@@ -769,7 +769,7 @@ func room_Edit_Mutators(rest string, user *users.UserRecord, room *rooms.Room, f
 
 	question := cmdPrompt.AskMenu(roomMutatorMenu(mutatorOptions), `0`)
 	if !question.Done {
-		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 	}
 
@@ -786,7 +786,7 @@ func room_Edit_Mutators(rest string, user *users.UserRecord, room *rooms.Room, f
 			user.SendText(messaging.CategoryAdmin, "Invalid selection.")
 			question.RejectResponse()
 
-			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 			return true, nil
 		}
 
@@ -818,7 +818,7 @@ func room_Edit_Mutators(rest string, user *users.UserRecord, room *rooms.Room, f
 
 		// Re-ask so the stored menu carries the updated [x] marks.
 		question = cmdPrompt.AskMenu(roomMutatorMenu(mutatorOptions), `0`)
-		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 
 	}

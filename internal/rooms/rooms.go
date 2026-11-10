@@ -268,7 +268,7 @@ func (r *Room) SendText(cat messaging.Category, txt string, excludeUserIds ...in
 			Category:  cat,
 			Text:      txt,
 			Channel:   messaging.ChannelAudio,
-			LineWidth: u.GetLineWidth(),
+			LineWidth: u.WrapWidth(),
 		})
 		if rendered == "" {
 			continue
@@ -343,7 +343,7 @@ func (r *Room) sendAudioHidingNames(cat messaging.Category, txt string, names []
 			Category:  cat,
 			Text:      hide(txt, names, messaging.ParticipantSight(u.Character, r)),
 			Channel:   messaging.ChannelAudio,
-			LineWidth: u.GetLineWidth(),
+			LineWidth: u.WrapWidth(),
 		})
 		if rendered == "" {
 			continue
@@ -461,7 +461,7 @@ func deliverVisual(u *users.UserRecord, decision messaging.SightDecision, cat me
 		Text:          text,
 		Channel:       messaging.ChannelVisual,
 		SightDecision: decision,
-		LineWidth:     u.GetLineWidth(),
+		LineWidth:     u.WrapWidth(),
 	})
 	if rendered == "" {
 		return
@@ -535,7 +535,7 @@ func deliverVisualElseAudio(u *users.UserRecord, decision messaging.SightDecisio
 		Text:          visualTxt,
 		Channel:       messaging.ChannelVisual,
 		SightDecision: decision,
-		LineWidth:     u.GetLineWidth(),
+		LineWidth:     u.WrapWidth(),
 	}
 	if decision == messaging.SightNone {
 		if audioTxt == "" {
@@ -548,7 +548,7 @@ func deliverVisualElseAudio(u *users.UserRecord, decision messaging.SightDecisio
 			Category:  cat,
 			Text:      audioTxt,
 			Channel:   messaging.ChannelAudio,
-			LineWidth: u.GetLineWidth(),
+			LineWidth: u.WrapWidth(),
 		}
 	}
 
@@ -584,7 +584,7 @@ func (r *Room) SendTextUnsighted(cat messaging.Category, txt string, excludeUser
 			Category:  cat,
 			Text:      txt,
 			Channel:   messaging.ChannelAudio,
-			LineWidth: u.GetLineWidth(),
+			LineWidth: u.WrapWidth(),
 		})
 		if rendered == "" {
 			continue
@@ -618,7 +618,7 @@ func (r *Room) SendTextVisualToUser(u *users.UserRecord, cat messaging.Category,
 		Text:          txt,
 		Channel:       messaging.ChannelVisual,
 		SightDecision: decision,
-		LineWidth:     u.GetLineWidth(),
+		LineWidth:     u.WrapWidth(),
 	})
 	if rendered == "" {
 		return
@@ -2073,7 +2073,7 @@ func (r *Room) HasVisited(id int, vType VisitorType) bool {
 
 func (r *Room) GetDescriptionFormatted(lineSplit int, highlightNouns bool) string {
 
-	desc := util.SplitStringNL(r.GetDescription(), 80)
+	desc := util.SplitStringNL(r.GetDescription(), lineSplit)
 
 	if highlightNouns {
 		for noun, _ := range r.Nouns {

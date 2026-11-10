@@ -19,7 +19,9 @@ package main.
   send on the wrong category. Examples: `pool_mutation_guard_test.go`,
   `contest_floor_guard_test.go`, `sight_penalty_guard_test.go`,
   `token_engine_guard_test.go`, `refusal_phrase_guard_test.go`,
-  `messaging_surface_guard_test.go`, the `*_wrapper_guard_test.go` files
+  `messaging_surface_guard_test.go`, `wrap_width_guard_test.go` (no fixed wrap
+  width in production Go, and `WrapWidth` the only wrap reader of the saved
+  `LineWidth`), the `*_wrapper_guard_test.go` files
   (`drink_wrapper_guard_test.go` holds `TestQuaffWrappersDoNotReFork` and
   `TestFoodWrappersDoNotReFork`).
 - **Content guards.** Read the shipped YAML under `_datafiles/world/dogmud`,

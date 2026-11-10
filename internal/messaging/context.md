@@ -44,24 +44,34 @@ the recipient's connection.
    `mobname` / `petname` ANSI name tags, including suffixed mob tags such as
    `mobname-dup2`, then substitutes "a figure" + the `combat-anon` color alias.
 5. **Apply category color tag** — `<ansi fg="<category-alias>">…</ansi>`.
-6. **Wrap** at recipient's `UserRecord.LineWidth` (default 80, range
-   40-240), ANSI-aware, but only for the narration categories
-   `shouldWrap` admits (48 of the 64 `Category` values as of this
-   writing, `CategoryLight` among them: lighting plan 3d's transition
-   notices wrap exactly as `CategoryTimeOfDay` does; `CategoryCraft`,
-   #515, the crafter's own work lines; and `CategoryCraftSeen`, the
-   room's lines about a crafter). Pre-formatted
-   output is excluded by category: mixed
-   buckets that mix refusals or chat with tables, ASCII art or a
-   banner (`System`, `Broadcast`, `Splash`, `SkillProgress`), the
-   side-by-side minimap block (`RoomDescription`), categories that
-   already wrap themselves at a hardcoded 80 (`Speech`, `Whisper`,
-   `Shout`, `Emote`), system output owned by a later stage (`Error`,
-   `Warning`), and categories with zero production senders
-   (`GrappleHigh`, `Login`, `OOC`, `Toxin`). `shouldWrap` in
-   `pipeline.go` is the authoritative list. `WrapAnsi` closes and
+6. **Wrap** at recipient's `UserRecord.WrapWidth()`, ANSI-aware, but
+   only for the categories `shouldWrap` admits (59 of the 70 `Category`
+   values as of this writing, `CategoryLight` among them: lighting plan
+   3d's transition notices wrap exactly as `CategoryTimeOfDay` does;
+   `CategoryCraft`, #515, the crafter's own work lines;
+   `CategoryCraftSeen`, the room's lines about a crafter;
+   `CategorySpeech`, `CategoryShout` and `CategoryEmote`, sent to a
+   whole room so no sender may wrap them first; and `CategoryRoomIdle`,
+   a room's idle flavor line, colored and normalised as
+   `CategoryRoomDescription` is; and `System`, `Warning`, `Error`,
+   `Refusal`, `Usage`, `Group` and `Broadcast`, whose senders no longer
+   wrap for themselves, a rule
+   `TestPipelineWrappedCategoriesAreWrappedOnce` holds). Layouts that
+   must never fold are excluded by category: ASCII art and banners
+   (`Splash`, `SkillProgress`), the side-by-side minimap block
+   (`RoomDescription`), staff output laid out to a wide screen (`Admin`),
+   laid-out screens (`Screen`), `Whisper`, which each sender wraps to its
+   one reader's `WrapWidth()`, and categories with zero production
+   senders (`GrappleHigh`, `Login`, `OOC`, `Toxin`). `shouldWrap` in
+   `pipeline.go` is the authoritative list. `WrapAnsi` copies a line
+   at or under the width byte for byte, padding and indent included, so
+   a table or box narrower than the reader survives; only a wider line
+   folds, and a fold rejoins that line's words with single spaces. An
+   embedded newline is a hard break, a carriage return takes no column,
+   and the CR of a CRLF inside a folded text is dropped because the
+   deliverer writes the line end. It closes and
    reopens the whole stack of open ansi tags across a line break and
-   measures width in runes, not bytes.
+   measures width in display columns per rune (`go-runewidth`), not bytes.
 7. **Deliver** to the recipient's connection.
 
 ## Channels
@@ -112,7 +122,7 @@ Types and constants:
   (`actions/salvage.go`), the interrupt lines (`usercommands/go.go`,
   `hooks/work_interrupt_narration.go`) and `cancel`'s stop line. It exists
   so these lines wrap: recipe prose often runs past 80 columns and
-  `CategorySystem` cannot wrap. Otherwise it is treated as `CategorySystem`:
+  `CategorySystem` did not wrap then. Otherwise it is treated as `CategorySystem`:
   no normalisation skips, no verbosity tier drops it, and alias `craft` in
   `ansi-aliases.yaml` is 8, the `system` value. Refusals (unknown recipe,
   missing ingredients, already busy, too dark) stay on `CategorySystem`
@@ -136,7 +146,7 @@ Types and constants:
   `CategorySystem`. Slice 4 moved usage, staff output and narration off
   `CategorySystem` too (the next three entries). Appended after
   `CategoryCraftSeen` so no value shifts. Treated exactly as
-  `CategorySystem` (every normalise stage, never wrapped), and alias
+  `CategorySystem` (every normalise stage, wrapped alike), and alias
   `refusal` in `ansi-aliases.yaml` is 8, the `system` value, so a player
   sees no change until the owner recolours it. `refusal.Failed` is the one
   helper that does not use it (it sends on `CategoryError`). Pinned by
@@ -145,8 +155,8 @@ Types and constants:
   #371), appended after `CategoryRefusal` so no value shifts. Each is
   treated exactly as `CategorySystem`: alias `usage`, `admin`, `group` in
   `ansi-aliases.yaml` is 8 (the `system` value), every normalise stage runs,
-  and none is in `shouldWrap`, so a player sees no change until the owner
-  recolours one.
+  and each wraps as `CategorySystem` does except `CategoryAdmin`, which stays
+  out of `shouldWrap`.
   - `CategoryUsage`: "Usage:" lines and usage blocks (the `*Usage(user)`
     functions), staff and player alike. Guard: `usage_category_guard_test.go`.
   - `CategoryAdmin`: everything an admin-only command or a staff-only
@@ -180,7 +190,7 @@ Types and constants:
   `map` command and the `achievements` list). It skips every normalise
   stage, as `CategorySplash` does, so the map legend's last name and a bare
   category heading get no stop. Alias `screen` is 8 (the `system` value) and
-  it is not in `shouldWrap`, so otherwise it looks as `CategorySystem` did.
+  it is not in `shouldWrap`.
   Pinned by `category_screen_test.go`; the map by
   `usercommands.TestMapLegendEndsWithoutAStop`.
 - `Verbosity`, `ParseVerbosity`, `(Verbosity).Suppresses` — combat-text
@@ -622,7 +632,7 @@ load-bearing.** The three roles of one event routinely differ: `shoot`
 uses four categories on the personal side and `throw` uses three on
 each side (hit, dodge, interrupt). A single-`Category` seam would
 silently recategorise them. Category decides the line's colour and
-whether it wraps at 80 (`CategorySystem` never wraps, which is why #449
+whether it wraps (`CategorySystem` did not wrap then, which is why #449
 moved the special-move actor and actee lines off it onto the move's own
 category; every refusal, special-move busy and cost lines included, rides
 `CategoryRefusal` since M7 slice 3, #371).
@@ -706,7 +716,7 @@ The package is the pipeline, one stage per file, plus the fan-out (`trio.go`):
 | `anonymize.go` | Replacing names the observer should not see (infrared fallback, whole-line) |
 | `hidenames.go` | `HideNames`, `NameHider`, `HideSpeakerNames` (sight gates slice 5b): replacing specific names in bare prose, longest-first, whole-word |
 | `hidenames_tagged.go` | Identity-tag-aware name replacement `HideNames` and `Anonymize` share, including the trailing adjective span |
-| `wrap.go` | `WrapAnsi`, ANSI-aware folding at a caller-supplied width measured in visible runes; called by the pipeline for the categories `shouldWrap` admits, and directly by `motd.go` for its box-bordered banner |
+| `wrap.go` | `WrapAnsi`, ANSI-aware folding of lines wider than a caller-supplied width measured in display columns; a line that fits is copied byte for byte; called by the pipeline for the categories `shouldWrap` admits, and directly by `motd.go` for its box-bordered banner |
 | `predicates.go` | `ParticipantSight` (the optics primitive) plus `CanSeeClearly`/`CanSeeShapes`/`CanSeeSightImpairedOnly`, the one-line attention policies built on it; `SeesThroughExit` and `FixedLight` (lighting plan 5c); `SensesHeatThroughExit` (lighting plan 6) |
 | `window.go` | `SightThroughWindow`, the pure window-model function `ParticipantSight` calls, `clampShift`, `ExitThroughWindow` (lighting plan 5c), `LightTrimTarget` (lighting plan 5a, reparameterized in 5b to take `dazzleAbove` instead of reading the now-retired `windowDazzleEdge` constant), `DarknessTrimTarget` (lighting plan 5d), plus its two remaining unexported constants (`windowShiftCap`, `windowFloor`) |
 | `band.go` | `Band`, `BandThroughWindow`, `LightBand` (lighting plan 3d): the band-grained twin of `SightDecision`/`SightThroughWindow`/`ParticipantSight`, adding the dazzled tier for `internal/lightnotice` |

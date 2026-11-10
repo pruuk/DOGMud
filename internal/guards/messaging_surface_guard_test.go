@@ -774,7 +774,7 @@ func narrationNormalizeLiteral(raw string) string {
 // used as an argument), or across a "a" + "b" concatenation. Returns "" when
 // none is found (a message built entirely from variables/params, e.g. a
 // dialogue tree's user_text, or forwarded through a helper like
-// util.SplitStringNL(replyMsg, 80)).
+// util.SplitStringNL(replyMsg, targetUser.WrapWidth())).
 func narrationStringLiteralIn(expr ast.Expr) string {
 	switch e := expr.(type) {
 	case *ast.BasicLit:
@@ -800,7 +800,7 @@ func narrationStringLiteralIn(expr ast.Expr) string {
 // literal string when one of call's arguments carries one (per
 // narrationStringLiteralIn), otherwise the printed source of the call's
 // argument list itself (e.g. "playerMsg, roomMsg" or
-// "util.SplitStringNL(replyMsg, 80)"), which is stable and still distinct
+// "util.SplitStringNL(replyMsg, targetUser.WrapWidth())"), which is stable and still distinct
 // per call site even when the message text is entirely data-driven.
 func narrationCallFingerprint(fset *token.FileSet, call *ast.CallExpr) string {
 	for _, arg := range call.Args {
@@ -1413,7 +1413,7 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"usercommands/read.go|You look at <ansi fg=\"item\">%s</ansi>...":                                                 {verdictCorrect, true, false, true, "audit: reads a held item -- self-targeted (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/read.go:48)"},
 	"usercommands/remove.go|You remove your <ansi fg=\"item\">%s</ansi> and return it to your backpack.":              {verdictCorrect, true, false, true, "audit: removes an equipped item -- target is an item (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/remove.go:74)"},
 	"usercommands/renameself.go|The world ripples briefly. You are now known as <ansi fg=\"username\">":               {verdictCorrect, true, false, true, "audit: rename succeeds -- self-directed (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/renameself.go:89)"},
-	"usercommands/reply.go|messaging.CategoryWhisper, util.SplitStringNL(replyMsg, 80)":                               {verdictCorrect, true, true, false, "a whisper reply; the recipient is the actee, and a whisper is deliberately private, no room broadcast for any whisper in this codebase."},
+	"usercommands/reply.go|messaging.CategoryWhisper, util.SplitStringNL(replyMsg, targetUser.WrapWidth())":           {verdictCorrect, true, true, false, "a whisper reply; the recipient is the actee, and a whisper is deliberately private, no room broadcast for any whisper in this codebase."},
 	"usercommands/report.go|<ansi fg=\"whisper\"><ansi fg=\"username\">%s</ansi> reports to you: %s</ansi>":           {verdictCorrect, true, true, false, "audit: whisper-reports vitals to one player -- deliberately private; no room broadcast in this branch (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/report.go:79)"},
 	"usercommands/report.go|You report: %s":                                                                           {verdictCorrect, true, false, true, "audit: reports vitals to the room -- broadcast with no specific target (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/report.go:86)"},
 	"usercommands/sell.go|You sell %d <ansi fg=\"itemname\">%s</ansi> for <ansi fg=\"gold\">%s gold</ansi>.":          {verdictCorrect, true, false, true, "audit: sells multiple items -- merchant is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/sell.go:105)"},
@@ -1442,7 +1442,7 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	`actions/drink.go|You take the <ansi fg="itemname">%s</ansi>.`:                                              {verdictCorrect, true, false, true, "a Bloom Wafer taken: the wafer's sibling of the audited drink row, self-targeted, a wafer being no drink."},
 	`usercommands/appraise.go|<ansi fg="mobname">%s</ansi> turns <ansi fg="itemname">%s</ansi> over in their h`: {verdictCorrect, true, false, true, "a merchant's free appraisal of a bauble: the merchant is a mob and the target an item, same as the audited paid appraisal; the room is told via room.SendTextVisual."},
 	`usercommands/sell.go|You sell %d items for <ansi fg="gold">%s gold</ansi>.`:                                {verdictCorrect, true, false, true, "selling several different things at once (every bauble has its own name): the mixed-sale sibling of the two audited sell rows; the merchant is a mob."},
-	"usercommands/whisper.go|messaging.CategoryWhisper, util.SplitStringNL(whisperMsg, 80)":                     {verdictCorrect, true, true, false, "a whisper; the recipient is the actee, deliberately private with no room broadcast, same as reply.go."},
+	"usercommands/whisper.go|messaging.CategoryWhisper, util.SplitStringNL(whisperMsg, toUser.WrapWidth())":     {verdictCorrect, true, true, false, "a whisper; the recipient is the actee, deliberately private with no room broadcast, same as reply.go."},
 }
 
 // TestNarrationSitesMatchViewpointAudit fails when this guard's own AST walk
