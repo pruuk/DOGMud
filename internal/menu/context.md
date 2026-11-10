@@ -69,7 +69,8 @@ send the text. Part of the quest-arc phase 0 work (#375).
   `Detail` is dropped.
 - The footer is `Footer` when set; otherwise "Type a number, or press Enter
   for N." when `Default` names an entry; otherwise "Type a number, or press
-  Enter to leave." when `Leave` is set; otherwise "Type a number."
+  Enter to leave." when `Leave` is set; otherwise "Type a number." It wraps
+  to the width given to `Render`, as `Body` and `Detail` do.
 
 ## Resolve
 

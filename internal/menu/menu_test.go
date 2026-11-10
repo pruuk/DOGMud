@@ -239,6 +239,38 @@ func TestRender_ProseWrapsToTheReadersWidth(t *testing.T) {
 	}
 }
 
+// The computed footers are 36 and 39 columns, so they wrap at the narrow end
+// of the web range and stay one line at 80.
+func TestRender_FooterWrapsToTheReadersWidth(t *testing.T) {
+	entries := []Entry{{Id: "a", Label: "Accept"}}
+	for _, tc := range []struct {
+		name   string
+		m      Menu
+		footer string
+	}{
+		{"leave", Menu{Entries: entries, Leave: "Leave"}, "Type a number, or press Enter to leave."},
+		{"default", Menu{Entries: entries, Default: "a"}, "Type a number, or press Enter for 1."},
+		{"custom", Menu{Entries: entries, Footer: "Choose carefully, because the choice you make here is final."}, "Choose carefully, because the choice you make here is final."},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, width := range []int{30, 37, 80} {
+				for _, line := range strings.Split(plain(Render(tc.m, width)), "\n") {
+					if n := utf8.RuneCountInString(line); n > width {
+						t.Errorf("width %d: line over the width (%d): %q", width, n, line)
+					}
+				}
+			}
+			if !strings.HasSuffix(plain(Render(tc.m, 80)), "\n"+tc.footer) {
+				t.Errorf("at 80 the footer must stay one line: %q", plain(Render(tc.m, 80)))
+			}
+			narrow := strings.Fields(plain(Render(tc.m, 30)))
+			if !strings.Contains(strings.Join(narrow, " "), tc.footer) {
+				t.Errorf("the wrap lost words of the footer: %q", narrow)
+			}
+		})
+	}
+}
+
 func TestRender_NoBodyIsUnchanged(t *testing.T) {
 	m := talkMenu()
 	before := renderAt80(m)

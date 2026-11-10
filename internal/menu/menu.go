@@ -100,7 +100,7 @@ func Render(m Menu, width int) string {
 		}
 		b.WriteString("\n")
 	}
-	b.WriteString(footer(m))
+	b.WriteString(strings.Join(wrap(footer(m), width), "\n"))
 	return b.String()
 }
 

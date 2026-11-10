@@ -274,13 +274,14 @@ func cmdSetFprompt(user *users.UserRecord, rest string, setTarget string, args [
 	if len(args) < 1 {
 		// One block on CategoryScreen, as the set status screen (#614).
 		customPrompt := user.GetConfigOption(`fprompt`)
+		width := user.WrapWidth()
 		rows := []string{`<ansi fg="yellow-bold">Fight Prompt:</ansi>`}
 		if customPrompt == nil {
-			rows = append(rows, `  <ansi fg="8">[system default - toggle-driven]</ansi>`)
+			rows = append(rows, util.SplitStringNL(`  <ansi fg="8">[system default - toggle-driven]</ansi>`, width, `  `))
 		} else {
-			rows = append(rows, `  `+wrapPrompt(customPrompt.(string), user.WrapWidth()-2, `  `))
+			rows = append(rows, `  `+wrapPrompt(customPrompt.(string), width-2, `  `))
 		}
-		rows = append(rows, ``, `<ansi fg="yellow">Toggle Settings</ansi> <ansi fg="8">(set fprompt tog <name> to change):</ansi>`)
+		rows = append(rows, ``, util.SplitStringNL(`<ansi fg="yellow">Toggle Settings</ansi> <ansi fg="8">(set fprompt tog <name> to change):</ansi>`, width))
 		toggleList := []struct{ name, desc string }{
 			{"bars", "HP/SP/CP vital bars"},
 			{"pos", "Your combat position"},
@@ -296,9 +297,9 @@ func cmdSetFprompt(user *users.UserRecord, rest string, setTarget string, args [
 			if !on {
 				state = `<ansi fg="red">[OFF]</ansi>`
 			}
-			rows = append(rows, fmt.Sprintf(`  <ansi fg="magenta">%-14s</ansi> %s %s`, t.name, state, t.desc))
+			rows = append(rows, util.SplitStringNL(fmt.Sprintf(`  <ansi fg="magenta">%-14s</ansi> %s %s`, t.name, state, t.desc), width, `    `))
 		}
-		rows = append(rows, ``, `Type <ansi fg="command">help set-prompt</ansi> for more info on customizing prompts.`)
+		rows = append(rows, ``, util.SplitStringNL(`Type <ansi fg="command">help set-prompt</ansi> for more info on customizing prompts.`, width))
 		user.SendText(messaging.CategoryScreen, strings.Join(rows, "\n"))
 		return true, nil
 	}
