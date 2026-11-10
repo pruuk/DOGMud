@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-11-10: Tables that fit
+
+- A table too wide for your screen, such as a long history or a crowded
+  list of who is online, now shows in a narrower layout instead of running
+  off the edge.
+
 ## 2026-11-09: Cleaner line breaks
 
 - Long game messages no longer break in the middle of a word.
