@@ -701,11 +701,11 @@ class RoomGridSVG {
           // In the lower half of the topmost tile, under its room, on a small plate: a fitted
           // view can cut through the top row's upper half (seen in the demo page's screenshot),
           // and room names are drawn only for the player's own room, so this spot is free.
-          const lw = 8 + qm.label.length * 4.6, ly = top.y * sp + 19;
+          const lw = 8 + qm.label.length * 5.4, ly = top.y * sp + 19;
           g.appendChild(lEl('rect', { x: top.x * sp - lw / 2, y: ly - 8.5, width: lw, height: 11, rx: 2,
               fill: L.legendBg, opacity: '0.85', 'data-wash-label': '1' }));
           g.appendChild(lTxt({ x: top.x * sp, y: ly, 'text-anchor': 'middle',
-              'font-family': L.font, 'font-size': '9', 'font-style': 'italic', fill: L.title }, qm.label));
+              'font-family': L.font, 'font-size': '9', fill: L.title }, qm.label));
       }
   }
 
@@ -727,12 +727,12 @@ class RoomGridSVG {
       if (!qm || !qm.inside || !qm.label || (qm.kind !== 'area' && qm.kind !== 'zone')) { return; }
       const L = RoomGridSVG.LEATHER;
       let text = 'Somewhere in ' + qm.label;
-      if (text.length > 48) { text = text.slice(0, 45) + '...'; }
-      const w = Math.min(200, 12 + text.length * 3.9);
+      if (text.length > 41) { text = text.slice(0, 38) + '...'; }
+      const w = Math.min(200, 12 + text.length * 4.5);
       ov.appendChild(lEl('rect', { x: 160 - w / 2, y: 49, width: w, height: 13, rx: 3, fill: L.legendBg,
           stroke: L.questGold, 'stroke-width': 0.8, opacity: '0.92', 'data-quest-banner': '1' }));
       ov.appendChild(lTxt({ x: 160, y: 58.2, 'text-anchor': 'middle', 'font-family': L.font,
-          'font-size': '7.5', 'font-style': 'italic', fill: L.title, 'data-quest-banner': '1' }, text));
+          'font-size': '7.5', fill: L.title, 'data-quest-banner': '1' }, text));
   }
 
   /** Rebuild a single room's token in place (e.g. to add/remove its marker). */
@@ -954,7 +954,7 @@ class RoomGridSVG {
       // ── Title + subtitle ─────────────────────────────────────────────
       embText(g, W / 2, 36, {
           "text-anchor": "middle", "font-family": L.font,
-          "font-size": 13, "font-style": "italic", "font-weight": "bold"
+          "font-size": 13, "font-weight": "bold"
       }, String(zone), L.title, d);
       g.appendChild(lTxt({
           x: W / 2, y: 46, "text-anchor": "middle",
@@ -1013,7 +1013,7 @@ class RoomGridSVG {
           g.appendChild(lTxt({
               x: cx, y: cy + 20,
               "text-anchor": "middle", "font-family": L.font,
-              "font-size": 8, "font-style": "italic", fill: L.label
+              "font-size": 8, fill: L.label
           }, room.name || ""));
       } else if (svc) {
           embCirc(g, cx, cy, 7, L.ink, L.roomFill, 1.3, d * 0.7);
@@ -1049,7 +1049,7 @@ class RoomGridSVG {
       }
 
       // Focused-quest destination marker (brass ring + brass glow +
-      // brass pin + italic name) on the target room.
+      // brass pin + name) on the target room.
       const qm = this._questMarker;
       if (qm && qm.targetRoom && (qm.targetRoom === id || qm.targetRoom === String(id))) {
           g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 12, fill: L.questGold, opacity: "0.30" }));
@@ -1061,7 +1061,7 @@ class RoomGridSVG {
               g.appendChild(lTxt({
                   x: cx, y: cy + 21, "text-anchor": "middle",
                   "font-family": L.font, "font-size": "7.5",
-                  "font-style": "italic", fill: L.title
+                  fill: L.title
               }, qm.name));
           }
       }
@@ -1144,7 +1144,7 @@ class RoomGridSVG {
               this.connectionsGroup.appendChild(lTxt({
                   x: ex + ux * 4, y: ey + uy * 4 + 3,
                   "text-anchor": ux > 0 ? "start" : (ux < 0 ? "end" : "middle"),
-                  "font-family": L.font, "font-size": 7, "font-style": "italic", fill: L.ink
+                  "font-family": L.font, "font-size": 7, fill: L.ink
               }, "→ " + e.tozone));
           }
           return;
@@ -1352,7 +1352,7 @@ class RoomGridSVG {
           st.id = 'rgsvg-ctl-style';
           st.textContent =
 ".rgsvg-brass{min-width:24px;height:24px;padding:0 6px;font-family:" + L.font + ";" +
-"font-weight:bold;font-size:12px;line-height:1;color:" + L.brassText + ";cursor:pointer;" +
+"font-weight:400;font-size:var(--text);line-height:1;color:" + L.brassText + ";cursor:pointer;" +
 "border:1px solid " + L.brassBorder + ";border-radius:5px;" +
 "background:radial-gradient(circle at 34% 26%," + L.brass[0] + " 0%," + L.brass[1] + " 46%," + L.brass[2] + " 100%);" +
 "text-shadow:0 1px 0 rgba(255,244,206,0.55);" +
@@ -1466,7 +1466,7 @@ RoomGridSVG.LEATHER = {
   sheen: "#cec6aa", vignette: "#19140c", glow: "#e8c98a", roomEdge: "#3a2a18", partyFill: "#1c2e2a",
   pin: "#aa8636", faint: "#8a7a55",
   brass: ["#f4dd92", "#aa8636", "#736133"], brassText: "#1a1206", brassBorder: "#50371d",
-  font: "'Source Sans 3', system-ui, sans-serif",   // the map's lettering; system-ui where gomud.css is not loaded
+  font: "'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace",   // the map's lettering
   emboss: 0.6, fray: 3.4, nickP: 0.08, crackStep: 24, crackJit: 9, vig: 0.5
 };
 

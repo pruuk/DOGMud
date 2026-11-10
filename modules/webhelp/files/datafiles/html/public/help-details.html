@@ -25,14 +25,14 @@
     }
     div.webhelp-content .error {
         color:#ff0000;
-        font-weight:bold;
+        font-weight: 400;
     }
     div.webhelp-content pre.terminal-output {
-        font-size: 18px;
+        font-size: var(--text);
         white-space: pre-wrap;
     }
     form.search input[type="text"] {
-        font-size: 18px;
+        font-size: var(--cmd);
         line-height: 18px;
         width: 300px;
         height: 25px;
@@ -40,7 +40,7 @@
         margin: 0px;
     }
     form.search input[type="submit"] {
-        font-size: 18px;
+        font-size: var(--text);
         line-height: 18px;
         width: 100px;
         height: 25px;
@@ -50,16 +50,16 @@
     }
     @media (max-width: 768px) {
         div.webhelp-content pre.terminal-output {
-            font-size: 14px;
+            font-size: var(--text);
         }
         form.search input[type="text"] {
             width: 100%;
             max-width: 300px;
             box-sizing: border-box;
-            font-size: 16px;
+            font-size: var(--cmd);
         }
         form.search input[type="submit"] {
-            font-size: 16px;
+            font-size: var(--text);
             margin-top: 5px;
         }
     }

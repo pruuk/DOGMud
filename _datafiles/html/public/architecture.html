@@ -3,7 +3,7 @@
 <style>
   .diagrams-title {
     color: var(--title-gold);
-    font-family: var(--font-serif);
+    font-family: var(--font-heading);
     margin-bottom: 0.25rem;
     text-align: center;
   }
@@ -32,7 +32,7 @@
     /* No outline (Malia 2026-11-01), like the page cards. The page card behind
        is #201913, the old fill's twin (1.01), so the card steps up to the umber
        #252015 and takes a soft shadow. On it: title 10.92, text 9.32, label
-       5.49, link 6.44, italic line 4.62. A lighter fill fails the italic line. */
+       5.49, link 6.44, why line 4.62. A lighter fill fails the why line. */
     background: #252015;
     border: 0;
     border-radius: 12px;
@@ -55,7 +55,7 @@
   }
   .diagram-kind {
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: var(--text);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--antique-gold);
@@ -63,8 +63,8 @@
   .diagram-card h3 {
     margin: 0;
     color: var(--title-gold);
-    font-family: var(--font-serif);
-    font-size: 1.15rem;
+    font-family: var(--font-heading);
+    font-size: var(--title);
   }
   .diagram-what {
     margin: 0;
@@ -73,14 +73,13 @@
   .diagram-why {
     margin: 0;
     color: var(--text-secondary);
-    font-style: italic;
     line-height: 1.5;
   }
   .diagram-cta {
     margin-top: auto;
     padding-top: 0.5rem;
     color: var(--ink-gold);
-    font-size: 0.9rem;
+    font-size: var(--text);
   }
   @media (prefers-reduced-motion: reduce) {
     .diagram-card {

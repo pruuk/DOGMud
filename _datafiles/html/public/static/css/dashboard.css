@@ -56,15 +56,15 @@
   background: linear-gradient(var(--bar-top), var(--bar-bottom));
   border: 1px solid var(--panel-border);
   border-radius: 5px;
-  font-family: var(--font-body); font-size: 0.85rem;
+  font-family: var(--font-body); font-size: var(--text);
   color: var(--text-primary);
 }
-#dash-session .sess-name { color: var(--title-gold); font-weight: bold; }
+#dash-session .sess-name { color: var(--title-gold); font-weight: var(--bold); }
 #dash-session .sess-mid { margin: 0 auto; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 /* Enter Game at the login prompt points the player at the command box. */
 #command-input.cmd-nudge { border-color: var(--cmd-border-focus); box-shadow: 0 0 0 2px var(--cmd-ring-focus); }
 /* The same size as the tab buttons inside the panels (.subtab, Malia 2026-11-01). */
-#dash-session button { font-size: 0.95rem; }
+#dash-session button { font-size: var(--text); }
 /* Everything in the session bar stays on one line; when space runs out the
    character name shortens first. Phones get a 48px tap height on the Enter /
    Leave Game and Yes / Stay buttons, 44px icons for Settings and Full screen (words
@@ -84,8 +84,8 @@
 #dashboard[data-mode="phone"] #sess-confirm { gap: 8px; }
 /* The Settings drop-down lives inside the strip (so Tab reaches it next) but
    is not part of its one-line row. */
-#dash-session > #settings-menu { white-space: normal; font-size: 0.95rem; }
-#dash-session #settings-close { font-size: 20px; }
+#dash-session > #settings-menu { white-space: normal; font-size: var(--text); }
+#dash-session #settings-close { font-size: var(--text); }
 #dashboard[data-mode="phone"] #dash-session { gap: 8px; padding: 4px 8px; }
 #dashboard[data-mode="phone"] #btn-fullscreen .btn-label,
 #dashboard[data-mode="phone"] #btn-settings .btn-label,
@@ -94,14 +94,14 @@
 #dashboard[data-mode="phone"] #btn-settings .btn-icon,
 #dashboard[data-mode="phone"] #sess-confirm .q-short { display: inline; }
 #dashboard[data-mode="phone"] #btn-fullscreen,
-#dashboard[data-mode="phone"] #btn-settings { font-size: 1.1rem; min-width: 44px; min-height: 44px; }
+#dashboard[data-mode="phone"] #btn-settings { font-size: var(--text); min-width: 44px; min-height: 44px; }
 /* "Companion key" has no icon, so on a narrow phone it is the one to give
    way after the name: its words shorten with "..." (the full name stays in
    its title) rather than pushing the page sideways. */
 #dashboard[data-mode="phone"] #btn-companion-key { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; min-height: 44px; }
 #dashboard[data-mode="phone"] #btn-settings .btn-icon { margin-right: 0; }
 #dashboard[data-mode="phone"] #btn-session,
-#dashboard[data-mode="phone"] #sess-confirm button { min-height: 48px; padding: 0 14px; font-size: 0.95rem; }
+#dashboard[data-mode="phone"] #sess-confirm button { min-height: 48px; padding: 0 14px; font-size: var(--text); }
 
 /* Panel shell */
 .dash-panel {
@@ -122,12 +122,8 @@
 }
 .dash-panel-head .ph-title {
   font-family: var(--font-heading);
-  font-size: 0.82rem; color: var(--vellum);
-}
-/* With a mouse, the tab names grow a little so they sit well next to
-   the 24px ▾ and ⧉ buttons below (#730). Touch screens keep 0.82rem. */
-@media (pointer: fine) {
-  .dash-panel-head .ph-title { font-size: 0.95rem; }
+  font-size: var(--title); font-weight: var(--bold); color: var(--vellum);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
 /* Parchment cards: vellum fill + gold outline + dark text, for
@@ -159,10 +155,13 @@
 #panel-status .status-empty { color: var(--status-muted); }
 #dash-session .sess-name { color: var(--ink-deep); }
 
-.dash-panel-head .ph-btns { margin-left: auto; display: flex; gap: 4px; }
+.dash-panel-head .ph-btns { margin-left: auto; display: flex; flex: none; gap: 4px; }
+/* Room for the Map's title beside its two buttons at the title size. */
+#panel-map .dash-panel-head { padding-left: 8px; padding-right: 4px; gap: 2px; }
+#panel-map .dash-panel-head .ph-btns { gap: 2px; }
 .dash-panel-head .ph-btn {
   width: 18px; height: 18px; line-height: 16px; text-align: center;
-  font-size: 11px; cursor: pointer; border-radius: 3px;
+  font-size: var(--text); cursor: pointer; border-radius: 3px;
   color: var(--brass-text);
   background: var(--brass-grad);
   border: 1px solid var(--brass-border);
@@ -175,12 +174,12 @@
    the title bar's padding, so the bar stays 50px tall, as it was with
    40px buttons, and title bars without buttons do not change. */
 @media (pointer: coarse) {
-  .dash-panel-head .ph-btn { width: 44px; height: 44px; line-height: 42px; font-size: 18px; margin: -2px 0; }
+  .dash-panel-head .ph-btn { width: 44px; height: 44px; line-height: 42px; font-size: var(--text); margin: -2px 0; }
 }
 /* With a mouse, the ▾ and ⧉ buttons are 24px, the smallest size the
    accessibility rules allow for something you click (#730). */
 @media (pointer: fine) {
-  .dash-panel-head .ph-btn { width: 24px; height: 24px; line-height: 22px; font-size: 14px; }
+  .dash-panel-head .ph-btn { width: 24px; height: 24px; line-height: 22px; font-size: var(--text); }
 }
 .dash-panel-body { flex: 1 1 auto; min-height: 0; overflow: auto; position: relative; }
 
@@ -240,7 +239,7 @@
 
 /* Per-panel stack proportions (flex-basis 0 → grow ratios set the heights;
    splitters will later tune these --f-* vars). Left: Map / Vitals / Scene;
-   Right: Chat / Status / Triggers (~equal). */
+   Right: Chat / Conditions / Triggers (~equal). */
 /* Left column auto-balances by content: the Map absorbs slack (large when the
    inventory is short) but keeps a min; the Inventory panel sizes to its content
    (grows with a long eq list — e.g. extra-arms — and scrolls only once the Map
@@ -287,7 +286,7 @@
   padding: 6px 6px;
   border-top: 1px solid var(--panel-border);
 }
-#map-controls .rgsvg-brass { min-width: 32px; height: 32px; padding: 0 10px; font-size: 14px; }
+#map-controls .rgsvg-brass { min-width: 36px; height: 32px; padding: 0 10px; font-size: var(--text); }
 @media (pointer: coarse) {
   #map-controls .rgsvg-brass { min-width: 44px; height: 44px; }
   /* 44px buttons: tighter padding above and below the map and its button
@@ -318,8 +317,8 @@
   border: 0;
   cursor: pointer;
   font-family: var(--font-body);
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: var(--text);
+  font-weight: 400;
   color: #dfcc94;
 }
 .map-legend-arrow { color: #b5a26c; }
@@ -331,7 +330,7 @@
   border-top: 1px solid var(--panel-border);
   padding: 6px 10px;
   font-family: var(--font-body);
-  font-size: 0.82rem;
+  font-size: var(--text);
   color: #cec6aa;
 }
 .map-legend[hidden] { display: none; }
@@ -350,30 +349,30 @@
    short laptop window never scrolls the whole page (#768 review item 5). */
 #panel-quests { flex: 0 1 auto; min-height: 80px; }
 #panel-quests .dash-panel-body { max-height: 220px; overflow: auto; }
-.quests-empty { color: var(--quest-dim); font: italic 12px var(--font-body); padding: 4px 2px; }
+.quests-empty { color: var(--quest-dim); font-family: var(--font-body); font-size: var(--text); padding: 4px 2px; }
 .qrow { display:flex; align-items:baseline; gap:7px; padding:5px 5px 4px; border-radius:4px; cursor:pointer; }
 .qrow + .qrow, .qhint + .qrow { margin-top:1px; }
 .qrow:hover { background:color-mix(in srgb, var(--ink-gold) 7%, transparent); }
 .qrow.focus { background:color-mix(in srgb, var(--brass-mid) 14%, transparent); box-shadow:inset 2px 0 0 var(--brass-mid); }
-.qrow .qdot { flex:0 0 auto; width:13px; text-align:center; font-size:11px; color:var(--quest-dim); }
+.qrow .qdot { flex:0 0 auto; width:1.2em; text-align:center; font-size: var(--text); color:var(--quest-dim); }
 .qrow.focus .qdot { color:var(--brass-mid); }
-/* Quest title: the prominent line — larger, bold, warm parchment. */
-.qrow .qname { flex:1; font-family:var(--font-body); font-size:13px; font-weight:600; letter-spacing:.2px; line-height:1.25; color:var(--quest-name); }
+/* Quest title: the prominent line, bold, warm parchment. */
+.qrow .qname { flex:1; min-width:0; overflow-wrap:anywhere; font-family:var(--font-body); font-size: var(--text); font-weight: var(--bold); letter-spacing:.2px; line-height:1.25; color:var(--quest-name); }
 .qrow.focus .qname { color:var(--quest-name-focus); }
-.qbar { flex:0 0 auto; align-self:center; width:42px; height:4px; background:var(--quest-bar-track); border:1px solid var(--panel-border); border-radius:3px; overflow:hidden; }
+.qbar { flex:0 0 auto; align-self:center; width:48px; height:4px; background:var(--quest-bar-track); border:1px solid var(--panel-border); border-radius:3px; overflow:hidden; }
 .qbar > i { display:block; height:100%; background:linear-gradient(var(--brass-light),var(--brass-mid)); }
-/* Hint: clearly secondary — smaller italic, muted, indented under its title
+/* Hint: clearly secondary — muted, indented under its title
    with a thin brass rule tying it to the quest above. */
-.qhint { margin:0 0 5px 20px; padding:1px 0 1px 8px; border-left:1px solid color-mix(in srgb, var(--brass-mid) 35%, transparent); font:italic 11px var(--font-body); line-height:1.4; color:var(--quest-progress); }
+.qhint { margin:0 0 5px 20px; padding:1px 0 1px 8px; border-left:1px solid color-mix(in srgb, var(--brass-mid) 35%, transparent); font-family: var(--font-body); font-size: var(--text); line-height:1.4; color:var(--quest-progress); }
 /* A hint over the 200-character cap (#375 P8) shows three lines until the
    player asks for more. Only the text span clamps; the toggle and the
    direction follow it, outside the clamp, so they always show. */
 .qhint-clamp { display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-.qhint-more { font:italic 11px var(--font-body); color:var(--quest-name); background:none; border:0; padding:0 2px; cursor:pointer; text-decoration:underline; }
+.qhint-more { font-family: var(--font-body); font-size: var(--text); color:var(--quest-name); background:none; border:0; padding:0 2px; cursor:pointer; text-decoration:underline; }
 .qhint-more:hover, .qhint-more:focus-visible { color:var(--quest-name-focus); }
 /* Progress of a count or explore step (#375 phase 3b slice 4): plain text
    under its quest, indented like the hint, in the hint's muted colour. */
-.qprogress { margin:0 0 5px 20px; padding:0 0 0 9px; font:11px var(--font-body); line-height:1.4; color:var(--quest-progress); }
+.qprogress { margin:0 0 5px 20px; padding:0 0 0 9px; font-family: var(--font-body); font-size: var(--text); line-height:1.4; color:var(--quest-progress); }
 .qprogress + .qrow { margin-top:1px; }
 /* The "(repeatable)" tag, the "Repeatable work" heading and the finished
    repeatable quests under it. They are quieter than active quests because
@@ -381,19 +380,22 @@
    see-through text faded to about 2:1 against the panel (unreadable in
    Light and Dark mode). The hint colour reads at about 5:1 in both modes.
    Words still say the status ("Not offered again yet."), never colour alone. */
-.qrepeat { margin-left: 0.4em; font-size: 0.9em; color: var(--quest-progress); }
-.qgroup { margin-top: 0.6em; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; color: var(--quest-progress); }
+.qrepeat { margin-left: 0.4em; font-size: var(--text); color: var(--quest-progress); }
+.qgroup { margin-top: 0.6em; font-size: var(--text); text-transform: uppercase; letter-spacing: 0.05em; color: var(--quest-progress); }
 .qrepeatrow { padding: 2px 0; cursor: default; }
-.qrepeatrow .qname { font-family:var(--font-body); font-size:13px; font-weight:600; color:var(--quest-progress); }
+.qrepeatrow .qname { font-family:var(--font-body); font-size: var(--text); font-weight: var(--bold); color:var(--quest-progress); }
 .qonmap { color:var(--party-teal); font-style:normal; white-space:nowrap; }
 #panel-vitals { flex: 0 0 auto; }                    /* content-compact; grows with party rows */
 #panel-art    { flex: 0 1 auto; min-height: 120px; } /* inventory: content-sized, grows w/ eq list */
-/* Chat gets twice the share of Status and Automation, and at least 240px
+/* Chat gets twice the share of Conditions and Automation, and at least 240px
    in the right column: its channel tabs wrap to two or three rows on a
    laptop, which left the messages 11 to 27px tall at 1280x720 and
    1366x650 (#768 review item 1). */
 #panel-chat   { flex: var(--f-chat, 2) 1 0; }
 #dash-col-right > #panel-chat { min-height: 240px; }
+/* Automation's tabs take two rows at the text size; this keeps its list in
+   view on a laptop until layout D replaces these columns. */
+#dash-col-right > #panel-trig { min-height: 200px; }
 #panel-status { flex: var(--f-status, 1) 1 0; }
 #panel-trig   { flex: var(--f-trig, 1) 1 0; }
 
@@ -401,11 +403,11 @@
 .dash-slot .dash-panel-body {
   display: flex; align-items: center; justify-content: center;
   color: var(--text-secondary); font-family: var(--font-body);
-  font-style: italic; font-size: 0.8rem; text-align: center; padding: 8px;
+  font-size: var(--text); text-align: center; padding: 8px;
 }
 
 /* A tab folded with its ▾ button shows only its title bar, on every tab
-   (Map, Quests, Health, Inventory, Chat, Status, Automation) and every
+   (Map, Quests, Health, Inventory, Chat, Conditions, Automation) and every
    screen. The !important is needed here: several tabs have their own rules
    for their size and layout, and the fold must beat all of them, or
    that tab's ▾ button seems to do nothing. */
@@ -529,8 +531,8 @@
   border: 1px solid var(--gtab-pill);
   white-space: nowrap;
   font-family: var(--font-body);
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: var(--text);
+  font-weight: 400;
   line-height: 1.3;
   pointer-events: none;
   color: var(--gtab-pill-text);
@@ -570,12 +572,12 @@
 /* ------------------------------------------------------------------ */
 
 /* Phone bar sizes: a 40px circle row (52px bar) floating 8px above the screen
-   edge, and a 30px strip above it for the open tab's name. */
+   edge, and a 36px strip above it for the open tab's name. */
 #dashboard[data-mode="phone"],
 #dash-tabbar,
 #dash-drawer {
   --tabbar-h: 60px;   /* bar + its bottom gap */
-  --tabname-h: 30px;  /* the name strip, shown while a panel is open */
+  --tabname-h: 36px;  /* the name strip, shown while a panel is open; fits the pill at the text size */
   /* The command box's height on a phone (its 48px box and its frame, 58px)
      plus the 6px gap under it. An open tab stops this far up, so it never
      covers the command box. */
@@ -711,7 +713,7 @@ html.keyboard-open #dash-drawer {
   min-width: 40px;
   min-height: 40px;
   padding: 3px 12px;
-  font-size: 1.1rem;
+  font-size: var(--text);
   font-weight: 400;
   line-height: 1;
 }
@@ -724,7 +726,7 @@ html.keyboard-open #dash-drawer {
    is made narrow enough to use the phone layout with a mouse or trackpad. */
 /* It also matches the ✕'s look: the same rounded corners and brass shading
    (the Settings button style), with its arrow centred. The ▾ character is
-   drawn smaller than ✕, so it gets a bigger font to look the same size. */
+   drawn smaller than ✕ at the same font size. */
 #dash-drawer .dash-panel-head .ph-collapse {
   display: inline-flex;
   align-items: center;
@@ -742,7 +744,7 @@ html.keyboard-open #dash-drawer {
 #dash-drawer .dash-panel-head .ph-collapse::before {
   content: "\25BE";    /* ▾ */
   display: inline-block;
-  font-size: 26px;
+  font-size: var(--text);
   line-height: 1;
   padding-bottom: 5px; /* the ▾ character sits low; this lifts it to the middle */
 }
@@ -767,7 +769,7 @@ html.keyboard-open #dash-drawer {
   flex-direction: column;
 }
 
-/* Short tabs (Health, Status, Quests and the rest) stay short. */
+/* Short tabs (Health, Conditions, Quests and the rest) stay short. */
 #dash-drawer .dash-panel {
   flex: 0 0 auto;
   min-height: 0;
@@ -804,6 +806,8 @@ html.keyboard-open #dash-drawer {
 }
 .winbox.dash-winbox .wb-title {
   font-family: var(--font-heading);
+  font-size: var(--title);
+  font-weight: var(--bold);
   color: var(--vellum);
 }
 .winbox.dash-winbox .wb-body {
@@ -849,7 +853,7 @@ html.keyboard-open #dash-drawer {
   min-height: 34px;
   padding: 4px 10px;
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: var(--text);
   font-weight: 400;
   line-height: 1.2;
   white-space: nowrap;
@@ -885,7 +889,7 @@ html.keyboard-open #dash-drawer {
 .chat-hint {
   margin: 6px 8px;
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: var(--text);
   line-height: 1.4;
   color: var(--quest-progress);
 }
@@ -894,16 +898,16 @@ html.keyboard-open #dash-drawer {
    two or three rows and, with the 50px title bar, most of an open Chat tab,
    upright and sideways. On a touch screen under 600px wide or under 500px
    tall (a phone either way up, never a tablet) they are 30px, still above
-   the 24px minimum target, with smaller words and padding so more fit on a
+   the 24px minimum target, with less padding so more fit on a
    row, and the panel title buttons shrink to match. A deliberate exception
    to the 44px rule, recorded in BRAND_STANDARDS.md. */
 @media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .subtabs { gap: 4px; padding: 4px 4px 5px; }
-  .subtab { min-height: 30px; padding: 2px 8px; font-size: 0.82rem; }
-  .dash-panel-head .ph-btn { width: 32px; height: 30px; line-height: 28px; font-size: 15px; margin: 0; }
+  .subtab { min-height: 30px; padding: 2px 8px; font-size: var(--text); }
+  .dash-panel-head .ph-btn { width: 32px; height: 30px; line-height: 28px; font-size: var(--text); margin: 0; }
   .drawer-close { min-width: 32px; min-height: 30px; margin: 0; padding: 2px 8px; }
   #dash-drawer .dash-panel-head .ph-collapse { width: 32px; height: 30px; }
-  #dash-drawer .dash-panel-head .ph-collapse::before { font-size: 20px; padding-bottom: 3px; }
+  #dash-drawer .dash-panel-head .ph-collapse::before { font-size: var(--text); padding-bottom: 3px; }
 }
 /* Sideways only: the tab name pill under the game tabs goes too (the
    pressed circle already shows which is open), and Chat says that Full
@@ -927,7 +931,7 @@ html.keyboard-open #dash-drawer {
   margin: 0;
   padding: 3px 8px;
   font-family: var(--font-body);
-  font-size: 0.82rem;
+  font-size: var(--text);
   color: var(--quest-progress);   /* 4.95 on the dark panel, 4.97 on Light */
 }
 @media (forced-colors: active) {
@@ -973,6 +977,7 @@ html.keyboard-open #dash-drawer {
 
 /* A cell: icon tile stacked above label */
 .inv-cell {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1026,9 +1031,10 @@ html.keyboard-open #dash-drawer {
 }
 .inv-tile.empty:hover { border-color: var(--panel-border); }
 
-/* Slot label below the tile */
+/* Slot label below the tile. Off: a 46px column fits about four letters at
+   the text size (spec, Equipped panel). */
 .inv-slab {
-  font-size: 8px;
+  display: none;
   color: var(--text-secondary);
   line-height: 1;
   text-align: center;
@@ -1045,11 +1051,11 @@ html.keyboard-open #dash-drawer {
   position: absolute;
   bottom: 2px;
   right: 3px;
-  font-size: 8px;
+  font-size: var(--text);
   color: var(--vellum);
   background: color-mix(in srgb, var(--shadow) 55%, transparent);
   border-radius: 2px;
-  padding: 0 2px;
+  padding: 0 3px;
   pointer-events: none;
   line-height: 1.3;
 }
@@ -1084,8 +1090,7 @@ html.keyboard-open #dash-drawer {
   justify-content: center;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-style: italic;
-  font-size: 0.8rem;
+  font-size: var(--text);
   padding: 16px 8px;
   text-align: center;
 }
@@ -1101,18 +1106,17 @@ html.keyboard-open #dash-drawer {
   overflow: hidden;
   z-index: 9000;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: var(--text);
 }
 .inv-ctx .ctx-header {
   padding: 5px 10px 4px;
-  font-size: 10px;
-  font-style: italic;
+  font-size: var(--text);
   color: var(--text-secondary);
   border-bottom: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: min(34ch, 80vw);
   pointer-events: none;
   user-select: none;
 }
@@ -1145,8 +1149,8 @@ html.keyboard-open #dash-drawer {
   margin: 0;
   padding: 6px 8px;
   font-family: var(--font-body);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--text);
+  font-weight: 400;
   color: var(--text-primary);
   background: var(--panel-bg);
   border-bottom: 1px solid var(--panel-border);
@@ -1163,7 +1167,7 @@ html.keyboard-open #dash-drawer {
 }
 
 .auto-add {
-  font-size: 10px;
+  font-size: var(--text);
   padding: 2px 8px;
   border-radius: 3px;
   cursor: pointer;
@@ -1171,15 +1175,14 @@ html.keyboard-open #dash-drawer {
   background: var(--brass-grad);
   border: 1px solid var(--brass-border);
   font-family: var(--font-body);
-  font-style: italic;
   filter: brightness(0.85);
   transition: filter 0.08s;
   user-select: none;
 }
-/* With a mouse, "+ New" is at least 24px tall with easier-to-read text,
+/* With a mouse, "+ New" is at least 24px tall,
    the smallest size the accessibility rules allow (#730). */
 @media (pointer: fine) {
-  .auto-add { font-size: 13px; min-height: 24px; display: inline-flex; align-items: center; }
+  .auto-add { font-size: var(--text); min-height: 24px; display: inline-flex; align-items: center; }
 }
 .auto-add:hover {
   filter: brightness(1);
@@ -1221,7 +1224,7 @@ html.keyboard-open #dash-drawer {
 /* Key / alias name — mono, gold */
 .auto-row .name {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text);
   color: var(--ink-gold);
   flex-shrink: 0;
   white-space: nowrap;
@@ -1230,8 +1233,7 @@ html.keyboard-open #dash-drawer {
 /* Command summary — muted, ellipsis overflow */
 .auto-row .sum {
   font-family: var(--font-body);
-  font-size: 10px;
-  font-style: italic;
+  font-size: var(--text);
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1290,7 +1292,7 @@ html.keyboard-open #dash-drawer {
   justify-content: center;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: var(--text);
   padding: 16px 8px;
   text-align: center;
 }
@@ -1306,19 +1308,18 @@ html.keyboard-open #dash-drawer {
   overflow: hidden;
   z-index: 9000;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: var(--text);
 }
 /* Shared row/header/sep styles from .inv-ctx also apply to .auto-ctx */
 .auto-ctx .ctx-header {
   padding: 5px 10px 4px;
-  font-size: 10px;
-  font-style: italic;
+  font-size: var(--text);
   color: var(--text-secondary);
   border-bottom: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: min(34ch, 80vw);
   pointer-events: none;
   user-select: none;
 }
@@ -1348,18 +1349,17 @@ html.keyboard-open #dash-drawer {
   overflow: hidden;
   z-index: 9000;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: var(--text);
 }
 .quest-ctx .ctx-header {
   padding: 5px 10px 4px;
-  font-size: 10px;
-  font-style: italic;
+  font-size: var(--text);
   color: var(--text-secondary);
   border-bottom: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: min(34ch, 80vw);
   pointer-events: none;
   user-select: none;
 }
@@ -1377,12 +1377,11 @@ html.keyboard-open #dash-drawer {
 .quest-ctx .ctx-sep {
   border-top: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
 }
-/* Dimmed and italic: shape and brightness carry the meaning, no hue. */
+/* Dimmed: brightness carries the meaning, no hue. */
 .quest-ctx .ctx-row.ctx-disabled,
 .quest-ctx .ctx-row.ctx-disabled:hover {
   color: var(--text-secondary);
   background: none;
-  font-style: italic;
   cursor: default;
 }
 
@@ -1418,8 +1417,8 @@ html.keyboard-open #dash-drawer {
 
 .auto-modal-title {
   font-family: var(--font-heading);
-  font-style: italic;
-  font-size: 0.9rem;
+  font-size: var(--title);
+  font-weight: var(--bold);
   color: var(--vellum);
   flex: 1;
 }
@@ -1427,7 +1426,7 @@ html.keyboard-open #dash-drawer {
 .auto-modal-close {
   cursor: pointer;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--text);
   padding: 0 2px;
 }
 .auto-modal-close:hover { color: var(--vellum); }
@@ -1447,8 +1446,7 @@ html.keyboard-open #dash-drawer {
 }
 .auto-field label {
   font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-style: italic;
+  font-size: var(--text);
   color: var(--text-secondary);
 }
 .auto-field input,
@@ -1458,7 +1456,7 @@ html.keyboard-open #dash-drawer {
   border-radius: 3px;
   color: var(--vellum);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--cmd);
   padding: 5px 7px;
   outline: none;
   transition: border-color 0.08s;
@@ -1480,7 +1478,7 @@ html.keyboard-open #dash-drawer {
   padding: 8px 12px;
   border-top: 1px solid var(--panel-border);
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: var(--text);
   color: var(--vellum);
 }
 .auto-modal-msg[hidden] { display: none; }
@@ -1496,12 +1494,11 @@ html.keyboard-open #dash-drawer {
 
 .auto-modal-cancel,
 .auto-modal-save {
-  font-size: 11px;
+  font-size: var(--text);
   padding: 4px 14px;
   border-radius: 4px;
   cursor: pointer;
   font-family: var(--font-body);
-  font-style: italic;
   border: 1px solid var(--brass-border);
   color: var(--brass-text);
   background: var(--brass-grad);
@@ -1524,18 +1521,18 @@ html.keyboard-open #dash-drawer {
 #terminal .composition-view { background: var(--ink-deep); color: var(--term-cursor); }
 
 /* Automation macro/alias "sticker" chips — compact oval pills (mirrors the
-   Status panel cond-chips). Shows only the shortcut/F-key; full
+   Conditions panel cond-chips). Shows only the shortcut/F-key; full
    expansion is the hover title. Wraps to fit many in the panel. */
 .auto-chips { display: flex; flex-wrap: wrap; gap: 5px; padding: 2px; align-content: flex-start; }
 .auto-chip {
-  font-family: var(--font-mono); font-size: 0.72rem;
-  padding: 2px 9px; border-radius: 12px;
+  font-family: var(--font-mono); font-size: var(--text);
+  padding: 2px 10px; border-radius: 12px;
   border: 1px solid var(--panel-border); background: var(--chip-bg);
   color: var(--ink-gold);
   cursor: pointer; white-space: nowrap; user-select: none;
   transition: border-color 0.1s, box-shadow 0.1s, color 0.1s;
 }
-/* Type accents — mirror the Status panel's two-tone chips so the
+/* Type accents — mirror the Conditions panel's two-tone chips so the
    automation tabs read with the same polish. Macros = warm brass (F-key action
    keys); aliases = teal/copper, tying them to the status-panel condition chips. */
 .auto-chip[data-auto-type="macro"] {
@@ -1563,16 +1560,16 @@ html.keyboard-open #dash-drawer {
 /* FIFO position badge — circular, red by default, brass for position 1 */
 .auto-badge {
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  line-height: 18px;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
   text-align: center;
   border-radius: 50%;
   background: var(--madder);
   color: var(--white);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: var(--text);
+  font-weight: 400;
 }
 /* Brass "next to fire" badge */
 .auto-badge.next {
@@ -1600,18 +1597,17 @@ html.keyboard-open #dash-drawer {
 }
 .auto-qcount {
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: var(--text);
   color: var(--title-gold);
 }
 .auto-qcd {
-  font-size: 0.66rem;
+  font-size: var(--text);
   color: var(--text-secondary);
-  font-style: italic;
   flex: 1;
 }
 /* Brass Clear button */
 .auto-qclear {
-  font-size: 0.68rem;
+  font-size: var(--text);
   color: var(--brass-text);
   background: radial-gradient(circle at 34% 26%, var(--brass-light), var(--brass-mid) 46%, var(--brass-dark));
   border: 1px solid var(--brass-border);
@@ -1619,7 +1615,6 @@ html.keyboard-open #dash-drawer {
   padding: 2px 9px;
   cursor: pointer;
   font-family: var(--font-body);
-  font-style: italic;
   transition: filter 0.08s;
 }
 .auto-qclear:hover {
@@ -1635,7 +1630,7 @@ html.keyboard-open #dash-drawer {
   position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 12px);
   background: linear-gradient(var(--ink-deep), var(--bar-bottom)); color: var(--title-gold);
   border: 1px solid var(--antique-gold); border-radius: 6px; padding: 8px 16px;
-  font: 13px var(--font-body); letter-spacing: .2px;
+  font-family: var(--font-body); font-size: var(--text); letter-spacing: .2px;
   box-shadow: 0 4px 16px color-mix(in srgb, var(--shadow) 55%, transparent), inset 0 1px 0 color-mix(in srgb, var(--ink-gold) 12%, transparent);
   opacity: 0; pointer-events: none; z-index: 99999;
   transition: opacity .28s ease, transform .28s ease;

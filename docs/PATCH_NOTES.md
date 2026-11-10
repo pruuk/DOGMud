@@ -1,5 +1,16 @@
 # DOGMud Patch Notes
 
+## 2026-11-10: One look for the web client
+
+- The web client and the website now share one clear typeface, in one text
+  size and one title size, with no italics.
+- Room titles, quest names and your own name stand out in bold.
+- Text on the side panels is larger and easier to read.
+- The game window's text still changes size with your window for now.
+- The website's bottom bar no longer repeats the menu from the top bar.
+- The Status tab is now called Conditions, so it is not confused with the
+  `status` command.
+
 ## 2026-11-09: Cleaner line breaks
 
 - Long game messages no longer break in the middle of a word.
