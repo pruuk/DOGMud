@@ -212,6 +212,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/roomtitlebold.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/viewportfit.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/termfit.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js?v={{ .ASSET_VERSION }}"></script>
@@ -3040,7 +3041,8 @@
 
                 // Otherwise, just write to terminal
                 // The MOTD shows without its box here (static/js/motdrestyle.js).
-                term.write(window.MotdRestyle ? window.MotdRestyle.restyle(event.data) : event.data);
+                var shown = window.MotdRestyle ? window.MotdRestyle.restyle(event.data) : event.data;
+                term.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);
                 // Tap text stream for trigger matching (read-only copy; does not affect terminal output)
                 try {
                     stripAnsi(event.data).split(/\r?\n/).forEach(function(line){ if (line) runTriggers(line, Date.now()); });
