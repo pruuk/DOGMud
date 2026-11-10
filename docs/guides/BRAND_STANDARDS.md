@@ -98,7 +98,7 @@ All colours come from the palette spec. The roles that define the brand:
   the lit lamp, green `#70e010` with an umber `#3b2a10` rim and knob; off is
   the dark track with a lighter knob. Red never means on. New entries start
   on. Check boxes are a different control and keep the brass accent.
-- **Round tabs** (Map, Quests, Health, Inventory, Chat, Status, Automation):
+- **Round tabs** (Map, Quests, Health, Inventory, Chat, Conditions, Automation):
   brass circles on a dark umber bar with a teal rim, one sliding name pill.
 - **Panels:** gold outline on every card, one teal line under every panel
   title. Pop-out windows are a wide-screen feature only.

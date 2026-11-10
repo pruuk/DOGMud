@@ -239,7 +239,7 @@
 
 /* Per-panel stack proportions (flex-basis 0 → grow ratios set the heights;
    splitters will later tune these --f-* vars). Left: Map / Vitals / Scene;
-   Right: Chat / Status / Triggers (~equal). */
+   Right: Chat / Conditions / Triggers (~equal). */
 /* Left column auto-balances by content: the Map absorbs slack (large when the
    inventory is short) but keeps a min; the Inventory panel sizes to its content
    (grows with a long eq list — e.g. extra-arms — and scrolls only once the Map
@@ -387,7 +387,7 @@
 .qonmap { color:var(--party-teal); font-style:normal; white-space:nowrap; }
 #panel-vitals { flex: 0 0 auto; }                    /* content-compact; grows with party rows */
 #panel-art    { flex: 0 1 auto; min-height: 120px; } /* inventory: content-sized, grows w/ eq list */
-/* Chat gets twice the share of Status and Automation, and at least 240px
+/* Chat gets twice the share of Conditions and Automation, and at least 240px
    in the right column: its channel tabs wrap to two or three rows on a
    laptop, which left the messages 11 to 27px tall at 1280x720 and
    1366x650 (#768 review item 1). */
@@ -407,7 +407,7 @@
 }
 
 /* A tab folded with its ▾ button shows only its title bar, on every tab
-   (Map, Quests, Health, Inventory, Chat, Status, Automation) and every
+   (Map, Quests, Health, Inventory, Chat, Conditions, Automation) and every
    screen. The !important is needed here: several tabs have their own rules
    for their size and layout, and the fold must beat all of them, or
    that tab's ▾ button seems to do nothing. */
@@ -769,7 +769,7 @@ html.keyboard-open #dash-drawer {
   flex-direction: column;
 }
 
-/* Short tabs (Health, Status, Quests and the rest) stay short. */
+/* Short tabs (Health, Conditions, Quests and the rest) stay short. */
 #dash-drawer .dash-panel {
   flex: 0 0 auto;
   min-height: 0;
@@ -1521,7 +1521,7 @@ html.keyboard-open #dash-drawer {
 #terminal .composition-view { background: var(--ink-deep); color: var(--term-cursor); }
 
 /* Automation macro/alias "sticker" chips — compact oval pills (mirrors the
-   Status panel cond-chips). Shows only the shortcut/F-key; full
+   Conditions panel cond-chips). Shows only the shortcut/F-key; full
    expansion is the hover title. Wraps to fit many in the panel. */
 .auto-chips { display: flex; flex-wrap: wrap; gap: 5px; padding: 2px; align-content: flex-start; }
 .auto-chip {
@@ -1532,7 +1532,7 @@ html.keyboard-open #dash-drawer {
   cursor: pointer; white-space: nowrap; user-select: none;
   transition: border-color 0.1s, box-shadow 0.1s, color 0.1s;
 }
-/* Type accents — mirror the Status panel's two-tone chips so the
+/* Type accents — mirror the Conditions panel's two-tone chips so the
    automation tabs read with the same polish. Macros = warm brass (F-key action
    keys); aliases = teal/copper, tying them to the status-panel condition chips. */
 .auto-chip[data-auto-type="macro"] {

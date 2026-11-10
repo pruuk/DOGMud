@@ -348,7 +348,7 @@
         </section>
       </div>
 
-      <!-- RIGHT column: Chat · Status · Automation -->
+      <!-- RIGHT column: Chat · Conditions · Automation -->
       <div class="dash-col" id="dash-col-right">
         <section class="dash-panel" id="panel-chat" data-panel="chat">
           <div class="dash-panel-head"><span class="ph-title">Chat</span>
@@ -380,7 +380,7 @@
         </section>
 
         <section class="dash-panel" id="panel-status" data-panel="status">
-          <div class="dash-panel-head"><span class="ph-title">Status</span>
+          <div class="dash-panel-head"><span class="ph-title">Conditions</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body"><div id="status-conditions"></div></div>
         </section>
@@ -1429,7 +1429,7 @@
                 list.appendChild(el);
             }
 
-            // A compact oval "sticker" chip (like the Status panel).
+            // A compact oval "sticker" chip (like the Conditions panel).
             // Shows only the shortcut/F-key; the full expansion is the hover tooltip.
             // dataset carries the data for left-click fire + right-click menu.
             function makeAutoChip(type, key, cmd, label) {
@@ -3776,7 +3776,7 @@
             color: var(--chat-whisper);
         }
 
-        /* Status panel */
+        /* Conditions panel (#panel-status) */
         #status-conditions {
             padding: 6px;
             display: flex;
@@ -3807,7 +3807,7 @@
         }
         .cond-chip .cond-dur {
             color: var(--text-secondary);
-            margin-left: 4px;
+            margin-left: 1ch;
             font-size: var(--text);
         }
         /* ── Mutation reveal (toast → ceremonial card) ─────────────────── */
