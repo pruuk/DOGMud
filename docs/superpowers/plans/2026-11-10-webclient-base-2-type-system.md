@@ -1281,7 +1281,7 @@ Write `$S/pr-body.md` with the Write tool: what players see, the seven departure
 
 ## Changed after the whole-branch review
 
-The review of the finished branch found these, and they are fixed in the commit after the docs. Every field a player types in reads `--cmd`, so iOS does not zoom the page on an upright phone (the Automation editor, Help search, `select` and `textarea`). The map's quest plates are sized for a monospaced font. Right-click menu headers are capped in characters instead of pixels. `viewportfit.js` also reads `window.orientation` for iOS before 16.4. The guard scans `dashboard.js` in full, pins all three family tokens and the ligature rule, and accepts a value that ends a quoted string.
+The review of the finished branch found these, and they are fixed in the commit after the docs. Every field a player types in reads `--cmd`, so iOS does not zoom the page on an upright phone (the Automation editor, Help search, `select` and `textarea`). The map's quest plates are sized for a monospaced font. Right-click menu headers are capped in characters instead of pixels. `viewportfit.js` also reads `window.orientation` for iOS before 16.4. The guard scans `dashboard.js` in full, pins all three family tokens and the ligature rule, and accepts a value that ends a quoted string. The guard does not read SVG attributes such as `font-size="7"`, which only the map legend's icons use, an accepted limit.
 
 ## Self-review against the spec
 

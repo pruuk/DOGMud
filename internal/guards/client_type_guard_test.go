@@ -69,7 +69,7 @@ var (
 	typeSizeDecl  = regexp.MustCompile(`font-size\s*:\s*([^;}]+)`)
 	typeSizeOK    = regexp.MustCompile(`^var\(--(text|title|cmd|nav-text|foot-text)\)$`)
 	typeShort     = regexp.MustCompile(`(^|[\s;{"'])font\s*:\s*[^;]`)
-	typeItalic    = regexp.MustCompile(`font-style['"]?\s*[:=]\s*['"]?(italic|oblique)`)
+	typeItalic    = regexp.MustCompile(`font-style['"]?\s*[:=]\s*['"]?(italic|oblique)|font\s*:\s*['"]?italic`)
 	typeStyleProp = regexp.MustCompile(`\.style\.font(Size|Weight|Style|Family)\b`)
 	typeTokenDef  = regexp.MustCompile(`(^|[\s;{])--(text|title|cmd|nav-text|foot-text|bold)\s*:`)
 	typeFamily    = regexp.MustCompile(`font-family\s*:\s*([^;}]+)`)

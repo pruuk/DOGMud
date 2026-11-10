@@ -727,8 +727,8 @@ class RoomGridSVG {
       if (!qm || !qm.inside || !qm.label || (qm.kind !== 'area' && qm.kind !== 'zone')) { return; }
       const L = RoomGridSVG.LEATHER;
       let text = 'Somewhere in ' + qm.label;
-      if (text.length > 48) { text = text.slice(0, 45) + '...'; }
-      const w = Math.min(300, 12 + text.length * 4.5);
+      if (text.length > 41) { text = text.slice(0, 38) + '...'; }
+      const w = Math.min(200, 12 + text.length * 4.5);
       ov.appendChild(lEl('rect', { x: 160 - w / 2, y: 49, width: w, height: 13, rx: 3, fill: L.legendBg,
           stroke: L.questGold, 'stroke-width': 0.8, opacity: '0.92', 'data-quest-banner': '1' }));
       ov.appendChild(lTxt({ x: 160, y: 58.2, 'text-anchor': 'middle', 'font-family': L.font,

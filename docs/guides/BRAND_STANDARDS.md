@@ -77,8 +77,8 @@ All colours come from the palette spec. The roles that define the brand:
   The Google Fonts version has no box-drawing characters, which misaligns
   every box in the game.
 - **Two sizes:** text 16px and titles 20px (`--text`, `--title`), 14px and
-  18px on upright phones. The command box is always 16px (`--cmd`): iOS zooms
-  the page on anything smaller.
+  18px on upright phones. The command box and every field a player types in
+  are always 16px (`--cmd`): iOS zooms the page on anything smaller.
 - **Site bars:** top bar 20px and footer 16px (`--nav-text`, `--foot-text`),
   16px and 14px on phones (under 768px wide or 500px tall).
 - **No italics.** Regular weight for body text and every button. One bold
