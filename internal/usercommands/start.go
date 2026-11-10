@@ -73,7 +73,7 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// only presses Enter never lands on a path that skips the tutorial.
 	})
 	if !question.Done {
-		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 	}
 
@@ -114,7 +114,7 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	case routeVeteran:
 		confirm := cmdPrompt.AskConfirm("Skip everything and start in the city, already Awakened?", "Yes, skip ahead", "No")
 		if !confirm.Done {
-			user.SendText(messaging.CategoryScreen, menu.Render(*confirm.Menu))
+			user.SendText(messaging.CategoryScreen, menu.Render(*confirm.Menu, user.WrapWidth()))
 			return true, nil
 		}
 		if confirm.Response != "yes" {

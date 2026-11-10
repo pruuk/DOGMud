@@ -67,7 +67,7 @@ func RenameSelf(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	// A rename frees the old name for anyone to claim, so the labels name it.
 	q := cmdPrompt.AskConfirm(confirmText, `Yes, rename me`, `No, keep my name`)
 	if !q.Done {
-		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu, user.WrapWidth()))
 		return true, nil
 	}
 	if q.Response != `yes` {

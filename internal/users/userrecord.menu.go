@@ -121,9 +121,9 @@ func (u *UserRecord) OpenMenu(m menu.Menu, s menu.Session) (menu.CloseReason, bo
 		old.s.OnClose(menu.CloseReplaced)
 	}
 	if s.ShowLast {
-		u.sendTextAt(messaging.CategoryScreen, menu.Render(m), menuShowLastPriority)
+		u.sendTextAt(messaging.CategoryScreen, menu.Render(m, u.WrapWidth()), menuShowLastPriority)
 	} else {
-		u.SendText(messaging.CategoryScreen, menu.Render(m))
+		u.SendText(messaging.CategoryScreen, menu.Render(m, u.WrapWidth()))
 	}
 	return menu.CloseNone, true
 }
@@ -378,7 +378,7 @@ func (u *UserRecord) RouteMenuInput(line string, typed bool) bool {
 		u.SendText(messaging.CategoryRefusal, ambiguousLine(res.Matches))
 		return true
 	case menu.Empty:
-		u.SendText(messaging.CategoryScreen, menu.Render(om.m))
+		u.SendText(messaging.CategoryScreen, menu.Render(om.m, u.WrapWidth()))
 		return true
 	default:
 		// Announced (owner ruling 2026-10-30, #690): menu.InterruptLine names

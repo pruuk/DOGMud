@@ -131,7 +131,7 @@ func guildCreate(user *users.UserRecord, remainder, rest string) {
 	cmdPrompt.NonModal = true
 	q := cmdPrompt.AskConfirm(fmt.Sprintf(`Found "%s" [%s] for %s gold from your bank?`, name, strings.ToUpper(tag), util.FormatNumber(cost)), `Yes, found it`, `No`)
 	if !q.Done {
-		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu, user.WrapWidth()))
 		return
 	}
 	user.ClearPrompt()
@@ -197,7 +197,7 @@ func guildLeave(user *users.UserRecord, rest string) {
 		cmdPrompt.NonModal = true
 		q := cmdPrompt.AskConfirm(`You are the only member. Leaving will disband the guild. Proceed?`, `Yes, disband it`, `No, stay`)
 		if !q.Done {
-			user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
+			user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu, user.WrapWidth()))
 			return
 		}
 		user.ClearPrompt()
@@ -233,7 +233,7 @@ func guildDisband(user *users.UserRecord, rest string) {
 	cmdPrompt.NonModal = true
 	q := cmdPrompt.AskConfirm(fmt.Sprintf(`Disband "%s"? This cannot be undone.`, g.Name), `Yes, disband it`, `No, keep it`)
 	if !q.Done {
-		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu, user.WrapWidth()))
 		return
 	}
 	user.ClearPrompt()
@@ -436,7 +436,7 @@ func guildTransfer(user *users.UserRecord, remainder, rest string) {
 	cmdPrompt.NonModal = true
 	q := cmdPrompt.AskConfirm(fmt.Sprintf(`Hand leadership of %s to %s?`, g.Name, name), `Yes, hand it over`, `No, keep it`)
 	if !q.Done {
-		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu, user.WrapWidth()))
 		return
 	}
 	user.ClearPrompt()

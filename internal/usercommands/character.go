@@ -75,7 +75,7 @@ func Character(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 	question := cmdPrompt.AskMenu(characterMenu(altNames))
 	if !question.Done {
-		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 	}
 
@@ -153,13 +153,13 @@ func cmdCharacterNew(user *users.UserRecord, room *rooms.Room, cmdPrompt *prompt
 		// same heading returns the existing question.
 		q := cmdPrompt.AskMenu(characterMenu(altNames))
 		q.RejectResponse()
-		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu, user.WrapWidth()))
 		return true, nil
 	}
 
 	question := cmdPrompt.AskConfirm(`Are you SURE? (Your current character will be saved here to change back to later)`, `Yes`, `No`)
 	if !question.Done {
-		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 	}
 
@@ -214,7 +214,7 @@ func cmdCharacterDelete(user *users.UserRecord, cmdPrompt *prompt.Prompt, altNam
 
 		question := cmdPrompt.AskConfirm(`<ansi fg="red">Are you SURE you want to delete <ansi fg="username">`+delChar.Name+`</ansi>?</ansi>`, `Yes, delete them`, `No, keep them`)
 		if !question.Done {
-			user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu, user.WrapWidth()))
 			return true, nil
 		}
 
@@ -269,7 +269,7 @@ func cmdCharacterChange(user *users.UserRecord, room *rooms.Room, cmdPrompt *pro
 
 		question := cmdPrompt.AskConfirm(`<ansi fg="51">Are you SURE you want to change to <ansi fg="username">`+char.Name+`</ansi>?</ansi>`, `Yes`, `No`)
 		if !question.Done {
-			user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu, user.WrapWidth()))
 			return true, nil
 		}
 
@@ -400,7 +400,7 @@ func cmdCharacterHire(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 
 		question := cmdPrompt.AskConfirm(fmt.Sprintf(`<ansi fg="51">The price to hire <ansi fg="username">%s</ansi> is <ansi fg="gold">%s gold</ansi>. Are you sure?</ansi>`, char.Name, util.FormatNumber(charValue)), `Yes, hire them`, `No`)
 		if !question.Done {
-			user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu, user.WrapWidth()))
 			return true, nil
 		}
 

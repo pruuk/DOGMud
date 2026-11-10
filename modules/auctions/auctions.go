@@ -416,7 +416,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 	cmdPrompt.NonModal = true
 	questionConfirm := cmdPrompt.AskConfirm(`Auction your `+matchItem.NameComplex()+`?`, `Yes, auction it`, `No`)
 	if !questionConfirm.Done {
-		user.SendText(messaging.CategoryScreen, menu.Render(*questionConfirm.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*questionConfirm.Menu, user.WrapWidth()))
 		return true, nil
 	}
 

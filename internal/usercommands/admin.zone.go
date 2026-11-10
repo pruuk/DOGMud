@@ -147,7 +147,7 @@ func zone_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 	question := cmdPrompt.AskMenu(zoneMutatorMenu(mutatorOptions), `0`)
 	if !question.Done {
-		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 	}
 
@@ -166,7 +166,7 @@ func zone_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags even
 			user.SendText(messaging.CategoryAdmin, "Invalid selection.")
 			question.RejectResponse()
 
-			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 			return true, nil
 		}
 
@@ -198,7 +198,7 @@ func zone_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 		// Re-ask so the stored menu carries the updated [x] marks.
 		question = cmdPrompt.AskMenu(zoneMutatorMenu(mutatorOptions), `0`)
-		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 
 	}
@@ -214,7 +214,7 @@ func zone_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		}
 		question := cmdPrompt.AskMenu(musicMenu)
 		if !question.Done {
-			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 			return true, nil
 		}
 

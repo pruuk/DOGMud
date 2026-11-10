@@ -197,7 +197,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	question := cmdPrompt.AskMenu(picklockMenu())
 	if !question.Done {
-		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 	}
 
@@ -309,7 +309,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	// The question was reset above, so show the choices again.
-	user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
+	user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu, user.WrapWidth()))
 	return true, nil
 }
 

@@ -125,7 +125,7 @@ func TestConfirm(t *testing.T) {
 	if m.Leave != "" {
 		t.Errorf("a confirm has no Leave entry")
 	}
-	if plain(Render(m)) != "Disband \"Iron Wolves\"? This cannot be undone.\n\n  1.     Yes, disband it\n  2.     No, keep it\n\nType a number, or press Enter for 2." {
-		t.Errorf("confirm render: %q", plain(Render(m)))
+	if plain(renderAt80(m)) != "Disband \"Iron Wolves\"? This cannot be undone.\n\n  1.     Yes, disband it\n  2.     No, keep it\n\nType a number, or press Enter for 2." {
+		t.Errorf("confirm render: %q", plain(renderAt80(m)))
 	}
 }

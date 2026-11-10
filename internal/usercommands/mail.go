@@ -188,7 +188,7 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if !question.Done {
 		tplTxt, _ := templates.Process("mail/message", msg, user.UserId)
 		user.SendText(messaging.CategoryScreen, tplTxt)
-		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 	}
 	user.ClearPrompt()

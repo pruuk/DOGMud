@@ -349,7 +349,7 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 	levelOptions, _ := getConfigOptions(configPrefix)
 	question := cmdPrompt.AskMenu(configMenu(levelOptions), `quit`)
 	if !question.Done {
-		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 		return true, nil
 	}
 
@@ -413,7 +413,7 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 
 	// Re-ask so the stored menu is the level just drawn.
 	question = cmdPrompt.AskMenu(configMenu(menuOptions), `quit`)
-	user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+	user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu, user.WrapWidth()))
 
 	return true, nil
 }
