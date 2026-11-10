@@ -45,6 +45,10 @@ The web system is built around Go's standard `net/http` package with several key
 - WebSocket endpoint for real-time game clients
 - Automatic `.html` extension handling
 - Custom 404 error page support
+- Short links (`shortlinks.go`): `shortLinks` maps a short path on the site
+  (`/novel`, `/patch-notes`) to a long address the game prints, answered with
+  a permanent redirect by `shortLinkHandler`. The MOTD uses them so its links
+  fit a narrow screen (#844); `shortlinks_test.go` holds the MOTD to them
 
 ### 2. **Administrative Interface**
 - Comprehensive admin panels for game content management
