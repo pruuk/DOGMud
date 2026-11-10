@@ -26,12 +26,22 @@ import (
 // Use this in tests instead of RegisterFS, which appends and leaks. This is
 // not safe with parallel tests (t.Parallel()): fileSystems is an unlocked
 // package-level var, so two tests racing SetFSForTest step on each other's
-// registrations and cleanups.
+// registrations and cleanups. It also forgets which narrow forms exist, on
+// the way in and out, since they were found on the old filesystems.
 func SetFSForTest(t *testing.T, filesystems ...fs.ReadFileFS) {
 	t.Helper()
 	original := fileSystems
 	fileSystems = filesystems
+	formCache.Clear()
 	t.Cleanup(func() {
 		fileSystems = original
+		formCache.Clear()
 	})
+}
+
+// ProcessAtWidth renders fname as Process does for a reader whose screen is
+// width columns wide, without a screen reader. For guards that hold every
+// template to the width it is shown at (internal/guards).
+func ProcessAtWidth(fname string, data any, width int) (string, error) {
+	return process(fname, data, templateConfig{}, width)
 }

@@ -129,7 +129,11 @@ var (
 		"divFloat":     func(a int, b int) float64 { return float64(a) / float64(b) },
 		"stringor":     stringOr,
 		"splitstring":  util.SplitStringNL,
-		"ansiparse":    TplAnsiParse,
+		// screenwidth is the reader's width; Process replaces it per render
+		// (forms.go). Rendered with no reader, it is FullWidth.
+		"screenwidth": func() int { return FullWidth },
+		"min":         func(a, b int) int { return min(a, b) },
+		"ansiparse":   TplAnsiParse,
 		"conditionname": func(conditionId int) string {
 			conditionSpec := conditions.GetConditionSpec(conditionId)
 			if conditionSpec == nil {
