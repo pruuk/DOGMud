@@ -74,14 +74,15 @@
         }
         #settings-title {
             font-family: var(--font-heading);
-            font-size: 1.1rem;
+            font-size: var(--title);
+            font-weight: var(--bold);
             color: var(--white);
         }
         #settings-close {
             flex: 0 0 auto;
             width: 32px;
             height: 32px;
-            font-size: 20px;
+            font-size: var(--text);
             line-height: 1;
             cursor: pointer;
             color: var(--white);
@@ -109,13 +110,13 @@
         }
         .settings-note {
             margin: 2px 0 8px;
-            font-size: 0.85rem;
+            font-size: var(--text);
             color: var(--menu-text);
         }
         #settings-menu legend {
             padding: 0 6px 0 0;
             font-family: var(--font-heading);
-            font-size: 0.95rem;
+            font-size: var(--text);
             color: var(--white);
         }
 
@@ -140,7 +141,7 @@
         .slider-icon {
             width: 32px;
             text-align: center;
-            font-size: 20px;
+            font-size: var(--text);
             color: var(--menu-text);
         }
 
@@ -170,7 +171,7 @@
             box-sizing: border-box;
             min-height: 48px;
             padding: 10px 12px;
-            font-size: 16px;
+            font-size: var(--cmd);
             border: 2px solid var(--cmd-border-rest);
             background-color: var(--input-bg);
             color: var(--text-primary);
@@ -434,6 +435,8 @@
             rows: 60,
             cursorBlink: true,
             fontSize: 20,
+            // The one bold (--bold in gomud.css); room titles use it.
+            fontWeightBold: '600',
             // Give rapid-fire feed text vertical breathing room so lines don't
             // blend into a wall (affects row height only — not the 80-col fit).
             lineHeight: 1.2,
@@ -554,12 +557,12 @@
 
         // The 80-col grid is measured from glyph width, so it must be computed
         // against the real font, not a fallback. font-display:swap
-        // renders in a fallback until Source Code Pro loads; once it does, re-assign
+        // renders in a fallback until JetBrains Mono loads; once it does, re-assign
         // fontFamily (forces xterm to rebuild its glyph atlas) and refit.
         if (document.fonts && document.fonts.load) {
             Promise.all([
-                document.fonts.load('400 16px "Source Code Pro"'),
-                document.fonts.load('700 16px "Source Code Pro"')
+                document.fonts.load('400 16px "JetBrains Mono"'),
+                document.fonts.load('600 16px "JetBrains Mono"')
             ]).then(function () {
                 term.setOption('fontFamily', termFont);
                 resizeTerminal(true);
@@ -3610,17 +3613,17 @@
         /* Party Vitals Window Styles */
 
         #vitals-bars {
-            height: 100%;
+            height: auto;
             padding: 2px;
             display: flex;
             flex-direction: column;
-            gap: 1px;
+            gap: 2px;
         }
 
         .vitals-row {
             display: flex;
             align-items: center;
-            height: 20px;
+            height: 26px;
             gap: 2px;
         }
 
@@ -3632,10 +3635,10 @@
         }
 
         .vitals-name {
-            width: 70px;
-            min-width: 70px;
+            width: 9ch;
+            min-width: 9ch;
             font-family: var(--font-mono);
-            font-size: 0.75em;
+            font-size: var(--text);
             /* The vitals field background is vellum (light parchment), so names
                must be DARK ink to read. Companions get a slightly softer brown
                than self, but both stay high-contrast against the parchment. */
@@ -3649,13 +3652,13 @@
 
         .vitals-name.self {
             color: var(--vitals-name-self);
-            font-weight: bold;
+            font-weight: var(--bold);
         }
 
         .vitals-composite {
             flex: 1;
             display: flex;
-            height: 14px;
+            height: 22px;
             border-radius: 3px;
             overflow: hidden;
         }
@@ -3713,7 +3716,7 @@
             align-items: center;
             justify-content: center;
             font-family: var(--font-mono);
-            font-size: 0.65em;
+            font-size: var(--text);
             color: white;
             text-shadow: 0 1px 1px color-mix(in srgb, var(--shadow) 90%, transparent);
             pointer-events: none;
@@ -3782,13 +3785,12 @@
         }
         .status-line {
             font-family: var(--font-body);
-            font-size: 0.85rem;
+            font-size: var(--text);
             color: var(--vellum);
         }
         .status-empty {
             color: var(--text-secondary);
-            font-style: italic;
-            font-size: 0.8rem;
+            font-size: var(--text);
         }
         .cond-chips {
             display: flex;
@@ -3796,8 +3798,8 @@
             gap: 4px;
         }
         .cond-chip {
-            font-size: 0.72rem;
-            padding: 2px 8px;
+            font-size: var(--text);
+            padding: 2px 10px;
             border-radius: 12px;
             border: 1px solid var(--panel-border);
             background: var(--chip-bg);
@@ -3806,7 +3808,7 @@
         .cond-chip .cond-dur {
             color: var(--text-secondary);
             margin-left: 4px;
-            font-size: 0.66rem;
+            font-size: var(--text);
         }
         /* ── Mutation reveal (toast → ceremonial card) ─────────────────── */
         #mut-toast {
@@ -3823,8 +3825,8 @@
             background: var(--panel-bg); object-fit: cover;
         }
         #mut-toast img { width: 44px; height: 44px; }
-        #mut-toast .mt-name { color: var(--toast-name); font-family: var(--font-heading); font-size: 13px; }
-        #mut-toast .mt-sub  { color: var(--toast-sub); font-size: 10px; }
+        #mut-toast .mt-name { color: var(--toast-name); font-family: var(--font-heading); font-size: var(--text); }
+        #mut-toast .mt-sub  { color: var(--toast-sub); font-size: var(--text); }
         #mut-card-overlay {
             position: fixed; inset: 0; z-index: 70; display: none;
             background: color-mix(in srgb, var(--scrim) 55%, transparent); align-items: center; justify-content: center;
@@ -3838,10 +3840,10 @@
             box-shadow: 0 8px 40px color-mix(in srgb, var(--shadow) 70%, transparent);
         }
         #mut-card img { width: 128px; height: 128px; margin: 0 auto 12px; display: block; }
-        #mut-card .mc-kicker { color: var(--toast-kicker); font-size: 11px; letter-spacing: .25em; text-transform: uppercase; }
-        #mut-card .mc-name   { color: var(--toast-name); font-size: 20px; font-family: var(--font-heading); margin: 6px 0 8px; }
-        #mut-card .mc-desc   { color: var(--toast-desc); font-size: 12px; }
-        #mut-card .mc-hint   { color: var(--toast-hint); font-size: 10px; margin-top: 12px; }
+        #mut-card .mc-kicker { color: var(--toast-kicker); font-size: var(--text); letter-spacing: .25em; text-transform: uppercase; }
+        #mut-card .mc-name   { color: var(--toast-name); font-size: var(--title); font-weight: var(--bold); font-family: var(--font-heading); margin: 6px 0 8px; }
+        #mut-card .mc-desc   { color: var(--toast-desc); font-size: var(--text); }
+        #mut-card .mc-hint   { color: var(--toast-hint); font-size: var(--text); margin-top: 12px; }
     </style>
 
     <!-- Automation modal overlay — hidden; JS drives visibility -->
@@ -4307,7 +4309,7 @@
                 menu.appendChild(sep);
 
                 // A quest the server does not offer to set aside stays in the
-                // menu, dimmed and italic with its reason as a tooltip, so
+                // menu, dimmed with its reason as a tooltip, so
                 // the player learns why instead of wondering where it went.
                 var canDrop = row.getAttribute("data-abandonable") === "1";
                 var drop = makeCtxRow("Abandon", false, function() {
@@ -4490,7 +4492,7 @@
                 });
                 var enableLabel = document.createElement("span");
                 enableLabel.textContent = "Enabled";
-                enableLabel.style.cssText = "font-family:var(--font-body);font-size:0.85em;color:var(--auto-label);";
+                enableLabel.style.cssText = "font-family:var(--font-body);font-size: var(--text);color:var(--auto-label);";
                 enableWrap.appendChild(enableTog);
                 enableWrap.appendChild(enableLabel);
 
@@ -4566,7 +4568,7 @@
 
                 var doLabel = document.createElement("div");
                 doLabel.textContent = "Do";
-                doLabel.style.cssText = "font-family:var(--font-body);font-size:0.82em;color:var(--auto-label);font-weight:bold;margin-bottom:2px;";
+                doLabel.style.cssText = "font-family:var(--font-body);font-size: var(--text);color:var(--auto-label);font-weight: 400;margin-bottom:2px;";
                 doSection.appendChild(doLabel);
 
                 // Simple ThenCmds textarea (shown when no clause)
@@ -4586,7 +4588,7 @@
                 sourceRow.style.cssText = "display:flex;align-items:center;gap:6px;flex-wrap:wrap;";
                 var ifLabel = document.createElement("span");
                 ifLabel.textContent = "If";
-                ifLabel.style.cssText = "font-family:var(--font-body);font-size:0.82em;color:var(--auto-label);";
+                ifLabel.style.cssText = "font-family:var(--font-body);font-size: var(--text);color:var(--auto-label);";
                 sourceRow.appendChild(ifLabel);
 
                 var srcSelect = document.createElement("select");
@@ -4673,7 +4675,7 @@
                 var removeClauseBtn = document.createElement("button");
                 removeClauseBtn.type = "button";
                 removeClauseBtn.textContent = "✕ Remove condition";
-                removeClauseBtn.style.cssText = "align-self:flex-start;background:none;border:1px solid var(--auto-button-border);color:var(--auto-label);cursor:pointer;border-radius:3px;padding:2px 8px;font-size:0.8em;";
+                removeClauseBtn.style.cssText = "align-self:flex-start;background:none;border:1px solid var(--auto-button-border);color:var(--auto-label);cursor:pointer;border-radius:3px;padding:2px 8px;font-size: var(--text);";
                 removeClauseBtn.addEventListener("click", function() {
                     // Preserve any Then commands typed in the clause back into the simple area.
                     simpleThenArea.value = thenArea.value;
@@ -4689,7 +4691,7 @@
                 var addClauseBtn = document.createElement("button");
                 addClauseBtn.type = "button";
                 addClauseBtn.textContent = "+ Add condition (if/else)";
-                addClauseBtn.style.cssText = "align-self:flex-start;background:none;border:1px solid var(--auto-button-border);color:var(--auto-label);cursor:pointer;border-radius:3px;padding:2px 10px;font-size:0.8em;margin-top:2px;";
+                addClauseBtn.style.cssText = "align-self:flex-start;background:none;border:1px solid var(--auto-button-border);color:var(--auto-label);cursor:pointer;border-radius:3px;padding:2px 10px;font-size: var(--text);margin-top:2px;";
                 addClauseBtn.addEventListener("click", function() {
                     // Move then commands from simple area to the clause then area
                     if (!thenArea.value && simpleThenArea.value) {
@@ -4717,7 +4719,7 @@
                 });
                 var enableLbl = document.createElement("span");
                 enableLbl.textContent = "Enabled";
-                enableLbl.style.cssText = "font-family:var(--font-body);font-size:0.85em;color:var(--auto-label);";
+                enableLbl.style.cssText = "font-family:var(--font-body);font-size: var(--text);color:var(--auto-label);";
                 enableWrap.appendChild(enableTog);
                 enableWrap.appendChild(enableLbl);
                 body.appendChild(enableWrap);
@@ -4727,9 +4729,9 @@
                 queueWrap.style.cssText = "display:flex;align-items:center;gap:8px;";
                 var queueLbl = document.createElement("span");
                 queueLbl.textContent = "Queue this action";
-                queueLbl.style.cssText = "font-family:var(--font-body);font-size:0.85em;color:var(--auto-label);";
+                queueLbl.style.cssText = "font-family:var(--font-body);font-size: var(--text);color:var(--auto-label);";
                 var queueSelect = document.createElement("select");
-                queueSelect.style.cssText = "background:var(--well);border:1px solid var(--brass-border);border-radius:3px;color:var(--vellum);font-family:var(--font-mono);font-size:11px;padding:2px 6px;";
+                queueSelect.style.cssText = "background:var(--well);border:1px solid var(--brass-border);border-radius:3px;color:var(--vellum);font-family:var(--font-mono);font-size: var(--text);padding:2px 6px;";
                 var queueOptions = [
                     {v: "",      l: "Fire immediately"},
                     {v: "back",  l: "Queue at back"},
