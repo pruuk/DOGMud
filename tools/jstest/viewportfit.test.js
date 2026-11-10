@@ -21,6 +21,29 @@ check('a phone on its side is a phone', VF.isPhone(844, 390), true);
 check('a small tablet is not a phone', VF.isPhone(600, 960), false);
 check('a laptop is not a phone', VF.isPhone(1920, 1080), false);
 
+check('upright phone', VF.isUprightPhone(390, 844, 'portrait-primary'), true);
+check('sideways phone', VF.isUprightPhone(844, 390, 'landscape-primary'), false);
+check('iOS sizes do not swap: the orientation wins', VF.isUprightPhone(390, 844, 'landscape-secondary'), false);
+check('no orientation API, upright', VF.isUprightPhone(390, 844, undefined), true);
+check('no orientation API, sideways', VF.isUprightPhone(844, 390, undefined), false);
+check('an upright tablet is not an upright phone', VF.isUprightPhone(768, 1024, 'portrait-primary'), false);
+(function () {
+    var classes = {}, handlers = {};
+    var win = {
+        screen: { width: 390, height: 844, orientation: { type: 'portrait-primary' } },
+        document: { documentElement: { classList: { toggle: function (n, on) { classes[n] = on; } } } },
+        addEventListener: function (n, f) { handlers[n] = f; }
+    };
+    VF.watchUprightPhone(win);
+    check('the class is set at once', classes['upright-phone'], true);
+    win.screen.orientation.type = 'landscape-primary';
+    handlers.orientationchange();
+    check('turning the phone clears it', classes['upright-phone'], false);
+    win.screen.orientation.type = 'portrait-primary';
+    handlers.resize();
+    check('a resize re-reads it', classes['upright-phone'], true);
+}());
+
 check('a phone opens full screen', VF.wantFullScreen(null, true), true);
 check('a larger screen does not', VF.wantFullScreen(null, false), false);
 check('a phone player who turned it off stays off', VF.wantFullScreen('0', true), false);
@@ -35,8 +58,9 @@ check('never negative', VF.frameHeight(700, 50, 100), 0);
 
 var outer = fs.readFileSync(path.join(PUBLIC, 'webclient.html'), 'utf8');
 var header = fs.readFileSync(path.join(PUBLIC, '_header.html'), 'utf8');
-check('the outer page loads the module',
-    outer.indexOf('/static/js/viewportfit.js?v={{ .ASSET_VERSION }}"') !== -1, true);
+check('every site page loads the module, before it paints',
+    header.indexOf('/static/js/viewportfit.js?v={{ .ASSET_VERSION }}"') !== -1 &&
+    header.indexOf('/static/js/viewportfit.js') < header.indexOf('/static/css/gomud.css'), true);
 check('the full screen code exists before the game frame starts loading',
     outer.indexOf('window.WebclientFrame') !== -1 &&
     outer.indexOf('window.WebclientFrame') < outer.indexOf('<iframe'), true);
