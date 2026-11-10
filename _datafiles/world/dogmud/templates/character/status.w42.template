@@ -1,7 +1,8 @@
 {{- /* The status sheet at 42 columns: each section a titled rule and its
 label: value pairs, two to a line with the second at column 22. A section
 with a value too long for its column lists one pair per line. One closing
-rule follows the last section. Prose after a label (the broken limb line) continues 2 past the label (owner, 2026-11-10). The
+rule follows the last section. Prose after a label (the broken limb
+line) continues 2 past the label (owner, 2026-11-10). The
 form is drawn to 42 whatever the reader's width, so a reader narrower than
 that gets the 30-column form. */ -}}
 {{- define "pair" }} <ansi fg="yellow">{{ padRight 13 .a }}</ansi>{{ .va }}{{ if .b }}{{ repeat " " (sub 8 (visiblewidth .va)) }}<ansi fg="yellow">{{ padRight 13 .b }}</ansi>{{ .vb }}{{ end }}{{ end -}}
