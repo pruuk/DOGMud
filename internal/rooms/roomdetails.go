@@ -40,6 +40,24 @@ type RoomTemplateDetails struct {
 	ShowPvp        bool     // Whether to display that the room is PVP
 }
 
+const (
+	// alertCenterColumns is the widest span an alert centers in.
+	alertCenterColumns = 65
+	// alertTemplateMargin is the indent room.template prints before an alert,
+	// left and right of the span it centers in.
+	alertTemplateMargin = 6
+)
+
+// centerAlert pads text to center it for a reader width columns wide. Text
+// with no room to pad comes back as it went in.
+func centerAlert(text string, width int) string {
+	span := min(alertCenterColumns, width-2*alertTemplateMargin)
+	if len(text) >= span {
+		return text
+	}
+	return strings.Repeat(` `, (span-len(text))>>1) + text
+}
+
 func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTemplateDetails {
 
 	c := configs.GetGamePlayConfig()
@@ -174,13 +192,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		// No current plans to allow them to overwrite existing alerts.
 		if mutSpec.AlertModifier != nil {
 
-			alertText := mutSpec.AlertModifier.Text
-
-			// center the text
-			if len(mutSpec.AlertModifier.Text) < 65 {
-				padding := (65 - len(mutSpec.AlertModifier.Text)) >> 1
-				alertText = strings.Repeat(` `, padding) + alertText
-			}
+			alertText := centerAlert(mutSpec.AlertModifier.Text, user.WrapWidth())
 
 			details.RoomAlerts = append(details.RoomAlerts, colorpatterns.ApplyColorPattern(alertText, mutSpec.AlertModifier.ColorPattern))
 
