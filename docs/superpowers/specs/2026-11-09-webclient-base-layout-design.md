@@ -131,9 +131,9 @@ Text already on screen keeps its line breaks. New text uses the new width.
 
 ### 2. Templates to 30 columns
 
-A desktop does not change: at 80 columns the widest form is used. Narrower forms appear only on screens that cannot fit it. A template may have several forms, and **the game uses the widest form whose longest line fits the session's width.** No per-device rules or width thresholds are written down, so a shop list with short item names stays bordered on a narrower screen than one with long names.
+A desktop does not change: at 80 columns the widest form is used. Narrower forms appear only on screens that cannot fit it, and on a desktop only for a table already wider than 80 columns, which wraps mid-row today (owner, 2026-11-10). A template may have several forms, and **the game uses the widest form whose longest line fits the session's width.** No per-device rules or width thresholds are written down, so a shop list with short item names stays bordered on a narrower screen than one with long names.
 
-Variants sit beside the base file and are named for the width they are drawn to, such as `character/status.w42.template` and `.w30.template`, tried the way `name.screenreader.template` is. The width joins `templateConfig`, and a width report clears the cache with `ClearTemplateConfigCache`. Forms are only rendered and compared when the session is under 80 columns.
+Variants sit beside the base file and are named for the width they are drawn to, such as `character/status.w42.template` and `.w30.template`, tried the way `name.screenreader.template` is. The width joins `templateConfig`, and a width report clears the cache with `ClearTemplateConfigCache`. Forms are only rendered and compared when the base is wider than the session, and only for a template that has forms (owner, 2026-11-10).
 
 Forms by use case, as chosen against real devices (the columns are the usual ones for those devices):
 
@@ -146,16 +146,16 @@ Forms by use case, as chosen against real devices (the columns are the usual one
 
 Every form shows all of the information: no screen moves content behind a separate command.
 
-Measuring limits. `Process` reads and parses a template on every call (`internal/templates/templates.go:212-214`), so each extra form tried costs one more read, parse and execute. Forms are tried only for a session under 80 columns and only for a template that has variants, widest first, stopping at the first that fits, so a phone pays at most three renders for a player-requested screen. Measuring never runs on a per-round or per-broadcast path. Plan 3 measures the cost on the production-sized machine limit before merging, and adds a parsed-template cache if it shows up. Measuring counts columns with `util.VisibleWidth` and executes nothing new: player text is passed as template data, as it is today, and `text/template` does not evaluate data as a template.
+Measuring limits. `Process` reads and parses a template on every call (`internal/templates/templates.go:212-214`), so each extra form tried costs one more read, parse and execute. Forms are tried only when the base is wider than the session and only for a template that has variants, widest first, stopping at the first that fits, so a phone pays at most three renders for a player-requested screen. Measuring never runs on a per-round or per-broadcast path. Plan 3a measures the cost on the production-sized machine limit before merging, and adds a parsed-template cache if it shows up. Measuring counts columns with `util.VisibleWidth` and executes nothing new: player text is passed as template data, as it is today, and `text/template` does not evaluate data as a template.
 
 Rendered at 30, 42 and 80 columns, no line may exceed the width and no column may break, apart from the exemption in ruling 3.
 
 Three kinds of wrapping sit inside templates, outside plan 1's sweep, and belong to plans 3 and 4:
-- **Fixed widths in templates.** 11 lines in 10 template files call `splitstring` with a literal 59 to 73 (plan 3), and `setdesc.go` echoes at 72 to match them.
+- **Fixed widths in templates.** 11 lines in 10 template files call `splitstring` with a literal 59 to 73 (plan 3b; `screenwidth` from plan 3a replaces the literal), and `setdesc.go` echoes at 72 to match them.
 - **Hard line breaks in authored text.** Of 468 help files, 434 have prose broken by hand into lines of 45 columns or more, and help rides `CategoryScreen`, which the pipeline does not wrap. So plan 4 covers every help page's prose as well as the 170 aligned ones: on a session under 80 columns, the lines of a paragraph are joined and wrapped to the reader's width.
 - **Rendering without a reader.** `help.go:222` calls `Process` with user id 0, so plan 4 passes the reader through.
 
-`motdBox` needs a narrow form (plan 3): seen at 42 columns on 2026-11-09, its spaced-out title is cut off, and URLs too long for the box burst through its sides. `motdrestyle.js` matches the box by its shape and did not remove it at that width, so plan 5 checks it at narrow widths.
+`motdBox` needs a narrow form (plan 3a): seen at 42 columns on 2026-11-09, its spaced-out title is cut off, and URLs too long for the box burst through its sides. `motdrestyle.js` matches the box by its shape and did not remove it at that width, so plan 5 checks it at narrow widths.
 
 A 320px screen at 16px fits only 29 columns because of the game window's padding, so that padding is trimmed at that width to reach 30.
 
@@ -215,9 +215,10 @@ One spec, one plan per slice. Each ships on its own and leaves the game working.
 |---|---|---|---|
 | 1 | Server wrap width: `WrapWidth`, the `Client.Display` handler, the sweep, telnet golden test | Almost nothing: a few line breaks at the end of lines move, and a saved `set linewidth` now also applies to speech, whispers, room descriptions, menus and `set` | None |
 | 2 | Type system: JetBrains Mono, size tokens, no italics, button weights, top and bottom bars, the site pages, brand standard | The client and site look like one design. Game text still changes size with the window | None |
-| 3 | Screens and tables to 30 columns: the form mechanism, generated tables, the 58 hard layouts, the template guard | Nothing yet, since no client reports a narrow width | 1 |
-| 4 | Help pages to 30 columns, in batches: the aligned details, and paragraph rewrapping for hand-broken prose | Help details change form at every width | 3 |
-| 5 | Game window goes live: fixed text size, columns follow the window, the client reports its width | Readable phone text, and 200% zoom works | 1, 2, 3, 4 |
+| 3a | Screen machinery: the form mechanism, `screenwidth`, generated tables, splash to words only, the MOTD box, the template guard (split from plan 3, owner 2026-11-10) | Nothing yet, since no client reports a narrow width | 1 |
+| 3b | The hand-laid screens: narrow forms for status, inventory, skills and the other character and description screens, mail, the skill and stat banners, the auction broadcasts, the Go-built screens, and every table now wider than 80 columns redesigned to fit (owner, 2026-11-10), shown as a mock first | Nothing yet | 3a |
+| 4 | Help pages to 30 columns, in batches: the aligned details, and paragraph rewrapping for hand-broken prose | Help details change form at every width | 3a |
+| 5 | Game window goes live: fixed text size, columns follow the window, the client reports its width | Readable phone text, and 200% zoom works | 1, 2, 3a, 3b, 4 |
 | 6 | Layout and phones: large-screen layout, sideways tablets, retiring rail and column dragging, 30% tabs, keyboard rules, X, toast | The new arrangement | 2, 5 |
 | 7 | Panels: Map title and bar, Quests tabs, Comms rename, compressed Equipped, item menus by tap and right-click | The panel changes | 2, 6 |
 
