@@ -193,7 +193,7 @@ func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 	// motd.go's own comments and arithmetic rather than inventing a new
 	// shape:
 	//
-	//   lw := user.GetLineWidth()          -> lineWidth (55) here
+	//   motdBox(text, user.WrapWidth())     -> lw is lineWidth (55) here
 	//   innerWidth := lw - 3                -> chars between the corners
 	//   padWidth := lw - 4                  -> ` ║ ` (3) + `║` (1) = 4 frame chars
 	//   wrapWidth := padWidth - 1           -> lw - 5, leaves a gutter space

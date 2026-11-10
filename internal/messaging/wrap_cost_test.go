@@ -11,8 +11,9 @@ import (
 )
 
 // wrapBudget is far above what a linear pass over these inputs costs (a few
-// milliseconds) and far below what a scan to the end of the text at every
-// less-than sign costs (tens of seconds).
+// milliseconds). The test guards against the quadratic scan returning: a scan
+// to the end of the text at every less-than sign. The lastTagEnd shortcut in
+// WrapAnsi is not separately measured.
 const wrapBudget = 2 * time.Second
 
 func TestWrapAnsi_LinearInLessThanSigns(t *testing.T) {
