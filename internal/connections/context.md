@@ -624,6 +624,12 @@ func (c DisplaySettings) GetScreenHeight() int {
 }
 ```
 
+`Display.ScreenWidth` comes from NAWS on telnet and, on the web, from the GMCP
+`Client.Display` report (`modules/gmcp/gmcp.ClientDisplay.go`), clamped to 30
+to 80 before it is stored. `RegisterTestWebsocketConnection` is the websocket
+twin of `RegisterTestConnection`; its socket was never dialled, so a test must
+not write to it or close it.
+
 ## Connection State Management
 
 ### State Transitions

@@ -2622,7 +2622,8 @@ room targeting the shooter", a wider question than "who has engaged me".
 ## Speech, emotes and the Deafened filter (sight gates 5b)
 
 `Message_SendMessages.go` is the one place a queued `events.Message` becomes
-delivered text; both of its branches gate on
+delivered text. Player chatter on its `RoomId` branch arrives unrendered, so
+`roomMessageTextFor` wraps it there for each reader. Both of its branches gate on
 `message.HiddenFromDeafened(user.Deafened)` (`internal/events`'s one
 statement of the rule) before sending, rather than re-deriving it. Every
 speech and emote room line now reaches this package through
@@ -2841,7 +2842,8 @@ death and sets `DeathQueued`, so no tick reaches them.
   `gossip_common_test.go` pins it.
 - `NewRound_RoomIdle.go`: `roomIdleChancePer10k` (`RoomIdleChancePct`,
   room -1 four times, zone `ambientmultiplier`) and `sendRoomIdleLine`
-  (budget, and a one-line room shows its line once per visit).
+  (budget, and a one-line room shows its line once per visit). The line rides
+  `messaging.CategoryRoomIdle`, so the pipeline wraps it for each reader.
 - `UserRoundTick` calls `ambient.RoundTick` each round.
 - `BroadcastTips` reads `TipIntervalRounds` (0 off).
 - `conversationStartRoll` (`ConversationBaseChancePct`, 0 never); a

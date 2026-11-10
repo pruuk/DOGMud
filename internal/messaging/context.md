@@ -44,19 +44,22 @@ the recipient's connection.
    `mobname` / `petname` ANSI name tags, including suffixed mob tags such as
    `mobname-dup2`, then substitutes "a figure" + the `combat-anon` color alias.
 5. **Apply category color tag** — `<ansi fg="<category-alias>">…</ansi>`.
-6. **Wrap** at recipient's `UserRecord.LineWidth` (default 80, range
-   40-240), ANSI-aware, but only for the narration categories
-   `shouldWrap` admits (48 of the 64 `Category` values as of this
-   writing, `CategoryLight` among them: lighting plan 3d's transition
-   notices wrap exactly as `CategoryTimeOfDay` does; `CategoryCraft`,
-   #515, the crafter's own work lines; and `CategoryCraftSeen`, the
-   room's lines about a crafter). Pre-formatted
+6. **Wrap** at recipient's `UserRecord.WrapWidth()`, ANSI-aware, but
+   only for the categories `shouldWrap` admits (52 of the 70 `Category`
+   values as of this writing, `CategoryLight` among them: lighting plan
+   3d's transition notices wrap exactly as `CategoryTimeOfDay` does;
+   `CategoryCraft`, #515, the crafter's own work lines;
+   `CategoryCraftSeen`, the room's lines about a crafter;
+   `CategorySpeech`, `CategoryShout` and `CategoryEmote`, sent to a
+   whole room so no sender may wrap them first; and `CategoryRoomIdle`,
+   a room's idle flavor line, colored and normalised as
+   `CategoryRoomDescription` is). Pre-formatted
    output is excluded by category: mixed
    buckets that mix refusals or chat with tables, ASCII art or a
    banner (`System`, `Broadcast`, `Splash`, `SkillProgress`), the
-   side-by-side minimap block (`RoomDescription`), categories that
-   already wrap themselves at a hardcoded 80 (`Speech`, `Whisper`,
-   `Shout`, `Emote`), system output owned by a later stage (`Error`,
+   side-by-side minimap block (`RoomDescription`), `Whisper`, which
+   each sender wraps to its one reader's `WrapWidth()`, system output
+   owned by a later stage (`Error`,
    `Warning`), and categories with zero production senders
    (`GrappleHigh`, `Login`, `OOC`, `Toxin`). `shouldWrap` in
    `pipeline.go` is the authoritative list. `WrapAnsi` closes and
@@ -622,7 +625,7 @@ load-bearing.** The three roles of one event routinely differ: `shoot`
 uses four categories on the personal side and `throw` uses three on
 each side (hit, dodge, interrupt). A single-`Category` seam would
 silently recategorise them. Category decides the line's colour and
-whether it wraps at 80 (`CategorySystem` never wraps, which is why #449
+whether it wraps (`CategorySystem` never wraps, which is why #449
 moved the special-move actor and actee lines off it onto the move's own
 category; every refusal, special-move busy and cost lines included, rides
 `CategoryRefusal` since M7 slice 3, #371).

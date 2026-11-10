@@ -497,6 +497,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Char.go` | `Char` | Vitals, stats, status — the core player feed |
 | `gmcp.Automation.go` | `Char.Automation` | Triggers, macros, aliases, the action queue |
 | `gmcp.Room.go` | `Room` | Current room: description, exits, occupants |
+| `gmcp.ClientDisplay.go` | `Client.Display` (inbound) | A web client's `{"cols": n}`. Websocket only, whole numbers only, clamped to `users.MinWrapWidth`..`users.MaxAutoWrapWidth`, written to `Display.ScreenWidth` only when it changes |
 | `gmcp.Zone.go` | `Zone` | The `Zone.Map` snapshot the web mapper draws, plus `party` and `full`; sent as a diff (see "Zone.Map is sent as a diff") |
 | `gmcp.ZoneDiff.go` | (none) | `zoneDiff`, the pure decision of what `Zone.Map` to send, and `roomFingerprint` |
 | `gmcp.CharVitalsWatch.go` | `Char.Vitals` | The once-a-round on-change check that keeps `Char.Vitals` current (see "When Char.Vitals is sent") |
@@ -671,7 +672,8 @@ the area name over `target_rooms` that are on the map (`_drawQuestWash`), a
   work inline: queue an event and handle it on MainWorker, as `GMCPBuildOp` /
   `handleBuildOp` (`gmcp.Build.go`), `GMCPCharOp` / `handleCharOp`
   (`gmcp.CharOp.go`) and `GMCPZoneResync` / `zoneResyncHandler`
-  (`gmcp.Zone.go`, no payload) all do. **Copy the payload** when you queue it — it
+  (`gmcp.Zone.go`, no payload) and `GMCPClientDisplay` / `clientDisplayHandler`
+  (`gmcp.ClientDisplay.go`) all do. **Copy the payload** when you queue it — it
   aliases the IAC read buffer, which is reused once `HandleIAC` returns.
 - **`Companion.Relay.*` is the one inbound family handled inline.**
   `Companion.Relay.Response`, `.Ready` and `.Gone` touch no game state, so
