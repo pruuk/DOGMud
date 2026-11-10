@@ -1,5 +1,10 @@
 # DOGMud Patch Notes
 
+## 2026-11-10: Surrender policy hidden
+
+- The status screen and the settings list no longer show a surrender policy.
+  The setting never took effect in a fight, so it is hidden until it does.
+
 ## 2026-11-10: Guild screen
 
 - Typing `guild` on its own shows your guild again, the same as `guild info`.

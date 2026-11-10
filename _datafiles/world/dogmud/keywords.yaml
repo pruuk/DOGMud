@@ -101,7 +101,6 @@ help:
       - steal
       - plant
       - stomp
-      - surrender
       - target
       - taunt
       - throttle
@@ -260,7 +259,6 @@ help-aliases:
   trip:             [tailsweep]
   companion:        [companions]
   reservation:      [reserved, reserve, set aside]
-  surrender:        [submit, tap out, tapout]
   stamina:          [endurance, energy]
   bank:             [deposit, withdraw]
   mutations:        [mutation, chrysalis, mutate]

@@ -28,10 +28,6 @@ stat in your adventures, the more it grows over time.
     (<ansi fg="command">mercy</ansi> / <ansi fg="command">subdue</ansi> / <ansi fg="command">cripple</ansi> / <ansi fg="command">lethal</ansi>)
     See <ansi fg="command">help submission</ansi>.
 
-  <ansi fg="command">Surrender</ansi>  - Whether you tap out when caught in a sub.
-    (<ansi fg="command">never</ansi> / <ansi fg="command">always</ansi> / <ansi fg="command">auto-tap-below N%</ansi>)
-    See <ansi fg="command">help surrender</ansi>.
-
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">status</ansi> - Show your character status
@@ -44,6 +40,5 @@ stat in your adventures, the more it grows over time.
   <ansi fg="command">help conviction</ansi>
   <ansi fg="command">help armor</ansi>
   <ansi fg="command">help submission</ansi>
-  <ansi fg="command">help surrender</ansi>
   <ansi fg="command">help progression</ansi>
 

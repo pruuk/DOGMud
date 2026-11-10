@@ -164,7 +164,6 @@ func displaySetStatus(user *users.UserRecord) {
 	row(`wimpy`, fmt.Sprintf(`%d%%`, currentWimpy.(int)))
 
 	row(`submission`, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.Character.SubmissionPolicy))
-	row(`surrender`, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.Character.SurrenderPolicy))
 	row(`combatverbosity`, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.GetCombatVerbosity().String()))
 
 	rows = append(rows, ``, `See: <ansi fg="command">help set</ansi>`)

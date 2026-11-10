@@ -158,7 +158,7 @@ func TestTemplateFreeze_StatusReadsInPlainWords(t *testing.T) {
 	plain := regexp.MustCompile(`</?ansi[^>]*>`).ReplaceAllString(out, "")
 
 	assert.NotContains(t, plain, "auto-tap-below", "status must not print the set-surrender syntax")
-	assert.Contains(t, plain, "Surrender policy: tap out below 15% health")
+	assert.NotContains(t, plain, "Surrender policy", "hidden until #848 is resolved")
 	assert.Contains(t, plain, "Encumbrance: ", "the label needs a space before its value")
 	for _, label := range []string{"HP reserve:", "SP reserve:", "CP reserve:"} {
 		assert.Contains(t, plain, label, "every reserve cell carries its pool's label")

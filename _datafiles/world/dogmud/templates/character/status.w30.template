@@ -33,7 +33,6 @@ beside it at 30 columns puts "the" on the title's line. */ -}}
 {{ template "one" (map "a" "Bank:" "va" (numberFormat $c.Bank)) }}
 {{ repeat "─" $w }}
  <ansi fg="yellow">Submission policy:</ansi> {{ $c.SubmissionPolicy }}
- {{ wraptext (print "<ansi fg=\"yellow\">Surrender policy:</ansi> " $c.SurrenderPolicy.Describe) (sub $w 3) "   " }}
 {{- if $c.Conditions.HasCondition 83 }}
  <ansi fg="red-bold">{{ wraptext (printf "Broken limb: %d rounds remaining" ($c.Conditions.TriggersLeft 83)) (sub $w 3) "   " }}</ansi>
 {{- end }}

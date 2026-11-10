@@ -18,9 +18,7 @@
 <ansi fg="system"> <ansi fg="yellow">Gold:        </ansi>250</ansi>
 <ansi fg="system"> <ansi fg="yellow">Bank:        </ansi>100</ansi>
 <ansi fg="system">──────────────────────────────────────────</ansi>
-<ansi fg="system"> <ansi fg="yellow">Submission policy:</ansi> subdue</ansi>
-<ansi fg="system"> <ansi fg="yellow">Surrender policy:</ansi> tap out below 15%</ansi>
-<ansi fg="system">   health.</ansi>
+<ansi fg="system"> <ansi fg="yellow">Submission policy:</ansi> subdue.</ansi>
 === item list (CategorySystem) ===
 <ansi fg="system"> <ansi fg="red-bold">1</ansi>. <ansi fg="yellow-bold">Iron Sword</ansi>       <ansi fg="red-bold">2</ansi>. <ansi fg="yellow-bold">Healing Draught</ansi> </ansi>
 <ansi fg="system"> <ansi fg="red-bold">3</ansi>. <ansi fg="yellow-bold">Leather Boots</ansi>    <ansi fg="red-bold">4</ansi>. <ansi fg="yellow-bold">Silver Ring</ansi>     </ansi>

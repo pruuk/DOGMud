@@ -148,6 +148,6 @@ needed. See <ansi fg="command">help submission</ansi>.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help attack</ansi>,
   <ansi fg="command">help kick</ansi>, <ansi fg="command">help trip</ansi>,
-  <ansi fg="command">help submission</ansi>, <ansi fg="command">help surrender</ansi>,
+  <ansi fg="command">help submission</ansi>,
   <ansi fg="command">help reach</ansi>, <ansi fg="command">help stamina</ansi>,
   <ansi fg="command">help special</ansi>
