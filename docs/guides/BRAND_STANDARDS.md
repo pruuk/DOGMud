@@ -70,13 +70,24 @@ All colours come from the palette spec. The roles that define the brand:
 
 ## 3. Type
 
-- **Source Sans 3** for everything you read in the interface: menus, panels,
-  buttons, headings (`--font-body`, `--font-heading`).
-- **Source Code Pro** for the game text window, the command box and code
-  (`--font-mono`).
-- Self-hosted (`static/fonts/`), so every device shows the same type.
-- Button and tab labels: regular weight, 15px (`0.95rem`). No glow or text
-  shadow on brass labels.
+- **JetBrains Mono** for everything: game text, panels, menus, buttons,
+  headings and the site pages (`--font-body`, `--font-heading` and
+  `--font-mono` all name it). Ligatures off.
+- Self-hosted (`static/fonts/`): the official v2.304 web files, unmodified.
+  The Google Fonts version has no box-drawing characters, which misaligns
+  every box in the game.
+- **Two sizes:** text 16px and titles 20px (`--text`, `--title`), 14px and
+  18px on upright phones. The command box is always 16px (`--cmd`): iOS zooms
+  the page on anything smaller.
+- **Site bars:** top bar 20px and footer 16px (`--nav-text`, `--foot-text`),
+  16px and 14px on phones (under 768px wide or 500px tall).
+- **No italics.** Regular weight for body text and every button. One bold
+  (`--bold`, 600) for titles, quest names, your own character's name and room
+  titles. No glow or text shadow on brass labels.
+- Lettering in the map art scales with the map. The builder, the admin pages
+  and the architecture diagrams keep their own styling.
+- `internal/guards/client_type_guard_test.go` holds the font, sizes, weights
+  and italics.
 
 ## 4. Controls in the game
 

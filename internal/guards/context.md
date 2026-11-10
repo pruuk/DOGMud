@@ -21,7 +21,9 @@ package main.
   `token_engine_guard_test.go`, `refusal_phrase_guard_test.go`,
   `messaging_surface_guard_test.go`, `wrap_width_guard_test.go` (no fixed wrap
   width in production Go, and `WrapWidth` the only wrap reader of the saved
-  `LineWidth`), the `*_wrapper_guard_test.go` files
+  `LineWidth`), `client_type_guard_test.go` (the web client's and site's fonts,
+  sizes and weights read the tokens in `gomud.css`), the
+  `*_wrapper_guard_test.go` files
   (`drink_wrapper_guard_test.go` holds `TestQuaffWrappersDoNotReFork` and
   `TestFoodWrappersDoNotReFork`).
 - **Content guards.** Read the shipped YAML under `_datafiles/world/dogmud`,
