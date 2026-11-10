@@ -36,8 +36,18 @@ func Motd(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	return true, nil
 }
 
+// motdBoxMinWidth is the narrowest box the spaced-out title fits in: the
+// title and its leading space take 41 of the lw-4 content columns.
+const motdBoxMinWidth = 45
+
 // motdBox draws the MOTD text in a double-line box exactly lw columns wide.
+// A screen narrower than the title, or text holding a word wider than the
+// box (a long link), gets the narrow form instead: a plain title and the text
+// wrapped to the screen, because a box cannot hold either (spec section 2).
 func motdBox(text string, lw int) string {
+	if lw < motdBoxMinWidth || motdLongestWord(text) > lw-5 {
+		return motdPlain(text, lw)
+	}
 	// Box outer width scales with the player's configured line width.
 	// Layout: " " + "║" + " " + <content padded to padWidth> + "║"
 	//          1     1     1          ...                       1   = lw
@@ -86,4 +96,20 @@ func motdBox(text string, lw int) string {
 	output += ` ╚` + horiz + `╝</ansi>` + "\n"
 
 	return output
+}
+
+// motdPlain is the MOTD's narrow form: the title on its own line and the
+// text wrapped to lw. Only a single word wider than lw can run past it.
+func motdPlain(text string, lw int) string {
+	return `<ansi fg="cyan-bold">Message of the Day</ansi>` + "\n" +
+		`<ansi fg="yellow">` + messaging.WrapAnsi(text, lw) + `</ansi>` + "\n"
+}
+
+// motdLongestWord is the display width of the longest word in text.
+func motdLongestWord(text string) int {
+	longest := 0
+	for _, word := range strings.Fields(motdAnsiTagRE.ReplaceAllString(text, "")) {
+		longest = max(longest, motdVisibleWidth(word))
+	}
+	return longest
 }

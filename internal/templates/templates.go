@@ -114,6 +114,7 @@ type templateDetails struct {
 	name       string
 	path       string
 	preProcess func(string) string
+	hasForms   bool // the .template file, which may have narrow forms
 }
 
 func ClearTemplateConfigCache(userId int) {
@@ -157,129 +158,61 @@ func processMarkdown(in string) string {
 	return "\n" + divider + "\n" + p.Parse().String(0) + "\n"
 }
 
+// Process renders a template for a reader. receivingUserId picks the
+// screen-reader form and the width the reader's screen has room for.
 func Process(fname string, data any, receivingUserId ...int) (string, error) {
-	ansiLock.RLock()
-	defer ansiLock.RUnlock()
-
-	var parseAnsiTags bool = false
-
-	var ansitagsParseBehavior []ansitags.ParseBehavior = make([]ansitags.ParseBehavior, 0, 2)
-
-	if forceAnsiFlags != AnsiTagsDefault {
-		//	ansiFlags = append(ansiFlags, forceAnsiFlags)
-	}
-
 	userId := 0
 	if len(receivingUserId) > 0 {
 		userId = receivingUserId[0]
 	}
+	return process(fname, data, getTemplateConfig(userId), readerWidth(userId))
+}
 
-	tplConfig := getTemplateConfig(userId)
+// process renders fname at width. A screen-reader form is tried first, then
+// a markdown file, then the .template file. Only the .template file has
+// narrow forms: when its output is wider than the
+// reader, the widest form that fits is used (see forms.go).
+func process(fname string, data any, tplConfig templateConfig, width int) (string, error) {
+	ansiLock.RLock()
+	defer ansiLock.RUnlock()
 
-	var buf bytes.Buffer
-
-	// Contains each template to attempt to load, in order.
-	// This allows us to attempt optional adjusted template paths first.
+	// Each template to attempt to load, in order.
 	filesToAttempt := []templateDetails{}
 
-	// Try a screen-reader friendly template first?
 	if tplConfig.ScreenReader {
-		filesToAttempt = append(filesToAttempt,
-			templateDetails{
-				name: fname,
-				path: util.FilePath(`templates/`, fname+`.screenreader.template`), // All templates must end with .template
-			},
-		)
+		filesToAttempt = append(filesToAttempt, templateDetails{
+			name: fname,
+			path: util.FilePath(`templates/`, fname+`.screenreader.template`),
+		})
 	}
 
-	filesToAttempt = append(filesToAttempt,
-		templateDetails{
-			name:       fname,
-			path:       util.FilePath(`templates/`, fname+`.md`), // All templates must end with .template
-			preProcess: processMarkdown,
-		},
-	)
+	filesToAttempt = append(filesToAttempt, templateDetails{
+		name:       fname,
+		path:       util.FilePath(`templates/`, fname+`.md`),
+		preProcess: processMarkdown,
+	})
 
-	filesToAttempt = append(filesToAttempt,
-		templateDetails{
-			name: fname,
-			path: util.FilePath(`templates/`, fname+`.template`), // All templates must end with .template
-		},
-	)
+	filesToAttempt = append(filesToAttempt, templateDetails{
+		name:     fname,
+		path:     util.FilePath(`templates/`, fname+`.template`),
+		hasForms: true,
+	})
 
 	for _, tplInfo := range filesToAttempt {
-
-		if fileBytes, err := readFile(tplInfo.path); err == nil {
-
-			tpl, err := template.New(tplInfo.name).Funcs(funcMap).Parse(string(fileBytes))
-			if err != nil {
-				mudlog.Error("template parse error", "module", true, "filepath", tplInfo.path, "error", err)
-				return string(fileBytes), err
-			}
-
-			err = tpl.Execute(&buf, data)
-			if err != nil {
-				mudlog.Error("could not parse template file", "module", true, "filepath", tplInfo.path, "error", err)
-				return "[TEMPLATE ERROR]", err
-			}
-
-			// return the final data as a string, parse ansi tags if needed (No need to parse if it was preparsed)
-			if parseAnsiTags {
-				return ansitags.Parse(buf.String(), ansitagsParseBehavior...), nil
-			}
-
-			if tplInfo.preProcess != nil {
-				return tplInfo.preProcess(buf.String()), nil
-			}
-			return buf.String(), nil
-		}
-
-		//
-		// nothing able to load from the plugin files, lets try the normal filesystem.
-		//
-
-		fullPath := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), `/`, tplInfo.path)
-
-		// Get the file contents
-		fileContents, err := os.ReadFile(fullPath)
-		if err != nil {
+		out, found, err := renderFile(tplInfo, data, tplConfig, width)
+		if !found {
 			continue
 		}
-
-		// parse the file contents as a template
-		tpl, err := template.New(tplInfo.name).Funcs(funcMap).Parse(string(fileContents))
-		if err != nil {
-			mudlog.Error("template parse error", "module", false, "filepath", fullPath, "error", err)
-			return string(fileContents), err
+		if err != nil || !tplInfo.hasForms {
+			return out, err
 		}
-
-		// execute the template and store the results into a buffer
-
-		err = tpl.Execute(&buf, data)
-		if err != nil {
-			mudlog.Error("could not parse template file", "module", false, "filepath", fullPath, "error", err)
-			return "[TEMPLATE ERROR]", err
+		// Only a template that has forms is measured, so a broadcast of a
+		// template without them costs nothing extra.
+		forms := formsOf(fname)
+		if len(forms) == 0 || WidestLine(out) <= width {
+			return out, nil
 		}
-
-		if tplConfig.ScreenReader {
-			strippedOut := util.StripCharsForScreenReaders(buf.String())
-
-			// return the final data as a string, parse ansi tags if needed (No need to parse if it was preparsed)
-			if parseAnsiTags {
-				return ansitags.Parse(strippedOut, ansitagsParseBehavior...), nil
-			}
-			return strippedOut, nil
-		}
-
-		// return the final data as a string, parse ansi tags if needed (No need to parse if it was preparsed)
-		if parseAnsiTags {
-			return ansitags.Parse(buf.String(), ansitagsParseBehavior...), nil
-		}
-
-		if tplInfo.preProcess != nil {
-			return tplInfo.preProcess(buf.String()), nil
-		}
-		return buf.String(), nil
+		return narrowestFit(fname, data, tplConfig, width, out, forms), nil
 	}
 
 	//
@@ -291,6 +224,58 @@ func Process(fname string, data any, receivingUserId ...int) (string, error) {
 	}
 	mudlog.Error("template files not found", "files", strings.Join(allFiles, `, `))
 	return fmt.Sprintf(`[TEMPLATE READ ERROR: FNF (%s) `, strings.Join(allFiles, `, `)), fmt.Errorf(`Files not found: %s`, strings.Join(allFiles, `, `))
+}
+
+// renderFile reads and executes one template file. found is false when the
+// file exists nowhere. A registered filesystem (a module) is read first, then
+// the data files on disk; a screen-reader reader gets the on-disk output
+// stripped of decorative characters, as before.
+func renderFile(tplInfo templateDetails, data any, tplConfig templateConfig, width int) (out string, found bool, err error) {
+	if fileBytes, rerr := readFile(tplInfo.path); rerr == nil {
+		tpl, perr := template.New(tplInfo.name).Funcs(funcMap).Parse(string(fileBytes))
+		if perr != nil {
+			mudlog.Error("template parse error", "module", true, "filepath", tplInfo.path, "error", perr)
+			return string(fileBytes), true, perr
+		}
+		var buf bytes.Buffer
+		if xerr := tpl.Funcs(widthFuncs(width)).Execute(&buf, data); xerr != nil {
+			mudlog.Error("could not parse template file", "module", true, "filepath", tplInfo.path, "error", xerr)
+			return "[TEMPLATE ERROR]", true, xerr
+		}
+		if tplInfo.preProcess != nil {
+			return tplInfo.preProcess(buf.String()), true, nil
+		}
+		return buf.String(), true, nil
+	}
+
+	//
+	// nothing able to load from the plugin files, lets try the normal filesystem.
+	//
+	fullPath := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), `/`, tplInfo.path)
+	fileContents, rerr := os.ReadFile(fullPath)
+	if rerr != nil {
+		return "", false, nil
+	}
+
+	tpl, perr := template.New(tplInfo.name).Funcs(funcMap).Parse(string(fileContents))
+	if perr != nil {
+		mudlog.Error("template parse error", "module", false, "filepath", fullPath, "error", perr)
+		return string(fileContents), true, perr
+	}
+
+	var buf bytes.Buffer
+	if xerr := tpl.Funcs(widthFuncs(width)).Execute(&buf, data); xerr != nil {
+		mudlog.Error("could not parse template file", "module", false, "filepath", fullPath, "error", xerr)
+		return "[TEMPLATE ERROR]", true, xerr
+	}
+
+	if tplConfig.ScreenReader {
+		return util.StripCharsForScreenReaders(buf.String()), true, nil
+	}
+	if tplInfo.preProcess != nil {
+		return tplInfo.preProcess(buf.String()), true, nil
+	}
+	return buf.String(), true, nil
 }
 
 func ProcessText(text string, data any, ansiFlags ...AnsiFlag) (string, error) {
@@ -377,6 +362,24 @@ func (t TemplateTable) GetCell(row int, column int) string {
 		return fmt.Sprintf(t.Formatting[row%t.formatRowCount][column], cellStr)
 	}
 	return cellStr
+}
+
+// RowDetail is a row without its first cell, as "Header: value" pairs joined
+// by " · ", for the two-line table form (tables/*.w30.template). A blank cell
+// is left out, and a cell under a blank header shows its value alone.
+func (t TemplateTable) RowDetail(row int) string {
+	parts := []string{}
+	for c := 1; c < len(t.Rows[row]); c++ {
+		value := strings.TrimSpace(t.Rows[row][c])
+		if value == `` {
+			continue
+		}
+		if c < len(t.Header) && strings.TrimSpace(t.Header[c]) != `` {
+			value = t.Header[c] + `: ` + value
+		}
+		parts = append(parts, value)
+	}
+	return strings.Join(parts, ` · `)
 }
 
 func GetTable(title string, headers []string, rows [][]string, formatting ...[]string) TemplateTable {

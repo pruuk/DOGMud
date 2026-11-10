@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-11-10: Tables that fit
+
+- A table too wide for your screen, such as a long history or a crowded
+  list of who is online, now shows in a narrower layout instead of running
+  off the edge.
+
 ## 2026-11-10: One look for the web client
 
 - The web client and the website now share one clear typeface, in one text

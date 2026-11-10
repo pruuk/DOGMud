@@ -1,8 +1,8 @@
 
-<ansi fg="yellow-bold">*******************************************************************************</ansi>
-<ansi fg="yellow-bold">*******************************************************************************</ansi>
+<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>
+<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>
 
 <ansi fg="yellow"> {{ . }}</ansi>
 
-<ansi fg="yellow-bold">*******************************************************************************</ansi>
-<ansi fg="yellow-bold">*******************************************************************************</ansi>
+<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>
+<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>

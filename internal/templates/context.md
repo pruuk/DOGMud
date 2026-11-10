@@ -139,6 +139,31 @@ Cached template with metadata for efficient reuse and cache invalidation.
 - **Alternative Layouts**: Screen reader optimized template variants
 - **Configurable Output**: User-controllable output formatting
 
+### Narrow forms and the reader's width (`forms.go`)
+- `Process` renders for the reader's width, `users.UserRecord.WrapWidth()`
+  (`FullWidth`, 80, with no reader). The width is read on every call, never
+  cached, so a resized screen or a new `set linewidth` takes effect at once.
+- The `screenwidth` template function returns that width, capped at
+  `FullWidth`, so a template can fit a rule or a wrapped paragraph to its
+  reader: `{{ repeat "*" (sub screenwidth 1) }}`,
+  `{{ splitstring .X (sub screenwidth 9) "  " }}`. `min` is there for caps:
+  `(min 67 (sub screenwidth 12))`.
+- A `.template` may have narrow forms beside it, named for the width they are
+  drawn to: `tables/generic.w40.template`, `tables/generic.w30.template`. Only
+  widths in `FormWidths` (42, 40, 30) are read. When the base output's widest
+  line (`WidestLine`) is wider than the reader, the forms are rendered widest
+  first and the first that fits is used, or the narrowest one found. A base
+  that fits is always used. Which forms a template has is found once and
+  remembered (`formsOf`); a form file added while the server runs is seen
+  after a restart.
+- A screen-reader file still comes first and has no forms. A `.md` file has
+  no forms.
+- `TemplateTable.RowDetail` gives a row's other cells as `Header: value`
+  pairs for the two-line table form.
+- `ProcessAtWidth` (testing_support.go) renders at a given width for guards.
+- `internal/guards/template_width_guard_test.go` knows every template and why
+  it is safe at 30 columns, and renders the ones that must fit at 30, 42, 80.
+
 ### Multi-Source Loading
 - **Plugin Templates**: Templates from plugin file systems
 - **Core Templates**: Built-in game templates
