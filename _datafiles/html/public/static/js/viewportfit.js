@@ -7,6 +7,7 @@
         module.exports = api;      // node, for the tests
     } else {
         root.ViewportFit = api;    // browser
+        api.watchUprightPhone(root);
     }
 }(typeof self !== 'undefined' ? self : this, function () {
     'use strict';
@@ -16,6 +17,33 @@
     // is not.
     function isPhone(screenW, screenH) {
         return Math.min(screenW, screenH) < 600;
+    }
+
+    // An upright phone reads 14/18 instead of 16/20 (gomud.css). Judged from the
+    // screen, like isPhone. iOS does not swap screen.width and height when the
+    // phone turns, so the orientation API comes first.
+    function isUprightPhone(screenW, screenH, orientationType) {
+        var landscape = orientationType ? orientationType.indexOf('landscape') === 0 : screenW >= screenH;
+        return isPhone(screenW, screenH) && !landscape;
+    }
+
+    function markUprightPhone(win) {
+        var s = win.screen;
+        var type = s.orientation && s.orientation.type;
+        // iOS before 16.4 has no screen.orientation; window.orientation is its
+        // only true signal.
+        if (!type && typeof win.orientation === 'number') {
+            type = Math.abs(win.orientation) === 90 ? 'landscape-primary' : 'portrait-primary';
+        }
+        win.document.documentElement.classList.toggle('upright-phone',
+            isUprightPhone(s.width, s.height, type));
+    }
+
+    function watchUprightPhone(win) {
+        var mark = function () { markUprightPhone(win); };
+        mark();
+        win.addEventListener('resize', mark);
+        win.addEventListener('orientationchange', mark);
     }
 
     // pref is the remembered choice: '1', '0', or null for none yet.
@@ -68,6 +96,8 @@
     return {
         keyboardOpen: keyboardOpen,
         isPhone: isPhone,
+        isUprightPhone: isUprightPhone,
+        watchUprightPhone: watchUprightPhone,
         wantFullScreen: wantFullScreen,
         fullScreenShown: fullScreenShown,
         enterFullScreenOnConnect: enterFullScreenOnConnect,

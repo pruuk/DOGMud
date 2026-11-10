@@ -155,14 +155,20 @@
   /* ── Tables ── */
   --table-row-alt: color-mix(in srgb, var(--ink-gold) 5%, transparent);
 
-  /* ── Fonts ── */
-  /* Sans serif everywhere: body and headings are both Source Sans 3.
-     Source Serif 4 stays loaded (browsers only fetch fonts in use); for
-     serif headings again, set --font-heading to
-     "Source Serif 4", Georgia, "Times New Roman", serif. */
-  --font-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-heading: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "Source Code Pro", ui-monospace, Menlo, Consolas, monospace;
+  /* ── Type (spec 2026-11-09, rulings 4 to 8a) ──
+     One font, two text sizes, one bold. Nothing else sets a size in the
+     client or the site pages: internal/guards/client_type_guard_test.go
+     holds that. The three font tokens stay separate names so a later
+     change can part them again. */
+  --font-body: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --font-heading: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --text: 16px;
+  --title: 20px;
+  --cmd: 16px;        /* the command box: iOS zooms the page on anything smaller */
+  --nav-text: 20px;   /* the site's top bar */
+  --foot-text: 16px;  /* the site's footer */
+  --bold: 600;        /* the one bold: titles, quest names, your own name, room titles */
 
   /* Legacy table tokens kept so any stray references resolve */
   --table-border-color: #19140c;
@@ -186,6 +192,13 @@
   --glass-prominent: #b5a26c;
   --focus-ring: #e7b86c;
 }
+
+:root { font-variant-ligatures: none; }
+/* Upright phones. The class comes from the screen (viewportfit.js), so the
+   on-screen keyboard cannot change the size. */
+:root.upright-phone { --text: 14px; --title: 18px; }
+/* The site bars on phones: under 768px wide or 500px tall. */
+@media (max-width: 767px), (max-height: 500px) { :root { --nav-text: 16px; --foot-text: 14px; } }
 
 /* ── Light theme (website pages only, 2026-11-01) ──
    Chosen in the web client's Settings > Appearance; static/js/theme.js sets
@@ -247,12 +260,27 @@ body {
   flex-direction: column;
   color: var(--text-primary);
   font-family: var(--font-body);
+  font-size: var(--text);
   background-color: var(--bg-base);
   /* --background-image is set in _header.html (CSS gradient); falls back here */
   background: var(--background-image, radial-gradient(circle at 50% 22%, var(--page-glow), var(--page-edge))) fixed;
 }
 
 a { text-decoration: none; color: inherit; }
+/* Browsers give form controls their own type, ligatures included. */
+button, input, select, textarea {
+  font-family: var(--font-body);
+  font-size: var(--text);
+  font-weight: 400;
+  font-variant-ligatures: none;
+}
+/* Fields a player types in stay at the command box size: iOS zooms the page
+   on anything smaller. */
+input, select, textarea { font-size: var(--cmd); }
+/* Regular weight for body text; the one bold is for titles. */
+b, strong { font-weight: 400; }
+/* No italics, including what browsers italicise by default. */
+em, i, cite, dfn, var, address { font-style: normal; }
 
 /* ── Site header (logo + nav in one bar) ──
    A borderless glass bar across the full width (design 2026-11-01, Apple's
@@ -280,7 +308,7 @@ header {
 .brass {
   display: inline-block;
   font-family: var(--font-body);
-  font-weight: bold;
+  font-weight: 400;
   color: var(--brass-text);
   background: var(--brass-grad);
   border: 1px solid var(--brass-border);
@@ -300,7 +328,7 @@ header {
               inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
 }
 
-/* ── Nav in the header bar, pushed right (the footer menu is .footer-nav) ── */
+/* ── Nav in the header bar, pushed right ── */
 header nav {
   flex: 1;
   display: flex;
@@ -317,17 +345,15 @@ header nav {
   gap: 6px;
   padding: 0;
 }
-/* Menu links, shared by the three looks below. Written against
-   .nav-container, not header, so the same menu can sit above the footer
-   later. The current page carries aria-current="page" (and the older
-   .selected). */
+/* Menu links, shared by the looks below. The current page carries
+   aria-current="page" (and the older .selected). */
 .nav-container a {
   display: inline-flex;
   align-items: center;
   min-height: 36px;
   padding: 0 14px;
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: var(--nav-text);
   white-space: nowrap;
   color: var(--glass-text);
   border: 0;
@@ -338,7 +364,7 @@ header nav {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-.nav-container a[aria-current="page"] { font-weight: 600; }
+.nav-container a[aria-current="page"] { font-weight: 400; }
 
 /* Text (the site menu): plain links; the current page is cream with a gold line. */
 .nav-text { gap: 4px; }
@@ -374,16 +400,17 @@ header nav {
   outline-offset: 2px;
 }
 
-/* Tablets: tighter links so the logo and all seven fit on one row. */
+/* Tablets: tighter links. At 20px the seven links take two rows below about
+   1125px wide. */
 @media (min-width: 769px) and (max-width: 1100px) {
   header { gap: 8px 12px; padding: 8px 16px; }
   .nav-container { gap: 4px; }
-  .nav-container a { font-size: 0.82rem; padding: 0 10px; min-height: 32px; }
+  .nav-container a { font-size: var(--nav-text); padding: 0 10px; min-height: 32px; }
   .nav-text a { padding: 0 7px; }
 }
 @media (min-width: 769px) and (max-width: 900px) {
   .nav-container { gap: 3px; }
-  .nav-container a { font-size: 0.78rem; padding: 0 8px; }
+  .nav-container a { font-size: var(--nav-text); padding: 0 8px; }
   .nav-text a { padding: 0 5px; }
 }
 
@@ -444,20 +471,20 @@ body:has(.content-container[data-path="/webclient"]) footer { margin-top: 0; }
 .hero { text-align: center; padding: 30px 26px; box-sizing: border-box; max-width: 100%; }
 .hero-title {
   font-family: var(--font-heading);
-  font-weight: bold;
+  font-weight: var(--bold);
   color: var(--title-gold);
-  font-size: 2.4rem;
+  font-size: var(--title);
   margin: 0;
   text-shadow: 0 2px 4px var(--shadow);
 }
 .hero-tagline {
   font-family: var(--font-body);
   color: var(--text-tagline);
-  font-size: 1.05rem;
+  font-size: var(--text);
   margin: 8px 0 22px;
 }
 .hero-cta {
-  font-size: 1.15rem;
+  font-size: var(--text);
   letter-spacing: 1px;
   padding: 14px 34px;
   text-decoration: none;
@@ -466,7 +493,7 @@ body:has(.content-container[data-path="/webclient"]) footer { margin-top: 0; }
   margin-top: 14px;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 .hero-sub b { color: var(--text-primary); }
 .online-stat {
@@ -478,14 +505,13 @@ body:has(.content-container[data-path="/webclient"]) footer { margin-top: 0; }
   background: var(--chip-bg);
   color: var(--online-green);
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 
 /* ── Footer: the teal bar again, bookending the top bar (Malia 2026-11-01) ──
-   Full width, no outline, solid teal. Website pages repeat the menu here as
-   plain links (current page cream with a gold line, as at the top); the credit
-   line is nav gold, as the olive grey fails on teal (4.46). Measured on teal:
-   links and credit 5.89, current page and GoMud link 6.67, focus ring 5.12. */
+   Full width, no outline, solid teal. The site menu is in the top bar only.
+   The credit line is nav gold, as the olive grey fails on teal (4.46).
+   Measured on teal: credit 5.89, GoMud link 6.67, focus ring 5.12. */
 footer {
   margin-top: 7px;
   padding: 12px clamp(12px, 2vw, 18px) 10px;
@@ -493,35 +519,12 @@ footer {
   text-align: center;
   color: var(--glass-text);
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: var(--foot-text);
 }
 footer p { margin: 0; }
 footer a { color: var(--glass-text-strong); }
 footer a:hover { text-decoration: underline; }
 footer a:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
-.footer-nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 2px 14px;
-  margin-bottom: 8px;
-}
-.footer-nav a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  padding: 0 4px;
-  font-size: 0.9rem;
-  color: var(--glass-text);
-  white-space: nowrap;
-}
-.footer-nav a:hover { color: var(--glass-text-strong); text-decoration: none; }
-.footer-nav a[aria-current="page"] {
-  color: var(--glass-text-strong);
-  text-decoration: underline 2px var(--glass-prominent);
-  text-underline-offset: 6px;
-}
-@media (pointer: coarse) { .footer-nav a { min-height: 44px; } }
 
 /* ── Tables ── */
 table { width: 100%; border-collapse: collapse; }
@@ -529,6 +532,7 @@ table th {
   background: linear-gradient(var(--bar-top), var(--bar-bottom));
   color: var(--ink-gold);
   font-family: var(--font-body);
+  font-weight: var(--bold);
   text-transform: uppercase;
   letter-spacing: 1px;
   padding: 0.7em;
@@ -539,20 +543,20 @@ table tr { background: var(--panel-bg-alt); }
 table tr:nth-child(even) { background: var(--table-row-alt); }
 table td {
   font-family: var(--font-body);
-  font-size: 1.05rem;
+  font-size: var(--text);
   padding: 0.4em 0.7em;
   text-align: left;
   color: var(--text-primary);
 }
 /* Config dump values read better monospaced */
-table.config td { font-family: var(--font-mono); font-size: 0.95rem; }
+table.config td { font-family: var(--font-mono); font-size: var(--text); overflow-wrap: anywhere; }
 
 pre, code { font-family: var(--font-mono); }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
   header { padding: 6px 12px; gap: 8px; }
-  .hero-title { font-size: 1.7rem; }
+  .hero-title { font-size: var(--title); }
   /* The ☰ button opens the menu as a full-width sheet under the bar. */
   header nav { flex-basis: 100%; order: 3; }
   .nav-toggle { display: flex; margin-left: auto; }
@@ -568,9 +572,9 @@ pre, code { font-family: var(--font-mono); }
   .nav-container a { justify-content: center; min-height: 44px; }
   .content-container { padding: 12px; }
   .overlay, .underlay { width: 95%; padding: 12px; }
-  footer { font-size: 0.8rem; padding: 9px 12px; }
-  table th { padding: 0.5em; font-size: 0.8em; }
-  table td { padding: 0.3em; font-size: 3.2vw; }
+  footer { font-size: var(--foot-text); padding: 9px 12px; }
+  table th { padding: 0.5em; font-size: var(--text); }
+  table td { padding: 0.3em; font-size: var(--text); }
 }
 
 @media (max-width: 480px) {
@@ -578,41 +582,22 @@ pre, code { font-family: var(--font-mono); }
   .hero { padding: 24px 8px; }
 }
 
-/* ── Fonts: the Source family, shipped with the site so every device shows
-   the same type. Variable files, so each covers every weight from 200 to 900.
-   Licences sit beside them in static/fonts/ (SIL Open Font License 1.1). ── */
+/* ── Fonts: JetBrains Mono, shipped with the site so every device shows the
+   same type. The official v2.304 web fonts, unmodified: the Google Fonts
+   version has no box-drawing characters. Licence beside them in
+   static/fonts/ (SIL Open Font License 1.1). ── */
 @font-face {
-  font-family: "Source Sans 3";
-  font-style: normal; font-weight: 200 900; font-display: swap;
-  src: url("../fonts/SourceSans3-Upright.woff2") format("woff2");
+  font-family: "JetBrains Mono";
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url("../fonts/JetBrainsMono-Regular.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Source Sans 3";
-  font-style: italic; font-weight: 200 900; font-display: swap;
-  src: url("../fonts/SourceSans3-Italic.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Source Serif 4";
-  font-style: normal; font-weight: 200 900; font-display: swap;
-  src: url("../fonts/SourceSerif4-Roman.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Source Serif 4";
-  font-style: italic; font-weight: 200 900; font-display: swap;
-  src: url("../fonts/SourceSerif4-Italic.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Source Code Pro";
-  font-style: normal; font-weight: 200 900; font-display: swap;
-  src: url("../fonts/SourceCodePro-Upright.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Source Code Pro";
-  font-style: italic; font-weight: 200 900; font-display: swap;
-  src: url("../fonts/SourceCodePro-Italic.woff2") format("woff2");
+  font-family: "JetBrains Mono";
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url("../fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
 }
 
-h1, h2, h3, h4 { font-family: var(--font-heading); }
+h1, h2, h3, h4 { font-family: var(--font-heading); font-size: var(--title); font-weight: var(--bold); }
 
 /* Malia's logo (2026-11-02): the D.O.G. mark in the top bar, the full logo in
    the home page hero. Letters in the logo golds #d9ac46 / #c3932d (palette
