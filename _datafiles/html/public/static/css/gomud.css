@@ -274,6 +274,9 @@ button, input, select, textarea {
   font-weight: 400;
   font-variant-ligatures: none;
 }
+/* Fields a player types in stay at the command box size: iOS zooms the page
+   on anything smaller. */
+input, select, textarea { font-size: var(--cmd); }
 /* Regular weight for body text; the one bold is for titles. */
 b, strong { font-weight: 400; }
 /* No italics, including what browsers italicise by default. */

@@ -44,6 +44,18 @@ check('an upright tablet is not an upright phone', VF.isUprightPhone(768, 1024, 
     check('a resize re-reads it', classes['upright-phone'], true);
 }());
 
+(function () {
+    var classes = {};
+    var win = {
+        orientation: 90,
+        screen: { width: 390, height: 844 },
+        document: { documentElement: { classList: { toggle: function (n, on) { classes[n] = on; } } } },
+        addEventListener: function () {}
+    };
+    VF.watchUprightPhone(win);
+    check('old iOS held sideways: window.orientation wins', classes['upright-phone'], false);
+}());
+
 check('a phone opens full screen', VF.wantFullScreen(null, true), true);
 check('a larger screen does not', VF.wantFullScreen(null, false), false);
 check('a phone player who turned it off stays off', VF.wantFullScreen('0', true), false);

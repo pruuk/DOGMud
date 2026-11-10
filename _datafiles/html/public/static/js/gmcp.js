@@ -701,7 +701,7 @@ class RoomGridSVG {
           // In the lower half of the topmost tile, under its room, on a small plate: a fitted
           // view can cut through the top row's upper half (seen in the demo page's screenshot),
           // and room names are drawn only for the player's own room, so this spot is free.
-          const lw = 8 + qm.label.length * 4.6, ly = top.y * sp + 19;
+          const lw = 8 + qm.label.length * 5.4, ly = top.y * sp + 19;
           g.appendChild(lEl('rect', { x: top.x * sp - lw / 2, y: ly - 8.5, width: lw, height: 11, rx: 2,
               fill: L.legendBg, opacity: '0.85', 'data-wash-label': '1' }));
           g.appendChild(lTxt({ x: top.x * sp, y: ly, 'text-anchor': 'middle',
@@ -728,7 +728,7 @@ class RoomGridSVG {
       const L = RoomGridSVG.LEATHER;
       let text = 'Somewhere in ' + qm.label;
       if (text.length > 48) { text = text.slice(0, 45) + '...'; }
-      const w = Math.min(200, 12 + text.length * 3.9);
+      const w = Math.min(300, 12 + text.length * 4.5);
       ov.appendChild(lEl('rect', { x: 160 - w / 2, y: 49, width: w, height: 13, rx: 3, fill: L.legendBg,
           stroke: L.questGold, 'stroke-width': 0.8, opacity: '0.92', 'data-quest-banner': '1' }));
       ov.appendChild(lTxt({ x: 160, y: 58.2, 'text-anchor': 'middle', 'font-family': L.font,

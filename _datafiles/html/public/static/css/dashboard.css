@@ -356,7 +356,7 @@
 .qrow.focus { background:color-mix(in srgb, var(--brass-mid) 14%, transparent); box-shadow:inset 2px 0 0 var(--brass-mid); }
 .qrow .qdot { flex:0 0 auto; width:1.2em; text-align:center; font-size: var(--text); color:var(--quest-dim); }
 .qrow.focus .qdot { color:var(--brass-mid); }
-/* Quest title: the prominent line — larger, bold, warm parchment. */
+/* Quest title: the prominent line, bold, warm parchment. */
 .qrow .qname { flex:1; min-width:0; overflow-wrap:anywhere; font-family:var(--font-body); font-size: var(--text); font-weight: var(--bold); letter-spacing:.2px; line-height:1.25; color:var(--quest-name); }
 .qrow.focus .qname { color:var(--quest-name-focus); }
 .qbar { flex:0 0 auto; align-self:center; width:48px; height:4px; background:var(--quest-bar-track); border:1px solid var(--panel-border); border-radius:3px; overflow:hidden; }
@@ -726,7 +726,7 @@ html.keyboard-open #dash-drawer {
    is made narrow enough to use the phone layout with a mouse or trackpad. */
 /* It also matches the ✕'s look: the same rounded corners and brass shading
    (the Settings button style), with its arrow centred. The ▾ character is
-   drawn smaller than ✕, so it gets a bigger font to look the same size. */
+   drawn smaller than ✕ at the same font size. */
 #dash-drawer .dash-panel-head .ph-collapse {
   display: inline-flex;
   align-items: center;
@@ -898,7 +898,7 @@ html.keyboard-open #dash-drawer {
    two or three rows and, with the 50px title bar, most of an open Chat tab,
    upright and sideways. On a touch screen under 600px wide or under 500px
    tall (a phone either way up, never a tablet) they are 30px, still above
-   the 24px minimum target, with smaller words and padding so more fit on a
+   the 24px minimum target, with less padding so more fit on a
    row, and the panel title buttons shrink to match. A deliberate exception
    to the 44px rule, recorded in BRAND_STANDARDS.md. */
 @media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
@@ -1116,7 +1116,7 @@ html.keyboard-open #dash-drawer {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: min(34ch, 80vw);
   pointer-events: none;
   user-select: none;
 }
@@ -1179,7 +1179,7 @@ html.keyboard-open #dash-drawer {
   transition: filter 0.08s;
   user-select: none;
 }
-/* With a mouse, "+ New" is at least 24px tall with easier-to-read text,
+/* With a mouse, "+ New" is at least 24px tall,
    the smallest size the accessibility rules allow (#730). */
 @media (pointer: fine) {
   .auto-add { font-size: var(--text); min-height: 24px; display: inline-flex; align-items: center; }
@@ -1319,7 +1319,7 @@ html.keyboard-open #dash-drawer {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: min(34ch, 80vw);
   pointer-events: none;
   user-select: none;
 }
@@ -1359,7 +1359,7 @@ html.keyboard-open #dash-drawer {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: min(34ch, 80vw);
   pointer-events: none;
   user-select: none;
 }
@@ -1456,7 +1456,7 @@ html.keyboard-open #dash-drawer {
   border-radius: 3px;
   color: var(--vellum);
   font-family: var(--font-mono);
-  font-size: var(--text);
+  font-size: var(--cmd);
   padding: 5px 7px;
   outline: none;
   transition: border-color 0.08s;

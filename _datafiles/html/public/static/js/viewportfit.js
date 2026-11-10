@@ -29,8 +29,14 @@
 
     function markUprightPhone(win) {
         var s = win.screen;
+        var type = s.orientation && s.orientation.type;
+        // iOS before 16.4 has no screen.orientation; window.orientation is its
+        // only true signal.
+        if (!type && typeof win.orientation === 'number') {
+            type = Math.abs(win.orientation) === 90 ? 'landscape-primary' : 'portrait-primary';
+        }
         win.document.documentElement.classList.toggle('upright-phone',
-            isUprightPhone(s.width, s.height, s.orientation && s.orientation.type));
+            isUprightPhone(s.width, s.height, type));
     }
 
     function watchUprightPhone(win) {

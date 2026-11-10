@@ -33,6 +33,7 @@ var typeScopeFiles = []string{
 	typePublic + "architecture.html",
 	typeHelp + "help.html",
 	typeHelp + "help-details.html",
+	typePublic + "static/js/dashboard.js",
 	"modules/achievements/files/datafiles/html/public/achievements.html",
 	"modules/leaderboards/files/datafiles/html/public/leaderboards.html",
 }
@@ -47,8 +48,8 @@ const typeMapArtFile = typePublic + "static/js/gmcp.js"
 // The map buttons are injected by gmcp.js and are not art.
 const typeMapButtonRule = "font-weight:400;font-size:var(--text);"
 
-// Scripts that draw text; scanned for italics and old fonts only.
-var typeScriptFiles = []string{typeMapArtFile, typePublic + "static/js/dashboard.js"}
+// Scripts that draw art; scanned for italics and old fonts only.
+var typeScriptFiles = []string{typeMapArtFile}
 
 // typeExemptLines maps "file|trimmed line" to why that exact line may break a
 // rule. Changing the line drops the exemption.
@@ -83,8 +84,9 @@ func typeLineFaults(line string) []string {
 	var faults []string
 	check := func(re, ok *regexp.Regexp, what string) {
 		for _, m := range re.FindAllStringSubmatch(line, -1) {
-			if !ok.MatchString(strings.TrimSpace(m[1])) {
-				faults = append(faults, what+" "+strings.TrimSpace(m[1]))
+			value := strings.TrimRight(strings.TrimSpace(m[1]), `"'`)
+			if !ok.MatchString(value) {
+				faults = append(faults, what+" "+value)
 			}
 		}
 	}
@@ -140,6 +142,7 @@ func TestClientTypeRulesCanFail(t *testing.T) {
 	for _, line := range []string{
 		`  font-size: var(--text);`, `font-size: var(--title);`, `font-family: var(--font-mono);`,
 		`font-weight: var(--bold);`, `font-weight: 400;`, `.qonmap { font-style:normal; }`,
+		`el.style.cssText = "font-size:var(--text)";`,
 	} {
 		if got := typeLineFaults(line); len(got) != 0 {
 			t.Errorf("probe %q should pass, got %v", line, got)
@@ -214,7 +217,10 @@ func TestTypeTokensHoldTheRuledSizes(t *testing.T) {
 		":root.upright-phone { --text: 14px; --title: 18px; }",
 		"@media (max-width: 767px), (max-height: 500px) { :root { --nav-text: 16px; --foot-text: 14px; } }",
 		`--font-body: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;`,
-		"font-variant-ligatures: none;",
+		`--font-heading: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;`,
+		`--font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;`,
+		":root { font-variant-ligatures: none; }",
+		"input, select, textarea { font-size: var(--cmd); }",
 	} {
 		if !strings.Contains(css, want) {
 			t.Errorf("gomud.css lost %q", want)
