@@ -1,20 +1,49 @@
 package messaging
 
 import (
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // ansiOpenTagExpr matches one <ansi …> open tag with any attribute set
-// (fg, bg, or combinations). Shared by ansiTagPattern here and by the
-// a/an stage in normalize.go, which looks through a run of them.
+// (fg, bg, or combinations). The a/an stage in normalize.go uses it to look
+// through a run of them; ansiTagLen is the same grammar for the wrapper.
 const ansiOpenTagExpr = `<ansi[^>]*>`
 
-// ansiTagPattern matches <ansi …> (any attribute set, including fg,
-// bg, or combinations) or </ansi>. Only used for scanning;
-// replacement uses the literal strings.
-var ansiTagPattern = regexp.MustCompile(ansiOpenTagExpr + `|</ansi>`)
+const (
+	ansiOpenPrefix = `<ansi`
+	ansiCloser     = `</ansi>`
+)
+
+// ansiTagLen returns the byte length of the <ansi …> or </ansi> tag that
+// begins s, or 0 when s does not begin with one. Anything other than a tag
+// is refused on its first few bytes, and a tag is read no further than its
+// own closing '>'.
+func ansiTagLen(s string) int {
+	if strings.HasPrefix(s, ansiCloser) {
+		return len(ansiCloser)
+	}
+	if !strings.HasPrefix(s, ansiOpenPrefix) {
+		return 0
+	}
+	end := strings.IndexByte(s[len(ansiOpenPrefix):], '>')
+	if end < 0 {
+		return 0
+	}
+	return len(ansiOpenPrefix) + end + 1
+}
+
+// runeColumns is the display columns one rune takes. ASCII is always one,
+// control characters included, which is what the wrapper has always counted
+// for it; anything else is the width util.VisibleWidth would give it.
+func runeColumns(r rune) int {
+	if r < utf8.RuneSelf {
+		return 1
+	}
+	return runewidth.RuneWidth(r)
+}
 
 // WrapAnsi wraps text at maxWidth display columns. ANSI escape
 // sequences (<ansi …> / </ansi> tags) don't count toward width.
@@ -124,20 +153,25 @@ func WrapAnsi(text string, maxWidth int) (wrapped string) {
 		pending = pending[:0]
 	}
 
+	// Every tag ends in '>', so a '<' past the last one is plain text. Before
+	// it, the search for an open tag's '>' always succeeds and the walk then
+	// jumps over what was searched, so WrapAnsi does constant work at a stray
+	// less-than sign and one linear pass overall.
+	lastTagEnd := strings.LastIndexByte(text, '>')
+
 	i := 0
 	for i < len(text) {
 		// ANSI tag?
-		if text[i] == '<' {
-			loc := ansiTagPattern.FindStringIndex(text[i:])
-			if loc != nil && loc[0] == 0 {
-				tag := text[i : i+loc[1]]
+		if text[i] == '<' && i < lastTagEnd {
+			if tagLen := ansiTagLen(text[i:]); tagLen > 0 {
+				tag := text[i : i+tagLen]
 				if strings.HasPrefix(tag, `</`) {
 					pending = append(pending, tagOp{close: true})
 				} else {
 					pending = append(pending, tagOp{close: false, tag: tag})
 				}
 				curWord.WriteString(tag)
-				i += loc[1]
+				i += tagLen
 				continue
 			}
 		}
@@ -158,12 +192,13 @@ func WrapAnsi(text string, maxWidth int) (wrapped string) {
 			i++
 			continue
 		}
-		// Visible character. Advance by one RUNE: the counter is display
-		// columns, and indexing the string byte-by-byte made every
-		// multi-byte character count as two or more columns.
-		_, size := utf8.DecodeRuneInString(text[i:])
+		// Visible character. Advance by one RUNE and count its display
+		// columns: indexing the string byte-by-byte made every multi-byte
+		// character count as two or more columns, and counting runes made
+		// a wide character count as one.
+		r, size := utf8.DecodeRuneInString(text[i:])
 		curWord.WriteString(text[i : i+size])
-		curWordW++
+		curWordW += runeColumns(r)
 		i += size
 	}
 	if curWord.Len() > 0 {

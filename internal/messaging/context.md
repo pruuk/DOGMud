@@ -61,7 +61,7 @@ the recipient's connection.
    (`GrappleHigh`, `Login`, `OOC`, `Toxin`). `shouldWrap` in
    `pipeline.go` is the authoritative list. `WrapAnsi` closes and
    reopens the whole stack of open ansi tags across a line break and
-   measures width in runes, not bytes.
+   measures width in display columns per rune (`go-runewidth`), not bytes.
 7. **Deliver** to the recipient's connection.
 
 ## Channels
@@ -706,7 +706,7 @@ The package is the pipeline, one stage per file, plus the fan-out (`trio.go`):
 | `anonymize.go` | Replacing names the observer should not see (infrared fallback, whole-line) |
 | `hidenames.go` | `HideNames`, `NameHider`, `HideSpeakerNames` (sight gates slice 5b): replacing specific names in bare prose, longest-first, whole-word |
 | `hidenames_tagged.go` | Identity-tag-aware name replacement `HideNames` and `Anonymize` share, including the trailing adjective span |
-| `wrap.go` | `WrapAnsi`, ANSI-aware folding at a caller-supplied width measured in visible runes; called by the pipeline for the categories `shouldWrap` admits, and directly by `motd.go` for its box-bordered banner |
+| `wrap.go` | `WrapAnsi`, ANSI-aware folding at a caller-supplied width measured in display columns; called by the pipeline for the categories `shouldWrap` admits, and directly by `motd.go` for its box-bordered banner |
 | `predicates.go` | `ParticipantSight` (the optics primitive) plus `CanSeeClearly`/`CanSeeShapes`/`CanSeeSightImpairedOnly`, the one-line attention policies built on it; `SeesThroughExit` and `FixedLight` (lighting plan 5c); `SensesHeatThroughExit` (lighting plan 6) |
 | `window.go` | `SightThroughWindow`, the pure window-model function `ParticipantSight` calls, `clampShift`, `ExitThroughWindow` (lighting plan 5c), `LightTrimTarget` (lighting plan 5a, reparameterized in 5b to take `dazzleAbove` instead of reading the now-retired `windowDazzleEdge` constant), `DarknessTrimTarget` (lighting plan 5d), plus its two remaining unexported constants (`windowShiftCap`, `windowFloor`) |
 | `band.go` | `Band`, `BandThroughWindow`, `LightBand` (lighting plan 3d): the band-grained twin of `SightDecision`/`SightThroughWindow`/`ParticipantSight`, adding the dazzled tier for `internal/lightnotice` |
