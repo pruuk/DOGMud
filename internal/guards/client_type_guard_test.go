@@ -283,3 +283,21 @@ func TestRoomTitleBoldMatchesTheAlias(t *testing.T) {
 		t.Errorf("roomtitlebold.js does not hold room-title's colour %s", m[1])
 	}
 }
+
+// The site menu is in the top bar only (owner 2026-11-10). A second copy in the
+// bottom bar was clutter, and the game page never had one.
+func TestSiteMenuIsInTheTopBarOnly(t *testing.T) {
+	read := func(rel string) string {
+		data, err := os.ReadFile(filepath.Join(repoRoot(t), filepath.FromSlash(typePublic+rel)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	if !strings.Contains(read("_header.html"), ".NAV") {
+		t.Fatal("probe: _header.html no longer ranges over .NAV, so this check proves nothing")
+	}
+	if strings.Contains(read("_footer.html"), ".NAV") {
+		t.Error("_footer.html lists the site menu; it belongs in the top bar only")
+	}
+}

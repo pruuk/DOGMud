@@ -7,6 +7,7 @@
 - Room titles, quest names and your own name stand out in bold.
 - Text on the side panels is larger and easier to read.
 - The game window's text still changes size with your window for now.
+- The website's bottom bar no longer repeats the menu from the top bar.
 
 ## 2026-11-09: Cleaner line breaks
 

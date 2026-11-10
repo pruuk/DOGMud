@@ -328,7 +328,7 @@ header {
               inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
 }
 
-/* ── Nav in the header bar, pushed right (the footer menu is .footer-nav) ── */
+/* ── Nav in the header bar, pushed right ── */
 header nav {
   flex: 1;
   display: flex;
@@ -345,10 +345,8 @@ header nav {
   gap: 6px;
   padding: 0;
 }
-/* Menu links, shared by the three looks below. Written against
-   .nav-container, not header, so the same menu can sit above the footer
-   later. The current page carries aria-current="page" (and the older
-   .selected). */
+/* Menu links, shared by the looks below. The current page carries
+   aria-current="page" (and the older .selected). */
 .nav-container a {
   display: inline-flex;
   align-items: center;
@@ -511,10 +509,9 @@ body:has(.content-container[data-path="/webclient"]) footer { margin-top: 0; }
 }
 
 /* ── Footer: the teal bar again, bookending the top bar (Malia 2026-11-01) ──
-   Full width, no outline, solid teal. Website pages repeat the menu here as
-   plain links (current page cream with a gold line, as at the top); the credit
-   line is nav gold, as the olive grey fails on teal (4.46). Measured on teal:
-   links and credit 5.89, current page and GoMud link 6.67, focus ring 5.12. */
+   Full width, no outline, solid teal. The site menu is in the top bar only.
+   The credit line is nav gold, as the olive grey fails on teal (4.46).
+   Measured on teal: credit 5.89, GoMud link 6.67, focus ring 5.12. */
 footer {
   margin-top: 7px;
   padding: 12px clamp(12px, 2vw, 18px) 10px;
@@ -528,29 +525,6 @@ footer p { margin: 0; }
 footer a { color: var(--glass-text-strong); }
 footer a:hover { text-decoration: underline; }
 footer a:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
-.footer-nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 2px 14px;
-  margin-bottom: 8px;
-}
-.footer-nav a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  padding: 0 4px;
-  font-size: var(--foot-text);
-  color: var(--glass-text);
-  white-space: nowrap;
-}
-.footer-nav a:hover { color: var(--glass-text-strong); text-decoration: none; }
-.footer-nav a[aria-current="page"] {
-  color: var(--glass-text-strong);
-  text-decoration: underline 2px var(--glass-prominent);
-  text-underline-offset: 6px;
-}
-@media (pointer: coarse) { .footer-nav a { min-height: 44px; } }
 
 /* ── Tables ── */
 table { width: 100%; border-collapse: collapse; }
