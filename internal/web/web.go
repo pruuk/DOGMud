@@ -330,6 +330,9 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string)) 
 
 	http.HandleFunc("/", serveTemplate)
 
+	// Short links for the long addresses the game prints (shortlinks.go).
+	registerShortLinks()
+
 	// websocket upgrade
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 
