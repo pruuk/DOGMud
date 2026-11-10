@@ -1,0 +1,11 @@
+{{- /* The skills at 30 columns: per skill its name and rank 1 in, then its
+description wrapped 3 in. "Recovering..." follows the rank when it fits,
+else it takes a line of its own at the description's indent. */ -}}
+{{ $w := 30 }}{{ $cooldowns := .SkillCooldowns }}{{ $blurbs := .SkillBlurbs }}{{ $nw := or .NameWidth 12 }}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Skills</ansi> {{ repeat "─" (sub $w 12) }}
+{{ range $skillName, $skillLevel := .SkillList }}{{ $rank := "[Unknown]" }}{{ if ne $skillLevel 0 }}{{ $rank = print "<ansi fg=\"white\">[" (skillRank $skillLevel) "]</ansi>" }}{{ end -}}
+{{ " " }}<ansi fg="yellow-bold">{{ padRight $nw $skillName }}</ansi> {{ $rank }}{{ if ne (index $cooldowns $skillName) 0 }}{{ if le (add 16 $nw (visiblewidth $rank)) $w }} <ansi fg="red">Recovering...</ansi>{{ else }}
+   <ansi fg="red">Recovering...</ansi>{{ end }}{{ end }}
+{{ if index $blurbs $skillName }}   <ansi fg="black-bold">{{ wraptext (index $blurbs $skillName) (sub $w 3) "   " }}</ansi>
+{{ end }}{{ end }}{{ if eq (len .SkillList) 0 }} {{ wraptext "No Skills! Visit a guild or training center to train." (sub $w 1) " " }}
+{{ end }}{{ repeat "─" $w }}

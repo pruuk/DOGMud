@@ -1,0 +1,76 @@
+{{- /* The inventory at 42 columns: the equipment between two full-width
+rules, then the carried lists. An item name that does not fit beside its
+slot label goes on the next line, 2 past the label. A list wraps between
+names, hanging under the first name when every name fits there, else 2 past
+the label; a name longer than a whole line is wrapped on its own. The form
+is drawn to 42 whatever the reader's width, so a reader narrower than that
+gets the 30-column form. */ -}}
+{{- define "slot" }}{{ if le (add (len .ind) 12 (visiblewidth .v)) .w }}{{ .ind }}<ansi fg="yellow">{{ padRight 12 .label }}</ansi><ansi fg="itemname">{{ .v }}</ansi>{{ else }}{{ .ind }}<ansi fg="yellow">{{ .label }}</ansi>
+{{ .ind }}  <ansi fg="itemname">{{ wraptext .v (sub .w (len .ind) 2) (print .ind "  ") }}</ansi>{{ end }}
+{{ end -}}
+{{- define "list" -}}
+{{- $w := .w -}}{{- $col := add 1 (len .label) -}}{{- $hang := add $col 1 -}}
+{{- if lt (sub $w $hang) 20 -}}{{- $hang = 3 -}}{{- end -}}
+{{- range .names -}}{{- if gt (add (visiblewidth .) 1) (sub $w $hang) -}}{{- $hang = 3 -}}{{- end -}}{{- end -}}
+{{- $pad := repeat " " $hang -}}{{- $cur := $col -}}{{- $last := sub (len .names) 1 -}}
+{{ " " }}{{ .label }}{{ if not .names }} {{ .empty }}{{ end }}
+{{- range $i, $f := .names -}}
+{{- if lt $i $last -}}{{- $f = print $f "," -}}{{- end -}}
+{{- $n := visiblewidth $f -}}
+{{- if le (add $cur 1 $n) $w -}}
+{{ " " }}{{ $f }}{{- $cur = add $cur 1 $n -}}
+{{- else if le (add $hang $n) $w -}}
+{{ "\n" }}{{ $pad }}{{ $f }}{{- $cur = add $hang $n -}}
+{{- else -}}
+{{ "\n" }}{{ $pad }}{{ wraptext $f (sub $w $hang) $pad }}{{- $cur = $w -}}
+{{- end -}}
+{{- end }}
+{{ end -}}
+{{- define "bag" -}}
+{{- $w := .w -}}{{- $hang := 20 -}}
+{{- if lt (sub $w $hang) 20 -}}{{- $hang = 3 -}}{{- end -}}
+{{- range .names -}}{{- if gt (visiblewidth .) (sub $w $hang) -}}{{- $hang = 3 -}}{{- end -}}{{- end -}}
+{{- $pad := repeat " " $hang -}}
+{{ " " }}Found in your bag:
+{{- range $i, $f := .names -}}
+{{- if and (eq $i 0) (eq $hang 20) -}}
+{{ " " }}{{ $f }}
+{{- else -}}
+{{ "\n" }}{{ $pad }}{{ wraptext $f (sub $w $hang) $pad }}
+{{- end -}}
+{{- end }}
+{{ end -}}
+{{ $w := 42 }}{{ $ind := "   " }}{{ if not .Searching }}── <ansi fg="black-bold">.:</ansi><ansi fg="20">Equipment</ansi> {{ repeat "─" (sub $w 15) }}
+{{ if not .Equipment.Weapon.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Weapon:" "v" .Equipment.Weapon.NameComplex) }}{{ end -}}
+{{- if and (not .Equipment.Offhand.IsDisabled) (not (.Character.IsBlockedBy2H "offhand")) }}{{ template "slot" (map "w" $w "ind" $ind "label" "Offhand:" "v" .Equipment.Offhand.NameComplex) }}{{ end -}}
+{{- if not .Equipment.ExtraArm1.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Arm 3:" "v" .Equipment.ExtraArm1.NameComplex) }}{{ end -}}
+{{- if and (not .Equipment.ExtraArm2.IsDisabled) (not (.Character.IsBlockedBy2H "extra arm 2")) }}{{ template "slot" (map "w" $w "ind" $ind "label" "Arm 4:" "v" .Equipment.ExtraArm2.NameComplex) }}{{ end -}}
+{{- if not .Equipment.ExtraArm3.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Arm 5:" "v" .Equipment.ExtraArm3.NameComplex) }}{{ end -}}
+{{- if and (not .Equipment.ExtraArm4.IsDisabled) (not (.Character.IsBlockedBy2H "extra arm 4")) }}{{ template "slot" (map "w" $w "ind" $ind "label" "Arm 6:" "v" .Equipment.ExtraArm4.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Head.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Head:" "v" .Equipment.Head.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Neck.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Neck:" "v" .Equipment.Neck.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Shoulders.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Shoulders:" "v" .Equipment.Shoulders.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Body.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Body:" "v" .Equipment.Body.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Back.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Back:" "v" .Equipment.Back.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Belt.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Belt:" "v" .Equipment.Belt.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Wrist1.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Wrist 1:" "v" .Equipment.Wrist1.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Wrist2.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Wrist 2:" "v" .Equipment.Wrist2.NameComplex) }}{{ end -}}
+{{- if not .Equipment.ExtraWrist1.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Wrist 3:" "v" .Equipment.ExtraWrist1.NameComplex) }}{{ end -}}
+{{- if not .Equipment.ExtraWrist2.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Wrist 4:" "v" .Equipment.ExtraWrist2.NameComplex) }}{{ end -}}
+{{- if not .Equipment.ExtraWrist3.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Wrist 5:" "v" .Equipment.ExtraWrist3.NameComplex) }}{{ end -}}
+{{- if not .Equipment.ExtraWrist4.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Wrist 6:" "v" .Equipment.ExtraWrist4.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Gloves.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Gloves:" "v" .Equipment.Gloves.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Ring.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Ring:" "v" .Equipment.Ring.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Ring2.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Ring:" "v" .Equipment.Ring2.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Legs.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Legs:" "v" .Equipment.Legs.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Feet.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Feet:" "v" .Equipment.Feet.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Tail.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Tail:" "v" .Equipment.Tail.NameComplex) }}{{ end -}}
+{{- if not .Equipment.Light.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Light:" "v" .Equipment.Light.NameComplex) }}{{ end -}}
+{{- if not .Equipment.ComponentBag.IsDisabled }}{{ template "slot" (map "w" $w "ind" $ind "label" "Components:" "v" .Equipment.ComponentBag.NameComplex) }}{{ end -}}
+{{ repeat "─" $w }}
+{{ template "list" (map "w" $w "label" "Carrying:" "names" .ItemNamesFormatted "empty" "nothing") -}}
+{{ if .ComponentNames }}{{ template "list" (map "w" $w "label" "Components:" "names" .ComponentNamesFormatted "empty" "") }}{{ end -}}
+{{ if .PotionNames }}{{ template "list" (map "w" $w "label" "Bandolier:" "names" .PotionNamesFormatted "empty" "") }}{{ end -}}
+{{ " " }}<ansi fg="{{ .EncumbranceColor }}">Encumbrance: [{{ .EncumbranceLabel }}]</ansi>
+{{ else }}
+{{ template "bag" (map "w" $w "names" .ItemNamesFormatted) }}{{ end }}

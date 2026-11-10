@@ -1,0 +1,36 @@
+
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Skills</ansi> ─────────────────────────────────────────────────────────────────┐
+   <ansi fg="yellow-bold">alchemy       </ansi> [Unknown]    
+      <ansi fg="black-bold">Brewing potions, salves, and medicines.</ansi>
+   <ansi fg="yellow-bold">bartering     </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Better prices and appraisal when you trade.</ansi>
+   <ansi fg="yellow-bold">blacksmithing </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Forging metal weapons, armor, and tools.</ansi>
+   <ansi fg="yellow-bold">cooking       </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Preparing food and the benefits good meals give.</ansi>
+   <ansi fg="yellow-bold">enchanting    </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Imbuing items with magic.</ansi>
+   <ansi fg="yellow-bold">jewelcrafting </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Rings, pendants, and gemwork.</ansi>
+   <ansi fg="yellow-bold">manifestation </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Summoning companions, charming, and necromancy.</ansi>
+   <ansi fg="yellow-bold">ranged-combat </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Bows, crossbows, and firearms (aimed with Perception).</ansi>
+   <ansi fg="yellow-bold">rhetoric      </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Conviction attacks: taunt and demoralize.</ansi>
+   <ansi fg="yellow-bold">salvage       </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Breaking items down into materials.</ansi>
+   <ansi fg="yellow-bold">search        </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Finding hidden things, and foraging the wild for resources.</ansi>
+   <ansi fg="yellow-bold">skullduggery  </ansi> <ansi fg="white">[grandmaster]</ansi>    <ansi fg="red">Recovering...</ansi>
+      <ansi fg="black-bold">Sneaking, stealing, lockpicking, and ambush.</ansi>
+   <ansi fg="yellow-bold">spellcasting  </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">All magic, offense and defense.</ansi>
+   <ansi fg="yellow-bold">tailoring     </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Crafting cloth and leather goods.</ansi>
+   <ansi fg="yellow-bold">unarmed-combat</ansi> <ansi fg="white">[grandmaster]</ansi>    <ansi fg="red">Recovering...</ansi>
+      <ansi fg="black-bold">Fists, grappling, and unarmed defense.</ansi>
+   <ansi fg="yellow-bold">weapon-combat </ansi> <ansi fg="white">[grandmaster]</ansi>    
+      <ansi fg="black-bold">Melee with weapons: attack and defense.</ansi>
+ └────────────────────────────────────────────────────────────────────────────┘
+

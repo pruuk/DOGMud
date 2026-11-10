@@ -1,0 +1,16 @@
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">In Storage</ansi> ───────────────────────────────────────────────────────────┐
+   1. <ansi fg="itemname">Basalt-Iron Blade</ansi>
+   2. <ansi fg="itemname">Basalt-Iron Blade</ansi>
+   3. <ansi fg="itemname">Basalt-Iron Blade</ansi>
+   4. <ansi fg="itemname">Basalt-Iron Blade</ansi>
+   5. <ansi fg="itemname"><ansi fg="item-flags">[<ansi fg="item-enchanted">e</ansi>]</ansi> A Salt-Stiff Page of a Sailor's Telling <ansi fg="item-bonus-damage">+12</ansi></ansi>
+   6. <ansi fg="itemname">Basalt-Iron Blade</ansi>
+   7. <ansi fg="itemname">Basalt-Iron Blade</ansi>
+   8. <ansi fg="itemname">Basalt-Iron Blade</ansi>
+   9. <ansi fg="itemname">Basalt-Iron Blade</ansi>
+   10. <ansi fg="itemname">Basalt-Iron Blade</ansi>
+   11. <ansi fg="itemname">Basalt-Iron Blade <ansi fg="uses-left">(x14)</ansi></ansi>
+ └──────────────────────────────────────────────────────────────────────────┘
+ <ansi fg="command">storage add [item/all]</ansi> to store items. <ansi fg="command">unstore [item/#]</ansi> to retrieve.
+ <ansi fg="command">stow</ansi> deposits all your crafting components here at once.
+

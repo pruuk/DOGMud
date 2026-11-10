@@ -1,0 +1,17 @@
+{{- /* The title screen at 42 columns: label: value lines, a value's
+parenthesis hanging under the value when the two do not fit on a line, and
+a title too long for its line moved under the label, 2 past it. The stat
+bars keep their 20 cells. Drawn to 42 whatever the reader's width. */ -}}
+{{- define "tier" }}   <ansi fg="yellow">{{ .label }}</ansi>{{ repeat " " (sub 16 (len .label)) }}{{ .value }}{{ if le (add 19 (len .value) 1 (len .paren)) .w }} {{ else }}
+                   {{ end }}<ansi fg="black-bold">{{ .paren }}</ansi>{{ end -}}
+{{ $w := 42 }}── <ansi fg="black-bold">.:</ansi><ansi fg="20">Title</ansi> {{ repeat "─" (sub $w 11) }}
+{{ if le (add 18 (len .FullTitle)) $w }}   <ansi fg="yellow-bold">Current Title:</ansi> <ansi fg="white-bold">{{ .FullTitle }}</ansi>{{ else }}   <ansi fg="yellow-bold">Current Title:</ansi>
+     <ansi fg="white-bold">{{ wraptext .FullTitle (sub $w 5) "     " }}</ansi>{{ end }}
+
+{{ template "tier" (map "w" $w "label" "Mutation Tier:" "value" .MutTier "paren" (printf "(%s presence)" .MutLoad)) }}
+{{ template "tier" (map "w" $w "label" "Skill Tier:" "value" .SkillTier "paren" (printf "(%s)" .SkillPct)) }}
+   <ansi fg="yellow">Archetype:</ansi>      {{ .Archetype }}
+
+   <ansi fg="yellow">Stat Profile:</ansi>
+{{ range $idx, $stat := .TopStats }}    {{ padRight 12 $stat.Name }} {{ $stat.Bar }}
+{{ end }}{{ repeat "─" $w }}

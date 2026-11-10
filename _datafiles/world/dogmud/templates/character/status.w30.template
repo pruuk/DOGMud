@@ -1,0 +1,45 @@
+{{- /* The status sheet at 30 columns: each section a titled rule and one
+label: value pair per line, everything the 80-column sheet shows. One
+closing rule follows the last section. A name too long to keep "the"
+beside it at 30 columns puts "the" on the title's line. */ -}}
+{{- define "one" }} <ansi fg="yellow">{{ padRight 13 .a }}</ansi>{{ .va }}{{ end -}}
+{{ $w := 30 }}{{ $c := .Character }}{{ $title := title .Character }}
+{{ if le (add 9 (len $c.Name) (len $title)) $w }} <ansi fg="black-bold">.:</ansi> <ansi fg="username">{{ $c.Name }}</ansi> the {{ $title }}{{ else if le (add 8 (len $c.Name)) $w }} <ansi fg="black-bold">.:</ansi> <ansi fg="username">{{ $c.Name }}</ansi> the
+    {{ wraptext $title (sub $w 4) "    " }}{{ else }} <ansi fg="black-bold">.:</ansi> <ansi fg="username">{{ $c.Name }}</ansi>
+    {{ wraptext (print "the " $title) (sub $w 4) "    " }}{{ end }}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Attributes</ansi> {{ repeat "─" (sub $w 16) }}
+{{ template "one" (map "a" "Strength:" "va" (statQuality .Character.Stats.Strength.Value)) }}
+{{ template "one" (map "a" "Dexterity:" "va" (statQuality .Character.Stats.Dexterity.Value)) }}
+{{ template "one" (map "a" "Perception:" "va" (statQuality .Character.Stats.Perception.Value)) }}
+{{ template "one" (map "a" "Vitality:" "va" (statQuality .Character.Stats.Vitality.Value)) }}
+{{ template "one" (map "a" "Willpower:" "va" (statQuality .Character.Stats.Willpower.Value)) }}
+{{ template "one" (map "a" "Charisma:" "va" (statQuality .Character.Stats.Charisma.Value)) }}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Vitals</ansi> {{ repeat "─" (sub $w 12) }}
+{{ template "one" (map "a" "Health:" "va" (vitalQuality $c.Health ($c.EffectivePoolMaxNamed "health"))) }}
+{{ template "one" (map "a" "Stamina:" "va" (vitalQuality $c.Stamina ($c.EffectivePoolMaxNamed "stamina"))) }}
+{{ template "one" (map "a" "Conviction:" "va" (vitalQuality $c.Conviction ($c.EffectivePoolMaxNamed "conviction"))) }}
+{{ template "one" (map "a" "HP reserve:" "va" (reservationQuality ($c.ReservationBandName "health"))) }}
+{{ template "one" (map "a" "SP reserve:" "va" (reservationQuality ($c.ReservationBandName "stamina"))) }}
+{{ template "one" (map "a" "CP reserve:" "va" (reservationQuality ($c.ReservationBandName "conviction"))) }}
+{{ template "one" (map "a" "Toxicity:" "va" (toxicityQuality $c.ToxicityBandName)) }}
+{{ template "one" (map "a" "Encumbrance:" "va" (encumbranceQuality $c.GetCarriedWeight $c.CarryCapacity)) }}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Defenses</ansi> {{ repeat "─" (sub $w 14) }}
+{{ template "one" (map "a" "Physical:" "va" (defenseQuality (effectiveMitigation $c "physical"))) }}
+{{ template "one" (map "a" "Magical:" "va" (defenseQuality (effectiveMitigation $c "magical"))) }}
+{{ template "one" (map "a" "Conviction:" "va" (defenseQuality (effectiveMitigation $c "conviction"))) }}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi> {{ repeat "─" (sub $w 10) }}
+{{ template "one" (map "a" "Species:" "va" $c.SpeciesDisplay) }}
+{{ template "one" (map "a" "Gold:" "va" (numberFormat $c.Gold)) }}
+{{ template "one" (map "a" "Bank:" "va" (numberFormat $c.Bank)) }}
+{{ repeat "─" $w }}
+ <ansi fg="yellow">Submission policy:</ansi> {{ $c.SubmissionPolicy }}
+{{- if $c.Conditions.HasCondition 83 }}
+ <ansi fg="red-bold">{{ wraptext (printf "Broken limb: %d rounds remaining" ($c.Conditions.TriggersLeft 83)) (sub $w 3) "   " }}</ansi>
+{{- end }}
+{{- if $c.Mutations }}
+ <ansi fg="black-bold">.:</ansi><ansi fg="20">Mutations</ansi><ansi fg="black-bold">:.</ansi>
+{{- range $id, $level := $c.Mutations }}
+ <ansi fg="yellow">{{ wraptext $id (sub $w 1) " " }}</ansi>
+   <ansi fg="magenta">{{ mutationLevel $level }}</ansi>
+{{- end }}
+{{- end }}

@@ -46,11 +46,6 @@ There are a handful of settings you can adjust with this command, including:
   Type <ansi fg="command">set submission</ansi> alone to see your current policy.
   See <ansi fg="command">help submission</ansi>.
 
-  <ansi fg="command">set surrender <never|always|auto-tap-below N></ansi>
-  Sets whether you tap out when caught in a submission.
-  Type <ansi fg="command">set surrender</ansi> alone to see your current policy.
-  See <ansi fg="command">help surrender</ansi>.
-
   <ansi fg="command">set charset</ansi>
   Toggles between UTF-8 and ASCII display modes. If your client
   shows garbled characters in tables and borders, switch to ASCII.
@@ -59,5 +54,4 @@ There are a handful of settings you can adjust with this command, including:
   Controls how much combat text you see. See <ansi fg="command">help combatverbosity</ansi>.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help alias</ansi>, <ansi fg="command">help macros</ansi>,
-  <ansi fg="command">help set-prompt</ansi>, <ansi fg="command">help submission</ansi>,
-  <ansi fg="command">help surrender</ansi>
+  <ansi fg="command">help set-prompt</ansi>, <ansi fg="command">help submission</ansi>

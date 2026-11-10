@@ -1,0 +1,11 @@
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Conditions</ansi> ─────────────────────────────────────────────────────────────┐
+   <ansi fg="yellow-bold">Chrysalis Regeneration (99)</ansi> Your body knits itself back together, stronger in
+                            the places it broke.
+                            <ansi fg="green">well established</ansi>
+   <ansi fg="yellow-bold">Minor Potion Healing    </ansi> A small healing effect is working on you.
+                            <ansi fg="green">active</ansi>
+   <ansi fg="yellow-bold">Death's Shadow          </ansi> A dark shadow clings to you, dulling your senses
+                            and weakening your body.
+                            <ansi fg="red">fading fast</ansi>
+   <ansi fg="yellow-bold">Stoneskin               </ansi> Skin like rock.
+ └────────────────────────────────────────────────────────────────────────────┘

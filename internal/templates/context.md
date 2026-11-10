@@ -148,6 +148,19 @@ Cached template with metadata for efficient reuse and cache invalidation.
   reader: `{{ repeat "*" (sub screenwidth 1) }}`,
   `{{ splitstring .X (sub screenwidth 9) "  " }}`. `min` is there for caps:
   `(min 67 (sub screenwidth 12))`.
+- `wraptext text width prefix` wraps with `messaging.WrapAnsi`, the game's
+  one wrapper, and starts each later line with prefix. It breaks only at
+  spaces and reopens a colour tag on each line, where `splitstring`
+  (`util.SplitString`) can leave an opening bracket at the end of a line
+  ("Missing Person (" / "following)"). Narrow forms use it.
+- `visiblewidth s` is the columns s takes, colour tags not counted, so a form
+  can test whether a coloured value (a `vitalQuality` word, a `NameComplex`)
+  fits beside its label.
+- The character screens' forms (`character/status`, `inventory`, `skills`,
+  `conditions`, `cooldowns`, `quests`, `storage`, `title`, each `.w42` and
+  `.w30`) are drawn to their own width, not to `screenwidth`: a 42 form drawn
+  to a 35-column reader would fit and hide the 30 form. Shared layout
+  pieces live in `{{ define }}` blocks inside each form file.
 - A `.template` may have narrow forms beside it, named for the width they are
   drawn to: `tables/generic.w40.template`, `tables/generic.w30.template`. Only
   widths in `FormWidths` (42, 40, 30) are read. When the base output's widest

@@ -1,0 +1,6 @@
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Cooldowns</ansi> ──────────────────────────────────────────────────────────────┐
+   <ansi fg="yellow-bold">skullduggery            </ansi> <ansi fg="red">fading fast</ansi>
+   <ansi fg="yellow-bold">special moves           </ansi> <ansi fg="green">well established</ansi>
+   <ansi fg="yellow-bold">unarmed-combat          </ansi> <ansi fg="yellow">briefly active</ansi>
+ └────────────────────────────────────────────────────────────────────────────┘
+

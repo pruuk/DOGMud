@@ -1,0 +1,12 @@
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Title</ansi> ────────────────────────────────────────────────────────────────┐
+   <ansi fg="yellow-bold">Current Title:</ansi> <ansi fg="white-bold">Ascendant Grandmaster Juggernaut</ansi>
+
+   <ansi fg="yellow">Mutation Tier:</ansi>  Ascendant <ansi fg="black-bold">(overwhelming presence)</ansi>
+   <ansi fg="yellow">Skill Tier:</ansi>     Grandmaster <ansi fg="black-bold">(accomplished)</ansi>
+   <ansi fg="yellow">Archetype:</ansi>      Juggernaut
+
+   <ansi fg="yellow">Stat Profile:</ansi>
+    Perception   <ansi fg="green">████████████████████</ansi><ansi fg="black-bold"></ansi>
+    Strength     <ansi fg="green">███████████████████</ansi><ansi fg="black-bold">░</ansi>
+    Vitality     <ansi fg="green">████████</ansi><ansi fg="black-bold">░░░░░░░░░░░░</ansi>
+ └──────────────────────────────────────────────────────────────────────────┘

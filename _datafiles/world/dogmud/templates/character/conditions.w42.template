@@ -1,0 +1,9 @@
+{{- /* The conditions at 42 columns: per condition its name, then its
+description wrapped 6 in, then how long it lasts. Drawn to 42 whatever the
+reader's width. */ -}}
+{{ $w := 42 }}── <ansi fg="black-bold">.:</ansi><ansi fg="20">Conditions</ansi> {{ repeat "─" (sub $w 16) }}
+{{ if eq (len .) 0 }}   None
+{{ else }}{{ range $key, $val := . }}   <ansi fg="yellow-bold">{{ wraptext $val.Name (sub $w 3) "   " }}</ansi>
+      {{ wraptext $val.Description (sub $w 6) "      " }}{{ if not .Permanent }}
+      {{ durationQuality $val.RoundsLeft }}{{ end }}
+{{ end }}{{ end }}{{ repeat "─" $w }}

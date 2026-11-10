@@ -1,0 +1,28 @@
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Equipment</ansi> ──────────────────────────────────────────────────────────────┐
+   <ansi fg="yellow">Weapon:     </ansi><ansi fg="itemname"><ansi fg="item-flags">[<ansi fg="item-enchanted">e</ansi>]</ansi> Pit Fighter's Serrated Basalt-Iron Blade <ansi fg="item-bonus-damage">+3</ansi></ansi>
+   <ansi fg="yellow">Offhand:    </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Head:       </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Neck:       </ansi><ansi fg="itemname"><ansi fg="item-flags">[<ansi fg="item-enchanted">e</ansi>]</ansi> A Salt-Stiff Page of a Sailor's Telling</ansi>
+   <ansi fg="yellow">Shoulders:  </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Body:       </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Back:       </ansi><ansi fg="itemname">Wayfarer's Bottomless Pack</ansi>
+   <ansi fg="yellow">Belt:       </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Wrist 1:    </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Wrist 2:    </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Gloves:     </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Ring:       </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Ring:       </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Legs:       </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Feet:       </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+   <ansi fg="yellow">Light:      </ansi><ansi fg="itemname">Hooded Lantern</ansi>
+   <ansi fg="yellow">Components: </ansi><ansi fg="itemname"><ansi fg="item-nothing">-nothing-</ansi></ansi>
+ └────────────────────────────────────────────────────────────────────────────┘
+ Carrying: <ansi fg="itemname">A Salt-Stiff Page of a Sailor's Telling (x12)</ansi>, <ansi fg="itemname">Leather Backpack</ansi>, 
+           <ansi fg="itemname">Reinforced Travel Pack</ansi>, <ansi fg="itemname">Strongbox Key</ansi>, <ansi fg="itemname">Pit Fighter's Sword</ansi>, 
+           <ansi fg="itemname">Basalt-Iron Blade</ansi>, <ansi fg="itemname">Spirit Fetish (turned)</ansi>, <ansi fg="itemname">Healing Draught (3)</ansi>, 
+           <ansi fg="itemname">A Stained Page with a Deathbed Word</ansi>
+ Components: <ansi fg="itemname">Iron Ore</ansi> <ansi fg="uses-left">(x24)</ansi>, <ansi fg="itemname">Rough-Cut Moonstone Shard</ansi> <ansi fg="uses-left">(x3)</ansi>, <ansi fg="itemname">Tanned Hide</ansi>
+ Bandolier: <ansi fg="itemname">Minor Potion of Healing</ansi> <ansi fg="uses-left">(x4)</ansi>, <ansi fg="itemname">Conviction Draught</ansi>, 
+            <ansi fg="8">Stamina Draught (turned)</ansi>
+ <ansi fg="red-bold">Encumbrance: [overburdened]</ansi>
+

@@ -126,7 +126,6 @@ nothing.
   <ansi fg="command">help attack</ansi>, <ansi fg="command">help flee</ansi>, <ansi fg="command">help bash</ansi>, <ansi fg="command">help trip</ansi>
   <ansi fg="command">help kick</ansi>, <ansi fg="command">help taunt</ansi>, <ansi fg="command">help prone</ansi>
   <ansi fg="command">help grapple</ansi>, <ansi fg="command">help submission</ansi>,
-  <ansi fg="command">help surrender</ansi>
   <ansi fg="command">help unarmed-combat</ansi>, <ansi fg="command">help stamina</ansi>,
   <ansi fg="command">help conviction</ansi>, <ansi fg="command">help skills</ansi>,
   <ansi fg="command">help progression</ansi>, <ansi fg="command">help ambush</ansi>,

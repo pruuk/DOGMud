@@ -1,0 +1,7 @@
+{{- /* The cooldowns at 30 columns: each name 1 in, how long it lasts under
+it, 3 in. */ -}}
+{{ $w := 30 }}── <ansi fg="black-bold">.:</ansi><ansi fg="20">Cooldowns</ansi> {{ repeat "─" (sub $w 15) }}
+{{ range $name, $cooldown := . }} <ansi fg="yellow-bold">{{ wraptext $name (sub $w 1) " " }}</ansi>
+   {{ durationQuality $cooldown }}
+{{ end }}{{ repeat "─" $w }}
+
