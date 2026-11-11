@@ -1,5 +1,4 @@
-<parameter name="file_path">/c/Users/Calabe Davis/workspace/DOGMud/_datafiles/world/dogmud/templates/help/serpents-edge.template
-<parameter name="content"><ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="yellow">Serpents-Edge</ansi> (enchanting recipe)
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="yellow">Serpents-Edge</ansi> (enchanting recipe)
 
 Reptilian scales form along the blade, imbuing it with serpentine
 lethality.
