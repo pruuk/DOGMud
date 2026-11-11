@@ -68,8 +68,7 @@ var templateClassNames = map[string][]string{
 	// is of types private to that package.
 	"fits in usercommands": {"character/conditions", "character/quests", "character/title"},
 	// Narrow forms come in plan 3b-3.
-	"plan 3b-3": {"character/skillup", "character/statup",
-		"auctions/auction-bid", "auctions/auction-end",
+	"plan 3b-3": {"auctions/auction-bid", "auctions/auction-end",
 		"auctions/auction-start", "auctions/auction-update"},
 	// No production code renders these (survey 2026-11-10).
 	"no caller": {"character/experience", "character/jobs",
@@ -118,7 +117,11 @@ var templateFits = map[string]templateFixture{
 				{"1", "a lantern", "light", "40 gold"},
 			})
 	}},
-	"character/questup": {data: func() any { return "You have found a new quest: The Long Road Home." }, wrapped: true},
+	"character/questup": {data: func() any { return "You have found a new quest: The Long Road Home." }, more: []func() any{questupCaptured, questupWide}, wrapped: true},
+	// The banners (notice_screens_test.go). skillup and statup go out on
+	// CategorySkillProgress, which the pipeline does not wrap.
+	"character/skillup": {data: skillupWide, more: []func() any{skillupCaptured}},
+	"character/statup":  {data: statupWide, more: []func() any{statupCaptured, statupLong}},
 	// The character screens (character_screens_test.go).
 	"character/status":    {setup: seedCharacterScreenRegistries, data: statusScreenFixture, more: []func() any{statusScreenLongName}},
 	"character/inventory": {data: inventoryScreenFixture(false), more: []func() any{inventoryScreenFixture(true)}},

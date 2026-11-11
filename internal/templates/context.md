@@ -173,6 +173,10 @@ Cached template with metadata for efficient reuse and cache invalidation.
 - `trimspace s` drops the padding around s. A 30 form uses it on a
   localized label (`Inbox.Sent: 'Sent:    '`) to follow it with one space,
   so the padding rule holds in every language without new strings.
+- The banners `character/questup`, `skillup` and `statup` (plan 3b-3) have
+  no forms: their star rules are `screenwidth` wide (79 at 80 and wider, as
+  a desktop always saw them) and their text wraps inside the rules at
+  indent 1 with `wrapspans`, so one layout fits every width.
 - `mail/message` (plan 3b-3) is the 80 layout, its message and NOTE lines
   wrapped to 80 under their value; its `.w42` and `.w30` forms continue
   that prose 2 past the label and keep the date-time

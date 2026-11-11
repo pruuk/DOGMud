@@ -285,6 +285,133 @@ func TestMailFitsInChinese(t *testing.T) {
 	}
 }
 
+// bannerDrawings are the banners as the owner approved them at 42 and 30
+// (narrow-screens-3b-mock/forms/banner_*.txt): rules the full width, the
+// text wrapped at indent 1.
+var bannerDrawings = map[string]map[int]string{
+	"character/questup": {
+		42: `
+******************************************
+
+ You have been given a new quest:
+ Into the Vein!
+ type quests to track your progress on
+ quests.
+
+******************************************`,
+		30: `
+******************************
+
+ You have been given a new
+ quest: Into the Vein!
+ type quests to track your
+ progress on quests.
+
+******************************`,
+	},
+	"character/skillup": {
+		42: `
+******************************************
+******************************************
+
+ Your mastery of weapon-combat has grown —
+ you are now novice!
+ type help weapon-combat to learn more
+ about using this skill.
+
+******************************************
+******************************************`,
+		30: `
+******************************
+******************************
+
+ Your mastery of weapon-combat
+ has grown — you are now
+ novice!
+ type help weapon-combat to
+ learn more about using this
+ skill.
+
+******************************
+******************************`,
+	},
+	"character/statup": {
+		42: `
+******************************************
+******************************************
+
+ You feel notably stronger — your muscles
+ carry a new permanence.
+
+******************************************
+******************************************`,
+		30: `
+******************************
+******************************
+
+ You feel notably stronger —
+ your muscles carry a new
+ permanence.
+
+******************************
+******************************`,
+	},
+}
+
+var bannerCaptured = map[string]func() any{
+	"character/questup": questupCaptured,
+	"character/skillup": skillupCaptured,
+	"character/statup":  statupCaptured,
+}
+
+func TestBannersAreTheDrawings(t *testing.T) {
+	templateRenderSetup(t)
+	for name, byWidth := range bannerDrawings {
+		for width, want := range byWidth {
+			got := strings.TrimSuffix(strings.Join(noticePlain(t, name, bannerCaptured[name](), width), "\n"), "\n")
+			if got != want {
+				t.Errorf("%s at %d is not the drawing:\n%s", name, width, lineDiff(want, got))
+			}
+		}
+	}
+}
+
+// A banner's star rules span the screen (79 at 80 and wider, as a desktop
+// always saw them), and no text is wider than its rules (ruling 1).
+func TestBannerTextStaysInsideItsRules(t *testing.T) {
+	templateRenderSetup(t)
+	stars := regexp.MustCompile(`^\*+$`)
+	for name, fixtures := range map[string][]func() any{
+		"character/questup": {questupCaptured, questupWide},
+		"character/skillup": {skillupCaptured, skillupWide},
+		"character/statup":  {statupCaptured, statupLong, statupWide},
+	} {
+		for i, data := range fixtures {
+			for _, width := range []int{30, 42, 60, 80, 120} {
+				rule := min(width, 80)
+				if rule == 80 {
+					rule = 79
+				}
+				rules := 0
+				for _, line := range noticePlain(t, name, data(), width) {
+					w := templates.WidestLine(line)
+					if stars.MatchString(line) {
+						rules++
+						if w != rule {
+							t.Errorf("%s (data %d) at %d has a %d-star rule, want %d", name, i, width, w, rule)
+						}
+					} else if w > rule {
+						t.Errorf("%s (data %d) at %d has a line %d wide inside %d-wide rules: %q", name, i, width, w, rule, line)
+					}
+				}
+				if rules == 0 {
+					t.Errorf("%s (data %d) at %d drew no rule", name, i, width)
+				}
+			}
+		}
+	}
+}
+
 func noticeScreenGoldenPath(key string) string {
 	return testdataPath(filepath.Join("notice_screens_80", key+".golden"))
 }
