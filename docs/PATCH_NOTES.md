@@ -1,5 +1,12 @@
 # DOGMud Patch Notes
 
+## 2026-11-11: Help fixes
+
+- `help spell` followed by a spell's name shows that spell's page again.
+  It used to say no help was found.
+- The help page for the Serpent's Edge recipe no longer starts with two
+  lines of stray text.
+
 ## 2026-11-11: Grapples fixed
 
 - Creatures now fight for the upper hand in a grapple the way players do.
