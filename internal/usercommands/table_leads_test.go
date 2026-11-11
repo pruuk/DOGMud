@@ -375,6 +375,13 @@ func wideTables() map[string]tableCase {
 			},
 			ordered: true, detail: []string{"Type: shop", "Time: Nov 11 '26 3:04PM"}, twoLineAll: true,
 		},
+		"online_admin": {
+			screen: func(t *testing.T, width int) string {
+				return onlineAt(t, width, true, longestShippedZoneName(t), goScreenLongestName, goScreenLegacyName)
+			},
+			leads:  func(t *testing.T) []string { return []string{goScreenLongestName, goScreenLegacyName} },
+			detail: []string{"UserId: ", "Online: ", "Role: ", "Zone: ", "RoomId: 60557"}, twoLineAll: true,
+		},
 		"online_player": {
 			screen: func(t *testing.T, width int) string {
 				return onlineAt(t, width, false, "Frostfang", goScreenLongestName, goScreenLegacyName)
@@ -463,6 +470,31 @@ func TestTablesLeadWithTheNamedColumn(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// `online` shows every name and zone whole, in the admin view too (ruling
+// 7): a list too wide for the reader takes the table's narrow form, at 80
+// as on a phone, where it once cut the zone and then the name to "...".
+// Login runs the same command (OnLoginCommands in config.yaml).
+func TestOnlineShowsEveryNameAndZoneWhole(t *testing.T) {
+	for _, admin := range []bool{true, false} {
+		for _, width := range tableWidths {
+			var zone, out string
+			t.Run("render", func(t *testing.T) {
+				t.Cleanup(seedAllRegistries())
+				useDogmudTemplates(t)
+				zone = longestShippedZoneName(t)
+				out = strings.Join(plainLines(onlineAt(t, width, admin, zone, goScreenLongestName, goScreenLegacyName)), "\n")
+			})
+			require.NotContains(t, out, "...", "admin %v at %d:\n%s", admin, width, out)
+			for _, whole := range []string{goScreenLongestName, goScreenLegacyName} {
+				require.Contains(t, out, whole, "admin %v at %d", admin, width)
+			}
+			if admin {
+				require.Contains(t, strings.Join(strings.Fields(out), " "), zone, "admin at %d", width)
+			}
+		}
 	}
 }
 

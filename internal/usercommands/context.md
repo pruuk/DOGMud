@@ -39,10 +39,12 @@ The `internal/usercommands` package implements the complete command system for p
   reader's sight, and a hidden waker is revealed (`wakeIsNoisy`). Waking a
   keeper in their own shop also relights their lantern (`relightLantern`).
 - **Observation**: `look`, `inspect`, `consider`, `online` (`who` is its alias in `keywords.yaml`, #421) - Information gathering.
-  The admin `online` table swaps Title for UserId, Zone and RoomId, and
-  `fitOnlineEntries` keeps it within 80 columns: it trims the Zone cell
-  first (RoomId still names the room), then the character name, keeping
-  its `[AI]` tag (#449). The player table is not trimmed.
+  The admin `online` table swaps Title for UserId, Zone and RoomId (#449).
+  Nothing is trimmed: a list wider than the reader, at 80 columns too,
+  takes the table's plain-column or two-line form, led by the Name (plan
+  3b-3, ruling 7; `fitOnlineEntries`, which cut the zone and then the name
+  to "...", is gone). Login runs `online` (OnLoginCommands), so the same
+  holds there.
 - **Inventory**: `inventory`, `get`, `drop`, `give`, `put` - Item management
 - **Quaff** (`quaff.go`, drink path unification 2026-09-28, renamed in #375
   phase 7): `Quaff` is a wrapper over `actions.Quaff`, which holds every potion
