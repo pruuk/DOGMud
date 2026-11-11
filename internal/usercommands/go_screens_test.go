@@ -287,3 +287,105 @@ func shippedMotd(t *testing.T) string {
 func TestMotdKeepsIts80ColumnOutput(t *testing.T) {
 	checkGolden(t, "motd", motdBox(shippedMotd(t), 80))
 }
+
+// The shipped MOTD as drawn (login_motd_and_who in the 3b mock): rules only,
+// no corners or side bars (ruling 1), every rule the form's width; the
+// spaced title at 42 and the plain one at 30; the text at indent 2 and 1,
+// and a link wider than the room at its indent starting at column 0. At 42
+// "The novel:" keeps its short link on its line, which fits: the drawing
+// broke it there only because it was made from the old, longer link.
+func TestMotdIsTheDrawing(t *testing.T) {
+	text := shippedMotd(t)
+	r42, r30 := strings.Repeat("═", 42), strings.Repeat("═", 30)
+	for _, tc := range []struct {
+		width int
+		want  string
+	}{
+		{42, r42 + `
+  .:  M E S S A G E   O F   T H E   D A Y
+` + r42 + `
+  TALK TO PEOPLE. Type talk <name> for a
+  numbered menu of what someone knows and
+  what they need. A [!] before a name
+  means they have work for you.
+  EVERY STEP HAS A HINT. Your quest log
+  says what to do next, and the map points
+  the way.
+  LOOK AND SEARCH. Type look <thing> to
+  study anything you see, and type search
+  to find what is hidden. Many secrets
+  give way to one or the other, so bring a
+  light.
+  LISTEN TO THE GOSSIPS. Some of what they
+  repeat is worth chasing.
+  The novel: https://dogmud.org/novel
+  Full patch notes:
+  https://dogmud.org/patch-notes
+` + r42},
+		{30, r30 + `
+  .:  MESSAGE OF THE DAY
+` + r30 + `
+ TALK TO PEOPLE. Type talk
+ <name> for a numbered menu of
+ what someone knows and what
+ they need. A [!] before a
+ name means they have work for
+ you.
+ EVERY STEP HAS A HINT. Your
+ quest log says what to do
+ next, and the map points the
+ way.
+ LOOK AND SEARCH. Type look
+ <thing> to study anything you
+ see, and type search to find
+ what is hidden. Many secrets
+ give way to one or the other,
+ so bring a light.
+ LISTEN TO THE GOSSIPS. Some
+ of what they repeat is worth
+ chasing.
+ The novel:
+ https://dogmud.org/novel
+ Full patch notes:
+https://dogmud.org/patch-notes
+` + r30},
+	} {
+		got := strings.Join(plainLines(motdBox(text, tc.width)), "\n")
+		if got != tc.want {
+			t.Errorf("MOTD at %d is not the drawing:\n%s", tc.width, lineDiffForTest(tc.want, got))
+		}
+	}
+}
+
+// motdCorners are the box glyphs ruling 1 removes from every narrow form.
+const motdCorners = "╔╗╚╝╠╣║"
+
+// Below 80 columns the MOTD is the ruled form, never the box: the 42 form
+// from 42 to 79 (as a template's 42 form is picked there) and the 30 form
+// below, every rule exactly the form's width and no line wider. At 80 and
+// wider it is the box at the screen's width, as master drew it.
+func TestMotdFitsEveryWidth(t *testing.T) {
+	text := shippedMotd(t)
+	for _, width := range []int{30, 35, 42, 44, 45, 60, 79, 80, 100} {
+		out := motdBox(text, width)
+		lines := plainLines(out)
+		if width >= 80 {
+			require.True(t, strings.HasPrefix(lines[0], " ╔"), "at %d the box is gone:\n%s", width, out)
+			continue
+		}
+		formWidth := 42
+		if width < 42 {
+			formWidth = 30
+		}
+		require.False(t, strings.ContainsAny(out, motdCorners), "at %d a narrow form has box glyphs:\n%s", width, out)
+		rules := 0
+		for _, line := range lines {
+			require.LessOrEqual(t, templates.WidestLine(line), formWidth, "at %d: %q", width, line)
+			if strings.HasPrefix(line, "═") {
+				rules++
+				require.Equal(t, formWidth, templates.WidestLine(line), "at %d a rule is not the form's width", width)
+			}
+		}
+		require.Equal(t, 3, rules, "at %d:\n%s", width, out)
+	}
+}

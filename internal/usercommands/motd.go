@@ -36,17 +36,18 @@ func Motd(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	return true, nil
 }
 
-// motdBoxMinWidth is the narrowest box the spaced-out title fits in: the
-// title and its leading space take 41 of the lw-4 content columns.
-const motdBoxMinWidth = 45
-
-// motdBox draws the MOTD text in a double-line box exactly lw columns wide.
-// A screen narrower than the title, or text holding a word wider than the
-// box (a long link), gets the narrow form instead: a plain title and the text
-// wrapped to the screen, because a box cannot hold either (spec section 2).
+// motdBox draws the MOTD text in a double-line box exactly lw columns wide,
+// at 80 columns and wider, as a desktop has always seen it. A narrower
+// screen, or text holding a word wider than the box (a long link), gets the
+// ruled form instead (motdRuled), because the narrow forms have rules only,
+// no corners or side bars (plan 3b-3, ruling 1): the 42 form from 42 to 79
+// columns, as a template's 42 form is picked there, and the 30 form below.
 func motdBox(text string, lw int) string {
-	if lw < motdBoxMinWidth || motdLongestWord(text) > lw-5 {
-		return motdPlain(text, lw)
+	if lw < users.MaxAutoWrapWidth {
+		return motdRuled(text, narrowFormWidth(lw))
+	}
+	if motdLongestWord(text) > lw-5 {
+		return motdRuled(text, users.MaxAutoWrapWidth)
 	}
 	// Box outer width scales with the player's configured line width.
 	// Layout: " " + "║" + " " + <content padded to padWidth> + "║"
@@ -55,9 +56,6 @@ func motdBox(text string, lw int) string {
 	// trailing space gutter inside the right border). A border row is
 	// " " + "╔" + <innerWidth rules> + "╗", so innerWidth = lw - 3: the
 	// rules fill the same columns as the content line's " " + padWidth.
-	if lw < 20 {
-		lw = 20 // sanity floor; below this the box can't render
-	}
 	innerWidth := lw - 3 // chars between the ╔ ╗ corners
 	padWidth := lw - 4   // ` ║ ` (3) + `║` (1) = 4 frame chars per line
 	wrapWidth := padWidth - 1
@@ -68,7 +66,7 @@ func motdBox(text string, lw int) string {
 
 	// Title row: pad the visible title to padWidth (ANSI tags don't
 	// count toward width — we add them after measuring).
-	title := `.:  M E S S A G E   O F   T H E   D A Y`
+	title := motdSpacedTitle
 	// Legacy layout was ` ║  TITLE...║` — content cell already opens with
 	// one space (the ` ║ ` frame), so we add 1 more space inside to match
 	// the legacy 2-space leading indent.
@@ -98,11 +96,40 @@ func motdBox(text string, lw int) string {
 	return output
 }
 
-// motdPlain is the MOTD's narrow form: the title on its own line and the
-// text wrapped to lw. Only a single word wider than lw can run past it.
-func motdPlain(text string, lw int) string {
-	return `<ansi fg="cyan-bold">Message of the Day</ansi>` + "\n" +
-		`<ansi fg="yellow">` + messaging.WrapAnsi(text, lw) + `</ansi>` + "\n"
+// motdSpacedTitle is the title the box and the wider ruled forms show;
+// motdPlainTitle is the one a form narrower than it shows.
+const (
+	motdSpacedTitle = `.:  M E S S A G E   O F   T H E   D A Y`
+	motdPlainTitle  = `.:  MESSAGE OF THE DAY`
+)
+
+// motdRuled is the MOTD's ruled form, formWidth columns wide, as drawn
+// (login_motd_and_who in narrow-screens-3b-mock): a `═` rule, the title at
+// indent 2, a rule, the text, a closing rule, every rule formWidth wide and
+// no corners. The spaced title where it fits, else the plain one. The text
+// sits at indent 2 (1 below 42 columns), wrapped to the room left; a line
+// holding a word wider than that room (a long link) starts at column 0, and
+// only a word wider than the whole form can run past it.
+func motdRuled(text string, formWidth int) string {
+	title := motdSpacedTitle
+	if 2+motdVisibleWidth(title) > formWidth {
+		title = motdPlainTitle
+	}
+	indent := 2
+	if formWidth < 42 {
+		indent = 1
+	}
+	rule := strings.Repeat("═", formWidth)
+	out := `<ansi fg="yellow">` + rule + "\n" +
+		`  <ansi fg="cyan-bold">` + title + `</ansi>` + "\n" +
+		rule + "\n"
+	for _, line := range strings.Split(messaging.WrapAnsi(text, formWidth-indent), "\n") {
+		if motdVisibleWidth(line) <= formWidth-indent {
+			line = strings.Repeat(" ", indent) + line
+		}
+		out += line + "\n"
+	}
+	return out + rule + `</ansi>` + "\n"
 }
 
 // motdLongestWord is the display width of the longest word in text.

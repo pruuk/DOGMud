@@ -533,6 +533,15 @@ indent at a space, keeping the indent (ruling 3).
   name at the indent of 4 on a 30 screen has no space to split at, so
   `packUnits` pulls it left to end at the edge. `go_screens_test.go` holds
   both to the drawings and fits them at 30, 42, 60 and 80.
+- **MOTD** (`motd.go`): `motdBox` draws the double-line box at 80 columns and
+  wider, exactly as master did (`motd.golden`). Below 80, or when a word is
+  wider than the box, it draws `motdRuled`: `═` rules the form's width, the
+  title (spaced where it fits, `.:  MESSAGE OF THE DAY` below), the text at
+  indent 2 (1 at 30), and no corners or side bars (ruling 1). The form is
+  42 wide from 42 to 79 columns and 30 below, as a template's forms are
+  picked. `motdrestyle.js` matches only the box, so the web client shows the
+  ruled form as sent (plan 5 checks it). Tested with the shipped MOTD read
+  from `_datafiles/config.yaml`.
 
 ## Message categories (messaging M7 slice 4, #371)
 
