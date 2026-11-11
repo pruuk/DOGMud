@@ -27,9 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # golangci-lint-action keeps its own cache; this job must not save the
+      # Go build cache the test job needs (see .github/actions/setup-go).
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+          cache: false
       # only-new-issues grandfathers the pre-existing findings (97 as of
       # 2026-08-10) so this gates what a change introduces without first
       # clearing the backlog. It works on push as well as pull_request: the
