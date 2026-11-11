@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/achievements"
+	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -194,6 +196,46 @@ func TestChannelsAreTheDrawing(t *testing.T) {
 		for _, line := range plainLines(runScreen(t, user, room, width, Channels, "")) {
 			require.LessOrEqual(t, templates.WidestLine(line), width, "at %d: %q", width, line)
 		}
+	}
+}
+
+// --- skills extra ---
+
+// `skills extra` closes with the cooldowns being tracked. It showed a raw
+// round count ("special-move: 4"); it now names each timer and its time as
+// the `cooldowns` screen does (cooldownsForDisplay, durationQuality), sorted
+// by name, and fits every width: a row wider than the reader puts the time
+// under the name, 3 in (the 30 form of `cooldowns`).
+func TestSkillsExtraNamesCooldownsInWords(t *testing.T) {
+	cleanup := seedAllRegistries()
+	t.Cleanup(cleanup)
+	useDogmudTemplates(t)
+	user, room := getTestUserAndRoom(t)
+	orig := user.Character.Cooldowns
+	t.Cleanup(func() { user.Character.Cooldowns = orig })
+	// The longest shipped tracking tag (internal/hooks
+	// NewRound_UserRoundTick.go), 41 columns with its time.
+	user.Character.Cooldowns = characters.Cooldowns{
+		actions.SpecialMoveCooldownTag: 4,
+		"enchant-tierup-blocked":       40,
+	}
+	for _, width := range []int{30, 40, 41, 42, 60, 80} {
+		out := runScreen(t, user, room, width, Skills, "extra")
+		lines := plainLines(out)
+		at := -1
+		for i, l := range lines {
+			if l == "Cooldown Tracking:" {
+				at = i
+			}
+		}
+		require.GreaterOrEqual(t, at, 0, "at %d no cooldown heading:\n%s", width, out)
+		tail := strings.Join(lines[at:], "\n")
+		want := "Cooldown Tracking:\n enchant-tierup-blocked: well established\n special moves: briefly active"
+		if width < 41 {
+			want = "Cooldown Tracking:\n enchant-tierup-blocked:\n   well established\n special moves: briefly active"
+		}
+		require.Equal(t, want, tail, "at %d", width)
+		require.NotRegexp(t, `: \d`, tail, "a raw round count")
 	}
 }
 

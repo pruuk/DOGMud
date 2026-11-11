@@ -452,24 +452,29 @@ var (
 			}
 			return prefix + " your " + statName
 		},
-		"mutationLevel": mutations.LevelDescription,
-		"skillRank":     skills.GetSkillRankDescription,
-		"durationQuality": func(rounds int) string {
-			switch {
-			case rounds <= 0:
-				return `<ansi fg="red">fading</ansi>`
-			case rounds <= 3:
-				return `<ansi fg="red">fading fast</ansi>`
-			case rounds <= 10:
-				return `<ansi fg="yellow">briefly active</ansi>`
-			case rounds <= 30:
-				return `<ansi fg="green">active</ansi>`
-			default:
-				return `<ansi fg="green">well established</ansi>`
-			}
-		},
+		"mutationLevel":   mutations.LevelDescription,
+		"skillRank":       skills.GetSkillRankDescription,
+		"durationQuality": DurationQuality,
 	}
 )
+
+// DurationQuality is how long rounds left lasts, in words and colour, as
+// the `cooldowns` and conditions screens show a timer: a player never sees
+// the raw round count (the player-copy rule). `skills extra` uses it too.
+func DurationQuality(rounds int) string {
+	switch {
+	case rounds <= 0:
+		return `<ansi fg="red">fading</ansi>`
+	case rounds <= 3:
+		return `<ansi fg="red">fading fast</ansi>`
+	case rounds <= 10:
+		return `<ansi fg="yellow">briefly active</ansi>`
+	case rounds <= 30:
+		return `<ansi fg="green">active</ansi>`
+	default:
+		return `<ansi fg="green">well established</ansi>`
+	}
+}
 
 // wrapText wraps s to width columns with messaging.WrapAnsi, the game's one
 // wrapper: it breaks only at spaces, so "(following)" never loses its
