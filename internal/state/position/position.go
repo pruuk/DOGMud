@@ -172,8 +172,11 @@ func (m *Machine) IsSitting() bool      { return m.State() == Sitting }
 
 // IsGrappling returns true for any of the 11 grapple states
 // (Clinch through Turtle).
-func (m *Machine) IsGrappling() bool {
-	s := m.State()
+func (m *Machine) IsGrappling() bool { return IsGrappleState(m.State()) }
+
+// IsGrappleState reports whether s is one of the 11 grapple states. Observers
+// use it on a transition's from and to, where no Machine predicate applies.
+func IsGrappleState(s State) bool {
 	return s == Clinch || s == BackStanding || s == Mount || s == SideControl ||
 		s == KneeOnBelly || s == NorthSouth || s == Crucifix || s == BackGround ||
 		s == HalfGuard || s == Guard || s == Turtle

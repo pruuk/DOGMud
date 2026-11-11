@@ -21,6 +21,21 @@
   quest, skill and stat banners, auctions, achievements, the channel list
   and every screen above take a narrow layout with nothing left out.
 
+## 2026-11-11: Help fixes
+
+- `help spell` followed by a spell's name shows that spell's page again.
+  It used to say no help was found.
+- The help page for the Serpent's Edge recipe no longer starts with two
+  lines of stray text.
+
+## 2026-11-11: Grapples fixed
+
+- Creatures now fight for the upper hand in a grapple the way players do.
+  One that pins you holds you down properly, and one you pin is properly
+  held. Grappling creatures are more dangerous than before.
+- When a grapple ends, you are no longer treated as held. Before, a hold
+  could leave you unable to talk to anyone after the fight was over.
+
 ## 2026-11-11: Room alerts and biome info
 
 - The bank and storage notices in a room, and the biome screen, now sit

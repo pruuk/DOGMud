@@ -215,7 +215,10 @@ func GetHelpContents(input string) (string, error) {
 		if sData == nil {
 			helpName = `spells`
 		} else {
-			helpVars = *sData
+			// The pointer: help/spell calls pointer-receiver methods
+			// (HelpOrHarmString, TargetTypeString, DefenceNames), which a
+			// value cannot reach.
+			helpVars = sData
 		}
 	}
 
@@ -224,10 +227,10 @@ func GetHelpContents(input string) (string, error) {
 		// If no dedicated help template exists, check if the name matches a spell
 		// and fall back to the generic spell template.
 		if sData := spells.GetSpell(helpName); sData != nil {
-			return templates.Process("help/spell", *sData, 0)
+			return templates.Process("help/spell", sData, 0)
 		}
 		if sData := spells.FindSpellByName(helpName); sData != nil {
-			return templates.Process("help/spell", *sData, 0)
+			return templates.Process("help/spell", sData, 0)
 		}
 	}
 	return result, err
