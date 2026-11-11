@@ -487,8 +487,9 @@ disagrees with the percentage. `TestQuestProgressHasOneSource` fails any
 other code in the package that sets those fields. `character/title` gets a `titleScreen` of `statBar`s. `companion.go`
 lays out its own narrow forms (`companionList`, `companionDetail`): the
 80-column screen goes to any reader it fits, else the form drawn to 42 or 30
-columns, chosen by `companionNarrowWidth` as `templates.Process` chooses a
-template's forms. Every heading in a companion form sits on a rule the
+columns, chosen by `screenFormWidth` as `templates.Process` chooses a
+template's forms and laid out by `packUnits` (both in `narrow_layout.go`,
+shared with the plan 3b-3 Go screens below). Every heading in a companion form sits on a rule the
 full form width (`companionRule`); a heading too long for that goes on its
 own line or lines with a full-width rule under it. `narrow_forms_test.go` renders conditions, quests, title
 and companion at 30, 42 and 80 and pins their 80-column output to goldens
@@ -500,6 +501,28 @@ for a telnet reader at 30, 42 and 80 columns: the minimap goes above the
 prose at 42 and below, each alert sits between two rules the full screen
 width, and the 80-column view is pinned (`room_view.golden`, recorded on the
 branch because the owner ruled the alerts' change at 80).
+
+### Narrow forms of the Go-built screens (plan 3b-3)
+
+`narrow_layout.go` holds what the Go-built screens share: `narrowFormWidth`
+(42, or 30 below that), `screenFormWidth` (0 when the 80-column lines fit the
+reader, else `narrowFormWidth`; it measures, so only for a screen a player
+asks for), `redrawnFormWidth` (80 at 80 and wider, else `narrowFormWidth`, for
+a screen whose 80-column layout was itself redrawn) and `packUnits`, which
+breaks lines only between whole units and splits a unit too wide for its
+indent at a space, keeping the indent (ruling 3).
+
+- **Craft** (`craft_rows.go`): `craft list` and the bare `craft` view build a
+  `craftRow` per recipe (`newCraftRow`) and lay it out with `craftRowLines` at
+  `redrawnFormWidth`. At 80 the row is the status, the name padded to 26 and
+  the ingredients, then a line under the name with the reason and
+  `[station], speed` (the drawn 80 redesign, so 80 is not master's); at 42
+  `[X] Name:` and the ingredients and station on lines under the name; at 30
+  those lines sit 2 in from the row (ruling 9). `craftFooterLines` keeps the
+  closing "Overall recipe knowledge:" line whole where it fits.
+  `craft_screens_test.go` holds the rows to the drawings and fits every
+  shipped recipe (read from the YAML, with its longest reason) at 30, 42, 60
+  and 80.
 
 ## Message categories (messaging M7 slice 4, #371)
 
