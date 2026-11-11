@@ -1,0 +1,37 @@
+<ansi fg="screen"><ansi fg="yellow-bold">Achievements</ansi>: earned <ansi fg="white-bold">8/26</ansi>, <ansi fg="yellow">115 points</ansi></ansi>
+<ansi fg="screen">
+<ansi fg="cyan-bold">Combat</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Cutting Teeth (10): Cut down a hundred foes.</ansi>  <ansi fg="white">(0/100)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Duelist (15): Best ten rivals in single combat.</ansi>  <ansi fg="white">(0/10)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="green">[x] First Blood</ansi> <ansi fg="yellow">(5)</ansi>: Defeat your first foe.</ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Hard to Kill (10): Rise again after ten deaths.</ansi>  <ansi fg="white">(0/10)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="green">[x] The Last Warden</ansi> <ansi fg="yellow">(30)</ansi>: Bring down the Core Guardian.</ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Veteran (25): Fell a thousand foes.</ansi>  <ansi fg="white">(0/1000)</ansi></ansi>
+<ansi fg="screen">
+<ansi fg="cyan-bold">Exploration</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Cartographer (20): Chart two hundred and fifty rooms.</ansi>  <ansi fg="white">(0/250)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Pathfinder (10): Explore a hundred rooms.</ansi>  <ansi fg="white">(0/100)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] The Torn Record (25): Read every torn page of the old account.</ansi>  <ansi fg="white">(0/30)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="green">[x] Wanderer</ansi> <ansi fg="yellow">(5)</ansi>: Set foot in twenty-five rooms.</ansi>
+<ansi fg="screen">
+<ansi fg="cyan-bold">Wealth</ansi></ansi>
+<ansi fg="screen">  <ansi fg="green">[x] Coin Purse</ansi> <ansi fg="yellow">(5)</ansi>: Amass a thousand gold.</ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Magnate (30): Amass a hundred thousand gold.</ansi>  <ansi fg="white">(0/100000)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="green">[x] Well-Off</ansi> <ansi fg="yellow">(15)</ansi>: Amass ten thousand gold.</ansi>
+<ansi fg="screen">
+<ansi fg="cyan-bold">Progression</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Chimeric (20): Bear five mutations.</ansi>  <ansi fg="white">(0/5)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Decorated (15): Earn fifty achievement points.</ansi>  <ansi fg="white">(not yet)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Formidable (20): Push a talent past mortal limits.</ansi>  <ansi fg="white">(100/160)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Honed (10): Sharpen a talent to formidable heights.</ansi>  <ansi fg="white">(100/130)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Legend (25): Earn a hundred and fifty achievement points.</ansi>  <ansi fg="white">(not yet)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Skilled (15): Master a discipline.</ansi>  <ansi fg="white">(0/25)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] The Pinnacle (40): Acquire a piece of legendary gear.</ansi>  <ansi fg="white">(not yet)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Twice-Touched (10): Bear two mutations.</ansi>  <ansi fg="white">(0/2)</ansi></ansi>
+<ansi fg="screen">
+<ansi fg="cyan-bold">Quests</ansi></ansi>
+<ansi fg="screen">  <ansi fg="green">[x] A Swallowed Stone</ansi> <ansi fg="yellow">(30)</ansi>: Learn what the buried thing knows.</ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Adventurer (15): Complete five quests.</ansi>  <ansi fg="white">(0/5)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="green">[x] Errand Runner</ansi> <ansi fg="yellow">(5)</ansi>: Complete your first quest.</ansi>
+<ansi fg="screen">  <ansi fg="black-bold">[ ] Hero of the Realm (30): Complete fifteen quests.</ansi>  <ansi fg="white">(0/15)</ansi></ansi>
+<ansi fg="screen">  <ansi fg="green">[x] Key in the Dark</ansi> <ansi fg="yellow">(20)</ansi>: Finish a lost man's work.</ansi>

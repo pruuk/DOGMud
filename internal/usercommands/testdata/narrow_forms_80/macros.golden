@@ -1,0 +1,18 @@
+<ansi fg="screen"><ansi fg="226">Your macros:</ansi></ansi>
+
+<ansi fg="screen">  <ansi fg="228">=1</ansi>:</ansi>
+<ansi fg="screen">      a) <ansi fg="command">get</ansi> all</ansi>
+<ansi fg="screen">      b) <ansi fg="command">stow</ansi> </ansi>
+<ansi fg="screen">      c) <ansi fg="command">look</ansi> </ansi>
+
+<ansi fg="screen">  <ansi fg="228">=2</ansi>:</ansi>
+<ansi fg="screen">      a) <ansi fg="command">cast</ansi> identify on cuirass</ansi>
+<ansi fg="screen">      b) <ansi fg="command">appraise</ansi> cuirass</ansi>
+
+<ansi fg="screen">  <ansi fg="228">=4</ansi>:</ansi>
+<ansi fg="screen">      a) <ansi fg="command">party</ansi> invite bartholomewsworthingtonianus</ansi>
+<ansi fg="screen">      b) <ansi fg="command">guild</ansi> who</ansi>
+<ansi fg="screen">      c) <ansi fg="command">who</ansi> </ansi>
+
+<ansi fg="system">To use a macro, type <ansi fg="command">={num}</ansi>.</ansi>
+<ansi fg="system">Some terminals support pressing the associated F-Key (<ansi fg="228">F1</ansi>, <ansi fg="228">F2</ansi>, etc.)</ansi>

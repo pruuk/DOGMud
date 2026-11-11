@@ -1,0 +1,12 @@
+
+<ansi fg="system">You can <ansi fg="command">use</ansi> the <ansi fg="container">binding press</ansi> if you put the following objects inside:.</ansi>
+
+<ansi fg="screen">    <ansi fg="230">To receive 1 <ansi fg="itemname">A Fair Copy of the Compiled Survey</ansi>:</ansi> </ansi>
+<ansi fg="screen">        <ansi fg="10">[1/1]</ansi> <ansi fg="itemname">A Salt-Stiff Page of a Sailor's Telling</ansi></ansi>
+
+<ansi fg="room-description"><ansi fg="white"> ┌─────────────────────────────────────────────────────────────────────────┐</ansi>
+
+  <ansi fg="white">Inside: </ansi><ansi fg="itemname">A Salt-Stiff Page of a Sailor's Telling</ansi>
+
+<ansi fg="white"> └─────────────────────────────────────────────────────────────────────────┘</ansi></ansi>
+
