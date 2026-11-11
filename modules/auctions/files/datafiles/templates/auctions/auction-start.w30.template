@@ -4,6 +4,8 @@ place of the highest. */ -}}
 {{- define "slot" }}{{ if le (add (len .ind) .pad (visiblewidth .v)) .w }}{{ .ind }}{{ padRight .pad .label }}{{ .v }}{{ else }}{{ .ind }}{{ .label }}
 {{ .ci }}{{ wrapspans .v (sub .w (len .ci)) .ci }}{{ end }}{{ end -}}
 {{- define "flow" }}{{ .ind }}{{ wrapspans (print (padRight .pad .label) .v) (sub .w (len .ci)) .ci }}{{ end -}}
+{{- /* A seller's description may hold a word wider than a line: it breaks at the edge (wrapbreak, as mail does). */ -}}
+{{- define "prose" }}{{ .ind }}{{ wrapbreak (print (padRight .pad .label) .v) (sub .w (len .ci)) .ci }}{{ end -}}
 {{- $w := 29 }}{{ $ind := " " }}{{ $ci := "   " }}
 <ansi fg="auction-banner">******************************</ansi>
 <ansi fg="auction-banner">* * * AUCTION * AUCTION * * *</ansi>
@@ -13,7 +15,7 @@ place of the highest. */ -}}
 
 {{ if not .Anonymous }}{{ template "slot" (map "w" $w "ind" $ind "ci" $ind "pad" 7 "label" "Owner:" "v" (print `<ansi fg="username">` .SellerName `</ansi>`)) }}
 {{ end }}{{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 6 "label" "Item:" "v" (print `<ansi fg="item">` .ItemData.NameComplex `</ansi>`)) }}
-{{ template "flow" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Description:" "v" (print `<ansi fg="itemdesc">` .ItemData.GetSpec.Description `</ansi>`)) }}
+{{ template "prose" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Description:" "v" (print `<ansi fg="itemdesc">` .ItemData.GetSpec.Description `</ansi>`)) }}
 
 {{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Minimum Bid:" "v" (print `<ansi fg="gold">` .MinimumBid ` gold</ansi>`)) }}
 

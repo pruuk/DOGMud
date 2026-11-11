@@ -159,8 +159,14 @@ var (
 	// form that wraps a column too wide is caught.
 	auctionFullLine = auctionFixture(coreHeart, "Screenly", false, 625, 12345678, "The Crown Assessor")
 
+	// auctionLongWord is a lot whose description holds a word wider than
+	// the 42 form's whole line (a seller's description can), which breaks
+	// at the edge as mail, signs and runes break one (wrapbreak).
+	auctionLongWord = auctionFixture(noticeItem("Core Guardian Heart", "A "+strings.Repeat("x", 45)+" word that is long.", false),
+		"Screenly", false, 625, 0, "")
+
 	// auctionFixtures are every auction fixture but the widest.
-	auctionFixtures = []func() any{auctionCaptured, auctionWon, auctionAnonymous, auctionNpcBidder, auctionFullLine}
+	auctionFixtures = []func() any{auctionCaptured, auctionWon, auctionAnonymous, auctionNpcBidder, auctionFullLine, auctionLongWord}
 )
 
 // noticeScreenGoldens are the screens whose 80-column output is pinned. All

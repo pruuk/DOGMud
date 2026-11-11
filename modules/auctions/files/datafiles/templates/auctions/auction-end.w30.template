@@ -5,6 +5,8 @@ the full 28 letters fits. */ -}}
 {{- define "slot" }}{{ if le (add (len .ind) .pad (visiblewidth .v)) .w }}{{ .ind }}{{ padRight .pad .label }}{{ .v }}{{ else }}{{ .ind }}{{ .label }}
 {{ .ci }}{{ wrapspans .v (sub .w (len .ci)) .ci }}{{ end }}{{ end -}}
 {{- define "flow" }}{{ .ind }}{{ wrapspans (print (padRight .pad .label) .v) (sub .w (len .ci)) .ci }}{{ end -}}
+{{- /* A seller's description may hold a word wider than a line: it breaks at the edge (wrapbreak, as mail does). */ -}}
+{{- define "prose" }}{{ .ind }}{{ wrapbreak (print (padRight .pad .label) .v) (sub .w (len .ci)) .ci }}{{ end -}}
 {{- $w := 29 }}{{ $ind := " " }}{{ $ci := "   " }}
 {{- $winner := "none (It will be returned to the owner)" }}{{ $bid := "none" }}{{ if ge .HighestBid 1 }}{{ $bid = print `<ansi fg="gold">` .HighestBid ` gold</ansi>` }}{{ $winner = "Anonymous" }}{{ if not .Anonymous }}{{ $winner = print `<ansi fg="username">` .HighestBidderName `</ansi>` }}{{ end }}{{ end }}
 <ansi fg="auction-banner">******************************</ansi>
@@ -16,7 +18,7 @@ the full 28 letters fits. */ -}}
 {{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 5 "label" "Bid:" "v" $bid) }}
 
 {{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 6 "label" "Item:" "v" (print `<ansi fg="item">` .ItemData.NameComplex `</ansi>`)) }}
-{{ template "flow" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Description:" "v" (print `<ansi fg="item">` .ItemData.GetSpec.Description `</ansi>`)) }}
+{{ template "prose" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Description:" "v" (print `<ansi fg="item">` .ItemData.GetSpec.Description `</ansi>`)) }}
 
 {{ $ind }}{{ wrapspans `Type <ansi fg="command">help auction</ansi> to learn more about auctions.` (sub $w (len $ind)) $ind }}
 

@@ -8,6 +8,8 @@ a name, the command. A broadcast picks this form by width alone
 {{- define "slot" }}{{ if le (add (len .ind) .pad (visiblewidth .v)) .w }}{{ .ind }}{{ padRight .pad .label }}{{ .v }}{{ else }}{{ .ind }}{{ .label }}
 {{ .ci }}{{ wrapspans .v (sub .w (len .ci)) .ci }}{{ end }}{{ end -}}
 {{- define "flow" }}{{ .ind }}{{ wrapspans (print (padRight .pad .label) .v) (sub .w (len .ci)) .ci }}{{ end -}}
+{{- /* A seller's description may hold a word wider than a line: it breaks at the edge (wrapbreak, as mail does). */ -}}
+{{- define "prose" }}{{ .ind }}{{ wrapbreak (print (padRight .pad .label) .v) (sub .w (len .ci)) .ci }}{{ end -}}
 {{- $w := 41 }}{{ $ind := "  " }}{{ $ci := "    " }}
 {{- $hb := "none" }}{{ if ge .HighestBid 1 }}{{ $hb = print `<ansi fg="gold">` .HighestBid ` gold</ansi>` }}{{ if not .Anonymous }}{{ $hb = print $hb ` by <ansi fg="username">` .HighestBidderName `</ansi>` }}{{ end }}{{ end }}
 <ansi fg="auction-banner">******************************************</ansi>
@@ -17,7 +19,7 @@ a name, the command. A broadcast picks this form by width alone
 
 {{ if not .Anonymous }}{{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Owner:" "v" (print `<ansi fg="username">` .SellerName `</ansi>`)) }}
 {{ end }}{{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Item:" "v" (print `<ansi fg="item">` .ItemData.NameComplex `</ansi>`)) }}
-{{ template "flow" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Description:" "v" (print `<ansi fg="itemdesc">` .ItemData.GetSpec.Description `</ansi>`)) }}
+{{ template "prose" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Description:" "v" (print `<ansi fg="itemdesc">` .ItemData.GetSpec.Description `</ansi>`)) }}
 
 {{ template "flow" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Highest Bid:" "v" $hb) }}
 {{ if lt .HighestBid 1 }}{{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Minimum Bid:" "v" (print `<ansi fg="gold">` .MinimumBid ` gold</ansi>`)) }}
