@@ -214,6 +214,13 @@ Cached template with metadata for efficient reuse and cache invalidation.
   after a restart.
 - A screen-reader file still comes first and has no forms. A `.md` file has
   no forms.
+- `ProcessForWidth(fname, data, screenReader, width)` (forms.go) renders for
+  every reader who shares that screen-reader setting and width, picking the
+  form by width alone (`formFor`): the base at `FullWidth` and wider, else
+  the widest form drawn to no more than width, or the narrowest. It measures
+  nothing, so a broadcast renders once per distinct (screen reader, width)
+  among its readers (spec ruling 11, plan 3b-3; the auction broadcasts use
+  it). `Process` and `ProcessForWidth` share `processPicked`.
 - `TemplateTable.RowDetail` gives a row's other cells as `Header: value`
   pairs for the two-line table form.
 - `ProcessAtWidth` (testing_support.go) renders at a given width for guards.

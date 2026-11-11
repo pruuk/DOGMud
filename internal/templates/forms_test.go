@@ -86,6 +86,50 @@ func TestScreenwidthIsTheReaderWidth(t *testing.T) {
 	assert.Equal(t, "80", got, "text rendered with no reader is laid out full width")
 }
 
+// A broadcast picks the form by width alone (spec ruling 11 of plan 3b-3):
+// the widest drawn to no more than the width, the narrowest below them all,
+// and the base at FullWidth and wider. Nothing is measured, so at 60 the
+// 42 form is used even though the base would fit.
+func TestProcessForWidthPicksByWidthAlone(t *testing.T) {
+	SetFSForTest(t, formsFS())
+	for _, tc := range []struct {
+		width int
+		want  string
+	}{
+		{120, strings.Repeat("b", 50)},
+		{80, strings.Repeat("b", 50)},
+		{79, strings.Repeat("f", 40)},
+		{60, strings.Repeat("f", 40)},
+		{42, strings.Repeat("f", 40)},
+		{41, strings.Repeat("n", 30)},
+		{30, strings.Repeat("n", 30)},
+		{20, strings.Repeat("n", 30)},
+	} {
+		got, err := ProcessForWidth("t", nil, false, tc.width)
+		require.NoError(t, err)
+		assert.Equal(t, tc.want, got, "width %d", tc.width)
+	}
+	got, err := ProcessForWidth("plain", nil, false, 30)
+	require.NoError(t, err)
+	assert.Equal(t, strings.Repeat("p", 50), got, "a template with no forms renders its base")
+
+	got, err = ProcessForWidth("sw", nil, false, 42)
+	require.NoError(t, err)
+	assert.Equal(t, "42", got, "screenwidth is the width given")
+}
+
+func TestProcessForWidthKeepsTheScreenReaderForm(t *testing.T) {
+	fsys := formsFS()
+	fsys[util.FilePath("templates/t.screenreader.template")] = &fstest.MapFile{Data: []byte("spoken")}
+	SetFSForTest(t, fsys)
+	got, err := ProcessForWidth("t", nil, true, 30)
+	require.NoError(t, err)
+	assert.Equal(t, "spoken", got)
+	got, err = ProcessForWidth("t", nil, false, 30)
+	require.NoError(t, err)
+	assert.Equal(t, strings.Repeat("n", 30), got)
+}
+
 func TestFormsAreFoundOnceAndRemembered(t *testing.T) {
 	SetFSForTest(t, formsFS())
 	assert.Equal(t, []int{42, 30}, formsOf("t"))

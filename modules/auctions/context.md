@@ -16,6 +16,8 @@ population — a listing with no human interest still finds a price.
   command, persistence, and the round handler.
 - **npc_buyers.go** — the `NpcBuyer` interface, `NpcWallet`, and each buyer
   archetype.
+- **files/datafiles/templates/auctions/** — the four broadcasts and their 42
+  and 30 forms (see Broadcasts).
 
 ## Types
 
@@ -63,6 +65,24 @@ the world instead of shelving, same rule the player-sale path in
 `internal/actions` applies; a non-bauble item is unaffected. The shop still
 paid for it either way, capped by `Balance.ShopAffixedStockCap`.
 
+## Broadcasts and their forms
+
+The four broadcasts (`auctions/auction-start`, `-update`, `-bid`, `-end`)
+live in `files/datafiles/templates/auctions/`, each with a `.w42` and a
+`.w30` form (plan 3b-3): a full-width star rule, the word rule (star and
+space, so 41 and 29 wide), and every line inside the word rule. The 80
+templates are unchanged.
+
+`broadcastAuction(fname, auction, readers)` sends one to every reader in
+`onlineReaders()` who has not turned auctions off, checking the opt-out
+before rendering, and renders it once per distinct (screen reader, width)
+among them through `renderAuction` (`templates.ProcessForWidth`, which picks
+the form by width without measuring: spec ruling 11). A bid reaches each
+reader at their own width; it once went out rendered at the bidder's.
+`broadcast_test.go` holds the per-view rendering. The `auction` command with
+no arguments shows the update through `templates.Process`, as a screen the
+player asked for.
+
 ## Gotchas
 
 - **Player money is BANK-ONLY, never carried gold.** `Bid` checks and debits
@@ -96,7 +116,8 @@ paid for it either way, capped by `Balance.ShopAffixedStockCap`.
 
 ## Dependencies
 
-`plugins`, `events`, `items`, `users`, `rooms`, `mudlog`, `configs`.
+`plugins`, `events`, `items`, `users`, `rooms`, `mudlog`, `configs`,
+`templates`, `messaging`.
 
 ## Consumers
 

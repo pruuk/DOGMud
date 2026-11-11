@@ -1,0 +1,29 @@
+{{- /* The auction update at 42 columns (plan 3b-3): a full-width star rule,
+the word rule (star and space, so 41 wide), and every line inside the word
+rule, 2 in. A value that does not fit beside its padded label goes under it, 2
+past the label; the description and the highest bid continue 2 past it
+(owner, 2026-11-11). Units stay whole while they fit: a count with its "!",
+a name, the command. A broadcast picks this form by width alone
+(templates.ProcessForWidth). */ -}}
+{{- define "slot" }}{{ if le (add (len .ind) .pad (visiblewidth .v)) .w }}{{ .ind }}{{ padRight .pad .label }}{{ .v }}{{ else }}{{ .ind }}{{ .label }}
+{{ .ci }}{{ wrapspans .v (sub .w (len .ci)) .ci }}{{ end }}{{ end -}}
+{{- define "flow" }}{{ .ind }}{{ wrapspans (print (padRight .pad .label) .v) (sub .w (len .ci)) .ci }}{{ end -}}
+{{- $w := 41 }}{{ $ind := "  " }}{{ $ci := "    " }}
+{{- $hb := "none" }}{{ if ge .HighestBid 1 }}{{ $hb = print `<ansi fg="gold">` .HighestBid ` gold</ansi>` }}{{ if not .Anonymous }}{{ $hb = print $hb ` by <ansi fg="username">` .HighestBidderName `</ansi>` }}{{ end }}{{ end }}
+<ansi fg="auction-banner">******************************************</ansi>
+<ansi fg="auction-banner">* * * AUCTION * AUCTION * AUCTION * * * *</ansi>
+
+{{ $ind }}{{ wrapspans (print `<ansi fg="yellow">The auction will end in <ansi fg="white-bold">` (secondsFrom .EndTime) ` seconds</ansi>!</ansi>`) (sub $w (len $ind)) $ind }}
+
+{{ if not .Anonymous }}{{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Owner:" "v" (print `<ansi fg="username">` .SellerName `</ansi>`)) }}
+{{ end }}{{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Item:" "v" (print `<ansi fg="item">` .ItemData.NameComplex `</ansi>`)) }}
+{{ template "flow" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Description:" "v" (print `<ansi fg="itemdesc">` .ItemData.GetSpec.Description `</ansi>`)) }}
+
+{{ template "flow" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Highest Bid:" "v" $hb) }}
+{{ if lt .HighestBid 1 }}{{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Minimum Bid:" "v" (print `<ansi fg="gold">` .MinimumBid ` gold</ansi>`)) }}
+{{ end }}
+{{ $ind }}{{ wrapspans `<ansi fg="command">bid <ansi fg="gold">(gold amount)</ansi></ansi> to bid on this auction.` (sub $w (len $ind)) $ind }}
+
+<ansi fg="auction-banner">* * * AUCTION * AUCTION * AUCTION * * * *</ansi>
+<ansi fg="auction-banner">******************************************</ansi>
+

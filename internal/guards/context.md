@@ -35,8 +35,12 @@ package main.
   byte: the lighting goldens (`lighting_*_golden_test.go`),
   `wrap_live_render_golden_test.go`, `m2_routing_guard_test.go`, and the
   80-column goldens of the narrow-form screens, `character_screens_test.go`
-  (`-update-character-screens`) and `looking_screens_test.go`
-  (`-update-looking-screens`). Their files live in `testdata/` here.
+  (`-update-character-screens`), `looking_screens_test.go`
+  (`-update-looking-screens`) and `notice_screens_test.go`
+  (`-update-notice-screens`: mail, banners, auctions). Their files live in
+  `testdata/` here. `notice_screens_test.go` imports `modules/auctions` for
+  the auction's own data type and reads the module's templates through
+  `withAuctionTemplates`.
 - **Copy guards.** House style for player text: `prose_dash_guard_test.go`,
   `go_prose_dash_guard_test.go`, `copy_no_dash_test.go`,
   `prose_tag_spacing_guard_test.go`, `combat_idiom_guard_test.go`,

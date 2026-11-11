@@ -122,6 +122,51 @@ func (ae AuctionUpdate) Data(name string) any {
 	return nil
 }
 
+// renderAuction renders an auction template for one view of a broadcast.
+// It picks the form by width alone (templates.ProcessForWidth); a test counts
+// renders through it.
+var renderAuction = templates.ProcessForWidth
+
+// auctionView is what an auction broadcast is rendered for: every reader who
+// shares one gets the same text.
+type auctionView struct {
+	screenReader bool
+	width        int
+}
+
+// broadcastAuction sends the auction template fname to each reader who has
+// not turned auctions off, rendering it once per distinct (screen reader,
+// width) among them (spec ruling 11, plan 3b-3). The form is picked by width,
+// never measured per reader, and the opt-out is checked before anything is
+// rendered. A bid, which once went out rendered at the bidder's width,
+// reaches each reader at their own.
+func broadcastAuction(fname string, auction *AuctionItem, readers []*users.UserRecord) {
+	rendered := map[auctionView]string{}
+	for _, u := range readers {
+		if on := u.GetConfigOption(`auction`); on != nil && !on.(bool) {
+			continue
+		}
+		view := auctionView{screenReader: u.ScreenReader, width: u.WrapWidth()}
+		txt, ok := rendered[view]
+		if !ok {
+			txt, _ = renderAuction(fname, auction, view.screenReader, view.width)
+			rendered[view] = txt
+		}
+		u.SendText(messaging.CategoryBroadcast, txt)
+	}
+}
+
+// onlineReaders is every online player, the readers of an auction broadcast.
+func onlineReaders() []*users.UserRecord {
+	readers := []*users.UserRecord{}
+	for _, uid := range users.GetOnlineUserIds() {
+		if u := users.GetByUserId(uid); u != nil {
+			readers = append(readers, u)
+		}
+	}
+	return readers
+}
+
 // restoreNpcBinding rebinds a shopkeeper high bidder to the shop it escrowed
 // against, after ActiveAuction is reloaded from disk (the binding is in-memory
 // only, so a restart would otherwise strand the shop's gold on refund/relist).
@@ -353,15 +398,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 		}
 
 		// Broadcast the bid
-		auctionTxt, _ := templates.Process("auctions/auction-bid", currentAuction, user.UserId)
-		for _, uid := range users.GetOnlineUserIds() {
-			if u := users.GetByUserId(uid); u != nil {
-				auctionOn := u.GetConfigOption(`auction`)
-				if auctionOn == nil || auctionOn.(bool) {
-					u.SendText(messaging.CategoryBroadcast, auctionTxt)
-				}
-			}
-		}
+		broadcastAuction("auctions/auction-bid", currentAuction, onlineReaders())
 
 		sellerName := currentAuction.SellerName
 		buyerName := currentAuction.HighestBidderName
@@ -508,17 +545,7 @@ func (mod *AuctionsModule) newRoundHandler(e events.Event) events.ListenerReturn
 
 		auctionNow.LastUpdate = evt.TimeNow
 
-		for _, uid := range users.GetOnlineUserIds() {
-
-			auctionTxt, _ := templates.Process("auctions/auction-end", auctionNow, uid)
-
-			if u := users.GetByUserId(uid); u != nil {
-				auctionOn := u.GetConfigOption(`auction`)
-				if auctionOn == nil || auctionOn.(bool) {
-					u.SendText(messaging.CategoryBroadcast, auctionTxt)
-				}
-			}
-		}
+		broadcastAuction("auctions/auction-end", auctionNow, onlineReaders())
 
 		// Give the item to the winner and let them know. An NPC win counts as
 		// sold too (HighestBidUserId is 0 for an NPC — the item sinks below).
@@ -663,17 +690,7 @@ func (mod *AuctionsModule) newRoundHandler(e events.Event) events.ListenerReturn
 
 		auctionNow.LastUpdate = evt.TimeNow
 
-		for _, uid := range users.GetOnlineUserIds() {
-
-			auctionTxt, _ := templates.Process("auctions/auction-start", auctionNow, uid)
-
-			if u := users.GetByUserId(uid); u != nil {
-				auctionOn := u.GetConfigOption(`auction`)
-				if auctionOn == nil || auctionOn.(bool) {
-					u.SendText(messaging.CategoryBroadcast, auctionTxt)
-				}
-			}
-		}
+		broadcastAuction("auctions/auction-start", auctionNow, onlineReaders())
 
 		sellerName := auctionNow.SellerName
 		buyerName := auctionNow.HighestBidderName
@@ -710,17 +727,7 @@ func (mod *AuctionsModule) newRoundHandler(e events.Event) events.ListenerReturn
 			}
 		}
 
-		for _, uid := range users.GetOnlineUserIds() {
-
-			auctionTxt, _ := templates.Process("auctions/auction-update", auctionNow, uid)
-
-			if u := users.GetByUserId(uid); u != nil {
-				auctionOn := u.GetConfigOption(`auction`)
-				if auctionOn == nil || auctionOn.(bool) {
-					u.SendText(messaging.CategoryBroadcast, auctionTxt)
-				}
-			}
-		}
+		broadcastAuction("auctions/auction-update", auctionNow, onlineReaders())
 
 		sellerName := auctionNow.SellerName
 		buyerName := auctionNow.HighestBidderName

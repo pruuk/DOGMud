@@ -67,9 +67,10 @@ var templateClassNames = map[string][]string{
 	// (TestNarrowTemplateScreensFitEveryWidth): the data its commands pass
 	// is of types private to that package.
 	"fits in usercommands": {"character/conditions", "character/quests", "character/title"},
-	// Narrow forms come in plan 3b-3.
-	"plan 3b-3": {"auctions/auction-bid", "auctions/auction-end",
-		"auctions/auction-start", "auctions/auction-update"},
+	// Narrow forms come in plan 3b-3. Its template screens (mail, the
+	// banners, the auctions) are done; the class stays, empty, until the
+	// plan's last stage removes it.
+	"plan 3b-3": {},
 	// No production code renders these (survey 2026-11-10).
 	"no caller": {"character/experience", "character/jobs",
 		"character/permadeath", "descriptions/train", "login/character-name.prompt",
@@ -145,6 +146,11 @@ var templateFits = map[string]templateFixture{
 	"descriptions/sign":            {data: signWide, more: []func() any{signShort, signLongWord}},
 	// The notice screens (notice_screens_test.go).
 	"mail/message": {data: mailWide, more: []func() any{mailCaptured, mailPlain, mailRead, mailLongWord}},
+	// The auction broadcasts, read from the module's own templates.
+	"auctions/auction-bid":    {setup: withAuctionTemplates, data: auctionWide, more: auctionFixtures},
+	"auctions/auction-end":    {setup: withAuctionTemplates, data: auctionWide, more: auctionFixtures},
+	"auctions/auction-start":  {setup: withAuctionTemplates, data: auctionWide, more: auctionFixtures},
+	"auctions/auction-update": {setup: withAuctionTemplates, data: auctionWide, more: auctionFixtures},
 }
 
 // templateClasses names every class that holds name.

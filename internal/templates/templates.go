@@ -173,6 +173,13 @@ func Process(fname string, data any, receivingUserId ...int) (string, error) {
 // narrow forms: when its output is wider than the
 // reader, the widest form that fits is used (see forms.go).
 func process(fname string, data any, tplConfig templateConfig, width int) (string, error) {
+	return processPicked(fname, data, tplConfig, width, true)
+}
+
+// processPicked is process, measuring the .template file's output against
+// width when measure is set, else picking its form by width alone (formFor,
+// for ProcessForWidth).
+func processPicked(fname string, data any, tplConfig templateConfig, width int, measure bool) (string, error) {
 	ansiLock.RLock()
 	defer ansiLock.RUnlock()
 
@@ -199,11 +206,19 @@ func process(fname string, data any, tplConfig templateConfig, width int) (strin
 	})
 
 	for _, tplInfo := range filesToAttempt {
+		if tplInfo.hasForms && !measure {
+			if formWidth := formFor(formsOf(fname), width); formWidth > 0 {
+				out, found, err := renderFile(templateDetails{name: fname, path: FormPath(fname, formWidth)}, data, tplConfig, width)
+				if found {
+					return out, err
+				}
+			}
+		}
 		out, found, err := renderFile(tplInfo, data, tplConfig, width)
 		if !found {
 			continue
 		}
-		if err != nil || !tplInfo.hasForms {
+		if err != nil || !tplInfo.hasForms || !measure {
 			return out, err
 		}
 		// Only a template that has forms is measured, so a broadcast of a

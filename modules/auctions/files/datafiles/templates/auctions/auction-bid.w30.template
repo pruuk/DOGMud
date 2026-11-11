@@ -1,0 +1,13 @@
+{{- /* The auction bid at 30 columns (plan 3b-3): the update's 30 rules (see
+auction-update.w30.template) around its one line, wrapped inside the 29-wide
+word rule, 1 in, the bidder's name and the bid kept whole. */ -}}
+{{- $w := 29 }}{{ $ind := " " }}
+{{- $who := "Someone" }}{{ if not .Anonymous }}{{ $who = print `<ansi fg="username">` .HighestBidderName `</ansi>` }}{{ end }}
+<ansi fg="auction-banner">******************************</ansi>
+<ansi fg="auction-banner">* * * AUCTION * AUCTION * * *</ansi>
+
+{{ $ind }}{{ wrapspans (print $who ` has bid <ansi fg="gold">` .HighestBid ` gold</ansi>`) (sub $w (len $ind)) $ind }}
+
+<ansi fg="auction-banner">* * * AUCTION * AUCTION * * *</ansi>
+<ansi fg="auction-banner">******************************</ansi>
+

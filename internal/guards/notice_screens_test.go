@@ -2,6 +2,7 @@ package guards
 
 import (
 	"flag"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -149,6 +150,17 @@ var (
 		noticeLongestName, false, 1234567, 1234567, noticeLongestName)
 	// auctionAnonymous hides both names.
 	auctionAnonymous = auctionFixture(coreHeart, "Screenly", true, 625, 1234567, noticeLongestName)
+	// auctionNpcBidder is a bid by the longest shipped mob name (29 letters,
+	// mobs/), wider than a character name and split by its spaces.
+	auctionNpcBidder = auctionFixture(coreHeart, noticeLongestName, false, 625, 1234567, "Riss the Cartographer-Scholar")
+
+	// auctionFullLine is a bid whose line is one column wider than the 42
+	// form's word rule allows, by a shipped NPC buyer (npc_buyers.go), so a
+	// form that wraps a column too wide is caught.
+	auctionFullLine = auctionFixture(coreHeart, "Screenly", false, 625, 12345678, "The Crown Assessor")
+
+	// auctionFixtures are every auction fixture but the widest.
+	auctionFixtures = []func() any{auctionCaptured, auctionWon, auctionAnonymous, auctionNpcBidder, auctionFullLine}
 )
 
 // noticeScreenGoldens are the screens whose 80-column output is pinned. All
@@ -407,6 +419,105 @@ func TestBannerTextStaysInsideItsRules(t *testing.T) {
 				if rules == 0 {
 					t.Errorf("%s (data %d) at %d drew no rule", name, i, width)
 				}
+			}
+		}
+	}
+}
+
+var auctionTemplates = []string{"auctions/auction-bid", "auctions/auction-end", "auctions/auction-start", "auctions/auction-update"}
+
+// An auction's star rule is its form's width (42, 30, or 79 at 80), its word
+// rule alternates star and space and so is odd (41, 29, 79), and no text is
+// wider than the word rule (ruling 1). Held both as a player's own `auction`
+// sees it (measured) and as a broadcast sends it (picked by width alone,
+// templates.ProcessForWidth, which a broadcast to a 60-column reader sends
+// the 42 form).
+func TestAuctionTextStaysInsideItsRules(t *testing.T) {
+	templateRenderSetup(t)
+	withAuctionTemplates(t)
+	stars, word := regexp.MustCompile(`^\*+$`), regexp.MustCompile(`^\* \* \*`)
+	for _, name := range auctionTemplates {
+		for i, data := range append([]func() any{auctionWide}, auctionFixtures...) {
+			for _, width := range []int{30, 35, 42, 60, 80, 120} {
+				for _, picked := range []bool{false, true} {
+					var out string
+					var err error
+					if picked {
+						out, err = templates.ProcessForWidth(name, data(), false, width)
+					} else {
+						out, err = templates.ProcessAtWidth(name, data(), width)
+					}
+					if err != nil {
+						t.Fatal(err)
+					}
+					plain := regexp.MustCompile(`</?ansi[^>]*>`).ReplaceAllString(strings.ReplaceAll(out, "\r\n", "\n"), "")
+					lines := strings.Split(plain, "\n")
+					starW, wordW := 0, 0
+					for _, line := range lines {
+						switch {
+						case stars.MatchString(line):
+							starW = templates.WidestLine(line)
+						case word.MatchString(line):
+							wordW = templates.WidestLine(line)
+						}
+					}
+					where := fmt.Sprintf("%s (data %d) at %d (picked by width %v)", name, i, width, picked)
+					if starW == 0 || wordW == 0 || starW > min(width, 80) || wordW%2 == 0 || (wordW != starW && wordW != starW-1) {
+						t.Errorf("%s: star rule %d, word rule %d:\n%s", where, starW, wordW, plain)
+						continue
+					}
+					for _, line := range lines {
+						if !stars.MatchString(line) && templates.WidestLine(line) > wordW {
+							t.Errorf("%s: a line %d wide inside a %d-wide word rule: %q", where, templates.WidestLine(line), wordW, line)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// The auction forms as drawn (narrow-screens-3b-mock/forms/auction_*.txt),
+// with the description continuing 2 past its label (owner, 2026-11-11), the
+// labels unpadded at 30, and the units kept whole: a count with its "!", a
+// command, a name.
+func TestAuctionFormsAsDrawn(t *testing.T) {
+	templateRenderSetup(t)
+	withAuctionTemplates(t)
+	for _, tc := range []struct {
+		name  string
+		data  func() any
+		width int
+		want  []string
+	}{
+		{"auctions/auction-update", auctionCaptured, 42, []string{
+			"\n******************************************\n* * * AUCTION * AUCTION * AUCTION * * * *\n\n  The auction will end in 171 seconds!\n\n",
+			"\n  Owner:       Screenly\n  Item:        Core Guardian Heart\n  Description: Drawn from the deepest\n    of the guardians,",
+			"\n\n  Highest Bid: none\n  Minimum Bid: 625 gold\n\n  bid (gold amount) to bid on this\n  auction.\n\n* * * AUCTION * AUCTION * AUCTION * * * *\n******************************************\n"}},
+		{"auctions/auction-update", auctionCaptured, 30, []string{
+			"\n******************************\n* * * AUCTION * AUCTION * * *\n\n The auction will end in\n 171 seconds!\n\n",
+			"\n Owner: Screenly\n Item: Core Guardian Heart\n Description: Drawn from\n   the deepest",
+			"\n\n Highest Bid: none\n Minimum Bid: 625 gold\n\n bid (gold amount) to bid on\n this auction.\n\n* * * AUCTION * AUCTION * * *\n******************************\n"}},
+		{"auctions/auction-end", auctionWon, 42, []string{
+			"\n******************************************\n* * * * AUCTION END * AUCTION END * * * *\n\n  The auction has ENDED!\n\n  Winner:      Master Ordwin\n  Bid:         625 gold\n\n  Item:        Core Guardian Heart\n",
+			"\n\n  Type help auction to learn more about\n  auctions.\n\n* * * * AUCTION END * AUCTION END * * * *\n******************************************\n"}},
+		{"auctions/auction-end", auctionWon, 30, []string{
+			"\n******************************\n* * * * AUCTION END * * * * *\n\n The auction has ENDED!\n\n Winner: Master Ordwin\n Bid: 625 gold\n\n Item: Core Guardian Heart\n",
+			"\n\n Type help auction to learn\n more about auctions.\n\n* * * * AUCTION END * * * * *\n******************************\n"}},
+		{"auctions/auction-start", auctionCaptured, 42, []string{
+			"\n  An auction has started!\n  The auction will end in 171 seconds!\n\n  Owner:       Screenly\n",
+			"\n\n  Minimum Bid: 625 gold\n\n  bid (gold amount) to bid on this\n  auction.\n"}},
+		{"auctions/auction-bid", auctionWon, 30, []string{
+			"\n******************************\n* * * AUCTION * AUCTION * * *\n\n Master Ordwin has bid\n 625 gold\n\n* * * AUCTION * AUCTION * * *\n******************************\n"}},
+		{"auctions/auction-bid", auctionWide, 42, []string{"\n  " + noticeLongestName + " has bid\n  1234567 gold\n"}},
+		{"auctions/auction-bid", auctionWide, 30, []string{"\n " + noticeLongestName + "\n has bid 1234567 gold\n"}},
+		{"auctions/auction-update", auctionWide, 30, []string{"\n Owner:\n " + noticeLongestName + "\n", "\n Highest Bid: 1234567 gold by\n " + noticeLongestName + "\n"}},
+		{"auctions/auction-update", auctionWide, 42, []string{"\n  Owner:\n    " + noticeLongestName + "\n", "\n  Highest Bid: 1234567 gold by\n    " + noticeLongestName + "\n"}},
+	} {
+		plain := strings.Join(noticePlain(t, tc.name, tc.data(), tc.width), "\n")
+		for _, want := range tc.want {
+			if !strings.Contains(plain, want) {
+				t.Errorf("%s at %d lacks %q:\n%s", tc.name, tc.width, want, plain)
 			}
 		}
 	}
