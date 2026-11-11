@@ -1,0 +1,80 @@
+Achievements: earned 8/26,
+  115 points
+
+Combat
+  [ ] Cutting Teeth (10): Cut
+    down a hundred foes.
+    (0/100)
+  [ ] Duelist (15): Best ten
+    rivals in single combat.
+    (0/10)
+  [x] First Blood (5): Defeat
+    your first foe.
+  [ ] Hard to Kill (10): Rise
+    again after ten deaths.
+    (0/10)
+  [x] The Last Warden (30):
+    Bring down the Core
+    Guardian.
+  [ ] Veteran (25): Fell a
+    thousand foes.  (0/1000)
+
+Exploration
+  [ ] Cartographer (20): Chart
+    two hundred and fifty
+    rooms.  (2/250)
+  [ ] Pathfinder (10): Explore
+    a hundred rooms.  (2/100)
+  [ ] The Torn Record (25):
+    Read every torn page of
+    the old account.  (0/30)
+  [x] Wanderer (5): Set foot
+    in twenty-five rooms.
+
+Wealth
+  [x] Coin Purse (5): Amass a
+    thousand gold.
+  [ ] Magnate (30): Amass a
+    hundred thousand gold.
+    (15250/100000)
+  [x] Well-Off (15): Amass ten
+    thousand gold.
+
+Progression
+  [ ] Chimeric (20): Bear five
+    mutations.  (0/5)
+  [ ] Decorated (15): Earn
+    fifty achievement points.
+    (not yet)
+  [ ] Formidable (20): Push a
+    talent past mortal limits.
+    (111/160)
+  [ ] Honed (10): Sharpen a
+    talent to formidable
+    heights.  (111/130)
+  [ ] Legend (25): Earn a
+    hundred and fifty
+    achievement points.
+    (not yet)
+  [ ] Skilled (15): Master a
+    discipline.  (1/25)
+  [ ] The Pinnacle (40):
+    Acquire a piece of
+    legendary gear.  (not yet)
+  [ ] Twice-Touched (10): Bear
+    two mutations.  (0/2)
+
+Quests
+  [x] A Swallowed Stone (30):
+    Learn what the buried
+    thing knows.
+  [ ] Adventurer (15):
+    Complete five quests.
+    (1/5)
+  [x] Errand Runner (5):
+    Complete your first quest.
+  [ ] Hero of the Realm (30):
+    Complete fifteen quests.
+    (1/15)
+  [x] Key in the Dark (20):
+    Finish a lost man's work.

@@ -1,6 +1,10 @@
 package usercommands
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -135,4 +139,86 @@ func TestContainerRecipeKeepsIts80ColumnOutput(t *testing.T) {
 	out := containerRecipeLook(t, 80, map[int][]int{97001: {97002}}, 97002)
 	require.Contains(t, out, "To receive", "the recipe lines did not print")
 	checkGolden(t, "container_recipe", out)
+}
+
+// drawing3b3 is the approved drawing name (say "achievements.w42"), copied
+// from _archive/notes/reports/narrow-screens-3b3-mock/forms into testdata,
+// as lines with no trailing CR.
+func drawing3b3(t *testing.T, name string) string {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join("testdata", "drawings_3b3", name+".txt"))
+	require.NoError(t, err)
+	return strings.TrimRight(strings.ReplaceAll(string(raw), "\r\n", "\n"), "\n")
+}
+
+// achievementsCaptured is the screen the 3b-3 capture showed, in its order.
+var achievementsCaptured = []achievementEntry{
+	capturedAchievement("combat", "Cutting Teeth", 10, "Cut down a hundred foes.", "0/100"),
+	capturedAchievement("combat", "Duelist", 15, "Best ten rivals in single combat.", "0/10"),
+	capturedAchievement("combat", "First Blood", 5, "Defeat your first foe.", ""),
+	capturedAchievement("combat", "Hard to Kill", 10, "Rise again after ten deaths.", "0/10"),
+	capturedAchievement("combat", "The Last Warden", 30, "Bring down the Core Guardian.", ""),
+	capturedAchievement("combat", "Veteran", 25, "Fell a thousand foes.", "0/1000"),
+	capturedAchievement("exploration", "Cartographer", 20, "Chart two hundred and fifty rooms.", "2/250"),
+	capturedAchievement("exploration", "Pathfinder", 10, "Explore a hundred rooms.", "2/100"),
+	capturedAchievement("exploration", "The Torn Record", 25, "Read every torn page of the old account.", "0/30"),
+	capturedAchievement("exploration", "Wanderer", 5, "Set foot in twenty-five rooms.", ""),
+	capturedAchievement("wealth", "Coin Purse", 5, "Amass a thousand gold.", ""),
+	capturedAchievement("wealth", "Magnate", 30, "Amass a hundred thousand gold.", "15250/100000"),
+	capturedAchievement("wealth", "Well-Off", 15, "Amass ten thousand gold.", ""),
+	capturedAchievement("progression", "Chimeric", 20, "Bear five mutations.", "0/5"),
+	capturedAchievement("progression", "Decorated", 15, "Earn fifty achievement points.", "not yet"),
+	capturedAchievement("progression", "Formidable", 20, "Push a talent past mortal limits.", "111/160"),
+	capturedAchievement("progression", "Honed", 10, "Sharpen a talent to formidable heights.", "111/130"),
+	capturedAchievement("progression", "Legend", 25, "Earn a hundred and fifty achievement points.", "not yet"),
+	capturedAchievement("progression", "Skilled", 15, "Master a discipline.", "1/25"),
+	capturedAchievement("progression", "The Pinnacle", 40, "Acquire a piece of legendary gear.", "not yet"),
+	capturedAchievement("progression", "Twice-Touched", 10, "Bear two mutations.", "0/2"),
+	capturedAchievement("quests", "A Swallowed Stone", 30, "Learn what the buried thing knows.", ""),
+	capturedAchievement("quests", "Adventurer", 15, "Complete five quests.", "1/5"),
+	capturedAchievement("quests", "Errand Runner", 5, "Complete your first quest.", ""),
+	capturedAchievement("quests", "Hero of the Realm", 30, "Complete fifteen quests.", "1/15"),
+	capturedAchievement("quests", "Key in the Dark", 20, "Finish a lost man's work.", ""),
+}
+
+// capturedAchievement is one captured row; an empty hint marks it earned.
+func capturedAchievement(cat, name string, points int, desc, hint string) achievementEntry {
+	return achievementEntry{
+		def:    achievements.Definition{Name: name, Points: points, Description: desc, Category: cat},
+		earned: hint == "",
+		hint:   hint,
+	}
+}
+
+// The screen as drawn (achievements in narrow-screens-3b3-mock): rows wrap
+// 2 past `[x]`; a locked row's hint stays two spaces after the description
+// when it fits there, else takes a line of its own at the continuation.
+func TestAchievementsAreTheDrawing(t *testing.T) {
+	for _, width := range []int{42, 30} {
+		msgs := achievementsScreen(achievementsCaptured, 115, false, "", width)
+		got := strings.Join(plainLines(strings.Join(msgs, "\n")), "\n")
+		want := drawing3b3(t, fmt.Sprintf("achievements.w%d", width))
+		if got != want {
+			t.Errorf("achievements at %d is not the drawing:\n%s", width, lineDiffForTest(want, got))
+		}
+	}
+}
+
+// The shipped achievements fit at every width, every description whole
+// between its line breaks, and a wide progress hint too; at 80 they are
+// master's screen (TestAchievementsKeepsIts80ColumnOutput).
+func TestAchievementsFitEveryWidth(t *testing.T) {
+	user, room := achievementsUser(t)
+	origGold := user.Character.Gold
+	t.Cleanup(func() { user.Character.Gold = origGold })
+	user.Character.Gold = 15250
+	for _, width := range goScreenWidths {
+		out := runScreen(t, user, room, width, Achievements, "")
+		guildFitsAt(t, out, width)
+		flat := strings.Join(strings.Fields(strings.Join(plainLines(out), " ")), " ")
+		for _, d := range achievements.All() {
+			require.Contains(t, flat, d.Name+" ("+strconv.Itoa(d.Points)+"): "+d.Description, "at %d", width)
+		}
+		require.Contains(t, flat, "(15250/100000)", "at %d", width)
+	}
 }
