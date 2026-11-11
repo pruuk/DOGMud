@@ -1,29 +1,17 @@
 package auctions
 
 import (
-	"io/fs"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 )
-
-// moduleFS reads this module's data files by the OS-separated paths
-// templates asks for (util.FilePath), which os.DirFS alone refuses on
-// Windows.
-type moduleFS struct{ fs.FS }
-
-func (f moduleFS) Open(name string) (fs.File, error) { return f.FS.Open(filepath.ToSlash(name)) }
-func (f moduleFS) ReadFile(name string) ([]byte, error) {
-	return fs.ReadFile(f.FS, filepath.ToSlash(name))
-}
 
 // broadcastReader is a telnet reader whose line is width columns wide.
 func broadcastReader(id int, width int, auctionsOn bool) *users.UserRecord {
@@ -38,9 +26,11 @@ func broadcastReader(id int, width int, auctionsOn bool) *users.UserRecord {
 // An auction broadcast renders once per distinct (screen reader, width)
 // among its readers, by width alone, and each reader gets the text for its
 // own width; a reader who turned auctions off causes no render and gets
-// nothing (spec ruling 11, plan 3b-3).
+// nothing (spec ruling 11, plan 3b-3). The templates are read from the
+// module's embedded files through the plugin registry, as the server reads
+// them, so the forms are proven to ship in the embed.
 func TestAuctionBroadcastRendersOncePerView(t *testing.T) {
-	templates.SetFSForTest(t, moduleFS{os.DirFS("files/datafiles")})
+	templates.SetFSForTest(t, plugins.GetPluginRegistry())
 	lot := &AuctionItem{
 		ItemData:   items.Item{ItemId: 99301, Spec: &items.ItemSpec{ItemId: 99301, Name: "Core Guardian Heart", Description: "A fist of grey material."}},
 		SellerName: "Screenly", MinimumBid: 625, HighestBid: 700, HighestBidderName: "Master Ordwin",
