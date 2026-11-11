@@ -528,17 +528,43 @@ func wrapSpans(s string, width int, prefix ...string) string {
 		for to < len(runes)-1 && runes[to+1].r != ' ' {
 			to++
 		}
-		unit := 0
-		for _, v := range runes[from : to+1] {
-			unit += util.VisibleWidth(string(v.r))
+		widthOf := func(a, b int) (w int) {
+			for _, v := range runes[a:b] {
+				w += util.VisibleWidth(string(v.r))
+			}
+			return w
 		}
-		if unit > width {
+		lw, sw, rw := widthOf(from, first), widthOf(first, last+1), widthOf(last+1, to+1)
+		if sw > width {
 			continue
 		}
 		for i := first; i <= last; i++ {
 			if runes[i].r == ' ' {
 				what[i] = keep
 			}
+		}
+		if lw+sw+rw <= width {
+			continue
+		}
+		// The unit is wider than a line, so a break must fall inside it,
+		// and the span is protected: give the wrapper one where the glue
+		// meets the span. A side gets its break when the span with that
+		// side alone overflows (forced: the glue word and the span word
+		// cannot share a line). When neither side overflows alone, only
+		// one side gets it (the right, else the left): the glue word plus
+		// the span, and the other glue, still overflow, so it is forced
+		// too. Every added space is a forced break, never a stray space.
+		needLeft := lw > 0 && lw+sw > width
+		needRight := rw > 0 && sw+rw > width
+		if !needLeft && !needRight {
+			needRight = rw > 0
+			needLeft = !needRight
+		}
+		if needLeft {
+			what[first-1] += " "
+		}
+		if needRight {
+			what[last+1] = " " + what[last+1]
 		}
 	}
 	return strings.ReplaceAll(wrapText(rebuild(s, runes, what), width, prefix...), keep, " ")
@@ -556,7 +582,7 @@ func wrapBreak(s string, width int, prefix ...string) string {
 	cols := 0
 	for i, v := range runes {
 		what[i] = s[v.start:v.end]
-		if v.r == ' ' {
+		if v.r == ' ' || v.r == '\n' {
 			cols = 0
 			continue
 		}
