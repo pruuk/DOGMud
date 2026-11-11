@@ -1,20 +1,22 @@
 {{- /* The auction end at 30 columns (plan 3b-3): the update's 30 shape (see
 auction-update.w30.template) with the END word rule, the winner and the
 winning bid. The winner's line continues at the label's column, so a name of
-the full 28 letters fits. */ -}}
+the full 28 letters fits; unsold, the winner is prose and continues 2 past the
+label. */ -}}
 {{- define "slot" }}{{ if le (add (len .ind) .pad (visiblewidth .v)) .w }}{{ .ind }}{{ padRight .pad .label }}{{ .v }}{{ else }}{{ .ind }}{{ .label }}
 {{ .ci }}{{ wrapspans .v (sub .w (len .ci)) .ci }}{{ end }}{{ end -}}
 {{- define "flow" }}{{ .ind }}{{ wrapspans (print (padRight .pad .label) .v) (sub .w (len .ci)) .ci }}{{ end -}}
 {{- /* A seller's description may hold a word wider than a line: it breaks at the edge (wrapbreak, as mail does). */ -}}
 {{- define "prose" }}{{ .ind }}{{ wrapbreak (print (padRight .pad .label) .v) (sub .w (len .ci)) .ci }}{{ end -}}
 {{- $w := 29 }}{{ $ind := " " }}{{ $ci := "   " }}
+{{- $winnerCi := $ind }}{{ if lt .HighestBid 1 }}{{ $winnerCi = $ci }}{{ end }}
 {{- $winner := "none (It will be returned to the owner)" }}{{ $bid := "none" }}{{ if ge .HighestBid 1 }}{{ $bid = print `<ansi fg="gold">` .HighestBid ` gold</ansi>` }}{{ $winner = "Anonymous" }}{{ if not .Anonymous }}{{ $winner = print `<ansi fg="username">` .HighestBidderName `</ansi>` }}{{ end }}{{ end }}
 <ansi fg="auction-banner">******************************</ansi>
 <ansi fg="auction-banner">* * * * AUCTION END * * * * *</ansi>
 
 {{ $ind }}<ansi fg="yellow">The auction has <ansi fg="white-bold">ENDED!</ansi></ansi>
 
-{{ template "flow" (map "w" $w "ind" $ind "ci" $ind "pad" 8 "label" "Winner:" "v" $winner) }}
+{{ template "flow" (map "w" $w "ind" $ind "ci" $winnerCi "pad" 8 "label" "Winner:" "v" $winner) }}
 {{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 5 "label" "Bid:" "v" $bid) }}
 
 {{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 6 "label" "Item:" "v" (print `<ansi fg="item">` .ItemData.NameComplex `</ansi>`)) }}

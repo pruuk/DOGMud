@@ -510,6 +510,10 @@ func TestAuctionFormsAsDrawn(t *testing.T) {
 		{"auctions/auction-end", auctionWon, 30, []string{
 			"\n******************************\n* * * * AUCTION END * * * * *\n\n The auction has ENDED!\n\n Winner: Master Ordwin\n Bid: 625 gold\n\n Item: Core Guardian Heart\n",
 			"\n\n Type help auction to learn\n more about auctions.\n\n* * * * AUCTION END * * * * *\n******************************\n"}},
+		// Unsold, the Winner is prose, not a name: it continues 2 past
+		// its label, as at 42 (review of plan 3b-3).
+		{"auctions/auction-end", auctionCaptured, 30, []string{
+			"\n Winner: none (It will be\n   returned to the owner)\n Bid: none\n"}},
 		{"auctions/auction-start", auctionCaptured, 42, []string{
 			"\n  An auction has started!\n  The auction will end in 171 seconds!\n\n  Owner:       Screenly\n",
 			"\n\n  Minimum Bid: 625 gold\n\n  bid (gold amount) to bid on this\n  auction.\n"}},
