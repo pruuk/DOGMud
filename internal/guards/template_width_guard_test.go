@@ -27,8 +27,9 @@ import (
 // ones that must fit at 30, 42 and 80.
 //
 // The classes are the state of the work, not a permanent exemption list:
-// plan 3b-3 empties "plan 3b-3", plan 4 does "help/". When both are done, only
-// "wide" and the classes that never reach a narrow screen unwrapped remain.
+// plan 3b-3 gave every template screen it held a narrow form and removed its
+// class; plan 4 does "help/". When that is done, only "wide" and the classes
+// that never reach a narrow screen unwrapped remain.
 
 // templateFolders are every place a template is read from: the live world,
 // and each module's own files (modules/<name>/files/datafiles/templates).
@@ -67,10 +68,6 @@ var templateClassNames = map[string][]string{
 	// (TestNarrowTemplateScreensFitEveryWidth): the data its commands pass
 	// is of types private to that package.
 	"fits in usercommands": {"character/conditions", "character/quests", "character/title"},
-	// Narrow forms come in plan 3b-3. Its template screens (mail, the
-	// banners, the auctions) are done; the class stays, empty, until the
-	// plan's last stage removes it.
-	"plan 3b-3": {},
 	// No production code renders these (survey 2026-11-10).
 	"no caller": {"character/experience", "character/jobs",
 		"character/permadeath", "descriptions/train", "login/character-name.prompt",
