@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
+	"github.com/GoMudEngine/GoMud/internal/state/control"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
@@ -695,11 +696,19 @@ func (c *Character) Validate(recalcPermanentConditions ...bool) error {
 	if c.Position == nil {
 		c.Position = position.NewMachine()
 	}
+	// Control is yaml:"-" like the machines above, so a saved player, a mob
+	// template and a mob instance (ResetForMobInstance clears it) all arrive
+	// here without one. It was left nil once, which meant only characters
+	// made by New() since the last restart could be held or in control in
+	// a grapple: mobs never could, and neither could any loaded player
+	// (bug, owner 2026-11-11). Call sites keep their nil checks for test
+	// fixtures that build a Character by hand.
+	if c.Control == nil {
+		c.Control = control.NewMachine()
+	}
 	if c.Presence == nil {
 		// Player default — mob.Validate() overwrites with NewMobPresence()
-		// AFTER calling this. Control intentionally lacks a parallel guard
-		// here and uses per-call-site nil checks instead (see
-		// position_predicates.go for examples).
+		// AFTER calling this.
 		c.Presence = presence.NewPlayerPresence()
 		// Chunk 5 (Presence) T8: terminal-state cleanup. On entry to
 		// Disconnected, cancel all pending scheduled transitions for this

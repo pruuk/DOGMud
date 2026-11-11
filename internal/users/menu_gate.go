@@ -30,8 +30,9 @@ func menuGate(c *characters.Character) menu.CloseReason {
 		return menu.CloseQuitting
 	// Owner ruling 2026-10-20: being off their feet (sitting, prone, supine,
 	// any non-standing position) is not a gate for audio interactions such as
-	// talking and menus. Combat and grapple control still are. Control is nil
-	// for a character loaded from a save; both checks are nil-safe.
+	// talking and menus. Combat and grapple control still are. Validate
+	// builds Control for every character; both checks stay nil-safe for
+	// hand-built test fixtures.
 	case c.IsBeingControlled(), c.Control != nil && c.Control.State() == control.BecomingControlled:
 		return menu.CloseControlled
 	}
