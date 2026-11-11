@@ -494,7 +494,12 @@ own line or lines with a full-width rule under it. `narrow_forms_test.go` render
 and companion at 30, 42 and 80 and pins their 80-column output to goldens
 recorded from master (`testdata/narrow_forms_80/`, `-update-narrow-forms`).
 The other character screens are held in `internal/guards`
-(`character_screens_test.go`).
+(`character_screens_test.go`), as are the looking-at-things screens of plan
+3b-2 (`looking_screens_test.go`). `room_view_forms_test.go` runs `lookRoom`
+for a telnet reader at 30, 42 and 80 columns: the minimap goes above the
+prose at 42 and below, each alert sits between two rules the full screen
+width, and the 80-column view is pinned (`room_view.golden`, recorded on the
+branch because the owner ruled the alerts' change at 80).
 
 ## Message categories (messaging M7 slice 4, #371)
 

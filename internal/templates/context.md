@@ -156,11 +156,41 @@ Cached template with metadata for efficient reuse and cache invalidation.
 - `visiblewidth s` is the columns s takes, colour tags not counted, so a form
   can test whether a coloured value (a `vitalQuality` word, a `NameComplex`)
   fits beside its label.
+- `centerlines text width` centres text on a screen width columns wide:
+  whole when it fits with 2 columns clear each side, else one piece to a
+  line when every piece fits with 1 column clear, else wrapped with
+  `messaging.WrapAnsi` with 2 clear. A piece ends at a sentence end or at a
+  run of two or more spaces (`respace`, which steps over colour tags, so a
+  per-letter colour pattern such as the wildfire's flame reads by its
+  letters); wrapped, a run of spaces is one space. Lines are padded on the
+  left only. The room view's alerts use it between two `screenwidth` rules.
+- `wrapspans text width prefix` wraps as `wraptext` does but keeps each
+  top-level colour span (a name, an exit), with the text glued to it
+  ("Name..."), on one line unless that unit is wider than width. The room
+  view's tracking line uses it.
+- `wrapbreak text width prefix` wraps as `wraptext` does but first breaks a
+  word longer than width into width-wide pieces. Signs and runes use it,
+  since players write them. `visibleRunes` and `rebuild` are the shared
+  walk over a string's visible runes behind `respace`, `wrapspans` and
+  `wrapbreak`.
 - The character screens' forms (`character/status`, `inventory`, `skills`,
   `conditions`, `cooldowns`, `quests`, `storage`, `title`, each `.w42` and
   `.w30`) are drawn to their own width, not to `screenwidth`: a 42 form drawn
   to a 35-column reader would fit and hide the 30 form. Shared layout
-  pieces live in `{{ define }}` blocks inside each form file.
+  pieces live in `{{ define }}` blocks inside each form file. So are the
+  looking-at-things forms (plan 3b-2): `character/description`,
+  `description-corpse`, `inventory-look`, `pet`, and `descriptions/biome`,
+  `identify`, `insidecontainer`, `track`.
+- The room view's own templates (`descriptions/room`, `room-title`, `exits`,
+  `fixtures`, `rune`, `sign`) have no forms: `rooms.GetDetails` wraps the
+  room's prose to the reader's own width, so a form drawn to 42 would not
+  fit a 60-column reader's prose. They draw to `screenwidth` instead, and
+  wrap a line only when it is wider than the screen, so a line that fits
+  keeps the bytes it always had. An exit and its tag (`northeast (locked)`)
+  and the title's PvP tag are units, never split while they fit a line.
+- `descriptions/biome` draws its box as two 80-wide rules at every width
+  (owner-approved mock, 2026-11-10), with its lighting wrapped under its
+  value.
 - A `.template` may have narrow forms beside it, named for the width they are
   drawn to: `tables/generic.w40.template`, `tables/generic.w30.template`. Only
   widths in `FormWidths` (42, 40, 30) are read. When the base output's widest
