@@ -3,6 +3,7 @@ package hooks
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/control"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
@@ -60,6 +61,25 @@ func wirePositionCrossMachineCascades(c *characters.Character) {
 				}
 			}
 			_ = c.Position.TransitionToStanding(reason)
+		})
+
+	// Grapple exit resets ControlLevel (bug, owner 2026-11-11). Only the
+	// paired break in TransitionPair used to reset Control; every one-sided
+	// exit (a stand, the consistency check's force-break, the death
+	// fallback above) left a held player at Controlled, so they read as held
+	// after the fight: no talking, menus closed, mobs preferring them as a
+	// target. Resetting here covers every route out of a grapple, present
+	// and future. Control is read at fire time because it may be nil (mob
+	// instances) or replaced after this wiring runs.
+	c.Position.RegisterObserver("control_reset_on_grapple_exit",
+		func(from, to position.State, _ state.TransitionReason) {
+			if !position.IsGrappleState(from) || position.IsGrappleState(to) {
+				return
+			}
+			if c.Control == nil || c.Control.State() == control.Neutral {
+				return
+			}
+			_ = c.Control.TransitionToNeutral(state.TransitionReason{Trigger: control.TriggerGrappleExit})
 		})
 }
 

@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-11-11: Free after a grapple
+
+- When a grapple ends, you are no longer treated as held. Before, a hold
+  that ended some ways (for example your foe breaking off before it fled)
+  could leave you unable to talk to anyone until you logged out.
+
 ## 2026-11-11: Room alerts and biome info
 
 - The bank and storage notices in a room, and the biome screen, now sit
