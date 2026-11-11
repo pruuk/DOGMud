@@ -40,8 +40,9 @@ func Motd(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 // at 80 columns and wider, as a desktop has always seen it. A narrower
 // screen, or text holding a word wider than the box (a long link), gets the
 // ruled form instead (motdRuled), because the narrow forms have rules only,
-// no corners or side bars (plan 3b-3, ruling 1): the 42 form from 42 to 79
-// columns, as a template's 42 form is picked there, and the 30 form below.
+// no corners or side bars (plan 3b-3, ruling 1), picked by band without
+// measuring (users.NarrowFormWidth): the 42 form from 42 to 79 columns and
+// the 30 form below 42.
 func motdBox(text string, lw int) string {
 	if lw < users.MaxAutoWrapWidth {
 		return motdRuled(text, users.NarrowFormWidth(lw))

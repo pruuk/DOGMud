@@ -134,10 +134,10 @@ func Companion(rest string, user *users.UserRecord,
 	return true, nil
 }
 
-// Narrow forms of the companion screens (web client base spec, section 2),
-// picked as templates.Process picks a template's forms: the 80-column screen
-// goes to any reader it fits, as it always did. A reader it does not fit gets
-// the form drawn to 42 columns, or to 30 below that: the heading rule runs
+// Narrow forms of the companion screens (web client base spec, section 2):
+// the 80-column screen goes to any reader it fits, as it always did. A
+// reader it does not fit gets, by band without measuring the form, the form
+// drawn to 42 columns from 42 up, or to 30 below 42: the heading rule runs
 // the full width, the bars stack one per line, and words break only between
 // whole names. Every form shows everything the 80-column screen does. The
 // form is picked by screenFormWidth and laid out by messaging.PackUnits

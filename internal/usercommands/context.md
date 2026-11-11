@@ -488,10 +488,12 @@ the 30-column form draws the same bar 20 cells wide (`BarFullAt`,
 disagrees with the percentage. `TestQuestProgressHasOneSource` fails any
 other code in the package that sets those fields. `character/title` gets a `titleScreen` of `statBar`s. `companion.go`
 lays out its own narrow forms (`companionList`, `companionDetail`): the
-80-column screen goes to any reader it fits, else the form drawn to 42 or 30
-columns, chosen by `screenFormWidth` as `templates.Process` chooses a
-template's forms (`narrow_layout.go`, shared with the plan 3b-3 Go screens
-below) and laid out by `messaging.PackUnits`. Every heading in a companion form sits on a rule the
+80-column screen goes to any reader it fits (`screenFormWidth` measures
+it), else the form drawn to 42 columns from 42 up or to 30 below 42, picked
+by band without measuring the form (`narrow_layout.go`, shared with the plan
+3b-3 Go screens below; `templates.Process`, which measures each form, may
+give a 40 or 41 column reader the 42 form instead) and laid out by
+`messaging.PackUnits`. Every heading in a companion form sits on a rule the
 full form width (`companionRule`); a heading too long for that goes on its
 own line or lines with a full-width rule under it. `narrow_forms_test.go` renders conditions, quests, title
 and companion at 30, 42 and 80 and pins their 80-column output to goldens
@@ -522,8 +524,10 @@ goldens recorded from master (`testdata/narrow_forms_80/tables_*.golden`).
 ### Narrow forms of the Go-built screens (plan 3b-3)
 
 `narrow_layout.go` holds `screenFormWidth` (0 when the 80-column lines fit
-the reader, else `users.NarrowFormWidth`; it measures, so only for a screen a
-player asks for). The fixed form widths live in `internal/users`
+the reader, else `users.NarrowFormWidth`; it measures the 80-column lines,
+so only for a screen a player asks for) and `measuredFormLines` (the 42 form
+where all its lines fit the reader, else the `NarrowFormWidth` one, as
+`templates.Process` picks; the guild roster uses it). The fixed form widths live in `internal/users`
 (`wrapwidth.go`) so the scan screen in `internal/actions` shares them:
 `users.NarrowFormWidth` (42, or 30 below that) and `users.RedrawnFormWidth`
 (80 at 80 and wider, else `NarrowFormWidth`, for a screen whose 80-column
@@ -551,7 +555,10 @@ does: a legacy one runs past on its own line at its indent (ruling 8).
   where it fits the reader (so 80 is master's, `guild_roster.golden`); a
   heading that does not fit puts the name on a line of its own and the tag
   and count under it, and a member line that does not fit puts the rank title
-  after the unpadded name or under it. `guild list` packs each guild into
+  after the unpadded name or under it. Both narrow forms are picked by
+  `measuredFormLines` (`narrow_layout.go`), which measures as
+  `templates.Process` does: the 42 form where it fits the reader, so a 40
+  or 41 column reader keeps a 40-letter guild name whole. `guild list` packs each guild into
   units (tag, `Name:`, count, `led by`, leader) at `users.RedrawnFormWidth`, the
   rest indented 4, which at 80 is master's line wherever that fit. A 28-letter
   name at the indent of 4 on a 30 screen has no space to split at, so

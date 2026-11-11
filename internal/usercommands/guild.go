@@ -103,15 +103,16 @@ func guildInfo(user *users.UserRecord) {
 		return
 	}
 	// Each line is the 80-column one where it fits the reader, else its
-	// narrow form (plan 3b-3): the name on a line of its own, then the tag
-	// and count; a member's rank title after the name, or under it.
+	// narrow form (plan 3b-3), measured as templates.Process measures a
+	// template's (measuredFormLines): the name on a line of its own, then
+	// the tag and count; a member's rank title after the name, or under it.
 	width := user.WrapWidth()
 	heading := fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> <ansi fg="cyan">[%s]</ansi>: %d member(s)`, g.Name, g.Tag, len(g.Members))
 	if util.VisibleWidth(heading) > width {
-		formWidth := users.NarrowFormWidth(width)
-		lines := messaging.PackUnits([]string{`<ansi fg="yellow-bold">` + g.Name + `</ansi>`}, 0, 2, formWidth)
-		lines = append(lines, messaging.PackUnits([]string{`<ansi fg="cyan">[` + g.Tag + `]</ansi>:`, fmt.Sprintf(`%d member(s)`, len(g.Members))}, 2, 4, formWidth)...)
-		heading = strings.Join(lines, "\n")
+		heading = strings.Join(measuredFormLines(width, func(formWidth int) []string {
+			lines := messaging.PackUnits([]string{`<ansi fg="yellow-bold">` + g.Name + `</ansi>`}, 0, 2, formWidth)
+			return append(lines, messaging.PackUnits([]string{`<ansi fg="cyan">[` + g.Tag + `]</ansi>:`, fmt.Sprintf(`%d member(s)`, len(g.Members))}, 2, 4, formWidth)...)
+		}), "\n")
 	}
 	user.SendText(messaging.CategoryScreen, heading)
 	if g.Motd != "" {
@@ -128,8 +129,10 @@ func guildInfo(user *users.UserRecord) {
 			line := fmt.Sprintf(`  <ansi fg="white">%-20s</ansi> <ansi fg="black-bold">%s</ansi>`, m.CharacterName, g.RankTitle(m.Rank))
 			if util.VisibleWidth(line) > width {
 				name := `<ansi fg="white">` + m.CharacterName + `</ansi>`
-				line = strings.Join(messaging.PackUnits([]string{name,
-					`<ansi fg="black-bold">` + g.RankTitle(m.Rank) + `</ansi>`}, 2, 4, users.NarrowFormWidth(width), name), "\n")
+				rankTitle := `<ansi fg="black-bold">` + g.RankTitle(m.Rank) + `</ansi>`
+				line = strings.Join(measuredFormLines(width, func(formWidth int) []string {
+					return messaging.PackUnits([]string{name, rankTitle}, 2, 4, formWidth, name)
+				}), "\n")
 			}
 			user.SendText(messaging.CategoryScreen, line)
 		}

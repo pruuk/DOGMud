@@ -605,7 +605,9 @@ wrap width with two pure functions here, so `internal/usercommands` and the
 scan screen in `internal/actions` share them: `NarrowFormWidth(width)` (42,
 or 30 below that, or the width itself if narrower) and
 `RedrawnFormWidth(width)` (80 at 80 and wider, else `NarrowFormWidth`), for a
-screen whose 80-column layout was itself redrawn.
+screen whose 80-column layout was itself redrawn. Both are bands that measure
+nothing: a 40 or 41 column reader gets 30 where `templates.Process` may pick
+a template's 42 form.
 
 ### Game menu session (#375 phase 0)
 

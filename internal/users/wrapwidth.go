@@ -13,8 +13,9 @@ const (
 
 // NarrowFormWidth is the width of the narrow form of a screen built in Go
 // for a reader width columns wide (web client base spec, section 2): 42, or
-// 30 below that (or the reader's width, if narrower still). A reader
-// between 42 and 80 gets the 42 form, as a template's.
+// 30 below that (or the reader's width, if narrower still). It is a band
+// and measures nothing, so a 40 or 41 column reader gets 30 where
+// templates.Process, which measures each form, may pick the 42 form.
 func NarrowFormWidth(width int) int {
 	if width >= 42 {
 		return 42

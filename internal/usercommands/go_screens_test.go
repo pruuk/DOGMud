@@ -180,6 +180,19 @@ own rope."
 	}
 }
 
+// At 40 and 41 columns the roster takes the 42 form where it fits, as
+// templates.Process picks a template's forms by measuring: the 40-letter
+// name whole on its line (review of plan 3b-3: a band gave 30 there and
+// split it).
+func TestGuildRosterMeasuresItsForm(t *testing.T) {
+	wide := guildWide(t)
+	for _, width := range []int{40, 41} {
+		got := strings.Join(plainLines(guildCommand(t, wide[0], width, "")), "\n")
+		require.True(t, strings.HasPrefix(got, goScreenLongestGuild+"\n  [WOMG]: 3 member(s)\n"), "at %d:\n%s", width, got)
+		guildFitsAt(t, got, width)
+	}
+}
+
 // The roster fits at every width with the widest names, and at 60 (wide
 // enough for every 80-column line) it is the 80-column screen.
 func TestGuildRosterFitsEveryWidth(t *testing.T) {
