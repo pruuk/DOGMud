@@ -1,0 +1,7 @@
+
+<ansi fg="magenta-bold">*******************************************************************************</ansi>
+
+<ansi fg="yellow"> You have been given a new quest: <ansi fg="questname">Into the Vein</ansi>!</ansi>
+<ansi fg="yellow"> type <ansi fg="command">quests</ansi> to track your progress on quests.</ansi>
+
+<ansi fg="magenta-bold">*******************************************************************************</ansi>

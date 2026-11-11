@@ -39,10 +39,12 @@ The `internal/usercommands` package implements the complete command system for p
   reader's sight, and a hidden waker is revealed (`wakeIsNoisy`). Waking a
   keeper in their own shop also relights their lantern (`relightLantern`).
 - **Observation**: `look`, `inspect`, `consider`, `online` (`who` is its alias in `keywords.yaml`, #421) - Information gathering.
-  The admin `online` table swaps Title for UserId, Zone and RoomId, and
-  `fitOnlineEntries` keeps it within 80 columns: it trims the Zone cell
-  first (RoomId still names the room), then the character name, keeping
-  its `[AI]` tag (#449). The player table is not trimmed.
+  The admin `online` table swaps Title for UserId, Zone and RoomId (#449).
+  Nothing is trimmed: a list wider than the reader, at 80 columns too,
+  takes the table's plain-column or two-line form, led by the Name (plan
+  3b-3, ruling 7; `fitOnlineEntries`, which cut the zone and then the name
+  to "...", is gone). Login runs `online` (OnLoginCommands), so the same
+  holds there.
 - **Inventory**: `inventory`, `get`, `drop`, `give`, `put` - Item management
 - **Quaff** (`quaff.go`, drink path unification 2026-09-28, renamed in #375
   phase 7): `Quaff` is a wrapper over `actions.Quaff`, which holds every potion
@@ -486,9 +488,12 @@ the 30-column form draws the same bar 20 cells wide (`BarFullAt`,
 disagrees with the percentage. `TestQuestProgressHasOneSource` fails any
 other code in the package that sets those fields. `character/title` gets a `titleScreen` of `statBar`s. `companion.go`
 lays out its own narrow forms (`companionList`, `companionDetail`): the
-80-column screen goes to any reader it fits, else the form drawn to 42 or 30
-columns, chosen by `companionNarrowWidth` as `templates.Process` chooses a
-template's forms. Every heading in a companion form sits on a rule the
+80-column screen goes to any reader it fits (`screenFormWidth` measures
+it), else the form drawn to 42 columns from 42 up or to 30 below 42, picked
+by band without measuring the form (`narrow_layout.go`, shared with the plan
+3b-3 Go screens below; `templates.Process`, which measures each form, may
+give a 40 or 41 column reader the 42 form instead) and laid out by
+`messaging.PackUnits`. Every heading in a companion form sits on a rule the
 full form width (`companionRule`); a heading too long for that goes on its
 own line or lines with a full-width rule under it. `narrow_forms_test.go` renders conditions, quests, title
 and companion at 30, 42 and 80 and pins their 80-column output to goldens
@@ -500,6 +505,107 @@ for a telnet reader at 30, 42 and 80 columns: the minimap goes above the
 prose at 42 and below, each alert sits between two rules the full screen
 width, and the 80-column view is pinned (`room_view.golden`, recorded on the
 branch because the owner ruled the alerts' change at 80).
+
+### Tables (plan 3b-3, ruling 6)
+
+The tables go through `tables/generic` (`tables/shoplist` for `list`), whose
+narrow forms are a plain-column one and a two-line one. Each command names
+the column that leads an item of the two-line form with
+`templates.TemplateTable.WithLead`: `history` the Log, `spells` the Name,
+`keyring` Where (the exit or container the lock is on), `online` the Name
+(second in the admin view), and `renderShopTable` what is for sale when the
+section's first column is Qty. `party` already leads with its Name, and
+`killstats`, `alias`, the alt list and the admin tables keep their first
+column. `table_leads_test.go` runs each through its real command at 30, 42
+and 80 with data as wide as play makes it, and pins the bordered and
+plain-column forms, and killstats and a lead-less table at every width, to
+goldens recorded from master (`testdata/narrow_forms_80/tables_*.golden`).
+
+### Narrow forms of the Go-built screens (plan 3b-3)
+
+`narrow_layout.go` holds `screenFormWidth` (0 when the 80-column lines fit
+the reader, else `users.NarrowFormWidth`; it measures the 80-column lines,
+so only for a screen a player asks for) and `measuredFormLines` (the 42 form
+where all its lines fit the reader, else the `NarrowFormWidth` one, as
+`templates.Process` picks; the guild roster uses it). The fixed form widths live in `internal/users`
+(`wrapwidth.go`) so the scan screen in `internal/actions` shares them:
+`users.NarrowFormWidth` (42, or 30 below that) and `users.RedrawnFormWidth`
+(80 at 80 and wider, else `NarrowFormWidth`, for a screen whose 80-column
+layout was itself redrawn). They lay out with
+`messaging.PackUnits` (moved there from `narrow_layout.go` so the two-line
+table form shares it), which breaks lines only between whole units and
+splits a unit too wide for its indent at a space, keeping the indent
+(ruling 3). A spaceless piece wider than the whole line (a 40-letter guild
+name, a link in a macro) breaks at the edge; a character name, which the
+caller lists in `PackUnits`' `names` (guild roster and list, scan), never
+does: a legacy one runs past on its own line at its indent (ruling 8).
+
+- **Craft** (`craft_rows.go`): `craft list` and the bare `craft` view build a
+  `craftRow` per recipe (`newCraftRow`) and lay it out with `craftRowLines` at
+  `users.RedrawnFormWidth`. At 80 the row is the status, the name padded to 26 and
+  the ingredients, then a line under the name with the reason and
+  `[station], speed` (the drawn 80 redesign, so 80 is not master's); at 42
+  `[X] Name:` and the ingredients and station on lines under the name; at 30
+  those lines sit 2 in from the row (ruling 9). `craftFooterLines` keeps the
+  closing "Overall recipe knowledge:" line whole where it fits.
+  `craft_screens_test.go` holds the rows to the drawings and fits every
+  shipped recipe (read from the YAML, with its longest reason) at 30, 42, 60
+  and 80.
+- **Guild** (`guild.go`): the roster (`guildInfo`) keeps each 80-column line
+  where it fits the reader (so 80 is master's, `guild_roster.golden`); a
+  heading that does not fit puts the name on a line of its own and the tag
+  and count under it, and a member line that does not fit puts the rank title
+  after the unpadded name or under it. Both narrow forms are picked by
+  `measuredFormLines` (`narrow_layout.go`), which measures as
+  `templates.Process` does: the 42 form where it fits the reader, so a 40
+  or 41 column reader keeps a 40-letter guild name whole. `guild list` packs each guild into
+  units (tag, `Name:`, count, `led by`, leader) at `users.RedrawnFormWidth`, the
+  rest indented 4, which at 80 is master's line wherever that fit. A 28-letter
+  name at the indent of 4 on a 30 screen has no space to split at, so
+  `messaging.PackUnits` pulls it left to end at the edge. `go_screens_test.go` holds
+  both to the drawings and fits them at 30, 42, 60 and 80.
+- **MOTD** (`motd.go`): `motdBox` draws the double-line box at 80 columns and
+  wider, exactly as master did (`motd.golden`). Below 80, or when a word is
+  wider than the box, it draws `motdRuled`: `═` rules the form's width, the
+  title (spaced where it fits, `.:  MESSAGE OF THE DAY` below), the text at
+  indent 2 (1 at 30), and no corners or side bars (ruling 1). The form is
+  42 wide from 42 to 79 columns and 30 below, as a template's forms are
+  picked. `motdrestyle.js` matches only the box, so the web client shows the
+  ruled form as sent (plan 5 checks it). Tested with the shipped MOTD read
+  from `_datafiles/config.yaml`.
+- **Achievements** (`achievements.go`): `achievementsScreen` builds the list
+  from `achievementEntry` rows at `users.RedrawnFormWidth`; a line that fits
+  is master's (`achievements.golden`), a row that does not
+  (`achievementRowLines`) packs `[x] Name (points):` whole and the
+  description's words at 2, continuing at 4. A locked row is grey on every
+  line, its progress hint two spaces after the text or on a line of its own.
+- **Macros** (`macros.go`): a command that does not fit the form
+  (`users.RedrawnFormWidth`; the 80 layout is a redesign) breaks between
+  words, continuing 2 past its letter: key at 2 and commands at 6 at 80 and
+  42, at 1 and 3 at 30. A line that fits is master's (`macros.golden`).
+- **Channels** (`channel.go`): a heading wider than the reader breaks
+  between words at `users.NarrowFormWidth`, continuing 2 in.
+- **`skills extra`** (`skills.go`): the cooldowns being tracked, sorted, each
+  by its display name (`cooldownsForDisplay`) with its time in words
+  (`templates.DurationQuality`), never a round count; the time drops under
+  the name, 3 in, when the row is wider than the reader.
+- **Container recipes in `look`** (`look.go`): `containerRecipeLines` lays out
+  each recipe (`containerRecipeInput` per input, in the recipe's order;
+  recipes by output id) at `users.RedrawnFormWidth`: lead at 4 and inputs at
+  8 at 80, 2 and 4 at 42, 1 and 2 at 30, each line continuing 2 past its
+  start. The output reads `To receive a Fair Copy...`
+  (`items.ArticlePrefix`, `MidSentenceName`).
+
+`list_screens_test.go` holds these five to the approved drawings
+(`testdata/drawings_3b3/`) and to their goldens.
+
+`start` gives a character still carrying its placeholder name its username,
+checked by `users.ValidateActorName` with the user's own id excluded (an
+online user's username is in the username list) and `SkipMaxLength`: a
+username longer than today's `NameSizeMax` (28 since plan 3b-3, was 32) is
+kept when the length is its only fault. A username failing any other check
+(banned, a mob's name, another player's) is not set, and the placeholder
+stays.
 
 ## Message categories (messaging M7 slice 4, #371)
 

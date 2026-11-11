@@ -455,27 +455,11 @@ func classifyRecipe(user *users.UserRecord, room *rooms.Room, r *crafting.Recipe
 	return "missing"
 }
 
-// craftRecipeRow renders a single recipe line (name + ingredients + station +
-// time) using the shared craftList row style, WITHOUT the leading [X] indicator.
-// Used by the bare-craft "Ready to Craft" view.
-func craftRecipeRow(r *crafting.RecipeSpec) string {
-	ingredientList := ingredientSummary(r)
-	stationStr := ""
-	if r.Station != "" {
-		stationStr = fmt.Sprintf(" [%s]", strings.ReplaceAll(r.Station, "_", " "))
-	}
-	displayName := r.Name
-	if crafting.IsEnchantingRecipe(r) && r.TargetType != "" {
-		displayName = fmt.Sprintf("%s (%s)", r.Name, r.TargetType)
-	}
-	return fmt.Sprintf(
-		`  <ansi fg="green">[V]</ansi> <ansi fg="white">%-26s</ansi>: %s  <ansi fg="dark-cyan">%s, %s</ansi>`,
-		displayName, ingredientList, stationStr, craftTimeDesc(r.TimeRounds))
-}
-
 // craftCraftableNow prints only the recipes the player can craft right now in
-// the current room (materials in hand or completable from this room's storage).
+// the current room (materials in hand or completable from this room's storage),
+// each as a craftRow laid out for the reader's width (craftRowLines).
 func craftCraftableNow(user *users.UserRecord, room *rooms.Room) bool {
+	formWidth := users.RedrawnFormWidth(user.WrapWidth())
 	all := crafting.GetAll()
 
 	// Collect known + ready recipes, grouped by skill for a stable ordering.
@@ -518,7 +502,7 @@ func craftCraftableNow(user *users.UserRecord, room *rooms.Room) bool {
 			`<ansi fg="yellow">%s</ansi>`,
 			titleCase(strings.ReplaceAll(skillName, "-", " "))))
 		for _, r := range recipes {
-			user.SendText(messaging.CategoryScreen, craftRecipeRow(r))
+			user.SendText(messaging.CategoryScreen, strings.Join(craftRowLines(newCraftRow(r, "V", ""), 2, formWidth), "\n"))
 		}
 	}
 
@@ -584,6 +568,14 @@ func craftList(user *users.UserRecord, room *rooms.Room) bool {
 		}
 	}
 
+	// Each row is a craftRow laid out for the reader's width
+	// (craftRowLines): 4 in under its skill heading, 3 at 30 columns.
+	formWidth := users.RedrawnFormWidth(user.WrapWidth())
+	rowIndent := 4
+	if formWidth < 42 {
+		rowIndent = 3
+	}
+
 	user.SendBlankLine(messaging.CategorySystem)
 	user.SendText(messaging.CategoryScreen, `<ansi fg="cyan-bold"> .:. Crafting Recipes .:.</ansi>`)
 
@@ -624,26 +616,7 @@ func craftList(user *users.UserRecord, room *rooms.Room) bool {
 
 			for _, r := range recipes {
 				indicator, reason := recipeStatus(user, room, r, skillLevel)
-				ingredientList := ingredientSummary(r)
-				stationStr := ""
-				if r.Station != "" {
-					stationStr = fmt.Sprintf(" [%s]", strings.ReplaceAll(r.Station, "_", " "))
-				}
-				// Enchanting recipes target an equipped item; annotate the
-				// recipe name with the slot for at-a-glance lookup.
-				displayName := r.Name
-				if crafting.IsEnchantingRecipe(r) && r.TargetType != "" {
-					displayName = fmt.Sprintf("%s (%s)", r.Name, r.TargetType)
-				}
-				if reason != "" {
-					user.SendText(messaging.CategoryScreen, fmt.Sprintf(
-						`    <ansi fg="red">[%s]</ansi> <ansi fg="white">%-26s</ansi>: %s  <ansi fg="red">%s</ansi><ansi fg="dark-cyan">%s, %s</ansi>`,
-						indicator, displayName, ingredientList, reason, stationStr, craftTimeDesc(r.TimeRounds)))
-				} else {
-					user.SendText(messaging.CategoryScreen, fmt.Sprintf(
-						`    <ansi fg="green">[%s]</ansi> <ansi fg="white">%-26s</ansi>: %s  <ansi fg="dark-cyan">%s, %s</ansi>`,
-						indicator, displayName, ingredientList, stationStr, craftTimeDesc(r.TimeRounds)))
-				}
+				user.SendText(messaging.CategoryScreen, strings.Join(craftRowLines(newCraftRow(r, indicator, reason), rowIndent, formWidth), "\n"))
 			}
 		}
 	}
@@ -651,7 +624,7 @@ func craftList(user *users.UserRecord, room *rooms.Room) bool {
 	// Overall completion
 	overallDesc := recipeCompletionTier(totalKnown, grandTotal)
 	user.SendBlankLine(messaging.CategorySystem)
-	user.SendText(messaging.CategoryScreen, fmt.Sprintf(`<ansi fg="cyan">Overall recipe knowledge: %s</ansi>`, overallDesc))
+	user.SendText(messaging.CategoryScreen, strings.Join(craftFooterLines("cyan", "Overall recipe knowledge:", overallDesc, formWidth), "\n"))
 	user.SendBlankLine(messaging.CategorySystem)
 	return true
 }
@@ -742,15 +715,6 @@ func storageAwareMissingTag(user *users.UserRecord, r *crafting.RecipeSpec, fall
 func storageCompletable(user *users.UserRecord, r *crafting.RecipeSpec) bool {
 	_, complete := crafting.PlanStoragePull(r, user.Character.Items, user.Character.ComponentItems, user.ItemStorage.GetItems())
 	return complete
-}
-
-// ingredientSummary returns a short comma-separated ingredient list.
-func ingredientSummary(r *crafting.RecipeSpec) string {
-	parts := make([]string, 0, len(r.Ingredients))
-	for _, ing := range r.Ingredients {
-		parts = append(parts, fmt.Sprintf("%dx %s", ing.Quantity, items.ComponentTagName(ing.ItemTag)))
-	}
-	return strings.Join(parts, ", ")
 }
 
 // completeCraft resolves a craft instantly (used when time_rounds <= 0).

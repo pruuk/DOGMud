@@ -1,7 +1,7 @@
 package usercommands
 
 import (
-	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 type SkillsOptions struct {
@@ -57,9 +58,26 @@ func Skills(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	user.SendText(messaging.CategoryScreen, strings.TrimRight(skillTxt, "\r\n"))
 
 	if rest == `extra` {
+		// Each timer by name, sorted, with how long it has left in words as
+		// the `cooldowns` screen gives it (a raw round count broke the
+		// player-copy rule). A row wider than the reader puts the time under
+		// the name, 3 in, as the 30-column `cooldowns` form does (plan 3b-3).
 		user.SendText(messaging.CategoryScreen, `<ansi fg="yellow">Cooldown Tracking:</ansi>`)
-		for name, rnds := range user.Character.GetAllCooldowns() {
-			user.SendText(messaging.CategoryScreen, fmt.Sprintf(` <ansi fg="yellow">%s</ansi>: <ansi fg="red">%d</ansi>`, name, rnds))
+		all := cooldownsForDisplay(user.Character.GetAllCooldowns())
+		names := make([]string, 0, len(all))
+		for name := range all {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		width := user.WrapWidth()
+		for _, name := range names {
+			label := `<ansi fg="yellow">` + name + `</ansi>:`
+			duration := templates.DurationQuality(all[name])
+			line := ` ` + label + ` ` + duration
+			if util.VisibleWidth(line) > width {
+				line = strings.Join(messaging.PackUnits([]string{label}, 1, 1, users.NarrowFormWidth(width)), "\n") + "\n   " + duration
+			}
+			user.SendText(messaging.CategoryScreen, line)
 		}
 	}
 

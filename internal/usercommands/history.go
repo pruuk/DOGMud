@@ -39,7 +39,9 @@ func History(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	}
 
-	searchResultsTable := templates.GetTable(`History`, headers, rows, formatting)
+	// The Log says what happened, so it leads each item of the two-line
+	// form (plan 3b-3, ruling 6).
+	searchResultsTable := templates.GetTable(`History`, headers, rows, formatting).WithLead(2)
 	tplTxt, _ := templates.Process("tables/generic", searchResultsTable, user.UserId)
 	user.SendText(messaging.CategoryScreen, tplTxt)
 

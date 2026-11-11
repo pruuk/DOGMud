@@ -11,6 +11,29 @@ const (
 	MaxAutoWrapWidth = 80
 )
 
+// NarrowFormWidth is the width of the narrow form of a screen built in Go
+// for a reader width columns wide (web client base spec, section 2): 42, or
+// 30 below that (or the reader's width, if narrower still). It is a band
+// and measures nothing, so a 40 or 41 column reader gets 30 where
+// templates.Process, which measures each form, may pick the 42 form.
+func NarrowFormWidth(width int) int {
+	if width >= 42 {
+		return 42
+	}
+	return min(width, 30)
+}
+
+// RedrawnFormWidth is the width to draw a Go-built screen to whose
+// 80-column layout was itself redrawn to fit 80 (plan 3b-3: the craft
+// screens, `guild list`, scan, macros): that layout at 80 and wider,
+// whatever the reader's width past 80, else NarrowFormWidth.
+func RedrawnFormWidth(width int) int {
+	if width >= MaxAutoWrapWidth {
+		return MaxAutoWrapWidth
+	}
+	return NarrowFormWidth(width)
+}
+
 // WrapWidth is the column width text for this user wraps at, and the only
 // source of one: every send and every layout that wraps reads it.
 //

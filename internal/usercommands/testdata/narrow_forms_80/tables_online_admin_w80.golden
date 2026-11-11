@@ -1,0 +1,6 @@
+<ansi fg="screen"><ansi fg="black-bold">.:</ansi> <ansi fg="table-title">1 user online</ansi>
+<ansi fg="yellow-bold">╒════════╤═══════════╤═════════════╤═══════╤═══════════╤════════╕
+│<ansi fg="white"> UserId </ansi>│<ansi fg="white"> User.Name </ansi>│<ansi fg="white"> Online      </ansi>│<ansi fg="white"> Role  </ansi>│<ansi fg="white"> Zone      </ansi>│<ansi fg="white"> RoomId </ansi>│
+├────────┼───────────┼─────────────┼───────┼───────────┼────────┤
+│<ansi fg="userid"> <ansi fg="userid">98201 </ansi> </ansi>│<ansi fg="user.name"> <ansi fg="username">Screenly </ansi> </ansi>│<ansi fg="online"> <ansi fg="magenta">2562047h47m</ansi> </ansi>│<ansi fg="role"> <ansi fg="role-admin-bold">admin</ansi> </ansi>│<ansi fg="zone"> <ansi fg="zone">Frostfang</ansi> </ansi>│<ansi fg="roomid"> <ansi fg="1">60557 </ansi> </ansi>│
+└────────┴───────────┴─────────────┴───────┴───────────┴────────┘</ansi></ansi>

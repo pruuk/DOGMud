@@ -113,6 +113,13 @@ Cached template with metadata for efficient reuse and cache invalidation.
   scales, plus a status-only top band. Both are top-level functions in
   `templatesfunctions.go`, registered in the func map.
 
+### Durations in words
+- **DurationQuality(rounds int) string** (`templatesfunctions.go`): how long
+  a timer has left, in words and colour ("fading" to "well established"),
+  never a round count. Registered as the `durationQuality` template function
+  (the conditions and cooldowns screens) and called from Go by `skills
+  extra` (plan 3b-3).
+
 ### Markdown Integration
 - **processMarkdown(in string) string**: Processes markdown content
   - Converts markdown to ANSI-formatted text
@@ -165,9 +172,22 @@ Cached template with metadata for efficient reuse and cache invalidation.
   letters); wrapped, a run of spaces is one space. Lines are padded on the
   left only. The room view's alerts use it between two `screenwidth` rules.
 - `wrapspans text width prefix` wraps as `wraptext` does but keeps each
-  top-level colour span (a name, an exit), with the text glued to it
-  ("Name..."), on one line unless that unit is wider than width. The room
-  view's tracking line uses it.
+  colour span (a name, an exit, a count), with the text glued to it
+  ("Name..."), on one line unless that unit is wider than width. A span
+  inside another is a unit too (plan 3b-3), so an item named inside a
+  coloured mail NOTE stays whole while the NOTE wraps. The room view's
+  tracking line, the mail forms and the banners use it.
+- `trimspace s` drops the padding around s. A 30 form uses it on a
+  localized label (`Inbox.Sent: 'Sent:    '`) to follow it with one space,
+  so the padding rule holds in every language without new strings.
+- The banners `character/questup`, `skillup` and `statup` (plan 3b-3) have
+  no forms: their star rules are `screenwidth` wide (79 at 80 and wider, as
+  a desktop always saw them) and their text wraps inside the rules at
+  indent 1 with `wrapspans`, so one layout fits every width.
+- `mail/message` (plan 3b-3) is the 80 layout, its message and NOTE lines
+  wrapped to 80 under their value; its `.w42` and `.w30` forms continue
+  that prose 2 past the label and keep the date-time
+  (`users.Message.DateUnits`), the sender and an attached item whole.
 - `wrapbreak text width prefix` wraps as `wraptext` does but first breaks a
   word longer than width into width-wide pieces. Signs and runes use it,
   since players write them. `visibleRunes` and `rebuild` are the shared
@@ -201,8 +221,32 @@ Cached template with metadata for efficient reuse and cache invalidation.
   after a restart.
 - A screen-reader file still comes first and has no forms. A `.md` file has
   no forms.
-- `TemplateTable.RowDetail` gives a row's other cells as `Header: value`
-  pairs for the two-line table form.
+- `ProcessForWidth(fname, data, screenReader, width)` (forms.go) renders for
+  every reader who shares that screen-reader setting and width, picking the
+  form by width alone (`formFor`): the base at `FullWidth` and wider, else
+  the widest form drawn to no more than width, or the narrowest. It measures
+  nothing, so a broadcast renders once per distinct (screen reader, width)
+  among its readers (spec ruling 11, plan 3b-3; the auction broadcasts use
+  it). `Process` and `ProcessForWidth` share `processPicked`.
+- A table names the column that leads each item of its two-line form
+  (`tables/*.w30.template`) with `TemplateTable.WithLead(column)` (plan
+  3b-3, ruling 6); `Lead()` reads it. A table that names none leads with
+  its first column; a column out of range is ignored. The bordered and
+  plain-column forms do not use it. Leads in use: history (Log), spells
+  (Name), keyring (Where), who / online (Name, which the admin view puts
+  second), auction history (Item), the shop list (what is for sale, after
+  Qty).
+- `TemplateTable.RowDetail` gives a row's cells but the lead's as
+  `Header: value` pairs joined by ` · `, in column order (the first column
+  included when it does not lead). `DetailLines(row, width)` lays them out
+  for the two-line form at an indent of 2 with
+  `messaging.PackUnitsKeepIndent` (nothing pulled left of the indent, since
+  column 0 starts the next item): it breaks only between pairs, each with
+  the ` ·` after it glued to its last word by a no-break space, so a name or
+  a place stays whole where it fits (ruling 3) and no line starts with a
+  dot; a pair that fits only without its dot, or whose last word cannot
+  share a line with it, goes without the dot. The lead cell is
+  wrapped with `wrapspans`, so a coloured name in it stays whole.
 - `ProcessAtWidth` (testing_support.go) renders at a given width for guards.
 - `internal/guards/template_width_guard_test.go` knows every template and why
   it is safe at 30 columns, and renders the ones that must fit at 30, 42, 80.

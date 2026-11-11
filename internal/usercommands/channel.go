@@ -78,7 +78,17 @@ func Channels(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	args := strings.Fields(rest)
 
 	if len(args) == 0 {
-		user.SendText(messaging.CategoryScreen, `<ansi fg="yellow">Channels</ansi> <ansi fg="8">(channels <name> to toggle):</ansi>`)
+		// Plan 3b-3 (channels in narrow-screens-3b3-mock): a heading wider
+		// than the reader breaks between words, continuing 2 in.
+		heading := `<ansi fg="yellow">Channels</ansi> <ansi fg="8">(channels <name> to toggle):</ansi>`
+		if width := user.WrapWidth(); util.VisibleWidth(heading) > width {
+			units := []string{`<ansi fg="yellow">Channels</ansi>`}
+			for _, word := range strings.Fields(`(channels <name> to toggle):`) {
+				units = append(units, `<ansi fg="8">`+word+`</ansi>`)
+			}
+			heading = strings.Join(messaging.PackUnits(units, 0, 2, users.NarrowFormWidth(width)), "\n")
+		}
+		user.SendText(messaging.CategoryScreen, heading)
 		for _, ch := range channels.All() {
 			state := `<ansi fg="red">off</ansi>`
 			if channels.Enabled(user.GetConfigOption(ch.ConfigKey)) {

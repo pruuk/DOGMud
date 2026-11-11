@@ -1,0 +1,7 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="table-title">Lost and found</ansi>
+<ansi fg="yellow-bold">╒═══════════╤═══════════════════════════════╤══════════╕
+│<ansi fg="white"> Item      </ansi>│<ansi fg="white"> Where                         </ansi>│<ansi fg="white"> Since    </ansi>│
+├───────────┼───────────────────────────────┼──────────┤
+│<ansi fg="item"> a lantern </ansi>│<ansi fg="where"> the Thornwall Temple District </ansi>│<ansi fg="since"> two days </ansi>│
+│<ansi fg="item"> a rope    </ansi>│<ansi fg="where"> Main Street                   </ansi>│<ansi fg="since"> today    </ansi>│
+└───────────┴───────────────────────────────┴──────────┘</ansi>

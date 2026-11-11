@@ -1,0 +1,4 @@
+<ansi fg="screen"><ansi fg="black-bold">.:</ansi> <ansi fg="table-title">History</ansi>
+<ansi fg="white">Type    Time               Log                                        </ansi>
+<ansi fg="type"><ansi fg="red">shop  </ansi></ansi>  <ansi fg="time"><ansi fg="magenta">Nov 11 '26 3:04PM</ansi></ansi>  <ansi fg="log"><ansi fg="white-bold">Purchased a <ansi fg="itemname">lantern</ansi> from <ansi fg="mobname">Keeper</ansi> for <ansi fg="gold">40 gold</ansi></ansi></ansi>
+<ansi fg="type"><ansi fg="red">combat</ansi></ansi>  <ansi fg="time"><ansi fg="magenta">Nov 11 '26 3:04PM</ansi></ansi>  <ansi fg="log"><ansi fg="white-bold">You defeated a rat.                        </ansi></ansi></ansi>

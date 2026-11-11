@@ -1,0 +1,14 @@
+<ansi fg="yellow"> ╔═════════════════════════════════════════════════════════════════════════════╗
+ ║  <ansi fg="cyan-bold">.:  M E S S A G E   O F   T H E   D A Y</ansi>                                    ║
+ ╠═════════════════════════════════════════════════════════════════════════════╣
+ ║ TALK TO PEOPLE. Type talk <name> for a numbered menu of what someone knows  ║
+ ║ and what they need. A [!] before a name means they have work for you.       ║
+ ║ EVERY STEP HAS A HINT. Your quest log says what to do next, and the map     ║
+ ║ points the way.                                                             ║
+ ║ LOOK AND SEARCH. Type look <thing> to study anything you see, and type      ║
+ ║ search to find what is hidden. Many secrets give way to one or the other,   ║
+ ║ so bring a light.                                                           ║
+ ║ LISTEN TO THE GOSSIPS. Some of what they repeat is worth chasing.           ║
+ ║ The novel: https://dogmud.org/novel                                         ║
+ ║ Full patch notes: https://dogmud.org/patch-notes                            ║
+ ╚═════════════════════════════════════════════════════════════════════════════╝</ansi>

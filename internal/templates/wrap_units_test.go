@@ -46,6 +46,32 @@ func TestWrapSpansKeepsFittingNameWhole(t *testing.T) {
 	}
 }
 
+// A name inside another colour span (an item in a coloured sentence, a count
+// in a coloured notice) is a unit too, kept whole while it fits a line, with
+// what is glued to it (plan 3b-3).
+func TestWrapSpansKeepsNestedNameWhole(t *testing.T) {
+	for _, tc := range []struct {
+		name, in string
+		width    int
+		want     []string
+	}{
+		{"name in a sentence", `<ansi fg="mail-note">This message came with one <ansi fg="itemname">Hull-Plate Cuirass</ansi> attached.</ansi>`, 38,
+			[]string{"This message came with one", "Hull-Plate Cuirass attached."}},
+		{"count with its glue", `<ansi fg="yellow">The auction will end in <ansi fg="white-bold">171 seconds</ansi>!</ansi>`, 28,
+			[]string{"The auction will end in", "171 seconds!"}},
+		{"outer span that fits stays whole", `<ansi fg="yellow">ends in <ansi fg="white-bold">171 seconds</ansi>!</ansi> now`, 21,
+			[]string{"ends in 171 seconds!", "now"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := wrapSpans(tc.in, tc.width)
+			assert.Equal(t, tc.want, plainLines(got), got)
+			for _, line := range strings.Split(got, "\n") {
+				assert.Equal(t, strings.Count(line, "<ansi"), strings.Count(line, "</ansi>"), "unbalanced: %q", line)
+			}
+		})
+	}
+}
+
 // A unit that fits is byte-identical to wrapText's output.
 func TestWrapSpansFittingUnitUnchanged(t *testing.T) {
 	in := `Tracking <ansi fg="mobname">Riss the Cartographer-Scholar</ansi>... They are here and it is a long road ahead.`

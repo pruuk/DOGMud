@@ -1,16 +1,19 @@
 
-{{ $readMarker := "" -}}
+{{/* A mail message at 80 columns, with forms at 42 and 30 beside it. The
+message and each NOTE wrap to 80 under their value, so a narrower screen,
+where they would not fit, takes a form (plan 3b-3; the NOTE lines wrap as the
+owner approved in the 2026-11-10 mock). */}}{{ $readMarker := "" -}}
 {{- if .Read }}{{ $readMarker = "-read" }}{{ else }}<ansi fg="alert-5">{{ t "Inbox.NewMessage" }}</ansi>
 {{ end -}}
 <ansi fg="mail-title{{ $readMarker }}">{{ t "Inbox.Sent" }}</ansi><ansi fg="mail-date{{ $readMarker }}">{{ .DateString }}</ansi>
 <ansi fg="mail-title{{ $readMarker }}">{{ t "Inbox.From" }}</ansi><ansi fg="username">{{ .FromName }}</ansi>
 
-<ansi fg="mail-title{{ $readMarker }}">{{ t "Inbox.Message" }}</ansi><ansi fg="mail-message{{ $readMarker }}">{{ splitstring .Message (sub screenwidth 9) "         " }}</ansi>
+{{ $lw := visiblewidth (t "Inbox.Message") }}{{ $nw := visiblewidth (t "Inbox.Note") }}<ansi fg="mail-title{{ $readMarker }}">{{ t "Inbox.Message" }}</ansi><ansi fg="mail-message{{ $readMarker }}">{{ splitstring .Message (sub 80 $lw) (repeat " " $lw) }}</ansi>
 {{ if gt .Gold 0 }}
 {{ $mapNoteGold := map "Gold" .Gold -}}
-<ansi fg="mail-note{{ $readMarker }}"><ansi fg="alert-4">{{ t "Inbox.Note" }}</ansi>{{ t "Inbox.NoteGold" $mapNoteGold }}</ansi>
+<ansi fg="alert-4">{{ t "Inbox.Note" }}</ansi>{{ wrapspans (print `<ansi fg="mail-note` $readMarker `">` (t "Inbox.NoteGold" $mapNoteGold) `</ansi>`) (sub 80 $nw) (repeat " " $nw) }}
 {{- end -}}
 {{ if ne .Item nil }}
 {{ $mapNoteItem := map "Item" .Item -}}
-<ansi fg="mail-note{{ $readMarker }}"><ansi fg="alert-4">{{ t "Inbox.Note" }}</ansi>{{ t "Inbox.NoteItem" $mapNoteItem }}</ansi>
+<ansi fg="alert-4">{{ t "Inbox.Note" }}</ansi>{{ wrapspans (print `<ansi fg="mail-note` $readMarker `">` (t "Inbox.NoteItem" $mapNoteItem) `</ansi>`) (sub 80 $nw) (repeat " " $nw) }}
 {{- end -}}

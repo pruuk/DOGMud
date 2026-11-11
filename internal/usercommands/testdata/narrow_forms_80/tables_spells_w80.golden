@@ -1,0 +1,8 @@
+<ansi fg="screen"><ansi fg="black-bold">.:</ansi> <ansi fg="table-title">Spells</ansi>
+<ansi fg="yellow-bold">╒═════════╤════════╤════════╤═════════════╕
+│<ansi fg="white"> SpellId </ansi>│<ansi fg="white"> Name   </ansi>│<ansi fg="white"> Target </ansi>│<ansi fg="white"> Cost        </ansi>│
+├─────────┼────────┼────────┼─────────────┤
+│<ansi fg="spellid"> <ansi fg="yellow-bold">glow   </ansi> </ansi>│<ansi fg="name"> <ansi fg="white-bold">Glow  </ansi> </ansi>│<ansi fg="target"> <ansi fg="spell-Unknown">Self  </ansi> </ansi>│<ansi fg="cost"> <ansi fg="magenta">trivial    </ansi> </ansi>│
+│<ansi fg="spellid"> <ansi fg="yellow-bold">mend   </ansi> </ansi>│<ansi fg="name"> <ansi fg="white-bold">Mend  </ansi> </ansi>│<ansi fg="target"> <ansi fg="spell-Unknown">Single</ansi> </ansi>│<ansi fg="cost"> <ansi fg="magenta">significant</ansi> </ansi>│
+│<ansi fg="spellid"> <ansi fg="yellow-bold">sparks </ansi> </ansi>│<ansi fg="name"> <ansi fg="white-bold">Sparks</ansi> </ansi>│<ansi fg="target"> <ansi fg="spell-Unknown">Single</ansi> </ansi>│<ansi fg="cost"> <ansi fg="magenta">moderate   </ansi> </ansi>│
+└─────────┴────────┴────────┴─────────────┘</ansi></ansi>

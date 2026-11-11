@@ -1,0 +1,27 @@
+{{- /* The auction end at 42 columns (plan 3b-3): the update's shape (see
+auction-update.w42.template) with the END word rule, the winner and the
+winning bid. The winner goes under its padded label when it does not fit
+beside it. */ -}}
+{{- define "slot" }}{{ if le (add (len .ind) .pad (visiblewidth .v)) .w }}{{ .ind }}{{ padRight .pad .label }}{{ .v }}{{ else }}{{ .ind }}{{ .label }}
+{{ .ci }}{{ wrapspans .v (sub .w (len .ci)) .ci }}{{ end }}{{ end -}}
+{{- define "flow" }}{{ .ind }}{{ wrapspans (print (padRight .pad .label) .v) (sub .w (len .ci)) .ci }}{{ end -}}
+{{- /* A seller's description may hold a word wider than a line: it breaks at the edge (wrapbreak, as mail does). */ -}}
+{{- define "prose" }}{{ .ind }}{{ wrapbreak (print (padRight .pad .label) .v) (sub .w (len .ci)) .ci }}{{ end -}}
+{{- $w := 41 }}{{ $ind := "  " }}{{ $ci := "    " }}
+{{- $winner := "none (It will be returned to the owner)" }}{{ $bid := "none" }}{{ if ge .HighestBid 1 }}{{ $bid = print `<ansi fg="gold">` .HighestBid ` gold</ansi>` }}{{ $winner = "Anonymous" }}{{ if not .Anonymous }}{{ $winner = print `<ansi fg="username">` .HighestBidderName `</ansi>` }}{{ end }}{{ end }}
+<ansi fg="auction-banner">******************************************</ansi>
+<ansi fg="auction-banner">* * * * AUCTION END * AUCTION END * * * *</ansi>
+
+{{ $ind }}<ansi fg="yellow">The auction has <ansi fg="white-bold">ENDED!</ansi></ansi>
+
+{{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Winner:" "v" $winner) }}
+{{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Bid:" "v" $bid) }}
+
+{{ template "slot" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Item:" "v" (print `<ansi fg="item">` .ItemData.NameComplex `</ansi>`)) }}
+{{ template "prose" (map "w" $w "ind" $ind "ci" $ci "pad" 13 "label" "Description:" "v" (print `<ansi fg="item">` .ItemData.GetSpec.Description `</ansi>`)) }}
+
+{{ $ind }}{{ wrapspans `Type <ansi fg="command">help auction</ansi> to learn more about auctions.` (sub $w (len $ind)) $ind }}
+
+<ansi fg="auction-banner">* * * * AUCTION END * AUCTION END * * * *</ansi>
+<ansi fg="auction-banner">******************************************</ansi>
+

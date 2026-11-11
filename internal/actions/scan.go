@@ -121,6 +121,7 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 		}
 		viewer := actor.GetCharacter()
 		seesOut := messaging.SeesThroughExit(viewer, room)
+		formWidth := users.RedrawnFormWidth(users.GetByUserId(actor.GetUserId()).WrapWidth())
 		for _, s := range result.Sightings {
 			// The player's list follows the player's sight (lighting plan
 			// 5c): out through the exit from here, then into the next room.
@@ -143,10 +144,9 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			// light or heat would reach through it, with nobody listed; too
 			// dark when neither would.
 			sight, reaches := scanReach(viewer, room, rooms.LoadRoom(s.RoomId))
-			dirLabel := fmt.Sprintf(`<ansi fg="exit">%s</ansi>`, s.ExitName)
 			if s.Locked && reaches {
 				actor.SendText(messaging.CategoryScreen,
-					fmt.Sprintf(`  %s: the exit is locked`, dirLabel))
+					scanEntryText(s.ExitName, "", nil, "the exit is locked", formWidth))
 				continue
 			}
 			parts := []string{}
@@ -168,26 +168,52 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			}
 			// The next room's title belongs to a view the light grants
 			// (#428): heat or nothing names a direction, never a room.
-			label := dirLabel
+			title := ""
 			if seesOut {
-				label = fmt.Sprintf(`%s (<ansi fg="room-title">%s</ansi>)`,
-					dirLabel, s.RoomTitle)
+				title = s.RoomTitle
 			}
-			if sight == messaging.SightNone {
-				actor.SendText(messaging.CategoryScreen,
-					fmt.Sprintf(`  %s: too dark to make anything out`, label))
-			} else if len(parts) > 0 {
-				actor.SendText(messaging.CategoryScreen,
-					fmt.Sprintf(`  %s: %s`, label, strings.Join(parts, `, `)))
-			} else {
-				actor.SendText(messaging.CategoryScreen,
-					fmt.Sprintf(`  %s: nothing of interest`, label))
+			switch {
+			case sight == messaging.SightNone:
+				actor.SendText(messaging.CategoryScreen, scanEntryText(s.ExitName, title, nil, "too dark to make anything out", formWidth))
+			case len(parts) > 0:
+				actor.SendText(messaging.CategoryScreen, scanEntryText(s.ExitName, title, parts, "", formWidth))
+			default:
+				actor.SendText(messaging.CategoryScreen, scanEntryText(s.ExitName, title, nil, "nothing of interest", formWidth))
 			}
 		}
 		actor.SendBlankLine(messaging.CategorySystem)
 	}
 
 	return result
+}
+
+// scanEntryText is one direction of the scan screen for a form formWidth
+// wide (users.RedrawnFormWidth: 80, 42 or 30): `dir (Room Title):`, without
+// the title when it is "", then the names (each with its comma) or the
+// prose. Plan 3b-3, from the drawing scan (narrow-screens-3b3-mock), whose
+// 80 layout was redrawn because a line of names ran past 80: the line
+// breaks only between units (the direction, the bracketed title, a name, a
+// word of the prose), the first at indent 2 and the rest at 4. A unit wider
+// than the room at 4 splits at a space and keeps it (ruling 3). Where the
+// whole line fits it is the line master drew.
+func scanEntryText(exitName, title string, names []string, prose string, formWidth int) string {
+	dir := `<ansi fg="exit">` + exitName + `</ansi>`
+	units := []string{dir + ":"}
+	if title != "" {
+		units = []string{dir, `(<ansi fg="room-title">` + title + `</ansi>):`}
+	}
+	nameUnits := make([]string, 0, len(names))
+	for i, n := range names {
+		if i < len(names)-1 {
+			n += ","
+		}
+		nameUnits = append(nameUnits, n)
+	}
+	units = append(units, nameUnits...)
+	units = append(units, strings.Fields(prose)...)
+	// A player's name is never broken (a legacy one too long for the line
+	// runs past it, ruling 8); a mob's has spaces to split at.
+	return strings.Join(messaging.PackUnits(units, 2, 4, formWidth, nameUnits...), "\n")
 }
 
 // scanReach is how well a scanner standing in here makes out the room next

@@ -108,8 +108,9 @@ func shippedMobLooked(file string) func() any {
 	}
 }
 
-// lookingLongestName is a name at the configured maximum (NameSizeMax, 32),
-// for players and pets alike.
+// lookingLongestName is the longest name a player or pet can hold: 32
+// letters, the maximum (NameSizeMax) until plan 3b-3 lowered it to 28 for
+// new names (ruling 8), and kept by those who already have one.
 const lookingLongestName = "Bartholomewsworthingtonianfellow"
 
 // corpseCaptured is `look corpse` at the marsh rat, as captured.
@@ -416,14 +417,15 @@ var lookingScreenGoldens = map[string]struct {
 
 // A name is never split (owner, 2026-11-10: a single unbreakable word is an
 // accepted exception, as on the status sheet). With a 32-letter name, the
-// configured maximum for players and pets, looking at a person, a corpse or
+// longest a player or pet can hold (a legacy name: NameSizeMax is 28 for new
+// names since plan 3b-3, ruling 8), looking at a person, a corpse or
 // a pet fits at 42 and 80; at 30 a line runs past only where the name is
 // alone on it, beside at most its ".: " heading or its indent and one stop.
 func TestLookingWithTheLongestNameRunsPastOnlyOnItsName(t *testing.T) {
 	templateRenderSetup(t)
 	seedLookingScreenRegistries(t)
 	if len(lookingLongestName) != 32 {
-		t.Fatalf("the name is %d letters, not the 32 maximum", len(lookingLongestName))
+		t.Fatalf("the name is %d letters, not the 32 a legacy name may have", len(lookingLongestName))
 	}
 	tags := regexp.MustCompile(`</?ansi[^>]*>`)
 	alone := regexp.MustCompile(`^(\.: | *)` + lookingLongestName + `[.,]?$`)

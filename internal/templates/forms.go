@@ -96,6 +96,32 @@ func WidestLine(s string) int {
 	return widest
 }
 
+// ProcessForWidth renders fname for every reader whose screen is width
+// columns wide and who does, or does not, use a screen reader. It picks the
+// form by width alone (formFor) and measures nothing, so a broadcast renders
+// once per distinct (screen reader, width) among its readers, never once per
+// reader (spec ruling 11, plan 3b-3). A screen a player asks for uses
+// Process, which measures and so picks the widest form that fits.
+func ProcessForWidth(fname string, data any, screenReader bool, width int) (string, error) {
+	return processPicked(fname, data, templateConfig{ScreenReader: screenReader}, width, false)
+}
+
+// formFor is the form a render by width alone uses: 0 (the base) at
+// FullWidth and wider or when there are no forms, else the widest form
+// drawn to no more than width, or the narrowest when width is narrower than
+// them all. forms is widest first, as formsOf returns it.
+func formFor(forms []int, width int) int {
+	if width >= FullWidth || len(forms) == 0 {
+		return 0
+	}
+	for _, formWidth := range forms {
+		if formWidth <= width {
+			return formWidth
+		}
+	}
+	return forms[len(forms)-1]
+}
+
 // narrowestFit renders fname's forms widest first and returns the first that
 // fits width, or the narrowest one. base is the base form's output, returned
 // when the template has no forms.

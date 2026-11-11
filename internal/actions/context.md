@@ -1264,6 +1264,15 @@ Sweeps the rooms one step away for occupants (`scan.go`).
   make anything out` with neither. A locked exit reads `north: the exit is
   locked` when light or heat would reach through it, and too dark
   otherwise, as `ResolveLook` answers.
+- **Layout (plan 3b-3):** `scanEntryText` lays out each exit's line as units
+  (the direction, `(Room Title):`, each name with its comma, the prose's
+  words) packed by `messaging.PackUnits` at indent 2, continuing at 4, to
+  `users.RedrawnFormWidth` of the scanner's wrap width: the drawn 80
+  redesign (a line of names ran past 80), 42 or 30. A line that fits is the
+  line master drew. The names are passed as `PackUnits` names, so a legacy
+  player name wider than the line runs past it whole (ruling 8) instead of
+  breaking at the edge. `scan_screen_test.go` holds it to the drawings
+  (`testdata/drawings_3b3/`).
 - **MobActor behavior:** silent (`SendText` is a no-op).
 - **Hostile-only mode:** `opts.HostileOnly` is not applied by `Scan`; the
   caller filters.

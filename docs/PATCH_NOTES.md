@@ -1,5 +1,26 @@
 # DOGMud Patch Notes
 
+## 2026-11-11: More screens fit your window
+
+- `craft list` and `craft` now show why a recipe is locked, and where and
+  how fast you make it, on a second line under the recipe. Long ingredient
+  lists wrap neatly instead of running off the edge.
+- `scan`, `macros` and `guild list` wrap long lines to your window. A name,
+  a room title or a command is never cut in two when it fits on a line.
+- In your mail, long notes wrap under the note instead of past the edge.
+- A table too wide for your window, such as a long `history` or a crowded
+  `who`, shows each row on two lines: the row's name first, the rest below.
+- `who` and the online list now show every name and every zone in full.
+  They no longer cut long ones short.
+- `skills extra` now says how long each cooldown has left in words, as
+  `cooldowns` does.
+- A line that ends with a colon no longer gets a stray full stop after it.
+- New character names have a slightly shorter limit, so every name fits on
+  a phone screen. Names that already exist do not change.
+- On a narrow screen, such as a phone, the message of the day, the combat,
+  quest, skill and stat banners, auctions, achievements, the channel list
+  and every screen above take a narrow layout with nothing left out.
+
 ## 2026-11-11: Help fixes
 
 - `help spell` followed by a spell's name shows that spell's page again.

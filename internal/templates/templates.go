@@ -15,7 +15,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/markdown"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/ansitags"
 	"github.com/mattn/go-runewidth"
@@ -173,6 +175,13 @@ func Process(fname string, data any, receivingUserId ...int) (string, error) {
 // narrow forms: when its output is wider than the
 // reader, the widest form that fits is used (see forms.go).
 func process(fname string, data any, tplConfig templateConfig, width int) (string, error) {
+	return processPicked(fname, data, tplConfig, width, true)
+}
+
+// processPicked is process, measuring the .template file's output against
+// width when measure is set, else picking its form by width alone (formFor,
+// for ProcessForWidth).
+func processPicked(fname string, data any, tplConfig templateConfig, width int, measure bool) (string, error) {
 	ansiLock.RLock()
 	defer ansiLock.RUnlock()
 
@@ -199,11 +208,19 @@ func process(fname string, data any, tplConfig templateConfig, width int) (strin
 	})
 
 	for _, tplInfo := range filesToAttempt {
+		if tplInfo.hasForms && !measure {
+			if formWidth := formFor(formsOf(fname), width); formWidth > 0 {
+				out, found, err := renderFile(templateDetails{name: fname, path: FormPath(fname, formWidth)}, data, tplConfig, width)
+				if found {
+					return out, err
+				}
+			}
+		}
 		out, found, err := renderFile(tplInfo, data, tplConfig, width)
 		if !found {
 			continue
 		}
-		if err != nil || !tplInfo.hasForms {
+		if err != nil || !tplInfo.hasForms || !measure {
 			return out, err
 		}
 		// Only a template that has forms is measured, so a broadcast of a
@@ -333,6 +350,24 @@ type TemplateTable struct {
 	ColumnWidths       []int
 	Formatting         [][]string
 	formatRowCount     int
+	leadColumn         int
+}
+
+// WithLead returns the table with column leading each item of its two-line
+// form (tables/*.w30.template): the cell that names the item, such as a
+// history line's Log or a spell's Name (plan 3b-3, ruling 6). The bordered
+// and plain-column forms are unchanged by it. A column out of range leaves
+// the lead as it was; a table that names none leads with its first column.
+func (t TemplateTable) WithLead(column int) TemplateTable {
+	if column >= 0 && column < t.ColumnCount {
+		t.leadColumn = column
+	}
+	return t
+}
+
+// Lead is the column that leads each item of the two-line form.
+func (t TemplateTable) Lead() int {
+	return t.leadColumn
 }
 
 func (t TemplateTable) GetHeaderCell(column int) string {
@@ -364,12 +399,59 @@ func (t TemplateTable) GetCell(row int, column int) string {
 	return cellStr
 }
 
-// RowDetail is a row without its first cell, as "Header: value" pairs joined
-// by " · ", for the two-line table form (tables/*.w30.template). A blank cell
-// is left out, and a cell under a blank header shows its value alone.
+// RowDetail is a row without its lead cell (Lead), as "Header: value" pairs
+// joined by " · ", in column order, for the two-line table form
+// (tables/*.w30.template). A blank cell is left out, and a cell under a
+// blank header shows its value alone.
 func (t TemplateTable) RowDetail(row int) string {
+	return strings.Join(t.rowPairs(row), ` · `)
+}
+
+// DetailLines is RowDetail laid out at an indent of 2 in lines of at most
+// width columns, joined by CRLF: it breaks only between pairs, each with
+// the " ·" that follows it, so a name or a place stays whole where it fits
+// (ruling 3); a pair too wide for a line wraps between its words and keeps
+// the indent (messaging.PackUnitsKeepIndent: nothing is pulled left of it,
+// since column 0 starts the next item). The " ·" is glued to the pair's
+// last word, so no line starts with a stray dot. Where it cannot share a
+// line with what it follows (a pair that fits a line only without it, or
+// a last word as wide as the line), it is left off and the line break
+// stands for it. Empty when the row has no detail.
+func (t TemplateTable) DetailLines(row int, width int) string {
+	const indent = 2
+	pairs := t.rowPairs(row)
+	if len(pairs) == 0 {
+		return ``
+	}
+	room := width - indent
+	for i, pair := range pairs[:len(pairs)-1] {
+		words := strings.Fields(pair)
+		switch {
+		case util.VisibleWidth(pair+dotAfter) <= room:
+		case util.VisibleWidth(pair) <= room:
+			continue
+		case util.VisibleWidth(words[len(words)-1]+dotAfter) > room:
+			continue
+		}
+		pairs[i] += gluedDot
+	}
+	lines := messaging.PackUnitsKeepIndent(pairs, indent, indent, width)
+	return strings.ReplaceAll(strings.Join(lines, term.CRLFStr), gluedDot, dotAfter)
+}
+
+// dotAfter separates the pairs of a detail line; gluedDot is it with a
+// no-break space, which WrapAnsi never breaks at, while the line is laid out.
+const (
+	dotAfter = ` ·`
+	gluedDot = " ·"
+)
+
+func (t TemplateTable) rowPairs(row int) []string {
 	parts := []string{}
-	for c := 1; c < len(t.Rows[row]); c++ {
+	for c := 0; c < len(t.Rows[row]); c++ {
+		if c == t.leadColumn {
+			continue
+		}
 		value := strings.TrimSpace(t.Rows[row][c])
 		if value == `` {
 			continue
@@ -379,7 +461,7 @@ func (t TemplateTable) RowDetail(row int) string {
 		}
 		parts = append(parts, value)
 	}
-	return strings.Join(parts, ` · `)
+	return parts
 }
 
 func GetTable(title string, headers []string, rows [][]string, formatting ...[]string) TemplateTable {

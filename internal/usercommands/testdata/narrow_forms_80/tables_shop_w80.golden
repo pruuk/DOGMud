@@ -1,0 +1,9 @@
+<ansi fg="screen">
+<ansi fg="black-bold">.:</ansi> <ansi fg="table-title">Items available by <ansi fg="mobname">Keeper</ansi></ansi>
+<ansi fg="black-bold">╒═════╤══════════════════════════════╤═══════════╤═══════╕
+│<ansi fg="white"> Qty </ansi>│<ansi fg="white"> Name                         </ansi>│<ansi fg="white"> Type      </ansi>│<ansi fg="white"> Price </ansi>│
+├─────┼──────────────────────────────┼───────────┼───────┤
+│<ansi fg="shop-qty"> 3   </ansi>│<ansi fg="shop-name"> a flask of clear river water </ansi>│<ansi fg="shop-type"> drinkable </ansi>│<ansi fg="shop-price"> 12    </ansi>│
+│<ansi fg="shop-qty"> N/A </ansi>│<ansi fg="shop-name"> a lantern                    </ansi>│<ansi fg="shop-type"> light     </ansi>│<ansi fg="shop-price"> 40    </ansi>│
+└─────┴──────────────────────────────┴───────────┴───────┘</ansi></ansi>
+<ansi fg="system">Type buy to buy.</ansi>

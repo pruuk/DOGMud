@@ -134,84 +134,14 @@ func Companion(rest string, user *users.UserRecord,
 	return true, nil
 }
 
-// Narrow forms of the companion screens (web client base spec, section 2),
-// picked as templates.Process picks a template's forms: the 80-column screen
-// goes to any reader it fits, as it always did. A reader it does not fit gets
-// the form drawn to 42 columns, or to 30 below that: the heading rule runs
+// Narrow forms of the companion screens (web client base spec, section 2):
+// the 80-column screen goes to any reader it fits, as it always did. A
+// reader it does not fit gets, by band without measuring the form, the form
+// drawn to 42 columns from 42 up, or to 30 below 42: the heading rule runs
 // the full width, the bars stack one per line, and words break only between
-// whole names. Every form shows everything the 80-column screen does.
-
-// companionNarrowWidth is the width to draw a companion screen to for a
-// reader width columns wide: 0 when the 80-column lines fit, else 42, or 30
-// (or the reader's width, if narrower still).
-func companionNarrowWidth(width int, lines ...string) int {
-	fits := true
-	for _, line := range lines {
-		if util.VisibleWidth(line) > width {
-			fits = false
-			break
-		}
-	}
-	switch {
-	case fits:
-		return 0
-	case width >= 42:
-		return 42
-	default:
-		return min(width, 30)
-	}
-}
-
-// packCompanionUnits lays units out in lines of at most width columns: the
-// first line indented by first, the rest by rest, breaking only between
-// units. A unit goes on the line in hand when it fits there (the first line
-// measured from its own indent), else on a new line. Only a unit too long
-// for a whole new line is wrapped between its words (messaging.WrapAnsi).
-func packCompanionUnits(units []string, first, rest, width int) []string {
-	lines := []string{}
-	line, used := strings.Repeat(" ", first), first
-	empty := true
-	newLine := func() {
-		lines = append(lines, line)
-		line, used, empty = strings.Repeat(" ", rest), rest, true
-	}
-	place := func(word string) {
-		w := util.VisibleWidth(word)
-		sep := 1
-		if empty {
-			sep = 0
-		}
-		if used+sep+w > width && !empty {
-			newLine()
-			sep = 0
-		}
-		line += strings.Repeat(" ", sep) + word
-		used += sep + w
-		empty = false
-	}
-	for _, unit := range units {
-		w := util.VisibleWidth(unit)
-		sep := 1
-		if empty {
-			sep = 0
-		}
-		if used+sep+w <= width || w <= width-rest {
-			place(unit)
-			continue
-		}
-		if !empty {
-			newLine()
-		}
-		for _, part := range strings.Split(messaging.WrapAnsi(unit, width-rest), "\n") {
-			place(part)
-		}
-	}
-	lines = append(lines, line)
-	for i := range lines {
-		lines[i] = strings.TrimRight(lines[i], " ")
-	}
-	return lines
-}
+// whole names. Every form shows everything the 80-column screen does. The
+// form is picked by screenFormWidth and laid out by messaging.PackUnits
+// (narrow_layout.go), shared with the craft, guild and MOTD screens.
 
 // companionRule is a heading on a rule that spans width: "━━━ title "
 // filled with "━" to width when at least three fit after it. A longer title
@@ -223,7 +153,7 @@ func companionRule(width int, parts ...string) string {
 	if util.VisibleWidth(head)+3 <= width {
 		return `<ansi fg="yellow">` + head + strings.Repeat(`━`, width-util.VisibleWidth(head)) + `</ansi>`
 	}
-	lines := packCompanionUnits(parts, 0, 0, width)
+	lines := messaging.PackUnits(parts, 0, 0, width)
 	return `<ansi fg="yellow">` + strings.Join(lines, "\n") + "\n" + strings.Repeat(`━`, width) + `</ansi>`
 }
 
@@ -249,7 +179,7 @@ func companionMutationLines(label, mutList string, indent, width int) []string {
 			break
 		}
 	}
-	return packCompanionUnits(append([]string{label}, names...), indent, hang, width)
+	return messaging.PackUnits(append([]string{label}, names...), indent, hang, width)
 }
 
 // companionList is the messages of the companion list for a reader width
@@ -301,7 +231,7 @@ func companionList(companions []characters.CompanionInfo, width int) []string {
 			}
 		}
 	}
-	formWidth := companionNarrowWidth(width, measured...)
+	formWidth := screenFormWidth(width, measured...)
 	if formWidth == 0 {
 		// As it always was: the heading, then a name line, a bars line
 		// and a mutations line per companion.
@@ -315,7 +245,7 @@ func companionList(companions []characters.CompanionInfo, width int) []string {
 		if r.offline != "" {
 			units = append(units, r.offline)
 		}
-		msgs = append(msgs, strings.Join(packCompanionUnits(append(units, r.assist), 2, 4, formWidth), "\n"))
+		msgs = append(msgs, strings.Join(messaging.PackUnits(append(units, r.assist), 2, 4, formWidth), "\n"))
 		if r.mob == nil {
 			continue
 		}
@@ -340,13 +270,13 @@ func companionDetail(comp *characters.CompanionInfo, mob *mobs.Mob, assistStr st
 	assist := fmt.Sprintf(`  Auto-Assist: %s`, assistStr)
 	if mob == nil {
 		absent := `  This companion is not currently present.`
-		formWidth := companionNarrowWidth(width, heading, absent, assist)
+		formWidth := screenFormWidth(width, heading, absent, assist)
 		if formWidth == 0 {
 			return []companionLine{{messaging.CategorySystem, heading},
 				{messaging.CategorySystem, absent}, {messaging.CategoryScreen, assist}}
 		}
 		return []companionLine{{messaging.CategorySystem, companionDetailRule(comp, formWidth)},
-			{messaging.CategorySystem, strings.Join(packCompanionUnits(strings.Fields(absent), 2, 2, formWidth), "\n")},
+			{messaging.CategorySystem, strings.Join(messaging.PackUnits(strings.Fields(absent), 2, 2, formWidth), "\n")},
 			{messaging.CategoryScreen, assist}}
 	}
 
@@ -372,7 +302,7 @@ func companionDetail(comp *characters.CompanionInfo, mob *mobs.Mob, assistStr st
 	}
 	wide = append(wide, assist)
 
-	formWidth := companionNarrowWidth(width, wide...)
+	formWidth := screenFormWidth(width, wide...)
 	if formWidth == 0 {
 		lines := []companionLine{{messaging.CategorySystem, wide[0]}}
 		for _, text := range wide[1:] {

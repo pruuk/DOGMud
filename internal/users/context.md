@@ -458,6 +458,10 @@ func (i *Inbox) Empty() {
 func (m Message) DateString() string {
     return m.DateSent.Format(string(configs.GetConfig().TextFormats.Time))
 }
+
+// DateUnits is DateString cut after its first ", ": the day and the
+// date-time, which a narrow mail form keeps whole (plan 3b-3).
+func (m Message) DateUnits() []string
 ```
 
 ## User Data Management
@@ -595,6 +599,15 @@ A websocket session wraps at the smallest of `Display.GetScreenWidth()`,
 `set linewidth` above 80 still works on telnet and can only narrow a web
 session. `TestOnlyWrapWidthReadsTheSavedLineWidth` in `internal/guards` keeps
 it the only reader of `GetLineWidth` that wraps.
+
+The narrow forms of the Go-built screens (plan 3b-3) pick their width from a
+wrap width with two pure functions here, so `internal/usercommands` and the
+scan screen in `internal/actions` share them: `NarrowFormWidth(width)` (42,
+or 30 below that, or the width itself if narrower) and
+`RedrawnFormWidth(width)` (80 at 80 and wider, else `NarrowFormWidth`), for a
+screen whose 80-column layout was itself redrawn. Both are bands that measure
+nothing: a 40 or 41 column reader gets 30 where `templates.Process` may pick
+a template's 42 form.
 
 ### Game menu session (#375 phase 0)
 
@@ -943,7 +956,7 @@ restores a captured baseline before re-deriving the spec. Copy that. Note
 | `storage.go` / `storage_migrate.go` | Bank inventory (`Storage`, `StorageSlot`), its legacy `Items`-to-`Slots` shape migration, and the U10d ranged-weapon rescale over banked items |
 | `index.go` / `index_rebuild.go` / `character_index.go` | Name/character indexes |
 | `migration.go` | Per-user migrations |
-| `validate_actor_name.go` | Name validation |
+| `validate_actor_name.go` | Name validation (`ValidateActorName`; `ValidateActorOpts.SkipMaxLength` keeps a username from before `NameSizeMax` fell to 28 in plan 3b-3, used by `start`) |
 | `inbox.go` | Player mudmail |
 | `onlineinfo.go` | Who-list / online presence data |
 | `userlog.go` | Per-user log |

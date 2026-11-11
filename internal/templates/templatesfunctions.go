@@ -139,11 +139,14 @@ var (
 		// visiblewidth is the columns s takes on screen, colour tags not
 		// counted, so a narrow form can ask whether a coloured value fits.
 		"visiblewidth": util.VisibleWidth,
-		"wraptext":     wrapText,
-		"centerlines":  centerLines,
-		"wrapspans":    wrapSpans,
-		"wrapbreak":    wrapBreak,
-		"ansiparse":    TplAnsiParse,
+		// trimspace drops the padding a localized label carries, so a 30
+		// form can follow it with one space in every language.
+		"trimspace":   strings.TrimSpace,
+		"wraptext":    wrapText,
+		"centerlines": centerLines,
+		"wrapspans":   wrapSpans,
+		"wrapbreak":   wrapBreak,
+		"ansiparse":   TplAnsiParse,
 		"conditionname": func(conditionId int) string {
 			conditionSpec := conditions.GetConditionSpec(conditionId)
 			if conditionSpec == nil {
@@ -449,24 +452,29 @@ var (
 			}
 			return prefix + " your " + statName
 		},
-		"mutationLevel": mutations.LevelDescription,
-		"skillRank":     skills.GetSkillRankDescription,
-		"durationQuality": func(rounds int) string {
-			switch {
-			case rounds <= 0:
-				return `<ansi fg="red">fading</ansi>`
-			case rounds <= 3:
-				return `<ansi fg="red">fading fast</ansi>`
-			case rounds <= 10:
-				return `<ansi fg="yellow">briefly active</ansi>`
-			case rounds <= 30:
-				return `<ansi fg="green">active</ansi>`
-			default:
-				return `<ansi fg="green">well established</ansi>`
-			}
-		},
+		"mutationLevel":   mutations.LevelDescription,
+		"skillRank":       skills.GetSkillRankDescription,
+		"durationQuality": DurationQuality,
 	}
 )
+
+// DurationQuality is how long rounds left lasts, in words and colour, as
+// the `cooldowns` and conditions screens show a timer: a player never sees
+// the raw round count (the player-copy rule). `skills extra` uses it too.
+func DurationQuality(rounds int) string {
+	switch {
+	case rounds <= 0:
+		return `<ansi fg="red">fading</ansi>`
+	case rounds <= 3:
+		return `<ansi fg="red">fading fast</ansi>`
+	case rounds <= 10:
+		return `<ansi fg="yellow">briefly active</ansi>`
+	case rounds <= 30:
+		return `<ansi fg="green">active</ansi>`
+	default:
+		return `<ansi fg="green">well established</ansi>`
+	}
+}
 
 // wrapText wraps s to width columns with messaging.WrapAnsi, the game's one
 // wrapper: it breaks only at spaces, so "(following)" never loses its
@@ -482,10 +490,12 @@ func wrapText(s string, width int, prefix ...string) string {
 	return strings.ReplaceAll(messaging.WrapAnsi(s, width), "\n", "\n"+pad)
 }
 
-// wrapSpans wraps as wrapText does, but keeps each top-level colour span (a
-// name, an exit) on one line, together with any text glued to it ("Name..."),
+// wrapSpans wraps as wrapText does, but keeps each colour span (a name, an
+// exit, a count) on one line, together with any text glued to it ("Name..."),
 // unless that unit is wider than width; then the span's words wrap as usual.
-// A name is never split while it fits a line by itself (owner, 2026-11-10).
+// A span inside another is a unit too, so an item named inside a coloured
+// sentence stays whole while the sentence wraps (plan 3b-3). A name is never
+// split while it fits a line by itself (owner, 2026-11-10).
 //
 //	{{ wrapspans .TrackingString screenwidth }}
 func wrapSpans(s string, width int, prefix ...string) string {
@@ -495,18 +505,19 @@ func wrapSpans(s string, width int, prefix ...string) string {
 	for i, v := range runes {
 		what[i] = s[v.start:v.end]
 	}
-	depth, open := 0, 0
+	// opens holds where each open span's text starts, innermost last, so a
+	// span is seen as it closes: an inner one before the one around it.
+	opens := []int{}
 	for _, t := range ansiTag.FindAllStringIndex(s, -1) {
 		if !strings.HasPrefix(s[t[0]:t[1]], "</") {
-			if depth == 0 {
-				open = t[1]
-			}
-			depth++
+			opens = append(opens, t[1])
 			continue
 		}
-		if depth--; depth != 0 {
+		if len(opens) == 0 {
 			continue
 		}
+		open := opens[len(opens)-1]
+		opens = opens[:len(opens)-1]
 		// The span's visible runes, then the unit: the span widened over
 		// whatever is glued to it up to the nearest space each side.
 		first, last := -1, -1

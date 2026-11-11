@@ -222,6 +222,10 @@ func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 
 	// ── Fixture 3: a MOTD box, mirroring internal/usercommands/motd.go's ───
 	// real construction (frame arithmetic, border glyphs, per-line padding).
+	// Since plan 3b-3 motd.go draws the box only at 80 columns and wider
+	// (narrower screens get its ruled form); this fixture keeps a box at
+	// lineWidth because what it pins is how the pipeline passes a box laid
+	// out to the reader's width, which is the same at any width.
 	// Calling Motd() directly is impractical here: it needs a live
 	// connection and an active user session (it reads
 	// configs.GetServerConfig().Motd and sends through user.SendText on a

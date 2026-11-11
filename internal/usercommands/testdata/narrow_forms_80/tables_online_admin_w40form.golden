@@ -1,0 +1,3 @@
+<ansi fg="screen"><ansi fg="black-bold">.:</ansi> <ansi fg="table-title">1 user online</ansi>
+<ansi fg="white">UserId  User.Name  Online       Role   Zone       RoomId</ansi>
+<ansi fg="userid"><ansi fg="userid">98201 </ansi></ansi>  <ansi fg="user.name"><ansi fg="username">Screenly </ansi></ansi>  <ansi fg="online"><ansi fg="magenta">2562047h47m</ansi></ansi>  <ansi fg="role"><ansi fg="role-admin-bold">admin</ansi></ansi>  <ansi fg="zone"><ansi fg="zone">Frostfang</ansi></ansi>  <ansi fg="roomid"><ansi fg="1">60557 </ansi></ansi></ansi>

@@ -1,9 +1,11 @@
+{{/* Rules span the screen (79 stars at 80 and wider, as a desktop always saw
+them) and the text wraps inside them at indent 1, the skill and its rank kept
+whole (plan 3b-3). No forms: one layout fits every width. */}}{{ $r := screenwidth }}{{ if ge $r 80 }}{{ $r = 79 }}{{ end }}
+<ansi fg="yellow-bold">{{ repeat "*" $r }}</ansi>
+<ansi fg="yellow-bold">{{ repeat "*" $r }}</ansi>
 
-<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>
-<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>
+<ansi fg="yellow"> {{ wrapspans (print `Your mastery of <ansi fg="skill">` .SkillName `</ansi> has grown — you are now <ansi fg="yellow-bold">` (skillRank .SkillLevel) `</ansi>!`) (sub $r 1) " " }}
+<ansi fg="yellow"> {{ wrapspans (print `type <ansi fg="command">help ` .SkillName `</ansi> to learn more about using this skill.`) (sub $r 1) " " }}</ansi>
 
-<ansi fg="yellow"> Your mastery of <ansi fg="skill">{{ .SkillName }}</ansi> has grown — you are now <ansi fg="yellow-bold">{{ skillRank .SkillLevel }}</ansi>!
-<ansi fg="yellow"> type <ansi fg="command">help {{ .SkillName }}</ansi> to learn more about using this skill.</ansi>
-
-<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>
-<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>
+<ansi fg="yellow-bold">{{ repeat "*" $r }}</ansi>
+<ansi fg="yellow-bold">{{ repeat "*" $r }}</ansi>

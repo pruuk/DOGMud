@@ -27,8 +27,9 @@ import (
 // ones that must fit at 30, 42 and 80.
 //
 // The classes are the state of the work, not a permanent exemption list:
-// plan 3b-3 empties "plan 3b-3", plan 4 does "help/". When both are done, only
-// "wide" and the classes that never reach a narrow screen unwrapped remain.
+// plan 3b-3 gave every template screen it held a narrow form and removed its
+// class; plan 4 does "help/". When that is done, only "wide" and the classes
+// that never reach a narrow screen unwrapped remain.
 
 // templateFolders are every place a template is read from: the live world,
 // and each module's own files (modules/<name>/files/datafiles/templates).
@@ -67,10 +68,6 @@ var templateClassNames = map[string][]string{
 	// (TestNarrowTemplateScreensFitEveryWidth): the data its commands pass
 	// is of types private to that package.
 	"fits in usercommands": {"character/conditions", "character/quests", "character/title"},
-	// Narrow forms come in plan 3b-3.
-	"plan 3b-3": {"character/skillup", "character/statup",
-		"mail/message", "auctions/auction-bid", "auctions/auction-end",
-		"auctions/auction-start", "auctions/auction-update"},
 	// No production code renders these (survey 2026-11-10).
 	"no caller": {"character/experience", "character/jobs",
 		"character/permadeath", "descriptions/train", "login/character-name.prompt",
@@ -109,16 +106,25 @@ var templateFits = map[string]templateFixture{
 				{"the Ancient Lantern of the Drowned Lighthouse", "the Thornwall Temple District", "two days"},
 				{"a rope", "Main Street", "today"},
 			})
-	}},
+	}, more: []func() any{tableLeadingWithLaterColumn}},
 	"tables/shoplist": {data: func() any {
 		return templates.GetTable("Items available by Grumbleguts the Provisioner",
 			[]string{"Qty", "Name", "Type", "Price"},
 			[][]string{
 				{"3", "a flask of clear river water", "drinkable", "12 gold"},
 				{"1", "a lantern", "light", "40 gold"},
-			})
-	}},
-	"character/questup": {data: func() any { return "You have found a new quest: The Long Road Home." }, wrapped: true},
+			}).WithLead(1)
+	}, more: []func() any{func() any {
+		// The secondhand shelf leads with its first column, the Name.
+		return templates.GetTable("Secondhand goods by Grumbleguts the Provisioner",
+			[]string{"Name", "Type", "Price"},
+			[][]string{{"A Salt-Stiff Page of a Sailor's Telling", "readable", "1240"}})
+	}}},
+	"character/questup": {data: func() any { return "You have found a new quest: The Long Road Home." }, more: []func() any{questupCaptured, questupWide}, wrapped: true},
+	// The banners (notice_screens_test.go). skillup and statup go out on
+	// CategorySkillProgress, which the pipeline does not wrap.
+	"character/skillup": {data: skillupWide, more: []func() any{skillupCaptured}},
+	"character/statup":  {data: statupWide, more: []func() any{statupCaptured, statupLong}},
 	// The character screens (character_screens_test.go).
 	"character/status":    {setup: seedCharacterScreenRegistries, data: statusScreenFixture, more: []func() any{statusScreenLongName}},
 	"character/inventory": {data: inventoryScreenFixture(false), more: []func() any{inventoryScreenFixture(true)}},
@@ -140,6 +146,13 @@ var templateFits = map[string]templateFixture{
 	"descriptions/fixtures":        {data: fixturesWide, more: []func() any{fixturesShort}},
 	"descriptions/rune":            {data: signWide, more: []func() any{signShort, signLongWord}},
 	"descriptions/sign":            {data: signWide, more: []func() any{signShort, signLongWord}},
+	// The notice screens (notice_screens_test.go).
+	"mail/message": {data: mailWide, more: []func() any{mailCaptured, mailPlain, mailRead, mailLongWord}},
+	// The auction broadcasts, read from the module's own templates.
+	"auctions/auction-bid":    {setup: withAuctionTemplates, data: auctionWide, more: auctionFixtures},
+	"auctions/auction-end":    {setup: withAuctionTemplates, data: auctionWide, more: auctionFixtures},
+	"auctions/auction-start":  {setup: withAuctionTemplates, data: auctionWide, more: auctionFixtures},
+	"auctions/auction-update": {setup: withAuctionTemplates, data: auctionWide, more: auctionFixtures},
 }
 
 // templateClasses names every class that holds name.
@@ -451,4 +464,16 @@ func TestFittingTemplatesKeepTheirFullWidthLook(t *testing.T) {
 			t.Errorf("%s at 80 lost its border", name)
 		}
 	}
+}
+
+// tableLeadingWithLaterColumn is a table that names a later column as its
+// lead (plan 3b-3, ruling 6), as keyring does, with the longest shipped room
+// title and a lock sequence of difficulty 30 not yet learned.
+func tableLeadingWithLaterColumn() any {
+	return templates.GetTable("Your Keyring:",
+		[]string{"Type", "Location", "Where", "Sequence"},
+		[][]string{
+			{"Lockpick", "#60557 The Crossing, Great Hall Over the Waters", "north", "U D " + strings.Repeat("? ", 28)},
+			{"Key", "#60557 Town Square", "lockbox", "-"},
+		}).WithLead(2)
 }

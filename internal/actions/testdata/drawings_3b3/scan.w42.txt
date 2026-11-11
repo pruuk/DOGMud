@@ -1,0 +1,10 @@
+You scan the surrounding area...
+
+  north (Goblin Camp Perimeter):
+    Goblin Sentry, Goblin Scout,
+    Goblin Scrapper, Goblin Scrapper,
+    Goblin Scout, Goblin Shaman
+  east (Goblin Shaman's Alcove):
+    Goblin Shaman, Goblin Scrapper
+  south (Goblin Sleeping Den): too dark to
+    make anything out

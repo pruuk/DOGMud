@@ -102,7 +102,19 @@ func guildInfo(user *users.UserRecord) {
 		refusal.NotInGuild(user)
 		return
 	}
-	user.SendText(messaging.CategoryScreen, fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> <ansi fg="cyan">[%s]</ansi>: %d member(s)`, g.Name, g.Tag, len(g.Members)))
+	// Each line is the 80-column one where it fits the reader, else its
+	// narrow form (plan 3b-3), measured as templates.Process measures a
+	// template's (measuredFormLines): the name on a line of its own, then
+	// the tag and count; a member's rank title after the name, or under it.
+	width := user.WrapWidth()
+	heading := fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> <ansi fg="cyan">[%s]</ansi>: %d member(s)`, g.Name, g.Tag, len(g.Members))
+	if util.VisibleWidth(heading) > width {
+		heading = strings.Join(measuredFormLines(width, func(formWidth int) []string {
+			lines := messaging.PackUnits([]string{`<ansi fg="yellow-bold">` + g.Name + `</ansi>`}, 0, 2, formWidth)
+			return append(lines, messaging.PackUnits([]string{`<ansi fg="cyan">[` + g.Tag + `]</ansi>:`, fmt.Sprintf(`%d member(s)`, len(g.Members))}, 2, 4, formWidth)...)
+		}), "\n")
+	}
+	user.SendText(messaging.CategoryScreen, heading)
 	if g.Motd != "" {
 		// Escaped again on render (idempotent) so a MOTD persisted before
 		// guilds.SetMotd started escaping is neutralised too.
@@ -111,9 +123,18 @@ func guildInfo(user *users.UserRecord) {
 	// Roster: leader, then officers, then members.
 	for _, rank := range []guilds.GuildRank{guilds.RankLeader, guilds.RankOfficer, guilds.RankMember} {
 		for _, m := range g.Members {
-			if m.Rank == rank {
-				user.SendText(messaging.CategoryScreen, fmt.Sprintf(`  <ansi fg="white">%-20s</ansi> <ansi fg="black-bold">%s</ansi>`, m.CharacterName, g.RankTitle(m.Rank)))
+			if m.Rank != rank {
+				continue
 			}
+			line := fmt.Sprintf(`  <ansi fg="white">%-20s</ansi> <ansi fg="black-bold">%s</ansi>`, m.CharacterName, g.RankTitle(m.Rank))
+			if util.VisibleWidth(line) > width {
+				name := `<ansi fg="white">` + m.CharacterName + `</ansi>`
+				rankTitle := `<ansi fg="black-bold">` + g.RankTitle(m.Rank) + `</ansi>`
+				line = strings.Join(measuredFormLines(width, func(formWidth int) []string {
+					return messaging.PackUnits([]string{name, rankTitle}, 2, 4, formWidth, name)
+				}), "\n")
+			}
+			user.SendText(messaging.CategoryScreen, line)
 		}
 	}
 }
@@ -174,6 +195,10 @@ func guildList(user *users.UserRecord) {
 	}
 	sort.Slice(all, func(a, b int) bool { return strings.ToLower(all[a].Name) < strings.ToLower(all[b].Name) })
 	user.SendText(messaging.CategoryScreen, `<ansi fg="yellow-bold">Guilds:</ansi>`)
+	// Each guild's line breaks only between its units, the rest indented 4,
+	// to the reader's form width: 80 (the drawn redesign, which ran past 80
+	// with a long name and leader), 42 or 30 (plan 3b-3).
+	formWidth := users.RedrawnFormWidth(user.WrapWidth())
 	for _, g := range all {
 		leaderName := "?"
 		for _, m := range g.Members {
@@ -182,7 +207,9 @@ func guildList(user *users.UserRecord) {
 				break
 			}
 		}
-		user.SendText(messaging.CategoryScreen, fmt.Sprintf(`  <ansi fg="cyan">[%s]</ansi> <ansi fg="white">%s</ansi>: %d member(s), led by %s`, g.Tag, g.Name, len(g.Members), leaderName))
+		units := []string{`<ansi fg="cyan">[` + g.Tag + `]</ansi>`, `<ansi fg="white">` + g.Name + `</ansi>:`,
+			fmt.Sprintf(`%d member(s),`, len(g.Members)), `led by`, leaderName}
+		user.SendText(messaging.CategoryScreen, strings.Join(messaging.PackUnits(units, 2, 4, formWidth, leaderName), "\n"))
 	}
 }
 

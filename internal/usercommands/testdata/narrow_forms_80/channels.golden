@@ -1,0 +1,4 @@
+<ansi fg="screen"><ansi fg="yellow">Channels</ansi> <ansi fg="8">(channels <name> to toggle):</ansi></ansi>
+<ansi fg="screen">  <ansi fg="cyan">chat</ansi>: <ansi fg="green">on</ansi></ansi>
+<ansi fg="screen">  <ansi fg="green">newbie</ansi>: <ansi fg="green">on</ansi></ansi>
+<ansi fg="screen">  <ansi fg="yellow">trade</ansi>: <ansi fg="green">on</ansi></ansi>

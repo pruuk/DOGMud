@@ -31,8 +31,10 @@ the recipient's connection.
    tell the two apart, so it stays inside (decision, #455 review), and a
    line that ends in a coloured name authors its own stop after the name
    (`pet.go`: "You pet %s."). A line that ends in text the stage must
-   not touch ends in a terminator it already honours (`.!?,)]"'*`): the
-   afk message is quoted and the report's vital bars are bracketed.
+   not touch ends in a terminator it already honours (`.!?,)]"'*:`): the
+   afk message is quoted and the report's vital bars are bracketed. A
+   closing `:` introduces what follows (a list, a container's recipes)
+   and takes no stop (plan 3b-3; it printed `inside:.`).
    A line that ends on a drawn border (box drawing U+2500 to U+257F,
    block elements U+2580 to U+259F, or ASCII `+ | -`) is a table or box
    bottom and gets no stop (`isBorderRune`, #460); the test
@@ -598,6 +600,24 @@ Functions:
   item tag. A move name in `{attack}` renders untagged through
   `items.RenderMoveDefenseMessage`, and `{bodypart}` is never tagged.
 - `WrapAnsi(text string, maxWidth int) string`
+- `PackUnits(units []string, first, rest, width int, names ...string) []string`
+  (plan 3b-3): lays units out in lines of at most width, indented first then
+  rest, breaking only between units; a unit wider than the room at rest
+  wraps between its words (`WrapAnsi`) and keeps the indent. A piece with no
+  space that fits the line but not the indent is pulled left to end at the
+  edge; one wider than the whole line breaks at the edge (as the `wrapbreak`
+  template function does), unless its unit is listed in `names`: a
+  character name is never broken and a legacy one too long runs past the
+  edge on its own line at its indent (ruling 8). Callers name the names, not
+  the breakable units, so a forgotten unit breaks and stays on the screen.
+  No trailing empty line. The Go-built narrow forms (`internal/usercommands`,
+  scan in `internal/actions`) use it.
+- `PackUnitsKeepIndent(units []string, first, rest, width int) []string`:
+  PackUnits for the two-line table form
+  (`templates.TemplateTable.DetailLines`), where column 0 starts the next
+  item: nothing is pulled left of its indent and no word is broken, so a
+  piece too wide runs past the edge on its own line (the only such detail
+  pieces are character names). `pack_test.go` holds both.
 - `Say(cat Category, text string) Line`
 - `SendTrio(t Trio, aud Audience)`: delivers one narrated event to
   everyone entitled to it — FOUR roles since M4d (`44cc90ceb`): Actor,
@@ -664,6 +684,9 @@ flags). Everything else — `rooms`, `users`, `mobs`, `combat`,
   `UnarmedName` as a natural weapon. `species` imports `configs`,
   `fileloader`, `items`, `mudlog`, `stats` and `util`, none of which
   imports `messaging`, so this adds no cycle risk.
+- `messaging` also imports `internal/util` (added by plan 3b-3,
+  `pack.go`) for `VisibleWidth`. `util` imports only `copyover`, `dice`,
+  `mudlog` and `term`, none of which imports `messaging`.
 - Nothing in `characters` imports `messaging` (would close a cycle).
 
 > **Corrected 2026-09-08.** This file previously documented four
@@ -717,6 +740,7 @@ The package is the pipeline, one stage per file, plus the fan-out (`trio.go`):
 | `hidenames.go` | `HideNames`, `NameHider`, `HideSpeakerNames` (sight gates slice 5b): replacing specific names in bare prose, longest-first, whole-word |
 | `hidenames_tagged.go` | Identity-tag-aware name replacement `HideNames` and `Anonymize` share, including the trailing adjective span |
 | `wrap.go` | `WrapAnsi`, ANSI-aware folding of lines wider than a caller-supplied width measured in display columns; a line that fits is copied byte for byte; called by the pipeline for the categories `shouldWrap` admits, and directly by `motd.go` for its box-bordered banner |
+| `pack.go` | `PackUnits`, `PackUnitsKeepIndent` (plan 3b-3): lines that break only between whole units, for the narrow screen forms and the two-line table form |
 | `predicates.go` | `ParticipantSight` (the optics primitive) plus `CanSeeClearly`/`CanSeeShapes`/`CanSeeSightImpairedOnly`, the one-line attention policies built on it; `SeesThroughExit` and `FixedLight` (lighting plan 5c); `SensesHeatThroughExit` (lighting plan 6) |
 | `window.go` | `SightThroughWindow`, the pure window-model function `ParticipantSight` calls, `clampShift`, `ExitThroughWindow` (lighting plan 5c), `LightTrimTarget` (lighting plan 5a, reparameterized in 5b to take `dazzleAbove` instead of reading the now-retired `windowDazzleEdge` constant), `DarknessTrimTarget` (lighting plan 5d), plus its two remaining unexported constants (`windowShiftCap`, `windowFloor`) |
 | `band.go` | `Band`, `BandThroughWindow`, `LightBand` (lighting plan 3d): the band-grained twin of `SightDecision`/`SightThroughWindow`/`ParticipantSight`, adding the dazzled tier for `internal/lightnotice` |

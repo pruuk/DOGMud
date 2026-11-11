@@ -170,7 +170,9 @@ func storageScreenFixture() any {
 	return slots
 }
 
-// statusLongestName is a name at the configured maximum (NameSizeMax, 32).
+// statusLongestName is the longest name a character can hold: 32 letters,
+// the maximum (NameSizeMax) until plan 3b-3 lowered it to 28 for new names
+// (ruling 8), and kept by the characters who already have one.
 const statusLongestName = "Bartholomewsworthingtonianfellow"
 
 // A name is never split (owner, 2026-11-10: a single unbreakable word is an
@@ -181,7 +183,7 @@ func TestStatusWithTheLongestNameRunsPastOnlyOnItsName(t *testing.T) {
 	templateRenderSetup(t)
 	seedCharacterScreenRegistries(t)
 	if len(statusLongestName) != 32 {
-		t.Fatalf("the name is %d letters, not the 32 maximum", len(statusLongestName))
+		t.Fatalf("the name is %d letters, not the 32 a legacy name may have", len(statusLongestName))
 	}
 	for _, width := range templateWidths {
 		out, err := templates.ProcessAtWidth("character/status", statusScreenFixtureNamed(statusLongestName), width)

@@ -288,31 +288,39 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			user.SendBlankLine(messaging.CategorySystem)
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You can <ansi fg="command">use</ansi> the <ansi fg="container">%s</ansi> if you put the following objects inside:`, containerName))
 
-			for finalItemId, recipeList := range container.Recipes {
+			// Recipes by output id and inputs in the recipe's own order, so
+			// the screen reads the same every time (maps range at random).
+			finalIds := make([]int, 0, len(container.Recipes))
+			for finalItemId := range container.Recipes {
+				finalIds = append(finalIds, finalItemId)
+			}
+			sort.Ints(finalIds)
+			formWidth := users.RedrawnFormWidth(user.WrapWidth())
+
+			for _, finalItemId := range finalIds {
 
 				neededItems := map[int]int{}
-
-				for _, inputItemId := range recipeList {
+				order := []int{}
+				for _, inputItemId := range container.Recipes[finalItemId] {
+					if neededItems[inputItemId] == 0 {
+						order = append(order, inputItemId)
+					}
 					neededItems[inputItemId] += 1
 				}
 
 				user.SendBlankLine(messaging.CategorySystem)
 
 				finalItem := items.New(finalItemId)
-				user.SendText(messaging.CategoryScreen, fmt.Sprintf(`    <ansi fg="230">To receive 1 <ansi fg="itemname">%s</ansi>:</ansi> `, finalItem.DisplayName()))
-
-				for inputItemId, qtyNeeded := range neededItems {
+				inputs := make([]containerRecipeInput, 0, len(order))
+				for _, inputItemId := range order {
 					tmpItem := items.New(inputItemId)
-					totalContained := container.Count(inputItemId)
-					colorClass := "8" // None fulfilled
-					if totalContained == qtyNeeded {
-						colorClass = "10"
-					} else if totalContained > 0 {
-						colorClass = "3"
-					}
-					user.SendText(messaging.CategoryScreen, fmt.Sprintf(`        <ansi fg="%s">[%d/%d]</ansi> <ansi fg="itemname">%s</ansi>`, colorClass, totalContained, qtyNeeded, tmpItem.DisplayName()))
+					inputs = append(inputs, containerRecipeInput{have: container.Count(inputItemId),
+						need: neededItems[inputItemId], name: tmpItem.DisplayName()})
 				}
-
+				finalName := finalItem.DisplayName()
+				for _, line := range containerRecipeLines(finalName, inputs, formWidth) {
+					user.SendText(messaging.CategoryScreen, line)
+				}
 			}
 
 		}
@@ -945,4 +953,46 @@ func fixtureLines(room *rooms.Room) []fixtureLine {
 		}
 	}
 	return out
+}
+
+// containerRecipeInput is one input of a container recipe as look shows it:
+// how many are inside, how many the recipe needs, and its display name.
+type containerRecipeInput struct {
+	have, need int
+	name       string
+}
+
+// containerRecipeLines are the messages look sends for one container recipe:
+// what it makes, then each input with its count, for a form formWidth wide
+// (users.RedrawnFormWidth). Plan 3b-3, from the drawing container_recipe
+// (narrow-screens-3b3-mock). The output takes its article mid-sentence (`To
+// receive a Fair Copy`, items.ArticlePrefix and MidSentenceName, as `You
+// receive` lines do). At 80 the lead sits at 4 and the inputs at 8; at 42 at
+// 2 and 4; at 30 at 1 and 2. A line that does not fit breaks between its
+// units (`To receive`, the output name, `[have/need]`, the input name), the
+// rest 2 past the line's start; a name wider than the room there splits at
+// a space and keeps that indent (ruling 3).
+func containerRecipeLines(output string, inputs []containerRecipeInput, formWidth int) []string {
+	lead, row := 4, 8
+	switch {
+	case formWidth < 42:
+		lead, row = 1, 2
+	case formWidth < 80:
+		lead, row = 2, 4
+	}
+	msgs := []string{strings.Join(messaging.PackUnits([]string{`<ansi fg="230">To receive</ansi>`,
+		fmt.Sprintf(`<ansi fg="230">%s<ansi fg="itemname">%s</ansi>:</ansi>`, items.ArticlePrefix(output), items.MidSentenceName(output))},
+		lead, lead+2, formWidth), "\n")}
+	for _, in := range inputs {
+		colorClass := "8" // None fulfilled
+		if in.have == in.need {
+			colorClass = "10"
+		} else if in.have > 0 {
+			colorClass = "3"
+		}
+		msgs = append(msgs, strings.Join(messaging.PackUnits([]string{
+			fmt.Sprintf(`<ansi fg="%s">[%d/%d]</ansi>`, colorClass, in.have, in.need),
+			`<ansi fg="itemname">` + in.name + `</ansi>`}, row, row+2, formWidth), "\n"))
+	}
+	return msgs
 }

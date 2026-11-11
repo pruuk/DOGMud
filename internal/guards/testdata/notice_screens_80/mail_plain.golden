@@ -1,0 +1,6 @@
+
+<ansi fg="alert-5">         *NEW MESSAGE*</ansi>
+<ansi fg="mail-title">Sent:    </ansi><ansi fg="mail-date">Tuesday, 10-Nov-2026 12:51:27PM</ansi>
+<ansi fg="mail-title">From:    </ansi><ansi fg="username">Screenly</ansi>
+
+<ansi fg="mail-title">Message: </ansi><ansi fg="mail-message">Meet me at the bank at noon.</ansi>

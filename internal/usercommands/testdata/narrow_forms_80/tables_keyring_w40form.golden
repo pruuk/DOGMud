@@ -1,0 +1,4 @@
+<ansi fg="screen"><ansi fg="black-bold">.:</ansi> <ansi fg="table-title">Your Keyring:</ansi>
+<ansi fg="white">Type      Location            Where    Sequence</ansi>
+<ansi fg="type"><ansi fg="white-bold">Key     </ansi></ansi>  <ansi fg="location"><ansi fg="room-title">#60557 Town Square</ansi></ansi>  <ansi fg="where"><ansi fg="container">lockbox</ansi></ansi>  <ansi fg="sequence"><ansi fg="black-bold">-       </ansi></ansi>
+<ansi fg="type"><ansi fg="white-bold">Lockpick</ansi></ansi>  <ansi fg="location"><ansi fg="room-title">#60557 Town Square</ansi></ansi>  <ansi fg="where"><ansi fg="exit">north  </ansi></ansi>  <ansi fg="sequence"><ansi fg="green-bold">U D ? ? </ansi></ansi></ansi>

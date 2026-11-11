@@ -1,0 +1,10 @@
+<ansi fg="screen"><ansi fg="black-bold">.:</ansi> <ansi fg="table-title">Kill Stats by Mob</ansi>
+<ansi fg="yellow-bold">╒══════════════╤══════════╤══════╕
+│<ansi fg="white"> Mob          </ansi>│<ansi fg="white"> Quantity </ansi>│<ansi fg="white"> %    </ansi>│
+├──────────────┼──────────┼──────┤
+│<ansi fg="mob"> <ansi fg="mobname">Skeleton    </ansi> </ansi>│<ansi fg="quantity"> <ansi fg="red">3       </ansi> </ansi>│<ansi fg="%"> <ansi fg="230">100%</ansi> </ansi>│
+│<ansi fg="mob"> <ansi fg="mobname">            </ansi> </ansi>│<ansi fg="quantity"> <ansi fg="red">        </ansi> </ansi>│<ansi fg="%"> <ansi fg="230">    </ansi> </ansi>│
+│<ansi fg="mob"> <ansi fg="mobname">Total Kills </ansi> </ansi>│<ansi fg="quantity"> <ansi fg="red">3       </ansi> </ansi>│<ansi fg="%"> <ansi fg="230">    </ansi> </ansi>│
+│<ansi fg="mob"> <ansi fg="mobname">Total Deaths</ansi> </ansi>│<ansi fg="quantity"> <ansi fg="red">0       </ansi> </ansi>│<ansi fg="%"> <ansi fg="230">N/A </ansi> </ansi>│
+└──────────────┴──────────┴──────┘</ansi>
+Also try: <ansi fg="command">killstats pvp</ansi>, <ansi fg="command">killstats area</ansi></ansi>

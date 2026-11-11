@@ -1,0 +1,4 @@
+<ansi fg="screen"><ansi fg="black-bold">.:</ansi> <ansi fg="table-title">Party Members</ansi>
+<ansi fg="white">Name      Status    Health  Location   </ansi>
+<ansi fg="name"><ansi fg="username">Screenly</ansi></ansi>  <ansi fg="status"><ansi fg="white-bold">Leader  </ansi></ansi>  <ansi fg="health"><ansi fg="health-100">100%  </ansi></ansi>  <ansi fg="location"><ansi fg="magenta-bold">Town Square</ansi></ansi>
+<ansi fg="name"><ansi fg="username">Halix   </ansi></ansi>  <ansi fg="status"><ansi fg="white-bold">In Party</ansi></ansi>  <ansi fg="health"><ansi fg="health-100">100%  </ansi></ansi>  <ansi fg="location"><ansi fg="magenta-bold">Town Square</ansi></ansi></ansi>

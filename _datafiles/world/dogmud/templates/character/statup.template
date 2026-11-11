@@ -1,8 +1,10 @@
+{{/* Rules span the screen (79 stars at 80 and wider, as a desktop always saw
+them) and the text wraps inside them at indent 1 (plan 3b-3). No forms: one
+layout fits every width. */}}{{ $r := screenwidth }}{{ if ge $r 80 }}{{ $r = 79 }}{{ end }}
+<ansi fg="yellow-bold">{{ repeat "*" $r }}</ansi>
+<ansi fg="yellow-bold">{{ repeat "*" $r }}</ansi>
 
-<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>
-<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>
+<ansi fg="yellow"> {{ wrapspans . (sub $r 1) " " }}</ansi>
 
-<ansi fg="yellow"> {{ . }}</ansi>
-
-<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>
-<ansi fg="yellow-bold">{{ repeat "*" (sub screenwidth 1) }}</ansi>
+<ansi fg="yellow-bold">{{ repeat "*" $r }}</ansi>
+<ansi fg="yellow-bold">{{ repeat "*" $r }}</ansi>
