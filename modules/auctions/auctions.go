@@ -336,7 +336,8 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 			})
 		}
 
-		historyTableData := templates.GetTable(`Past Auctions`, headers, rows, formatting)
+		// The Item leads each item of the two-line form (plan 3b-3, ruling 6).
+		historyTableData := templates.GetTable(`Past Auctions`, headers, rows, formatting).WithLead(1)
 
 		tplTxt, _ := templates.Process("tables/generic", historyTableData, user.UserId)
 		user.SendText(messaging.CategoryScreen, tplTxt)

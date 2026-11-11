@@ -1,0 +1,4 @@
+<ansi fg="screen"><ansi fg="black-bold">.:</ansi> <ansi fg="table-title">Past Auctions</ansi>
+<ansi fg="white">Date                 Item       Seller     Buyer      Winning Bid</ansi>
+<ansi fg="date"><ansi fg="magenta">2026-11-10 18:30:00</ansi></ansi>  <ansi fg="item"><ansi fg="item">a rope   </ansi></ansi>  <ansi fg="seller"><ansi fg="username">Anonymous</ansi></ansi>  <ansi fg="buyer"><ansi fg="username">Anonymous</ansi></ansi>  <ansi fg="winning bid"><ansi fg="gold">12 gold    </ansi></ansi>
+<ansi fg="date"><ansi fg="magenta">2026-11-10 18:30:00</ansi></ansi>  <ansi fg="item"><ansi fg="item">a lantern</ansi></ansi>  <ansi fg="seller"><ansi fg="username">Screenly </ansi></ansi>  <ansi fg="buyer"><ansi fg="username">Halix    </ansi></ansi>  <ansi fg="winning bid"><ansi fg="gold">40 gold    </ansi></ansi></ansi>

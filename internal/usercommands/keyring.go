@@ -161,7 +161,9 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	allFormatting = append(allFormatting, keyFormatting...)
 	allFormatting = append(allFormatting, pickFormatting...)
 
-	keyRingTable := templates.GetTable(`Your Keyring:`, headers, rows, allFormatting...)
+	// Where (the exit or container the key or sequence opens) names the
+	// lock, so it leads each item of the two-line form (plan 3b-3, ruling 6).
+	keyRingTable := templates.GetTable(`Your Keyring:`, headers, rows, allFormatting...).WithLead(2)
 	tplTxt, _ := templates.Process("tables/generic", keyRingTable, user.UserId)
 	user.SendText(messaging.CategoryScreen, tplTxt)
 

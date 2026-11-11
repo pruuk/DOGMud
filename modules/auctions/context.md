@@ -18,6 +18,8 @@ population — a listing with no human interest still finds a price.
   archetype.
 - **files/datafiles/templates/auctions/** — the four broadcasts and their 42
   and 30 forms (see Broadcasts).
+- **history_table_test.go** — `auction history` at 30, 42 and 80, led by
+  the Item, and its goldens in `testdata/`.
 
 ## Types
 
@@ -82,6 +84,12 @@ reader at their own width; it once went out rendered at the bidder's.
 `broadcast_test.go` holds the per-view rendering. The `auction` command with
 no arguments shows the update through `templates.Process`, as a screen the
 player asked for.
+
+`auction history` is a `tables/generic` table whose two-line form leads
+with the Item (`WithLead(1)`, plan 3b-3 ruling 6). `history_table_test.go`
+fits it at 30, 42 and 80 with the longest shipped item name and pins its
+bordered and plain-column forms (`testdata/auction_history_*.golden`,
+recorded from master; `-update-auction-tables` rewrites them).
 
 ## Gotchas
 

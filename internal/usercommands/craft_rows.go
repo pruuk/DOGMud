@@ -86,7 +86,7 @@ func craftRowLines(row craftRow, indent, formWidth int) []string {
 	var lines []string
 	if formWidth >= 80 {
 		lead := fmt.Sprintf(`%s <ansi fg="white">%-26s</ansi>:`, status, row.name)
-		lines = packUnits(append([]string{lead}, ingredients...), indent, cont, formWidth)
+		lines = messaging.PackUnits(append([]string{lead}, ingredients...), indent, cont, formWidth)
 	} else {
 		pad := strings.Repeat(" ", indent)
 		for i, part := range strings.Split(messaging.WrapAnsi(`<ansi fg="white">`+row.name+`</ansi>:`, formWidth-under), "\n") {
@@ -97,10 +97,10 @@ func craftRowLines(row craftRow, indent, formWidth int) []string {
 			lines = append(lines, strings.Repeat(" ", under)+part)
 		}
 		if len(ingredients) > 0 {
-			lines = append(lines, packUnits(ingredients, cont, cont, formWidth)...)
+			lines = append(lines, messaging.PackUnits(ingredients, cont, cont, formWidth)...)
 		}
 	}
-	return append(lines, packUnits(tail, cont, cont, formWidth)...)
+	return append(lines, messaging.PackUnits(tail, cont, cont, formWidth)...)
 }
 
 // craftFooterLines is a closing "Label: value" line of a craft screen, in
@@ -111,7 +111,7 @@ func craftFooterLines(colour, label, value string, width int) []string {
 	if util.VisibleWidth(line) <= width {
 		return []string{`<ansi fg="` + colour + `">` + line + `</ansi>`}
 	}
-	lines := packUnits(append(strings.Fields(label), value), 0, 2, width)
+	lines := messaging.PackUnits(append(strings.Fields(label), value), 0, 2, width)
 	for i := range lines {
 		lines[i] = `<ansi fg="` + colour + `">` + lines[i] + `</ansi>`
 	}

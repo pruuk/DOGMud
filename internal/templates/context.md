@@ -221,8 +221,22 @@ Cached template with metadata for efficient reuse and cache invalidation.
   nothing, so a broadcast renders once per distinct (screen reader, width)
   among its readers (spec ruling 11, plan 3b-3; the auction broadcasts use
   it). `Process` and `ProcessForWidth` share `processPicked`.
-- `TemplateTable.RowDetail` gives a row's other cells as `Header: value`
-  pairs for the two-line table form.
+- A table names the column that leads each item of its two-line form
+  (`tables/*.w30.template`) with `TemplateTable.WithLead(column)` (plan
+  3b-3, ruling 6); `Lead()` reads it. A table that names none leads with
+  its first column; a column out of range is ignored. The bordered and
+  plain-column forms do not use it. Leads in use: history (Log), spells
+  (Name), keyring (Where), who / online (Name, which the admin view puts
+  second), auction history (Item), the shop list (what is for sale, after
+  Qty).
+- `TemplateTable.RowDetail` gives a row's cells but the lead's as
+  `Header: value` pairs joined by ` · `, in column order (the first column
+  included when it does not lead). `DetailLines(row, width)` lays them out
+  for the two-line form at an indent of 2 with `messaging.PackUnits`: it
+  breaks only between pairs, each with the ` ·` after it, so a name or a
+  place stays whole where it fits (ruling 3); a pair that fits only
+  without its dot goes alone on its line, without the dot. The lead cell is
+  wrapped with `wrapspans`, so a coloured name in it stays whole.
 - `ProcessAtWidth` (testing_support.go) renders at a given width for guards.
 - `internal/guards/template_width_guard_test.go` knows every template and why
   it is safe at 30 columns, and renders the ones that must fit at 30, 42, 80.

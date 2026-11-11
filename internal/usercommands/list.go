@@ -480,6 +480,11 @@ func sortRowsByCol(rows [][]string, col int) {
 // renderShopTable renders a sorted shop section table and sends it to the user.
 func renderShopTable(user *users.UserRecord, title, colorPattern, sellerName, sellerTag string, headers []string, rows [][]string, helpText string) {
 	saleItemsData := templates.GetTable(fmt.Sprintf(`%s by <ansi fg="%s">%s</ansi>`, colorpatterns.ApplyColorPattern(title, colorPattern), sellerTag, sellerName), headers, rows)
+	// What is for sale leads each item of the two-line form, not how many
+	// are left (plan 3b-3, ruling 6).
+	if len(headers) > 1 && headers[0] == `Qty` {
+		saleItemsData = saleItemsData.WithLead(1)
+	}
 	tplTxt, _ := templates.Process("tables/shoplist", saleItemsData, user.UserId, user.UserId)
 	user.SendText(messaging.CategoryScreen, tplTxt)
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s%s`, helpText, term.CRLFStr))

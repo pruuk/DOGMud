@@ -598,6 +598,12 @@ Functions:
   item tag. A move name in `{attack}` renders untagged through
   `items.RenderMoveDefenseMessage`, and `{bodypart}` is never tagged.
 - `WrapAnsi(text string, maxWidth int) string`
+- `PackUnits(units []string, first, rest, width int) []string` (plan 3b-3):
+  lays units out in lines of at most width, indented first then rest,
+  breaking only between units; a unit wider than the room at rest wraps
+  between its words (`WrapAnsi`) and keeps the indent. The Go-built narrow
+  forms (`internal/usercommands`: companion, craft, guild) and the two-line
+  table form (`templates.TemplateTable.DetailLines`) use it.
 - `Say(cat Category, text string) Line`
 - `SendTrio(t Trio, aud Audience)`: delivers one narrated event to
   everyone entitled to it — FOUR roles since M4d (`44cc90ceb`): Actor,
@@ -664,6 +670,9 @@ flags). Everything else — `rooms`, `users`, `mobs`, `combat`,
   `UnarmedName` as a natural weapon. `species` imports `configs`,
   `fileloader`, `items`, `mudlog`, `stats` and `util`, none of which
   imports `messaging`, so this adds no cycle risk.
+- `messaging` also imports `internal/util` (added by plan 3b-3,
+  `pack.go`) for `VisibleWidth`. `util` imports only `copyover`, `dice`,
+  `mudlog` and `term`, none of which imports `messaging`.
 - Nothing in `characters` imports `messaging` (would close a cycle).
 
 > **Corrected 2026-09-08.** This file previously documented four
@@ -717,6 +726,7 @@ The package is the pipeline, one stage per file, plus the fan-out (`trio.go`):
 | `hidenames.go` | `HideNames`, `NameHider`, `HideSpeakerNames` (sight gates slice 5b): replacing specific names in bare prose, longest-first, whole-word |
 | `hidenames_tagged.go` | Identity-tag-aware name replacement `HideNames` and `Anonymize` share, including the trailing adjective span |
 | `wrap.go` | `WrapAnsi`, ANSI-aware folding of lines wider than a caller-supplied width measured in display columns; a line that fits is copied byte for byte; called by the pipeline for the categories `shouldWrap` admits, and directly by `motd.go` for its box-bordered banner |
+| `pack.go` | `PackUnits` (plan 3b-3): lines that break only between whole units, for the narrow screen forms |
 | `predicates.go` | `ParticipantSight` (the optics primitive) plus `CanSeeClearly`/`CanSeeShapes`/`CanSeeSightImpairedOnly`, the one-line attention policies built on it; `SeesThroughExit` and `FixedLight` (lighting plan 5c); `SensesHeatThroughExit` (lighting plan 6) |
 | `window.go` | `SightThroughWindow`, the pure window-model function `ParticipantSight` calls, `clampShift`, `ExitThroughWindow` (lighting plan 5c), `LightTrimTarget` (lighting plan 5a, reparameterized in 5b to take `dazzleAbove` instead of reading the now-retired `windowDazzleEdge` constant), `DarknessTrimTarget` (lighting plan 5d), plus its two remaining unexported constants (`windowShiftCap`, `windowFloor`) |
 | `band.go` | `Band`, `BandThroughWindow`, `LightBand` (lighting plan 3d): the band-grained twin of `SightDecision`/`SightThroughWindow`/`ParticipantSight`, adding the dazzled tier for `internal/lightnotice` |

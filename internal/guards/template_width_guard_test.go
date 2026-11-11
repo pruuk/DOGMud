@@ -109,15 +109,20 @@ var templateFits = map[string]templateFixture{
 				{"the Ancient Lantern of the Drowned Lighthouse", "the Thornwall Temple District", "two days"},
 				{"a rope", "Main Street", "today"},
 			})
-	}},
+	}, more: []func() any{tableLeadingWithLaterColumn}},
 	"tables/shoplist": {data: func() any {
 		return templates.GetTable("Items available by Grumbleguts the Provisioner",
 			[]string{"Qty", "Name", "Type", "Price"},
 			[][]string{
 				{"3", "a flask of clear river water", "drinkable", "12 gold"},
 				{"1", "a lantern", "light", "40 gold"},
-			})
-	}},
+			}).WithLead(1)
+	}, more: []func() any{func() any {
+		// The secondhand shelf leads with its first column, the Name.
+		return templates.GetTable("Secondhand goods by Grumbleguts the Provisioner",
+			[]string{"Name", "Type", "Price"},
+			[][]string{{"A Salt-Stiff Page of a Sailor's Telling", "readable", "1240"}})
+	}}},
 	"character/questup": {data: func() any { return "You have found a new quest: The Long Road Home." }, more: []func() any{questupCaptured, questupWide}, wrapped: true},
 	// The banners (notice_screens_test.go). skillup and statup go out on
 	// CategorySkillProgress, which the pipeline does not wrap.
@@ -462,4 +467,16 @@ func TestFittingTemplatesKeepTheirFullWidthLook(t *testing.T) {
 			t.Errorf("%s at 80 lost its border", name)
 		}
 	}
+}
+
+// tableLeadingWithLaterColumn is a table that names a later column as its
+// lead (plan 3b-3, ruling 6), as keyring does, with the longest shipped room
+// title and a lock sequence of difficulty 30 not yet learned.
+func tableLeadingWithLaterColumn() any {
+	return templates.GetTable("Your Keyring:",
+		[]string{"Type", "Location", "Where", "Sequence"},
+		[][]string{
+			{"Lockpick", "#60557 The Crossing, Great Hall Over the Waters", "north", "U D " + strings.Repeat("? ", 28)},
+			{"Key", "#60557 Town Square", "lockbox", "-"},
+		}).WithLead(2)
 }

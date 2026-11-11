@@ -15,7 +15,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/markdown"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/ansitags"
 	"github.com/mattn/go-runewidth"
@@ -348,6 +350,24 @@ type TemplateTable struct {
 	ColumnWidths       []int
 	Formatting         [][]string
 	formatRowCount     int
+	leadColumn         int
+}
+
+// WithLead returns the table with column leading each item of its two-line
+// form (tables/*.w30.template): the cell that names the item, such as a
+// history line's Log or a spell's Name (plan 3b-3, ruling 6). The bordered
+// and plain-column forms are unchanged by it. A column out of range leaves
+// the lead as it was; a table that names none leads with its first column.
+func (t TemplateTable) WithLead(column int) TemplateTable {
+	if column >= 0 && column < t.ColumnCount {
+		t.leadColumn = column
+	}
+	return t
+}
+
+// Lead is the column that leads each item of the two-line form.
+func (t TemplateTable) Lead() int {
+	return t.leadColumn
 }
 
 func (t TemplateTable) GetHeaderCell(column int) string {
@@ -379,12 +399,41 @@ func (t TemplateTable) GetCell(row int, column int) string {
 	return cellStr
 }
 
-// RowDetail is a row without its first cell, as "Header: value" pairs joined
-// by " · ", for the two-line table form (tables/*.w30.template). A blank cell
-// is left out, and a cell under a blank header shows its value alone.
+// RowDetail is a row without its lead cell (Lead), as "Header: value" pairs
+// joined by " · ", in column order, for the two-line table form
+// (tables/*.w30.template). A blank cell is left out, and a cell under a
+// blank header shows its value alone.
 func (t TemplateTable) RowDetail(row int) string {
+	return strings.Join(t.rowPairs(row), ` · `)
+}
+
+// DetailLines is RowDetail laid out at an indent of 2 in lines of at most
+// width columns, joined by CRLF: it breaks only between pairs, each with
+// the " ·" that follows it, so a name or a place stays whole where it fits
+// (ruling 3); a pair too wide for a line wraps between its words and keeps
+// the indent (messaging.PackUnits). A pair that fits only without its " ·"
+// goes without it: it takes a line alone, so the break stands for the dot
+// and no line starts with a stray one. Empty when the row has no detail.
+func (t TemplateTable) DetailLines(row int, width int) string {
+	const indent = 2
+	pairs := t.rowPairs(row)
+	if len(pairs) == 0 {
+		return ``
+	}
+	for i := range pairs[:len(pairs)-1] {
+		if util.VisibleWidth(pairs[i]+` ·`) <= width-indent || util.VisibleWidth(pairs[i]) > width-indent {
+			pairs[i] += ` ·`
+		}
+	}
+	return strings.Join(messaging.PackUnits(pairs, indent, indent, width), term.CRLFStr)
+}
+
+func (t TemplateTable) rowPairs(row int) []string {
 	parts := []string{}
-	for c := 1; c < len(t.Rows[row]); c++ {
+	for c := 0; c < len(t.Rows[row]); c++ {
+		if c == t.leadColumn {
+			continue
+		}
 		value := strings.TrimSpace(t.Rows[row][c])
 		if value == `` {
 			continue
@@ -394,7 +443,7 @@ func (t TemplateTable) RowDetail(row int) string {
 		}
 		parts = append(parts, value)
 	}
-	return strings.Join(parts, ` · `)
+	return parts
 }
 
 func GetTable(title string, headers []string, rows [][]string, formatting ...[]string) TemplateTable {

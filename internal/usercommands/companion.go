@@ -140,7 +140,7 @@ func Companion(rest string, user *users.UserRecord,
 // the form drawn to 42 columns, or to 30 below that: the heading rule runs
 // the full width, the bars stack one per line, and words break only between
 // whole names. Every form shows everything the 80-column screen does. The
-// form is picked by screenFormWidth and laid out by packUnits
+// form is picked by screenFormWidth and laid out by messaging.PackUnits
 // (narrow_layout.go), shared with the craft, guild and MOTD screens.
 
 // companionRule is a heading on a rule that spans width: "━━━ title "
@@ -153,7 +153,7 @@ func companionRule(width int, parts ...string) string {
 	if util.VisibleWidth(head)+3 <= width {
 		return `<ansi fg="yellow">` + head + strings.Repeat(`━`, width-util.VisibleWidth(head)) + `</ansi>`
 	}
-	lines := packUnits(parts, 0, 0, width)
+	lines := messaging.PackUnits(parts, 0, 0, width)
 	return `<ansi fg="yellow">` + strings.Join(lines, "\n") + "\n" + strings.Repeat(`━`, width) + `</ansi>`
 }
 
@@ -179,7 +179,7 @@ func companionMutationLines(label, mutList string, indent, width int) []string {
 			break
 		}
 	}
-	return packUnits(append([]string{label}, names...), indent, hang, width)
+	return messaging.PackUnits(append([]string{label}, names...), indent, hang, width)
 }
 
 // companionList is the messages of the companion list for a reader width
@@ -245,7 +245,7 @@ func companionList(companions []characters.CompanionInfo, width int) []string {
 		if r.offline != "" {
 			units = append(units, r.offline)
 		}
-		msgs = append(msgs, strings.Join(packUnits(append(units, r.assist), 2, 4, formWidth), "\n"))
+		msgs = append(msgs, strings.Join(messaging.PackUnits(append(units, r.assist), 2, 4, formWidth), "\n"))
 		if r.mob == nil {
 			continue
 		}
@@ -276,7 +276,7 @@ func companionDetail(comp *characters.CompanionInfo, mob *mobs.Mob, assistStr st
 				{messaging.CategorySystem, absent}, {messaging.CategoryScreen, assist}}
 		}
 		return []companionLine{{messaging.CategorySystem, companionDetailRule(comp, formWidth)},
-			{messaging.CategorySystem, strings.Join(packUnits(strings.Fields(absent), 2, 2, formWidth), "\n")},
+			{messaging.CategorySystem, strings.Join(messaging.PackUnits(strings.Fields(absent), 2, 2, formWidth), "\n")},
 			{messaging.CategoryScreen, assist}}
 	}
 

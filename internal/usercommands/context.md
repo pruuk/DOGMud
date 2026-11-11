@@ -488,8 +488,8 @@ other code in the package that sets those fields. `character/title` gets a `titl
 lays out its own narrow forms (`companionList`, `companionDetail`): the
 80-column screen goes to any reader it fits, else the form drawn to 42 or 30
 columns, chosen by `screenFormWidth` as `templates.Process` chooses a
-template's forms and laid out by `packUnits` (both in `narrow_layout.go`,
-shared with the plan 3b-3 Go screens below). Every heading in a companion form sits on a rule the
+template's forms (`narrow_layout.go`, shared with the plan 3b-3 Go screens
+below) and laid out by `messaging.PackUnits`. Every heading in a companion form sits on a rule the
 full form width (`companionRule`); a heading too long for that goes on its
 own line or lines with a full-width rule under it. `narrow_forms_test.go` renders conditions, quests, title
 and companion at 30, 42 and 80 and pins their 80-column output to goldens
@@ -502,15 +502,32 @@ prose at 42 and below, each alert sits between two rules the full screen
 width, and the 80-column view is pinned (`room_view.golden`, recorded on the
 branch because the owner ruled the alerts' change at 80).
 
+### Tables (plan 3b-3, ruling 6)
+
+The tables go through `tables/generic` (`tables/shoplist` for `list`), whose
+narrow forms are a plain-column one and a two-line one. Each command names
+the column that leads an item of the two-line form with
+`templates.TemplateTable.WithLead`: `history` the Log, `spells` the Name,
+`keyring` Where (the exit or container the lock is on), `online` the Name
+(second in the admin view), and `renderShopTable` what is for sale when the
+section's first column is Qty. `party` already leads with its Name, and
+`killstats`, `alias`, the alt list and the admin tables keep their first
+column. `table_leads_test.go` runs each through its real command at 30, 42
+and 80 with data as wide as play makes it, and pins the bordered and
+plain-column forms, and killstats and a lead-less table at every width, to
+goldens recorded from master (`testdata/narrow_forms_80/tables_*.golden`).
+
 ### Narrow forms of the Go-built screens (plan 3b-3)
 
 `narrow_layout.go` holds what the Go-built screens share: `narrowFormWidth`
 (42, or 30 below that), `screenFormWidth` (0 when the 80-column lines fit the
 reader, else `narrowFormWidth`; it measures, so only for a screen a player
 asks for), `redrawnFormWidth` (80 at 80 and wider, else `narrowFormWidth`, for
-a screen whose 80-column layout was itself redrawn) and `packUnits`, which
-breaks lines only between whole units and splits a unit too wide for its
-indent at a space, keeping the indent (ruling 3).
+a screen whose 80-column layout was itself redrawn). They lay out with
+`messaging.PackUnits` (moved there from `narrow_layout.go` so the two-line
+table form shares it), which breaks lines only between whole units and
+splits a unit too wide for its indent at a space, keeping the indent
+(ruling 3).
 
 - **Craft** (`craft_rows.go`): `craft list` and the bare `craft` view build a
   `craftRow` per recipe (`newCraftRow`) and lay it out with `craftRowLines` at
@@ -531,7 +548,7 @@ indent at a space, keeping the indent (ruling 3).
   units (tag, `Name:`, count, `led by`, leader) at `redrawnFormWidth`, the
   rest indented 4, which at 80 is master's line wherever that fit. A 28-letter
   name at the indent of 4 on a 30 screen has no space to split at, so
-  `packUnits` pulls it left to end at the edge. `go_screens_test.go` holds
+  `messaging.PackUnits` pulls it left to end at the edge. `go_screens_test.go` holds
   both to the drawings and fits them at 30, 42, 60 and 80.
 - **MOTD** (`motd.go`): `motdBox` draws the double-line box at 80 columns and
   wider, exactly as master did (`motd.golden`). Below 80, or when a word is

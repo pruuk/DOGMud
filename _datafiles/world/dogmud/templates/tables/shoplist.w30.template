@@ -1,6 +1,7 @@
 {{- $tableData := . -}}
 {{- $headers := .Header -}}
+{{- $lead := .Lead -}}
 <ansi fg="black-bold">.:</ansi> <ansi fg="table-title">{{ splitstring .Title (sub screenwidth 3) "   " }}</ansi>
-{{ range $rowIndex, $row := .Rows }}<ansi fg="shop-{{ lowercase (index $headers 0) }}">{{ splitstring (index $row 0) screenwidth }}</ansi>
-{{ with $tableData.RowDetail $rowIndex }}  {{ splitstring . (sub screenwidth 2) "  " }}
+{{ range $rowIndex, $row := .Rows }}<ansi fg="shop-{{ lowercase (index $headers $lead) }}">{{ wrapspans (index $row $lead) screenwidth }}</ansi>
+{{ with $tableData.DetailLines $rowIndex screenwidth }}{{ . }}
 {{ end }}{{ end }}

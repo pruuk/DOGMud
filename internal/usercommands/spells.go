@@ -134,7 +134,8 @@ func Spells(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		rows = append(rows, e.row)
 	}
 
-	onlineResultsTable := templates.GetTable(`Spells`, headers, rows, rowFormatting...)
+	// The Name leads each item of the two-line form (plan 3b-3, ruling 6).
+	onlineResultsTable := templates.GetTable(`Spells`, headers, rows, rowFormatting...).WithLead(1)
 	tplTxt, _ := templates.Process("tables/generic", onlineResultsTable, user.UserId)
 	user.SendText(messaging.CategoryScreen, tplTxt)
 

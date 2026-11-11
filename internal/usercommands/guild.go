@@ -109,8 +109,8 @@ func guildInfo(user *users.UserRecord) {
 	heading := fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> <ansi fg="cyan">[%s]</ansi>: %d member(s)`, g.Name, g.Tag, len(g.Members))
 	if util.VisibleWidth(heading) > width {
 		formWidth := narrowFormWidth(width)
-		lines := packUnits([]string{`<ansi fg="yellow-bold">` + g.Name + `</ansi>`}, 0, 2, formWidth)
-		lines = append(lines, packUnits([]string{`<ansi fg="cyan">[` + g.Tag + `]</ansi>:`, fmt.Sprintf(`%d member(s)`, len(g.Members))}, 2, 4, formWidth)...)
+		lines := messaging.PackUnits([]string{`<ansi fg="yellow-bold">` + g.Name + `</ansi>`}, 0, 2, formWidth)
+		lines = append(lines, messaging.PackUnits([]string{`<ansi fg="cyan">[` + g.Tag + `]</ansi>:`, fmt.Sprintf(`%d member(s)`, len(g.Members))}, 2, 4, formWidth)...)
 		heading = strings.Join(lines, "\n")
 	}
 	user.SendText(messaging.CategoryScreen, heading)
@@ -127,7 +127,7 @@ func guildInfo(user *users.UserRecord) {
 			}
 			line := fmt.Sprintf(`  <ansi fg="white">%-20s</ansi> <ansi fg="black-bold">%s</ansi>`, m.CharacterName, g.RankTitle(m.Rank))
 			if util.VisibleWidth(line) > width {
-				line = strings.Join(packUnits([]string{`<ansi fg="white">` + m.CharacterName + `</ansi>`,
+				line = strings.Join(messaging.PackUnits([]string{`<ansi fg="white">` + m.CharacterName + `</ansi>`,
 					`<ansi fg="black-bold">` + g.RankTitle(m.Rank) + `</ansi>`}, 2, 4, narrowFormWidth(width)), "\n")
 			}
 			user.SendText(messaging.CategoryScreen, line)
@@ -205,7 +205,7 @@ func guildList(user *users.UserRecord) {
 		}
 		units := []string{`<ansi fg="cyan">[` + g.Tag + `]</ansi>`, `<ansi fg="white">` + g.Name + `</ansi>:`,
 			fmt.Sprintf(`%d member(s),`, len(g.Members)), `led by`, leaderName}
-		user.SendText(messaging.CategoryScreen, strings.Join(packUnits(units, 2, 4, formWidth), "\n"))
+		user.SendText(messaging.CategoryScreen, strings.Join(messaging.PackUnits(units, 2, 4, formWidth), "\n"))
 	}
 }
 

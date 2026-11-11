@@ -1,0 +1,3 @@
+<ansi fg="screen"><ansi fg="black-bold">.:</ansi> <ansi fg="table-title">1 user online</ansi>
+<ansi fg="white">User.Name                     Title             Online       Role</ansi>
+<ansi fg="user.name"><ansi fg="username">Bartholomewsworthingtonianus</ansi></ansi>  <ansi fg="title"><ansi fg="white-bold">Scrub Generalist</ansi></ansi>  <ansi fg="online"><ansi fg="magenta">2562047h47m</ansi></ansi>  <ansi fg="role"><ansi fg="role-user-bold">user</ansi></ansi></ansi>

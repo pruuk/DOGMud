@@ -200,7 +200,9 @@ func Online(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		tableTitle += fmt.Sprintf(` (%d human, %d AI)`, humanCt, aiCt)
 	}
 
-	onlineResultsTable := templates.GetTable(tableTitle, headers, rows, allFormatting...)
+	// The Name leads each item of the two-line form, in the admin view too
+	// where UserId comes first (plan 3b-3, ruling 6).
+	onlineResultsTable := templates.GetTable(tableTitle, headers, rows, allFormatting...).WithLead(slices.Index(columns, `User.Name`))
 	tplTxt, _ := templates.Process("tables/generic", onlineResultsTable, user.UserId)
 	user.SendText(messaging.CategoryScreen, tplTxt)
 
