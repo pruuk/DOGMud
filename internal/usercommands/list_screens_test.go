@@ -248,6 +248,9 @@ var containerRecipeItems = map[int]*items.ItemSpec{
 	97002: {ItemId: 97002, Name: "A Salt-Stiff Page of a Sailor's Telling", Type: items.Object},
 	97003: {ItemId: 97003, Name: "A Stained Page with a Deathbed Word", Type: items.Object},
 	97004: {ItemId: 97004, Name: "A Page About Where the Scrub Stops", Type: items.Object},
+	// 37 letters: at indent 6 it ends at 43, one past a 42 line, so a
+	// packer that overfills by one is caught.
+	97005: {ItemId: 97005, Name: "A Ledger Kept by the Salt Way Tollmen", Type: items.Object},
 }
 
 // containerRecipeLook is `look press` in a room whose binding press takes
@@ -268,6 +271,86 @@ func containerRecipeLook(t *testing.T, width int, recipe map[int][]int, inside .
 	}
 	room.Containers = map[string]rooms.Container{"binding press": press}
 	return runScreen(t, user, room, width, Look, "binding press")
+}
+
+// containerRecipeScreen is the recipe part of `look binding press` at width
+// for the capture's recipe (one output from four inputs, two of them the
+// same page) with two of the inputs inside: the intro and the recipe lines,
+// up to the "Inside" list.
+func containerRecipeScreen(t *testing.T, width int, more ...int) string {
+	out := containerRecipeLook(t, width, map[int][]int{97001: append([]int{97002, 97003, 97003, 97004}, more...)}, 97002, 97003)
+	lines := []string{}
+	for _, l := range plainLines(out) {
+		if strings.Contains(l, "┌") || strings.HasPrefix(l, "─") {
+			break
+		}
+		lines = append(lines, l)
+	}
+	return strings.Trim(strings.Join(lines, "\n"), "\n")
+}
+
+// The recipe as drawn (container_recipe in narrow-screens-3b3-mock), with
+// the copy fixes: the intro ends at its colon (it read `inside:.`), and the
+// output takes its article mid-sentence, `To receive a Fair Copy`, as `You
+// receive` lines do (items.ArticlePrefix, items.MidSentenceName), where it
+// read `To receive 1 A Fair Copy`. A name wider than the room at its indent
+// splits at a space and keeps the indent (ruling 3; the drawing pulled the
+// 39-letter page left to column 3). Inputs list in the recipe's order.
+func TestContainerRecipeIsTheDrawing(t *testing.T) {
+	for _, tc := range []struct {
+		width int
+		want  string
+	}{
+		{80, `You can use the binding press if you put the following objects inside:
+
+    To receive a Fair Copy of the Compiled Survey:
+        [1/1] A Salt-Stiff Page of a Sailor's Telling
+        [1/2] A Stained Page with a Deathbed Word
+        [0/1] A Page About Where the Scrub Stops`},
+		{42, `You can use the binding press if you put
+the following objects inside:
+
+  To receive
+    a Fair Copy of the Compiled Survey:
+    [1/1]
+      A Salt-Stiff Page of a Sailor's
+      Telling
+    [1/2]
+      A Stained Page with a Deathbed Word
+    [0/1]
+      A Page About Where the Scrub Stops`},
+		{30, `You can use the binding press
+if you put the following
+objects inside:
+
+ To receive
+   a Fair Copy of the Compiled
+   Survey:
+  [1/1]
+    A Salt-Stiff Page of a
+    Sailor's Telling
+  [1/2]
+    A Stained Page with a
+    Deathbed Word
+  [0/1]
+    A Page About Where the
+    Scrub Stops`},
+	} {
+		got := containerRecipeScreen(t, tc.width)
+		if got != tc.want {
+			t.Errorf("container recipe at %d is not the drawing:\n%s", tc.width, lineDiffForTest(tc.want, got))
+		}
+	}
+}
+
+// Every recipe line fits at every width, with an input whose name exactly
+// fills a 42 line at its indent.
+func TestContainerRecipeFitsEveryWidth(t *testing.T) {
+	for _, width := range []int{30, 35, 42, 60, 80} {
+		for _, line := range strings.Split(containerRecipeScreen(t, width, 97005), "\n") {
+			require.LessOrEqual(t, templates.WidestLine(line), width, "at %d: %q", width, line)
+		}
+	}
 }
 
 func TestContainerRecipeKeepsIts80ColumnOutput(t *testing.T) {

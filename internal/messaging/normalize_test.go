@@ -114,6 +114,16 @@ func TestNormalizeSkipsTrailingParenTag(t *testing.T) {
 	}
 }
 
+func TestNormalizeSkipsTrailingColon(t *testing.T) {
+	// A line ending in a colon introduces what follows; a stop after it
+	// printed `inside:.` under a container's recipes (plan 3b-3).
+	in := `You can <ansi fg="command">use</ansi> the press if you put the following objects inside:`
+	got := Normalize(CategorySystem, in)
+	if got != in {
+		t.Errorf("trailing : must not gain punctuation, got %q", got)
+	}
+}
+
 func TestNormalizeNoLonePeriodAfterTrailingNewline(t *testing.T) {
 	// A message ending in punctuation + newline must pass through
 	// unchanged — previously the newline hid the `...` from the
