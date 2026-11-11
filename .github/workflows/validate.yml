@@ -124,7 +124,15 @@ jobs:
             echo "::error::No coverage.out produced; the coverage gate cannot be evaluated."
             exit 1
           fi
-          TOTAL=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          # Only the summary line: a bare `grep total` also matched a function
+          # named total (internal/combat/calculations.go, 100%), so the gate
+          # printed "100.0" and compared two numbers (found 2026-11-11; the
+          # real total was 64.5%).
+          TOTAL=$(go tool cover -func=coverage.out | awk '$1 == "total:" {sub(/%/, "", $3); print $3}')
+          if ! [[ "$TOTAL" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Could not read one total from go tool cover (got: '${TOTAL}')."
+            exit 1
+          fi
           echo "Total coverage: ${TOTAL}%"
           # Fail if coverage drops below 28%
           if (( $(echo "$TOTAL < 28.0" | bc -l) )); then
