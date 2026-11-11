@@ -1,6 +1,6 @@
 # DOGMud Patch Notes
 
-## 2026-11-11: Every screen fits your window
+## 2026-11-11: More screens fit your window
 
 - `craft list` and `craft` now show why a recipe is locked, and where and
   how fast you make it, on a second line under the recipe. Long ingredient
