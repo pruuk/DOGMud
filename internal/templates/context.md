@@ -113,6 +113,13 @@ Cached template with metadata for efficient reuse and cache invalidation.
   scales, plus a status-only top band. Both are top-level functions in
   `templatesfunctions.go`, registered in the func map.
 
+### Durations in words
+- **DurationQuality(rounds int) string** (`templatesfunctions.go`): how long
+  a timer has left, in words and colour ("fading" to "well established"),
+  never a round count. Registered as the `durationQuality` template function
+  (the conditions and cooldowns screens) and called from Go by `skills
+  extra` (plan 3b-3).
+
 ### Markdown Integration
 - **processMarkdown(in string) string**: Processes markdown content
   - Converts markdown to ANSI-formatted text

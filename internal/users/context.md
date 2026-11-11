@@ -600,6 +600,13 @@ A websocket session wraps at the smallest of `Display.GetScreenWidth()`,
 session. `TestOnlyWrapWidthReadsTheSavedLineWidth` in `internal/guards` keeps
 it the only reader of `GetLineWidth` that wraps.
 
+The narrow forms of the Go-built screens (plan 3b-3) pick their width from a
+wrap width with two pure functions here, so `internal/usercommands` and the
+scan screen in `internal/actions` share them: `NarrowFormWidth(width)` (42,
+or 30 below that, or the width itself if narrower) and
+`RedrawnFormWidth(width)` (80 at 80 and wider, else `NarrowFormWidth`), for a
+screen whose 80-column layout was itself redrawn.
+
 ### Game menu session (#375 phase 0)
 
 A player has at most one open game menu (`activeMenu`, with its

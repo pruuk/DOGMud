@@ -31,8 +31,10 @@ the recipient's connection.
    tell the two apart, so it stays inside (decision, #455 review), and a
    line that ends in a coloured name authors its own stop after the name
    (`pet.go`: "You pet %s."). A line that ends in text the stage must
-   not touch ends in a terminator it already honours (`.!?,)]"'*`): the
-   afk message is quoted and the report's vital bars are bracketed.
+   not touch ends in a terminator it already honours (`.!?,)]"'*:`): the
+   afk message is quoted and the report's vital bars are bracketed. A
+   closing `:` introduces what follows (a list, a container's recipes)
+   and takes no stop (plan 3b-3; it printed `inside:.`).
    A line that ends on a drawn border (box drawing U+2500 to U+257F,
    block elements U+2580 to U+259F, or ASCII `+ | -`) is a table or box
    bottom and gets no stop (`isBorderRune`, #460); the test

@@ -521,11 +521,13 @@ goldens recorded from master (`testdata/narrow_forms_80/tables_*.golden`).
 
 ### Narrow forms of the Go-built screens (plan 3b-3)
 
-`narrow_layout.go` holds what the Go-built screens share: `narrowFormWidth`
-(42, or 30 below that), `screenFormWidth` (0 when the 80-column lines fit the
-reader, else `narrowFormWidth`; it measures, so only for a screen a player
-asks for), `redrawnFormWidth` (80 at 80 and wider, else `narrowFormWidth`, for
-a screen whose 80-column layout was itself redrawn). They lay out with
+`narrow_layout.go` holds `screenFormWidth` (0 when the 80-column lines fit
+the reader, else `users.NarrowFormWidth`; it measures, so only for a screen a
+player asks for). The fixed form widths live in `internal/users`
+(`wrapwidth.go`) so the scan screen in `internal/actions` shares them:
+`users.NarrowFormWidth` (42, or 30 below that) and `users.RedrawnFormWidth`
+(80 at 80 and wider, else `NarrowFormWidth`, for a screen whose 80-column
+layout was itself redrawn). They lay out with
 `messaging.PackUnits` (moved there from `narrow_layout.go` so the two-line
 table form shares it), which breaks lines only between whole units and
 splits a unit too wide for its indent at a space, keeping the indent
@@ -533,7 +535,7 @@ splits a unit too wide for its indent at a space, keeping the indent
 
 - **Craft** (`craft_rows.go`): `craft list` and the bare `craft` view build a
   `craftRow` per recipe (`newCraftRow`) and lay it out with `craftRowLines` at
-  `redrawnFormWidth`. At 80 the row is the status, the name padded to 26 and
+  `users.RedrawnFormWidth`. At 80 the row is the status, the name padded to 26 and
   the ingredients, then a line under the name with the reason and
   `[station], speed` (the drawn 80 redesign, so 80 is not master's); at 42
   `[X] Name:` and the ingredients and station on lines under the name; at 30
@@ -547,7 +549,7 @@ splits a unit too wide for its indent at a space, keeping the indent
   heading that does not fit puts the name on a line of its own and the tag
   and count under it, and a member line that does not fit puts the rank title
   after the unpadded name or under it. `guild list` packs each guild into
-  units (tag, `Name:`, count, `led by`, leader) at `redrawnFormWidth`, the
+  units (tag, `Name:`, count, `led by`, leader) at `users.RedrawnFormWidth`, the
   rest indented 4, which at 80 is master's line wherever that fit. A 28-letter
   name at the indent of 4 on a 30 screen has no space to split at, so
   `messaging.PackUnits` pulls it left to end at the edge. `go_screens_test.go` holds
@@ -561,6 +563,35 @@ splits a unit too wide for its indent at a space, keeping the indent
   picked. `motdrestyle.js` matches only the box, so the web client shows the
   ruled form as sent (plan 5 checks it). Tested with the shipped MOTD read
   from `_datafiles/config.yaml`.
+- **Achievements** (`achievements.go`): `achievementsScreen` builds the list
+  from `achievementEntry` rows at `users.RedrawnFormWidth`; a line that fits
+  is master's (`achievements.golden`), a row that does not
+  (`achievementRowLines`) packs `[x] Name (points):` whole and the
+  description's words at 2, continuing at 4. A locked row is grey on every
+  line, its progress hint two spaces after the text or on a line of its own.
+- **Macros** (`macros.go`): a command that does not fit the form
+  (`users.RedrawnFormWidth`; the 80 layout is a redesign) breaks between
+  words, continuing 2 past its letter: key at 2 and commands at 6 at 80 and
+  42, at 1 and 3 at 30. A line that fits is master's (`macros.golden`).
+- **Channels** (`channel.go`): a heading wider than the reader breaks
+  between words at `users.NarrowFormWidth`, continuing 2 in.
+- **`skills extra`** (`skills.go`): the cooldowns being tracked, sorted, each
+  by its display name (`cooldownsForDisplay`) with its time in words
+  (`templates.DurationQuality`), never a round count; the time drops under
+  the name, 3 in, when the row is wider than the reader.
+- **Container recipes in `look`** (`look.go`): `containerRecipeLines` lays out
+  each recipe (`containerRecipeInput` per input, in the recipe's order;
+  recipes by output id) at `users.RedrawnFormWidth`: lead at 4 and inputs at
+  8 at 80, 2 and 4 at 42, 1 and 2 at 30, each line continuing 2 past its
+  start. The output reads `To receive a Fair Copy...`
+  (`items.ArticlePrefix`, `MidSentenceName`).
+
+`list_screens_test.go` holds these five to the approved drawings
+(`testdata/drawings_3b3/`) and to their goldens.
+
+`start` gives a character still carrying its placeholder name its username;
+a username longer than today's `NameSizeMax` (28 since plan 3b-3, was 32) is
+kept as the name directly rather than failing validation.
 
 ## Message categories (messaging M7 slice 4, #371)
 
