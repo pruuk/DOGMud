@@ -2709,9 +2709,12 @@ SpecialRooms:
 ################################################################################
 Validation:
   # - NameLengthMin / NameLengthMax -
-  #   Min/Max size of names allowed.
+  #   Min/Max size of names allowed. The max is 28 so a new name fits a
+  #   30-column phone line (plan 3b-3, owner 2026-11-11; was 32). Existing
+  #   longer names are kept. It also caps usernames, and the playtest
+  #   harness's pt_<profile>_<6 hex> names (the longest is 27).
   NameSizeMin: 2
-  NameSizeMax: 32
+  NameSizeMax: 28
   # - PasswordSizeMin / PasswordSizeMax -
   #   Min/Max size of passwords allowed.
   PasswordSizeMin: 4

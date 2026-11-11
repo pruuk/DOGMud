@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/guilds"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -258,6 +259,43 @@ func TestGuildListFitsEveryWidth(t *testing.T) {
 			require.Contains(t, plain, "\n  "+goScreenLongestName, "at %d", width)
 		}
 	}
+}
+
+// --- name limit ---
+
+// The shipped name limit is the longest name these screens are tested
+// with: NameSizeMax went from 32 to 28 in plan 3b-3 (ruling 8, owner
+// 2026-11-11) so a new name fits a 30-column line. Read from
+// _datafiles/config.yaml, since a test binary loads the Go default.
+func TestShippedNameSizeMaxIsTheTestedLongestName(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", "..", "_datafiles", "config.yaml"))
+	require.NoError(t, err)
+	var cfg struct {
+		Validation struct {
+			NameSizeMax int `yaml:"NameSizeMax"`
+		} `yaml:"Validation"`
+	}
+	require.NoError(t, yaml.Unmarshal(raw, &cfg))
+	require.Equal(t, 28, cfg.Validation.NameSizeMax, "config.yaml's Validation.NameSizeMax")
+	require.Len(t, goScreenLongestName, cfg.Validation.NameSizeMax)
+}
+
+// A character still carrying its placeholder name takes its username in
+// `start`. A username longer than today's 28 (legal before plan 3b-3) is
+// kept as the name rather than failing validation and leaving the
+// placeholder.
+func TestStartKeepsALegacyLongUsernameAsTheName(t *testing.T) {
+	cleanup := seedAllRegistries()
+	t.Cleanup(cleanup)
+	orig := int(configs.GetValidationConfig().NameSizeMax)
+	_ = configs.AddOverlayOverrides(map[string]any{"Validation.NameSizeMax": 28})
+	t.Cleanup(func() { _ = configs.AddOverlayOverrides(map[string]any{"Validation.NameSizeMax": orig}) })
+	user := users.NewTestUser(97201, goScreenLegacyName, "", 99201)
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{user.UserId: user}))
+	user.Character.Name = user.TempName()
+	user.Character.RoomId = -1
+	_, _ = Start("", user, nil, 0)
+	require.Equal(t, goScreenLegacyName, user.Character.Name)
 }
 
 // --- motd ---

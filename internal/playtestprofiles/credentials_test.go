@@ -40,7 +40,7 @@ func TestGenerateCredentialsShapeAndHash(t *testing.T) {
 func TestGenerateCredentialsAdminProfileSurvivesShippedBannedNames(t *testing.T) {
 	_ = configs.AddOverlayOverrides(map[string]any{
 		"Validation.NameSizeMin":     2,
-		"Validation.NameSizeMax":     32,
+		"Validation.NameSizeMax":     28, // shipped since plan 3b-3 (was 32)
 		"Validation.NameRejectRegex": `^[a-zA-Z0-9_]+$`,
 		"Validation.BannedNames":     []string{"*admin*", "*moderator*"},
 	})
@@ -59,6 +59,26 @@ func TestGenerateCredentialsAdminProfileSurvivesShippedBannedNames(t *testing.T)
 	require.True(t, strings.HasPrefix(username, "pt_admin_"), "got %q", username)
 }
 
+// Every tracked profile's generated username (pt_<profile>_<6 hex>) fits the
+// shipped name limit, 28 since plan 3b-3 lowered NameSizeMax from 32. The
+// longest, pt_specialist_caster_xxxxxx, is 27; a longer profile id would make
+// GenerateCredentials fail every attempt and the profile could never start.
+func TestGenerateCredentialsFitsTheShippedNameLimitForEveryProfile(t *testing.T) {
+	_ = configs.AddOverlayOverrides(map[string]any{
+		"Validation.PasswordSizeMin": 4,
+		"Validation.PasswordSizeMax": 16,
+		"Validation.NameSizeMin":     2,
+		"Validation.NameSizeMax":     28,
+		"Validation.NameRejectRegex": `^[a-zA-Z0-9_]+$`,
+	})
+	for _, id := range KnownTemplateIDs {
+		u := &users.UserRecord{Role: users.RoleUser, Character: &characters.Character{Name: "Tester"}}
+		username, _, err := GenerateCredentials(u, id)
+		require.NoError(t, err, "profile %q", id)
+		require.LessOrEqual(t, len(username), 28, "profile %q: %q", id, username)
+	}
+}
+
 func TestSanitizeProfileToken(t *testing.T) {
 	require.Equal(t, "specialist_caster", sanitizeProfileToken("specialist-caster"))
 	require.Equal(t, "mid", sanitizeProfileToken("mid"))
@@ -68,7 +88,7 @@ func TestGenerateCredentialsRejectsHyphenShape(t *testing.T) {
 	_ = configs.AddOverlayOverrides(map[string]any{
 		"Validation.NameRejectRegex": `^[a-zA-Z0-9_]+$`,
 		"Validation.NameSizeMin":     2,
-		"Validation.NameSizeMax":     32,
+		"Validation.NameSizeMax":     28, // shipped since plan 3b-3 (was 32)
 	})
 	require.Error(t, users.ValidateName("pt-fresh-abc123"))
 	require.NoError(t, users.ValidateName("pt_fresh_abc123"))

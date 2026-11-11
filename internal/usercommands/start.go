@@ -56,9 +56,13 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// save or an odd signup path): default its name to the username rather than
 	// prompting. Never ask twice.
 	if user.Character.Name == user.TempName() || len(user.Character.Name) == 0 || strings.ToLower(user.Character.Name) == `nameless` {
-		// SetCharacterName only fails validation, and the username was already
-		// validated at signup, so this cannot realistically error here.
-		_ = user.SetCharacterName(user.Username)
+		// SetCharacterName only fails validation, and the username was
+		// validated at signup. A username from before plan 3b-3 lowered
+		// NameSizeMax from 32 to 28 can be longer than today's limit; such
+		// a name is kept (ruling 8), so it is set directly.
+		if err := user.SetCharacterName(user.Username); err != nil {
+			user.Character.Name = user.Username
+		}
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You will be known as <ansi fg="yellow-bold">%s</ansi>!%s`, user.Character.Name, term.CRLFStr))
 	}
 
