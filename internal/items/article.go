@@ -1,6 +1,9 @@
 package items
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // ArticlePrefix returns what a line puts before one item's name, trailing
 // space included, so a caller writes `"You find %s%s"` with no space of its
@@ -16,8 +19,14 @@ import "strings"
 // A name reads as plural when its last word ends in "s" but not "ss", "us"
 // or "is" (Cutlass, Abacus and Aegis stay singular). Item data has no plural
 // field; every shipped name this rule calls plural is one (2026-10-17).
+//
+// The rule reads the name as it shows: colour tags are skipped, and so is
+// the star a quest item's DisplayName opens with, so "★An Old Key" gets
+// nothing and "★Old Key" gets "an " (a recipe line once read "To receive a
+// ★An Old Key", review of plan 3b-3).
 func ArticlePrefix(name string) string {
-	words := strings.Fields(name)
+	_, rest := nameLead(name)
+	words := strings.Fields(nameTag.ReplaceAllString(rest, ``))
 	if len(words) == 0 {
 		return `a `
 	}
@@ -45,12 +54,29 @@ func ArticlePrefix(name string) string {
 // than "You find A Sheaf..." (2026-10-17 newbie-duo playtest, #620). Only
 // the article words ArticlePrefix recognises change; every other capital may
 // be part of a proper name and stays. Callers pair it with ArticlePrefix:
-// `"You find %s%s", ArticlePrefix(n), MidSentenceName(n)`.
+// `"You find %s%s", ArticlePrefix(n), MidSentenceName(n)`. The article is
+// looked for after any colour tags and quest star the name opens with
+// (nameLead), which stay in front: "★An Old Key" reads "★an Old Key".
 func MidSentenceName(name string) string {
-	if first, rest, ok := leadingArticle(name); ok {
-		return strings.ToLower(first) + ` ` + rest
+	lead, body := nameLead(name)
+	if first, rest, ok := leadingArticle(body); ok {
+		return lead + strings.ToLower(first) + ` ` + rest
 	}
 	return name
+}
+
+// nameTag matches one colour tag, opening or closing.
+var nameTag = regexp.MustCompile(`</?ansi[^>]*>`)
+
+// nameLeadRE matches what a name shows before its first word: colour tags
+// and the star a quest item's DisplayName opens with.
+var nameLeadRE = regexp.MustCompile(`^(?:</?ansi[^>]*>|★)*`)
+
+// nameLead splits name into what comes before its first word (colour tags,
+// the quest star) and the rest.
+func nameLead(name string) (lead, rest string) {
+	n := len(nameLeadRE.FindString(name))
+	return name[:n], name[n:]
 }
 
 // NameWithoutArticle returns name with its own leading article dropped, for a
@@ -58,8 +84,9 @@ func MidSentenceName(name string) string {
 // Culvert Slime corpse" and "4 Culvert Slime corpses", never "the A Culvert
 // Slime corpse" (#572). The article words are MidSentenceName's.
 func NameWithoutArticle(name string) string {
-	if _, rest, ok := leadingArticle(name); ok {
-		return rest
+	lead, body := nameLead(name)
+	if _, rest, ok := leadingArticle(body); ok {
+		return lead + rest
 	}
 	return name
 }

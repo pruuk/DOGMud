@@ -46,10 +46,18 @@ The items system is built around two main components:
   dialogue rewards, give, put, use, removing from a pet), so none reads "an
   Iron Lockpicks" or "an A Sheaf". It replaced `IndefiniteArticle`
   (2026-10-17), which returned the bare word and could not return nothing.
+  It reads the name as it shows: colour tags and the star a quest item's
+  `DisplayName` opens with are skipped, so "★An Old Key" gets "" and
+  "★Old Key" gets "an " (plan 3b-3 review: a recipe line read "To receive a
+  ★An Old Key").
 - `MidSentenceName(name) string` is the name half of that pair: a leading
-  article of the name's own (A, An, The, Some) is lowercased, every other
-  capital stays. Every `ArticlePrefix` caller passes the name through it, so
-  a forage line reads "You find a Sheaf of Gleaned Grain." (#620). The
+  article of the name's own (A, An, The, Some), after any opening colour
+  tags and quest star, is lowercased ("★an Old Key"), every other capital
+  stays. The item lines that print the pair pass the name through it, so a
+  forage line reads "You find a Sheaf of Gleaned Grain." (#620); the quest
+  engine's `GiveItem`, the behaviour tree's give and the reward summary
+  print the name as it is ("You receive A Damp Page", pinned by
+  `bridge_giveitem_test.go`). The
   messaging pipeline applies the same rule to every creature name that
   stands mid-sentence (`messaging.LowerMidSentenceNameArticles`, #572).
 - `NameWithoutArticle(name) string` drops that leading article, for a

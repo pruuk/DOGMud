@@ -57,6 +57,45 @@ func TestMidSentenceName(t *testing.T) {
 	}
 }
 
+// A quest item's DisplayName opens with a coloured star, and a name can be
+// coloured: the article is judged on the visible name after the tags and
+// the star, and the name's own article is lowercased there, so a recipe
+// line reads "To receive ★an Old Key", never "To receive a ★An Old Key"
+// (review of plan 3b-3).
+func TestArticleIsJudgedOnTheVisibleName(t *testing.T) {
+	star := `<ansi fg="questflag">★</ansi>`
+	for name, want := range map[string]string{
+		star + "An Old Key":                   "",
+		star + "Old Key":                      "an ",
+		star + "Iron Lockpicks":               "some ",
+		star + "Map":                          "a ",
+		`<ansi fg="red">Iron Sword</ansi>`:    "an ",
+		`<ansi fg="red">The Crown</ansi> (x)`: "",
+	} {
+		if got := ArticlePrefix(name); got != want {
+			t.Errorf("ArticlePrefix(%q) = %q, want %q", name, got, want)
+		}
+	}
+	for name, want := range map[string]string{
+		star + "An Old Key": star + "an Old Key",
+		star + "Old Key":    star + "Old Key",
+		star + "The":        star + "The",
+	} {
+		if got := MidSentenceName(name); got != want {
+			t.Errorf("MidSentenceName(%q) = %q, want %q", name, got, want)
+		}
+	}
+	if got := NameWithoutArticle(star + "A Culvert Slime"); got != star+"Culvert Slime" {
+		t.Errorf("NameWithoutArticle = %q", got)
+	}
+	// The real thing: a quest item's DisplayName.
+	itm := Item{ItemId: 99400, Spec: &ItemSpec{ItemId: 99400, Name: "An Old Key", QuestToken: "q-1"}}
+	n := itm.DisplayName()
+	if got := ArticlePrefix(n) + MidSentenceName(n); got != star+"an Old Key" {
+		t.Errorf("a quest item reads %q", got)
+	}
+}
+
 // TestNameWithoutArticle: a compound noun that brings its own article or count
 // drops the name's ("4 Culvert Slime corpses", #572).
 func TestNameWithoutArticle(t *testing.T) {

@@ -298,6 +298,15 @@ func containerRecipeScreen(t *testing.T, width int, more ...int) string {
 // read `To receive 1 A Fair Copy`. A name wider than the room at its indent
 // splits at a space and keeps the indent (ruling 3; the drawing pulled the
 // 39-letter page left to column 3). Inputs list in the recipe's order.
+// A quest item's name opens with a coloured star: its article is judged on
+// the name after the star, so the line reads `To receive ★an Old Key:`
+// where it read `To receive a ★An Old Key:` (review of plan 3b-3).
+func TestContainerRecipeArticleSkipsTheQuestStar(t *testing.T) {
+	itm := items.Item{ItemId: 97010, Spec: &items.ItemSpec{ItemId: 97010, Name: "An Old Key", QuestToken: "q-1"}}
+	lines := containerRecipeLines(itm.DisplayName(), nil, 80)
+	require.Equal(t, []string{"    To receive ★an Old Key:"}, plainLines(strings.Join(lines, "\n")))
+}
+
 func TestContainerRecipeIsTheDrawing(t *testing.T) {
 	for _, tc := range []struct {
 		width int
