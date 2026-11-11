@@ -1,0 +1,28 @@
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Basic Info</ansi> ──────────────────────────────────────────────────────────────┐
+   <ansi fg="yellow">Name:</ansi>        Hull-Plate Cuirass                                   
+   <ansi fg="yellow">Description:</ansi> A breastplate cut and folded from a curved section of the
+                grey material, shaped somehow to the wearer without a rivet
+                or a seam in sight. It is lighter than plate that size has
+                any right to be and colder against the body, and it turns a
+                blow with a low ringing note that hangs in the air. Long
+                scores mar its face where something once tested it and
+                failed. It was lifted from the leavings the buried place kept
+                of those who came before.
+   <ansi fg="yellow">Type:</ansi>        Body (Wearable)
+   <ansi fg="yellow">Value:</ansi>       1200 gold                                            
+ └─────────────────────────────────────────────────────────────────────────────┘
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Combat Properties</ansi> ──────────────────────────────────────────────────────┐
+   <ansi fg="yellow">Striking Power:</ansi>  N/A                                            
+   <ansi fg="yellow">Arcane Resonance:</ansi> N/A                                           
+   <ansi fg="yellow">Physical:</ansi>    light                                                
+   <ansi fg="yellow">Magical:</ansi>     thin                                                 
+   <ansi fg="yellow">Conviction:</ansi>  thin                                                 
+ └─────────────────────────────────────────────────────────────────────────────┘
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Modifiers</ansi> ───────────────────────────────────────────────────────────────┐
+   slightly bolsters your strength
+   slightly bolsters your vitality
+ └─────────────────────────────────────────────────────────────────────────────┘
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Magical Effects</ansi> ─────────────────────────────────────────────────────────┐
+   None detected.
+ └─────────────────────────────────────────────────────────────────────────────┘
+

@@ -1,0 +1,46 @@
+{{- /* Identify and appraise at 30 columns: four sections, each a titled
+rule, its lines 1 in, and a closing rule. Each label has one space after
+it; a value that does not fit beside it goes on the next line 2 past the
+label, and prose after a label continues 2 past it. */ -}}
+{{- define "slot" }}{{ if le (add (len .ind) .pad (visiblewidth .v)) .w }}{{ .ind }}<ansi fg="yellow">{{ padRight .pad .label }}</ansi>{{ .v }}{{ else }}{{ .ind }}<ansi fg="yellow">{{ .label }}</ansi>
+{{ .ind }}  {{ wraptext .v (sub .w (len .ind) 2) (print .ind "  ") }}{{ end }}{{ end -}}
+{{- define "prose" }}{{ .ind }}{{ wraptext (print `<ansi fg="yellow">` (padRight .pad .label) `</ansi>` .v) (sub .w (len .ind) 2) (print .ind "  ") }}{{ end -}}
+{{- $item := .Item }}{{ $spec := .ItemSpec }}{{ $w := 30 }}{{ $ind := " " -}}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Basic Info</ansi> {{ repeat "─" (sub $w 16) }}
+{{ template "slot" (map "w" $w "ind" $ind "pad" 6 "label" "Name:" "v" (uc $item.Name)) }}
+{{ template "prose" (map "w" $w "ind" $ind "pad" 13 "label" "Description:" "v" $spec.Description) }}
+{{ template "slot" (map "w" $w "ind" $ind "pad" 6 "label" "Type:" "v" (print (uc $spec.Type.String) " (" (uc $spec.Subtype.String) ")")) }}
+{{ template "slot" (map "w" $w "ind" $ind "pad" 7 "label" "Value:" "v" (printf "%d gold" $spec.Value)) }}
+{{ repeat "─" $w }}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Combat Properties</ansi> {{ repeat "─" (sub $w 23) }}
+{{ template "slot" (map "w" $w "ind" $ind "pad" 16 "label" "Striking Power:" "v" (or (and (eq $spec.Type.String "weapon") (damageQuality $spec.DamageMultiplier)) "N/A")) }}
+{{ template "slot" (map "w" $w "ind" $ind "pad" 18 "label" "Arcane Resonance:" "v" (or (and (ne $spec.SpellDamageMultiplier 0.0) (spellDamageQuality $spec.SpellDamageMultiplier)) "N/A")) }}
+{{ template "slot" (map "w" $w "ind" $ind "pad" 10 "label" "Physical:" "v" (or (and (ne $spec.PhysicalMitigation 0) (mitigationQuality (divFloat $spec.PhysicalMitigation 100))) "N/A")) }}
+{{ template "slot" (map "w" $w "ind" $ind "pad" 9 "label" "Magical:" "v" (or (and (ne $spec.MagicalMitigation 0) (mitigationQuality (divFloat $spec.MagicalMitigation 100))) "N/A")) }}
+{{ template "slot" (map "w" $w "ind" $ind "pad" 12 "label" "Conviction:" "v" (or (and (ne $spec.ConvictionMitigation 0) (mitigationQuality (divFloat $spec.ConvictionMitigation 100))) "N/A")) }}
+{{ repeat "─" $w }}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Modifiers</ansi> {{ repeat "─" (sub $w 15) }}
+{{- $hasMods := false }}
+{{- range $statName, $qty := $spec.StatMods }}{{ $hasMods = true }}
+{{ $ind }}{{ wraptext (statModDescription $statName $qty) (sub $w (len $ind) 2) (print $ind "  ") }}
+{{- end }}
+{{- range $idx, $conditionId := $spec.ConditionIds }}{{ $hasMods = true }}
+{{ template "prose" (map "w" $w "ind" $ind "pad" 9 "label" "Applies:" "v" (print `<ansi fg="spellname">` (conditionname $conditionId) `</ansi> - ` (conditionduration $conditionId))) }}
+{{- end }}
+{{- if not $hasMods }}
+{{ $ind }}None detected.
+{{- end }}
+{{ repeat "─" $w }}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Magical Effects</ansi> {{ repeat "─" (sub $w 21) }}
+{{- $hasMagic := false }}
+{{- if $item.IsCursed }}{{ $hasMagic = true }}
+{{ $ind }}It's <ansi fg="red-bold">CURSED!</ansi>{{ end }}
+{{- if gt (len $spec.Element.String) 0 }}{{ $hasMagic = true }}
+{{ template "slot" (map "w" $w "ind" $ind "pad" 9 "label" "Element:" "v" (uc $spec.Element.String)) }}{{ end }}
+{{- range $idx, $conditionId := $spec.Damage.CritConditionIds }}{{ $hasMagic = true }}
+{{ template "prose" (map "w" $w "ind" $ind "pad" 13 "label" "Crits Apply:" "v" (print `<ansi fg="spellname">` (conditionname $conditionId) `</ansi> - ` (conditionduration $conditionId))) }}
+{{- end }}
+{{- if not $hasMagic }}
+{{ $ind }}None detected.
+{{- end }}
+{{ repeat "─" $w }}

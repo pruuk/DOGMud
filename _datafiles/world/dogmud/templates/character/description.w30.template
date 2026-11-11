@@ -1,0 +1,11 @@
+{{- /* Looking at a person or a creature, at 30 columns: the description
+between two full-width rules, its prose wrapped 1 in. */ -}}
+{{ $w := 30 }}{{ $ind := " " }}
+<ansi fg="black-bold">.:</ansi> <ansi fg="username">{{ wraptext .Name (sub $w 3) "   " }}</ansi>
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Description</ansi> {{ repeat "─" (sub $w 17) }}
+{{ $ind }}{{ wraptext .GetDescription (sub $w (len $ind)) $ind }}
+{{- if .GetMutationVisuals }}
+{{ $ind }}<ansi fg="magenta">{{ wraptext .GetMutationVisuals (sub $w (len $ind)) $ind }}</ansi>
+{{- end }}
+{{ $ind }}{{ wraptext .GetHealthAppearance (sub $w (len $ind)) $ind }}
+{{ repeat "─" $w }}

@@ -1,0 +1,1 @@
+<ansi fg="yellow">Exits: </ansi><ansi fg="exit">down</ansi>, <ansi fg="exit">east</ansi> (unlocked), <ansi fg="exit">north</ansi> (locked), <ansi fg="secret-exit">(up)</ansi>, <ansi fg="exit">a rope ladder</ansi>

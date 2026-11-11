@@ -1,0 +1,20 @@
+┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Equipment</ansi> ──────────────────────────────────────────────────────────────┐
+   <ansi fg="yellow">Weapon:     </ansi><ansi fg="itemname">longsword</ansi>
+   <ansi fg="yellow">Offhand:    </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Head:       </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Neck:       </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Shoulders:  </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Body:       </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Back:       </ansi><ansi fg="itemname">pack</ansi>
+   <ansi fg="yellow">Belt:       </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Wrist 1:    </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Wrist 2:    </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Gloves:     </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Ring:       </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Ring:       </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Legs:       </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Feet:       </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Light:      </ansi><ansi fg="itemname">-nothing-</ansi>
+   <ansi fg="yellow">Components: </ansi><ansi fg="itemname">-nothing-</ansi>
+ └────────────────────────────────────────────────────────────────────────────┘
+ Carrying: several objects

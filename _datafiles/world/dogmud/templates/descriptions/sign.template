@@ -1,1 +1,4 @@
-           A sign reads: [<ansi fg="green-bold">{{ .DisplayText }}</ansi>]
+{{- /* A sign wider than the screen starts at the left edge, its text
+continuing 2 in; a word longer than a whole line is broken. */ -}}
+{{- $text := print `A sign reads: [<ansi fg="green-bold">` .DisplayText `</ansi>]` -}}
+{{- if le (add 11 (visiblewidth $text)) screenwidth }}           {{ $text }}{{ else }}{{ wrapbreak $text (sub screenwidth 2) "  " }}{{ end }}

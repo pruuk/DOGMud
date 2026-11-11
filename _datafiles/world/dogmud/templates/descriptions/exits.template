@@ -1,15 +1,33 @@
-<ansi fg="yellow">Exits: </ansi>
+{{- /* The exits line. A list wider than the screen wraps between exits,
+hanging under the first one. An exit and its tag ("northeast (locked)",
+"(up)") are one unit, split only when longer than a whole line. $list is the
+line as it always was; $wrapped is the same units laid out to the screen. */ -}}
+{{- $w := screenwidth -}}{{- $pad := "       " -}}
 {{- $exitCount := add (len .VisibleExits) (len .TemporaryExits) -}}
+{{- $list := "" }}{{ $wrapped := "" }}{{ $cur := 7 -}}
 {{- if eq $exitCount 0 -}}
-    <ansi fg="room-description{{ if or .IsNight .IsDark }}-dark{{ end }}">None</ansi>
+    {{- $dark := "" }}{{ if or .IsNight .IsDark }}{{ $dark = "-dark" }}{{ end -}}
+    {{- $list = print `<ansi fg="room-description` $dark `">None</ansi>` -}}
 {{- else -}}
     {{- $displayed := 0 -}}
     {{- range $exitStr, $exitInfo := .VisibleExits -}}
             {{- $displayed = add $displayed 1 -}}
-            <ansi fg="{{ if $exitInfo.Secret }}secret-{{ end }}exit">{{ if $exitInfo.Secret }}({{ end }}{{ $exitStr }}{{ if $exitInfo.Secret }}){{ end }}</ansi>{{ if $exitInfo.HasLock }}{{ if not $exitInfo.Lock.IsLocked }} (unlocked){{ else }} (locked){{ end }}{{ end }}{{- if ne $displayed $exitCount }}, {{ end -}}
+            {{- $u := "" }}{{ if $exitInfo.Secret }}{{ $u = print `<ansi fg="secret-exit">(` $exitStr `)</ansi>` }}{{ else }}{{ $u = print `<ansi fg="exit">` $exitStr `</ansi>` }}{{ end -}}
+            {{- if $exitInfo.HasLock }}{{ if not $exitInfo.Lock.IsLocked }}{{ $u = print $u ` (unlocked)` }}{{ else }}{{ $u = print $u ` (locked)` }}{{ end }}{{ end -}}
+            {{- if ne $displayed $exitCount }}{{ $u = print $u `,` }}{{ end -}}
+            {{- $n := visiblewidth $u }}{{ $sep := 0 }}{{ if gt $displayed 1 }}{{ $sep = 1 }}{{ $list = print $list " " }}{{ end }}{{ $list = print $list $u -}}
+            {{- if le (add $cur $sep $n) $w }}{{ if $sep }}{{ $wrapped = print $wrapped " " }}{{ end }}{{ $wrapped = print $wrapped $u }}{{ $cur = add $cur $sep $n -}}
+            {{- else if le (add 7 $n) $w }}{{ $wrapped = print $wrapped "\n" $pad $u }}{{ $cur = add 7 $n -}}
+            {{- else }}{{ if $sep }}{{ $wrapped = print $wrapped "\n" $pad }}{{ end }}{{ $wrapped = print $wrapped (wraptext $u (sub $w 7) $pad) }}{{ $cur = $w }}{{ end -}}
     {{- end -}}
     {{- range $exitStr, $tmpExitInfo := .TemporaryExits -}}
             {{- $displayed = add $displayed 1 -}}
-            <ansi fg="exit">{{ $tmpExitInfo.Title }}</ansi>{{- if ne $displayed $exitCount }}, {{ end -}}
+            {{- $u := print `<ansi fg="exit">` $tmpExitInfo.Title `</ansi>` -}}
+            {{- if ne $displayed $exitCount }}{{ $u = print $u `,` }}{{ end -}}
+            {{- $n := visiblewidth $u }}{{ $sep := 0 }}{{ if gt $displayed 1 }}{{ $sep = 1 }}{{ $list = print $list " " }}{{ end }}{{ $list = print $list $u -}}
+            {{- if le (add $cur $sep $n) $w }}{{ if $sep }}{{ $wrapped = print $wrapped " " }}{{ end }}{{ $wrapped = print $wrapped $u }}{{ $cur = add $cur $sep $n -}}
+            {{- else if le (add 7 $n) $w }}{{ $wrapped = print $wrapped "\n" $pad $u }}{{ $cur = add 7 $n -}}
+            {{- else }}{{ if $sep }}{{ $wrapped = print $wrapped "\n" $pad }}{{ end }}{{ $wrapped = print $wrapped (wraptext $u (sub $w 7) $pad) }}{{ $cur = $w }}{{ end -}}
     {{- end -}}
-{{- end }}
+{{- end -}}
+<ansi fg="yellow">Exits: </ansi>{{ if le (add 7 (visiblewidth $list)) $w }}{{ $list }}{{ else }}{{ $wrapped }}{{ end }}

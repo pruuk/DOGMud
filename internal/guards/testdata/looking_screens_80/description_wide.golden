@@ -1,0 +1,11 @@
+
+<ansi fg="black-bold">.:</ansi> <ansi fg="username">Bartholomewsworthingtonian</ansi>
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Description</ansi> ────────────────────────────────────────────────────────────┐
+   A tall, broad-shouldered traveller in a salt-stained greatcoat, with a
+   weathered face and a nose that has been broken more than once. Their
+   boots are caked with the grey mud of the lower marsh.
+   A brass compass hangs from a cord at their throat, its needle trembling.
+   <ansi fg="magenta">Their skin has the faint blue sheen of old ice, and frost gathers in the
+   creases of their knuckles. A long, sinuous tail sways behind them.</ansi>
+   <ansi fg="username">Bartholomewsworthingtonian</ansi> looks like they're <ansi fg="health-0">about to die!</ansi>
+ └────────────────────────────────────────────────────────────────────────────┘

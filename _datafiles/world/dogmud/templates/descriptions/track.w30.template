@@ -1,0 +1,32 @@
+{{- /* Track at 30 columns: the trails between two full-width rules, one to
+a line 1 in, laid out as at 42. */ -}}
+{{- define "trail" -}}
+{{- $w := .w }}{{ $ind := .ind }}{{ $in2 := print .ind "  " -}}
+{{- $str := print "[<ansi fg=\"trail-" (padRight 4 (lowercase .t.Strength)) "\">" .t.Strength "</ansi>]" -}}
+{{- $name := print "<ansi fg=\"username\">" (stringor .t.Name "None" 0) "</ansi>" -}}
+{{- $went := "" }}{{ if ne .t.ExitName "" }}{{ $went = print "- It seems like they went <ansi fg=\"exit\">" .t.ExitName "</ansi>" }}{{ end -}}
+{{- $head := print $str " " $name -}}
+{{- if and $went (le (add (len $ind) (visiblewidth $head) 1 (visiblewidth $went)) $w) -}}
+{{ $ind }}{{ $head }} {{ $went }}
+{{- else -}}
+{{- if le (add (len $ind) (visiblewidth $head)) $w -}}
+{{ $ind }}{{ $head }}
+{{- else -}}
+{{ $ind }}{{ $str }}
+{{ $in2 }}{{ wraptext $name (sub $w (len $in2)) $in2 }}
+{{- end -}}
+{{- if $went }}
+{{ $in2 }}{{ wraptext $went (sub $w (len $in2)) $in2 }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- $w := 30 }}{{ $ind := " " -}}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Recent Visitors</ansi> {{ repeat "─" (sub $w 21) }}
+{{- if eq (len .) 0 }}
+{{ $ind }}None
+{{- else }}
+{{- range $key, $val := . }}
+{{ template "trail" (map "w" $w "ind" $ind "t" $val) }}
+{{- end }}
+{{- end }}
+{{ repeat "─" $w }}

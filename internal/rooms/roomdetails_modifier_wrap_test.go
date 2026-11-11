@@ -32,48 +32,62 @@ func modifierWrapRoom(t *testing.T) (*Room, *users.UserRecord) {
 	return roomManager.rooms[1], users.GetByUserId(7491)
 }
 
-// A mutator's alert is centered for the reader. The widths at the top of the
-// range keep the 65-column centering they always had; below that the alert
-// centers between the room template's 6-column margins.
-func TestGetDetails_AlertCentersToTheReadersWidth(t *testing.T) {
-	const short = "Quake now!"          // 10 columns
-	const fits = "The floors are dusty" // 20 columns
-	for _, tc := range []struct {
-		name    string
-		width   int
-		alert   string
-		padding int
-	}{
-		{"short at 80 is unchanged", 80, short, 27},
-		{"longer at 80 is unchanged", 80, fits, 22},
-		{"short at 77 is unchanged", 77, short, 27},
-		{"short at 60", 60, short, 19},
-		{"short at 30", 30, short, 4},
-		{"longer at 30 has no room to pad", 30, fits, 0},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Cleanup(seedRegistry())
-			t.Cleanup(mutators.SeedSpecsForTest(mutators.MutatorSpec{
-				MutatorId:     "test-wrap-alert",
-				AlertModifier: &mutators.TextModifier{Text: tc.alert},
-			}))
-			viewer := users.NewTestUser(7492, "alerted", "Alerted", 97492)
-			viewer.LineWidth = tc.width
-			t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{7492: viewer}))
-			GetZoneConfig("TestZone").Mutators.Add("test-wrap-alert")
+// Every alert reaches the room template as bare text at every reader width:
+// the template centres it between two rules as wide as the reader's screen
+// (owner, 2026-11-10), so no width is baked in here.
+func TestGetDetails_AlertsAreBareText(t *testing.T) {
+	const quake = "Quake now! The floors are dusty."
+	for _, width := range []int{30, 42, 80} {
+		t.Cleanup(seedRegistry())
+		t.Cleanup(mutators.SeedSpecsForTest(mutators.MutatorSpec{
+			MutatorId:     "test-wrap-alert",
+			AlertModifier: &mutators.TextModifier{Text: quake},
+		}))
+		viewer := users.NewTestUser(7492, "alerted", "Alerted", 97492)
+		viewer.LineWidth = width
+		t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{7492: viewer}))
+		GetZoneConfig("TestZone").Mutators.Add("test-wrap-alert")
+		r := roomManager.rooms[1]
+		r.IsBank, r.IsStorage = true, true
 
-			alerts := GetDetails(roomManager.rooms[1], viewer).RoomAlerts
-			if len(alerts) != 1 {
-				t.Fatalf("want the one alert, got %q", alerts)
-			}
-			want := strings.Repeat(" ", tc.padding) + tc.alert
-			if got := alerts[0]; got != want {
-				t.Fatalf("alert %q, want %q", got, want)
-			}
-			if w := 6 + util.VisibleWidth(alerts[0]); w > tc.width {
-				t.Errorf("the alert ends at column %d, past the reader's %d", w, tc.width)
-			}
-		})
+		alerts := GetDetails(r, viewer).RoomAlerts
+		want := []string{AlertBank, AlertStorage, quake}
+		if strings.Join(alerts, "|") != strings.Join(want, "|") {
+			t.Fatalf("at %d the alerts are %q, want %q", width, alerts, want)
+		}
+		r.IsBank, r.IsStorage = false, false
+	}
+}
+
+// On a screen 42 columns wide or narrower the minimap goes above the prose,
+// which then takes the whole width (owner, 2026-11-10); wider, it stays
+// beside the prose (TestGetDetails_MinimapSitsAtTheViewersRightEdge).
+func TestGetDetails_MinimapGoesAboveTheProseOnANarrowScreen(t *testing.T) {
+	r, viewer := modifierWrapRoom(t)
+	tinymap := []string{"╔═════╗", "║.....║", "║.....║", "║..@..║", "║.....║", "║.....║", "╚═════╝"}
+	for _, width := range []int{30, 42} {
+		viewer.LineWidth = width
+		lines := strings.Split(GetDetails(r, viewer, tinymap).Description, "\n")
+		if len(lines) <= len(tinymap) || strings.Join(lines[:len(tinymap)], "\n") != strings.Join(tinymap, "\n") {
+			t.Fatalf("at %d the map is not above the prose:\n%s", width, strings.Join(lines, "\n"))
+		}
+		if !strings.Contains(strings.Join(lines[len(tinymap):], " "), "A peace older") {
+			t.Errorf("at %d the prose is missing:\n%s", width, strings.Join(lines, "\n"))
+		}
+		widest := 0
+		for _, line := range lines {
+			widest = max(widest, util.VisibleWidth(line))
+		}
+		if widest > width || widest < width-12 {
+			t.Errorf("at %d the prose does not take the width: widest line %d", width, widest)
+		}
+	}
+	for _, width := range []int{43, 80} {
+		viewer.LineWidth = width
+		lines := strings.Split(GetDetails(r, viewer, tinymap).Description, "\n")
+		if !strings.HasSuffix(lines[0], tinymap[0]) || lines[0] == tinymap[0] {
+			t.Errorf("at %d the map is no longer beside the prose: %q", width, lines[0])
+		}
 	}
 }
 

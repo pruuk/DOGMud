@@ -1,0 +1,7 @@
+<ansi fg="white"> ┌─────────────────────────────────────────────────────────────────────────┐</ansi>
+
+  <ansi fg="white">Inside: </ansi><ansi fg="itemname">1,234,567 gold</ansi>, <ansi fg="itemname">A Salt-Stiff Page of a Sailor's Telling</ansi>, 
+          <ansi fg="itemname">Pit Fighter's Serrated Basalt-Iron Blade</ansi>, <ansi fg="itemname">Reinforced Travel Pack</ansi>, 
+          <ansi fg="itemname">Strongbox Key</ansi>, <ansi fg="itemname">Iron Ore</ansi>
+
+<ansi fg="white"> └─────────────────────────────────────────────────────────────────────────┘</ansi>

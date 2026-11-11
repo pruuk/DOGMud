@@ -1,0 +1,13 @@
+{{- /* Looking at a person or a creature, at 42 columns: the description
+between two full-width rules, its prose wrapped 3 in. The form is drawn to
+42 whatever the reader's width, so a reader narrower than that gets the
+30-column form. */ -}}
+{{ $w := 42 }}{{ $ind := "   " }}
+<ansi fg="black-bold">.:</ansi> <ansi fg="username">{{ wraptext .Name (sub $w 3) "   " }}</ansi>
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Description</ansi> {{ repeat "─" (sub $w 17) }}
+{{ $ind }}{{ wraptext .GetDescription (sub $w (len $ind)) $ind }}
+{{- if .GetMutationVisuals }}
+{{ $ind }}<ansi fg="magenta">{{ wraptext .GetMutationVisuals (sub $w (len $ind)) $ind }}</ansi>
+{{- end }}
+{{ $ind }}{{ wraptext .GetHealthAppearance (sub $w (len $ind)) $ind }}
+{{ repeat "─" $w }}

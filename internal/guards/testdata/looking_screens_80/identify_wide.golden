@@ -1,0 +1,25 @@
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Basic Info</ansi> ──────────────────────────────────────────────────────────────┐
+   <ansi fg="yellow">Name:</ansi>        Pit Fighter'S Serrated Basalt-Iron Blade             
+   <ansi fg="yellow">Description:</ansi> A heavy blade of dark basalt-iron, its edge cut into teeth.
+   <ansi fg="yellow">Type:</ansi>        Weapon (Slashing)
+   <ansi fg="yellow">Value:</ansi>       1234567 gold                                         
+ └─────────────────────────────────────────────────────────────────────────────┘
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Combat Properties</ansi> ──────────────────────────────────────────────────────┐
+   <ansi fg="yellow">Striking Power:</ansi>  moderate striking power                        
+   <ansi fg="yellow">Arcane Resonance:</ansi> moderate arcane resonance                     
+   <ansi fg="yellow">Physical:</ansi>    N/A                                                  
+   <ansi fg="yellow">Magical:</ansi>     N/A                                                  
+   <ansi fg="yellow">Conviction:</ansi>  N/A                                                  
+ └─────────────────────────────────────────────────────────────────────────────┘
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Modifiers</ansi> ───────────────────────────────────────────────────────────────┐
+   saps your perception
+   greatly bolsters your strength
+   slightly bolsters your vitality
+   <ansi fg="yellow">Applies:</ansi>     <ansi fg="spellname">Chrysalis Regeneration</ansi> - Activates every round (50x total)
+ └─────────────────────────────────────────────────────────────────────────────┘
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Magical Effects</ansi> ─────────────────────────────────────────────────────────┐
+   It's <ansi fg="red-bold">CURSED!</ansi>
+   <ansi fg="yellow">Element:</ansi>     Electricity                                          
+   <ansi fg="yellow">Crits Apply:</ansi> <ansi fg="spellname">Death's Shadow</ansi> - Activates every round (5x total)
+ └─────────────────────────────────────────────────────────────────────────────┘
+

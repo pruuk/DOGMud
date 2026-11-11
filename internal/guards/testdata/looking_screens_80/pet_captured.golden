@@ -1,0 +1,7 @@
+
+<ansi fg="black-bold">.:</ansi> <ansi fg="petname">Whiskerfield</ansi>
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Description</ansi> ────────────────────────────────────────────────────────────┐
+   <ansi fg="petname">Whiskerfield</ansi> is a pet <ansi fg="petname">cat</ansi> owned by <ansi fg="username">Screenly</ansi>.
+   <ansi fg="petname">Whiskerfield</ansi> hunger is: <ansi fg="hunger-dying">dying</ansi>
+ └────────────────────────────────────────────────────────────────────────────┘
+ Carrying: 
