@@ -1,0 +1,25 @@
+
+<ansi fg="auction-banner">*******************************************************************************</ansi>
+<ansi fg="auction-banner">* * * AUCTION END * AUCTION END * AUCTION END * AUCTION END * AUCTION END * * *</ansi>
+
+    <ansi fg="yellow">The auction has <ansi fg="white-bold">ENDED!</ansi></ansi>
+
+    Winner:      <ansi fg="username">Master Ordwin</ansi>
+    Bid:         <ansi fg="gold">625 gold</ansi>
+
+    Item:        <ansi fg="item">Core Guardian Heart</ansi>
+    Description: <ansi fg="item">Drawn from the deepest of the guardians, the one that stood
+                 over the place where all the buried quiet gathers. It is a
+                 fist of grey material folded around a single mote of trapped
+                 brightness, and it is never wholly still -- the light within
+                 drifts and settles like something breathing in its sleep.
+                 Hold it and you feel a slow pulse answer in your own wrist,
+                 patient and enormous. Whatever it once guarded, it guards
+                 its last warmth now. A relic beyond price, fit only for work
+                 that will outlast the one who makes it.</ansi>
+
+    Type <ansi fg="command">help auction</ansi> to learn more about auctions.
+
+<ansi fg="auction-banner">* * * AUCTION END * AUCTION END * AUCTION END * AUCTION END * AUCTION END * * *</ansi>
+<ansi fg="auction-banner">*******************************************************************************</ansi>
+

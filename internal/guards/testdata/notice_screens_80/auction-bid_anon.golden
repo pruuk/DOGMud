@@ -1,0 +1,9 @@
+
+<ansi fg="auction-banner">*******************************************************************************</ansi>
+<ansi fg="auction-banner">* * * AUCTION * AUCTION * AUCTION * AUCTION * AUCTION * AUCTION * AUCTION * * *</ansi>
+
+    Someone has bid <ansi fg="gold">1234567 gold</ansi>
+
+<ansi fg="auction-banner">* * * AUCTION * AUCTION * AUCTION * AUCTION * AUCTION * AUCTION * AUCTION * * *</ansi>
+<ansi fg="auction-banner">*******************************************************************************</ansi>
+

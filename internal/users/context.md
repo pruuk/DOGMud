@@ -458,6 +458,10 @@ func (i *Inbox) Empty() {
 func (m Message) DateString() string {
     return m.DateSent.Format(string(configs.GetConfig().TextFormats.Time))
 }
+
+// DateUnits is DateString cut after its first ", ": the day and the
+// date-time, which a narrow mail form keeps whole (plan 3b-3).
+func (m Message) DateUnits() []string
 ```
 
 ## User Data Management

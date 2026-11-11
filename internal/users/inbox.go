@@ -1,6 +1,7 @@
 package users
 
 import (
+	"strings"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -59,4 +60,16 @@ func (i *Inbox) Empty() {
 func (m Message) DateString() string {
 	tFormat := string(configs.GetConfig().TextFormats.Time)
 	return m.DateSent.Format(tFormat)
+}
+
+// DateUnits is DateString cut after its first ", ": with the shipped format,
+// the day ("Tuesday,") and the date-time ("10-Nov-2026 12:51:27PM"). A
+// narrow mail screen keeps each whole on a line (plan 3b-3). A format with
+// no ", " is one unit.
+func (m Message) DateUnits() []string {
+	day, rest, found := strings.Cut(m.DateString(), ", ")
+	if !found {
+		return []string{day}
+	}
+	return []string{day + ",", rest}
 }

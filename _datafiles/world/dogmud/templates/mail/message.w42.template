@@ -1,0 +1,22 @@
+{{- /* A mail message at 42 columns, the width of the inbox rule (plan 3b-3).
+The date and the sender stay beside their padded label when they fit; the date
+wraps under its value with the date-time kept whole, and a sender too long for
+the line goes under the label, 2 in. The message and each NOTE are prose after
+a label, so they continue 2 past the label (owner, 2026-11-11). Attached item
+names stay whole (wrapspans). The 30 form is this one with $w 30 and the
+labels' padding dropped. */ -}}
+{{- $w := 42 }}{{ $rm := "" }}{{ if .Read }}{{ $rm = "-read" }}{{ end }}
+{{- $sent := t "Inbox.Sent" }}{{ $from := t "Inbox.From" }}{{ $msg := t "Inbox.Message" }}{{ $note := t "Inbox.Note" }}
+{{- $date := "" }}{{ range $i, $u := .DateUnits }}{{ if $i }}{{ $date = print $date " " }}{{ end }}{{ $date = print $date `<ansi fg="mail-date` $rm `">` $u `</ansi>` }}{{ end }}
+{{ if not .Read }}<ansi fg="alert-5">{{ t "Inbox.NewMessage" }}</ansi>
+{{ end -}}
+<ansi fg="mail-title{{ $rm }}">{{ $sent }}</ansi>{{ wrapspans $date (sub $w (visiblewidth $sent)) (repeat " " (visiblewidth $sent)) }}
+{{ if le (add (visiblewidth $from) (visiblewidth .FromName)) $w }}<ansi fg="mail-title{{ $rm }}">{{ $from }}</ansi><ansi fg="username">{{ .FromName }}</ansi>{{ else }}<ansi fg="mail-title{{ $rm }}">{{ trimspace $from }}</ansi>
+  <ansi fg="username">{{ .FromName }}</ansi>{{ end }}
+
+{{ wrapbreak (print `<ansi fg="mail-title` $rm `">` $msg `</ansi><ansi fg="mail-message` $rm `">` .Message `</ansi>`) (sub $w 2) "  " }}
+{{ if gt .Gold 0 }}
+{{ wrapspans (print `<ansi fg="alert-4">` $note `</ansi><ansi fg="mail-note` $rm `">` (t "Inbox.NoteGold" (map "Gold" .Gold)) `</ansi>`) (sub $w 2) "  " }}
+{{- end }}{{ if ne .Item nil }}
+{{ wrapspans (print `<ansi fg="alert-4">` $note `</ansi><ansi fg="mail-note` $rm `">` (t "Inbox.NoteItem" (map "Item" .Item)) `</ansi>`) (sub $w 2) "  " }}
+{{- end -}}

@@ -165,9 +165,18 @@ Cached template with metadata for efficient reuse and cache invalidation.
   letters); wrapped, a run of spaces is one space. Lines are padded on the
   left only. The room view's alerts use it between two `screenwidth` rules.
 - `wrapspans text width prefix` wraps as `wraptext` does but keeps each
-  top-level colour span (a name, an exit), with the text glued to it
-  ("Name..."), on one line unless that unit is wider than width. The room
-  view's tracking line uses it.
+  colour span (a name, an exit, a count), with the text glued to it
+  ("Name..."), on one line unless that unit is wider than width. A span
+  inside another is a unit too (plan 3b-3), so an item named inside a
+  coloured mail NOTE stays whole while the NOTE wraps. The room view's
+  tracking line, the mail forms and the banners use it.
+- `trimspace s` drops the padding around s. A 30 form uses it on a
+  localized label (`Inbox.Sent: 'Sent:    '`) to follow it with one space,
+  so the padding rule holds in every language without new strings.
+- `mail/message` (plan 3b-3) is the 80 layout, its message and NOTE lines
+  wrapped to 80 under their value; its `.w42` and `.w30` forms continue
+  that prose 2 past the label and keep the date-time
+  (`users.Message.DateUnits`), the sender and an attached item whole.
 - `wrapbreak text width prefix` wraps as `wraptext` does but first breaks a
   word longer than width into width-wide pieces. Signs and runes use it,
   since players write them. `visibleRunes` and `rebuild` are the shared

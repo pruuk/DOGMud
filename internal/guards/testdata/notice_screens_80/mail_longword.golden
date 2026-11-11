@@ -1,0 +1,7 @@
+
+<ansi fg="alert-5">         *NEW MESSAGE*</ansi>
+<ansi fg="mail-title">Sent:    </ansi><ansi fg="mail-date">Wednesday, 11-Nov-2026 12:51:27PM</ansi>
+<ansi fg="mail-title">From:    </ansi><ansi fg="username">Bartholomewsworthingtonianus</ansi>
+
+<ansi fg="mail-title">Message: </ansi><ansi fg="mail-message">Read it here: https://dogmud.org/a/very/long/link/to/the/far/marsh/map
+         and tell me.</ansi>

@@ -69,7 +69,7 @@ var templateClassNames = map[string][]string{
 	"fits in usercommands": {"character/conditions", "character/quests", "character/title"},
 	// Narrow forms come in plan 3b-3.
 	"plan 3b-3": {"character/skillup", "character/statup",
-		"mail/message", "auctions/auction-bid", "auctions/auction-end",
+		"auctions/auction-bid", "auctions/auction-end",
 		"auctions/auction-start", "auctions/auction-update"},
 	// No production code renders these (survey 2026-11-10).
 	"no caller": {"character/experience", "character/jobs",
@@ -140,6 +140,8 @@ var templateFits = map[string]templateFixture{
 	"descriptions/fixtures":        {data: fixturesWide, more: []func() any{fixturesShort}},
 	"descriptions/rune":            {data: signWide, more: []func() any{signShort, signLongWord}},
 	"descriptions/sign":            {data: signWide, more: []func() any{signShort, signLongWord}},
+	// The notice screens (notice_screens_test.go).
+	"mail/message": {data: mailWide, more: []func() any{mailCaptured, mailPlain, mailRead, mailLongWord}},
 }
 
 // templateClasses names every class that holds name.
