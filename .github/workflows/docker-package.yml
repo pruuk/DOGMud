@@ -24,7 +24,11 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v7
+      # The image compiles inside docker, so this job must not save the Go
+      # cache (see .github/actions/setup-go).
       - uses: ./.github/actions/setup-go
+        with:
+          cache: 'false'
 
       - name: Log in to the Container registry ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'

@@ -22,9 +22,12 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
+      # Compiles one package without -race, so its cache would be a poor
+      # partial one that blocks the test job's (see .github/actions/setup-go).
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+          cache: false
       - name: Show Docker versions
         run: docker version && docker compose version
       - name: Run supervisor integration

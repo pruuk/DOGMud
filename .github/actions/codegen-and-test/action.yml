@@ -71,6 +71,18 @@ runs:
       shell: bash
       run: go test -run "^(TestMeleeParityDamagePerSwing|TestMeleePredictionMatchesCombat)$" -timeout 300s ./internal/combat/
 
+    # internal/guards was the slowest package in the -race run (354s on a PR,
+    # 451s on master, 2026-11-11) and has no production code (doc.go plus
+    # tests), so it adds nothing to coverage.out. Its tests scan source and
+    # data and call game code that starts no goroutine: the only goroutines
+    # in packages it imports are fileloader's save workers (covered under
+    # -race by fileloader's own tests) and actions' bauble and steal-pocket
+    # timers, which no guard reaches (checked 2026-11-11). So the race
+    # detector has nothing to find here; it runs once, without -race.
+    - name: Guards
+      shell: bash
+      run: go test -timeout 900s ./internal/guards/
+
     # -timeout is PER TEST BINARY, not for the whole run. internal/combat sits
     # at roughly 250 to 360 seconds under -race depending on runner speed, so a
     # 300s cap put it on a coin flip: it timed out at 300.07s, 300.109s and
@@ -82,5 +94,6 @@ runs:
     # stops a green suite reporting red. If a package ever approaches 900s,
     # split it rather than raising this again. (#536 did that for combat: see
     # the "Statistical sweeps" step above.)
-    - run: go test -timeout 900s -race -coverprofile=coverage.out ./...
+    # Every package but internal/guards, which the step above ran.
+    - run: go test -timeout 900s -race -coverprofile=coverage.out $(go list ./... | grep -v '/internal/guards$')
       shell: bash

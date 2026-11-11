@@ -1,9 +1,23 @@
 name: "Setup Go"
 description: "Checkout and setup Go using go.mod"
+inputs:
+  cache:
+    description: >-
+      Whether this job restores and saves the Go build cache. Pass 'false' from
+      any job that does not compile the repo on the runner (see below).
+    required: false
+    default: 'true'
 runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v7
+    # setup-go keys its cache on go.sum alone, and a key that exists is never
+    # overwritten. Docker Package (which compiles inside docker, not on the
+    # runner) used to finish first and save a 7 KB cache under that key, so
+    # the test job restored nothing and could not save its own: every test
+    # job compiled from scratch (found 2026-11-11; the empty entries dated
+    # from August). Jobs that do not compile here pass cache: 'false'.
     - uses: actions/setup-go@v7
       with:
         go-version-file: 'go.mod'
+        cache: ${{ inputs.cache }}
