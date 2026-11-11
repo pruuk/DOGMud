@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-11-11: Room alerts and biome info
+
+- The bank and storage notices in a room, and the biome screen, now sit
+  between plain lines instead of in a box, and long lines in them wrap to
+  fit your screen.
+
 ## 2026-11-10: Surrender policy hidden
 
 - The status screen and the settings list no longer show a surrender policy.

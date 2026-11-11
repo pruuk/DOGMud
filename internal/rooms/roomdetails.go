@@ -40,23 +40,20 @@ type RoomTemplateDetails struct {
 	ShowPvp        bool     // Whether to display that the room is PVP
 }
 
-const (
-	// alertCenterColumns is the widest span an alert centers in.
-	alertCenterColumns = 65
-	// alertTemplateMargin is the indent room.template prints before an alert,
-	// left and right of the span it centers in.
-	alertTemplateMargin = 6
-)
+// minimapAboveWidth is the widest reader whose minimap goes above the room's
+// prose instead of beside it: the widest narrow form a screen is drawn to
+// (templates.FormWidths), where the prose beside the map would be 34 columns.
+const minimapAboveWidth = 42
 
-// centerAlert pads text to center it for a reader width columns wide. Text
-// with no room to pad comes back as it went in.
-func centerAlert(text string, width int) string {
-	span := min(alertCenterColumns, width-2*alertTemplateMargin)
-	if len(text) >= span {
-		return text
-	}
-	return strings.Repeat(` `, (span-len(text))>>1) + text
-}
+// The room alerts, as GetDetails lists them. Each is bare text: the room
+// template centres it between two rules as wide as the reader's screen
+// (owner, 2026-11-10).
+const (
+	AlertBank          = `<ansi fg="yellow-bold">This is a bank!</ansi> Type <ansi fg="command">bank</ansi> to deposit/withdraw.`
+	AlertStorage       = `<ansi fg="yellow-bold">This is an item storage location!</ansi> Type <ansi fg="command">storage</ansi> to store/unstore.`
+	AlertCharacterRoom = `<ansi fg="yellow-bold">This is a character room!</ansi> Type <ansi fg="command">character</ansi> to interact.`
+	AlertStart         = `<ansi fg="yellow-bold">Type <ansi fg="command">start</ansi> to begin playing.</ansi>`
+)
 
 func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTemplateDetails {
 
@@ -96,19 +93,19 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	//
 
 	if r.IsBank {
-		details.RoomAlerts = append(details.RoomAlerts, `          <ansi fg="yellow-bold">This is a bank!</ansi> Type <ansi fg="command">bank</ansi> to deposit/withdraw.`)
+		details.RoomAlerts = append(details.RoomAlerts, AlertBank)
 	}
 
 	if r.IsStorage {
-		details.RoomAlerts = append(details.RoomAlerts, ` <ansi fg="yellow-bold">This is an item storage location!</ansi> Type <ansi fg="command">storage</ansi> to store/unstore.`)
+		details.RoomAlerts = append(details.RoomAlerts, AlertStorage)
 	}
 
 	if r.IsCharacterRoom {
-		details.RoomAlerts = append(details.RoomAlerts, `      <ansi fg="yellow-bold">This is a character room!</ansi> Type <ansi fg="command">character</ansi> to interact.`)
+		details.RoomAlerts = append(details.RoomAlerts, AlertCharacterRoom)
 	}
 
 	if r.RoomId == -1 {
-		details.RoomAlerts = append(details.RoomAlerts, `      <ansi fg="yellow-bold">Type <ansi fg="command">start</ansi> to begin playing.</ansi>`)
+		details.RoomAlerts = append(details.RoomAlerts, AlertStart)
 	}
 
 	//
@@ -131,7 +128,15 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	// wrap, so a long modifier wraps with the rest (#455).
 	descParts := descriptionWithModifiers(r, details.Description)
 
-	if len(tinymap) > 0 {
+	if len(tinymap) > 0 && user.WrapWidth() <= minimapAboveWidth {
+		// A phone-width screen has no room for the map beside the prose
+		// (owner, 2026-11-10): the map goes above it, at the left edge, and
+		// the prose takes the full width. Only telnet reaches here; the web
+		// client never draws the minimap (look.go).
+		lines := append([]string{}, tinymap[0]...)
+		lines = append(lines, wrapDescriptionParts(descParts, user.WrapWidth(), nouns)...)
+		details.Description = strings.Join(lines, "\n")
+	} else if len(tinymap) > 0 {
 		desclineWidth := user.WrapWidth() - 7 // 7 is the width of the tinymap
 		padding := 1
 		description := wrapDescriptionParts(descParts, desclineWidth-padding, nouns)
@@ -192,9 +197,8 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		// No current plans to allow them to overwrite existing alerts.
 		if mutSpec.AlertModifier != nil {
 
-			alertText := centerAlert(mutSpec.AlertModifier.Text, user.WrapWidth())
-
-			details.RoomAlerts = append(details.RoomAlerts, colorpatterns.ApplyColorPattern(alertText, mutSpec.AlertModifier.ColorPattern))
+			// Bare text; the room template centres it (see AlertBank).
+			details.RoomAlerts = append(details.RoomAlerts, colorpatterns.ApplyColorPattern(mutSpec.AlertModifier.Text, mutSpec.AlertModifier.ColorPattern))
 
 		}
 	}

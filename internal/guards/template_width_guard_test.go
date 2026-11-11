@@ -27,7 +27,7 @@ import (
 // ones that must fit at 30, 42 and 80.
 //
 // The classes are the state of the work, not a permanent exemption list:
-// plan 3b empties "plan 3b", plan 4 does "help/". When both are done, only
+// plan 3b-3 empties "plan 3b-3", plan 4 does "help/". When both are done, only
 // "wide" and the classes that never reach a narrow screen unwrapped remain.
 
 // templateFolders are every place a template is read from: the live world,
@@ -67,14 +67,8 @@ var templateClassNames = map[string][]string{
 	// (TestNarrowTemplateScreensFitEveryWidth): the data its commands pass
 	// is of types private to that package.
 	"fits in usercommands": {"character/conditions", "character/quests", "character/title"},
-	// Narrow forms come in plan 3b.
-	"plan 3b": {"character/description", "character/description-corpse",
-		"character/inventory-look", "character/pet",
-		"character/skillup", "character/statup",
-		"descriptions/biome", "descriptions/identify",
-		"descriptions/insidecontainer", "descriptions/track",
-		"descriptions/exits", "descriptions/fixtures", "descriptions/room",
-		"descriptions/room-title", "descriptions/rune", "descriptions/sign",
+	// Narrow forms come in plan 3b-3.
+	"plan 3b-3": {"character/skillup", "character/statup",
 		"mail/message", "auctions/auction-bid", "auctions/auction-end",
 		"auctions/auction-start", "auctions/auction-update"},
 	// No production code renders these (survey 2026-11-10).
@@ -131,6 +125,21 @@ var templateFits = map[string]templateFixture{
 	"character/skills":    {data: skillsScreenFixture},
 	"character/cooldowns": {data: cooldownsScreenFixture},
 	"character/storage":   {data: storageScreenFixture},
+	// The looking-at-things screens (looking_screens_test.go).
+	"character/description":        {setup: seedLookingScreenRegistries, data: descriptionWide, more: []func() any{descriptionCaptured, shippedMobLooked(rissMobFile), shippedMobLooked(odellMobFile)}},
+	"character/description-corpse": {data: corpseWide, more: []func() any{corpseCaptured, shippedMobLooked(rissMobFile), shippedMobLooked(odellMobFile)}},
+	"character/inventory-look":     {data: inventoryLookFixture(true, false), more: []func() any{inventoryLookFixture(false, false), inventoryLookFixture(false, true)}},
+	"character/pet":                {data: petFixture(true), more: []func() any{petFixture(false), petNamedAfterMob(rissMobFile), petNamedAfterMob(odellMobFile)}},
+	"descriptions/biome":           {data: biomeStreetLamp, more: []func() any{biomeOutdoorCaptured, biomeInteriorCaptured}},
+	"descriptions/identify":        {setup: seedLookingScreenRegistries, data: identifyWide, more: []func() any{identifyCaptured}},
+	"descriptions/insidecontainer": {data: containerWide, more: []func() any{containerCaptured, containerEmpty}},
+	"descriptions/track":           {data: trackWide, more: []func() any{trackCaptured}},
+	"descriptions/room":            {data: roomViewFixture(true), more: []func() any{roomViewFixture(false), trackingAfterMob(rissMobFile), trackingAfterMob(odellMobFile)}},
+	"descriptions/room-title":      {data: roomTitleWide, more: []func() any{roomTitleCaptured}},
+	"descriptions/exits":           {data: exitsFixture(true), more: []func() any{exitsFixture(false), exitsMixed}},
+	"descriptions/fixtures":        {data: fixturesWide, more: []func() any{fixturesShort}},
+	"descriptions/rune":            {data: signWide, more: []func() any{signShort, signLongWord}},
+	"descriptions/sign":            {data: signWide, more: []func() any{signShort, signLongWord}},
 }
 
 // templateClasses names every class that holds name.

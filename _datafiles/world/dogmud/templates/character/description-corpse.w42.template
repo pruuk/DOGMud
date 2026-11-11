@@ -1,0 +1,11 @@
+{{- /* Looking at a corpse, at 42 columns: the description between two
+full-width rules, framed by two rows of 20 skulls, its prose wrapped 3 in.
+Drawn to 42 whatever the reader's width. */ -}}
+{{ $w := 42 }}{{ $ind := "   " }}
+<ansi fg="black-bold">.:</ansi> <ansi fg="8">{{ wraptext (print .Name " corpse") (sub $w 3) "   " }}</ansi>
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Description</ansi> {{ repeat "─" (sub $w 17) }}
+{{ $ind }}<ansi fg="red-bold">{{ repeat "☠ " 19 }}☠</ansi>
+{{ $ind }}<ansi fg="8">{{ wraptext .GetDescription (sub $w (len $ind)) $ind }}</ansi>
+{{ $ind }}<ansi fg="red-bold">{{ repeat "☠ " 19 }}☠</ansi>
+{{ $ind }}<ansi fg="8">This is a corpse. They are dead.</ansi>
+{{ repeat "─" $w }}

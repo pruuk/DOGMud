@@ -33,8 +33,10 @@ package main.
   `coulee_npc_light_guard_test.go`, `topic_manifest_test.go`.
 - **Goldens.** Record a rendered or computed output and compare it byte for
   byte: the lighting goldens (`lighting_*_golden_test.go`),
-  `wrap_live_render_golden_test.go` and `m2_routing_guard_test.go`. Their
-  files live in `testdata/` here.
+  `wrap_live_render_golden_test.go`, `m2_routing_guard_test.go`, and the
+  80-column goldens of the narrow-form screens, `character_screens_test.go`
+  (`-update-character-screens`) and `looking_screens_test.go`
+  (`-update-looking-screens`). Their files live in `testdata/` here.
 - **Copy guards.** House style for player text: `prose_dash_guard_test.go`,
   `go_prose_dash_guard_test.go`, `copy_no_dash_test.go`,
   `prose_tag_spacing_guard_test.go`, `combat_idiom_guard_test.go`,

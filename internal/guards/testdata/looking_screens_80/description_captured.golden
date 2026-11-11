@@ -1,0 +1,6 @@
+
+<ansi fg="black-bold">.:</ansi> <ansi fg="username">Screenly</ansi>
+ ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Description</ansi> ────────────────────────────────────────────────────────────┐
+   They seem thoroughly uninteresting.
+   <ansi fg="username">Screenly</ansi> is in <ansi fg="health-100">perfect health.</ansi>
+ └────────────────────────────────────────────────────────────────────────────┘

@@ -1,2 +1,4 @@
-{{- range $index, $fixture := .Fixtures }}<ansi fg="room-description{{ if or $.IsNight $.IsDark }}-dark{{ end }}">The <ansi fg="item">{{ $fixture.Name }}</ansi> {{ if $fixture.Darkness }}{{ if $fixture.Lit }}swallows the light{{ else }}is still{{ end }}{{ else }}is {{ if $fixture.Lit }}lit{{ else }}unlit{{ end }}{{ end }}.</ansi>
+{{- range $index, $fixture := .Fixtures }}{{ $dark := "" }}{{ if or $.IsNight $.IsDark }}{{ $dark = "-dark" }}{{ end -}}
+{{- $state := "" }}{{ if $fixture.Darkness }}{{ if $fixture.Lit }}{{ $state = "swallows the light" }}{{ else }}{{ $state = "is still" }}{{ end }}{{ else }}{{ if $fixture.Lit }}{{ $state = "is lit" }}{{ else }}{{ $state = "is unlit" }}{{ end }}{{ end -}}
+{{ wraptext (print `<ansi fg="room-description` $dark `">The <ansi fg="item">` $fixture.Name `</ansi> ` $state `.</ansi>`) screenwidth }}
 {{ end -}}

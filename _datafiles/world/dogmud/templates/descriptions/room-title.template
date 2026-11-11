@@ -2,4 +2,10 @@
 {{ if ne .RoomSymbol "" -}}
    {{ $mapSymbol = printf `<ansi fg="black-bold">[</ansi><ansi fg="map-%s" bg="mapbg-%s">%s</ansi><ansi fg="black-bold">]</ansi> ` (mapslug .RoomLegend) (mapslug .RoomLegend) .RoomSymbol }}
 {{- end }}
-<ansi fg="black-bold">.:</ansi> {{ $mapSymbol }}<ansi fg="room-title">{{ .Title }}</ansi>{{ if ne .Zone ""}} <ansi fg="room-zone">[{{ .Zone }}]</ansi>{{ end }}{{ if .ShowPvp }} <ansi fg="11" bg="52"> ☠ PK Area ☠ </ansi>{{ end }}
+{{- /* A title wider than the screen wraps 3 in, under the title. The PvP
+tag is one unit: when the line does not fit, it goes on a line of its own. */ -}}
+{{- $rest := print $mapSymbol `<ansi fg="room-title">` .Title `</ansi>` -}}
+{{- if ne .Zone "" }}{{ $rest = print $rest ` <ansi fg="room-zone">[` .Zone `]</ansi>` }}{{ end -}}
+{{- $pk := "" }}{{ $full := $rest }}{{ if .ShowPvp }}{{ $pk = `<ansi fg="11" bg="52"> ☠ PK Area ☠ </ansi>` }}{{ $full = print $rest " " $pk }}{{ end }}
+<ansi fg="black-bold">.:</ansi> {{ if le (add 3 (visiblewidth $full)) screenwidth }}{{ $full }}{{ else }}{{ wraptext $rest (sub screenwidth 3) "   " }}{{ if $pk }}
+   {{ $pk }}{{ end }}{{ end }}

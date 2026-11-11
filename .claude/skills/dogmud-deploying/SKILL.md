@@ -86,10 +86,12 @@ Keep the body to at most four highlights, each a caps headline plus one tight
 sentence, and prune every push: the MOTD is a rolling snapshot of the latest
 release, not a cumulative changelog. Older detail belongs in
 `PATCH_NOTES.md`. End with two links, always on the final lines, never in the
-middle: the novel
-(`https://github.com/pruuk/DOGMud/blob/master/novel/what_the_moons_keep.md`) and the
-full patch notes
-(`https://github.com/pruuk/DOGMud/blob/master/PATCH_NOTES.md`).
+middle: the novel (`https://dogmud.org/novel`) and the full patch notes
+(`https://dogmud.org/patch-notes`). These are short links (#845,
+`internal/web/shortlinks.go`) that redirect to the long GitHub addresses, so
+every word fits a narrow screen; a test holds the shipped MOTD to them.
+An in-game `setmotd` writes to the overrides file, which wins over
+`config.yaml` and survives a deploy; prod had no MOTD override on 2026-11-11.
 [[feedback_motd_format]]
 
 ## `config.yaml` and local overrides

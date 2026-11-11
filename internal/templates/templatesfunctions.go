@@ -3,10 +3,12 @@ package templates
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
+	"unicode/utf8"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
@@ -138,6 +140,9 @@ var (
 		// counted, so a narrow form can ask whether a coloured value fits.
 		"visiblewidth": util.VisibleWidth,
 		"wraptext":     wrapText,
+		"centerlines":  centerLines,
+		"wrapspans":    wrapSpans,
+		"wrapbreak":    wrapBreak,
 		"ansiparse":    TplAnsiParse,
 		"conditionname": func(conditionId int) string {
 			conditionSpec := conditions.GetConditionSpec(conditionId)
@@ -475,6 +480,226 @@ func wrapText(s string, width int, prefix ...string) string {
 		pad = prefix[0]
 	}
 	return strings.ReplaceAll(messaging.WrapAnsi(s, width), "\n", "\n"+pad)
+}
+
+// wrapSpans wraps as wrapText does, but keeps each top-level colour span (a
+// name, an exit) on one line, together with any text glued to it ("Name..."),
+// unless that unit is wider than width; then the span's words wrap as usual.
+// A name is never split while it fits a line by itself (owner, 2026-11-10).
+//
+//	{{ wrapspans .TrackingString screenwidth }}
+func wrapSpans(s string, width int, prefix ...string) string {
+	const keep = "\x1f" // one column to WrapAnsi, and never a break
+	runes := visibleRunes(s)
+	what := make([]string, len(runes))
+	for i, v := range runes {
+		what[i] = s[v.start:v.end]
+	}
+	depth, open := 0, 0
+	for _, t := range ansiTag.FindAllStringIndex(s, -1) {
+		if !strings.HasPrefix(s[t[0]:t[1]], "</") {
+			if depth == 0 {
+				open = t[1]
+			}
+			depth++
+			continue
+		}
+		if depth--; depth != 0 {
+			continue
+		}
+		// The span's visible runes, then the unit: the span widened over
+		// whatever is glued to it up to the nearest space each side.
+		first, last := -1, -1
+		for i, v := range runes {
+			if v.start >= open && v.end <= t[0] {
+				if first < 0 {
+					first = i
+				}
+				last = i
+			}
+		}
+		if first < 0 {
+			continue
+		}
+		from, to := first, last
+		for from > 0 && runes[from-1].r != ' ' {
+			from--
+		}
+		for to < len(runes)-1 && runes[to+1].r != ' ' {
+			to++
+		}
+		widthOf := func(a, b int) (w int) {
+			for _, v := range runes[a:b] {
+				w += util.VisibleWidth(string(v.r))
+			}
+			return w
+		}
+		lw, sw, rw := widthOf(from, first), widthOf(first, last+1), widthOf(last+1, to+1)
+		if sw > width {
+			continue
+		}
+		for i := first; i <= last; i++ {
+			if runes[i].r == ' ' {
+				what[i] = keep
+			}
+		}
+		if lw+sw+rw <= width {
+			continue
+		}
+		// The unit is wider than a line, so a break must fall inside it,
+		// and the span is protected: give the wrapper one where the glue
+		// meets the span. A side gets its break when the span with that
+		// side alone overflows (forced: the glue word and the span word
+		// cannot share a line). When neither side overflows alone, only
+		// one side gets it (the right, else the left): the glue word plus
+		// the span, and the other glue, still overflow, so it is forced
+		// too. Every added space is a forced break, never a stray space.
+		needLeft := lw > 0 && lw+sw > width
+		needRight := rw > 0 && sw+rw > width
+		if !needLeft && !needRight {
+			needRight = rw > 0
+			needLeft = !needRight
+		}
+		if needLeft {
+			what[first-1] += " "
+		}
+		if needRight {
+			what[last+1] = " " + what[last+1]
+		}
+	}
+	return strings.ReplaceAll(wrapText(rebuild(s, runes, what), width, prefix...), keep, " ")
+}
+
+// wrapBreak wraps as wrapText does, but first breaks any word longer than
+// width into pieces width wide, so no line runs past: a word is split only
+// when it is longer than a whole line. Signs and runes use it, since a
+// player writes them.
+//
+//	{{ wrapbreak $text (sub screenwidth 2) "  " }}
+func wrapBreak(s string, width int, prefix ...string) string {
+	runes := visibleRunes(s)
+	what := make([]string, len(runes))
+	cols := 0
+	for i, v := range runes {
+		what[i] = s[v.start:v.end]
+		if v.r == ' ' || v.r == '\n' {
+			cols = 0
+			continue
+		}
+		w := util.VisibleWidth(what[i])
+		if cols+w > width && cols > 0 {
+			// Only inside a word wider than a line: such a word is the only
+			// one that ever fills a whole line by itself.
+			what[i] = " " + what[i]
+			cols = 0
+		}
+		cols += w
+	}
+	return wrapText(rebuild(s, runes, what), width, prefix...)
+}
+
+// visibleRune is one rune of s that shows on screen, and its bytes in s.
+type visibleRune struct {
+	r          rune
+	start, end int
+}
+
+// visibleRunes lists the runes of s outside its colour tags.
+func visibleRunes(s string) []visibleRune {
+	tags := ansiTag.FindAllStringIndex(s, -1)
+	runes := []visibleRune{}
+	for i, t := 0, 0; i < len(s); {
+		if t < len(tags) && i == tags[t][0] {
+			i = tags[t][1]
+			t++
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(s[i:])
+		runes = append(runes, visibleRune{r, i, i + size})
+		i += size
+	}
+	return runes
+}
+
+// rebuild is s with each visible rune i replaced by what[i], its colour tags
+// kept where they were.
+func rebuild(s string, runes []visibleRune, what []string) string {
+	var b strings.Builder
+	at := 0
+	for i, v := range runes {
+		b.WriteString(s[at:v.start])
+		b.WriteString(what[i])
+		at = v.end
+	}
+	b.WriteString(s[at:])
+	return b.String()
+}
+
+// centerLines centres s on a screen width columns wide: on one line when it
+// fits with 2 columns clear each side; else one piece to a line when every
+// piece fits with 1 column clear each side; else wrapped with
+// messaging.WrapAnsi with 2 columns clear. A piece ends at a sentence end or
+// at a run of two or more spaces, the author's own break (the wildfire
+// alert spaces "!!!", its sentence and "!!!" apart); wrapped, a run is one
+// space. Each line is padded on the left only. The room view's alerts use it
+// (owner, 2026-11-10: an alert is its text centred between two full-width
+// rules).
+//
+//	{{ centerlines $alertStr screenwidth }}
+func centerLines(s string, width int) string {
+	s = strings.TrimSpace(s)
+	span := width - 4
+	text, wrapAt := s, span
+	if util.VisibleWidth(s) > span {
+		text, wrapAt = respace(s, true), width-2
+		for _, line := range strings.Split(text, "\n") {
+			if util.VisibleWidth(line) > width-2 {
+				text, wrapAt = respace(s, false), span
+				break
+			}
+		}
+	}
+	lines := []string{}
+	for _, line := range strings.Split(messaging.WrapAnsi(text, wrapAt), "\n") {
+		w := util.VisibleWidth(line)
+		if w == 0 {
+			continue
+		}
+		lines = append(lines, strings.Repeat(" ", max(0, (width-w)/2))+line)
+	}
+	return strings.Join(lines, "\n")
+}
+
+// ansiTag matches one colour tag, opening or closing.
+var ansiTag = regexp.MustCompile(`</?ansi[^>]*>`)
+
+// respace rewrites each run of spaces in s as one space, or, when breaks is
+// set, as a line break where the run ends a sentence (after ".", "!" or
+// "?") or is two or more spaces long. Colour tags are passed over and kept,
+// so a colour pattern that tags every letter and space (the wildfire's
+// flame) is read by its letters; WrapAnsi then closes and reopens a colour
+// that spans a break.
+func respace(s string, breaks bool) string {
+	runes := visibleRunes(s)
+	// what[i] is what visible rune i becomes: itself, "" (dropped), " " or "\n".
+	what := make([]string, len(runes))
+	for i := 0; i < len(runes); i++ {
+		if runes[i].r != ' ' {
+			what[i] = s[runes[i].start:runes[i].end]
+			continue
+		}
+		j := i
+		for j < len(runes) && runes[j].r == ' ' {
+			what[j] = ""
+			j++
+		}
+		what[i] = " "
+		if breaks && (j-i >= 2 || (i > 0 && strings.ContainsRune(".!?", runes[i-1].r))) {
+			what[i] = "\n"
+		}
+		i = j - 1
+	}
+	return rebuild(s, runes, what)
 }
 
 // Usage:

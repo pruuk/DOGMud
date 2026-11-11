@@ -1,0 +1,26 @@
+{{- /* Inside a container or a corpse, at 30 columns: the list between two
+full-width rules, wrapped as at 42. */ -}}
+{{- define "list" -}}
+{{- $w := .w -}}{{- $col := add (len .ind) (len .label) -}}{{- $hang := add $col 1 -}}
+{{- if lt (sub $w $hang) 20 -}}{{- $hang = add (len .ind) 2 -}}{{- end -}}
+{{- $short := add (len .ind) 2 -}}{{- range .names -}}{{- if gt (add (visiblewidth .) 1) (sub $w $hang) -}}{{- $hang = $short -}}{{- end -}}{{- end -}}
+{{- $pad := repeat " " $hang -}}{{- $cur := $col -}}{{- $last := sub (len .names) 1 -}}
+{{ .ind }}<ansi fg="white">{{ .label }}</ansi>{{ if not .names }} {{ .empty }}{{ end }}
+{{- range $i, $f := .names -}}
+{{- if lt $i $last -}}{{- $f = print $f "," -}}{{- end -}}
+{{- $n := visiblewidth $f -}}
+{{- if le (add $cur 1 $n) $w -}}
+{{ " " }}{{ $f }}{{- $cur = add $cur 1 $n -}}
+{{- else if le (add $hang $n) $w -}}
+{{ "\n" }}{{ $pad }}{{ $f }}{{- $cur = add $hang $n -}}
+{{- else -}}
+{{ "\n" }}{{ $pad }}{{ wraptext $f (sub $w $hang) $pad }}{{- $cur = $w -}}
+{{- end -}}
+{{- end }}
+{{- end -}}
+{{- $w := 30 -}}
+<ansi fg="white">{{ repeat "─" $w }}</ansi>
+
+{{ template "list" (map "w" $w "ind" "  " "label" "Inside:" "names" .ItemNamesFormatted "empty" "Nothing") }}
+
+<ansi fg="white">{{ repeat "─" $w }}</ansi>

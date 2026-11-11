@@ -306,6 +306,9 @@ func TestTemplateFreeze_BiomeSaysWhenLampsBurn(t *testing.T) {
 	for _, c := range cases {
 		out, err := templates.Process("descriptions/biome", &c.biome, 0)
 		require.NoError(t, err, c.name)
+		// The lighting line wraps under its value (plan 3b-2), so the
+		// words are compared with the line breaks taken out.
+		out = strings.Join(strings.Fields(out), " ")
 		assert.Contains(t, out, c.want, c.name)
 		assert.NotContains(t, out, c.deny, c.name)
 	}

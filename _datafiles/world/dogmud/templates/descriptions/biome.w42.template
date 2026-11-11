@@ -1,0 +1,14 @@
+{{- /* The biome at 42 columns: between two full-width rules, label: value
+lines 2 in. The lighting and the description are prose after a label, so
+they continue 2 past the label (owner, 2026-11-10). Drawn to 42 whatever
+the reader's width. */ -}}
+{{- $w := 42 -}}
+{{- $light := "" -}}
+{{- if le .SkyLightFraction 0.0 }}{{ $light = "No sky reaches this place at all." }}{{ else if ge .SkyLightFraction 0.8 }}{{ $light = "The open sky reaches this place freely." }}{{ else }}{{ $light = "Only a little sky reaches here, filtered and dim." }}{{ end -}}
+{{- if .HasLamp }}{{ if .StreetLamp }}{{ $light = print $light " Street lamps keep it lit from dusk to dawn." }}{{ else }}{{ $light = print $light " A lamp keeps it lit after dark." }}{{ end }}{{ end -}}
+── <ansi fg="black-bold">.:</ansi> Biome Info {{ repeat "─" (sub $w 17) }}
+  <ansi fg="yellow">Name:</ansi>        {{ wraptext .Name (sub $w 15) (repeat " " 15) }}
+  <ansi fg="yellow">Symbol:</ansi>      {{ .SymbolString }}
+  {{ wraptext (print `<ansi fg="yellow">Lighting:</ansi>    ` $light) (sub $w 4) "    " }}
+  {{ wraptext (print `<ansi fg="yellow">Description:</ansi> ` .Description) (sub $w 4) "    " }}
+{{ repeat "─" $w }}

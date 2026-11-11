@@ -175,7 +175,11 @@ The `internal/rooms` package is the core world management system for GoMud, hand
 - **Dynamic content**: Visible players, mobs, corpses, and exits
 - **Environmental context**: Day/night cycles, lighting, biome effects
 - **User-specific views**: Personalized room information based on character state
-- **Room alerts**: Special notifications for banks, training, storage, etc.
+- **Room alerts**: Special notifications for banks, storage, character rooms,
+  the start room (`AlertBank`, `AlertStorage`, `AlertCharacterRoom`,
+  `AlertStart`) and each active mutator's `AlertModifier` text. They are bare
+  text, never padded: `descriptions/room` centres each between two rules as
+  wide as the reader's screen (`centerlines`, owner 2026-11-10).
 - **NPC talk marker** (`npcmarker.go`): `rooms.NpcMarker func(viewerUserId int,
   mob *mobs.Mob) string` is a hook installed at boot (`wireConversationHooks`
   in the root package, and by `internal/conversation`'s init). `GetDetails`
@@ -857,8 +861,10 @@ Comprehensive test coverage in `*_test.go` files covering:
 
 Every sender passes `UserRecord.WrapWidth()` as the pipeline's width.
 `GetDetails` wraps the description to the viewer's `WrapWidth()`, and to
-that less the minimap's 7 columns beside a minimap. `GetDescriptionFormatted`
-uses the width it is given.
+that less the minimap's 7 columns beside a minimap. A viewer 42 columns wide
+or narrower (`minimapAboveWidth`) gets the minimap above the prose instead,
+and the prose takes the whole width. `GetDescriptionFormatted` uses the width
+it is given.
 
 ## Special Considerations
 - **Memory management**: Rooms automatically unload when empty to conserve memory

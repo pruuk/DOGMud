@@ -1,0 +1,28 @@
+{{- /* Looking at a pet, at 30 columns: the description between two
+full-width rules, its prose wrapped 1 in, then what it carries, wrapped as
+at 42. */ -}}
+{{- define "carrying" -}}
+{{- $w := .w -}}{{- $col := add (len .ind) (len .label) -}}{{- $hang := add $col 1 -}}
+{{- if lt (sub $w $hang) 20 -}}{{- $hang = add (len .ind) 2 -}}{{- end -}}
+{{- $short := add (len .ind) 2 -}}{{- range .items -}}{{- if gt (add (visiblewidth .DisplayName) 1) (sub $w $hang) -}}{{- $hang = $short -}}{{- end -}}{{- end -}}
+{{- $pad := repeat " " $hang -}}{{- $cur := $col -}}{{- $last := sub (len .items) 1 -}}
+{{ .ind }}{{ .label }}
+{{- range $i, $itm := .items -}}
+{{- $f := $itm.DisplayName -}}{{- if lt $i $last -}}{{- $f = print $f "," -}}{{- end -}}
+{{- $n := visiblewidth $f -}}
+{{- if le (add $cur 1 $n) $w -}}
+{{ " " }}{{ $f }}{{- $cur = add $cur 1 $n -}}
+{{- else if le (add $hang $n) $w -}}
+{{ "\n" }}{{ $pad }}{{ $f }}{{- $cur = add $hang $n -}}
+{{- else -}}
+{{ "\n" }}{{ $pad }}{{ wraptext $f (sub $w $hang) $pad }}{{- $cur = $w -}}
+{{- end -}}
+{{- end }}
+{{- end -}}
+{{ $w := 30 }}{{ $ind := " " }}{{ $p := .Character.Pet }}
+<ansi fg="black-bold">.:</ansi> {{ wraptext $p.DisplayName (sub $w 3) "   " }}
+── <ansi fg="black-bold">.:</ansi><ansi fg="20">Description</ansi> {{ repeat "─" (sub $w 17) }}
+{{ $ind }}{{ wraptext (print $p.DisplayName ` is a pet <ansi fg="petname">` $p.Type `</ansi> owned by <ansi fg="username">` .Character.Name `</ansi>.`) (sub $w (len $ind)) $ind }}
+{{ $ind }}{{ wraptext (print $p.DisplayName ` hunger is: <ansi fg="hunger-` $p.Food `">` $p.Food `</ansi>`) (sub $w (len $ind)) $ind }}
+{{ repeat "─" $w }}
+{{ template "carrying" (map "w" $w "ind" " " "label" "Carrying:" "items" $p.Items) }}

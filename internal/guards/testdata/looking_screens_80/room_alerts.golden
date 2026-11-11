@@ -1,0 +1,10 @@
+<ansi fg="room-description">A solid stone building
+with iron-banded doors.</ansi>
+
+<ansi fg="red">────────────────────────────────────────────────────────────────────────────────</ansi>
+                 <ansi fg="yellow-bold">This is a bank!</ansi> Type <ansi fg="command">bank</ansi> to deposit/withdraw.
+<ansi fg="red">────────────────────────────────────────────────────────────────────────────────</ansi>
+
+<ansi fg="red">────────────────────────────────────────────────────────────────────────────────</ansi>
+        <ansi fg="yellow-bold">This is an item storage location!</ansi> Type <ansi fg="command">storage</ansi> to store/unstore.
+<ansi fg="red">────────────────────────────────────────────────────────────────────────────────</ansi>

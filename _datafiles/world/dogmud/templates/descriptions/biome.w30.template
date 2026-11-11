@@ -1,0 +1,13 @@
+{{- /* The biome at 30 columns: between two full-width rules, label: value
+lines 2 in with one space after each label; a value that does not fit
+continues 2 past its label. */ -}}
+{{- $w := 30 -}}
+{{- $light := "" -}}
+{{- if le .SkyLightFraction 0.0 }}{{ $light = "No sky reaches this place at all." }}{{ else if ge .SkyLightFraction 0.8 }}{{ $light = "The open sky reaches this place freely." }}{{ else }}{{ $light = "Only a little sky reaches here, filtered and dim." }}{{ end -}}
+{{- if .HasLamp }}{{ if .StreetLamp }}{{ $light = print $light " Street lamps keep it lit from dusk to dawn." }}{{ else }}{{ $light = print $light " A lamp keeps it lit after dark." }}{{ end }}{{ end -}}
+── <ansi fg="black-bold">.:</ansi> Biome Info {{ repeat "─" (sub $w 17) }}
+  {{ wraptext (print `<ansi fg="yellow">Name:</ansi> ` .Name) (sub $w 4) "    " }}
+  <ansi fg="yellow">Symbol:</ansi> {{ .SymbolString }}
+  {{ wraptext (print `<ansi fg="yellow">Lighting:</ansi> ` $light) (sub $w 4) "    " }}
+  {{ wraptext (print `<ansi fg="yellow">Description:</ansi> ` .Description) (sub $w 4) "    " }}
+{{ repeat "─" $w }}
