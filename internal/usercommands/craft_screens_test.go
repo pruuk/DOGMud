@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/templates"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -397,7 +398,7 @@ func TestCraftRowsFitEveryWidthWithShippedRecipes(t *testing.T) {
 	recipes := shippedRecipes(t)
 	widest := map[string]int{}
 	for _, width := range goScreenWidths {
-		formWidth := redrawnFormWidth(width)
+		formWidth := users.RedrawnFormWidth(width)
 		for _, r := range recipes {
 			for _, view := range []struct {
 				indent int

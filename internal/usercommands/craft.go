@@ -459,7 +459,7 @@ func classifyRecipe(user *users.UserRecord, room *rooms.Room, r *crafting.Recipe
 // the current room (materials in hand or completable from this room's storage),
 // each as a craftRow laid out for the reader's width (craftRowLines).
 func craftCraftableNow(user *users.UserRecord, room *rooms.Room) bool {
-	formWidth := redrawnFormWidth(user.WrapWidth())
+	formWidth := users.RedrawnFormWidth(user.WrapWidth())
 	all := crafting.GetAll()
 
 	// Collect known + ready recipes, grouped by skill for a stable ordering.
@@ -570,7 +570,7 @@ func craftList(user *users.UserRecord, room *rooms.Room) bool {
 
 	// Each row is a craftRow laid out for the reader's width
 	// (craftRowLines): 4 in under its skill heading, 3 at 30 columns.
-	formWidth := redrawnFormWidth(user.WrapWidth())
+	formWidth := users.RedrawnFormWidth(user.WrapWidth())
 	rowIndent := 4
 	if formWidth < 42 {
 		rowIndent = 3

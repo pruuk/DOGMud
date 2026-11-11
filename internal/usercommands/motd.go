@@ -44,7 +44,7 @@ func Motd(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 // columns, as a template's 42 form is picked there, and the 30 form below.
 func motdBox(text string, lw int) string {
 	if lw < users.MaxAutoWrapWidth {
-		return motdRuled(text, narrowFormWidth(lw))
+		return motdRuled(text, users.NarrowFormWidth(lw))
 	}
 	if motdLongestWord(text) > lw-5 {
 		return motdRuled(text, users.MaxAutoWrapWidth)

@@ -56,7 +56,7 @@ func Achievements(rest string, user *users.UserRecord, room *rooms.Room, flags e
 	// rows), so it rides CategoryScreen: on CategorySystem the normalizer
 	// put a stop after every heading ("Combat.").
 	for _, msg := range achievementsScreen(entries, achievements.PointsFor(char.Achievements),
-		user.AchievementsExcluded(), filter, redrawnFormWidth(user.WrapWidth())) {
+		user.AchievementsExcluded(), filter, users.RedrawnFormWidth(user.WrapWidth())) {
 		user.SendText(messaging.CategoryScreen, msg)
 	}
 
@@ -73,7 +73,7 @@ type achievementEntry struct {
 
 // achievementsScreen is the achievements list, one message per line as it
 // is sent (a heading carries the blank line above it), for a form formWidth
-// columns wide (redrawnFormWidth: 80, 42 or 30). Plan 3b-3, from the drawing
+// columns wide (users.RedrawnFormWidth: 80, 42 or 30). Plan 3b-3, from the drawing
 // achievements (narrow-screens-3b3-mock): a line that fits the form is the
 // 80-column line; one that does not breaks between words, a row's
 // `[x] Name (points):` kept whole, continuing 2 past the `[x]` (ruling 2).

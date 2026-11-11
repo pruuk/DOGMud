@@ -38,7 +38,7 @@ func newCraftRow(r *crafting.RecipeSpec, indicator, reason string) craftRow {
 }
 
 // craftRowLines lays row out for a form formWidth columns wide (80, 42 or
-// 30, redrawnFormWidth), its first line indented by indent: 4 in `craft
+// 30, users.RedrawnFormWidth), its first line indented by indent: 4 in `craft
 // list`, under a skill heading, and 2 in the bare `craft` view (3 and 2 at
 // 30). Plan 3b-3, from the drawings craft_list (narrow-screens-3b-mock) and
 // craft_ready (narrow-screens-3b3-mock), ruling 9:

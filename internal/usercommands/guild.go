@@ -108,7 +108,7 @@ func guildInfo(user *users.UserRecord) {
 	width := user.WrapWidth()
 	heading := fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> <ansi fg="cyan">[%s]</ansi>: %d member(s)`, g.Name, g.Tag, len(g.Members))
 	if util.VisibleWidth(heading) > width {
-		formWidth := narrowFormWidth(width)
+		formWidth := users.NarrowFormWidth(width)
 		lines := messaging.PackUnits([]string{`<ansi fg="yellow-bold">` + g.Name + `</ansi>`}, 0, 2, formWidth)
 		lines = append(lines, messaging.PackUnits([]string{`<ansi fg="cyan">[` + g.Tag + `]</ansi>:`, fmt.Sprintf(`%d member(s)`, len(g.Members))}, 2, 4, formWidth)...)
 		heading = strings.Join(lines, "\n")
@@ -128,7 +128,7 @@ func guildInfo(user *users.UserRecord) {
 			line := fmt.Sprintf(`  <ansi fg="white">%-20s</ansi> <ansi fg="black-bold">%s</ansi>`, m.CharacterName, g.RankTitle(m.Rank))
 			if util.VisibleWidth(line) > width {
 				line = strings.Join(messaging.PackUnits([]string{`<ansi fg="white">` + m.CharacterName + `</ansi>`,
-					`<ansi fg="black-bold">` + g.RankTitle(m.Rank) + `</ansi>`}, 2, 4, narrowFormWidth(width)), "\n")
+					`<ansi fg="black-bold">` + g.RankTitle(m.Rank) + `</ansi>`}, 2, 4, users.NarrowFormWidth(width)), "\n")
 			}
 			user.SendText(messaging.CategoryScreen, line)
 		}
@@ -194,7 +194,7 @@ func guildList(user *users.UserRecord) {
 	// Each guild's line breaks only between its units, the rest indented 4,
 	// to the reader's form width: 80 (the drawn redesign, which ran past 80
 	// with a long name and leader), 42 or 30 (plan 3b-3).
-	formWidth := redrawnFormWidth(user.WrapWidth())
+	formWidth := users.RedrawnFormWidth(user.WrapWidth())
 	for _, g := range all {
 		leaderName := "?"
 		for _, m := range g.Members {
