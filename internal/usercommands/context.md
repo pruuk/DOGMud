@@ -523,6 +523,16 @@ indent at a space, keeping the indent (ruling 3).
   `craft_screens_test.go` holds the rows to the drawings and fits every
   shipped recipe (read from the YAML, with its longest reason) at 30, 42, 60
   and 80.
+- **Guild** (`guild.go`): the roster (`guildInfo`) keeps each 80-column line
+  where it fits the reader (so 80 is master's, `guild_roster.golden`); a
+  heading that does not fit puts the name on a line of its own and the tag
+  and count under it, and a member line that does not fit puts the rank title
+  after the unpadded name or under it. `guild list` packs each guild into
+  units (tag, `Name:`, count, `led by`, leader) at `redrawnFormWidth`, the
+  rest indented 4, which at 80 is master's line wherever that fit. A 28-letter
+  name at the indent of 4 on a 30 screen has no space to split at, so
+  `packUnits` pulls it left to end at the edge. `go_screens_test.go` holds
+  both to the drawings and fits them at 30, 42, 60 and 80.
 
 ## Message categories (messaging M7 slice 4, #371)
 

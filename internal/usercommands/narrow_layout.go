@@ -56,7 +56,10 @@ func redrawnFormWidth(width int) int {
 // unit goes on the line in hand when it fits there (the first line measured
 // from its own indent), else on a new line. Only a unit too long for a whole
 // new line at rest is wrapped between its words (messaging.WrapAnsi), and
-// its pieces keep that indent (ruling 3).
+// its pieces keep that indent (ruling 3). A piece with no space left to
+// split at that fits the line but not the indent is pulled left to end at
+// the right edge; one wider than the line (a legacy 32-letter name at 30,
+// ruling 8) runs past it on a line of its own.
 func packUnits(units []string, first, rest, width int) []string {
 	lines := []string{}
 	line, used := strings.Repeat(" ", first), first
@@ -93,6 +96,18 @@ func packUnits(units []string, first, rest, width int) []string {
 			newLine()
 		}
 		for _, part := range strings.Split(messaging.WrapAnsi(unit, width-rest), "\n") {
+			// A piece with no space to split at (a long character
+			// name) that fits the line but not the indent is pulled
+			// left to end at the right edge, as the mock drew such a
+			// unit, on a line of its own.
+			if pw := util.VisibleWidth(part); pw > width-rest && pw <= width {
+				if !empty {
+					newLine()
+				}
+				lines = append(lines, strings.Repeat(" ", width-pw)+part)
+				line, used, empty = strings.Repeat(" ", rest), rest, true
+				continue
+			}
 			place(part)
 		}
 	}

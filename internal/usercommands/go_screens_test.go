@@ -98,7 +98,7 @@ func guildWide(t *testing.T) []*users.UserRecord {
 		"Muster at the Market Gate at dusk. Bring a lantern and your own rope.",
 		goScreenLongestName, goScreenLegacyName, "Screenly")
 	require.NoError(t, guilds.SetRank("WOMG", us[2].UserId, guilds.RankOfficer))
-	require.NoError(t, guilds.SetRankTitle("WOMG", guilds.RankOfficer, "Keeper of the Gates"))
+	require.NoError(t, guilds.SetRankTitle("WOMG", guilds.RankOfficer, "Keepers of the Gates"))
 	return us
 }
 
@@ -113,6 +113,151 @@ func TestGuildListKeepsIts80ColumnOutput(t *testing.T) {
 	captured := guildCaptured(t)
 	guildFixture(t, 97121, "QC", "Quiet Company", "", goScreenLongestName)
 	checkGolden(t, "guild_list", guildCommand(t, captured[0], 80, "list"))
+}
+
+// guildFitsAt fails any line of out wider than width, but for a legacy
+// 32-letter name alone on its line at its indent (ruling 8: such a name may
+// overrun a 30 screen on its own line only).
+func guildFitsAt(t *testing.T, out string, width int) {
+	t.Helper()
+	for _, line := range plainLines(out) {
+		if templates.WidestLine(line) > width && strings.TrimSpace(line) != goScreenLegacyName {
+			t.Errorf("at %d a line is %d wide: %q in:\n%s", width, templates.WidestLine(line), line, strings.Join(plainLines(out), "\n"))
+		}
+	}
+}
+
+// The roster as drawn: the 3b mock's guild at 42 and 30 (its heading's tag
+// and count drop to a line of their own), and the 3b-3 mock's 40-letter
+// guild (at 30 its name splits at a space and keeps the indent, ruling 3).
+// The guild MOTD rides CategorySystem, which the pipeline wraps.
+func TestGuildRosterIsTheDrawing(t *testing.T) {
+	captured := guildCaptured(t)
+	wide := guildWide(t)
+	for _, tc := range []struct {
+		user  *users.UserRecord
+		width int
+		want  string
+	}{
+		{captured[0], 42, `Screen Testers Of Thornwall
+  [SCRN]: 1 member(s)
+"Meet at the bank before the bell. Bring
+keys, rope, and a light for the tunnels
+under Market Square."
+  Screenly             leader`},
+		{captured[0], 30, `Screen Testers Of Thornwall
+  [SCRN]: 1 member(s)
+"Meet at the bank before the
+bell. Bring keys, rope, and a
+light for the tunnels under
+Market Square."
+  Screenly             leader`},
+		{wide[0], 42, `Wardens of the Old Thornwall Market Gate
+  [WOMG]: 3 member(s)
+"Muster at the Market Gate at dusk. Bring
+a lantern and your own rope."
+  ` + goScreenLongestName + ` leader
+  Screenly Keepers of the Gates
+  ` + goScreenLegacyName + ` member`},
+		{wide[0], 30, `Wardens of the Old Thornwall
+  Market Gate
+  [WOMG]: 3 member(s)
+"Muster at the Market Gate at
+dusk. Bring a lantern and your
+own rope."
+  ` + goScreenLongestName + `
+    leader
+  Screenly
+    Keepers of the Gates
+  ` + goScreenLegacyName + `
+    member`},
+	} {
+		got := strings.Join(plainLines(guildCommand(t, tc.user, tc.width, "")), "\n")
+		if got != tc.want {
+			t.Errorf("roster at %d is not the drawing:\n%s", tc.width, lineDiffForTest(tc.want, got))
+		}
+	}
+}
+
+// The roster fits at every width with the widest names, and at 60 (wide
+// enough for every 80-column line) it is the 80-column screen.
+func TestGuildRosterFitsEveryWidth(t *testing.T) {
+	wide := guildWide(t)
+	for _, width := range goScreenWidths {
+		out := guildCommand(t, wide[0], width, "")
+		require.Contains(t, out, "Keepers of the Gates", "at %d", width)
+		guildFitsAt(t, out, width)
+	}
+	at60 := strings.Join(plainLines(guildCommand(t, wide[0], 60, "")), "\n")
+	require.Contains(t, at60, goScreenLongestGuild+" [WOMG]: 3 member(s)\n", "at 60 the heading fits on one line")
+	require.Contains(t, at60, "\n  Screenly             Keepers of the Gates\n", "at 60 the member line fits as it is")
+}
+
+// `guild list` as drawn (guild_list in the 3b-3 mock): at 80 the drawn
+// redesign, the leader under the line when it does not fit; at 42 and 30
+// the 40-letter name, wider than the room at its indent, splits at a space
+// and keeps the indent (ruling 3, where the drawing pulled it left); the
+// legacy 32-letter leader runs past 30 on its own line (ruling 8).
+func TestGuildListIsTheDrawing(t *testing.T) {
+	scrn := guildFixture(t, 97131, "SCRN", "Screen Testers", "", "Screenly")
+	guildFixture(t, 97141, "WOMG", goScreenLongestGuild, "", goScreenLegacyName)
+	for _, tc := range []struct {
+		width int
+		want  string
+	}{
+		{80, `Guilds:
+  [SCRN] Screen Testers: 1 member(s), led by Screenly
+  [WOMG] Wardens of the Old Thornwall Market Gate: 1 member(s), led by
+    ` + goScreenLegacyName},
+		{42, `Guilds:
+  [SCRN] Screen Testers: 1 member(s),
+    led by Screenly
+  [WOMG]
+    Wardens of the Old Thornwall Market
+    Gate: 1 member(s), led by
+    ` + goScreenLegacyName},
+		{30, `Guilds:
+  [SCRN] Screen Testers:
+    1 member(s), led by
+    Screenly
+  [WOMG]
+    Wardens of the Old
+    Thornwall Market Gate:
+    1 member(s), led by
+    ` + goScreenLegacyName},
+	} {
+		got := strings.Join(plainLines(guildCommand(t, scrn[0], tc.width, "list")), "\n")
+		if got != tc.want {
+			t.Errorf("guild list at %d is not the drawing:\n%s", tc.width, lineDiffForTest(tc.want, got))
+		}
+	}
+}
+
+// `guild list` fits at every width with a 40-letter guild led by a name at
+// the 28-letter maximum, and keeps its units whole where they fit.
+func TestGuildListFitsEveryWidth(t *testing.T) {
+	us := guildFixture(t, 97151, "WOMG", goScreenLongestGuild, "", goScreenLongestName)
+	guildFixture(t, 97161, "SCRN", "Screen Testers Of Thornwall", "", "Screenly")
+	for _, width := range goScreenWidths {
+		out := guildCommand(t, us[0], width, "list")
+		guildFitsAt(t, out, width)
+		plain := strings.Join(plainLines(out), "\n")
+		for _, unit := range []string{goScreenLongestName, "1 member(s),", "led by", "[WOMG]"} {
+			require.Contains(t, plain, unit, "at %d", width)
+		}
+		// A name splits only when wider than the room at its indent, 4.
+		if width >= 42 {
+			require.Contains(t, plain, "Screen Testers Of Thornwall:", "at %d", width)
+		}
+		if width >= 80 {
+			require.Contains(t, plain, goScreenLongestGuild, "at %d the name splits though it fits the line at its indent", width)
+		}
+		// The 28-letter leader fits a 30 line but not its indent of 4, and
+		// has no space to split at, so it is pulled left to end at the edge.
+		if width == 30 {
+			require.Contains(t, plain, "\n  "+goScreenLongestName, "at %d", width)
+		}
+	}
 }
 
 // --- motd ---
