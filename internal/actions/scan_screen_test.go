@@ -60,6 +60,15 @@ func scanCaptured(formWidth int) string {
 	return scanPlain(strings.Join(lines, "\n"))
 }
 
+// A player's name is never broken: a legacy 32-letter one wider than the
+// whole 30 line runs past it at its indent, on its own line (ruling 8),
+// where other spaceless text that long breaks at the edge.
+func TestScanNeverBreaksAName(t *testing.T) {
+	legacy := "Wilhelmina_Ashgrove_Thornbramble"
+	got := scanPlain(scanEntryText("north", "", []string{`<ansi fg="username">` + legacy + `</ansi>`, `<ansi fg="mobname">Goblin Scout</ansi>`}, "", 30))
+	require.Equal(t, "  north:\n    "+legacy+",\n    Goblin Scout", got)
+}
+
 func TestScanIsTheDrawing(t *testing.T) {
 	for _, width := range []int{80, 42, 30} {
 		got, want := scanCaptured(width), scanDrawing(t, width)

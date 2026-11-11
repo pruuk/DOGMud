@@ -89,6 +89,12 @@ func TestAuctionHistoryLeadsWithTheItem(t *testing.T) {
 			if templates.WidestLine(line) > width && strings.TrimSpace(line) != "Wilhelmina_Ashgrove_Thornbramble" {
 				t.Errorf("at %d a line is %d wide: %q in:\n%s", width, templates.WidestLine(line), line, plain)
 			}
+			// The " ·" between pairs stays on its pair's last word, so
+			// no line starts with one (the 28-letter Buyer once left a
+			// bare "·" at 30).
+			if strings.HasPrefix(strings.TrimSpace(line), "·") {
+				t.Errorf("at %d a line starts with a dot: %q in:\n%s", width, line, plain)
+			}
 		}
 		require.NotContains(t, plain, "│", "at %d the history is not the two-line form:\n%s", width, plain)
 		// Newest first, as the bordered form lists them.

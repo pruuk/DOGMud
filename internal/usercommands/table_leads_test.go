@@ -299,6 +299,66 @@ func TestTablesKeepTheirMasterOutput(t *testing.T) {
 	}
 }
 
+// shippedRoomTitles is the title of every shipped room, by room id.
+func shippedRoomTitles(t *testing.T) map[int]string {
+	t.Helper()
+	files, err := filepath.Glob(filepath.Join("..", "..", "_datafiles", "world", "dogmud", "rooms", "*", "*.yaml"))
+	require.NoError(t, err)
+	idRE := regexp.MustCompile(`(?m)^roomid:\s*(\d+)\s*$`)
+	titleRE := regexp.MustCompile(`(?m)^title:(.*)$`)
+	titles := map[int]string{}
+	for _, f := range files {
+		b, err := os.ReadFile(f)
+		require.NoError(t, err)
+		id, title := idRE.FindStringSubmatch(string(b)), titleRE.FindStringSubmatch(string(b))
+		if id == nil || title == nil {
+			continue // a zone-config.yaml
+		}
+		roomId, err := strconv.Atoi(id[1])
+		require.NoError(t, err)
+		titles[roomId] = strings.Trim(strings.TrimSpace(title[1]), `"'`)
+	}
+	require.Greater(t, len(titles), 1000, "the shipped rooms did not load")
+	require.Equal(t, "The Coachman's Rest, Common Room", titles[5406])
+	return titles
+}
+
+// No line of keyring's two-line form starts with the " ·" between pairs,
+// for any shipped room's Location at 30 to 39 columns (review of plan
+// 3b-3: "#5406 The Coachman's Rest, Common Room" left a bare "·" at 30 and
+// 31). The dot stays on its pair's last word.
+func TestKeyringDetailNeverStartsWithADot(t *testing.T) {
+	t.Cleanup(seedAllRegistries())
+	useDogmudTemplates(t)
+	u := tableUsers(t, 98451, "Screenly")[0]
+	checked := 0
+	for roomId, title := range shippedRoomTitles(t) {
+		room := &rooms.Room{
+			RoomId: roomId, Zone: "TestZone", Title: title, Description: "A room.",
+			Exits: map[string]exit.RoomExit{
+				"north": {RoomId: roomId, Lock: gamelock.Lock{Difficulty: 4}},
+			},
+			Containers: map[string]rooms.Container{"lockbox": {Lock: gamelock.Lock{Difficulty: 4}}},
+		}
+		restore := rooms.SeedRoomsForTest(map[int]*rooms.Room{roomId: room},
+			map[string]*rooms.ZoneConfig{"TestZone": {Name: "TestZone", RoomId: roomId, RoomIds: map[int]struct{}{roomId: {}}}})
+		u.Character.RoomId = roomId
+		id := strconv.Itoa(roomId)
+		u.Character.KeyRing = map[string]string{"key-" + id + "-lockbox": "", id + "-north": "UD"}
+		for width := 30; width <= 39; width++ {
+			out := tableRun(t, u, width, func() { _, _ = KeyRing("", u, nil, 0) })
+			for _, line := range plainLines(out) {
+				if strings.HasPrefix(strings.TrimSpace(line), "·") {
+					t.Errorf("room %d at %d: a line starts with a dot: %q in\n%s", roomId, width, line, strings.Join(plainLines(out), "\n"))
+				}
+			}
+			checked++
+		}
+		restore()
+	}
+	require.Greater(t, checked, 10000)
+}
+
 // shippedSpells is every shipped spell, read from the YAML.
 func shippedSpells(t *testing.T) map[string]*spells.SpellData {
 	t.Helper()

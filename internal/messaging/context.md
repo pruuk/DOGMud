@@ -600,12 +600,24 @@ Functions:
   item tag. A move name in `{attack}` renders untagged through
   `items.RenderMoveDefenseMessage`, and `{bodypart}` is never tagged.
 - `WrapAnsi(text string, maxWidth int) string`
-- `PackUnits(units []string, first, rest, width int) []string` (plan 3b-3):
-  lays units out in lines of at most width, indented first then rest,
-  breaking only between units; a unit wider than the room at rest wraps
-  between its words (`WrapAnsi`) and keeps the indent. The Go-built narrow
-  forms (`internal/usercommands`: companion, craft, guild) and the two-line
-  table form (`templates.TemplateTable.DetailLines`) use it.
+- `PackUnits(units []string, first, rest, width int, names ...string) []string`
+  (plan 3b-3): lays units out in lines of at most width, indented first then
+  rest, breaking only between units; a unit wider than the room at rest
+  wraps between its words (`WrapAnsi`) and keeps the indent. A piece with no
+  space that fits the line but not the indent is pulled left to end at the
+  edge; one wider than the whole line breaks at the edge (as the `wrapbreak`
+  template function does), unless its unit is listed in `names`: a
+  character name is never broken and a legacy one too long runs past the
+  edge on its own line at its indent (ruling 8). Callers name the names, not
+  the breakable units, so a forgotten unit breaks and stays on the screen.
+  No trailing empty line. The Go-built narrow forms (`internal/usercommands`,
+  scan in `internal/actions`) use it.
+- `PackUnitsKeepIndent(units []string, first, rest, width int) []string`:
+  PackUnits for the two-line table form
+  (`templates.TemplateTable.DetailLines`), where column 0 starts the next
+  item: nothing is pulled left of its indent and no word is broken, so a
+  piece too wide runs past the edge on its own line (the only such detail
+  pieces are character names). `pack_test.go` holds both.
 - `Say(cat Category, text string) Line`
 - `SendTrio(t Trio, aud Audience)`: delivers one narrated event to
   everyone entitled to it — FOUR roles since M4d (`44cc90ceb`): Actor,
@@ -728,7 +740,7 @@ The package is the pipeline, one stage per file, plus the fan-out (`trio.go`):
 | `hidenames.go` | `HideNames`, `NameHider`, `HideSpeakerNames` (sight gates slice 5b): replacing specific names in bare prose, longest-first, whole-word |
 | `hidenames_tagged.go` | Identity-tag-aware name replacement `HideNames` and `Anonymize` share, including the trailing adjective span |
 | `wrap.go` | `WrapAnsi`, ANSI-aware folding of lines wider than a caller-supplied width measured in display columns; a line that fits is copied byte for byte; called by the pipeline for the categories `shouldWrap` admits, and directly by `motd.go` for its box-bordered banner |
-| `pack.go` | `PackUnits` (plan 3b-3): lines that break only between whole units, for the narrow screen forms |
+| `pack.go` | `PackUnits`, `PackUnitsKeepIndent` (plan 3b-3): lines that break only between whole units, for the narrow screen forms and the two-line table form |
 | `predicates.go` | `ParticipantSight` (the optics primitive) plus `CanSeeClearly`/`CanSeeShapes`/`CanSeeSightImpairedOnly`, the one-line attention policies built on it; `SeesThroughExit` and `FixedLight` (lighting plan 5c); `SensesHeatThroughExit` (lighting plan 6) |
 | `window.go` | `SightThroughWindow`, the pure window-model function `ParticipantSight` calls, `clampShift`, `ExitThroughWindow` (lighting plan 5c), `LightTrimTarget` (lighting plan 5a, reparameterized in 5b to take `dazzleAbove` instead of reading the now-retired `windowDazzleEdge` constant), `DarknessTrimTarget` (lighting plan 5d), plus its two remaining unexported constants (`windowShiftCap`, `windowFloor`) |
 | `band.go` | `Band`, `BandThroughWindow`, `LightBand` (lighting plan 3d): the band-grained twin of `SightDecision`/`SightThroughWindow`/`ParticipantSight`, adding the dazzled tier for `internal/lightnotice` |

@@ -411,22 +411,40 @@ func (t TemplateTable) RowDetail(row int) string {
 // width columns, joined by CRLF: it breaks only between pairs, each with
 // the " ·" that follows it, so a name or a place stays whole where it fits
 // (ruling 3); a pair too wide for a line wraps between its words and keeps
-// the indent (messaging.PackUnits). A pair that fits only without its " ·"
-// goes without it: it takes a line alone, so the break stands for the dot
-// and no line starts with a stray one. Empty when the row has no detail.
+// the indent (messaging.PackUnitsKeepIndent: nothing is pulled left of it,
+// since column 0 starts the next item). The " ·" is glued to the pair's
+// last word, so no line starts with a stray dot. Where it cannot share a
+// line with what it follows (a pair that fits a line only without it, or
+// a last word as wide as the line), it is left off and the line break
+// stands for it. Empty when the row has no detail.
 func (t TemplateTable) DetailLines(row int, width int) string {
 	const indent = 2
 	pairs := t.rowPairs(row)
 	if len(pairs) == 0 {
 		return ``
 	}
-	for i := range pairs[:len(pairs)-1] {
-		if util.VisibleWidth(pairs[i]+` ·`) <= width-indent || util.VisibleWidth(pairs[i]) > width-indent {
-			pairs[i] += ` ·`
+	room := width - indent
+	for i, pair := range pairs[:len(pairs)-1] {
+		words := strings.Fields(pair)
+		switch {
+		case util.VisibleWidth(pair+dotAfter) <= room:
+		case util.VisibleWidth(pair) <= room:
+			continue
+		case util.VisibleWidth(words[len(words)-1]+dotAfter) > room:
+			continue
 		}
+		pairs[i] += gluedDot
 	}
-	return strings.Join(messaging.PackUnits(pairs, indent, indent, width), term.CRLFStr)
+	lines := messaging.PackUnitsKeepIndent(pairs, indent, indent, width)
+	return strings.ReplaceAll(strings.Join(lines, term.CRLFStr), gluedDot, dotAfter)
 }
+
+// dotAfter separates the pairs of a detail line; gluedDot is it with a
+// no-break space, which WrapAnsi never breaks at, while the line is laid out.
+const (
+	dotAfter = ` ·`
+	gluedDot = " ·"
+)
 
 func (t TemplateTable) rowPairs(row int) []string {
 	parts := []string{}

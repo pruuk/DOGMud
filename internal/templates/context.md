@@ -239,10 +239,13 @@ Cached template with metadata for efficient reuse and cache invalidation.
 - `TemplateTable.RowDetail` gives a row's cells but the lead's as
   `Header: value` pairs joined by ` · `, in column order (the first column
   included when it does not lead). `DetailLines(row, width)` lays them out
-  for the two-line form at an indent of 2 with `messaging.PackUnits`: it
-  breaks only between pairs, each with the ` ·` after it, so a name or a
-  place stays whole where it fits (ruling 3); a pair that fits only
-  without its dot goes alone on its line, without the dot. The lead cell is
+  for the two-line form at an indent of 2 with
+  `messaging.PackUnitsKeepIndent` (nothing pulled left of the indent, since
+  column 0 starts the next item): it breaks only between pairs, each with
+  the ` ·` after it glued to its last word by a no-break space, so a name or
+  a place stays whole where it fits (ruling 3) and no line starts with a
+  dot; a pair that fits only without its dot, or whose last word cannot
+  share a line with it, goes without the dot. The lead cell is
   wrapped with `wrapspans`, so a coloured name in it stays whole.
 - `ProcessAtWidth` (testing_support.go) renders at a given width for guards.
 - `internal/guards/template_width_guard_test.go` knows every template and why

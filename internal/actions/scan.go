@@ -202,14 +202,18 @@ func scanEntryText(exitName, title string, names []string, prose string, formWid
 	if title != "" {
 		units = []string{dir, `(<ansi fg="room-title">` + title + `</ansi>):`}
 	}
+	nameUnits := make([]string, 0, len(names))
 	for i, n := range names {
 		if i < len(names)-1 {
 			n += ","
 		}
-		units = append(units, n)
+		nameUnits = append(nameUnits, n)
 	}
+	units = append(units, nameUnits...)
 	units = append(units, strings.Fields(prose)...)
-	return strings.Join(messaging.PackUnits(units, 2, 4, formWidth), "\n")
+	// A player's name is never broken (a legacy one too long for the line
+	// runs past it, ruling 8); a mob's has spaces to split at.
+	return strings.Join(messaging.PackUnits(units, 2, 4, formWidth, nameUnits...), "\n")
 }
 
 // scanReach is how well a scanner standing in here makes out the room next

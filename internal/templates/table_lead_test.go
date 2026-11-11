@@ -112,3 +112,42 @@ func TestTableDetailKeepsPairsWhole(t *testing.T) {
 		assert.LessOrEqual(t, WidestLine(line), 30, "%q", line)
 	}
 }
+
+// A pair wider than its line keeps the " ·" after it on its last word, so
+// no detail line starts with a "·" or is a bare one (review of plan 3b-3):
+// a 28-letter Buyer, whose name and dot cannot share the line, ends its
+// pair with no dot (the break stands for it), and a room title that wraps
+// carries the dot on its last word.
+func TestTableDetailKeepsTheDotOnTheLastWord(t *testing.T) {
+	tbl := GetTable("Past Auctions", []string{"Item", "Buyer", "Location", "Bid"},
+		[][]string{{"a lantern", "Bartholomewsworthingtonianus", "#5406 The Coachman's Rest, Common Room", "40 gold"}})
+	for width := 30; width <= 39; width++ {
+		out, err := ProcessAtWidth("tables/generic", tbl, width)
+		require.NoError(t, err)
+		for _, line := range tableLeadLines(out)[2:] {
+			assert.False(t, strings.HasPrefix(strings.TrimSpace(line), "·"), "at %d a line starts with a dot: %q in\n%s", width, line, out)
+		}
+	}
+	out, err := ProcessAtWidth("tables/generic", tbl, 30)
+	require.NoError(t, err)
+	assert.Equal(t, []string{
+		".: Past Auctions",
+		"a lantern",
+		"  Buyer:",
+		"  Bartholomewsworthingtonianus",
+		"  Location: #5406 The",
+		"  Coachman's Rest, Common",
+		"  Room · Bid: 40 gold",
+	}, tableLeadLines(out))
+}
+
+// A table never pulls a detail piece left of its indent: column 0 starts
+// the next item. A legacy name too long for the indent runs past the edge
+// at the indent, on its own line.
+func TestTableDetailNeverPullsLeft(t *testing.T) {
+	tbl := GetTable("Past Auctions", []string{"Item", "Seller"},
+		[][]string{{"a lantern", "Bartholomewsworthingtonianusx"}})
+	out, err := ProcessAtWidth("tables/generic", tbl, 30)
+	require.NoError(t, err)
+	assert.Equal(t, []string{".: Past Auctions", "a lantern", "  Seller:", "  Bartholomewsworthingtonianusx"}, tableLeadLines(out))
+}

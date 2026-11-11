@@ -156,6 +156,8 @@ func TestMacrosFitEveryWidth(t *testing.T) {
 	// A 13- and a 12-column word side by side at indent 5 end at 31, one
 	// past a 30 line, so a packer that overfills by one is caught.
 	macros["=5"] = "say abcdefghijkl nopqrstuvwxyz abcdefghijkl"
+	// A word wider than the whole line (a link) breaks at the edge.
+	macros["=6"] = "say https://example.com/a/very/long/link/that/has/no/spaces/at/all ok"
 	user, room := macrosUser(t, macros)
 	for _, width := range goScreenWidths {
 		out := runScreen(t, user, room, width, Macros, "")

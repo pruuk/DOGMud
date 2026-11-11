@@ -261,6 +261,23 @@ func TestGuildListFitsEveryWidth(t *testing.T) {
 	}
 }
 
+// A guild name may be 40 letters with no space (validGuildName). Wider
+// than a whole 30 line, it breaks at the edge in `guild list` and in the
+// roster heading (as wrapbreak breaks signs and runes), where a character
+// name would run past (ruling 8).
+func TestASpacelessGuildNameBreaksAtTheEdge(t *testing.T) {
+	const spaceless = "Wardens-of-the-Old-Thornwall-Market-Gate"
+	us := guildFixture(t, 97171, "WOMG", spaceless, "", "Screenly")
+	for _, rest := range []string{"list", ""} {
+		for _, width := range goScreenWidths {
+			out := guildCommand(t, us[0], width, rest)
+			guildFitsAt(t, out, width)
+			flat := strings.Join(strings.Fields(strings.Join(plainLines(out), "")), "")
+			require.Contains(t, flat, spaceless, "`guild %s` at %d lost part of the name", rest, width)
+		}
+	}
+}
+
 // --- name limit ---
 
 // The shipped name limit is the longest name these screens are tested

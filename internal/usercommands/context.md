@@ -531,7 +531,10 @@ layout was itself redrawn). They lay out with
 `messaging.PackUnits` (moved there from `narrow_layout.go` so the two-line
 table form shares it), which breaks lines only between whole units and
 splits a unit too wide for its indent at a space, keeping the indent
-(ruling 3).
+(ruling 3). A spaceless piece wider than the whole line (a 40-letter guild
+name, a link in a macro) breaks at the edge; a character name, which the
+caller lists in `PackUnits`' `names` (guild roster and list, scan), never
+does: a legacy one runs past on its own line at its indent (ruling 8).
 
 - **Craft** (`craft_rows.go`): `craft list` and the bare `craft` view build a
   `craftRow` per recipe (`newCraftRow`) and lay it out with `craftRowLines` at
