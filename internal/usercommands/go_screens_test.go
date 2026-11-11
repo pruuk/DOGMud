@@ -311,21 +311,43 @@ func TestShippedNameSizeMaxIsTheTestedLongestName(t *testing.T) {
 }
 
 // A character still carrying its placeholder name takes its username in
-// `start`. A username longer than today's 28 (legal before plan 3b-3) is
-// kept as the name rather than failing validation and leaving the
-// placeholder.
+// `start`, checked with every name check but its own username (an online
+// user is in the username list). A username longer than today's 28 (legal
+// before plan 3b-3) is kept as the name when the length is its only fault;
+// a username that fails any other check (a banned name) is not set, and the
+// placeholder stays, as on master.
 func TestStartKeepsALegacyLongUsernameAsTheName(t *testing.T) {
 	cleanup := seedAllRegistries()
 	t.Cleanup(cleanup)
 	orig := int(configs.GetValidationConfig().NameSizeMax)
 	_ = configs.AddOverlayOverrides(map[string]any{"Validation.NameSizeMax": 28})
 	t.Cleanup(func() { _ = configs.AddOverlayOverrides(map[string]any{"Validation.NameSizeMax": orig}) })
-	user := users.NewTestUser(97201, goScreenLegacyName, "", 99201)
-	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{user.UserId: user}))
-	user.Character.Name = user.TempName()
-	user.Character.RoomId = -1
-	_, _ = Start("", user, nil, 0)
-	require.Equal(t, goScreenLegacyName, user.Character.Name)
+	origBanned := []string(configs.GetValidationConfig().BannedNames)
+	_ = configs.AddOverlayOverrides(map[string]any{"Validation.BannedNames": []string{"badword*"}})
+	t.Cleanup(func() { _ = configs.AddOverlayOverrides(map[string]any{"Validation.BannedNames": origBanned}) })
+
+	for i, tc := range []struct {
+		username string
+		kept     bool
+	}{
+		{goScreenLegacyName, true},               // too long only: kept
+		{"screenly", true},                       // its own username (online, listed lower case) is no collision
+		{"Badword_Ashgrove_Thornbramble", false}, // too long and banned
+		{"Badwordly", false},                     // banned
+	} {
+		user := users.NewTestUser(97201+i, tc.username, "", uint64(99201+i))
+		restore := users.SeedUsersForTest(map[int]*users.UserRecord{user.UserId: user})
+		temp := user.TempName()
+		user.Character.Name = temp
+		user.Character.RoomId = -1
+		_, _ = Start("", user, nil, 0)
+		if tc.kept {
+			require.Equal(t, tc.username, user.Character.Name, "%s was not kept", tc.username)
+		} else {
+			require.Equal(t, temp, user.Character.Name, "%s was set though it fails a name check", tc.username)
+		}
+		restore()
+	}
 }
 
 // --- motd ---

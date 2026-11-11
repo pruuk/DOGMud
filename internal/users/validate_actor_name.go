@@ -15,6 +15,10 @@ type ValidateActorOpts struct {
 	SkipMobCheck    bool // skip mob-template-name collision check
 	SkipBannedCheck bool // skip banned-pattern check
 	ExcludeUserId   int  // ignore collisions on this user (self-rename)
+	// SkipMaxLength accepts a name longer than NameSizeMax: a username
+	// from before plan 3b-3 lowered the limit from 32 to 28, kept as the
+	// character name (ruling 8). Every other check still applies.
+	SkipMaxLength bool
 }
 
 // ValidateActorName is the single source of truth for any name a player
@@ -24,7 +28,7 @@ type ValidateActorOpts struct {
 func ValidateActorName(name string, opts ValidateActorOpts) error {
 	validation := configs.GetValidationConfig()
 
-	if len(name) < int(validation.NameSizeMin) || len(name) > int(validation.NameSizeMax) {
+	if len(name) < int(validation.NameSizeMin) || (len(name) > int(validation.NameSizeMax) && !opts.SkipMaxLength) {
 		return fmt.Errorf("Names must be between %d and %d characters long.",
 			validation.NameSizeMin, validation.NameSizeMax)
 	}

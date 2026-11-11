@@ -599,9 +599,13 @@ does: a legacy one runs past on its own line at its indent (ruling 8).
 `list_screens_test.go` holds these five to the approved drawings
 (`testdata/drawings_3b3/`) and to their goldens.
 
-`start` gives a character still carrying its placeholder name its username;
-a username longer than today's `NameSizeMax` (28 since plan 3b-3, was 32) is
-kept as the name directly rather than failing validation.
+`start` gives a character still carrying its placeholder name its username,
+checked by `users.ValidateActorName` with the user's own id excluded (an
+online user's username is in the username list) and `SkipMaxLength`: a
+username longer than today's `NameSizeMax` (28 since plan 3b-3, was 32) is
+kept when the length is its only fault. A username failing any other check
+(banned, a mob's name, another player's) is not set, and the placeholder
+stays.
 
 ## Message categories (messaging M7 slice 4, #371)
 

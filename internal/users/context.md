@@ -956,7 +956,7 @@ restores a captured baseline before re-deriving the spec. Copy that. Note
 | `storage.go` / `storage_migrate.go` | Bank inventory (`Storage`, `StorageSlot`), its legacy `Items`-to-`Slots` shape migration, and the U10d ranged-weapon rescale over banked items |
 | `index.go` / `index_rebuild.go` / `character_index.go` | Name/character indexes |
 | `migration.go` | Per-user migrations |
-| `validate_actor_name.go` | Name validation |
+| `validate_actor_name.go` | Name validation (`ValidateActorName`; `ValidateActorOpts.SkipMaxLength` keeps a username from before `NameSizeMax` fell to 28 in plan 3b-3, used by `start`) |
 | `inbox.go` | Player mudmail |
 | `onlineinfo.go` | Who-list / online presence data |
 | `userlog.go` | Per-user log |
