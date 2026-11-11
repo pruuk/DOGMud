@@ -11,7 +11,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/achievements"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -93,6 +95,76 @@ func macrosUser(t *testing.T, macros map[string]string) (*users.UserRecord, *roo
 func TestMacrosKeepsIts80ColumnOutput(t *testing.T) {
 	user, room := macrosUser(t, macrosFitting)
 	checkGolden(t, "macros", runScreen(t, user, room, 80, Macros, ""))
+}
+
+// macrosCaptured are the capture's macros, with the party invite naming a
+// character at the 28-letter maximum where the capture had a legacy
+// 32-letter name.
+var macrosCaptured = map[string]string{
+	"=1": "get all;stow;look",
+	"=2": "cast identify on cuirass;appraise cuirass",
+	"=3": "say meet at the old market gate at dusk, and bring a lantern, a coil of rope and your strongbox key.",
+	"=4": "party invite " + strings.ToLower(goScreenLongestName) + ";guild who;who",
+}
+
+// macrosDrawn is the drawing at width with the 28-letter name for the
+// 32-letter one: at 80 and 42 it takes the old name's place; at 30 it fits
+// the line but not the indent of 5 and has no space to split at, so it is
+// pulled left to end at the edge, as PackUnits places such a unit (where the
+// drawing broke the legacy name after an underscore).
+func macrosDrawn(t *testing.T, width int) string {
+	drawn := drawing3b3(t, fmt.Sprintf("macros.w%d", width))
+	name := strings.ToLower(goScreenLongestName)
+	if width == 30 {
+		return strings.Replace(drawn, "     wilhelmina_ashgrove_\n     thornbramble", strings.Repeat(" ", 30-len(name))+name, 1)
+	}
+	return strings.Replace(drawn, "wilhelmina_ashgrove_thornbramble", name, 1)
+}
+
+// The macros as drawn (macros in narrow-screens-3b3-mock): at 80 (a
+// redesign, since a long macro ran past 80) and 42 the key at 2, its
+// commands at 6 continuing at 8; at 30 at 1, 3 and 5. The closing lines
+// ride CategorySystem, which the pipeline wraps.
+func TestMacrosAreTheDrawing(t *testing.T) {
+	user, room := macrosUser(t, macrosCaptured)
+	for _, width := range []int{80, 42, 30} {
+		out := runScreen(t, user, room, width, Macros, "")
+		lines := plainLines(out)
+		for i, l := range lines {
+			lines[i] = strings.TrimRight(l, " ")
+			// The pipeline wraps the two closing CategorySystem lines.
+			if strings.HasPrefix(l, "To use") || strings.HasPrefix(l, "Some terminals") {
+				lines[i] = messaging.WrapAnsi(l, width)
+			}
+		}
+		got := strings.TrimRight(strings.Join(lines, "\n"), "\n")
+		want := macrosDrawn(t, width)
+		if got != want {
+			t.Errorf("macros at %d is not the drawing:\n%s", width, lineDiffForTest(want, got))
+		}
+	}
+}
+
+// Every macro line fits the form at every width, a command word whole.
+func TestMacrosFitEveryWidth(t *testing.T) {
+	macros := map[string]string{}
+	for k, v := range macrosCaptured {
+		macros[k] = v
+	}
+	// A 13- and a 12-column word side by side at indent 5 end at 31, one
+	// past a 30 line, so a packer that overfills by one is caught.
+	macros["=5"] = "say abcdefghijkl nopqrstuvwxyz abcdefghijkl"
+	user, room := macrosUser(t, macros)
+	for _, width := range goScreenWidths {
+		out := runScreen(t, user, room, width, Macros, "")
+		formWidth := users.RedrawnFormWidth(width)
+		for _, line := range plainLines(out) {
+			if strings.HasPrefix(line, "To use") || strings.HasPrefix(line, "Some terminals") {
+				continue // CategorySystem: the pipeline wraps them
+			}
+			require.LessOrEqual(t, templates.WidestLine(line), formWidth, "at %d: %q", width, line)
+		}
+	}
 }
 
 // --- channels ---

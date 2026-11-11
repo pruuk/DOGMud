@@ -1,0 +1,29 @@
+Your macros:
+
+ =1:
+   a) get all
+   b) stow
+   c) look
+
+ =2:
+   a) cast identify on cuirass
+   b) appraise cuirass
+
+ =3:
+   a) say meet at the old
+     market gate at dusk, and
+     bring a lantern, a coil
+     of rope and your
+     strongbox key.
+
+ =4:
+   a) party invite
+     wilhelmina_ashgrove_
+     thornbramble
+   b) guild who
+   c) who
+
+To use a macro, type ={num}.
+Some terminals support
+pressing the associated F-Key
+(F1, F2, etc.)
