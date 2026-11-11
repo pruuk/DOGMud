@@ -1,0 +1,5 @@
+Channels (channels <name> to
+  toggle):
+  chat: on
+  newbie: on
+  trade: on

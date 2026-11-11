@@ -176,6 +176,27 @@ func TestChannelsKeepsIts80ColumnOutput(t *testing.T) {
 	checkGolden(t, "channels", runScreen(t, user, room, 80, Channels, ""))
 }
 
+// The channel list as drawn (channels in narrow-screens-3b3-mock): at 42 it
+// is the 80-column screen (37 wide); at 30 the heading breaks between words
+// and continues 2 in. Between 30 and 37 the heading's form is the 30 one.
+func TestChannelsAreTheDrawing(t *testing.T) {
+	cleanup := seedAllRegistries()
+	t.Cleanup(cleanup)
+	user, room := getTestUserAndRoom(t)
+	for _, width := range []int{42, 30} {
+		got := strings.Join(plainLines(runScreen(t, user, room, width, Channels, "")), "\n")
+		want := drawing3b3(t, fmt.Sprintf("channels.w%d", width))
+		if got != want {
+			t.Errorf("channels at %d is not the drawing:\n%s", width, lineDiffForTest(want, got))
+		}
+	}
+	for width := 30; width <= 42; width++ {
+		for _, line := range plainLines(runScreen(t, user, room, width, Channels, "")) {
+			require.LessOrEqual(t, templates.WidestLine(line), width, "at %d: %q", width, line)
+		}
+	}
+}
+
 // --- container recipes ---
 
 // containerRecipeItems are the capture's binding press items: the output
