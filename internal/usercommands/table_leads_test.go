@@ -236,6 +236,21 @@ func genericAt(t *testing.T, width int) string {
 	return out
 }
 
+// genericFitsAt is genericAt with data whose bordered form fits 80, so
+// its plain-column form (tables/generic.w40.template) is picked one column
+// narrower; genericAt's rows are too wide for that form at any width.
+func genericFitsAt(t *testing.T, width int) string {
+	t.Helper()
+	out, err := templates.ProcessAtWidth("tables/generic", templates.GetTable("Lost and found",
+		[]string{"Item", "Where", "Since"},
+		[][]string{
+			{"a lantern", "the Thornwall Temple District", "two days"},
+			{"a rope", "Main Street", "today"},
+		}), width)
+	require.NoError(t, err)
+	return out
+}
+
 // tableScreen is a table run at a width, with data whose bordered form
 // fits 80.
 type tableScreen func(t *testing.T, width int) string
@@ -254,6 +269,12 @@ var leadTables = map[string]tableScreen{
 	"keyring": func(t *testing.T, width int) string { return keyringAt(t, width, "Town Square", 4) },
 	"spells":  func(t *testing.T, width int) string { return spellsAt(t, width, spellsFit()) },
 	"shop":    func(t *testing.T, width int) string { return shopAt(t, width, shopFits()) },
+}
+
+// noLeadFitTables are tables that name no lead column, with data whose
+// bordered form fits 80, pinned at 80 and in their plain-column form.
+var noLeadFitTables = map[string]tableScreen{
+	"generic_fits": genericFitsAt,
 }
 
 // noLeadTables are tables that name no lead column.
@@ -287,6 +308,21 @@ func TestTablesKeepTheirMasterOutput(t *testing.T) {
 			require.Contains(t, at80, "╒", "%s at 80 is not bordered", name)
 			plain := tableRender(t, screen, bordered-1)
 			require.NotContains(t, plain, "╒", "%s at %d is bordered", name, bordered-1)
+			checkGolden(t, "tables_"+name+"_w40form", plain)
+		})
+	}
+	// A table with no lead keeps master's bordered form at 80 and its
+	// plain-column form one column narrower (tables/generic.w40.template,
+	// which plan 3b-3 left as master has it).
+	for name, screen := range noLeadFitTables {
+		t.Run(name, func(t *testing.T) {
+			at80 := tableRender(t, screen, 80)
+			require.Contains(t, at80, "╒", "%s at 80 is not bordered", name)
+			checkGolden(t, "tables_"+name+"_w80", at80)
+			width := templates.WidestLine(at80) - 1
+			plain := tableRender(t, screen, width)
+			require.Regexp(t, `(?m)^Item +Where +Since`, regexp.MustCompile(`</?ansi[^>]*>`).ReplaceAllString(plain, ""),
+				"%s at %d is not the plain-column form", name, width)
 			checkGolden(t, "tables_"+name+"_w40form", plain)
 		})
 	}
