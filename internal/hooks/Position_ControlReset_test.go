@@ -49,6 +49,40 @@ func TestControlResetsWhenGrappleEndsSolo(t *testing.T) {
 	}
 }
 
+// A mob that mounts a player is in control and the player is held, and the
+// break frees both. Before Validate built Control for mob instances, the
+// mob's side was nil and TransitionPair set neither side (bug, owner
+// 2026-11-11).
+func TestMobMountingPlayerSetsControlBothWays(t *testing.T) {
+	mob := characters.New()
+	mob.ResetForMobInstance() // the mob-instance path: machines cleared, then Validate
+	mob.MobInstanceId = 901
+	mob.Validate()
+	player := characters.New()
+	player.SetUserId(902)
+
+	enter := state.TransitionReason{Trigger: position.TriggerGrappleEntry}
+	if err := position.TransitionPair(mob, player, position.Clinch, enter); err != nil {
+		t.Fatalf("clinch: %v", err)
+	}
+	if err := position.TransitionPair(mob, player, position.Mount, state.TransitionReason{Trigger: position.TriggerTakedownMount}); err != nil {
+		t.Fatalf("mount: %v", err)
+	}
+	if mob.Control == nil || !mob.IsController() {
+		t.Fatalf("mob is not in control after mounting the player (Control nil = %v)", mob.Control == nil)
+	}
+	if !player.IsBeingControlled() {
+		t.Fatalf("player Control = %v, want Controlled", player.Control.State())
+	}
+
+	if err := position.TransitionPair(mob, player, position.Standing, state.TransitionReason{Trigger: position.TriggerGrappleBreak}); err != nil {
+		t.Fatalf("break: %v", err)
+	}
+	if mob.Control.State() != control.Neutral || player.Control.State() != control.Neutral {
+		t.Fatalf("after break: mob %v, player %v, want both Neutral", mob.Control.State(), player.Control.State())
+	}
+}
+
 // Moving between grapple positions keeps the dominance the drift roll built.
 func TestControlKeptBetweenGrapplePositions(t *testing.T) {
 	c := heldInMount(t)
