@@ -11,15 +11,16 @@ import (
 
 type recordedNotice struct {
 	userId int
-	text   string
+	text   string // as an 80-column reader gets it
+	narrow string // as a 30-column reader gets it
 }
 
 // recordProgressionNotices installs a recording notifier for one test.
 func recordProgressionNotices(t *testing.T) *[]recordedNotice {
 	t.Helper()
 	var got []recordedNotice
-	SetProgressionNotifier(func(userId int, text string) {
-		got = append(got, recordedNotice{userId, text})
+	SetProgressionNotifier(func(userId int, render func(width int) string) {
+		got = append(got, recordedNotice{userId, render(80), render(30)})
 	})
 	t.Cleanup(func() { SetProgressionNotifier(nil) })
 	return &got
@@ -56,6 +57,16 @@ func TestProgressionNotice_SkillBanner(t *testing.T) {
 	}
 	if strings.HasSuffix(n.text, "\n") {
 		t.Errorf("notice ends in a newline; UserRecord.SendText adds it")
+	}
+	// The banner is laid out for the reader's width (plan 3b-3): 64 glyphs
+	// of rule at 80, 30 at 30.
+	for _, tc := range []struct {
+		text  string
+		width int
+	}{{n.text, 64}, {n.narrow, 30}} {
+		if first := strings.SplitN(tc.text, "\n", 2)[0]; first != strings.Repeat("━", tc.width) {
+			t.Errorf("banner rule is %q, want %d glyphs", first, tc.width)
+		}
 	}
 	assertNoRawProgressionMessages(t)
 }

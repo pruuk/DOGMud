@@ -61,7 +61,12 @@ The hooks system is built around several key categories:
 - **Quest Processing**: Multi-step quest advancement and rewards
 - **Item Integration**: Quest item requirements and rewards
 - **Skill Advancement**: Skill-based quest completion
-- **Progression Distribution**: Skill progression rewards and notifications
+- **Progression Distribution**: Skill progression rewards and notifications.
+  `ProgressionNotifyCallback(userId, render func(width int) string)` is the
+  callback `characters` sends its progression lines through: it renders at the
+  user's `WrapWidth()` and sends on `CategorySkillProgress`, so the SKILL
+  ADVANCEMENT and STATISTIC INCREASED banners draw their rule to the reader's
+  width (plan 3b-3)
 
 ### 4. **System Maintenance and Optimization**
 - **Automatic Cleanup**: Zombie connections, expired conditions, ephemeral rooms

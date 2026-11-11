@@ -291,10 +291,13 @@ progression for contest paths now flows exclusively through
 
 ### Progression text delivery
 
-Progression never builds an `events.Message`. Banners (`banner.Format`), the
-regen gain line and the crit and fumble lines go through `notifyProgression`,
-which calls the callback registered with `SetProgressionNotifier`. `main.go`
-registers `hooks.ProgressionNotifyCallback`, which sends on
+Progression never builds an `events.Message`. Banners go through
+`notifyProgressionBanner`, the regen gain line and the crit and fumble lines
+through `notifyProgression`; both call `notifyProgressionAt`, which calls the
+callback registered with `SetProgressionNotifier`. The callback is handed a
+render function, `func(width int) string`, not text: `main.go` registers
+`hooks.ProgressionNotifyCallback`, which holds the user, calls it with
+`user.WrapWidth()` (so a banner's rule fits the reader, plan 3b-3) and sends on
 `messaging.CategorySkillProgress`. The callback exists because `messaging`
 imports `characters`. With no callback registered (unit tests) nothing is
 sent; `progression_notifier_guard_test.go` asserts the boot registration and

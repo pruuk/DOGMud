@@ -202,13 +202,11 @@ func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMul
 						tier = &banner.TierChange{From: prevTier, To: newTier}
 					}
 				}
-				msg := banner.Format(banner.Skill, actualSkill, tier)
-				notifyProgression(userId, msg)
+				notifyProgressionBanner(userId, banner.Skill, actualSkill, tier)
 			}
 		} else {
 			if userId > 0 {
-				msg := banner.Format(banner.Skill, skillName, nil)
-				notifyProgression(userId, msg)
+				notifyProgressionBanner(userId, banner.Skill, skillName, nil)
 			}
 		}
 		return true
@@ -297,8 +295,7 @@ func (c *Character) CheckStatProgression(statName string, userId int, bonusMulti
 		mudlog.Debug("Progression", "check", "stat", "result", "PROGRESS", "stat", statName, "rank", virtualRank, "chance", fmt.Sprintf("%.4g%%", chance*100), "roll", roll, "threshold", threshold, "character", c.Name)
 		if c.IncreaseStat(statName, 1) {
 			if userId > 0 {
-				msg := banner.Format(banner.Stat, statName, nil)
-				notifyProgression(userId, msg)
+				notifyProgressionBanner(userId, banner.Stat, statName, nil)
 			}
 			return true
 		}
