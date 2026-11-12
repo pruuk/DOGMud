@@ -43,25 +43,20 @@ func TestMapSizeForReader(t *testing.T) {
 }
 
 // shippedMapWords reads the longest words a map screen can hold from the
-// shipped world: the five longest room map legends (with the names the code
-// writes) and the longest zone name.
+// shipped world: the five longest legend names a map can show and the
+// longest zone name.
 func shippedMapWords(t *testing.T) (legend []string, zone string) {
 	t.Helper()
 	_, here, _, ok := runtime.Caller(0)
 	require.True(t, ok)
 	rooms := filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "rooms")
 
-	legends := map[string]bool{"Party Member": true, "Secret": true}
-	legendLine := regexp.MustCompile(`(?m)^maplegend:\s*"?([^"\r\n]+?)"?\s*$`)
-	files, err := filepath.Glob(filepath.Join(rooms, "*", "*.yaml"))
-	require.NoError(t, err)
-	require.Greater(t, len(files), 1000, "the glob must reach the shipped rooms")
-	for _, f := range files {
-		raw, err := os.ReadFile(f)
-		require.NoError(t, err)
-		if m := legendLine.FindSubmatch(raw); m != nil {
-			legends[string(m[1])] = true
-		}
+	// Every legend entry a map can draw (biomes, room legends, the mapper's
+	// and the map command's markers), plus the two markers that helper
+	// leaves out (skill.map.go: NPC, Party Member).
+	legends := map[string]bool{"Party Member": true, "NPC": true}
+	for _, g := range shippedLegendGlyphs(t) {
+		legends[g.name] = true
 	}
 	for name := range legends {
 		legend = append(legend, name)
