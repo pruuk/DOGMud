@@ -42,4 +42,21 @@ func TestLockRenderEmptyKeepsItsTitle(t *testing.T) {
 	if !strings.Contains(out, "The Lock Sequence Looks like:") {
 		t.Errorf("an empty lock lost its title:\n%s", out)
 	}
+	narrow := lockRenderAt("", "", 30, false)
+	if !strings.Contains(narrow, "The lock sequence:") || templates.WidestLine(narrow) > 30 {
+		t.Errorf("an empty lock at 30 has the wrong title or is too wide:\n%s", narrow)
+	}
+}
+
+// A row of one step is "Lock step N:", not "Lock steps N to N:".
+func TestLockRowOfOneStepIsSingular(t *testing.T) {
+	useDogmudTemplates(t)
+	out := lockRenderAt(strings.Repeat("UD", 5), "", 42, false) // 10 steps, 4 a row: 4, 4, 2
+	if strings.Contains(out, "Lock step 10:") || !strings.Contains(out, "Lock steps 9 to 10:") {
+		t.Errorf("a two-step last row is titled wrongly:\n%s", out)
+	}
+	out = lockRenderAt(strings.Repeat("UD", 5)[:9], "", 42, false) // 9 steps: 4, 4, 1
+	if !strings.Contains(out, "Lock step 9:") || strings.Contains(out, "Lock steps 9 to 9:") {
+		t.Errorf("a one-step last row is not singular:\n%s", out)
+	}
 }

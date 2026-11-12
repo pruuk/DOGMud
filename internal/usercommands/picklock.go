@@ -404,7 +404,15 @@ func lockRenderAt(sequence string, entered string, width int, screenReader bool)
 		// The template prints ".: " before the title, so a title has
 		// width-3 columns. "Lock steps 28 to 32:" is the longest, 20.
 		title := `The Lock Sequence Looks like:`
-		if len(sequence) > per || 3+len(title) > width {
+		switch {
+		case len(sequence) == 0:
+			// The empty table keeps today's title where it fits.
+			if 3+len(title) > width {
+				title = `The lock sequence:`
+			}
+		case end == start+1 && (len(sequence) > per || 3+len(title) > width):
+			title = fmt.Sprintf(`Lock step %d:`, end)
+		case len(sequence) > per || 3+len(title) > width:
 			title = fmt.Sprintf(`Lock steps %d to %d:`, start+1, end)
 		}
 		part := make([][]string, len(rows))
