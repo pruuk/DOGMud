@@ -78,5 +78,5 @@ a companion can have consequences.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help progression</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help dismiss</ansi>,
-  <ansi fg="command">help reservation</ansi>, <ansi fg="command">help assess</ansi>
+           <ansi fg="command">help reservation</ansi>, <ansi fg="command">help assess</ansi>
 ::

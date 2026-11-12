@@ -37,6 +37,4 @@ protection also softens critical hits.
 
 <ansi fg="yellow">Related: </ansi>
   <ansi fg="command">help combat</ansi>, <ansi fg="command">help equip</ansi>, <ansi fg="command">help status</ansi>,
-::keep
   <ansi fg="command">help taunt</ansi>
-::

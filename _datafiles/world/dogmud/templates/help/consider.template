@@ -36,5 +36,5 @@ so you can't consider and use a special move in the same breath.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cooldowns</ansi>, <ansi fg="command">help special</ansi>,
-  <ansi fg="command">help search</ansi>
+           <ansi fg="command">help search</ansi>
 ::

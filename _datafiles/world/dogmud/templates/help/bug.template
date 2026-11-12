@@ -6,7 +6,9 @@ timestamp so we can track it down.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">bug <description></ansi>
+::
 
   Examples:
     <ansi fg="command">bug The door to the east doesn't open even when I have the key.</ansi>

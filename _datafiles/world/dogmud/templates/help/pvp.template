@@ -7,7 +7,5 @@ You can see whether PVP is enabled on this server by typing: <ansi fg="command">
 The possible settings are:
 
     <ansi fg="yellow-bold">disabled</ansi> - PVP is <ansi fg="alert-5">disabled</ansi> on this server. You cannot fight other players.
-::rows
     <ansi fg="yellow-bold">enabled</ansi>  - PVP is <ansi fg="green-bold">enabled</ansi> on this server. You can fight other players anywhere.
-::
     <ansi fg="yellow-bold">limited</ansi>  - PVP is <ansi fg="yellow">limited</ansi> on this server. You can fight other players in places labeled with: <ansi fg="11" bg="52"> ☠ PK Area ☠ </ansi>.

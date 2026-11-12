@@ -11,7 +11,9 @@ The <ansi fg="command">skills</ansi> command lists your current known skills.
 <ansi fg="yellow">Combat Skills:</ansi>
 ::rows
   <ansi fg="stat">weapon-combat</ansi>  — Melee attack & defense with weapons
-    <ansi fg="stat">unarmed-combat</ansi> — Fist/body attacks, grappling
+::
+  <ansi fg="stat">unarmed-combat</ansi> — Fist/body attacks, grappling
+::rows
   <ansi fg="stat">ranged-combat</ansi>  — Bows, crossbows, thrown weapons
   <ansi fg="stat">spellcasting</ansi>   — All magic offense & defense
   <ansi fg="stat">rhetoric</ansi>       — Conviction attacks (taunt)
@@ -32,7 +34,9 @@ The <ansi fg="command">skills</ansi> command lists your current known skills.
   <ansi fg="stat">alchemy</ansi>       — Potions, salves, medicines
   <ansi fg="stat">tailoring</ansi>     — Cloth and leather goods
   <ansi fg="stat">cooking</ansi>       — Food preparation, beneficial conditions
-    <ansi fg="stat">jewelcrafting</ansi> — Rings, pendants, gemwork
+::
+  <ansi fg="stat">jewelcrafting</ansi> — Rings, pendants, gemwork
+::rows
   <ansi fg="stat">enchanting</ansi>    — Imbuing items with magic
 ::
 

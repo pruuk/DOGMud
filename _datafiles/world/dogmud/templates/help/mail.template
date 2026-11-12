@@ -7,7 +7,9 @@ it. Any coin lands in their bank and any item in their pack.
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">mail <recipient></ansi> - Begin composing a letter to that adventurer
+::rows
+  <ansi fg="command">mail <recipient></ansi>  Begin composing a letter to that adventurer
+::
 
 You will be asked for a message, how much gold to attach (from what you are
 carrying), and an item to attach (or "none"). Nothing leaves you until you

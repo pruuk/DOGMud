@@ -58,6 +58,6 @@ tracks it.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help grapple</ansi>,
-  <ansi fg="command">help unarmed-combat</ansi>,
-  <ansi fg="command">help weapon-combat</ansi>
+           <ansi fg="command">help unarmed-combat</ansi>,
+           <ansi fg="command">help weapon-combat</ansi>
 ::

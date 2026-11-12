@@ -59,42 +59,42 @@ such as <ansi fg="yellow">Thornwall</ansi> and the capital at <ansi fg="yellow">
 
 ::rows
 <ansi fg="white">Skill-based.</ansi>  There are no classes and no class restrictions. You become
-  what you practice. Fight with weapons: weapon combat improves. Cast
-  spells: spellcasting improves. Forge iron: blacksmithing improves. Skills
-  advance through use, not through spending points at a trainer. The word
-  in your title (warrior, channeler, sage and so on) only describes the
-  stats you lean on, and it changes as you do. See <ansi fg="command">help title</ansi>.
+              what you practice. Fight with weapons: weapon combat improves. Cast
+              spells: spellcasting improves. Forge iron: blacksmithing improves. Skills
+              advance through use, not through spending points at a trainer. The word
+              in your title (warrior, channeler, sage and so on) only describes the
+              stats you lean on, and it changes as you do. See <ansi fg="command">help title</ansi>.
 
 <ansi fg="white">Stat-based.</ansi>  Six stats govern your character: Strength, Dexterity,
-  Vitality, Perception, Willpower, Charisma. All start near 100 (human
-  baseline) and rise through use. A mage who never lifts a sword will have
-  weak arms. A blacksmith who never trains the mind will struggle with
-  spells.
+             Vitality, Perception, Willpower, Charisma. All start near 100 (human
+             baseline) and rise through use. A mage who never lifts a sword will have
+             weak arms. A blacksmith who never trains the mind will struggle with
+             spells.
 
 <ansi fg="white">Mutation-driven.</ansi>  How you live reshapes your body. The Chrysalis grows a
-  web of mutations arranged in nine clusters (Colossus, Stalker, Ethereal,
-  and their kin), and the skills you use drift you toward the ones that
-  fit. You do not pick them; you grow into them, keystone by keystone,
-  toward each cluster's apex. Every change has a cost as well as a gift.
-  See <ansi fg="command">help mutations</ansi>.
+                  web of mutations arranged in nine clusters (Colossus, Stalker, Ethereal,
+                  and their kin), and the skills you use drift you toward the ones that
+                  fit. You do not pick them; you grow into them, keystone by keystone,
+                  toward each cluster's apex. Every change has a cost as well as a gift.
+                  See <ansi fg="command">help mutations</ansi>.
 
 <ansi fg="white">Crafting.</ansi>  Raw materials become gear through skill and a working
-  station. A forge makes blades. An alchemy bench makes potions. What you
-  can craft depends on your skill and what you can find or gather.
+           station. A forge makes blades. An alchemy bench makes potions. What you
+           can craft depends on your skill and what you can find or gather.
 ::
 
 <ansi fg="yellow">If you've played other MUDs, three things work differently here:</ansi>
 
 ::rows
 <ansi fg="white">Three pools, not two.</ansi>  Actions draw on Health, Stamina (SP), and
-  Conviction (CP). Watch all three in a fight, not just health. Running a
-  pool dry has consequences beyond that pool.
+                       Conviction (CP). Watch all three in a fight, not just health. Running a
+                       pool dry has consequences beyond that pool.
 
 <ansi fg="white">Loot is on the body.</ansi>  A slain foe keeps its gear and gold until you take
-  it. Loot the corpse: <ansi fg="command">loot corpse</ansi>, or <ansi fg="command">get all corpse</ansi>.
+                      it. Loot the corpse: <ansi fg="command">loot corpse</ansi>, or <ansi fg="command">get all corpse</ansi>.
 
 <ansi fg="white">Death is not deletion.</ansi>  Falling routes you through injury and waking
-  (and, if you've earned it, a justice system), never a lost character.
+                        (and, if you've earned it, a justice system), never a lost character.
 ::
 
 <ansi fg="yellow">━━━ Getting Started ━━━</ansi>
@@ -114,6 +114,8 @@ such as <ansi fg="yellow">Thornwall</ansi> and the capital at <ansi fg="yellow">
 
 <ansi fg="8">DOGMud is built on the <ansi fg="white">GoMud</ansi> open source engine by Dylan Squires
 (Volte6).
-Source: <ansi fg="51">github.com/GoMudEngine/GoMud</ansi>
-DOGMud repository: <ansi fg="51">github.com/pruuk/DOGMud</ansi></ansi>
+::rows
+Source:  <ansi fg="51">github.com/GoMudEngine/GoMud</ansi>
+DOGMud repository:  <ansi fg="51">github.com/pruuk/DOGMud</ansi></ansi>
+::
 

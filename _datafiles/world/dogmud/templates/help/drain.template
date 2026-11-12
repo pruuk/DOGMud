@@ -24,12 +24,12 @@ successful hit also leaves the target bleeding.
 
 ::rows
   <ansi fg="stat">Damage: </ansi> Moderate, lighter than a full melee strike; the
-    lifesteal makes up the difference in sustained fights.
+           lifesteal makes up the difference in sustained fights.
   <ansi fg="stat">Lifesteal: </ansi> On a hit, the attacker heals for a fraction of
-    damage dealt.
+              damage dealt.
   <ansi fg="stat">Bleed: </ansi> Each hit opens a bleeding wound on the target,
-    dealing ongoing damage each round. Wounds from repeated hits
-    add up, and they keep bleeding after the fight ends.
+          dealing ongoing damage each round. Wounds from repeated hits
+          add up, and they keep bleeding after the fight ends.
   <ansi fg="stat">Cooldown: </ansi> Shared with other special moves.
   <ansi fg="stat">Skill: </ansi> Progresses Unarmed Combat
 ::

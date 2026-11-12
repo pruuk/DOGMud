@@ -16,7 +16,7 @@ difficult to notice. Enemies struggle to focus on a shrouded target.
   <ansi fg="yellow">Base Folds:  </ansi> 6
   <ansi fg="yellow">Conv. Cost:  </ansi> 50
   <ansi fg="yellow">Effect:      </ansi> Stealth/concealment condition, makes the target harder
-                 to perceive
+                to perceive
 ::
 
 ::rows

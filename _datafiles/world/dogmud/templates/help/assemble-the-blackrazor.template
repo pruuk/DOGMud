@@ -11,9 +11,9 @@ component be of your own making.
   <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 65)
   <ansi fg="yellow">Station:</ansi>     forge
   <ansi fg="yellow">Ingredients: </ansi> Hungering Guard (x1), Obsidian Edge-Resin (x1),
-               Void-Quenched Obsidian Core (x1),
-               Whisper of the Old White (x1), Pale-Grey Casting (x1),
-               Steel Ingot (x8), Coal Dust (x6)
+                Void-Quenched Obsidian Core (x1),
+                Whisper of the Old White (x1), Pale-Grey Casting (x1),
+                Steel Ingot (x8), Coal Dust (x6)
   <ansi fg="yellow">Learned:</ansi>     buy Veyra's blackrazor secret: talk veyra
 ::
 

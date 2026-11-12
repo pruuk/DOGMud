@@ -104,6 +104,6 @@ Some mutations alter your available slots:
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help armor</ansi>, <ansi fg="command">help inventory</ansi>,
-  <ansi fg="command">help component-bag</ansi>, <ansi fg="command">help leather-bandolier</ansi>,
-  <ansi fg="command">help equip</ansi>, <ansi fg="command">help light</ansi>
+           <ansi fg="command">help component-bag</ansi>, <ansi fg="command">help leather-bandolier</ansi>,
+           <ansi fg="command">help equip</ansi>, <ansi fg="command">help light</ansi>
 ::

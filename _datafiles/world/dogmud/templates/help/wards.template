@@ -20,5 +20,5 @@ Type <ansi fg="command">conditions</ansi> to see which ward is on you.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help conviction-ward</ansi>, <ansi fg="command">help conviction-bulwark</ansi>,
-          <ansi fg="command">help chrysalis-cocoon</ansi>, <ansi fg="command">help conditions</ansi>
+           <ansi fg="command">help chrysalis-cocoon</ansi>, <ansi fg="command">help conditions</ansi>
 ::

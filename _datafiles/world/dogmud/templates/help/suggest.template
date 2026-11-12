@@ -5,7 +5,9 @@ All suggestions are saved and reviewed.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">suggest <your idea></ansi>
+::
 
   Examples:
     <ansi fg="command">suggest It would be cool if we could craft arrows at the workbench.</ansi>

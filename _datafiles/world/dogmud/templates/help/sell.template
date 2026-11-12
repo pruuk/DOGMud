@@ -52,5 +52,5 @@ Find out more about referring to items by name by typing
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help buy</ansi>, <ansi fg="command">help appraise</ansi>, <ansi fg="command">help list</ansi>,
-  <ansi fg="command">help give</ansi>, <ansi fg="command">help storage</ansi>
+           <ansi fg="command">help give</ansi>, <ansi fg="command">help storage</ansi>
 ::

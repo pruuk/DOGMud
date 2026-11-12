@@ -25,10 +25,10 @@ strike than rake.
 ::rows
   <ansi fg="stat">Damage: </ansi> Heavy. The savage bite deals significant harm.
   <ansi fg="stat">Bleed: </ansi> A successful maul opens a deep wound that bleeds
-    severely for a long while, dealing substantial additional
-    damage beyond the initial strike. Every new maul opens another
-    wound on top of the old ones, and open wounds keep bleeding
-    after the fight ends.
+          severely for a long while, dealing substantial additional
+          damage beyond the initial strike. Every new maul opens another
+          wound on top of the old ones, and open wounds keep bleeding
+          after the fight ends.
   <ansi fg="stat">Cooldown: </ansi> Shared with other special moves.
   <ansi fg="stat">Skill: </ansi> Progresses Unarmed Combat
 ::
@@ -45,6 +45,4 @@ finisher for wearing down prey over a sustained fight. See
 
   <ansi fg="command">help rake</ansi>, <ansi fg="command">help kick</ansi>, <ansi fg="command">help special</ansi>,
   <ansi fg="command">help conditions</ansi>, <ansi fg="command">help stamina</ansi>,
-::keep
   <ansi fg="command">help combat</ansi>
-::

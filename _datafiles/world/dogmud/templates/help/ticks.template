@@ -24,10 +24,10 @@ connected through the web client.
 ::rows
   <ansi fg="command">+ New</ansi>         Open the editor to create a tick.
   <ansi fg="command">Toggle</ansi>        Enable or disable a tick without deleting
-                 it. Disabled ticks will not fire.
+                it. Disabled ticks will not fire.
   <ansi fg="command">Left-click</ansi>    Fire the tick's commands right now, once.
   <ansi fg="command">Right-click</ansi>   Open the context menu to Edit, Duplicate,
-                 or Remove a tick.
+                or Remove a tick.
 ::
 
 <ansi fg="yellow">Commands & intervals:</ansi>

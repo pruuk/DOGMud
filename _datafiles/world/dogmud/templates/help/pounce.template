@@ -26,10 +26,10 @@ to the ground on a successful hit.
 
 ::rows
   <ansi fg="stat">Damage: </ansi> Heavy. The leaping body-slam deals significant
-    harm on contact.
+           harm on contact.
   <ansi fg="stat">Knockdown: </ansi> A successful pounce has a strong chance to
-    drive the target backward off their feet (Supine),
-    leaving them vulnerable to follow-up attacks.
+              drive the target backward off their feet (Supine),
+              leaving them vulnerable to follow-up attacks.
   <ansi fg="stat">Cooldown: </ansi> Shared with other special moves.
   <ansi fg="stat">Skill: </ansi> Progresses Unarmed Combat
 ::
@@ -48,6 +48,4 @@ details on Supine.
   <ansi fg="command">help rake</ansi>, <ansi fg="command">help maul</ansi>, <ansi fg="command">help special</ansi>,
   <ansi fg="command">help kick</ansi>, <ansi fg="command">help conditions</ansi>,
   <ansi fg="command">help stamina</ansi>,
-::keep
   <ansi fg="command">help combat</ansi>
-::

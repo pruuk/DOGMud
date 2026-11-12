@@ -23,8 +23,8 @@ a tactical move rather than a finisher.
 ::rows
   <ansi fg="stat">Damage: </ansi> Light. The goal is the floor, not the hit.
   <ansi fg="stat">Knockdown Chance: </ansi> The most reliable knockdown of the three
-    special moves, resolved against the defender's Dexterity and
-    combat skill.
+                     special moves, resolved against the defender's Dexterity and
+                     combat skill.
   <ansi fg="stat">Cooldown: </ansi> Shared by every special move. See <ansi fg="command">help special</ansi>.
   <ansi fg="stat">Skill: </ansi> Progresses Unarmed Combat
 ::
@@ -42,6 +42,4 @@ for a short time. See <ansi fg="command">help prone</ansi> for details.
   <ansi fg="command">help bash</ansi>, <ansi fg="command">help kick</ansi>,
   <ansi fg="command">help stand</ansi>, <ansi fg="command">help prone</ansi>,
   <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>,
-::keep
   <ansi fg="command">help combat</ansi>
-::

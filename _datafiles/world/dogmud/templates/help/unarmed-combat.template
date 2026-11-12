@@ -56,7 +56,7 @@ This skill improves through use:
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help combat</ansi>,
-  <ansi fg="command">help kick</ansi>, <ansi fg="command">help trip</ansi>,
-  <ansi fg="command">help grapple</ansi>, <ansi fg="command">help submission</ansi>,
-  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>
+           <ansi fg="command">help kick</ansi>, <ansi fg="command">help trip</ansi>,
+           <ansi fg="command">help grapple</ansi>, <ansi fg="command">help submission</ansi>,
+           <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>
 ::

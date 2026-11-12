@@ -29,5 +29,5 @@ just as a second light adds less than the first did.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help light</ansi>, <ansi fg="command">help chrysalis-pall</ansi>, <ansi fg="command">help heat-sight</ansi>,
-  <ansi fg="command">help night-vision</ansi>, <ansi fg="command">help seasons</ansi>, <ansi fg="command">help moons</ansi>
+           <ansi fg="command">help night-vision</ansi>, <ansi fg="command">help seasons</ansi>, <ansi fg="command">help moons</ansi>
 ::

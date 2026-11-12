@@ -51,8 +51,8 @@ Your <ansi fg="skill">search</ansi> skill also powers two other commands:
 
 ::rows
   <ansi fg="command">track</ansi>  Follow trails left by creatures and players.
-            Higher search skill lets you follow trails farther and read
-            more detail from the tracks you find.
+         Higher search skill lets you follow trails farther and read
+         more detail from the tracks you find.
 ::
 
   <ansi fg="command">forage</ansi> Gather herbs, wood, ore, and materials from

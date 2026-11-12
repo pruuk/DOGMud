@@ -5,8 +5,8 @@ Something of your own vigor flows out along the bond to your brood.
 ::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Rare
+<ansi fg="yellow">Requires: </ansi> Sustaining Presence
 ::
-<ansi fg="yellow">Requires:</ansi> Sustaining Presence
 
 <ansi fg="yellow">Benefits:</ansi>
   The companions at your side fight harder and endure longer for

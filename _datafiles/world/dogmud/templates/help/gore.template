@@ -24,10 +24,10 @@ to the ground on a successful hit.
 
 ::rows
   <ansi fg="stat">Damage: </ansi> Solid. The charging impact deals meaningful
-    harm on contact.
+           harm on contact.
   <ansi fg="stat">Knockdown: </ansi> A successful gore has a strong chance to
-    drive the target backward off their feet (Supine),
-    leaving them vulnerable to follow-up attacks.
+              drive the target backward off their feet (Supine),
+              leaving them vulnerable to follow-up attacks.
   <ansi fg="stat">Cooldown: </ansi> Shared with other special moves.
   <ansi fg="stat">Skill: </ansi> Progresses Unarmed Combat
 ::
@@ -46,6 +46,4 @@ strength and momentum rather than agility. See
   <ansi fg="command">help pounce</ansi>, <ansi fg="command">help maul</ansi>, <ansi fg="command">help rake</ansi>,
   <ansi fg="command">help kick</ansi>, <ansi fg="command">help conditions</ansi>,
   <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>,
-::keep
   <ansi fg="command">help combat</ansi>
-::

@@ -8,7 +8,7 @@ A robust elixir that mends wounds and restores stamina simultaneously.
   <ansi fg="yellow">Skill:</ansi>       alchemy (minimum 12)
   <ansi fg="yellow">Station:</ansi>     alchemy bench
   <ansi fg="yellow">Ingredients: </ansi> healer's root (x2), bitter thistle (x1),
-                  dustwalk herb (x1), bottle (x1)
+                dustwalk herb (x1), bottle (x1)
 ::
 
 ::rows

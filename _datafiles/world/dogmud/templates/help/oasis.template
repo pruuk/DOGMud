@@ -48,5 +48,5 @@ back on themselves and elementals roam freely.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help instances</ansi>,
-  <ansi fg="command">help arena</ansi>, <ansi fg="command">help party</ansi>
+           <ansi fg="command">help arena</ansi>, <ansi fg="command">help party</ansi>
 ::

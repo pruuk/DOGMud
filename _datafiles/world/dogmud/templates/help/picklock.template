@@ -7,8 +7,8 @@ You'll need a set of <ansi fg="item">lockpicks</ansi>.
 
 ::rows
   <ansi fg="command">picklock [exit name/container name]</ansi>  This picks the lock. You can also use 
-    it to inspect the lock and select `quit` without attempting to pick it.
 ::
+  it to inspect the lock and select `quit` without attempting to pick it.
 
 <ansi fg="yellow">Examples: </ansi>
 

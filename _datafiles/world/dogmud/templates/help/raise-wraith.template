@@ -47,5 +47,5 @@ light thing to keep, close to a skeleton in what it asks of you.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cast</ansi>, <ansi fg="command">help manifestation</ansi>,
-  <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help reservation</ansi>
+           <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help reservation</ansi>
 ::

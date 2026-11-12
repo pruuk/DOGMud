@@ -16,9 +16,7 @@ Hidden areas and secret passages may not appear on the map.
 
 <ansi fg="yellow">Map symbols:</ansi>
 
-::rows
   UTF-8  ASCII
-::
   <ansi fg="white">@</ansi>      <ansi fg="white">@</ansi>      You (your current room)
   <ansi fg="white">☺</ansi>      <ansi fg="white">P</ansi>      A party member, and with keen Perception
                 a player or a peaceful NPC
@@ -36,7 +34,7 @@ and terrain glyphs become letters too. The legend names each one.
 ::rows
   <ansi fg="skill">map</ansi>        Display a map of the nearby area.
   <ansi fg="skill">map wide</ansi>   Display a larger map that fills your
-                 screen (requires keen Perception).
+             screen (requires keen Perception).
 ::
 
 <ansi fg="yellow">The web client map:</ansi>
@@ -57,17 +55,17 @@ hidden; rooms further from you appear slightly dimmed.
   <ansi fg="white">S</ansi>   Shop: a merchant or vendor
   <ansi fg="white">T</ansi>   Trainer: a skill instructor or master
   <ansi fg="white">▢</ansi>   Storage: a storeroom or money-pouch
-    A small figure on a room means a party member is standing there.
 ::
+  A small figure on a room means a party member is standing there.
 
 <ansi fg="yellow">Vertical connections (stairs):</ansi>
 ::rows
   <ansi fg="white">▲</ansi>   Stairs up to the floor above
   <ansi fg="white">▼</ansi>   Stairs down to the floor below
-    The map shows one floor (Z-level) at a time. Walk to a staircase
-    and use it to change levels; the map will update to show the
-    new floor.
 ::
+  The map shows one floor (Z-level) at a time. Walk to a staircase
+  and use it to change levels; the map will update to show the
+  new floor.
 
 <ansi fg="yellow">Paths between rooms:</ansi>
   The lines connecting rooms change style to show terrain type:

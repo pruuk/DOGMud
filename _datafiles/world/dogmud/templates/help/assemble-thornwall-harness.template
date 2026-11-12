@@ -11,8 +11,8 @@ component be of your own making.
   <ansi fg="yellow">Skill:</ansi>       tailoring (minimum 65)
   <ansi fg="yellow">Station:</ansi>     loom
   <ansi fg="yellow">Ingredients: </ansi> Barbed Spike-Plates (x1), Anti-Corrosion Quench (x1),
-               Ironwood Thorn-Heart (x1), Scab-Chitin Plate (x1),
-               Leather Strip (x8), Sinew (x6)
+                Ironwood Thorn-Heart (x1), Scab-Chitin Plate (x1),
+                Leather Strip (x8), Sinew (x6)
   <ansi fg="yellow">Learned:</ansi>     buy Veyra's thornwall secret: talk veyra
 ::
 

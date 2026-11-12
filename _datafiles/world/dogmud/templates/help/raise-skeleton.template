@@ -47,5 +47,5 @@ raised undead, a skeleton asks the least of you to keep.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cast</ansi>, <ansi fg="command">help manifestation</ansi>,
-  <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help reservation</ansi>
+           <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help reservation</ansi>
 ::

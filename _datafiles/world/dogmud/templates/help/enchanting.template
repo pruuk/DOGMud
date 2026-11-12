@@ -81,6 +81,4 @@ Type <ansi fg="command">help <recipe-name></ansi> for details on any recipe.
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help craft</ansi>, <ansi fg="command">help disenchant</ansi>, <ansi fg="command">help skills</ansi>,
-::keep
   <ansi fg="command">help reservation</ansi>
-::

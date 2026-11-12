@@ -127,9 +127,9 @@ See individual help topics for details on each special move.
 
 ::rows
   <ansi fg="command">flee</ansi>  Attempt to escape (costs stamina, may fail)
-    Victory - Kill all opponents or force a submission
-    Defeat - Reach 0 health
 ::
+  Victory - Kill all opponents or force a submission
+  Defeat - Reach 0 health
 
 <ansi fg="yellow">See Also:</ansi>
 
@@ -139,6 +139,4 @@ See individual help topics for details on each special move.
   <ansi fg="command">help prone</ansi>, <ansi fg="command">help stamina</ansi>
   <ansi fg="command">help grapple</ansi>, <ansi fg="command">help reach</ansi>,
   <ansi fg="command">help submission</ansi>, <ansi fg="command">help ambush</ansi>,
-::keep
   <ansi fg="command">help sneak</ansi>
-::

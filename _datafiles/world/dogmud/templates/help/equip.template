@@ -36,5 +36,5 @@ first available slot automatically.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help equipment</ansi>,
-  <ansi fg="command">help item-names</ansi>, <ansi fg="command">help remove</ansi>
+           <ansi fg="command">help item-names</ansi>, <ansi fg="command">help remove</ansi>
 ::

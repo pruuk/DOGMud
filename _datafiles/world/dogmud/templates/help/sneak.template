@@ -26,6 +26,6 @@ answer it, and it always gives your hiding place away. Read
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help skullduggery</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help steal</ansi>, <ansi fg="command">help ambush</ansi>,
-  <ansi fg="command">help fire</ansi>
+           <ansi fg="command">help steal</ansi>, <ansi fg="command">help ambush</ansi>,
+           <ansi fg="command">help fire</ansi>
 ::

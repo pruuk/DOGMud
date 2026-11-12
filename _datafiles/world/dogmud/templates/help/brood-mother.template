@@ -6,8 +6,8 @@ sustaining a brood.
 ::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
+<ansi fg="yellow">Requires: </ansi> Sustaining Presence and Hive Mind
 ::
-<ansi fg="yellow">Requires:</ansi> Sustaining Presence and Hive Mind
 
 <ansi fg="yellow">Benefits:</ansi>
   The conviction to sustain your companions eases to almost nothing,

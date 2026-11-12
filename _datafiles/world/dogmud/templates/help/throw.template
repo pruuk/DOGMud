@@ -47,6 +47,6 @@ spent, the exact item, cooldown, and combat state remain unchanged.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help flashbang</ansi>, <ansi fg="command">help firebomb</ansi>,
-  <ansi fg="command">help toxic-flask</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help craft</ansi>, <ansi fg="command">help sort</ansi>
+           <ansi fg="command">help toxic-flask</ansi>, <ansi fg="command">help stamina</ansi>,
+           <ansi fg="command">help craft</ansi>, <ansi fg="command">help sort</ansi>
 ::

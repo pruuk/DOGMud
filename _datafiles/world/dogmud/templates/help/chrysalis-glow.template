@@ -30,5 +30,5 @@ it again for full strength, or use <ansi fg="command">cancel glow</ansi> to let 
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>,
-  <ansi fg="command">help light</ansi>, <ansi fg="command">help cancel</ansi>
+           <ansi fg="command">help light</ansi>, <ansi fg="command">help cancel</ansi>
 ::

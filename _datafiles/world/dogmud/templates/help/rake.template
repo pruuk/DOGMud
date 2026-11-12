@@ -24,9 +24,9 @@ damage and applies a bleeding condition on a successful strike.
 ::rows
   <ansi fg="stat">Damage: </ansi> Moderate. The slashing strike itself deals real harm.
   <ansi fg="stat">Bleed: </ansi> A successful rake opens a wound that keeps bleeding
-    for a while, dealing additional damage beyond the initial
-    strike. Every new rake opens another wound on top of the old
-    ones, and open wounds keep bleeding after the fight ends.
+          for a while, dealing additional damage beyond the initial
+          strike. Every new rake opens another wound on top of the old
+          ones, and open wounds keep bleeding after the fight ends.
   <ansi fg="stat">Cooldown: </ansi> Shared with other special moves.
   <ansi fg="stat">Skill: </ansi> Progresses Unarmed Combat
 ::
@@ -43,6 +43,4 @@ opponents over the course of a longer fight. See
 
   <ansi fg="command">help kick</ansi>, <ansi fg="command">help special</ansi>,
   <ansi fg="command">help conditions</ansi>, <ansi fg="command">help stamina</ansi>,
-::keep
   <ansi fg="command">help combat</ansi>
-::

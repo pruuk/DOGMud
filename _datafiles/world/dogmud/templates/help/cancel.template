@@ -21,5 +21,5 @@ one: <ansi fg="command">cancel glow</ansi> puts it out at once. While you are ca
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cast</ansi>, <ansi fg="command">help craft</ansi>,
-  <ansi fg="command">help chrysalis-glow</ansi>
+           <ansi fg="command">help chrysalis-glow</ansi>
 ::

@@ -43,23 +43,23 @@ technique. Several things tilt the contest:
 
 ::rows
   <ansi fg="stat">Unarmed Combat skill: </ansi> the biggest single factor.
-            Trained grapplers reliably beat untrained ones of
-            similar build.
+                         Trained grapplers reliably beat untrained ones of
+                         similar build.
 
   <ansi fg="stat">Strength: </ansi> the primary stat for controlling and
-            holding positions.
+             holding positions.
 
   <ansi fg="stat">Dexterity: </ansi> a secondary stat for setups, framing,
-            and scrambling.
+              and scrambling.
 
   <ansi fg="stat">Initiative: </ansi> the side that started the grapple has
-            a small edge that round because they picked the moment.
+               a small edge that round because they picked the moment.
 
   <ansi fg="stat">Stamina: </ansi> a gassed grappler is dramatically worse.
             Long grapples favor whoever paces themselves.
 
   <ansi fg="stat">Encumbrance: </ansi> carrying too much weight hurts both
-            sides of a grapple.
+                sides of a grapple.
 ::
 
 Heavy armor doesn't directly help you escape; it just costs you
@@ -90,28 +90,28 @@ Position dominates the math of in-grapple combat:
 
 ::rows
   <ansi fg="stat">Striking down: </ansi> attacking from a dominant
-            position (mount, side control, back mount) is
-            substantially easier than swinging from standing.
+                  position (mount, side control, back mount) is
+                  substantially easier than swinging from standing.
 
   <ansi fg="stat">Striking back: </ansi> trying to hit your opponent
-            while pinned is much harder. The worst positions,
-            crucifix, back mount, and full mount, leave you barely
-            able to swing.
+                  while pinned is much harder. The worst positions,
+                  crucifix, back mount, and full mount, leave you barely
+                  able to swing.
 
   <ansi fg="stat">Outside the fight: </ansi> a third party attacking
-            either grappler finds them easier to hit. Two
-            grapplers locked together pay less attention to
-            their surroundings.
+                      either grappler finds them easier to hit. Two
+                      grapplers locked together pay less attention to
+                      their surroundings.
 
   <ansi fg="stat">Outside hits disrupt: </ansi> if a third party
-            damages a grappler who's holding position, that
-            grappler's grip loosens. Enough outside damage will
-            eventually break a hold.
+                         damages a grappler who's holding position, that
+                         grappler's grip loosens. Enough outside damage will
+                         eventually break a hold.
 
   <ansi fg="stat">Submissions are fragile: </ansi> a hard hit from
-            outside the grapple while you're applying a
-            submission will break the attempt and leave you
-            worse off than when you started.
+                            outside the grapple while you're applying a
+                            submission will break the attempt and leave you
+                            worse off than when you started.
 ::
 
 <ansi fg="yellow">━━━ What You Can't Do While Grappled ━━━</ansi>
@@ -160,8 +160,8 @@ needed. See <ansi fg="command">help submission</ansi>.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help attack</ansi>,
-  <ansi fg="command">help kick</ansi>, <ansi fg="command">help trip</ansi>,
-  <ansi fg="command">help submission</ansi>,
-  <ansi fg="command">help reach</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help special</ansi>
+           <ansi fg="command">help kick</ansi>, <ansi fg="command">help trip</ansi>,
+           <ansi fg="command">help submission</ansi>,
+           <ansi fg="command">help reach</ansi>, <ansi fg="command">help stamina</ansi>,
+           <ansi fg="command">help special</ansi>
 ::

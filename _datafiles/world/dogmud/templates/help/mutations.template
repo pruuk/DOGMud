@@ -64,5 +64,5 @@ like are untouched by the Chrysalis entirely.
 
 ::rows
 <ansi fg="yellow">See Also:</ansi>  <ansi fg="command">help status</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help progression</ansi>,
-  <ansi fg="command">help dogmud</ansi>
+           <ansi fg="command">help dogmud</ansi>
 ::

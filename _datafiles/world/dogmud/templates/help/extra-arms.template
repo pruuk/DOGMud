@@ -19,11 +19,11 @@ draws hostile attention and unsettles everyone around you.
 <ansi fg="yellow">Drawbacks:</ansi>
 ::rows
   Greatly reduced charisma:  so many arms are deeply disturbing to
-    behold
-    Draws significantly more hostile attention from enemies
-    Your body holds part of your conviction in reserve, and the last
-    change holds more than the others
 ::
+  behold
+  Draws significantly more hostile attention from enemies
+  Your body holds part of your conviction in reserve, and the last
+  change holds more than the others
 
 <ansi fg="yellow">Conflicts:</ansi> Clawed Hands, Elongated Limbs
 

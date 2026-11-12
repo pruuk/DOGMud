@@ -9,8 +9,8 @@ pools, and equipment.
 ::rows
   <ansi fg="red">Health</ansi>     - Physical well-being (based on Vitality)
   <ansi fg="green">Stamina</ansi>    - Physical energy for combat moves
-    <ansi fg="cyan">Conviction</ansi> - Mental energy for spells and abilities
 ::
+  <ansi fg="cyan">Conviction</ansi> - Mental energy for spells and abilities
 
 <ansi fg="yellow">Stats: </ansi>
 
@@ -30,8 +30,8 @@ stat in your adventures, the more it grows over time.
 
 ::rows
   <ansi fg="command">Submission</ansi>  What you do when you lock a submission.
-    (<ansi fg="command">mercy</ansi> / <ansi fg="command">subdue</ansi> / <ansi fg="command">cripple</ansi> / <ansi fg="command">lethal</ansi>)
-    See <ansi fg="command">help submission</ansi>.
+              (<ansi fg="command">mercy</ansi> / <ansi fg="command">subdue</ansi> / <ansi fg="command">cripple</ansi> / <ansi fg="command">lethal</ansi>)
+              See <ansi fg="command">help submission</ansi>.
 ::
 
 <ansi fg="yellow">Usage: </ansi>

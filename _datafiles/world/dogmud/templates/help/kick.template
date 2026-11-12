@@ -40,6 +40,6 @@ consumed.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help bash</ansi>, <ansi fg="command">help trip</ansi>,
-  <ansi fg="command">help grapple</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help special</ansi>
+           <ansi fg="command">help grapple</ansi>, <ansi fg="command">help stamina</ansi>,
+           <ansi fg="command">help special</ansi>
 ::

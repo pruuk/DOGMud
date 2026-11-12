@@ -98,7 +98,5 @@ Materials come from many sources:
   <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help tailoring</ansi>,
   <ansi fg="command">help cooking</ansi>, <ansi fg="command">help jewelcrafting</ansi>, <ansi fg="command">help enchanting</ansi>,
   <ansi fg="command">help foraging</ansi>, <ansi fg="command">help skills</ansi>, <ansi fg="command">help inventory</ansi>,
-::keep
   <ansi fg="command">help toxicity</ansi>
-::
 

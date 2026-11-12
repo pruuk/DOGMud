@@ -5,10 +5,14 @@ room. Also answers to <ansi fg="command">shoot</ansi>.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">fire <target></ansi>
+::
       Shoot a target in the same room.
 
+::keep
   <ansi fg="command">fire <target> <direction></ansi>
+::
       Shoot into the adjacent room in that direction and strike
       a target there.
 
@@ -73,7 +77,7 @@ accuracy and damage.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help ranged-combat</ansi>,
-  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help equip</ansi>,
-  <ansi fg="command">help sneak</ansi>, <ansi fg="command">help skullduggery</ansi>,
-  <ansi fg="command">help ambush</ansi>, <ansi fg="command">help special</ansi>
+           <ansi fg="command">help stamina</ansi>, <ansi fg="command">help equip</ansi>,
+           <ansi fg="command">help sneak</ansi>, <ansi fg="command">help skullduggery</ansi>,
+           <ansi fg="command">help ambush</ansi>, <ansi fg="command">help special</ansi>
 ::

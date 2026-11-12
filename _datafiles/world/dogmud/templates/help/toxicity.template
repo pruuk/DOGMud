@@ -63,5 +63,5 @@ builds up, and how much your body will take is your tolerance.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help quaff</ansi>, <ansi fg="command">help craft</ansi>,
-  <ansi fg="command">help health</ansi>, <ansi fg="command">help status</ansi>
+           <ansi fg="command">help health</ansi>, <ansi fg="command">help status</ansi>
 ::

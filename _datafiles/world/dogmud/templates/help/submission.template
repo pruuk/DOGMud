@@ -14,20 +14,20 @@ in-round prompts. Combat is too fast for that.
 
 ::rows
   <ansi fg="command">mercy</ansi>    — Release the opponent cleanly. They go on living.
-            Brief recovery weakness. No persistent damage.
+           Brief recovery weakness. No persistent damage.
 
   <ansi fg="command">subdue</ansi>   <ansi fg="white">(default)</ansi> Choke them out. They lose
-            consciousness, wake up at the temple. You take some of
-            their gold. No persistent injury.
+           consciousness, wake up at the temple. You take some of
+           their gold. No persistent injury.
 
   <ansi fg="command">cripple</ansi>  — Break the joint. They lose consciousness, wake up
-            at the temple with a broken arm or shoulder. The harmful
-            condition persists for around an hour of play. You take
-            some gold.
+           at the temple with a broken arm or shoulder. The harmful
+           condition persists for around an hour of play. You take
+           some gold.
 
   <ansi fg="command">lethal</ansi>   — Finish them. Full death — including for players,
-            with full deprogression and corpse loot. Requires
-            confirmation the first time you set it.
+           with full deprogression and corpse loot. Requires
+           confirmation the first time you set it.
 ::
 
 <ansi fg="yellow">━━━ Position Matters ━━━</ansi>
@@ -56,5 +56,5 @@ character is.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help grapple</ansi>,
-  <ansi fg="command">help reach</ansi>
+           <ansi fg="command">help reach</ansi>
 ::

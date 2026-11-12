@@ -26,16 +26,16 @@ are casting a spell.
 ::rows
   <ansi fg="stat">Damage: </ansi> Moderate. The choke bite deals direct harm.
   <ansi fg="stat">Bleed: </ansi> A successful throttle opens a shallow throat wound
-    that keeps bleeding for a while. Every new throttle opens
-    another wound on top of the old ones.
+          that keeps bleeding for a while. Every new throttle opens
+          another wound on top of the old ones.
   <ansi fg="stat">Stamina Drain: </ansi> The Throttled condition saps stamina over
-    several rounds as the victim struggles for breath.
+                  several rounds as the victim struggles for breath.
   <ansi fg="stat">Cast Interrupt: </ansi> When the victim is casting a spell, the
-    choke tests their grip on it. Their own Willpower and
-    spellcasting training contest the throttle, so a practiced
-    caster can hold through it, while a novice is more likely to
-    lose the spell entirely. When it breaks, their unspent
-    conviction is partially refunded but the spell is lost.
+                   choke tests their grip on it. Their own Willpower and
+                   spellcasting training contest the throttle, so a practiced
+                   caster can hold through it, while a novice is more likely to
+                   lose the spell entirely. When it breaks, their unspent
+                   conviction is partially refunded but the spell is lost.
   <ansi fg="stat">Cooldown: </ansi> Shared with other special moves.
   <ansi fg="stat">Skill: </ansi> Progresses Unarmed Combat
 ::
@@ -51,6 +51,4 @@ mid-incantation, letting you silence the spell before it fires.
 
   <ansi fg="command">help maul</ansi>, <ansi fg="command">help rake</ansi>, <ansi fg="command">help special</ansi>,
   <ansi fg="command">help conditions</ansi>, <ansi fg="command">help stamina</ansi>,
-::keep
   <ansi fg="command">help combat</ansi>
-::

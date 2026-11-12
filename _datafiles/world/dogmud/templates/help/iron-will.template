@@ -37,5 +37,5 @@ it worthwhile for extended fights or dangerous zones.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help chrysalis-cocoon</ansi>,
-          <ansi fg="command">help conviction-ward</ansi>
+           <ansi fg="command">help conviction-ward</ansi>
 ::

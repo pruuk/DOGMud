@@ -8,14 +8,18 @@ Market Square.
 
 ::rows
   <ansi fg="command">bank</ansi>  See your gold on hand and
-    in the bank
-
-  <ansi fg="command">bank deposit [amount/all]</ansi>  Deposit
-    gold into the bank
-
-  <ansi fg="command">bank withdraw [amount/all]</ansi>  Withdraw
-    gold from the bank
 ::
+  in the bank
+
+::rows
+  <ansi fg="command">bank deposit [amount/all]</ansi>  Deposit
+::
+  gold into the bank
+
+::rows
+  <ansi fg="command">bank withdraw [amount/all]</ansi>  Withdraw
+::
+  gold from the bank
 
 <ansi fg="yellow">Item Storage: </ansi>
 

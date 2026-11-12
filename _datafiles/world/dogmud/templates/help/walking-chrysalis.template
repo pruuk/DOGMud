@@ -6,8 +6,8 @@ folded inside you.
 ::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Rare
+<ansi fg="yellow">Requires: </ansi> Provident Hands
 ::
-<ansi fg="yellow">Requires:</ansi> Provident Hands
 
 <ansi fg="yellow">Benefits:</ansi>
   You can craft anything, anywhere, needing no station or tools

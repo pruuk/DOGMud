@@ -26,6 +26,6 @@ fully effective. See <ansi fg="command">help grapple</ansi> and
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help skills</ansi>, <ansi fg="command">help equip</ansi>,
-  <ansi fg="command">help grapple</ansi>, <ansi fg="command">help reach</ansi>,
-  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>
+           <ansi fg="command">help grapple</ansi>, <ansi fg="command">help reach</ansi>,
+           <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>
 ::

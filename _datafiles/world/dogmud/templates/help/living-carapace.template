@@ -6,8 +6,8 @@ repairs itself endlessly.
 ::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
+<ansi fg="yellow">Requires: </ansi> Thick Hide and Regrowth
 ::
-<ansi fg="yellow">Requires:</ansi> Thick Hide and Regrowth
 
 <ansi fg="yellow">Benefits:</ansi>
   Tremendous natural armor, blows that strike the carapace are hurled

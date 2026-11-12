@@ -66,12 +66,12 @@ tougher the enemies, and the better the potential loot.
   <ansi fg="command">Oasis</ansi>      A three-dimensional elemental maze.
              Death allows re-entry. Recall works.
              Methodical exploration rewarded.
-    <ansi fg="command">Crash Site</ansi> A buried place in the Eastern
+  <ansi fg="command">Crash Site</ansi> A buried place in the Eastern
              Highlands. Death allows re-entry. No
              recall. Bring a group.
 ::
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help arena</ansi>,
-  <ansi fg="command">help oasis</ansi>, <ansi fg="command">help party</ansi>, <ansi fg="command">help combat</ansi>
+           <ansi fg="command">help oasis</ansi>, <ansi fg="command">help party</ansi>, <ansi fg="command">help combat</ansi>
 ::

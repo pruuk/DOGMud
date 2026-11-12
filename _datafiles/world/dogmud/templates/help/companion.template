@@ -8,17 +8,17 @@ creatures bound to you through manifestation magic.
 ::rows
   <ansi fg="command">companion</ansi>            List all your active companions.
   <ansi fg="command">companion <name></ansi>     Show detailed info for one companion.
-    <ansi fg="command">companion <name> assist on/off</ansi>
+::
+  <ansi fg="command">companion <name> assist on/off</ansi>
                        Toggle auto-assist on or off for that
                        companion. When assist is on, the
                        companion joins combat alongside you
                        automatically.
-    <ansi fg="command">companion <name> name <nickname></ansi>
+  <ansi fg="command">companion <name> name <nickname></ansi>
                        Give your companion a personal name.
                        It will be known as "Nickname the Type"
                        (e.g., "Fred the Spirit Wolf"). Names
                        must be unique and letters only.
-::
 
 <ansi fg="yellow">━━━ What the Display Shows ━━━</ansi>
 
@@ -95,5 +95,5 @@ with it, so lend only what you can afford to lose.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help progression</ansi>, <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help dismiss</ansi>,
-  <ansi fg="command">help reservation</ansi>, <ansi fg="command">help conviction</ansi>
+           <ansi fg="command">help reservation</ansi>, <ansi fg="command">help conviction</ansi>
 ::

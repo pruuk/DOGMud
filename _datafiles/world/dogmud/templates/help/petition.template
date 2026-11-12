@@ -7,7 +7,9 @@ automatically.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">petition <message></ansi>
+::
 
   Examples:
     <ansi fg="command">petition A player named Grum keeps following and insulting me.</ansi>

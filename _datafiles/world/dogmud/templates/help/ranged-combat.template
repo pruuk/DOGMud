@@ -57,6 +57,6 @@ This skill improves through use:
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help fire</ansi>,
-  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help skills</ansi>,
-  <ansi fg="command">help ambush</ansi>, <ansi fg="command">help sneak</ansi>
+           <ansi fg="command">help stamina</ansi>, <ansi fg="command">help skills</ansi>,
+           <ansi fg="command">help ambush</ansi>, <ansi fg="command">help sneak</ansi>
 ::

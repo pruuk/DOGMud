@@ -23,10 +23,10 @@ to the ground.
 
 ::rows
   <ansi fg="stat">Damage: </ansi> Solid but not as heavy as a full weapon swing; the
-    goal is the knockdown, not the wound.
+           goal is the knockdown, not the wound.
   <ansi fg="stat">Knockdown Chance: </ansi> Decent, resolved against the defender's
-    Dexterity and combat skill. Not as reliable as trip, but
-    you hit harder getting there.
+                     Dexterity and combat skill. Not as reliable as trip, but
+                     you hit harder getting there.
 ::
 ::list
     - Attacker: Weapon Combat skill + Strength
@@ -50,6 +50,4 @@ time, suffering attack and defense penalties. See
   <ansi fg="command">help trip</ansi>, <ansi fg="command">help kick</ansi>,
   <ansi fg="command">help stand</ansi>, <ansi fg="command">help prone</ansi>,
   <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>,
-::keep
   <ansi fg="command">help combat</ansi>
-::

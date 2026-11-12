@@ -7,8 +7,8 @@ needed.
 ::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (always on)
 <ansi fg="yellow">Rarity:</ansi>   Apex
+<ansi fg="yellow">Requires: </ansi> Hollow Bones and a tail
 ::
-<ansi fg="yellow">Requires:</ansi> Hollow Bones and a tail
 
 <ansi fg="yellow">Benefits:</ansi>
   You strike down at earthbound foes from a superior angle and are

@@ -23,7 +23,7 @@ chunk of stamina.
 ::rows
   <ansi fg="stat">Stamina Cost: </ansi> A meaningful portion of your maximum stamina
   <ansi fg="stat">Success Rate: </ansi> Guaranteed. You spend the effort and get up
-    regardless of who is holding you down
+                 regardless of who is holding you down
   <ansi fg="stat">Action Cost: </ansi> Uses your action for the current round
 ::
 

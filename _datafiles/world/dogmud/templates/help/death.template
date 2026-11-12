@@ -36,5 +36,5 @@ when to <ansi fg="command">flee</ansi>.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help sethome</ansi>,
-  <ansi fg="command">help submission</ansi>
+           <ansi fg="command">help submission</ansi>
 ::

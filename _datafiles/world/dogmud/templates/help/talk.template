@@ -30,11 +30,9 @@ light first.
   <ansi fg="command">help quests</ansi>.
 
   When you choose a quest from the list, they tell you what they want.
-::rows
-  Then two lines appear:  <ansi fg="yellow">1. Accept</ansi> takes the quest, and <ansi fg="yellow">2. Leave</ansi>
-    says no for now. Pressing Enter also means Leave. Either way, the list
-    comes back, and you can ask about the quest again later.
-::
+  Then two lines appear: <ansi fg="yellow">1. Accept</ansi> takes the quest, and <ansi fg="yellow">2. Leave</ansi>
+  says no for now. Pressing Enter also means Leave. Either way, the list
+  comes back, and you can ask about the quest again later.
 
   Above those two lines, the quest shows what to do first and what you
   get for it. Sometimes the reward is a surprise, and you only get a

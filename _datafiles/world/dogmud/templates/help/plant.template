@@ -6,7 +6,9 @@ the target, and everything before it is the item.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">plant <item> <target></ansi>
+::
 
 <ansi fg="yellow">Examples:</ansi>
 

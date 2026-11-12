@@ -5,25 +5,25 @@ It has three parts:
 
 ::rows
   <ansi fg="yellow">Mutation Tier</ansi>  Based on your total mutation load.
-                  Awakened, Evolved, Ascendant, or Exalted.
-                  No mutations means no prefix.
+                 Awakened, Evolved, Ascendant, or Exalted.
+                 No mutations means no prefix.
 
   <ansi fg="yellow">Skill Tier</ansi>    Based on aggregate skill progress across
-                  all 17 skills. Ranges from scrub to master.
+                all 17 skills. Ranges from scrub to master.
 
   <ansi fg="yellow">Archetype</ansi>     Based on which stats you lean toward.
-                  Warriors favor Strength, rogues favor
-                  Dexterity, channelers favor Willpower, etc.
-                  Balanced builds may produce hybrid archetypes
-                  like paladin, duelist, or sage.
+                Warriors favor Strength, rogues favor
+                Dexterity, channelers favor Willpower, etc.
+                Balanced builds may produce hybrid archetypes
+                like paladin, duelist, or sage.
 ::
 
 <ansi fg="yellow">Example titles:</ansi>
 ::rows
   scrub warrior         — new character, Strength-focused
   Awakened expert sage  — mutated, skilled, Willpower+Charisma
-    Exalted master duelist — heavily mutated, max skills, Str+Dex
 ::
+  Exalted master duelist — heavily mutated, max skills, Str+Dex
 
 <ansi fg="yellow">Usage: </ansi>
 ::rows
@@ -35,7 +35,7 @@ It has three parts:
   <ansi fg="white-bold">Pure:</ansi>   warrior, rogue, scout, guardian, channeler,
           orator
   <ansi fg="white-bold">Hybrid: </ansi> paladin, juggernaut, duelist, ranger, sage,
-          seer, stoic
+           seer, stoic
   <ansi fg="white-bold">Even:</ansi>   generalist
 ::
 

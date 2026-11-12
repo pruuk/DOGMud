@@ -13,8 +13,8 @@ through an exit or open a container.
 
 ::rows
   <ansi fg="command">keyring</ansi>  This will list all keys and lockpick sequences you have.
-            It will tell you the Type, Location, exit or container name, and 
-            as the lockpick sequence if applicable.
+           It will tell you the Type, Location, exit or container name, and 
+           as the lockpick sequence if applicable.
 ::
 
 <ansi fg="yellow">Example: </ansi>

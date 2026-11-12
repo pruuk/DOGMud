@@ -21,8 +21,10 @@ Your attack success is based on:
   - <ansi fg="stat">Stamina:</ansi> Low stamina reduces hit chance and damage
 ::
 
-<ansi fg="red">Critical Hits:</ansi> Skill advantage increases crit chance
-<ansi fg="red">Fumbles:</ansi> Even skilled attacks can go badly wrong
+::rows
+<ansi fg="red">Critical Hits: </ansi> Skill advantage increases crit chance
+<ansi fg="red">Fumbles: </ansi> Even skilled attacks can go badly wrong
+::
 
 <ansi fg="yellow">━━━ Unarmed Combat ━━━</ansi>
 
@@ -132,9 +134,9 @@ decisively win a grapple round from a dominant position. See
 
 ::rows
   <ansi fg="stat">Stamina: </ansi> Fuels attacks, physical defenses, ranged
-    actions, special moves, fleeing, and grapple upkeep.
+            actions, special moves, fleeing, and grapple upkeep.
   <ansi fg="stat">Conviction: </ansi> Fuels spells, rhetoric actions, quell,
-    and defy, and is attacked by taunts.
+               and defy, and is attacked by taunts.
   <ansi fg="stat">Health: </ansi> Reach 0 and you die, then wake at safety
 ::
 
@@ -155,6 +157,4 @@ nothing.
   <ansi fg="command">help unarmed-combat</ansi>, <ansi fg="command">help stamina</ansi>,
   <ansi fg="command">help conviction</ansi>, <ansi fg="command">help skills</ansi>,
   <ansi fg="command">help progression</ansi>, <ansi fg="command">help ambush</ansi>,
-::keep
   <ansi fg="command">help sneak</ansi>
-::

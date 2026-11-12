@@ -35,5 +35,5 @@ roads, and other zones where ambushers lurk.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help skullduggery</ansi>,
-          <ansi fg="command">help perception</ansi>
+           <ansi fg="command">help perception</ansi>
 ::

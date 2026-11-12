@@ -10,13 +10,19 @@ retrieve items at storage locations around the world.
 ::
   See what you have in storage. Each slot is numbered.
 
+::keep
   <ansi fg="command">storage add <item></ansi>
+::
   Put one item into storage.
 
+::keep
   <ansi fg="command">storage add 5 <item></ansi>
+::
   Put up to five of that item into storage.
 
+::keep
   <ansi fg="command">storage add all <item></ansi>
+::
   Put every one of that item you carry into storage.
 
 ::keep
@@ -25,13 +31,19 @@ retrieve items at storage locations around the world.
   Put everything in your backpack and your component bag into
   storage.
 
+::keep
   <ansi fg="command">storage remove <item></ansi>
+::
   Take one item out of storage. <ansi fg="command">unstore <item></ansi> does the same.
 
+::keep
   <ansi fg="command">storage remove 5 <item></ansi>
+::
   Take up to five of that item out of storage.
 
+::keep
   <ansi fg="command">storage remove all <item></ansi>
+::
   Take every one of that item out of storage. You can also type
   <ansi fg="command">storage remove all.<item></ansi>.
 
@@ -61,5 +73,5 @@ the last three days. See <ansi fg="command">help steal</ansi>.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help stow</ansi>, <ansi fg="command">help stash</ansi>, <ansi fg="command">help sort</ansi>, <ansi fg="command">help component-bag</ansi>,
-  <ansi fg="command">help bank</ansi>, <ansi fg="command">help give</ansi>, <ansi fg="command">help sell</ansi>
+           <ansi fg="command">help bank</ansi>, <ansi fg="command">help give</ansi>, <ansi fg="command">help sell</ansi>
 ::

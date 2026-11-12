@@ -25,5 +25,5 @@ Type <ansi fg="command">conditions</ansi> to see which healing spell is on you.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help heal</ansi>, <ansi fg="command">help mend-wounds</ansi>, <ansi fg="command">help mend-all</ansi>,
-          <ansi fg="command">help communion-of-flesh</ansi>, <ansi fg="command">help mass-mend</ansi>
+           <ansi fg="command">help communion-of-flesh</ansi>, <ansi fg="command">help mass-mend</ansi>
 ::

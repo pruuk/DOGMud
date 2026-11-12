@@ -6,8 +6,8 @@ dissonance that bogs down everything hostile nearby.
 ::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
+<ansi fg="yellow">Requires: </ansi> Sticky Secretion and Grasping Tendrils
 ::
-<ansi fg="yellow">Requires:</ansi> Sticky Secretion and Grasping Tendrils
 
 <ansi fg="yellow">Benefits:</ansi>
   Enemies near you are slowed, half-snared, and struggle to hold a

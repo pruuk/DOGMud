@@ -44,5 +44,5 @@ who is not already carrying a heavy bond.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
-  <ansi fg="command">help reservation</ansi>
+           <ansi fg="command">help reservation</ansi>
 ::

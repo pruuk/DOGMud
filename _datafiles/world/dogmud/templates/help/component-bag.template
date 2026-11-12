@@ -21,10 +21,10 @@ of its contents.
 
 ::rows
   <ansi fg="itemname">Component Pouch</ansi>       20 items, 30% weight reduction.
-    Buy from Weaver Maren in Thornwall.
+                        Buy from Weaver Maren in Thornwall.
 
   <ansi fg="itemname">Artisan's Satchel</ansi>     40 items, 35% weight reduction.
-    Tailoring recipe (skill 15).
+                        Tailoring recipe (skill 15).
 ::
 
   <ansi fg="itemname">Master's Component Case</ansi> 75 items, 45% weight reduction.

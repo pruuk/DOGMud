@@ -7,7 +7,7 @@ room, or gives your own pet a nickname.
 
 ::rows
   <ansi fg="command">pet <petname></ansi>      Pet another player's pet in the room.
-    <ansi fg="command">pet name <newname></ansi> Give your own pet a nickname (once only).
+  <ansi fg="command">pet name <newname></ansi> Give your own pet a nickname (once only).
 ::
 
 Pet names follow the same rules as player names — no prohibited
