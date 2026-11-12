@@ -500,6 +500,14 @@ func wrapText(s string, width int, prefix ...string) string {
 //	{{ wrapspans .TrackingString screenwidth }}
 func wrapSpans(s string, width int, prefix ...string) string {
 	const keep = "\x1f" // one column to WrapAnsi, and never a break
+	return strings.ReplaceAll(wrapText(protectSpans(s, width, keep), width, prefix...), keep, " ")
+}
+
+// protectSpans is wrapSpans' first half: s with the spaces of every colour
+// span that fits width (with any text glued to it) swapped for keep, and a
+// break space added where glued text meets a span that must wrap. The help
+// layout pass uses it too, so both treat a span the same way.
+func protectSpans(s string, width int, keep string) string {
 	runes := visibleRunes(s)
 	what := make([]string, len(runes))
 	for i, v := range runes {
@@ -578,7 +586,7 @@ func wrapSpans(s string, width int, prefix ...string) string {
 			what[last+1] = " " + what[last+1]
 		}
 	}
-	return strings.ReplaceAll(wrapText(rebuild(s, runes, what), width, prefix...), keep, " ")
+	return rebuild(s, runes, what)
 }
 
 // wrapBreak wraps as wrapText does, but first breaks any word longer than

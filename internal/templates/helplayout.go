@@ -55,6 +55,9 @@ type helpBlock struct {
 // same-line form: its label, then its text wrapping two columns in. A kept
 // line is never touched. Marker lines are dropped.
 func LayoutHelp(text string, width int) string {
+	if width <= 0 {
+		width = FullWidth
+	}
 	width = min(width, FullWidth)
 	lines := strings.Split(strings.ReplaceAll(text, "\r", ""), "\n")
 	out := []string{}
@@ -80,15 +83,18 @@ func helpBlocks(lines []string) []helpBlock {
 	open := ""       // the open marker's kind, "" outside a block
 	boundary := true // the next line starts a new block
 	for _, line := range lines {
-		if open == "" && (line == helpMarkRows || line == helpMarkList || line == helpMarkKeep) {
-			open, boundary = strings.TrimPrefix(line, "::"), true
+		// A marker line never reaches the reader, whatever block is open: an
+		// opener closes any block in hand and opens its own, and a stray
+		// closer is dropped.
+		switch strings.TrimRight(line, " \t") {
+		case helpMarkRows, helpMarkList, helpMarkKeep:
+			open, boundary = strings.TrimPrefix(strings.TrimRight(line, " \t"), "::"), true
 			continue
-		}
-		if open != "" && line == helpMarkEnd {
+		case helpMarkEnd:
 			open, boundary = "", true
 			continue
 		}
-		if strings.TrimSpace(ansiTag.ReplaceAllString(line, "")) == "" {
+		if strings.TrimSpace(helpVisible(line)) == "" {
 			blocks = append(blocks, helpBlock{"blank", []string{line}})
 			boundary = true
 			continue
@@ -113,9 +119,35 @@ func helpIndent(s string) int {
 	return len(v) - len(strings.TrimLeft(v, " "))
 }
 
+// trimHelpEnd drops the visible spaces at the end of s, keeping its tags (a
+// space before a closing tag is trailing).
+func trimHelpEnd(s string) string {
+	runes := visibleRunes(s)
+	what := make([]string, len(runes))
+	last := -1
+	for i, v := range runes {
+		what[i] = s[v.start:v.end]
+		if v.r != ' ' {
+			last = i
+		}
+	}
+	for i := last + 1; i < len(runes); i++ {
+		what[i] = ""
+	}
+	return rebuild(s, runes, what)
+}
+
+func trimHelpEnds(lines []string) []string {
+	out := make([]string, len(lines))
+	for i, l := range lines {
+		out[i] = trimHelpEnd(l)
+	}
+	return out
+}
+
 func helpFits(lines []string, width int) bool {
 	for _, l := range lines {
-		if util.VisibleWidth(strings.TrimRight(l, " ")) > width {
+		if util.VisibleWidth(trimHelpEnd(l)) > width {
 			return false
 		}
 	}
@@ -124,54 +156,66 @@ func helpFits(lines []string, width int) bool {
 
 func layoutHelpPara(lines []string, width int) []string {
 	if helpFits(lines, width) {
-		return lines
+		return trimHelpEnds(lines)
 	}
 	if len(lines) == 1 {
-		if h, ok := shrinkHelpHeading(lines[0], width); ok {
-			return []string{h}
+		if h, ok := layoutHelpHeading(lines[0], width); ok {
+			return h
 		}
 	}
 	indent := helpIndent(lines[0])
 	return packHelp(strings.Join(lines, " "), nil, indent, indent, width)
 }
 
-// shrinkHelpHeading drops rule marks from a "━━━ Title ━━━" heading until it
-// fits, keeping its colour tags.
-func shrinkHelpHeading(line string, width int) (string, bool) {
+// layoutHelpHeading lays out a "━━━ Title ━━━" heading: it drops rule marks
+// (all, then one fewer each side, down to none) until it fits, keeping every
+// colour tag. A title too wide even bare is packed alone, without marks.
+func layoutHelpHeading(line string, width int) ([]string, bool) {
 	runes := visibleRunes(line)
 	if len(runes) == 0 {
-		return "", false
+		return nil, false
 	}
-	v := string(func() []rune {
-		r := make([]rune, len(runes))
-		for i, x := range runes {
-			r[i] = x.r
-		}
-		return r
-	}())
-	m := helpHeading.FindStringSubmatch(v)
+	m := helpHeading.FindStringSubmatch(helpVisible(line))
 	if m == nil {
-		return "", false
+		return nil, false
 	}
-	mark := []rune(m[1])[0]
-	before, after := line[:runes[0].start], line[runes[len(runes)-1].end:]
-	for n := len([]rune(m[1])); n >= 0; n-- {
-		cand := m[2]
-		if n > 0 {
-			cand = strings.Repeat(string(mark), n) + " " + m[2] + " " + strings.Repeat(string(mark), n)
+	nMarks, titleLen := len([]rune(m[1])), len([]rune(m[2]))
+	// Visible layout: marks, space, title, space, marks.
+	titleFrom, titleTo := nMarks+1, nMarks+1+titleLen
+	build := func(n int) string {
+		what := make([]string, len(runes))
+		for i, v := range runes {
+			keep := true
+			switch {
+			case i < titleFrom-1: // left marks
+				keep = i < n
+			case i == titleFrom-1: // space before the title
+				keep = n > 0
+			case i < titleTo: // title
+			case i == titleTo: // space after the title
+				keep = n > 0
+			default: // right marks
+				keep = i-titleTo-1 < n
+			}
+			if keep {
+				what[i] = line[v.start:v.end]
+			}
 		}
-		if util.VisibleWidth(cand) <= width {
-			return before + cand + after, true
+		return rebuild(line, runes, what)
+	}
+	for n := nMarks; n >= 0; n-- {
+		if cand := build(n); util.VisibleWidth(cand) <= width {
+			return []string{cand}, true
 		}
 	}
-	return "", false
+	return packHelp(build(0), nil, 0, 0, width), true
 }
 
 // layoutHelpEntries lays out a ::rows or ::list block. An entry starts at the
 // block's least indent; deeper lines continue it.
 func layoutHelpEntries(lines []string, width int, rows bool) []string {
 	if !rows && helpFits(lines, width) {
-		return lines
+		return trimHelpEnds(lines)
 	}
 	base := helpIndent(lines[0])
 	for _, l := range lines {
@@ -191,6 +235,7 @@ func layoutHelpEntries(lines []string, width int, rows bool) []string {
 		v := []rune(helpVisible(head))
 		body := string(v[base:])
 		var cut int // visible runes of head that make the label or marker
+		var marker string
 		if rows {
 			m := helpGap.FindStringSubmatchIndex(body)
 			if m == nil {
@@ -199,31 +244,36 @@ func layoutHelpEntries(lines []string, width int, rows bool) []string {
 			}
 			cut = base + len([]rune(body[:m[2]]))
 		} else {
-			m := helpListMarker.FindString(body)
-			if m == "" {
+			marker = helpListMarker.FindString(body)
+			if marker == "" {
 				out = append(out, packHelp(strings.Join(e, " "), nil, base, base+2, width)...)
 				continue
 			}
-			cut = base + len([]rune(m)) - 1 // the marker without its space
+			cut = base + len([]rune(marker)) - 1 // the marker without its space
 		}
 		label, text := cutHelpVisible(head, cut)
 		text = strings.TrimSpace(text + " " + rest)
 		label = trimHelpVisible(label)
 		if !rows {
-			hang := base + len([]rune(helpListMarker.FindString(body)))
+			hang := base + len([]rune(marker))
 			out = append(out, packHelp(text, []string{label}, base, hang, width)...)
 			continue
 		}
-		var lead []string
-		if util.VisibleWidth(label) <= width-base {
-			lead = []string{protectHelpSpaces(label)}
-		} else {
-			lead = helpUnits(label, width-base-2)
-		}
+		joiner := ""
 		if !strings.HasSuffix(helpVisible(label), ":") {
-			lead[len(lead)-1] += helpJoin
+			joiner = helpJoin
 		}
-		out = append(out, packHelp(text, lead, base, base+2, width)...)
+		eff := min(base, width/2) // packHelp clamps an indent the same way
+		if util.VisibleWidth(label+joiner) <= width-eff {
+			out = append(out, packHelp(text, []string{protectHelpSpaces(label) + joiner}, base, base+2, width)...)
+			continue
+		}
+		// A label too long to share its line takes lines of its own, and the
+		// text starts on a fresh line below, two in (owner ruling 6).
+		out = append(out, packHelp("", helpUnits(label, width-eff-2), base, base+2, width)...)
+		if text != "" {
+			out = append(out, packHelp(text, nil, base+2, base+2, width)...)
+		}
 	}
 	return out
 }
@@ -278,6 +328,9 @@ func trimHelpVisible(s string) string {
 }
 
 // protectHelpSpaces joins every visible space of s, so s packs as one unit.
+// It uses U+00A0 where wrapSpans (templatesfunctions.go) uses \x1f: the
+// packer measures units with util.VisibleWidth, which counts \x1f as 0
+// columns but U+00A0 as 1, and WrapAnsi breaks at neither.
 func protectHelpSpaces(s string) string {
 	runes := visibleRunes(s)
 	what := make([]string, len(runes))
@@ -295,40 +348,8 @@ func protectHelpSpaces(s string) string {
 // or a name never splits while it fits a line, owner 2026-11-10). Tags with
 // no visible text go with the next unit.
 func helpUnits(s string, limit int) []string {
-	runes := visibleRunes(s)
-	what := make([]string, len(runes))
-	for i, v := range runes {
-		what[i] = s[v.start:v.end]
-	}
-	opens := []int{}
-	for _, t := range ansiTag.FindAllStringIndex(s, -1) {
-		if !strings.HasPrefix(s[t[0]:t[1]], "</") {
-			opens = append(opens, t[1])
-			continue
-		}
-		if len(opens) == 0 {
-			continue
-		}
-		open := opens[len(opens)-1]
-		opens = opens[:len(opens)-1]
-		w, inside := 0, []int{}
-		for i, v := range runes {
-			if v.start >= open && v.end <= t[0] {
-				w += util.VisibleWidth(string(v.r))
-				inside = append(inside, i)
-			}
-		}
-		if w == 0 || w > limit {
-			continue
-		}
-		for _, i := range inside {
-			if runes[i].r == ' ' {
-				what[i] = helpJoin
-			}
-		}
-	}
 	units, pending := []string{}, ""
-	for _, u := range splitOutsideTags(rebuild(s, runes, what)) {
+	for _, u := range splitOutsideTags(protectSpans(s, limit, helpJoin)) {
 		if util.VisibleWidth(u) == 0 {
 			pending += u
 			continue
@@ -370,12 +391,34 @@ func splitOutsideTags(s string) []string {
 // by first, the rest by rest. WrapAnsi then closes and reopens colour at each
 // line break, so every line stands alone.
 func packHelp(text string, lead []string, first, rest, width int) []string {
+	first, rest = min(first, width/2), min(rest, width/2) // an indent never eats the line
 	units := append(append([]string{}, lead...), helpUnits(text, width-rest)...)
 	lines := messaging.PackUnits(units, first, rest, width)
 	joined := messaging.WrapAnsi(strings.Join(lines, "\n"), width)
-	out := strings.Split(strings.ReplaceAll(joined, helpJoin, " "), "\n")
+	out := strings.Split(joined, "\n")
 	for i := range out {
-		out[i] = strings.TrimRight(out[i], " ")
+		out[i] = trimHelpEnd(strings.ReplaceAll(dropLeadingHelpJoin(out[i]), helpJoin, " "))
 	}
 	return out
+}
+
+// dropLeadingHelpJoin removes the joiners that start a line after its indent.
+// They are left there when a unit wider than a whole line is broken at the
+// edge: the break falls on a space the unit protected, and the line below
+// would otherwise start with a stray space.
+func dropLeadingHelpJoin(s string) string {
+	runes := visibleRunes(s)
+	what := make([]string, len(runes))
+	lead := true
+	for i, v := range runes {
+		what[i] = s[v.start:v.end]
+		switch {
+		case v.r == ' ':
+		case v.r == []rune(helpJoin)[0] && lead:
+			what[i] = ""
+		default:
+			lead = false
+		}
+	}
+	return rebuild(s, runes, what)
 }
