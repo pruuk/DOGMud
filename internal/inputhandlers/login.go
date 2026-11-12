@@ -61,8 +61,9 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 
 					existingConnectionId := user.ConnectionId()
 
-					// Send a goodbye message to the currently connected user
-					tplTxt, _ := templates.Process("goodbye", nil)
+					// Send a goodbye message to the currently connected user,
+					// drawn for that connection's width.
+					tplTxt, _ := templates.ProcessForWidth("goodbye", nil, false, users.LoginWrapWidth(existingConnectionId))
 					connections.SendTo([]byte(templates.AnsiParse(tplTxt)), existingConnectionId)
 
 					users.SetZombieUser(userid)

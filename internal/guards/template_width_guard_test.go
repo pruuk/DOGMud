@@ -65,12 +65,10 @@ var templateClassNames = map[string][]string{
 	// sized by the terminal width the client reports, so it fits that terminal
 	// and the map test does not render it.
 	"sized by its command": {"maps/map", "tables/lockpicking"},
-	// Sent outside the pipeline as a player leaves (quit, a duplicate login
-	// taking over the session, shutdown); the terminal soft-wraps it. It is
-	// art 50 columns wide with no narrow form yet. The login prompts left
-	// this class in plan 5: they are laid out for the web client's width
-	// (inputhandlers.LoginTemplateAtWidth) and fit at every width.
-	"raw": {"goodbye"},
+	// The "raw" class (sent before a reader has a width) emptied in plan 5:
+	// the login prompts are laid out for the web client's width
+	// (inputhandlers.LoginTemplateAtWidth), and the connect splash and the
+	// goodbye art have narrow forms.
 	// Wrapped to the reader by the caller (actions/roster.go) or the
 	// pipeline (CategoryLogout).
 	"wrapped": {"descriptions/who", "descriptions/ontheground", "player-despawn"},
@@ -164,6 +162,10 @@ var templateFits = map[string]templateFixture{
 	// before login, drawn to the columns on the web client's websocket
 	// address (main.go), and takes no data.
 	"login/connect-splash": {data: func() any { return nil }},
+	// The goodbye art is 50 columns of pictures with no words, so its
+	// narrow forms say it in one word: splash art is the full art or words
+	// only (spec ruling 23).
+	"goodbye": {data: func() any { return nil }},
 	// The login prompts and the password mask, with the data login.go
 	// gives them; the yes or no questions with every text the login asks,
 	// the new user one with a name of NameSizeMax (28).

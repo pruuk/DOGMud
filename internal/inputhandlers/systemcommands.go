@@ -124,8 +124,8 @@ func trySystemCommand(cmd string, connectionId connections.ConnectionId) bool {
 
 	if cmd == "quit" {
 
-		// Not building complex output, so just preparse the ansi in the template and cache that
-		tplTxt, _ := templates.Process("goodbye", nil)
+		// Drawn for this connection's width: a phone gets the words-only form.
+		tplTxt, _ := templates.ProcessForWidth("goodbye", nil, false, users.LoginWrapWidth(connectionId))
 
 		connections.SendTo([]byte(templates.AnsiParse(tplTxt)), connectionId)
 
