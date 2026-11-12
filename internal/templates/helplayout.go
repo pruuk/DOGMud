@@ -30,6 +30,7 @@ var (
 	helpGap        = regexp.MustCompile(`\S( {2,})\S`)
 	helpHeading    = regexp.MustCompile(`^([━─]+) (.+) ([━─]+)$`)
 	helpCloseTag   = regexp.MustCompile(`^</ansi>`)
+	helpEmptyPair  = regexp.MustCompile(`<ansi[^>]*></ansi>`)
 )
 
 // ProcessHelp renders a help template for a reader whose screen is width
@@ -63,8 +64,10 @@ func LayoutHelp(text string, width int) string {
 	out := []string{}
 	for _, b := range helpBlocks(lines) {
 		switch b.kind {
-		case "blank", "keep":
+		case "keep":
 			out = append(out, b.lines...)
+		case "blank":
+			out = append(out, trimHelpEnds(b.lines)...)
 		case "para":
 			out = append(out, layoutHelpPara(b.lines, width)...)
 		case "list":
@@ -204,11 +207,23 @@ func layoutHelpHeading(line string, width int) ([]string, bool) {
 		return rebuild(line, runes, what)
 	}
 	for n := nMarks; n >= 0; n-- {
-		if cand := build(n); util.VisibleWidth(cand) <= width {
+		if cand := tidyHelpHeading(build(n)); util.VisibleWidth(cand) <= width {
 			return []string{cand}, true
 		}
 	}
-	return packHelp(build(0), nil, 0, 0, width), true
+	return packHelp(tidyHelpHeading(build(0)), nil, 0, 0, width), true
+}
+
+// tidyHelpHeading drops the colour pairs a dropped mark leaves empty, and
+// trailing spaces.
+func tidyHelpHeading(s string) string {
+	for {
+		t := helpEmptyPair.ReplaceAllString(s, "")
+		if t == s {
+			return trimHelpEnd(s)
+		}
+		s = t
+	}
 }
 
 // layoutHelpEntries lays out a ::rows or ::list block. An entry starts at the

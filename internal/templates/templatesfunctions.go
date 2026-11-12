@@ -540,6 +540,20 @@ func protectSpans(s string, width int, keep string) string {
 		if first < 0 {
 			continue
 		}
+		// A single space at either end of a span is a separator, not part of
+		// the name: it stays a break point, or the span fuses with whatever
+		// follows it ("Help for " + "master's component case"). A run of two
+		// or more is a label's padding and stays protected, since a fold
+		// would collapse it (the mail "NOTE:    " label).
+		if first < last && runes[first].r == ' ' && runes[first+1].r != ' ' {
+			first++
+		}
+		if last > first && runes[last].r == ' ' && runes[last-1].r != ' ' {
+			last--
+		}
+		if first == last && runes[first].r == ' ' {
+			continue
+		}
 		from, to := first, last
 		for from > 0 && runes[from-1].r != ' ' {
 			from--

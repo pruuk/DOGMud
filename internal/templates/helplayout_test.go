@@ -123,6 +123,46 @@ func TestLayoutHelpReviewFixes(t *testing.T) {
 	}
 }
 
+// Re-review fixes (task 1, 2026-11-12).
+const helpTitleFixture = `<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi>` +
+	`<ansi fg="skill">master's component case</ansi> (tailoring recipe)`
+
+func TestLayoutHelpSpanTrailingSpaceStaysABreak(t *testing.T) {
+	out := ansiTag.ReplaceAllString(LayoutHelp(helpTitleFixture, 30), "")
+	assert.Equal(t, ".: Help for\nmaster's component case\n(tailoring recipe)", out)
+}
+
+func TestWrapSpansSpanTrailingSpaceStaysABreak(t *testing.T) {
+	out := wrapSpans(helpTitleFixture, 30)
+	for _, l := range strings.Split(out, "\n") {
+		assert.LessOrEqual(t, util.VisibleWidth(l), 30, l)
+	}
+}
+
+func TestLayoutHelpReReviewFixes(t *testing.T) {
+	cases := []struct {
+		name  string
+		in    string
+		width int
+		want  string
+	}{
+		{"a whitespace-only line is trimmed",
+			"aaa\n          \nbbb", 5,
+			"aaa\n\nbbb"},
+		{"a shrunk heading leaves no empty colour pair",
+			`<ansi fg="y">━━━ </ansi><ansi fg="w">Title</ansi><ansi fg="y"> ━━━</ansi>`, 5,
+			`<ansi fg="w">Title</ansi>`},
+		{"a fitting heading candidate has no trailing space",
+			"━━━ Title  ━━━", 9,
+			"Title"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert.Equal(t, c.want, LayoutHelp(c.in, c.width))
+		})
+	}
+}
+
 func TestLayoutHelpGluedSpansStartNoLineWithASpace(t *testing.T) {
 	in := `<ansi fg="a">aaa bbb</ansi><ansi fg="b">ccc ddd</ansi> eee`
 	out := LayoutHelp(in, 10)
