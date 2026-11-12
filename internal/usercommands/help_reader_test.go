@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -21,6 +22,13 @@ func TestGetHelpContentsUsesTheReadersWidth(t *testing.T) {
 		assert.LessOrEqual(t, templates.WidestLine(out), width, "width %d:\n%s", width, out)
 		assert.Contains(t, out, "[thing]", "brackets survive at %d", width)
 		assert.NotContains(t, out, "::", "markers never reach the reader")
+		// Each usage row starts its own line. Unmarked, the rows would be
+		// rejoined as one paragraph, which fits the width but is wrong: the
+		// width check alone cannot tell (plan 4, HUA's point).
+		visible := regexp.MustCompile(`</?ansi[^>]*>`).ReplaceAllString(out, "")
+		for _, row := range []string{"  look north", "  look dave", "  look sword"} {
+			assert.Regexp(t, "(?m)^"+regexp.QuoteMeta(row), visible, "at %d the row %q starts a line", width, row)
+		}
 	}
 }
 
