@@ -26,7 +26,7 @@ func TestGetHelpContents_SpeciesRendersSpeciesDetail(t *testing.T) {
 	})()
 	useDogmudTemplates(t)
 
-	out, err := GetHelpContents("species")
+	out, err := GetHelpContents("species", 80)
 	require.NoError(t, err)
 	assert.Contains(t, out, "Probe Human", "help species must list the selectable species")
 	assert.Contains(t, out, "Probe Resilience", "the species' condition must render through conditionname")

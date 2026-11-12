@@ -77,14 +77,14 @@ func Help(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		}
 
-		helpTxt, err = templates.Process("help/help", helpCommandList, user.UserId)
+		helpTxt, err = templates.ProcessHelp("help/help", helpCommandList, user.WrapWidth())
 		if err != nil {
 			refusal.Failed(user, "help", err, "userId", user.UserId)
 			return true, nil
 		}
 	} else {
 
-		helpTxt, err = GetHelpContents(rest)
+		helpTxt, err = GetHelpContents(rest, user.WrapWidth())
 		if err != nil {
 			adminTxt, ok := adminHelpFor(rest, user)
 			if !ok {
@@ -174,7 +174,10 @@ func getSpeciesOptions(speciesRequest string) []species.Species {
 	return speciesOptions
 }
 
-func GetHelpContents(input string) (string, error) {
+// GetHelpContents renders the help page for input, laid out for a screen
+// width columns wide (the reader's WrapWidth in game; templates.FullWidth on
+// the web help pages, owner ruling 2026-11-12).
+func GetHelpContents(input string, width int) (string, error) {
 
 	args := util.SplitButRespectQuotes(input)
 
@@ -222,15 +225,15 @@ func GetHelpContents(input string) (string, error) {
 		}
 	}
 
-	result, err := templates.Process("help/"+helpName, helpVars, 0)
+	result, err := templates.ProcessHelp("help/"+helpName, helpVars, width)
 	if err != nil {
 		// If no dedicated help template exists, check if the name matches a spell
 		// and fall back to the generic spell template.
 		if sData := spells.GetSpell(helpName); sData != nil {
-			return templates.Process("help/spell", sData, 0)
+			return templates.ProcessHelp("help/spell", sData, width)
 		}
 		if sData := spells.FindSpellByName(helpName); sData != nil {
-			return templates.Process("help/spell", sData, 0)
+			return templates.ProcessHelp("help/spell", sData, width)
 		}
 	}
 	return result, err

@@ -70,7 +70,7 @@ func TestHelp_EarnMutationAdminPageAndMutateAlias(t *testing.T) {
 	adminMarker := strings.TrimSpace(strings.SplitN(adminPage, "\n", 2)[0])
 	require.NotEmpty(t, adminMarker)
 
-	playerPage, err := GetHelpContents("mutations")
+	playerPage, err := GetHelpContents("mutations", 80)
 	require.NoError(t, err)
 	playerMarker := strings.TrimSpace(strings.SplitN(playerPage, "\n", 2)[0])
 	require.NotEmpty(t, playerMarker)

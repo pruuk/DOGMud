@@ -4412,13 +4412,13 @@ func TestGetHelpContents(t *testing.T) {
 	defer cleanup()
 
 	t.Run("unknown_topic", func(t *testing.T) {
-		contents, err := GetHelpContents("zzz_nonexistent")
+		contents, err := GetHelpContents("zzz_nonexistent", 80)
 		_ = contents
 		_ = err
 	})
 
 	t.Run("known_topic", func(t *testing.T) {
-		contents, err := GetHelpContents("look")
+		contents, err := GetHelpContents("look", 80)
 		_ = contents
 		_ = err
 	})
