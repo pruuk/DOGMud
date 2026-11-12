@@ -305,7 +305,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 //
 // webSocketHandler receives the upgraded connection plus the resolved real
 // client IP. That second argument exists because the socket peer of a proxied
-// websocket is the reverse proxy, not the player — see ResolveClientIP. The
+// websocket is the reverse proxy, not the player; see ResolveClientIP. The
 // third is the address's raw cols value (/ws?cols=57, empty when absent): the
 // web client's columns, so the connect splash can be drawn to them before
 // its Client.Display report arrives. The handler validates it.

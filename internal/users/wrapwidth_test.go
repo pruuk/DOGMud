@@ -103,6 +103,7 @@ func TestParseReportedCols(t *testing.T) {
 		{" 42", 0, false},
 		{"abc", 0, false},
 		{"99999999999999999999999", 0, false},
+		{"+57", 57, true},
 	} {
 		got, ok := ParseReportedCols(tt.in)
 		require.Equal(t, tt.ok, ok, "%q", tt.in)

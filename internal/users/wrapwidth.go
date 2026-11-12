@@ -18,7 +18,8 @@ const (
 // ParseReportedCols reads a column count a web client sent as text: the
 // cols value on its websocket address (/ws?cols=57), sent so the connect
 // splash is drawn before its Client.Display report arrives. Only a whole
-// number counts; a fraction, a unit, a space or an empty value is refused.
+// number counts (a leading sign is accepted, and a negative is clamped
+// later); a fraction, a unit, a space or an empty value is refused.
 // The count is not clamped here; StoreReportedCols clamps it.
 func ParseReportedCols(s string) (int, bool) {
 	cols, err := strconv.Atoi(s)

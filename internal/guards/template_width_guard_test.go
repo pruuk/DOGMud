@@ -493,7 +493,8 @@ func TestConnectSplashByWidthFitsAndIsWordsOnly(t *testing.T) {
 		if width == 80 && !strings.Contains(out, logo) {
 			t.Errorf("at 80 columns the splash lost its logo:\n%s", out)
 		}
-		for _, words := range []string{"Gaius", "The Chrysalis awaits", "are not", "supported.", "Mudlet", "experience."} {
+		for _, words := range []string{"Welcome", "Gaius", "The Chrysalis awaits", "legacy clients", "(zMUD, etc.)",
+			"are not", "supported.", "recommend", "Mudlet", "web client", "experience."} {
 			if !strings.Contains(out, words) {
 				t.Errorf("at %d columns the splash lost %q", width, words)
 			}
