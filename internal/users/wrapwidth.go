@@ -1,6 +1,10 @@
 package users
 
-import "github.com/GoMudEngine/GoMud/internal/connections"
+import (
+	"strconv"
+
+	"github.com/GoMudEngine/GoMud/internal/connections"
+)
 
 const (
 	// MinWrapWidth is the narrowest a web session wraps. WCAG 2.2 AA reflow at
@@ -10,6 +14,35 @@ const (
 	// shows at most 80 columns.
 	MaxAutoWrapWidth = 80
 )
+
+// ParseReportedCols reads a column count a web client sent as text: the
+// cols value on its websocket address (/ws?cols=57), sent so the connect
+// splash is drawn before its Client.Display report arrives. Only a whole
+// number counts; a fraction, a unit, a space or an empty value is refused.
+// The count is not clamped here; StoreReportedCols clamps it.
+func ParseReportedCols(s string) (int, bool) {
+	cols, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, false
+	}
+	return cols, true
+}
+
+// StoreReportedCols stores a web client's reported column count as its
+// connection's screen width, clamped to MinWrapWidth..MaxAutoWrapWidth, and
+// returns the width. It writes only when the width differs. Both places a
+// web client reports its columns use it: the websocket address on connect
+// (main.go) and Client.Display (modules/gmcp). The caller checks that the
+// connection is a websocket.
+func StoreReportedCols(id connections.ConnectionId, cols int) int {
+	width := min(max(cols, MinWrapWidth), MaxAutoWrapWidth)
+	cs := connections.GetClientSettings(id)
+	if cs.Display.GetScreenWidth() != width {
+		cs.Display.ScreenWidth = uint32(width)
+		connections.OverwriteClientSettings(id, cs)
+	}
+	return width
+}
 
 // NarrowFormWidth is the width of the narrow form of a screen built in Go
 // for a reader width columns wide (web client base spec, section 2): 42, or

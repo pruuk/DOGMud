@@ -609,6 +609,14 @@ screen whose 80-column layout was itself redrawn. Both are bands that measure
 nothing: a 40 or 41 column reader gets 30 where `templates.Process` may pick
 a template's 42 form.
 
+A web client reports its columns twice: on its websocket address
+(`/ws?cols=57`, read in `main.HandleWebSocketConnection` so the connect
+splash fits) and by `Client.Display` (`modules/gmcp`). Both go through
+`StoreReportedCols(id, cols) int`, which clamps to `MinWrapWidth`..
+`MaxAutoWrapWidth`, writes `Display.ScreenWidth` only when it differs, and
+returns the width. `ParseReportedCols(s)` reads the address's text value:
+whole numbers only, unclamped.
+
 ### Game menu session (#375 phase 0)
 
 A player has at most one open game menu (`activeMenu`, with its

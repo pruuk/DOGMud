@@ -66,7 +66,7 @@ var templateClassNames = map[string][]string{
 	"sized by its command": {"maps/map", "tables/lockpicking"},
 	// Sent outside the pipeline, before a reader has a width or as they
 	// leave; the terminal soft-wraps them.
-	"raw": {"goodbye", "login/connect-splash", "login/email-new.prompt",
+	"raw": {"goodbye", "login/email-new.prompt",
 		"login/password-new-verify.prompt", "login/password-new.prompt",
 		"login/password.mask", "login/password.prompt", "login/username-new.prompt",
 		"login/username.prompt", "generic/prompt.yn"},
@@ -155,6 +155,10 @@ var templateFits = map[string]templateFixture{
 	"descriptions/fixtures":        {data: fixturesWide, more: []func() any{fixturesShort}},
 	"descriptions/rune":            {data: signWide, more: []func() any{signShort, signLongWord}},
 	"descriptions/sign":            {data: signWide, more: []func() any{signShort, signLongWord}},
+	// The connect splash: words only below 80 (spec ruling 23). It goes out
+	// before login, drawn to the columns on the web client's websocket
+	// address (main.go), and takes no data.
+	"login/connect-splash": {data: func() any { return nil }},
 	// The notice screens (notice_screens_test.go).
 	"mail/message": {data: mailWide, more: []func() any{mailCaptured, mailPlain, mailRead, mailLongWord}},
 	// The auction broadcasts, read from the module's own templates.
@@ -464,6 +468,36 @@ func TestFittingTemplatesFitAtEveryWidth(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// The connect splash goes out before login, picked by width alone
+// (templates.ProcessForWidth in main.go's websocket handler), not measured as
+// TestFittingTemplatesFitAtEveryWidth measures it. At every width from 30 to
+// 79 it fits and is words only (spec ruling 23: no small art); at 80 it is
+// the full art.
+func TestConnectSplashByWidthFitsAndIsWordsOnly(t *testing.T) {
+	templateRenderSetup(t)
+	const logo = `|____/`
+	for width := 30; width <= 80; width++ {
+		out, err := templates.ProcessForWidth("login/connect-splash", nil, false, width)
+		if err != nil {
+			t.Fatalf("at %d: %v", width, err)
+		}
+		if got := templates.WidestLine(out); got > width {
+			t.Errorf("at %d columns the splash has a line %d wide:\n%s", width, got, out)
+		}
+		if width < 80 && strings.Contains(out, logo) {
+			t.Errorf("at %d columns the splash still draws the logo:\n%s", width, out)
+		}
+		if width == 80 && !strings.Contains(out, logo) {
+			t.Errorf("at 80 columns the splash lost its logo:\n%s", out)
+		}
+		for _, words := range []string{"Gaius", "The Chrysalis awaits", "are not", "supported.", "Mudlet", "experience."} {
+			if !strings.Contains(out, words) {
+				t.Errorf("at %d columns the splash lost %q", width, words)
+			}
+		}
 	}
 }
 

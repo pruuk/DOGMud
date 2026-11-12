@@ -83,3 +83,45 @@ func TestWrapWidth_NilAndUnknownConnection(t *testing.T) {
 	gone.LineWidth = 55
 	require.Equal(t, 55, gone.WrapWidth(), "a connection that is not registered is not a websocket")
 }
+
+// The web client's websocket address carries its columns (/ws?cols=57) so
+// the connect splash is drawn to them. Only a whole number counts.
+func TestParseReportedCols(t *testing.T) {
+	for _, tt := range []struct {
+		in   string
+		want int
+		ok   bool
+	}{
+		{"57", 57, true},
+		{"30", 30, true},
+		{"5", 5, true},
+		{"5000", 5000, true},
+		{"-7", -7, true},
+		{"", 0, false},
+		{"42.5", 0, false},
+		{"42px", 0, false},
+		{" 42", 0, false},
+		{"abc", 0, false},
+		{"99999999999999999999999", 0, false},
+	} {
+		got, ok := ParseReportedCols(tt.in)
+		require.Equal(t, tt.ok, ok, "%q", tt.in)
+		require.Equal(t, tt.want, got, "%q", tt.in)
+	}
+}
+
+// A reported column count is clamped to 30..80 and stored on the connection
+// only when it differs; the width stored is returned.
+func TestStoreReportedCols(t *testing.T) {
+	const conn uint64 = 97104
+	connections.RegisterTestWebsocketConnection(conn)
+	t.Cleanup(func() { connections.UnregisterTestConnection(conn) })
+	stored := func() uint32 { return connections.GetClientSettings(conn).Display.ScreenWidth }
+
+	for _, tt := range []struct{ cols, want int }{
+		{57, 57}, {5, 30}, {-7, 30}, {30, 30}, {80, 80}, {81, 80}, {5000, 80}, {42, 42},
+	} {
+		require.Equal(t, tt.want, StoreReportedCols(conn, tt.cols), "cols %d", tt.cols)
+		require.Equal(t, uint32(tt.want), stored(), "cols %d", tt.cols)
+	}
+}

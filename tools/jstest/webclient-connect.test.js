@@ -46,7 +46,7 @@ function element(childSelectors) {
 }
 
 var sockets = [];
-function FakeSocket() { this.readyState = FakeSocket.CONNECTING; sockets.push(this); }
+function FakeSocket(url) { this.url = url; this.readyState = FakeSocket.CONNECTING; sockets.push(this); }
 FakeSocket.CONNECTING = 0; FakeSocket.OPEN = 1; FakeSocket.CLOSING = 2; FakeSocket.CLOSED = 3;
 FakeSocket.prototype.send = function () {};
 FakeSocket.prototype.close = function () { this.readyState = FakeSocket.CLOSING; };
@@ -105,6 +105,10 @@ if (!label) {
 // The page connects on load.
 connect.click();
 check('the first click opens a socket', sockets.length === 1, 'sockets ' + sockets.length);
+// The server sends the connect splash the moment the socket opens, before
+// the Client.Display report arrives, so the address carries the columns.
+check('the address carries the game window\'s columns', sockets[0].url === 'ws://test/ws?cols=57',
+    'url ' + sockets[0].url);
 check('the bar says it is connecting', label.textContent === ', connecting', 'label ' + label.textContent);
 check('Enter Game is disabled while connecting', session.disabled === true, 'disabled ' + session.disabled);
 

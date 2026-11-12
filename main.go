@@ -1281,7 +1281,12 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 // websocket's own RemoteAddr() is the TCP peer of the HTTP upgrade, which
 // behind a reverse proxy is the proxy itself — recording only that is what made
 // IP bans inert for every web-client player.
-func HandleWebSocketConnection(conn *websocket.Conn, clientIP string) {
+//
+// reportedCols is the raw cols value of the websocket address: the web
+// client's column count, which draws the connect splash to the reader's
+// width before its Client.Display report can arrive. A missing or bad value
+// leaves the connection at the default 80.
+func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCols string) {
 
 	var userObject *users.UserRecord
 	connDetails := connections.Add(nil, conn)
@@ -1369,8 +1374,15 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string) {
 	}
 
 	// --- Send Initial Welcome/Splash ---
-	// (This part was mostly correct before)
-	splashTxt, _ := templates.Process("login/connect-splash", nil)
+	// The splash goes out before the client's Client.Display report can
+	// arrive, so the width comes from the websocket address (/ws?cols=57),
+	// validated and clamped as Client.Display is. There is no user to measure
+	// for yet, so the form is picked by width alone.
+	splashWidth := connections.DefaultScreenWidth
+	if cols, ok := users.ParseReportedCols(reportedCols); ok {
+		splashWidth = users.StoreReportedCols(connDetails.ConnectionId(), cols)
+	}
+	splashTxt, _ := templates.ProcessForWidth("login/connect-splash", nil, false, splashWidth)
 	connections.SendTo([]byte(templates.AnsiParse(splashTxt)), connDetails.ConnectionId())
 
 	// --- Trigger the Prompt Handler to initialize state and send the FIRST prompt ---
