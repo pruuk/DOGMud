@@ -139,6 +139,42 @@ func TestWrapSpansSpanTrailingSpaceStaysABreak(t *testing.T) {
 	}
 }
 
+// A chain of spans written back to back is one unit; when it cannot fit, the
+// widest spans that fit are kept whole and a break remains between them.
+func TestSpanChainsNeverOverflowWhenABreakIsPossible(t *testing.T) {
+	cases := []struct {
+		name, in string
+		width    int
+		whole    []string // visible texts that must sit on one line
+	}{
+		{"words then two touching spans",
+			`Help: <ansi fg="a">aaaa bbbb cccc</ansi><ansi fg="b">dddd eeee ff</ansi>`, 20,
+			[]string{"aaaa bbbb cccc"}},
+		{"a short span glued to a wide one",
+			`<ansi fg="a">ccc )</ansi><ansi fg="b">help look help look help look</ansi>`, 30,
+			[]string{"help look help look help look"}},
+	}
+	for _, c := range cases {
+		render := map[string]string{
+			"wrapSpans":  wrapSpans(c.in, c.width),
+			"LayoutHelp": LayoutHelp(c.in, c.width),
+		}
+		for fn, out := range render {
+			plainLines := strings.Split(ansiTag.ReplaceAllString(out, ""), "\n")
+			for _, l := range plainLines {
+				assert.LessOrEqual(t, util.VisibleWidth(l), c.width, "%s %s: %q", c.name, fn, l)
+			}
+			for _, w := range c.whole {
+				found := false
+				for _, l := range plainLines {
+					found = found || strings.Contains(l, w)
+				}
+				assert.True(t, found, "%s %s: %q is split in %q", c.name, fn, w, plainLines)
+			}
+		}
+	}
+}
+
 func TestLayoutHelpReReviewFixes(t *testing.T) {
 	cases := []struct {
 		name  string

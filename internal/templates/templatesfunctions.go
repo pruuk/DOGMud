@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -509,10 +510,13 @@ func wrapSpans(s string, width int, prefix ...string) string {
 // layout pass uses it too, so both treat a span the same way.
 func protectSpans(s string, width int, keep string) string {
 	runes := visibleRunes(s)
-	what := make([]string, len(runes))
-	for i, v := range runes {
-		what[i] = s[v.start:v.end]
-	}
+	// prot[i]: the space at rune i is protected. brkBefore[i] and brkAfter[i]:
+	// a break space is added before or after rune i.
+	prot := make([]bool, len(runes))
+	brkBefore := make([]bool, len(runes))
+	brkAfter := make([]bool, len(runes))
+	type spanCore struct{ first, last int }
+	cores := []spanCore{}
 	// opens holds where each open span's text starts, innermost last, so a
 	// span is seen as it closes: an inner one before the one around it.
 	opens := []int{}
@@ -571,9 +575,10 @@ func protectSpans(s string, width int, keep string) string {
 		if sw > width {
 			continue
 		}
+		cores = append(cores, spanCore{first, last})
 		for i := first; i <= last; i++ {
 			if runes[i].r == ' ' {
-				what[i] = keep
+				prot[i] = true
 			}
 		}
 		if lw+sw+rw <= width {
@@ -594,10 +599,89 @@ func protectSpans(s string, width int, keep string) string {
 			needLeft = !needRight
 		}
 		if needLeft {
-			what[first-1] += " "
+			brkAfter[first-1] = true
 		}
 		if needRight {
-			what[last+1] = " " + what[last+1]
+			brkBefore[last+1] = true
+		}
+	}
+
+	// Each span above was checked against its own glue only. Spans written
+	// back to back chain into one word, so a word that is still wider than a
+	// line and holds protected spaces gets them handed back, then given again
+	// to one span at a time, the widest first, while the word they make fits.
+	runeW := func(i int) int { return util.VisibleWidth(string(runes[i].r)) }
+	sep := func(i int) bool { return runes[i].r == ' ' && !prot[i] }
+	wordAt := func(i int) (a, b int) {
+		a, b = i, i
+		for a > 0 && !sep(a-1) && !brkAfter[a-1] && !brkBefore[a] {
+			a--
+		}
+		for b < len(runes)-1 && !sep(b+1) && !brkAfter[b] && !brkBefore[b+1] {
+			b++
+		}
+		return a, b
+	}
+	wordW := func(a, b int) (w int) {
+		for i := a; i <= b; i++ {
+			w += runeW(i)
+		}
+		return w
+	}
+	for i := 0; i < len(runes); i++ {
+		if sep(i) {
+			continue
+		}
+		a, b := wordAt(i)
+		i = b
+		if wordW(a, b) <= width {
+			continue
+		}
+		held := false
+		for j := a; j <= b; j++ {
+			if prot[j] {
+				held, prot[j] = true, false
+			}
+		}
+		if !held {
+			continue
+		}
+		inside := []spanCore{}
+		for _, c := range cores {
+			if c.first >= a && c.last <= b {
+				inside = append(inside, c)
+			}
+		}
+		sort.SliceStable(inside, func(x, y int) bool {
+			return inside[x].last-inside[x].first > inside[y].last-inside[y].first
+		})
+		for _, c := range inside {
+			set := []int{}
+			for j := c.first; j <= c.last; j++ {
+				if runes[j].r == ' ' && !prot[j] {
+					prot[j] = true
+					set = append(set, j)
+				}
+			}
+			if wa, wb := wordAt(c.first); wordW(wa, wb) > width {
+				for _, j := range set {
+					prot[j] = false
+				}
+			}
+		}
+	}
+
+	what := make([]string, len(runes))
+	for i, v := range runes {
+		what[i] = s[v.start:v.end]
+		if prot[i] {
+			what[i] = keep
+		}
+		if brkBefore[i] {
+			what[i] = " " + what[i]
+		}
+		if brkAfter[i] {
+			what[i] += " "
 		}
 	}
 	return rebuild(s, runes, what)
