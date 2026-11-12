@@ -58,6 +58,7 @@ These are the owner's and Malia's decisions of 2026-11-09. They are recorded in 
 1. All wrapping goes through one place and follows the device width.
 2. The automatic width is at most 80 columns.
 3. Templates must work down to 30 columns, to meet WCAG 2.2 AA reflow at 320px. Maps and wide tables are exempt and may scroll sideways.
+   Amended 2026-11-12 (plan 5, owner ruling): the web game window cannot scroll sideways, so maps and wide tables fit the reader too; see docs/superpowers/plans/2026-11-12-webclient-base-5-live-window.md.
 
 **Type**
 4. One font in the client: JetBrains Mono, with ligatures off. Atkinson Hyperlegible Mono and Fira Mono were second and third. All are SIL OFL 1.1.
@@ -149,6 +150,7 @@ Every form shows all of the information: no screen moves content behind a separa
 Measuring limits. `Process` reads and parses a template on every call (`internal/templates/templates.go:212-214`), so each extra form tried costs one more read, parse and execute. Forms are tried only when the base is wider than the session and only for a template that has variants, widest first, stopping at the first that fits, so a phone pays at most three renders for a player-requested screen. Measuring never runs on a per-round or per-broadcast path. Plan 3a measures the cost on the production-sized machine limit before merging, and adds a parsed-template cache if it shows up. Measuring counts columns with `util.VisibleWidth` and executes nothing new: player text is passed as template data, as it is today, and `text/template` does not evaluate data as a template.
 
 Rendered at 30, 42 and 80 columns, no line may exceed the width and no column may break, apart from the exemption in ruling 3.
+Amended 2026-11-12 (plan 5, owner ruling): the exemption in ruling 3 is withdrawn; no screen is exempt from fitting. See docs/superpowers/plans/2026-11-12-webclient-base-5-live-window.md.
 
 Three kinds of wrapping sit inside templates, outside plan 1's sweep, and belong to plans 3 and 4:
 - **Fixed widths in templates.** 11 lines in 10 template files call `splitstring` with a literal 59 to 73 (plan 3b; `screenwidth` from plan 3a replaces the literal), and `setdesc.go` echoes at 72 to match them.
@@ -176,6 +178,8 @@ Exceptions, on purpose: map art that scales with the map (the compass N and the 
 
 The fixed-at-80 construction option at `WP:432` goes with it.
 
+Amended 2026-11-12 (plan 5, owner ruling): the game never resizes the game window or its text to make content fit; the game window is 80 columns and changes width only when the player changes the browser.
+
 ### 5. Layout
 
 `_computeMode` in `dashboard.js` returns:
@@ -189,6 +193,8 @@ The fixed-at-80 construction option at `WP:432` goes with it.
 Both orientation checks are required. A device preset reported landscape while upright in testing, and the window shape alone is wrong with a keyboard up.
 
 The layout is CSS grid as built in the mock. Map width is the smaller of 58% of the panel area and 52% of the height the panels have.
+
+Amended 2026-11-12 (plan 5, owner ruling): the mode table is replaced by the layout ladder in plan 5 (wide, column, slim, phone, chosen by the room beside an 80-column game window); the touch test is not used.
 
 ### 6. Phones and tablets
 
@@ -219,8 +225,8 @@ One spec, one plan per slice. Each ships on its own and leaves the game working.
 | 3a | Screen machinery: the form mechanism, `screenwidth`, generated tables, splash to words only, the MOTD box, the template guard (split from plan 3, owner 2026-11-10) | Nothing yet, since no client reports a narrow width | 1 |
 | 3b | The hand-laid screens: narrow forms for status, inventory, skills and the other character and description screens, mail, the skill and stat banners, the auction broadcasts, the Go-built screens, and every table now wider than 80 columns redesigned to fit (owner, 2026-11-10), shown as a mock first | Nothing yet | 3a |
 | 4 | Help pages to 30 columns, in batches: the aligned details, and paragraph rewrapping for hand-broken prose | Help details change form at every width | 3a |
-| 5 | Game window goes live: fixed text size, columns follow the window, the client reports its width | Readable phone text, and 200% zoom works | 1, 2, 3a, 3b, 4 |
-| 6 | Layout and phones: large-screen layout, sideways tablets, retiring rail and column dragging, 30% tabs, keyboard rules, X, toast | The new arrangement | 2, 5 |
+| 5 | Game window goes live: fixed text size, columns follow the window, the client reports its width, the large-screen layout (the ladder, retiring the rail and column dragging) | Readable phone text, and 200% zoom works | 1, 2, 3a, 3b, 4 |
+| 6 | Layout and phones: 30% tabs, keyboard rules, X, toast | The new arrangement | 2, 5 |
 | 7 | Panels: Map title and bar, Quests tabs, Comms rename, compressed Equipped, item menus by tap and right-click | The panel changes | 2, 6 |
 
 The renderer comparison (section 8) follows these, under its own spec.
@@ -232,6 +238,7 @@ Rulings are enforced where they can be, not just remembered.
 - **Telnet:** a golden test pins the visible text and line breaks at 80, with the accepted differences named one by one.
 - **Width:** a guard fails any new hardcoded wrap width in Go.
 - **Templates:** a guard renders every template at 30, 42 and 80 and fails on an over-long line, with an explicit exempt list for maps and wide tables.
+  Amended 2026-11-12 (plan 5, owner ruling): the exempt list is gone; the map and lockpicking are held by their own commands' tests, and help colors and map examples by their narrow forms.
 - **Type:** a guard fails any `font-size` outside the tokens and any italic in client or site CSS.
 - **Client:** `tools/jstest` covers the column fit, the mode table, and the keyboard list.
 - **WCAG 2.2 AA checks:** 200% zoom, 320px reflow, and contrast at the new sizes. #729's color list is not changed by this work.

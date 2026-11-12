@@ -221,6 +221,17 @@ Cached template with metadata for efficient reuse and cache invalidation.
   that fits is always used. Which forms a template has is found once and
   remembered (`formsOf`); a form file added while the server runs is seen
   after a restart.
+- No template is exempt from fitting (web client base plan 5, owner ruling
+  2026-11-12): the web game window cannot scroll sideways, so the map, the
+  lockpicking table and the two wide help pages fit the reader too. `maps/map`
+  has `.w42` and `.w30` forms (title, rules and legend, no rope frame) and
+  `help/colors` and `help/map-examples` have `.w42` and `.w30` forms. A help
+  form (`help/name.w42.template`) works as any other form: `ProcessHelp` and
+  `ProcessForWidth` pick it by width, and it is not a help topic. The
+  login screens follow the same rule: `login/connect-splash` has words-only
+  `.w42` and `.w30` forms (the splash art is only shown where it fits), and
+  `goodbye` has a words-only narrow form ("Goodbye."). Which widths each
+  template is held to is in `internal/guards/template_width_guard_test.go`.
 - A screen-reader file still comes first and has no forms. A `.md` file has
   no forms.
 - `ProcessForWidth(fname, data, screenReader, width)` (forms.go) renders for

@@ -497,7 +497,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Char.go` | `Char` | Vitals, stats, status — the core player feed |
 | `gmcp.Automation.go` | `Char.Automation` | Triggers, macros, aliases, the action queue |
 | `gmcp.Room.go` | `Room` | Current room: description, exits, occupants |
-| `gmcp.ClientDisplay.go` | `Client.Display` (inbound) | A web client's `{"cols": n}`. Websocket only, whole numbers only, clamped to `users.MinWrapWidth`..`users.MaxAutoWrapWidth`, written to `Display.ScreenWidth` only when it changes, through `users.StoreReportedCols` (shared with the `/ws?cols=` value read on connect) |
+| `gmcp.ClientDisplay.go` | `Client.Display` (inbound) | A web client's `{"cols": n}`. Websocket only, whole numbers only, clamped to `users.MinWrapWidth`..`users.MaxAutoWrapWidth`, written to `Display.ScreenWidth` only when it changes, through `users.StoreReportedCols` (shared with the `/ws?cols=` value read on connect). The web client sends it (`static/js/displayreport.js`) on connect, again on a reconnect, and after a column change has held for 250ms; a height-only change never sends |
 | `gmcp.Zone.go` | `Zone` | The `Zone.Map` snapshot the web mapper draws, plus `party` and `full`; sent as a diff (see "Zone.Map is sent as a diff") |
 | `gmcp.ZoneDiff.go` | (none) | `zoneDiff`, the pure decision of what `Zone.Map` to send, and `roomFingerprint` |
 | `gmcp.CharVitalsWatch.go` | `Char.Vitals` | The once-a-round on-change check that keeps `Char.Vitals` current (see "When Char.Vitals is sent") |
