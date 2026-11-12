@@ -29,6 +29,10 @@ var wide = css.slice(wideStart, css.indexOf('}', wideStart));
 var cssGap = parseFloat(/var\(--game-w[^)]*\)\s*\)?\s*([\d.]+)px/.exec(wide)[1]);
 check('layoutpick uses the stylesheet padding', LayoutPick.PAD, cssPad);
 check('layoutpick uses the stylesheet gap', LayoutPick.GAP, cssGap);
+// The game column before termfit measures: the stylesheet's fallback in the
+// default grid and the dashboard's default must be the same width.
+var cssDefault = parseFloat(/var\(--game-w,\s*([\d.]+)px\)/.exec(block)[1]);
+check('the default game width matches the stylesheet fallback', LayoutPick.GAME_W_DEFAULT, cssDefault);
 var G = 785;
 check('a monitor gets the full layout', LayoutPick.pick(1920, G, false), 'wide');
 check('360px of room is the full layout', LayoutPick.pick(12 + G + 6 + 360, G, false), 'wide');

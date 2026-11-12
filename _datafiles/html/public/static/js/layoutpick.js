@@ -22,6 +22,11 @@
 
     var PAD = 6, GAP = 6;                 // #dashboard padding and the game-to-panels track (dashboard.css)
     var WIDE = 360, COLUMN = 200, SLIM = 120;
+    // The game column before termfit has measured the letters: 80 columns
+    // at 16px (768px), the scrollbar's room and the border, as in
+    // dashboard.css var(--game-w, 786px). The dashboard uses it so a
+    // desktop never gets the phone layout only for lack of a measurement.
+    var GAME_W_DEFAULT = 786;
 
     // dashW: #dashboard's width in CSS px. gameW: the game window's width at
     // 80 columns, or null before it is measured. phone: a touch screen whose
@@ -35,5 +40,5 @@
         return 'phone';
     }
 
-    return { pick: pick, PAD: PAD, GAP: GAP };
+    return { pick: pick, PAD: PAD, GAP: GAP, GAME_W_DEFAULT: GAME_W_DEFAULT };
 }));

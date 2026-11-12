@@ -4,9 +4,11 @@
    the room right of it in #dash-panels. layoutpick.js picks the mode from
    that room: wide (Layout D), column, slim or phone. Until dashboard.js
    applies the first mode, #dashboard has no data-mode, and this default is
-   the wide grid, so a desktop never paints the phone layout first. The 6px
-   track between the game and the panels is layoutpick.js GAP and the 6px
-   padding its PAD (tools/jstest/layoutpick.test.js reads both here). */
+   the wide grid, so a desktop never paints the phone layout first. Its
+   786px fallback is layoutpick.js GAME_W_DEFAULT, the width dashboard.js
+   uses until termfit has measured. The 6px track between the game and the
+   panels is layoutpick.js GAP and the 6px padding its PAD
+   (tools/jstest/layoutpick.test.js reads all three here). */
 #dashboard {
   display: grid;
   position: relative;
@@ -474,8 +476,10 @@
   min-height: 0;
   /* Room for the tab bar at the column's foot. */
   padding-bottom: calc(6px + var(--tabbar-h));
+  /* Only a window too short for the floors below scrolls. */
+  overflow-y: auto;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(96px, 1fr);
   grid-template-areas:
     "map"
     "vitals"
@@ -487,17 +491,30 @@
 #dashboard[data-mode="column"] #dash-panels #panel-art,
 #dashboard[data-mode="column"] #dash-panels #panel-chat,
 #dashboard[data-mode="column"] #dash-panels #panel-trig { display: none; }
+/* Health and Conditions are stacked under the Map here (decision 10), so
+   each keeps a floor: its title bar and a few lines (Health 120px, its
+   bars; Conditions 96px). The square Map takes the height that is left:
+     100vh
+     - 12px              #dashboard padding, top and bottom
+     - 48px              the session bar (44px buttons on touch, its frame)
+     - 6px               the gap under the session bar
+     - 6px - tabbar-h    #dash-panels' room for the tab bar at its foot
+     - 12px              the two gaps between Map, Health and Conditions
+     - 120px - 96px      the Health and Conditions floors
+   = 100vh - 300px - tabbar-h, and never wider than the column. It stays at
+   least 120px, so its title bar and buttons always show; on a window too
+   short even for that, the column scrolls. */
 #dashboard[data-mode="column"] #panel-map {
   grid-area: map;
   justify-self: center;
   aspect-ratio: 1 / 1;
-  width: min(100%, calc(100vh - 192px - 66px - 190px));
+  width: min(100%, max(120px, calc(100vh - 300px - var(--tabbar-h))));
   min-height: 0;
 }
 #dashboard[data-mode="column"] #panel-map #map-render { flex: 1 1 0; aspect-ratio: auto; padding: 2px 0; box-sizing: border-box; }
 #dashboard[data-mode="column"] #panel-map .map-controls { padding: 3px 6px; }
-#dashboard[data-mode="column"] #panel-vitals { grid-area: vitals; min-height: 0; }
-#dashboard[data-mode="column"] #panel-status { grid-area: status; min-height: 0; }
+#dashboard[data-mode="column"] #panel-vitals { grid-area: vitals; min-height: 120px; }
+#dashboard[data-mode="column"] #panel-status { grid-area: status; min-height: 96px; }
 /* The tab bar shows only the four closed panels, and it and the opened tab
    stay over the panel column (--panels-w, set by dashboard.js). */
 html.layout-column .gtab[data-panel="map"],

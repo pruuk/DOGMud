@@ -310,6 +310,29 @@ resize(WIDE);
 check('a small screen without touch (a zoomed desktop) stays on the ladder', D.mode, 'wide');
 sandbox.screen = { width: 1920, height: 1080 };
 
+// --- before termfit has measured ---------------------------------------------
+
+// No reported width yet (the page's first fit returned early): a desktop
+// still starts in Layout D, at the default game column, and only a phone
+// gets the phone layout.
+dashboard.clientWidth = 1920;
+D.setGameWidth(null);
+check('a 1920 desktop with no reported width starts in the full layout', D.mode, 'wide');
+check('with no reported width the game column is the default',
+    htmlEl.style.getPropertyValue('--game-w'), '786px');
+sandbox.screen = { width: 390, height: 844 };
+coarse = true;
+D.setGameWidth(null);
+check('a touch phone with no reported width is the phone layout', D.mode, 'phone');
+check('the game column stays set in the phone layout too',
+    htmlEl.style.getPropertyValue('--game-w'), '786px');
+sandbox.screen = { width: 1920, height: 1080 };
+coarse = false;
+dashboard.clientWidth = WIDE;
+D.setGameWidth(800);
+check('a reported width replaces the default', [D.mode, htmlEl.style.getPropertyValue('--game-w')], ['wide', '806px']);
+D.setGameWidth(780);
+
 // --- the round trip ----------------------------------------------------------
 
 var LEFT = ['map', 'quests', 'vitals', 'art'];
@@ -438,6 +461,17 @@ delete store['dogmud.dashboard.layout.v1'];
 delete store[KEY];
 store['dogmud.dashboard.layout.v1'] = '{not json';
 check('a broken v1 is dropped, not carried', [D._readLayout(), store['dogmud.dashboard.layout.v1']], [null, undefined]);
+// A full or blocked storage: the v2 write fails, so v1 stays for next time.
+var V1 = JSON.stringify({ collapsed: ['chat'], popped: [] });
+store['dogmud.dashboard.layout.v1'] = V1;
+var realSetItem = localStorage.setItem;
+localStorage.setItem = function () { throw new Error('QuotaExceededError'); };
+D._readLayout();
+localStorage.setItem = realSetItem;
+check('when the v2 write fails, v1 survives and no v2 is written',
+    [store['dogmud.dashboard.layout.v1'], store[KEY]], [V1, undefined]);
+check('the next load carries it over', D._readLayout().collapsed, ['chat']);
+check('and then v1 is gone', store['dogmud.dashboard.layout.v1'], undefined);
 
 // --- Chat unfolds at the newest message --------------------------------------
 //

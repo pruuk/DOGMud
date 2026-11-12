@@ -149,7 +149,7 @@
 
   var Dashboard = {
     mode: null,         // current mode: "wide" | "column" | "slim" | "phone"
-    gameW: null,        // the game column's width in px, or null before termfit measures it
+    gameW: null,        // the measured game column's width in px, or null before termfit measures it (the layout then uses LayoutPick.GAME_W_DEFAULT)
     ready: false,       // init has run: setGameWidth may be called
 
     // DOM refs created once
@@ -203,12 +203,15 @@
     // The game window's width at 80 columns (termfit.js widthFor80), or
     // null before it is measured. The game column is that plus the Game
     // panel's border and the slack; the CSS reads it as --game-w on the
-    // root (not #dashboard: the tab bar and drawer live outside it).
+    // root (not #dashboard: the tab bar and drawer live outside it). Until
+    // termfit measures, the column is LayoutPick.GAME_W_DEFAULT, so a
+    // desktop never gets the phone layout only for lack of a width. The
+    // wide, column and slim grids use var(--game-w) with no fallback, so
+    // it is always set.
     setGameWidth: function (px) {
       this.gameW = px ? px + FEED_BORDER + SLACK : null;
-      var root = document.documentElement;
-      if (this.gameW) root.style.setProperty("--game-w", this.gameW + "px");
-      else root.style.removeProperty("--game-w");
+      document.documentElement.style.setProperty("--game-w",
+        (this.gameW || LayoutPick.GAME_W_DEFAULT) + "px");
       this._apply();
     },
 
@@ -277,7 +280,7 @@
       var w = document.getElementById("dashboard").clientWidth;
       var phone = ViewportFit.isPhone(screen.width, screen.height) &&
                   matchMedia("(pointer: coarse)").matches;
-      return LayoutPick.pick(w, this.gameW, phone);
+      return LayoutPick.pick(w, this.gameW || LayoutPick.GAME_W_DEFAULT, phone);
     },
 
     // The panel area's width, for the column mode's tab bar and drawer.
@@ -600,6 +603,8 @@
         if (localStorage.getItem(LAYOUT_KEY) === null) {
           var old = localStorage.getItem(OLD_LAYOUT_KEY);
           if (old !== null) {
+            // v1 goes only once v2 holds what it carried (or v1 held
+            // nothing to carry), so a failed write keeps it for next time.
             try {
               var o = JSON.parse(old);
               if (o && typeof o === "object") {
@@ -609,8 +614,13 @@
                 if (o.boxes && typeof o.boxes === "object") carried.boxes = o.boxes;
                 localStorage.setItem(LAYOUT_KEY, JSON.stringify(carried));
               }
-            } catch (e) {}
-            localStorage.removeItem(OLD_LAYOUT_KEY);
+              localStorage.removeItem(OLD_LAYOUT_KEY);
+            } catch (e) {
+              // A v1 that is not JSON can never be carried: drop it.
+              if (e instanceof SyntaxError) {
+                try { localStorage.removeItem(OLD_LAYOUT_KEY); } catch (e2) {}
+              }
+            }
           }
         }
         var raw = localStorage.getItem(LAYOUT_KEY);

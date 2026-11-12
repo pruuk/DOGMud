@@ -230,7 +230,8 @@
          itself on load, and onclose shows it when the player is not connected. -->
     <button id="connect-button" style="display:none">Enter Game</button>
 
-    <!-- DOCKED DASHBOARD GRID (arrangement C) -->
+    <!-- DOCKED DASHBOARD GRID: the game on the left, the panels on the
+         layout ladder around it (dashboard.js, layoutpick.js) -->
     <div id="dashboard">
       <div id="dash-session">
         <span class="sess-name" id="sess-name">—</span>
@@ -538,7 +539,7 @@
         }
         window.addEventListener('resize', resizeTerminal);
         // Re-fit whenever the feed panel itself changes size (grid reflow,
-        // splitters, pop-out) so xterm tracks the bounded box and keeps its
+        // a layout change, pop-out) so xterm tracks the bounded box and keeps its
         // row count sane. Without this the terminal can over-size and lag.
         // Watch the panel's BODY too: termfit measures the body, and a title
         // bar that grows after the first fit (a late web font, a bigger
