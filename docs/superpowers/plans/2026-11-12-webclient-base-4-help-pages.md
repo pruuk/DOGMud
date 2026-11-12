@@ -1430,7 +1430,14 @@ func helpWords(s string) []string {
 		}
 		keep = append(keep, l)
 	}
-	return strings.Fields(helpTag.ReplaceAllString(strings.Join(keep, "\n"), ""))
+	// Rule marks are not words: a heading too wide drops them (decision 7).
+	words := []string{}
+	for _, w := range strings.Fields(helpTag.ReplaceAllString(strings.Join(keep, "\n"), "")) {
+		if strings.Trim(w, "━─") != "" {
+			words = append(words, w)
+		}
+	}
+	return words
 }
 
 // HELP_DUMP=<folder> writes every page at 30 and 80 for the owner's report
