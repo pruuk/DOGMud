@@ -1,0 +1,14 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="20">{{ .Title }}</ansi>
+<ansi fg="black-bold">{{ padRightX "" "─" .Width }}</ansi>
+{{ range $index, $line := .DisplayLines -}}
+<ansi fg="map-default">{{ $line }}</ansi>
+{{ end -}}
+<ansi fg="black-bold">{{ padRightX "" "─" .Width }}</ansi>
+<ansi fg="map-legend">Legend</ansi>
+{{- $strlen := 6 -}}
+{{ range $symbol, $name := .Legend -}}
+{{- $proposedLength := add $strlen 3 (len $name) 1 -}}
+{{- if gt $proposedLength $.LegendWidth -}}{{- $strlen = 0 -}}{{ "\n" }}{{- end -}}
+<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-{{mapslug $name}}" bg="mapbg-{{mapslug $name}}">{{ printf "%c" $symbol }}</ansi></ansi> {{$name}}
+{{- $strlen = add $strlen 3 (len $name) 1 -}}
+{{- end }}

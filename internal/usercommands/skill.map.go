@@ -94,6 +94,18 @@ func mapSizeFor(skillLevel int, wide bool, screenWidth, screenHeight int) (int, 
 	return width, height
 }
 
+// mapSizeForReader is the map's size for a reader whose text wraps at wrap
+// columns. Under 80 the map has no frame and is the reader's whole width
+// (at least 30); `map wide` cannot be wider than the screen there. At 80
+// and over it is mapSizeFor.
+func mapSizeForReader(skillLevel int, wide bool, screenWidth, screenHeight, wrap int) (int, int, bool) {
+	if wrap < users.MaxAutoWrapWidth {
+		return max(wrap, users.MinWrapWidth), standardMapHeight, true
+	}
+	w, h := mapSizeFor(skillLevel, wide, screenWidth, screenHeight)
+	return w, h, false
+}
+
 func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	// Map is a free command — no skill gate.
@@ -143,7 +155,7 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	sw := user.ClientSettings().Display.GetScreenWidth()
 	sh := user.ClientSettings().Display.GetScreenHeight()
-	mapWidth, mapHeight := mapSizeFor(skillLevel, rest == "wide", sw, sh)
+	mapWidth, mapHeight, narrow := mapSizeForReader(skillLevel, rest == "wide", sw, sh, user.WrapWidth())
 
 	zMapper := mapper.GetMapper(roomId)
 	if zMapper == nil {
@@ -199,7 +211,15 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		displayLines[i] = mapper.ColorizeLegendLine(displayLines[i], legend)
 	}
 
-	mapTxt, err := templates.Process("maps/map", mapScreenData(room.Zone, displayLines, width, legend), user.UserId)
+	// A narrow reader gets the form drawn to its band (42 or 30), whatever
+	// the frame would measure; anyone else gets the framed base, even a
+	// telnet `map wide` wider than 80 (measuring would have swapped that
+	// for a frameless form).
+	formWidth := templates.FullWidth
+	if narrow {
+		formWidth = users.RedrawnFormWidth(user.WrapWidth())
+	}
+	mapTxt, err := templates.ProcessForWidth("maps/map", mapScreenData(room.Zone, displayLines, width, legend), user.ScreenReader, formWidth)
 	if err != nil {
 		refusal.Failed(user, "map", err, "userId", user.UserId)
 		return true, err
