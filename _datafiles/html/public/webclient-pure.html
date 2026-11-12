@@ -216,6 +216,8 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/roomtitlebold.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/viewportfit.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/termfit.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/displayreport.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/layoutpick.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js?v={{ .ASSET_VERSION }}"></script>
@@ -438,11 +440,17 @@
         const rootStyle = getComputedStyle(document.documentElement);
         const termColor = (name) => rootStyle.getPropertyValue('--term-' + name).trim();
         const termFont = rootStyle.getPropertyValue('--font-mono').trim();
+        // The game text size: the --text token (gomud.css), read each fit
+        // because an upright phone changes it.
+        function textSize() {
+            var px = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text'));
+            return isNaN(px) ? 16 : px;
+        }
         const term = new window.Terminal({
-            cols: 80,
+            cols: 80,  // resized to what fits by termfit.js
             rows: 60,
             cursorBlink: true,
-            fontSize: 20,
+            fontSize: textSize(),
             // The one bold (--bold in gomud.css); room titles use it.
             fontWeightBold: '600',
             // Give rapid-fire feed text vertical breathing room so lines don't
@@ -469,30 +477,6 @@
         const fitAddon = new window.FitAddon.FitAddon();
         term.loadAddon(fitAddon);
         term.open(document.getElementById('terminal'));
-
-        // The scale resizeTerminal() applies to the game text (1 = none).
-        // xterm measures its letters with getBoundingClientRect, which includes
-        // that scale, so a scaled terminal measured its cells too small and
-        // shrank twice (tiny, garbled text with a raised minimum font). Undo
-        // the scale in the measurement. Private xterm 4.19 internals; if they
-        // change, this quietly does nothing.
-        var termScale = 1;
-        (function () {
-            var cs = term._core && term._core._charSizeService;
-            var strat = cs && cs._measureStrategy;
-            if (!strat || !strat._measureElement || !strat._result) return;
-            strat.measure = function () {
-                var el = this._measureElement, o = this._optionsService.rawOptions;
-                el.style.fontFamily = o.fontFamily;
-                el.style.fontSize = o.fontSize + 'px';
-                var r = el.getBoundingClientRect();
-                if (r.width && r.height) {
-                    this._result.width = r.width / termScale;
-                    this._result.height = Math.ceil(r.height / termScale - 0.01);
-                }
-                return this._result;
-            };
-        })();
 
         // Keep the feed's text from sliding out of view sideways (playtest
         // 2026-10-17). See static/js/feedscroll.js for the causes it covers.
@@ -524,13 +508,28 @@
             } catch (e) { return 1; }
         })();
 
-        // Fit the game text to the panel (static/js/termfit.js).
+        // Tell the server the game window's columns (static/js/displayreport.js).
+        // SendGMCP is declared further down this script, so it is hoisted.
+        var displayReport = window.DisplayReport.create({
+            send: function (cols) { return SendGMCP('Client.Display', { cols: cols }); }
+        });
+        // Fit the game window to the panel (static/js/termfit.js). The text
+        // stays at the --text size; the columns follow the panel, at most 80.
         var termFitter = window.TermFit.create({
             term: term,
             fitAddon: fitAddon,
             host: document.getElementById('terminal'),
             minFont: browserMinFont,
-            setScale: function (s) { termScale = s; }
+            fontSize: textSize,
+            onCols: function (cols) { displayReport.columns(cols); },
+            // The layout gives the game window this width (dashboard.js).
+            // Kept on window too: dashboard.js loads at the end of the page
+            // and sets itself up on DOMContentLoaded, so the first reports
+            // arrive before it exists. Dashboard.init reads the last one.
+            onGameWidth: function (px) {
+                window.dogmudGameWidth = px;
+                if (window.Dashboard && window.Dashboard.ready) window.Dashboard.setGameWidth(px);
+            }
         });
         // force: true measures again at the same panel size. Event and frame
         // callbacks pass their own argument, so only a literal true counts.
@@ -538,6 +537,9 @@
             termFitter.fit(force === true);
         }
         window.addEventListener('resize', resizeTerminal);
+        // Turning a phone upright changes the --text token (14px); some
+        // browsers fire this after resize, so measure again then.
+        window.addEventListener('orientationchange', function () { resizeTerminal(true); });
         // Re-fit whenever the feed panel itself changes size (grid reflow,
         // a layout change, pop-out) so xterm tracks the bounded box and keeps its
         // row count sane. Without this the terminal can over-size and lag.
@@ -563,8 +565,9 @@
         requestAnimationFrame(resizeTerminal); // fit once after first grid paint
         resizeTerminal();
 
-        // The 80-col grid is measured from glyph width, so it must be computed
-        // against the real font, not a fallback. font-display:swap
+        // The column count (and the width 80 columns need) is measured from
+        // glyph width, so it must be computed against the real font, not a
+        // fallback. font-display:swap
         // renders in a fallback until JetBrains Mono loads; once it does, re-assign
         // fontFamily (forces xterm to rebuild its glyph atlas) and refit.
         if (document.fonts && document.fonts.load) {
@@ -2919,6 +2922,9 @@
                     pendingReconnectToken = null;
                     socket.send(t);
                 }
+                // The server starts every connection at 80 columns. After the
+                // token, so a copyover reconnect reads the token first.
+                displayReport.connected(term.cols);
                 reconnectAttempts = 0;
 
                 // A new connection is a new login: the relay glue waits for
