@@ -87,14 +87,6 @@ func helpTemplateFiles(t *testing.T) map[string]string {
 	return pages
 }
 
-// helpFormFiles are the narrow forms and screen-reader files of help pages.
-// They are help files and state their layout too, but they are not topics.
-func helpFormFiles(t *testing.T) map[string]string {
-	t.Helper()
-	_, forms := helpFolderFiles(t)
-	return forms
-}
-
 // helpPageForms lists, per page, the widths it has a form drawn to.
 func helpPageForms(forms map[string]string) map[string][]int {
 	have := map[string][]int{}
