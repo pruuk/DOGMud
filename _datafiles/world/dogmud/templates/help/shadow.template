@@ -7,7 +7,7 @@ automatically follow when they move.
 
 ::rows
   <ansi fg="command">shadow [target]</ansi>  Begin shadowing
-  <ansi fg="command">shadow stop</ansi>     - Stop shadowing
+  <ansi fg="command">shadow stop</ansi>       Stop shadowing
 ::
 
 You must be hidden to begin. Each room transition checks
