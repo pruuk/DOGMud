@@ -1,25 +1,26 @@
-/* In-game dashboard — arrangement C (visuals left). Reuses gomud.css tokens. */
+/* In-game dashboard: the layout ladder (owner 2026-11-12). Reuses gomud.css tokens. */
+/* The game window is on the left, exactly as wide as 80 columns
+   (--game-w, set on the root by dashboard.js setGameWidth); the panels take
+   the room right of it in #dash-panels. layoutpick.js picks the mode from
+   that room: wide (Layout D), column, slim or phone. Until dashboard.js
+   applies the first mode, #dashboard has no data-mode, and this default is
+   the wide grid, so a desktop never paints the phone layout first. The 6px
+   track between the game and the panels is layoutpick.js GAP and the 6px
+   padding its PAD (tools/jstest/layoutpick.test.js reads both here). */
 #dashboard {
   display: grid;
   position: relative;
   height: 100%;
   width: 100%;
-  gap: var(--dash-gap, 6px) 0;   /* row-gap kept, col-gap=0 (splitter tracks handle spacing) */
+  gap: var(--dash-gap, 6px) 0;   /* row-gap kept, col-gap=0 (the 6px track spaces the game from the panels) */
   padding: 6px;
   box-sizing: border-box;
   background: var(--desk);   /* deep ink-black field behind the cards, offset from the brown chrome */
-  /* session strip on top; below it five columns: left | ls-splitter | center | rs-splitter | right
-     so each panel can size independently and side columns are drag-resizable */
-  grid-template-columns:
-    minmax(180px, var(--col-l-w, 22vw))
-    6px
-    minmax(0, 1fr)
-    6px
-    minmax(180px, var(--col-r-w, 22vw));
+  grid-template-columns: var(--game-w, 786px) 6px minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
-    "sess sess sess   sess sess"
-    "left ls   center rs   right";
+    "sess   sess sess"
+    "center .    panels";
 }
 
 /* Independent vertical column stacks */
@@ -28,25 +29,9 @@
   gap: var(--dash-gap, 6px);
   min-height: 0; min-width: 0;
 }
-#dash-col-left   { grid-area: left; }
 #dash-col-center { grid-area: center; }
-#dash-col-right  { grid-area: right; }
-/* A side column whose panels are all at their smallest (a very short
-   window, such as 1100x540) scrolls by itself, so the whole page never
-   scrolls and the session bar stays in view. */
-#dash-col-left,
-#dash-col-right  { overflow-y: auto; }
-
-/* Column-width splitters (wide mode only) */
-.dash-splitter { z-index: 5; align-self: stretch; }
-.dash-splitter.col { cursor: col-resize; background: transparent; }
-.dash-splitter.col:hover,
-.dash-splitter.col.dragging { background: color-mix(in srgb, var(--ink-gold) 30%, transparent); }
-#dash-splitter-l { grid-area: ls; }
-#dash-splitter-r { grid-area: rs; }
-/* Hidden whenever not in the 3-column wide layout */
-#dashboard[data-mode="rail"] .dash-splitter,
-#dashboard[data-mode="phone"] .dash-splitter { display: none; }
+/* Every mode but the phone one has the panels area. */
+#dashboard:not([data-mode="phone"]) > #dash-panels { grid-area: panels; }
 
 /* Session strip */
 #dash-session {
@@ -117,7 +102,6 @@
   padding: 4px 8px;
   background: linear-gradient(var(--ink-deep), var(--bar-bottom));
   border-bottom: 2px solid var(--copper);   /* one teal line under every panel title (Malia 2026-11-01) */
-  cursor: grab;            /* header is the drag handle for swap */
   user-select: none;
 }
 .dash-panel-head .ph-title {
@@ -217,9 +201,9 @@
    feed sideways; static/js/feedscroll.js covers the rest (playtest
    2026-10-17). */
 #panel-feed #terminal .xterm-viewport { overflow-x: hidden; }
-/* Keeps the command box at the bottom of the middle column, even when the
-   Game window is popped out into its own box or dragged somewhere else.
-   Without this, the command box jumps to the top of the page. */
+/* Keeps the command box at the bottom of the game column, even when the
+   Game window is popped out into its own box. Without this, the command box
+   jumps to the top of the page. */
 #panel-cmd { flex: 0 0 auto; margin-top: auto; }
 #panel-cmd .dash-panel-body { display: flex; padding: 4px; }
 
@@ -238,7 +222,7 @@
 }
 
 /* Per-panel stack proportions (flex-basis 0 → grow ratios set the heights;
-   splitters will later tune these --f-* vars). Left: Map / Vitals / Scene;
+   the --f-* vars may tune them). Left: Map / Vitals / Scene;
    Right: Chat / Conditions / Triggers (~equal). */
 /* Left column auto-balances by content: the Map absorbs slack (large when the
    inventory is short) but keeps a min; the Inventory panel sizes to its content
@@ -387,15 +371,8 @@
 .qonmap { color:var(--party-teal); font-style:normal; white-space:nowrap; }
 #panel-vitals { flex: 0 0 auto; }                    /* content-compact; grows with party rows */
 #panel-art    { flex: 0 1 auto; min-height: 120px; } /* inventory: content-sized, grows w/ eq list */
-/* Chat gets twice the share of Conditions and Automation, and at least 240px
-   in the right column: its channel tabs wrap to two or three rows on a
-   laptop, which left the messages 11 to 27px tall at 1280x720 and
-   1366x650 (#768 review item 1). */
+/* Chat gets twice the share of Conditions and Automation. */
 #panel-chat   { flex: var(--f-chat, 2) 1 0; }
-#dash-col-right > #panel-chat { min-height: 240px; }
-/* Automation's tabs take two rows at the text size; this keeps its list in
-   view on a laptop until layout D replaces these columns. */
-#dash-col-right > #panel-trig { min-height: 200px; }
 #panel-status { flex: var(--f-status, 1) 1 0; }
 #panel-trig   { flex: var(--f-trig, 1) 1 0; }
 
@@ -418,49 +395,162 @@
   height: auto !important;
 }
 
-/* Drag-to-swap highlight and grab cursor */
-.dash-panel.drag-over {
-  outline: 2px dashed var(--antique-gold);
-  outline-offset: -2px;
-}
-.dash-panel-head[draggable="true"] { cursor: grab; }
-
 /* ------------------------------------------------------------------ */
-/* Responsive reflow — Rail mode (700–1100px)                          */
+/* The layout ladder: wide (Layout D), column and slim                 */
+/* (owner 2026-11-12; from the approved mock's section 4)              */
 /* ------------------------------------------------------------------ */
 
-/* Default: hide the responsive chrome until JS activates a mode */
-#dash-rail,
+/* Default: hide the tab bar and drawer until JS activates a mode */
 #dash-tabbar,
 #dash-drawer { display: none; }
 
-#dashboard[data-mode="rail"] {
-  grid-template-columns: minmax(0, 2.3fr) minmax(280px, 1fr);
+/* Wide, Layout D: 360px or more right of the game (spec ruling 9). The
+   game column is exactly 80 columns wide; the ladder, not this grid,
+   decides when the panels have room. */
+#dashboard[data-mode="wide"] {
+  grid-template-columns: var(--game-w) 6px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
-    "sess sess"
-    "center rail";
+    "sess   sess sess"
+    "center .    panels";
 }
-
-#dashboard[data-mode="rail"] #dash-col-left,
-#dashboard[data-mode="rail"] #dash-col-right { display: none; }
-
-/* Rail container lives inside #dashboard at grid-area "rail" */
-#dash-rail {
-  grid-area: rail;
-  display: flex;
-  flex-direction: column;
+/* The panel area's own grid. The same rules hold before the first mode is
+   applied (no data-mode), so the first paint is Layout D. */
+#dashboard:is([data-mode="wide"], :not([data-mode])) #dash-panels {
+  display: grid;
+  gap: var(--dash-gap, 6px);
+  min-width: 0;
   min-height: 0;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 6px;
-  overflow: hidden;
+  /* The Map is square: at most 58% of the panel area's width and about half
+     its height. Below it, two rows split 60/40: Chat and Quests on the wide
+     side, Inventory and Automation on the narrow side. Three tracks, so the
+     Map's edge and the 60/40 line can fall in different places. */
+  --map-w: min(58%, calc((100vh - 192px) * 0.52));
+  grid-template-columns:
+    var(--map-w)
+    max(0px, calc(60% - 9px - var(--map-w)))
+    minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1.1fr);
+  grid-template-areas:
+    "map    vitals vitals"
+    "map    status status"
+    "chat   chat   art"
+    "quests quests trig";
 }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #panel-map { align-self: start; width: 100%; aspect-ratio: 1 / 1; }
+/* Inside the square: the leather takes every pixel the title bar and button row leave. */
+#dashboard:is([data-mode="wide"], :not([data-mode])) #panel-map #map-render { flex: 1 1 0; aspect-ratio: auto; padding: 2px 0; box-sizing: border-box; }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #panel-map .map-controls { padding: 3px 6px; }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #dash-col-left,
+#dashboard:is([data-mode="wide"], :not([data-mode])) #dash-col-right { display: contents; }
+
+#dashboard:is([data-mode="wide"], :not([data-mode])) #panel-map    { grid-area: map;    min-height: 0; }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #panel-vitals { grid-area: vitals; }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #panel-status { grid-area: status; }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #panel-chat   { grid-area: chat;   min-height: 0; }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #panel-quests { grid-area: quests; min-height: 0; }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #panel-art    { grid-area: art;    min-height: 0; }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #panel-trig   { grid-area: trig;   min-height: 0; }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #panel-quests .dash-panel-body { max-height: none; }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #dash-panels { container: panels / inline-size; }
+#dashboard:is([data-mode="wide"], :not([data-mode])) #dash-panels .dash-panel-body { overflow-x: hidden; }
+
+/* Column: 200 to 359px right of the game. Map, Health and Conditions stay
+   open, stacked (the column is too narrow for Health and Conditions side
+   by side); Chat, Quests, Inventory and Automation open from the round
+   buttons at the column's foot, over the lower part of the column, so the
+   game text is never covered. */
+#dashboard[data-mode="column"] {
+  grid-template-columns: var(--game-w) 6px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "sess   sess sess"
+    "center .    panels";
+}
+#dashboard[data-mode="column"] #dash-panels {
+  display: grid;
+  gap: var(--dash-gap, 6px);
+  min-width: 0;
+  min-height: 0;
+  /* Room for the tab bar at the column's foot. */
+  padding-bottom: calc(6px + var(--tabbar-h));
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas:
+    "map"
+    "vitals"
+    "status";
+}
+#dashboard[data-mode="column"] #dash-col-left,
+#dashboard[data-mode="column"] #dash-col-right { display: contents; }
+#dashboard[data-mode="column"] #dash-panels #panel-quests,
+#dashboard[data-mode="column"] #dash-panels #panel-art,
+#dashboard[data-mode="column"] #dash-panels #panel-chat,
+#dashboard[data-mode="column"] #dash-panels #panel-trig { display: none; }
+#dashboard[data-mode="column"] #panel-map {
+  grid-area: map;
+  justify-self: center;
+  aspect-ratio: 1 / 1;
+  width: min(100%, calc(100vh - 192px - 66px - 190px));
+  min-height: 0;
+}
+#dashboard[data-mode="column"] #panel-map #map-render { flex: 1 1 0; aspect-ratio: auto; padding: 2px 0; box-sizing: border-box; }
+#dashboard[data-mode="column"] #panel-map .map-controls { padding: 3px 6px; }
+#dashboard[data-mode="column"] #panel-vitals { grid-area: vitals; min-height: 0; }
+#dashboard[data-mode="column"] #panel-status { grid-area: status; min-height: 0; }
+/* The tab bar shows only the four closed panels, and it and the opened tab
+   stay over the panel column (--panels-w, set by dashboard.js). */
+html.layout-column .gtab[data-panel="map"],
+html.layout-column .gtab[data-panel="vitals"],
+html.layout-column .gtab[data-panel="status"] { display: none; }
+html.layout-column .gtabs-phone { justify-content: space-around; }
+html.layout-column #dash-tabbar { left: auto; right: 6px; bottom: 0; width: var(--panels-w); box-sizing: border-box; padding-left: 0; padding-right: 0; }
+html.layout-column #dash-drawer { left: auto; right: 6px; width: var(--panels-w); bottom: calc(var(--tabbar-h) + var(--tabname-h)); }
+
+/* Slim: 120 to 199px right of the game. Health over Conditions beside the
+   game; Map, Chat, Quests, Inventory and Automation on the tab bar under
+   the game, and an opened one over the lower part of the game, as on a
+   phone. */
+#dashboard[data-mode="slim"] {
+  grid-template-columns: var(--game-w) 6px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "sess   sess sess"
+    "center .    panels";
+}
+#dashboard[data-mode="slim"] #dash-panels {
+  display: grid;
+  gap: var(--dash-gap, 6px);
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "vitals"
+    "status";
+}
+#dashboard[data-mode="slim"] #dash-col-left,
+#dashboard[data-mode="slim"] #dash-col-right { display: contents; }
+#dashboard[data-mode="slim"] #dash-panels #panel-map,
+#dashboard[data-mode="slim"] #dash-panels #panel-quests,
+#dashboard[data-mode="slim"] #dash-panels #panel-art,
+#dashboard[data-mode="slim"] #dash-panels #panel-chat,
+#dashboard[data-mode="slim"] #dash-panels #panel-trig { display: none; }
+#dashboard[data-mode="slim"] #panel-vitals { grid-area: vitals; min-height: 0; }
+#dashboard[data-mode="slim"] #panel-status { grid-area: status; min-height: 0; }
+/* The game column leaves room for the tab bar under it, so the bar never
+   covers the command box (#730). */
+#dashboard[data-mode="slim"] #dash-col-center { padding-bottom: var(--tabbar-h); }
+html.layout-slim .gtab[data-panel="vitals"],
+html.layout-slim .gtab[data-panel="status"] { display: none; }
+html.layout-slim #dash-tabbar { left: 6px; right: auto; width: var(--game-w); box-sizing: border-box; }
+html.layout-slim #dash-drawer { left: 6px; right: auto; width: var(--game-w); }
 
 /* Game tabs (design 2026-11-01, Version B): round icon buttons on a dark
    umber bar with a teal rim, and ONE name pill per bar that rests on the open
    tab and slides to a hovered or keyboard-focused circle. Built by
-   makeTabBar() in dashboard.js; the same component in the rail and on the
-   phone. The teal rim ties the bar to the teal site bar above it (Malia picked
+   makeTabBar() in dashboard.js; one bar, used by the column, slim and phone
+   layouts. The teal rim ties the bar to the teal site bar above it (Malia picked
    the rim over a teal gradient). The circles follow the sub-tab rule (Malia
    2026-11-01): closed = shiny brass with a dark icon, open = pressed into
    dark brass with a cream icon.
@@ -521,7 +611,7 @@
               inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
 }
 
-/* The one name pill. Below the bar in the rail, above it on the phone. */
+/* The one name pill; .gtabs-phone below puts it above the bar. */
 .gtab-pill {
   position: absolute;
   left: 0;
@@ -552,28 +642,20 @@
   .gtab.open { outline: 2px solid Highlight; }
 }
 
-/* In the rail: across the top, with room below it for the name. */
-.gtabs-rail { margin: 6px 6px 34px; }
-
-/* Rail body: panels inside, only the open tab's panel is shown */
-.rail-body {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Panels in the rail body are hidden unless JS sets display:"" */
-/* (JS drives visibility directly via panel.style.display)        */
-
 /* ------------------------------------------------------------------ */
-/* Responsive reflow — Phone mode (< 700px)                           */
+/* Phone mode (under 120px beside the game, narrower than the game,    */
+/* or a phone), and the tab bar and drawer it shares with column and   */
+/* slim                                                                */
 /* ------------------------------------------------------------------ */
+
+/* The panel columns are hidden; every panel is on the tab bar. */
+#dashboard[data-mode="phone"] #dash-panels { display: contents; }
 
 /* Phone bar sizes: a 40px circle row (52px bar) floating 8px above the screen
    edge, and a 36px strip above it for the open tab's name. */
 #dashboard[data-mode="phone"],
+#dashboard[data-mode="column"],
+#dashboard[data-mode="slim"],
 #dash-tabbar,
 #dash-drawer {
   --tabbar-h: 60px;   /* bar + its bottom gap */
@@ -598,6 +680,8 @@
    replace the vh one on a browser without dvh. */
 @supports (height: 1dvh) {
   #dashboard[data-mode="phone"],
+  #dashboard[data-mode="column"],
+  #dashboard[data-mode="slim"],
   #dash-tabbar,
   #dash-drawer {
     --drawer-cap: max(80px, min(50dvh, calc(100dvh - var(--cmdbox-h) - var(--tabbar-h) - var(--tabname-h) - var(--drawer-keep))));
@@ -625,7 +709,7 @@
   right: 0;
   bottom: 0;
   z-index: 50;
-  display: block;   /* overrides the hidden default above; JS hides it outside phone mode */
+  display: block;   /* overrides the hidden default above; JS hides it in wide mode */
   padding: 0 8px 8px;
 }
 /* A panel is open: the name strip sits between the drawer and the bar. */
@@ -639,11 +723,21 @@
 html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"] {
   padding-bottom: calc(6px + var(--tabbar-h) + var(--tabname-h));
 }
+/* The same in slim, where the bar is under the game column only... */
+html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="slim"] #dash-col-center {
+  padding-bottom: calc(var(--tabbar-h) + var(--tabname-h));
+}
+/* ...and in column, where it is at the foot of the panel column. */
+html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="column"] #dash-panels {
+  padding-bottom: calc(6px + var(--tabbar-h) + var(--tabname-h));
+}
 .gtabs-phone { --gtab-size: 40px; gap: 2px; }
 /* Touch screens: 44px circles (a 56px bar). Seven of them fit from 348px
    wide; on a 320px phone they shrink to 40px to fit, as .gtab may. */
 @media (pointer: coarse) {
   #dashboard[data-mode="phone"],
+  #dashboard[data-mode="column"],
+  #dashboard[data-mode="slim"],
   #dash-tabbar,
   #dash-drawer { --tabbar-h: 64px; }
   .gtabs-phone { --gtab-size: 44px; }
@@ -653,6 +747,10 @@ html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"] {
    top of it, so the tab bar steps aside and gives its room back to the game. */
 html.keyboard-open #dash-tabbar { display: none !important; }
 html.keyboard-open #dashboard[data-mode="phone"] { padding-bottom: 6px; }
+html.keyboard-open #dashboard[data-mode="slim"] #dash-col-center { padding-bottom: 0; }
+html.keyboard-open #dashboard[data-mode="column"] #dash-panels { padding-bottom: 0; }
+/* In column an open tab stays over the panel column, down to its foot. */
+html.layout-column.keyboard-open #dash-drawer { bottom: 6px; }
 /* With the keyboard up, an open tab sits just above the command box. The
    tab bar and name strip are hidden then, so the cap must not subtract
    them: half of what is visible, leaving about two lines of game text
@@ -672,8 +770,7 @@ html.keyboard-open #dash-drawer {
   html.keyboard-open #dash-session,
   html.keyboard-open #panel-feed .dash-panel-head { display: none; }
 }
-/* No room on a phone's session bar once the full screen button is there, and the
-   phone layout has no columns or splitters to reset. */
+/* No room on a phone's session bar once the full screen button is there. */
 #dashboard[data-mode="phone"] #btn-reset-layout { display: none; }
 
 /* On a phone, a tab (Map, Chat, Health and the rest) opens as a card that
@@ -817,9 +914,9 @@ html.keyboard-open #dash-drawer {
    it, so the panel's own header would only repeat it ("Game" twice). */
 .winbox.dash-winbox .dash-panel-head { display: none; }
 
-/* Pop-out windows are for wide screens; dashboard.js docks them when narrow. */
-#dashboard[data-mode="rail"] .ph-popout,
-#dashboard[data-mode="phone"] .ph-popout,
+/* Pop-out windows are for Layout D (wide) only; dashboard.js docks them in
+   every other layout. */
+#dashboard:not([data-mode="wide"]) .ph-popout,
 #dash-drawer .ph-popout { display: none; }
 
 /* ------------------------------------------------------------------ */
@@ -916,9 +1013,10 @@ html.keyboard-open #dash-drawer {
    once full screen is on (the frame's .fullscreen-on, set from the outer
    page) and in the home screen app, which has no bars. */
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
-  .gtabs-rail { margin-bottom: 6px; }
   .gtab-pill { display: none; }
   #dashboard[data-mode="phone"],
+  #dashboard[data-mode="column"],
+  #dashboard[data-mode="slim"],
   #dash-tabbar,
   #dash-drawer { --tabname-h: 0px; }
   html:not(.fullscreen-on) .chat-fs-hint { display: block; }

@@ -276,6 +276,27 @@
         <button class="brass" id="btn-reset-layout" title="Reset layout" aria-label="Reset layout" onclick="window.Dashboard && Dashboard.resetLayout && Dashboard.resetLayout()"><span class="btn-icon" aria-hidden="true">↺</span><span class="btn-label">Reset layout</span></button>
       </div>
 
+      <!-- CENTER column: Game Feed · Command. First, so the game and the
+           command box come before the panels in the keyboard's Tab order. -->
+      <div class="dash-col" id="dash-col-center">
+        <section class="dash-panel" id="panel-feed" data-panel="feed">
+          <div class="dash-panel-head"><span class="ph-title">Game</span>
+            <span class="ph-btns"><span class="ph-btn ph-popout">⧉</span></span></div>
+          <div class="dash-panel-body"><div id="terminal"></div></div>
+        </section>
+
+        <section class="dash-panel" id="panel-cmd" data-panel="cmd">
+          <div class="dash-panel-body">
+            <input type="text" id="command-input" placeholder="Enter command..." style="flex:1">
+          </div>
+        </section>
+      </div>
+
+      <!-- The panel area, right of the game (dashboard.js and dashboard.css,
+           the layout ladder). The two columns sit inside it; in every layout
+           but the phone one they use display: contents, so each panel is a
+           grid item of this area. -->
+      <div id="dash-panels">
       <!-- LEFT column: Map · Quests · Health · Inventory -->
       <div class="dash-col" id="dash-col-left">
         <section class="dash-panel" id="panel-map" data-panel="map">
@@ -329,21 +350,6 @@
               <button type="button" class="inv-tab subtab" aria-pressed="false" data-tab="backpack">Backpack</button>
             </div>
             <div id="inv-grid" class="inv-grid"></div>
-          </div>
-        </section>
-      </div>
-
-      <!-- CENTER column: Game Feed · Command -->
-      <div class="dash-col" id="dash-col-center">
-        <section class="dash-panel" id="panel-feed" data-panel="feed">
-          <div class="dash-panel-head"><span class="ph-title">Game</span>
-            <span class="ph-btns"><span class="ph-btn ph-popout">⧉</span></span></div>
-          <div class="dash-panel-body"><div id="terminal"></div></div>
-        </section>
-
-        <section class="dash-panel" id="panel-cmd" data-panel="cmd">
-          <div class="dash-panel-body">
-            <input type="text" id="command-input" placeholder="Enter command..." style="flex:1">
           </div>
         </section>
       </div>
@@ -403,6 +409,7 @@
           </div>
         </section>
       </div>
+      </div><!-- #dash-panels -->
     </div>
 
     <script>

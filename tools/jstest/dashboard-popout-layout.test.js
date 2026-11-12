@@ -1,18 +1,21 @@
 // dashboard-popout-layout.test.js: a popped-out panel keeps its place in its
-// column and its window keeps its size and place (#768 review item 14).
+// column and its window keeps its size and place (#768 review item 14), on
+// the layout ladder (plan 5, Task 7).
 //
 // Run:  node tools/jstest/dashboard-popout-layout.test.js
 //
-// The bug: pop out Map, shrink the window below 1100 wide (pop-outs dock),
-// widen again, close the window. Map landed under Inventory and stayed there
-// after a reload, and every crossing reset the window to 360x300. The saved
-// arrangement left the popped panel out, so the way back to wide appended it
-// at the end of its column, and every pop-out started at a fixed size.
+// The bug: pop out Map, narrow the window until pop-outs dock, widen again,
+// close the window. Map landed under Inventory and stayed there after a
+// reload, and every crossing reset the window to 360x300. Since the ladder
+// (owner 2026-11-12) panels never move between columns, so a popped panel
+// docks back before its anchor, its place in the page's order; the saved
+// layout (v2) keeps only folded and popped panels and window places.
 //
-// Loads the real static/js/dashboard.js against a small fake DOM and a fake
-// WinBox, and drives Dashboard's own _apply, popout, redock, saveLayout and
-// restoreLayout. Only the rail and phone chrome is stubbed: moving panels
-// into the rail is not part of the bug.
+// Loads the real static/js/dashboard.js, with the real layoutpick.js and
+// viewportfit.js, against a small fake DOM and a fake WinBox, and drives
+// Dashboard's own setGameWidth, _apply, popout, redock, saveLayout and
+// restoreLayout. Only the tab bar modes' enter and exit are stubbed: moving
+// panels into the drawer is not part of the bug.
 //
 // Dependency-free and assertion-library-free, matching the other jstest
 // files. Exits non-zero on failure.
@@ -22,9 +25,8 @@ var fs = require('fs');
 var path = require('path');
 var vm = require('vm');
 
-var SRC = fs.readFileSync(path.join(
-    __dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'js', 'dashboard.js'
-), 'utf8');
+var JS = path.join(__dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'js');
+var SRC = fs.readFileSync(path.join(JS, 'dashboard.js'), 'utf8');
 
 var failures = 0;
 var checks = 0;
@@ -44,6 +46,13 @@ function check(name, got, want) {
 // Enough for the code paths under test: ids, classes, data-*, parent and
 // children, and querySelector(All) for ".a", ".a.b", "#id .a" and lists.
 
+function Style() {
+    var props = {};
+    this.getPropertyValue = function (k) { return props[k] || ''; };
+    this.setProperty = function (k, v) { props[k] = String(v); };
+    this.removeProperty = function (k) { delete props[k]; };
+}
+
 function Node(tag, attrs) {
     attrs = attrs || {};
     this.tagName = tag.toUpperCase();
@@ -52,10 +61,11 @@ function Node(tag, attrs) {
     this.dataset = {};
     this.children = [];
     this.parentNode = null;
-    this.style = { getPropertyValue: function () { return ''; }, setProperty: function () {} };
+    this.style = new Style();
     this.textContent = attrs.text || '';
     this.scrollTop = 0;
     this.scrollHeight = 0;
+    this.clientWidth = 0;
     var self = this;
     this.classList = {
         contains: function (c) { return self.classes.indexOf(c) >= 0; },
@@ -90,7 +100,7 @@ Object.defineProperty(Node.prototype, 'nextElementSibling', {
     }
 });
 Node.prototype.removeAttribute = function (name) {
-    if (name === 'style') this.style = { getPropertyValue: function () { return ''; }, setProperty: function () {} };
+    if (name === 'style') this.style = new Style();
     if (name.indexOf('data-') === 0) {
         var key = name.slice(5).replace(/-([a-z])/g, function (m, c) { return c.toUpperCase(); });
         delete this.dataset[key];
@@ -98,6 +108,7 @@ Node.prototype.removeAttribute = function (name) {
 };
 Node.prototype.setAttribute = function () {};
 Node.prototype.addEventListener = function () {};
+Node.prototype.getBoundingClientRect = function () { return { width: this.clientWidth }; };
 Node.prototype.contains = function (n) {
     for (; n; n = n.parentNode) if (n === this) return true;
     return false;
@@ -137,8 +148,10 @@ Node.prototype.closest = function (sel) {
     return null;
 };
 
+var htmlEl = new Node('html');
 var docRoot = new Node('body');
 var document = {
+    documentElement: htmlEl,
     body: docRoot,
     getElementById: function (id) {
         return descendants(docRoot).filter(function (n) { return n.id === id; })[0] || null;
@@ -149,7 +162,8 @@ var document = {
     addEventListener: function () {}
 };
 
-// The real page's columns and panels, in the page's own order.
+// The real page's columns and panels, in the page's own order: the game
+// column first, then the panel area holding the left and right columns.
 var COLS = {
     'dash-col-left': ['map', 'quests', 'vitals', 'art'],
     'dash-col-center': ['feed', 'cmd'],
@@ -158,9 +172,10 @@ var COLS = {
 var dashboard = new Node('div', { id: 'dashboard' });
 dashboard.clientWidth = 1400;
 docRoot.appendChild(dashboard);
-Object.keys(COLS).forEach(function (colId) {
+var panelArea = new Node('div', { id: 'dash-panels' });
+function makeCol(colId, parent) {
     var col = new Node('div', { id: colId, className: 'dash-col' });
-    dashboard.appendChild(col);
+    parent.appendChild(col);
     COLS[colId].forEach(function (name) {
         var p = new Node('section', { id: 'panel-' + name, className: 'dash-panel' });
         p.dataset.panel = name;
@@ -168,7 +183,11 @@ Object.keys(COLS).forEach(function (colId) {
         p.appendChild(new Node('span', { className: 'ph-title', text: name }));
         col.appendChild(p);
     });
-});
+}
+makeCol('dash-col-center', dashboard);
+dashboard.appendChild(panelArea);
+makeCol('dash-col-left', panelArea);
+makeCol('dash-col-right', panelArea);
 // Somewhere off the columns for a popped panel to live, as WinBox does.
 var floating = new Node('div', { id: 'winbox-layer' });
 docRoot.appendChild(floating);
@@ -202,7 +221,7 @@ WinBox.prototype.playerMoves = function (x, y, w, h) {
     this.width = w; this.height = h; if (this.onresize) this.onresize.call(this, w, h);
 };
 
-// --- load dashboard.js -------------------------------------------------------
+// --- load layoutpick.js, viewportfit.js and dashboard.js ---------------------
 
 var store = {};
 var localStorage = {
@@ -216,11 +235,16 @@ var win = {
     innerHeight: 900,
     addEventListener: function () {}
 };
+var coarse = false;
 var sandbox = {
     window: win,
     document: document,
     localStorage: localStorage,
     WinBox: WinBox,
+    // A desktop monitor with a mouse, until a check says otherwise.
+    screen: { width: 1920, height: 1080 },
+    matchMedia: function (q) { return { matches: q === '(pointer: coarse)' && coarse }; },
+    addEventListener: function () {},
     setTimeout: function (fn) { timers.push(fn); return timers.length; },
     clearTimeout: function () {},
     requestAnimationFrame: function () {},
@@ -228,21 +252,63 @@ var sandbox = {
     console: console
 };
 vm.createContext(sandbox);
+['layoutpick.js', 'viewportfit.js'].forEach(function (f) {
+    vm.runInContext(fs.readFileSync(path.join(JS, f), 'utf8'), sandbox, { filename: f });
+});
 vm.runInContext(SRC, sandbox, { filename: 'dashboard.js' });
 var D = win.Dashboard;
 
-// Stand-ins for the rail and phone chrome; the panel moves under test live in
+// Stand-ins for the tab bar modes; the panel moves under test live in
 // _apply, popout, redock, _enterWide, saveLayout and restoreLayout.
-D._enterRail = D._exitRail = D._enterPhone = D._exitPhone = function () {};
-D.mode = 'wide';
+var entered = [];
+['Column', 'Slim', 'Phone'].forEach(function (m) {
+    D['_enter' + m] = function () { entered.push(m.toLowerCase()); };
+    D['_exit' + m] = function () {};
+});
+
+// termfit reports 780px for 80 columns: the game column is 786.
+D.setGameWidth(780);
+check('the game column is the 80-column width plus border and slack',
+    htmlEl.style.getPropertyValue('--game-w'), '786px');
+check('a 1400px dashboard is the full layout', D.mode, 'wide');
 D.initPopout();
 
+// Widths the ladder maps to each mode, with the 786px game column:
+// room = width - 12 - 786 - 6.
+var WIDE = 1400, COLUMN = 1100, SLIM = 1000, PHONE = 900;
 function resize(width) {
     dashboard.clientWidth = width;
     win.innerWidth = width;
     D._apply();
 }
-function saved() { return JSON.parse(store['dogmud.dashboard.layout.v1'] || '{}'); }
+var KEY = 'dogmud.dashboard.layout.v2';
+function saved() { return JSON.parse(store[KEY] || '{}'); }
+function anchorOf(name) {
+    var a = D._dockAnchor[name];
+    return a && a.dataset ? a.dataset.panel : null;
+}
+
+// --- the ladder --------------------------------------------------------------
+
+resize(COLUMN);
+check('296px of room is the one-column step', D.mode, 'column');
+check('the root is marked for the column CSS', htmlEl.classList.contains('layout-column'), true);
+resize(SLIM);
+check('196px of room is the slim column', D.mode, 'slim');
+check('the root is marked for the slim CSS', [htmlEl.classList.contains('layout-slim'), htmlEl.classList.contains('layout-column')], [true, false]);
+resize(PHONE);
+check('96px of room is the phone layout', D.mode, 'phone');
+check('the phone layout has no column or slim mark',
+    [htmlEl.classList.contains('layout-slim'), htmlEl.classList.contains('layout-column')], [false, false]);
+check('each tab bar mode was entered', entered, ['column', 'slim', 'phone']);
+sandbox.screen = { width: 390, height: 844 };
+coarse = true;
+resize(WIDE);
+check('a phone gets the phone layout however wide it reports', D.mode, 'phone');
+coarse = false;
+resize(WIDE);
+check('a small screen without touch (a zoomed desktop) stays on the ladder', D.mode, 'wide');
+sandbox.screen = { width: 1920, height: 1080 };
 
 // --- the round trip ----------------------------------------------------------
 
@@ -251,8 +317,9 @@ check('starts in the page order', column('dash-col-left'), LEFT);
 
 D.popout('map');
 check('popping out Map takes it out of its column', column('dash-col-left'), ['quests', 'vitals', 'art']);
-check('the saved arrangement keeps Map in its place while popped',
-    saved().arrange['dash-col-left'], LEFT);
+check('Map will dock back before Quests', anchorOf('map'), 'quests');
+check('the saved layout keeps Map popped and no arrangement',
+    [saved().popped, saved().arrange, saved().cols], [['map'], undefined, undefined]);
 check('a first pop-out opens at the default size', [boxes[0].width, boxes[0].height], [360, 300]);
 
 boxes[0].playerMoves(500, 120, 480, 420);
@@ -260,38 +327,43 @@ timers.splice(0).forEach(function (fn) { fn(); });
 check('moving and resizing the window is saved',
     (saved().boxes || {}).map, { x: 500, y: 120, width: 480, height: 420 });
 
-resize(900);
-check('narrowing docks Map back in its place', column('dash-col-left'), LEFT);
-resize(1400);
+resize(COLUMN);
+check('narrowing to the one-column step docks Map back in its place', column('dash-col-left'), LEFT);
+check('a docked-for-narrow Map is still saved as popped', saved().popped, ['map']);
+resize(WIDE);
 check('widening again pops Map out again', boxes.length, 2);
 check('the window comes back at its size and place',
     [boxes[1].x, boxes[1].y, boxes[1].width, boxes[1].height], [500, 120, 480, 420]);
-check('Map is still saved in its place', saved().arrange['dash-col-left'], LEFT);
+check('Map will still dock back before Quests', anchorOf('map'), 'quests');
 
-boxes[1].close();
+resize(PHONE);
+check('narrowing to the phone layout docks Map back in its place', column('dash-col-left'), LEFT);
+resize(WIDE);
+check('widening from the phone layout pops Map out again', boxes.length, 3);
+
+boxes[2].close();
 check('closing the window docks Map in its place, not under Inventory',
     column('dash-col-left'), LEFT);
-check('the saved arrangement after the close keeps Map first', saved().arrange['dash-col-left'], LEFT);
+check('the saved layout after the close has nothing popped', saved().popped, []);
 
 // --- a reload while popped ---------------------------------------------------
 
 D.popout('map');
-boxes[2].playerMoves(40, 60, 300, 260);
+boxes[3].playerMoves(40, 60, 300, 260);
 timers.splice(0).forEach(function (fn) { fn(); });
-var beforeReload = store['dogmud.dashboard.layout.v1'];
+var beforeReload = store[KEY];
 
 // A fresh page: panels in the page's own order, then the saved layout.
 D.redock('map');
-store['dogmud.dashboard.layout.v1'] = beforeReload;
+store[KEY] = beforeReload;
 D._popped = {};
 D._dockAnchor = {};
 D._boxGeom = null;
-D._savedArrange = null;
 D.restoreLayout();
 check('after a reload Map pops out again', !!D._popped.map, true);
 check('after a reload the window keeps its size and place',
-    [boxes[3].x, boxes[3].y, boxes[3].width, boxes[3].height], [40, 60, 300, 260]);
-boxes[3].close();
+    [boxes[4].x, boxes[4].y, boxes[4].width, boxes[4].height], [40, 60, 300, 260]);
+boxes[4].close();
 check('after a reload, closing docks Map in its place', column('dash-col-left'), LEFT);
 
 // --- two popped panels, one anchored on the other ----------------------------
@@ -301,8 +373,8 @@ D.popout('map');
 var mapBox = boxes[boxes.length - 1];
 D.popout('quests');
 var questsBox = boxes[boxes.length - 1];
-check('Map and Quests both popped: both saved in place',
-    saved().arrange['dash-col-left'], LEFT);
+check('Map and Quests both popped: Map anchored on Quests, Quests on Health',
+    [anchorOf('map'), anchorOf('quests')], ['quests', 'vitals']);
 mapBox.close();
 check('Map closed while Quests is still out docks at the top, not the bottom',
     column('dash-col-left'), ['map', 'vitals', 'art']);
@@ -312,10 +384,10 @@ check('both docked back in place', column('dash-col-left'), LEFT);
 // --- the Game window, in the centre column -----------------------------------
 
 D.popout('feed');
-check('the Game window is saved above the command box while popped',
-    saved().arrange['dash-col-center'], ['feed', 'cmd']);
-resize(900);
-resize(1400);
+check('the Game window will dock above the command box', anchorOf('feed'), 'cmd');
+resize(PHONE);
+check('the phone layout docks the Game window above the command box', column('dash-col-center'), ['feed', 'cmd']);
+resize(WIDE);
 boxes[boxes.length - 1].close();
 check('the Game window docks above the command box', column('dash-col-center'), ['feed', 'cmd']);
 
@@ -330,15 +402,46 @@ check('a window too far right or down is pulled back on screen',
     [b.x, b.y, b.width, b.height], [600, 300, 600, 400]);
 b.close();
 
-// --- reset forgets window sizes ----------------------------------------------
+// --- reset forgets window sizes, in whatever mode it is pressed --------------
 
 D._toast = function () {};
 D.resetLayout();
 check('Reset layout forgets window sizes', D._boxGeom, null);
+check('Reset layout forgets the saved layout', store[KEY], undefined);
+check('Reset layout in Layout D keeps every panel in its page order',
+    [column('dash-col-left'), column('dash-col-right')], [LEFT, ['chat', 'status', 'trig']]);
+resize(SLIM);
+entered = [];
+D.resetLayout();
+check('Reset layout in the slim column re-enters the slim column', [D.mode, entered], ['slim', ['slim']]);
+resize(WIDE);
+
+// --- an old v1 saved layout carries over once --------------------------------
+
+delete store[KEY];
+store['dogmud.dashboard.layout.v1'] = JSON.stringify({
+    cols: { l: '300px', r: '280px' },
+    arrange: { 'dash-col-left': ['art', 'map', 'quests', 'vitals'] },
+    collapsed: ['quests'],
+    popped: ['map'],
+    boxes: { map: { x: 10, y: 20, width: 330, height: 310 } }
+});
+var carried = D._readLayout();
+check('v1 folded, popped and window places carry over',
+    carried, { collapsed: ['quests'], popped: ['map'], boxes: { map: { x: 10, y: 20, width: 330, height: 310 } } });
+check('the carried layout is saved as v2, without the arrangement or widths',
+    JSON.parse(store[KEY]), { collapsed: ['quests'], popped: ['map'], boxes: { map: { x: 10, y: 20, width: 330, height: 310 } } });
+check('v1 is removed after the carry-over', store['dogmud.dashboard.layout.v1'], undefined);
+store['dogmud.dashboard.layout.v1'] = JSON.stringify({ collapsed: ['chat'] });
+check('an existing v2 wins over a stray v1', D._readLayout().collapsed, ['quests']);
+delete store['dogmud.dashboard.layout.v1'];
+delete store[KEY];
+store['dogmud.dashboard.layout.v1'] = '{not json';
+check('a broken v1 is dropped, not carried', [D._readLayout(), store['dogmud.dashboard.layout.v1']], [null, undefined]);
 
 // --- Chat unfolds at the newest message --------------------------------------
 //
-// The fold button's handler is wired in initRearrange; read its effect
+// The fold button's handler is wired in initCollapse; read its effect
 // through the shared helper and the handler's source.
 
 var chat = document.getElementById('panel-chat');
@@ -349,6 +452,9 @@ D._scrollChatToNewest(chat);
 check('the Chat helper scrolls to the newest message', chatWin.scrollTop, 900);
 check('unfolding a panel scrolls its Chat to the newest message',
     /panel\.classList\.toggle\("collapsed"\);\s*\/\/[^\n]*\n\s*if \(!panel\.classList\.contains\("collapsed"\)\) self\._scrollChatToNewest\(panel\);/.test(SRC), true);
+check('the fold handler lives in initCollapse, which init calls',
+    /initCollapse: function \(\) \{[\s\S]*?panel\.classList\.toggle\("collapsed"\)/.test(SRC) &&
+    /this\.initCollapse\s*&& this\.initCollapse\(\);/.test(SRC), true);
 check('opening the phone card uses the same helper',
     /this\._scrollChatToNewest\(panel\);\s*this\._updateTabbarActive\(name\);/.test(SRC), true);
 

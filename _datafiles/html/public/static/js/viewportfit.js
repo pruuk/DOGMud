@@ -21,10 +21,13 @@
 
     // An upright phone reads 14/18 instead of 16/20 (gomud.css). Judged from the
     // screen, like isPhone. iOS does not swap screen.width and height when the
-    // phone turns, so the orientation API comes first.
-    function isUprightPhone(screenW, screenH, orientationType) {
+    // phone turns, so the orientation API comes first. coarse: the screen is
+    // a touch screen (pointer: coarse). A desktop monitor turned upright, or
+    // zoomed in, can have a short side under 600 too; it keeps 16px, as the
+    // layout ladder treats it as a desktop (plan 5, decision 13).
+    function isUprightPhone(screenW, screenH, orientationType, coarse) {
         var landscape = orientationType ? orientationType.indexOf('landscape') === 0 : screenW >= screenH;
-        return isPhone(screenW, screenH) && !landscape;
+        return !!coarse && isPhone(screenW, screenH) && !landscape;
     }
 
     function markUprightPhone(win) {
@@ -35,8 +38,9 @@
         if (!type && typeof win.orientation === 'number') {
             type = Math.abs(win.orientation) === 90 ? 'landscape-primary' : 'portrait-primary';
         }
+        var coarse = !!(win.matchMedia && win.matchMedia('(pointer: coarse)').matches);
         win.document.documentElement.classList.toggle('upright-phone',
-            isUprightPhone(s.width, s.height, type));
+            isUprightPhone(s.width, s.height, type, coarse));
     }
 
     function watchUprightPhone(win) {
