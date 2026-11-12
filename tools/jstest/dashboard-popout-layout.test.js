@@ -319,13 +319,13 @@ dashboard.clientWidth = 1920;
 D.setGameWidth(null);
 check('a 1920 desktop with no reported width starts in the full layout', D.mode, 'wide');
 check('with no reported width the game column is the default',
-    htmlEl.style.getPropertyValue('--game-w'), '786px');
+    htmlEl.style.getPropertyValue('--game-w'), '790px');
 sandbox.screen = { width: 390, height: 844 };
 coarse = true;
 D.setGameWidth(null);
 check('a touch phone with no reported width is the phone layout', D.mode, 'phone');
 check('the game column stays set in the phone layout too',
-    htmlEl.style.getPropertyValue('--game-w'), '786px');
+    htmlEl.style.getPropertyValue('--game-w'), '790px');
 sandbox.screen = { width: 1920, height: 1080 };
 coarse = false;
 dashboard.clientWidth = WIDE;

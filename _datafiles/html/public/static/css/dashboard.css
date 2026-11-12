@@ -5,7 +5,7 @@
    that room: wide (Layout D), column, slim or phone. Until dashboard.js
    applies the first mode, #dashboard has no data-mode, and this default is
    the wide grid, so a desktop never paints the phone layout first. Its
-   786px fallback is layoutpick.js GAME_W_DEFAULT, the width dashboard.js
+   790px fallback is layoutpick.js GAME_W_DEFAULT, the width dashboard.js
    uses until termfit has measured. The 6px track between the game and the
    panels is layoutpick.js GAP and the 6px padding its PAD
    (tools/jstest/layoutpick.test.js reads all three here). */
@@ -18,7 +18,7 @@
   padding: 6px;
   box-sizing: border-box;
   background: var(--desk);   /* deep ink-black field behind the cards, offset from the brown chrome */
-  grid-template-columns: var(--game-w, 786px) 6px minmax(0, 1fr);
+  grid-template-columns: var(--game-w, 790px) 6px minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
     "sess   sess sess"
