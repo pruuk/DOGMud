@@ -70,6 +70,19 @@
                     term._core._renderService.onDevicePixelRatioChange) {
                     term._core._renderService.onDevicePixelRatioChange();
                 }
+                // Tell the layout the width 80 columns now need BEFORE the
+                // columns are counted, so it can widen the game window first.
+                // The count reads the host's computed width, which lays the
+                // page out again, so it sees the new width in this same fit:
+                // a font load never shows fewer than 80 columns for a moment.
+                // On its own, so a listener that throws cannot stop the fit.
+                try {
+                    var w80 = widthFor80();
+                    if (w80 && w80 !== lastW80) {
+                        lastW80 = w80;
+                        if (opts.onGameWidth) opts.onGameWidth(w80);   // the page keeps the last one
+                    }
+                } catch (e) {}
                 // A terminal that cannot measure yet is not fitted, and the
                 // fit is not remembered, so the next one tries again.
                 // The fit addon gives the rows. Its columns are not used: it
@@ -94,15 +107,8 @@
                 lastW = body.clientWidth; lastH = body.clientHeight;
                 lastDpr = window.devicePixelRatio; lastFont = font; forcePending = false;
             } catch (e) { return; }
-            // The fit is remembered; each listener is told on its own, so one
-            // that throws cannot keep the other from hearing.
-            try {
-                var w80 = widthFor80();
-                if (w80 && w80 !== lastW80) {
-                    lastW80 = w80;
-                    if (opts.onGameWidth) opts.onGameWidth(w80);   // the page keeps the last one (Task 8)
-                }
-            } catch (e) {}
+            // The fit is remembered; the column listener is told on its own,
+            // so it cannot undo the fit by throwing.
             try {
                 if (colsChanged && opts.onCols) opts.onCols(cols);
             } catch (e) {}

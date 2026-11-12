@@ -179,8 +179,10 @@
 
       // Apply the first mode, from the game width termfit last reported.
       // The page keeps it on window because termfit reports before this
-      // script sets itself up (plan 5, Task 8).
-      this.setGameWidth(window.dogmudGameWidth || null);
+      // script sets itself up (plan 5, Task 8). A width measured before the
+      // web font loaded is not used: the stylesheet's default column holds
+      // until the page passes the real one.
+      this.setGameWidth(window.dogmudFontReady ? window.dogmudGameWidth || null : null);
       this.ready = true;
 
       // Window resize listener

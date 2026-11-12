@@ -528,9 +528,32 @@
             // arrive before it exists. Dashboard.init reads the last one.
             onGameWidth: function (px) {
                 window.dogmudGameWidth = px;
-                if (window.Dashboard && window.Dashboard.ready) window.Dashboard.setGameWidth(px);
+                giveLayoutGameWidth();
             }
         });
+        // The layout takes the game width only once the web font is in: a
+        // width measured in the fallback font is about 80px narrower, and
+        // taking it would narrow the game window and widen it again on load.
+        // Until then the dashboard keeps the stylesheet's default column
+        // (786px, dashboard.css). Dashboard.init seeds from the width only
+        // when this is set. A browser that cannot tell when fonts load
+        // has nothing to wait for.
+        window.dogmudFontReady = !(document.fonts && document.fonts.load);
+        function giveLayoutGameWidth() {
+            if (window.dogmudFontReady && window.dogmudGameWidth &&
+                window.Dashboard && window.Dashboard.ready) {
+                window.Dashboard.setGameWidth(window.dogmudGameWidth);
+            }
+        }
+        // The web font has loaded (or will not): the layout may take the
+        // measured width, then the terminal is fitted against it.
+        function webFontIn() {
+            window.dogmudFontReady = true;
+            resizeTerminal(true);
+            // A fit that found the same width reports nothing new, so pass on
+            // the width it already holds.
+            giveLayoutGameWidth();
+        }
         // force: true measures again at the same panel size. Event and frame
         // callbacks pass their own argument, so only a literal true counts.
         function resizeTerminal(force) {
@@ -576,7 +599,10 @@
                 document.fonts.load('600 16px "JetBrains Mono"')
             ]).then(function () {
                 term.setOption('fontFamily', termFont);
-                resizeTerminal(true);
+                // Lets the layout take the real width, then refits; termfit
+                // tells the layout before it counts the columns, so the
+                // window widens first and never shows fewer than 80.
+                webFontIn();
                 // xterm measures the new font's letters after this tick, so a
                 // refit in the same tick still used the fallback's shorter rows:
                 // the terminal came out about three rows taller than its panel,
@@ -584,11 +610,11 @@
                 // the new size is in.
                 requestAnimationFrame(function () { resizeTerminal(true); });
                 setTimeout(function () { resizeTerminal(true); }, 300);
-            }).catch(function () { resizeTerminal(true); });
+            }).catch(function () { webFontIn(); });   // the fallback is the font, then
             // Any later web font (the panels' type) can still change the
             // layout: refit once every font has loaded.
             if (document.fonts.ready) {
-                document.fonts.ready.then(function () { resizeTerminal(true); });
+                document.fonts.ready.then(function () { webFontIn(); });
             }
         }
 

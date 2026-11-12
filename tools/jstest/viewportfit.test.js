@@ -202,10 +202,13 @@ check('home screen icon opens the game', manifest.start_url, '/webclient');
 // 2026-11-07 hotfix: the terminal came out three rows taller than the Game
 // panel (exits and prompt hidden). It refits once the font's real size is in,
 // and when the panel body (what termfit measures) changes size.
+// webFontIn (plan 5) lets the layout take the real game width, then refits.
+check('webFontIn refits the terminal',
+    /function webFontIn\(\) \{\s*window\.dogmudFontReady = true;\s*resizeTerminal\(true\);/.test(game), true);
 check('the terminal refits after the font swap, on the next frame',
-    /term\.setOption\('fontFamily', termFont\);\s*resizeTerminal\(true\);[\s\S]{0,600}requestAnimationFrame\(function \(\) \{ resizeTerminal\(true\); \}\);/.test(game), true);
+    /term\.setOption\('fontFamily', termFont\);(\s*\/\/[^\n]*)*\s*webFontIn\(\);[\s\S]{0,600}requestAnimationFrame\(function \(\) \{ resizeTerminal\(true\); \}\);/.test(game), true);
 check('the terminal refits once every font has loaded',
-    /document\.fonts\.ready\.then\(function \(\) \{ resizeTerminal\(true\); \}\);/.test(game), true);
+    /document\.fonts\.ready\.then\(function \(\) \{ webFontIn\(\); \}\);/.test(game), true);
 check('the Game panel body is observed, not only the panel',
     /_feedBody = _feedPanel\.querySelector\('\.dash-panel-body'\);\s*if \(_feedBody\) _feedObserver\.observe\(_feedBody\);/.test(game), true);
 check('a tab that wraps alone keeps its own size',

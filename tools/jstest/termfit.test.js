@@ -462,6 +462,27 @@ function listenerChecks() {
     check('a throwing onGameWidth does not silence onCols', cols.length === 1 && cols[0] === 80,
         'cols ' + cols.join(','));
 
+    // The layout hears the new game width before the columns are counted.
+    // The page gives the game window exactly widthFor80 (dashboard.js
+    // setGameWidth); here onGameWidth sets the host to it, as the page's
+    // layout does. The fallback font is narrower (0.5em, 8px cells); when
+    // the web font lands (0.6em, 9px cells) the same fit must widen the
+    // window first and end at 80 columns, never counting the old width.
+    var lay;
+    lay = makePage(16 * 0.5 * 80 + SCROLLBAR, 900, { text: 16, minFont: 1,
+        onGameWidth: function (px) { lay.panel.clientWidth = px; } });
+    lay.glyph = 0.5;
+    lay.fitter.fit(true);
+    check('the fallback font fills its window at 80 columns', lay.real.cols === 80, 'cols ' + lay.real.cols);
+    lay.narrowest = lay.real.cols;
+    lay.glyph = 0.6;                       // the web font arrives, wider letters
+    lay.fitter.fit(true);
+    check('a font load widens the game window before counting: 80 columns',
+        lay.real.cols === 80 && lay.panel.clientWidth === expected80(16 * 0.6, 1),
+        'cols ' + lay.real.cols + ' host ' + lay.panel.clientWidth);
+    check('a font load never resizes the game window below 80, even for a moment',
+        lay.narrowest === 80, 'narrowest ' + lay.narrowest);
+
     var c = makePage(1600, 900, { text: 16, minFont: 1,
         fontSize: function () { throw new Error('fontSize'); } });
     var threw = false;
