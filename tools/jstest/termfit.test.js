@@ -483,6 +483,38 @@ function listenerChecks() {
     check('a font load never resizes the game window below 80, even for a moment',
         lay.narrowest === 80, 'narrowest ' + lay.narrowest);
 
+    // Before the web font loads the page gives the layout a predicted width.
+    // Once a 0.6em font is measured, widthFor80 must equal it, so the game
+    // window does not move when the font lands.
+    [1, 1.25, 2].forEach(function (dpr) {
+        [16, 14].forEach(function (text) {
+            global.devicePixelRatio = dpr;
+            var pr = makePage(1600, 900, { text: text, minFont: 1 });
+            pr.glyph = 0.5;                    // the fallback font is in
+            pr.fitter.fit(true);
+            var predicted = pr.fitter.predictWidthFor80(text);
+            pr.glyph = 0.6;                    // JetBrains Mono lands
+            pr.fitter.fit(true);
+            check('the predicted game width is the measured one (dpr ' + dpr + ', ' + text + 'px)',
+                predicted === pr.fitter.widthFor80() && predicted === expected80(text * 0.6, dpr),
+                'predicted ' + predicted + ' measured ' + pr.fitter.widthFor80());
+
+            // The page connects on load, often before the font, and puts the
+            // columns on /ws. A host exactly the predicted width holds 80 in
+            // the fallback font and in the real one.
+            var conn = makePage(predicted, 900, { text: text, minFont: 1 });
+            conn.glyph = 0.5;
+            conn.fitter.fit(true);
+            var before = conn.real.cols;
+            conn.glyph = 0.6;
+            conn.fitter.fit(true);
+            check('a desktop connects at 80 columns in the predicted window, either font (dpr ' + dpr + ', ' + text + 'px)',
+                before === 80 && conn.real.cols === 80 && conn.narrowest === 80,
+                'fallback ' + before + ' real ' + conn.real.cols + ' narrowest ' + conn.narrowest);
+        });
+    });
+    global.devicePixelRatio = 1;
+
     var c = makePage(1600, 900, { text: 16, minFont: 1,
         fontSize: function () { throw new Error('fontSize'); } });
     var threw = false;

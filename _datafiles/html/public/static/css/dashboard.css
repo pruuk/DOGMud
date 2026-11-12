@@ -718,6 +718,21 @@ html.layout-slim #dash-drawer { left: 6px; right: auto; width: var(--game-w); }
 #dashboard[data-mode="phone"] #dash-col-left,
 #dashboard[data-mode="phone"] #dash-col-right { display: none; }
 
+/* A phone before dashboard.js applies its first mode: the phone grid, not
+   the wide default with its 790px game column. html.phone is set in the
+   page head (viewportfit.js isPhone), and a phone is a touch screen too
+   (layoutpick decision 8), so a zoomed desktop keeps the wide default. */
+@media (pointer: coarse) {
+  html.phone #dashboard:not([data-mode]) {
+    padding-bottom: calc(6px + 64px);   /* the phone tab bar's room (--tabbar-h on touch) */
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "sess"
+      "center";
+  }
+  html.phone #dashboard:not([data-mode]) #dash-panels { display: none; }
+}
+
 /* Bottom tab-bar — appended to body (outside #dashboard) so
    position:fixed is not clipped by the grid container           */
 #dash-tabbar {

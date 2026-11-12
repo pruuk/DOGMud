@@ -215,6 +215,14 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/roomtitlebold.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/viewportfit.js?v={{ .ASSET_VERSION }}"></script>
+    <script>
+        // Set in the head, before the first paint: phones keep the bright
+        // dim grey (gomud.css :root.phone), and a touch phone paints the
+        // phone grid before dashboard.js applies a mode (dashboard.css).
+        if (window.ViewportFit.isPhone(window.screen.width, window.screen.height)) {
+            document.documentElement.classList.add('phone');
+        }
+    </script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/termfit.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/displayreport.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/layoutpick.js?v={{ .ASSET_VERSION }}"></script>
@@ -431,10 +439,6 @@
         // Terminal Setup
         //
         /////////////////////////////////////////////
-        // Phones keep the bright dim grey (gomud.css :root.phone).
-        if (window.ViewportFit.isPhone(window.screen.width, window.screen.height)) {
-            document.documentElement.classList.add('phone');
-        }
         // xterm needs plain colour strings, so the palette is read once from
         // the --term-* tokens in gomud.css :root.
         const rootStyle = getComputedStyle(document.documentElement);
@@ -531,21 +535,24 @@
                 giveLayoutGameWidth();
             }
         });
-        // The layout takes the game width only once the web font is in: a
-        // width measured in the fallback font is about 80px narrower, and
-        // taking it would narrow the game window and widen it again on load.
-        // Until then the dashboard keeps the stylesheet's default column
-        // (790px, dashboard.css). Dashboard.init seeds from the width only
-        // when this is set. A browser that cannot tell when fonts load
-        // has nothing to wait for.
+        // The layout takes the measured game width only once the web font is
+        // in: a width measured in the fallback font is about 80px narrower,
+        // and taking it would narrow the game window and widen it again on
+        // load. Until then it takes the width the font will give, worked out
+        // from the text size (termfit.js predictWidthFor80), so nothing moves
+        // when the font lands. Dashboard.pageGameWidth picks between the two,
+        // for Dashboard.init and for every later report. A browser that
+        // cannot tell when fonts load has nothing to wait for.
         window.dogmudFontReady = !(document.fonts && document.fonts.load);
+        window.dogmudPredictGameWidth = function () {
+            return termFitter.predictWidthFor80(Math.max(textSize(), browserMinFont));
+        };
         function giveLayoutGameWidth() {
-            if (window.dogmudFontReady && window.dogmudGameWidth &&
-                window.Dashboard && window.Dashboard.ready) {
-                window.Dashboard.setGameWidth(window.dogmudGameWidth);
+            if (window.Dashboard && window.Dashboard.ready) {
+                window.Dashboard.setGameWidth(window.Dashboard.pageGameWidth());
             }
         }
-        // The web font has loaded (or will not): the layout may take the
+        // The web font has loaded (or will not): the layout takes the
         // measured width, then the terminal is fitted against it.
         function webFontIn() {
             window.dogmudFontReady = true;

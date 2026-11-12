@@ -492,6 +492,43 @@ check('the fold handler lives in initCollapse, which init calls',
 check('opening the phone card uses the same helper',
     /this\._scrollChatToNewest\(panel\);\s*this\._updateTabbarActive\(name\);/.test(SRC), true);
 
+// --- init seeds the game width the page gives it (plan 5, Task 8) ------------
+//
+// Before the web font loads, termfit has measured the fallback font, about
+// 80px narrow. init must take the page's prediction of the real font's width
+// instead, so the game window does not move when the font lands, and a 900px
+// dashboard goes straight to slim (the 790 default gave phone, the fallback
+// width column). Once the font is in, init takes the measured width. The
+// parts of init that build the tab bar, folding, pop-out and the saved
+// layout are stubbed: they are tested above.
+D._buildPhone = D.initCollapse = D.initPopout = D.restoreLayout = function () {};
+dashboard.clientWidth = 900;
+win.dogmudGameWidth = 657;                              // the fallback font's 80 columns
+win.dogmudPredictGameWidth = function () { return 737; }; // JetBrains Mono's, predicted
+win.dogmudFontReady = false;
+D.init();
+check('before the font, init takes the predicted width',
+    htmlEl.style.getPropertyValue('--game-w'), '743px');
+check('before the font, a 900px dashboard is slim at once', D.mode, 'slim');
+check('init marks the dashboard ready', D.ready, true);
+win.dogmudFontReady = true;
+win.dogmudGameWidth = 737;                              // measured, as predicted
+D.init();
+check('once the font is in, init takes the measured width',
+    htmlEl.style.getPropertyValue('--game-w'), '743px');
+win.dogmudGameWidth = 700;                              // a measurement that differs
+D.init();
+check('the measured width wins over the prediction once the font is in',
+    htmlEl.style.getPropertyValue('--game-w'), '706px');
+win.dogmudFontReady = false;
+delete win.dogmudPredictGameWidth;
+D.init();
+check('with no prediction before the font, the default column holds',
+    htmlEl.style.getPropertyValue('--game-w'), '790px');
+check('the page asks the dashboard which width to use for every later report',
+    /function giveLayoutGameWidth\(\) \{\s*if \(window\.Dashboard && window\.Dashboard\.ready\) \{\s*window\.Dashboard\.setGameWidth\(window\.Dashboard\.pageGameWidth\(\)\);/
+        .test(fs.readFileSync(path.join(JS, '..', '..', 'webclient-pure.html'), 'utf8')), true);
+
 // --- result ------------------------------------------------------------------
 
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');

@@ -20,6 +20,7 @@
     'use strict';
 
     var MAX_COLS = 80;
+    var GLYPH_EM = 0.6;    // a JetBrains Mono letter's width (--font-mono)
 
     // opts: term, fitAddon, host (the element xterm opened in), minFont (the
     // smallest size the browser renders), fontSize() (the --text token in px),
@@ -170,7 +171,20 @@
             return Math.ceil(Math.floor(cs.width * dpr) * MAX_COLS / dpr + scrollBarWidth());
         }
 
-        return { fit: fit, cols: function () { return term.cols; }, widthFor80: widthFor80 };
+        // The width widthFor80 will give once the web font is in, worked out
+        // before it loads: JetBrains Mono letters are 0.6em wide, so at
+        // textPx the cell is floor(0.6 * textPx * dpr) device pixels. The
+        // page gives the layout this until the font lands, so the game
+        // window does not move when the measurement replaces it.
+        function predictWidthFor80(textPx) {
+            var dpr = window.devicePixelRatio || 1;
+            return Math.ceil(Math.floor(GLYPH_EM * textPx * dpr) * MAX_COLS / dpr + scrollBarWidth());
+        }
+
+        return {
+            fit: fit, cols: function () { return term.cols; },
+            widthFor80: widthFor80, predictWidthFor80: predictWidthFor80
+        };
     }
 
     return { create: create };

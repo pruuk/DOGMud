@@ -177,12 +177,8 @@
       // parent so position:fixed is not clipped by the grid container)
       this._buildPhone();
 
-      // Apply the first mode, from the game width termfit last reported.
-      // The page keeps it on window because termfit reports before this
-      // script sets itself up (plan 5, Task 8). A width measured before the
-      // web font loaded is not used: the stylesheet's default column holds
-      // until the page passes the real one.
-      this.setGameWidth(window.dogmudFontReady ? window.dogmudGameWidth || null : null);
+      // Apply the first mode, from the page's game width (pageGameWidth).
+      this.setGameWidth(this.pageGameWidth());
       this.ready = true;
 
       // Window resize listener
@@ -210,6 +206,19 @@
     // desktop never gets the phone layout only for lack of a width. The
     // wide, column and slim grids use var(--game-w) with no fallback, so
     // it is always set.
+    // The game width the page has for the layout now (webclient-pure.html,
+    // plan 5 Task 8). termfit reports before this script sets itself up,
+    // so the page keeps its numbers on window. Until the web font is in
+    // (window.dogmudFontReady), a width measured in the fallback font is
+    // about 80px narrow, so the layout takes the width the font will give
+    // (window.dogmudPredictGameWidth), and nothing moves when it lands.
+    // Null when the page has neither: the default column holds.
+    pageGameWidth: function () {
+      if (window.dogmudFontReady) return window.dogmudGameWidth || null;
+      return typeof window.dogmudPredictGameWidth === "function" ?
+        window.dogmudPredictGameWidth() || null : null;
+    },
+
     setGameWidth: function (px) {
       this.gameW = px ? px + FEED_BORDER + SLACK : null;
       document.documentElement.style.setProperty("--game-w",
