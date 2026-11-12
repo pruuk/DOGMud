@@ -326,7 +326,23 @@ func picklockMenu() menu.Menu {
 	}
 }
 
+// lockStepsPerRow is how many lock steps fit a row at width: the template
+// indents 2 and each step is 8 columns ("║ cell ") plus the closing "║".
+func lockStepsPerRow(width int) int {
+	return max(1, (width-3)/8)
+}
+
 func GetLockRender(sequence string, entered string, viewingUserId int) string {
+	width, screenReader := templates.FullWidth, false
+	if u := users.GetByUserId(viewingUserId); u != nil {
+		width, screenReader = u.WrapWidth(), u.ScreenReader
+	}
+	return lockRenderAt(sequence, entered, width, screenReader)
+}
+
+// lockRenderAt draws the lock for a reader width columns wide: one table of
+// as many steps as fit, then the next, so no lock is wider than the screen.
+func lockRenderAt(sequence string, entered string, width int, screenReader bool) string {
 
 	rows := [][]string{}
 
@@ -380,11 +396,26 @@ func GetLockRender(sequence string, entered string, viewingUserId int) string {
 	}
 	rows = append(rows, row)
 
-	picklockTable := templates.GetTable(`The Lock Sequence Looks like:`, rows[0], rows, formatting)
-	tplTxt, _ := templates.Process("tables/lockpicking", picklockTable, viewingUserId)
-
-	return tplTxt
-
+	per := lockStepsPerRow(width)
+	var out strings.Builder
+	// An empty sequence still draws today's titled, empty table, once.
+	for start := 0; start == 0 || start < len(sequence); start += per {
+		end := min(start+per, len(sequence))
+		// The template prints ".: " before the title, so a title has
+		// width-3 columns. "Lock steps 28 to 32:" is the longest, 20.
+		title := `The Lock Sequence Looks like:`
+		if len(sequence) > per || 3+len(title) > width {
+			title = fmt.Sprintf(`Lock steps %d to %d:`, start+1, end)
+		}
+		part := make([][]string, len(rows))
+		for i := range rows {
+			part[i] = rows[i][start:end]
+		}
+		tbl := templates.GetTable(title, rows[0][start:end], part, formatting[start:end])
+		txt, _ := templates.ProcessForWidth("tables/lockpicking", tbl, screenReader, width)
+		out.WriteString(txt)
+	}
+	return out.String()
 }
 
 func sequenceMatches(input string, correctSequence string) bool {
