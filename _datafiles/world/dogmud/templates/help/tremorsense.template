@@ -11,13 +11,17 @@ fine motor control.
 ::
 
 <ansi fg="yellow">Benefits:</ansi>
-  Detect hidden creatures through ground vibrations — concealment
-  offers little protection against you
-  Moderately improved perception from the wealth of sensory data
+::list
+  - Detect hidden creatures through ground vibrations — concealment
+    offers little protection against you
+  - Moderately improved perception from the wealth of sensory data
+::
 
 <ansi fg="yellow">Drawbacks:</ansi>
-  Slightly reduced dexterity — the constant vibration noise
-  disrupts fine motor control
+::list
+  - Slightly reduced dexterity — the constant vibration noise
+    disrupts fine motor control
+::
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>

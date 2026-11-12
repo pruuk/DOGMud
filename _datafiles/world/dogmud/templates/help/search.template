@@ -55,10 +55,12 @@ Your <ansi fg="skill">search</ansi> skill also powers two other commands:
          more detail from the tracks you find.
 ::
 
-  <ansi fg="command">forage</ansi> Gather herbs, wood, ore, and materials from
-            natural environments. Your search skill determines what
-            quality materials you can uncover, and how rare the finds
-            might be.
+::rows
+  <ansi fg="command">forage</ansi>  Gather herbs, wood, ore, and materials from
+          natural environments. Your search skill determines what
+          quality materials you can uncover, and how rare the finds
+          might be.
+::
 
 <ansi fg="yellow">━━━ Skill Progression ━━━</ansi>
 

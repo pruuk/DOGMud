@@ -86,4 +86,5 @@ and conditions raise Vitality (and so stamina) as well.
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help health</ansi>, <ansi fg="command">help conviction</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help stand</ansi>
+
   <ansi fg="command">help flee</ansi>, <ansi fg="command">help status</ansi>, <ansi fg="command">help encumbrance</ansi>

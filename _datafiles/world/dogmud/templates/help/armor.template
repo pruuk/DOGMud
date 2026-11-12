@@ -7,6 +7,7 @@ less, and no amount of armor makes you untouchable. Very heavy
 protection also softens critical hits.
 
 <ansi fg="yellow">Physical Mitigation</ansi>
+
   Reduces damage from melee attacks, ranged weapons, and
   physical spells. Comes from:
 ::list
@@ -16,6 +17,7 @@ protection also softens critical hits.
 ::
 
 <ansi fg="yellow">Magical Mitigation</ansi>
+
   Reduces damage from offensive spells that target the
   mind. Comes from:
 ::list
@@ -24,6 +26,7 @@ protection also softens critical hits.
 ::
 
 <ansi fg="yellow">Conviction Mitigation</ansi>
+
   Reduces conviction damage from social attacks like
   <ansi fg="command">taunt</ansi>. Comes from:
 ::list
@@ -32,6 +35,7 @@ protection also softens critical hits.
 ::
 
 <ansi fg="yellow">Viewing Your Mitigation</ansi>
+
   Use <ansi fg="command">status</ansi> to see your current stats and equipment.
   Your total mitigation stacks from all equipped items.
 

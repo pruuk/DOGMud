@@ -9,9 +9,11 @@ tireless, and indifferent to bad air.
 ::
 
 <ansi fg="yellow">Benefits:</ansi>
-  Quickens how fast your stamina returns
-  Shrugs off gas, poison, and foul air, and lets you hold your
-  breath far longer than any lung should allow
+::list
+  - Quickens how fast your stamina returns
+  - Shrugs off gas, poison, and foul air, and lets you hold your
+    breath far longer than any lung should allow
+::
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>

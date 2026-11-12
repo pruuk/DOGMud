@@ -6,13 +6,14 @@ action or reaction to the room.
 Example:
 
     [HP:10/10 MP:10/10]: emote scratches his head.
+
     <ansi fg="username">Chuckles</ansi> <ansi fg="20">scratches his head.</ansi>
-    
+
 What others see:
 
     [HP:6/6 MP:8/8]: <ansi fg="username">Chuckles</ansi> <ansi fg="20">scratches his head.</ansi>
 
 Here are some shortcut emotes that can be invoked with a single word:
 
-{{ $counter := 0 -}}{{ range $command, $output := . }}   <ansi fg="command">{{ padRight 8 $command }}</ansi> {{ if eq (mod $counter 6) 5 }}{{ printf "\n" }}{{ end }}{{ $counter = (add $counter 1) }}{{ end }}
+   {{ $sep := "" }}{{ range $command, $output := . }}{{ $sep }}<ansi fg="command">{{ $command }}</ansi>{{ $sep = " " }}{{ end }}
 

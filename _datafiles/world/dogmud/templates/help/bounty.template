@@ -7,6 +7,7 @@ reputation with the issuing faction.
 <ansi fg="yellow">Usage:</ansi>
 
   <ansi fg="command">bounty list</ansi> [<ansi fg="yellow">filter</ansi>]
+
     List open bounties. Optional filter:
 ::rows
       <ansi fg="yellow">mob</ansi>                 only bounties on creatures
@@ -16,6 +17,7 @@ reputation with the issuing faction.
 ::
 
   <ansi fg="command">bounty show</ansi> <ansi fg="yellow"><id></ansi>
+
     Show full detail of a single open bounty.
 
 <ansi fg="yellow">Examples:</ansi>

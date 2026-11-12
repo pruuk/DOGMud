@@ -81,12 +81,14 @@ triggers a powerful counter-move against the attacker. Between evenly
 matched fighters this is uncommon. It happens often when the attacker is
 badly outmatched, or is swinging from the ground after a fall:
 
-  <ansi fg="cyan-bold">⚔ Parry Crit → RIPOSTE:</ansi> Free counter-attack with reduced damage.
-    Your blade turns their strike aside and bites back.
-  <ansi fg="cyan-bold">⚡ Dodge Crit → SWEEP:</ansi> Automatic trip attempt (ignores
-    cooldown). Dodge under their swing and sweep their legs.
-  <ansi fg="cyan-bold">🛡 Block Crit → SHIELD SLAM:</ansi> Automatic bash attempt
-    (ignores cooldown). Catch the blow and slam them back.
+::rows
+  <ansi fg="cyan-bold">⚔ Parry Crit → RIPOSTE:</ansi>  Free counter-attack with reduced damage.
+                           Your blade turns their strike aside and bites back.
+  <ansi fg="cyan-bold">⚡ Dodge Crit → SWEEP:</ansi>  Automatic trip attempt (ignores
+                         cooldown). Dodge under their swing and sweep their legs.
+  <ansi fg="cyan-bold">🛡 Block Crit → SHIELD SLAM:</ansi>  Automatic bash attempt
+                               (ignores cooldown). Catch the blow and slam them back.
+::
 
 A defence that succeeds without being exceptional still helps: it takes the
 force out of the blow rather than stopping it outright. The crits above are
@@ -109,10 +111,10 @@ a second weapon, so a weapon and a free hand pay none of the penalty below.
 Tactical moves with cooldowns that can turn the tide:
 
 ::rows
-  <ansi fg="command">bash</ansi>    - Shield strike with a chance to knock down
-  <ansi fg="command">trip</ansi>    - Reliable leg sweep with light damage
-  <ansi fg="command">kick</ansi>    - Strong strike with a chance to knock down
-  <ansi fg="command">taunt</ansi>   - Verbal assault (conviction damage)
+  <ansi fg="command">bash</ansi>     Shield strike with a chance to knock down
+  <ansi fg="command">trip</ansi>     Reliable leg sweep with light damage
+  <ansi fg="command">kick</ansi>     Strong strike with a chance to knock down
+  <ansi fg="command">taunt</ansi>    Verbal assault (conviction damage)
   <ansi fg="command">grapple</ansi>  Grabs and restrains an opponent.
 ::
 
@@ -152,7 +154,9 @@ nothing.
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help attack</ansi>, <ansi fg="command">help flee</ansi>, <ansi fg="command">help bash</ansi>, <ansi fg="command">help trip</ansi>
+
   <ansi fg="command">help kick</ansi>, <ansi fg="command">help taunt</ansi>, <ansi fg="command">help prone</ansi>
+
   <ansi fg="command">help grapple</ansi>, <ansi fg="command">help submission</ansi>,
   <ansi fg="command">help unarmed-combat</ansi>, <ansi fg="command">help stamina</ansi>,
   <ansi fg="command">help conviction</ansi>, <ansi fg="command">help skills</ansi>,

@@ -16,15 +16,17 @@ Hidden areas and secret passages may not appear on the map.
 
 <ansi fg="yellow">Map symbols:</ansi>
 
-  UTF-8  ASCII
-  <ansi fg="white">@</ansi>      <ansi fg="white">@</ansi>      You (your current room)
-  <ansi fg="white">☺</ansi>      <ansi fg="white">P</ansi>      A party member, and with keen Perception
-                a player or a peaceful NPC
-  <ansi fg="white">☠</ansi>      <ansi fg="white">!</ansi>      A hostile or fighting mob (keen Perception)
-  <ansi fg="white">☹</ansi>      <ansi fg="white">&</ansi>      A friend (a charmed mob travelling with
-                a party member)
-  <ansi fg="white">⚷</ansi>      <ansi fg="white">K</ansi>      A locked exit
-  <ansi fg="white">?</ansi>      <ansi fg="white">?</ansi>      A secret passage you have found
+  UTF-8 ASCII
+::rows
+  <ansi fg="white">@</ansi> <ansi fg="white">@</ansi>  You (your current room)
+  <ansi fg="white">☺</ansi> <ansi fg="white">P</ansi>  A party member, and with keen Perception
+       a player or a peaceful NPC
+  <ansi fg="white">☠</ansi> <ansi fg="white">!</ansi>  A hostile or fighting mob (keen Perception)
+  <ansi fg="white">☹</ansi> <ansi fg="white">&</ansi>  A friend (a charmed mob travelling with
+       a party member)
+  <ansi fg="white">⚷</ansi> <ansi fg="white">K</ansi>  A locked exit
+  <ansi fg="white">?</ansi> <ansi fg="white">?</ansi>  A secret passage you have found
+::
 
 With <ansi fg="command">set charset</ansi> on ASCII the map draws the second column,
 and terrain glyphs become letters too. The legend names each one.

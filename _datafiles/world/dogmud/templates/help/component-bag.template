@@ -25,10 +25,10 @@ of its contents.
 
   <ansi fg="itemname">Artisan's Satchel</ansi>     40 items, 35% weight reduction.
                         Tailoring recipe (skill 15).
-::
 
-  <ansi fg="itemname">Master's Component Case</ansi> 75 items, 45% weight reduction.
-    Tailoring recipe (skill 30).
+  <ansi fg="itemname">Master's Component Case</ansi>  75 items, 45% weight reduction.
+                           Tailoring recipe (skill 30).
+::
 
 Removing the bag spills its contents back into your backpack.
 

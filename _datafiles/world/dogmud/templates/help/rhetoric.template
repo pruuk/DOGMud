@@ -31,8 +31,8 @@ rather than their body.
 ::rows
   <ansi fg="command">taunt</ansi>  — Verbal assault that deals conviction damage
          and forces the target to attack you
-  <ansi fg="command">warcry</ansi> — Battle cry that boosts physical damage for
-             all allies in the room
+  <ansi fg="command">warcry</ansi>  — Battle cry that boosts physical damage for
+          all allies in the room
   <ansi fg="command">rally</ansi>  — Rallying shout that improves dodge, parry,
          and block for all allies in the room
 ::

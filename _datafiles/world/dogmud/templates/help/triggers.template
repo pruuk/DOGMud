@@ -102,8 +102,8 @@ an optional condition to decide what to do.
 ::rows
     Operators:  <ansi fg="command">is one of</ansi>, <ansi fg="command">is not one of</ansi>.
     Value:  a comma-separated list of names. Matches
+            any name in the list.
 ::
-    any name in the list.
 
 ::keep
   <ansi fg="command">The ability cooldown</ansi>
@@ -144,15 +144,11 @@ an optional condition to decide what to do.
   triggers can all queue up and fire in sequence as
   the cooldown frees — instead of stomping each other.
 
-::rows
-  <ansi fg="command">Dedup: </ansi> if the same command is already waiting in
-::
+  <ansi fg="command">Dedup:</ansi> if the same command is already waiting in
   the queue, the trigger will not add a second copy.
   The queue holds at most <ansi fg="command">10</ansi> entries.
 
-::rows
-  <ansi fg="command">Clear: </ansi> the panel has a Clear button that empties the
-::
+  <ansi fg="command">Clear:</ansi> the panel has a Clear button that empties the
   queue instantly. The queue also clears on death and
   on any page reload or reconnect.
 
@@ -183,6 +179,7 @@ an optional condition to decide what to do.
     Pattern:  <ansi fg="command">* tells you '*'</ansi>
     Command:  <ansi fg="command">reply $1, got it</ansi>
 ::
+
     The first <ansi fg="command">*</ansi> captures the sender's name into
     <ansi fg="command">$1</ansi>; the second <ansi fg="command">*</ansi> captures the message body
     into <ansi fg="command">$2</ansi>. This example echoes the sender's name
@@ -197,6 +194,7 @@ an optional condition to decide what to do.
     Then:     <ansi fg="command">cast heal self</ansi>
     Queue:    Queue at front
 ::
+
     Jumps ahead of any pending re-casts so the heal
     fires as soon as the cooldown opens.
 
@@ -206,6 +204,7 @@ an optional condition to decide what to do.
     Command:  <ansi fg="command">rally</ansi>
     Queue:    Queue at back
 ::
+
     Rally (and warcry) now print an expiry message
     when they wear off, making this pattern reliable.
 
@@ -215,6 +214,7 @@ an optional condition to decide what to do.
     Command:  <ansi fg="command">cast heal self</ansi>
     Queue:    Queue at back
 ::
+
     Because the queue never auto-retries, this trigger
     catches the failure message and puts the cast back
     in line for the next free cooldown.

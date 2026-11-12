@@ -11,14 +11,18 @@ appearance.
 ::
 
 <ansi fg="yellow">Benefits:</ansi>
-  Substantial natural physical armor — your hide turns blows that
-  would wound a normal person
+::list
+  - Substantial natural physical armor — your hide turns blows that
+    would wound a normal person
+::
 
 <ansi fg="yellow">Drawbacks:</ansi>
-  Moderately reduced dexterity — the stiff, leathery skin restricts
-  fluid movement
-  Moderately reduced charisma — the ridged hide is deeply unsettling
-  in appearance
+::list
+  - Moderately reduced dexterity — the stiff, leathery skin restricts
+    fluid movement
+  - Moderately reduced charisma — the ridged hide is deeply unsettling
+    in appearance
+::
 
 <ansi fg="yellow">Conflicts:</ansi> Chameleon Skin
 

@@ -64,8 +64,8 @@ the range of materials you can find.
   <ansi fg="yellow">raw-gem</ansi>          Found in: caves (jewelcrafting)
   <ansi fg="yellow">gem-dust</ansi>         Found in: caves (jewelcrafting)
   <ansi fg="yellow">chrysalis-shard</ansi>  Found in: caves, rare (enchanting)
+  <ansi fg="yellow">mutation-catalyst</ansi>  Found in: caves, very rare (enchanting)
 ::
-  <ansi fg="yellow">mutation-catalyst</ansi> Found in: caves, very rare (enchanting)
 
 Some rare materials can only be found in dangerous places. The deeper you
 go, the stranger the things you find.

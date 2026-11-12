@@ -10,7 +10,9 @@ All suggestions are saved and reviewed.
 ::
 
   Examples:
+
     <ansi fg="command">suggest It would be cool if we could craft arrows at the workbench.</ansi>
+
     <ansi fg="command">suggest The training dummy in Sanctum Basin should give feedback on form.</ansi>
 
 ::rows

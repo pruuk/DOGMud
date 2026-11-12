@@ -10,17 +10,19 @@ hard to miss.
 ::
 
 <ansi fg="yellow">Benefits:</ansi>
-  Toughens your body, deepening your reserves of health
-  In its later stages you grow large enough to wield a two-handed
-  weapon in your weapon hand alone
+::list
+  - Toughens your body, deepening your reserves of health
+  - In its later stages you grow large enough to wield a two-handed
+    weapon in your weapon hand alone
+::
 
 <ansi fg="yellow">Drawbacks:</ansi>
-::rows
-  Slows your reflexes:  your sheer size makes blows easier to land
+::list
+  - Slows your reflexes: your sheer size makes blows easier to land
+    on you
+  - Your growing body holds part of your conviction in reserve, leaving
+    less for companions
 ::
-  on you
-  Your growing body holds part of your conviction in reserve, leaving
-  less for companions
 
 <ansi fg="yellow">Conflicts:</ansi> Hollow Bones
 

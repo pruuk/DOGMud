@@ -6,6 +6,7 @@ primarily on your Vitality stat.
 
 Health will change color to reflect your condition:
 
+::keep
 <ansi fg="health-100">untouched</ansi>
 <ansi fg="health-90">barely marked</ansi>
 <ansi fg="health-80">scratched</ansi>
@@ -18,6 +19,7 @@ Health will change color to reflect your condition:
 <ansi fg="health-10">near death</ansi>
 <ansi fg="health-0">at the edge</ansi>
 <ansi fg="health-dead">dead</ansi>
+::
 
 The colors run from the first of those to the last as you
 take punishment. Judge a fight by the color, not by counting:

@@ -5,7 +5,7 @@ The <ansi fg="command">damage</ansi> stat of weapons (and unarmed combat) repres
 Damage is often reprsented as a dice roll. For example: <ansi fg="red">2d6+1</ansi>
 
 In the example <ansi fg="red">2d6+1</ansi>, to calculate damage, you would roll <ansi fg="red">2</ansi> dice, each having 
-<ansi fg="red">6</ansi> sides, and then add <ansi fg="red">1</ansi>  to the result. This is your final damage.
+<ansi fg="red">6</ansi> sides, and then add <ansi fg="red">1</ansi> to the result. This is your final damage.
 
 The possible damage range for <ansi fg="red">2d6+1</ansi> is <ansi fg="red">3</ansi>-<ansi fg="red">13</ansi>. As you can see, the minimum damage
 scales up with the first number (Number of dice), whereas the maximum damage 

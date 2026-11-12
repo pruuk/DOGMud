@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -30,4 +31,16 @@ func TestGetHelpContents_SpeciesRendersSpeciesDetail(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, out, "Probe Human", "help species must list the selectable species")
 	assert.Contains(t, out, "Probe Resilience", "the species' condition must render through conditionname")
+
+	// The unarmed attack shows its name only: the empty "()" that followed it
+	// (the damage dice, empty for every species) is gone (plan 4, decision 5).
+	unarmed := ""
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "Unarmed:") {
+			unarmed = line
+		}
+	}
+	require.NotEmpty(t, unarmed, "help species must show an Unarmed row")
+	assert.NotContains(t, unarmed, "()", "the Unarmed row must not print an empty ()")
+	assert.NotContains(t, unarmed, "(<", "the Unarmed row must not print the damage brackets")
 }

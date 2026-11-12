@@ -9,6 +9,7 @@
 ::
   Sets a macro # (0-10) to a command of your choice. You can then use this macro
   as a shortcut to quickly issue to a command as follows: <ansi fg="command">=1</ansi>
+
   If your terminal program supports it, prettying a corresponding F-Key
   
 ::rows
@@ -30,12 +31,11 @@
 
   You can split a macro into more than one command by separating extra commands
   with a semicolon - <ansi fg="yellow">;</ansi>
+
   e.g. <ansi fg="command">set =1 wave;say hi;emote sits down</ansi>
 
-::rows
-  <ansi fg="black-bold">Web client: </ansi> your macros also appear in the
+  <ansi fg="black-bold">Web client:</ansi> your macros also appear in the
   <ansi fg="command">Triggers & Timers</ansi> panel, where you can add, edit,
-::
   and run them with the mouse.
 
 ::rows

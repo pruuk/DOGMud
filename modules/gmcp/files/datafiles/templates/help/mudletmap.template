@@ -9,10 +9,12 @@ The <ansi fg="command">mudletmap</ansi> command sends map data to Mudlet clients
 ::
 
 <ansi fg="yellow-bold">Notes:</ansi>
+::list
 - This command only works if you are using a Mudlet client
 - The map data helps with navigation and visualization of the game world
 - This command runs automatically when you log in with Mudlet
 - If your map isn't displaying properly, you can run this command to refresh it
+::
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mudletui</ansi>, <ansi fg="command">checkclient</ansi> 

@@ -66,9 +66,9 @@ tougher the enemies, and the better the potential loot.
   <ansi fg="command">Oasis</ansi>      A three-dimensional elemental maze.
              Death allows re-entry. Recall works.
              Methodical exploration rewarded.
-  <ansi fg="command">Crash Site</ansi> A buried place in the Eastern
-             Highlands. Death allows re-entry. No
-             recall. Bring a group.
+  <ansi fg="command">Crash Site</ansi>  A buried place in the Eastern
+              Highlands. Death allows re-entry. No
+              recall. Bring a group.
 ::
 
 ::rows

@@ -5,13 +5,10 @@ continues each round until someone flees or dies.
 
 <ansi fg="yellow">━━━ Basic Usage ━━━</ansi>
 
-::keep
-  <ansi fg="command">attack goblin</ansi>
+::rows
+  <ansi fg="command">attack goblin</ansi>  Start combat with the goblin
+  <ansi fg="command">attack archer</ansi> (while already fighting)  Switch targets to the archer mid-combat
 ::
-  Start combat with the goblin
-
-  <ansi fg="command">attack archer</ansi> (while already fighting)
-  Switch targets to the archer mid-combat
 
 If you are hidden when you engage, your opening blow becomes an
 <ansi fg="magenta-bold">ambush</ansi>. It is one strike, a ready defender can
@@ -126,17 +123,19 @@ See individual help topics for details on each special move.
 <ansi fg="yellow">━━━ Ending Combat ━━━</ansi>
 
 ::rows
-  <ansi fg="command">flee</ansi>  Attempt to escape (costs stamina, may fail)
+  <ansi fg="command">flee</ansi>     Attempt to escape (costs stamina, may fail)
+  Victory  Kill all opponents or force a submission
+  Defeat   Reach 0 health
 ::
-  Victory - Kill all opponents or force a submission
-  Defeat - Reach 0 health
 
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help combat</ansi>, <ansi fg="command">help defense</ansi>,
   <ansi fg="command">help flee</ansi>, <ansi fg="command">help bash</ansi>
+
   <ansi fg="command">help trip</ansi>, <ansi fg="command">help kick</ansi>,
   <ansi fg="command">help prone</ansi>, <ansi fg="command">help stamina</ansi>
+
   <ansi fg="command">help grapple</ansi>, <ansi fg="command">help reach</ansi>,
   <ansi fg="command">help submission</ansi>, <ansi fg="command">help ambush</ansi>,
   <ansi fg="command">help sneak</ansi>

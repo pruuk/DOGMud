@@ -10,16 +10,20 @@ but makes wearing leg armor impossible.
 ::
 
 <ansi fg="yellow">Benefits:</ansi>
-  Slightly improved dexterity — the tail provides balance and
-  body awareness
-  Unlocks the tail slot for wearable attachments
-  Your trip attack becomes a powerful tailsweep with enhanced
-  knockdown force
+::list
+  - Slightly improved dexterity — the tail provides balance and
+    body awareness
+  - Unlocks the tail slot for wearable attachments
+  - Your trip attack becomes a powerful tailsweep with enhanced
+    knockdown force
+::
 
 <ansi fg="yellow">Drawbacks:</ansi>
-  Moderately reduced charisma — a tail is an unsettling sight to
-  most people
-  Leg armor cannot be worn — the tail makes leg slots incompatible
+::list
+  - Moderately reduced charisma — a tail is an unsettling sight to
+    most people
+  - Leg armor cannot be worn — the tail makes leg slots incompatible
+::
 
 <ansi fg="yellow">Conflicts:</ansi> Small
 

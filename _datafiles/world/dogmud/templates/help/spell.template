@@ -2,6 +2,7 @@
 
 <ansi fg="white-bold">{{ .Description }}</ansi>
 
+::rows
 <ansi fg="yellow">SpellID:     </ansi> <ansi fg="white-bold">{{ .SpellId }}</ansi>
 <ansi fg="yellow">Name:        </ansi> <ansi fg="white-bold">{{ .Name }}</ansi>
 <ansi fg="yellow">Type:        </ansi> <ansi fg="spell-{{ lowercase .HelpOrHarmString }}">{{ .HelpOrHarmString }}</ansi>
@@ -14,7 +15,9 @@
 {{ end -}}
 {{ if .ComponentTag -}}
 <ansi fg="red-bold">Requires:    </ansi> <ansi fg="white-bold">{{ .ComponentTag }}</ansi> in your inventory to cast
-{{ end }}
+{{ end -}}
+::
+
 Position, Willpower, and your spellcasting training all affect
 whether your concentration holds while the folds complete. Casting
 pinned or prone risks disruption.

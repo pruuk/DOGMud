@@ -8,25 +8,19 @@ afterwards.
 <ansi fg="yellow">━━━ Usage ━━━</ansi>
 
 ::rows
-  <ansi fg="command">companion-ai</ansi>       Where things stand now, and whose key is
-                     answering: your own, this server's, or none.
-  <ansi fg="command">companion-ai on</ansi>    They answer in their own words. What you say to
-                     them, and what happens around you both, is sent to
-                     OpenAI (or to your own key's provider, when you use
-                     one) and kept on this server.
-  <ansi fg="command">companion-ai off</ansi>   Nothing you say leaves the server. They still
-                     travel with you and fight beside you, and answer
-                     with a few set lines.
+  <ansi fg="command">companion-ai</ansi>                Where things stand now, and whose key is
+                              answering: your own, this server's, or none.
+  <ansi fg="command">companion-ai on</ansi>             They answer in their own words. What you say to
+                              them, and what happens around you both, is sent to
+                              OpenAI (or to your own key's provider, when you
+                              use one) and kept on this server.
+  <ansi fg="command">companion-ai off</ansi>            Nothing you say leaves the server. They still
+                              travel with you and fight beside you, and answer
+                              with a few set lines.
+  <ansi fg="command">companion-ai strangers off</ansi>  Passers-by who talk to them are still heard, but
+                              get only a few set lines back.
+  <ansi fg="command">companion-ai strangers on</ansi>   Passers-by can talk with them properly.
 ::
-::keep
-  <ansi fg="command">companion-ai strangers off</ansi>
-::
-                        Passers-by who talk to them are still heard, but
-                        get only a few set lines back.
-::keep
-  <ansi fg="command">companion-ai strangers on</ansi>
-::
-                        Passers-by can talk with them properly.
 
 Switched off, nothing new is recorded or sent. What was already remembered
 stays on the server; <ansi fg="command">companion-part</ansi> ends the

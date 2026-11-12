@@ -20,15 +20,17 @@ into items through long use.
 
 <ansi fg="yellow">━━━ Known Recipes ━━━</ansi>
 
-  <ansi fg="yellow">Copper Ring</ansi>           Skill 0   1x copper-wire, 1x gem-dust                2 rounds
-  <ansi fg="yellow">Simple Pendant</ansi>        Skill 3   1x copper-wire, 1x polished-stone           3 rounds
-  <ansi fg="yellow">Polished Stone Amulet</ansi>  Skill 8   2x polished-stone, 1x copper-wire           3 rounds
-  <ansi fg="yellow">Silver Ring</ansi>           Skill 12  1x silver-wire, 1x gem-dust                  3 rounds
-  <ansi fg="yellow">Chrysalis Setting</ansi>     Skill 15  1x copper-wire, 1x chrysalis-shard           4 rounds
-  <ansi fg="yellow">Gem-Set Necklace</ansi>      Skill 18  2x silver-wire, 1x raw-gem                   4 rounds
-  <ansi fg="yellow">Engraved Bracelet</ansi>     Skill 22  1x silver-wire, 2x gem-dust                  4 rounds
-  <ansi fg="yellow">Gold Signet Ring</ansi>      Skill 28  1x gold-wire, 1x gem-dust                   5 rounds
-  <ansi fg="yellow">Masterwork Gem Pendant</ansi> Skill 35  2x gold-wire, 2x raw-gem                    6 rounds
+::rows
+  <ansi fg="yellow">Copper Ring</ansi>  Skill 0: 1x copper-wire, 1x gem-dust, 2 rounds
+  <ansi fg="yellow">Simple Pendant</ansi>  Skill 3: 1x copper-wire, 1x polished-stone, 3 rounds
+  <ansi fg="yellow">Polished Stone Amulet</ansi>  Skill 8: 2x polished-stone, 1x copper-wire, 3 rounds
+  <ansi fg="yellow">Silver Ring</ansi>  Skill 12: 1x silver-wire, 1x gem-dust, 3 rounds
+  <ansi fg="yellow">Chrysalis Setting</ansi>  Skill 15: 1x copper-wire, 1x chrysalis-shard, 4 rounds
+  <ansi fg="yellow">Gem-Set Necklace</ansi>  Skill 18: 2x silver-wire, 1x raw-gem, 4 rounds
+  <ansi fg="yellow">Engraved Bracelet</ansi>  Skill 22: 1x silver-wire, 2x gem-dust, 4 rounds
+  <ansi fg="yellow">Gold Signet Ring</ansi>  Skill 28: 1x gold-wire, 1x gem-dust, 5 rounds
+  <ansi fg="yellow">Masterwork Gem Pendant</ansi>  Skill 35: 2x gold-wire, 2x raw-gem, 6 rounds
+::
 
 <ansi fg="yellow">━━━ Skill Progression ━━━</ansi>
 

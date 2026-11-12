@@ -7,8 +7,8 @@ connected through the web client.
 <ansi fg="yellow">How it works:</ansi>
 
   While you're logged in through the web client, each
-  enabled tick runs its commands every N seconds — hands-
-  free, on a loop. Ticks pause when you disconnect; they
+  enabled tick runs its commands every N seconds — hands-free,
+  on a loop. Ticks pause when you disconnect; they
   resume the next time you log in with a capable client.
 
   Tick definitions save to your account and sync across
