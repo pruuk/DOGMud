@@ -155,7 +155,9 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	sw := user.ClientSettings().Display.GetScreenWidth()
 	sh := user.ClientSettings().Display.GetScreenHeight()
-	mapWidth, mapHeight, narrow := mapSizeForReader(skillLevel, rest == "wide", sw, sh, user.WrapWidth())
+	// One read, so the map's size and its form come from the same width.
+	wrap := user.WrapWidth()
+	mapWidth, mapHeight, narrow := mapSizeForReader(skillLevel, rest == "wide", sw, sh, wrap)
 
 	zMapper := mapper.GetMapper(roomId)
 	if zMapper == nil {
@@ -217,7 +219,7 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	// for a frameless form).
 	formWidth := templates.FullWidth
 	if narrow {
-		formWidth = users.RedrawnFormWidth(user.WrapWidth())
+		formWidth = users.RedrawnFormWidth(wrap)
 	}
 	mapTxt, err := templates.ProcessForWidth("maps/map", mapScreenData(room.Zone, displayLines, width, legend), user.ScreenReader, formWidth)
 	if err != nil {
