@@ -21,16 +21,20 @@ import (
 	textlang "golang.org/x/text/language"
 )
 
-// Every template works down to 30 columns (web client base spec, ruling 3),
-// apart from maps and wide tables. This guard knows every template, in the
-// live world and in every module, and why it is safe at 30. It renders the
-// ones that must fit at 30, 42 and 80.
+// Every template works down to 30 columns (web client base spec, ruling 3,
+// amended by plan 5: the web game window cannot scroll sideways, so no screen
+// is exempt from fitting). This guard knows every template, in the live world
+// and in every module, and why it is safe at 30. It renders the ones that must
+// fit at 30, 42 and 80.
 //
-// The classes are the state of the work, not a permanent exemption list:
-// plan 3b-3 gave every template screen it held a narrow form and removed its
-// class. Plan 4 is done for "help/": the help pages are held by
-// help_render_guard_test.go, so the folder is a class here. Only "wide" and
-// the classes that never reach a narrow screen unwrapped remain otherwise.
+// The classes are the state of the work, not a permanent exemption list, and
+// no class exempts a screen from fitting: each names who holds it. Plan 3b-3
+// gave every template screen it held a narrow form and removed its class.
+// Plan 4 is done for "help/": the help pages are held by
+// help_render_guard_test.go, so the folder is a class here. Plan 5 sized the
+// map and lockpicking by their commands ("sized by its command", held by tests
+// in internal/usercommands that TestSizedByItsCommandClassIsHeld looks for).
+// The classes that never reach a narrow screen unwrapped remain otherwise.
 
 // templateFolders are every place a template is read from: the live world,
 // and each module's own files (modules/<name>/files/datafiles/templates).
@@ -54,8 +58,12 @@ var templateWidths = []int{30, 42, 80}
 
 // templateClassNames lists the templates in each exact-name class.
 var templateClassNames = map[string][]string{
-	// Maps and wide tables may scroll sideways (ruling 3).
-	"wide": {"maps/map", "tables/lockpicking", "help/map-examples", "help/colors"},
+	// Sized by their command for the reader's width, held by the command's
+	// own tests in internal/usercommands: the map (TestMapRendersFitEveryWidth)
+	// and lockpicking (TestLockRenderFitsEveryWidth). A telnet `map wide` is
+	// sized by the terminal width the client reports, so it fits that terminal
+	// and the map test does not render it.
+	"sized by its command": {"maps/map", "tables/lockpicking"},
 	// Sent outside the pipeline, before a reader has a width or as they
 	// leave; the terminal soft-wraps them.
 	"raw": {"goodbye", "login/connect-splash", "login/email-new.prompt",
@@ -170,8 +178,8 @@ func templateClasses(name string) []string {
 		}
 	}
 	for prefix, class := range templateClassPrefixes {
-		// A help page that is also named in an exact class ("wide") is held
-		// by that class; the help folder class covers the rest.
+		// A page named in an exact class is held by that class (so it is not
+		// counted twice); a folder class covers the rest.
 		if strings.HasPrefix(name, prefix) && len(hits) == 0 {
 			hits = append(hits, class)
 		}
@@ -372,6 +380,35 @@ func TestFitsInUsercommandsClassIsHeld(t *testing.T) {
 	for _, name := range held {
 		if !listed[name] {
 			t.Errorf("%s is in \"fits in usercommands\" but %s's narrowTemplateScreens does not render it", name, path)
+		}
+	}
+}
+
+// The "sized by its command" class is held, not just named: the tests that
+// render each screen at every width exist in internal/usercommands. Renaming
+// or deleting one turns this red instead of leaving the class unheld.
+func TestSizedByItsCommandClassIsHeld(t *testing.T) {
+	held := templateClassNames["sized by its command"]
+	if len(held) == 0 {
+		t.Fatal(`the "sized by its command" class is empty; the check proves nothing`)
+	}
+	dir := filepath.Join(repoRoot(t), "internal", "usercommands")
+	files, err := filepath.Glob(filepath.Join(dir, "*_test.go"))
+	if err != nil || len(files) < 10 {
+		t.Fatalf("found %d test files in %s (err %v); the glob is not reaching them", len(files), dir, err)
+	}
+	var source strings.Builder
+	for _, f := range files {
+		raw, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		source.Write(raw)
+		source.WriteByte('\n')
+	}
+	for _, fn := range []string{"TestMapRendersFitEveryWidth", "TestLockRenderFitsEveryWidth"} {
+		if !regexp.MustCompile(`(?m)^func ` + fn + `\(`).MatchString(source.String()) {
+			t.Errorf("internal/usercommands has no func %s, which holds the \"sized by its command\" class %v", fn, held)
 		}
 	}
 }
