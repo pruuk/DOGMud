@@ -153,6 +153,7 @@ Rendered at 30, 42 and 80 columns, no line may exceed the width and no column ma
 Three kinds of wrapping sit inside templates, outside plan 1's sweep, and belong to plans 3 and 4:
 - **Fixed widths in templates.** 11 lines in 10 template files call `splitstring` with a literal 59 to 73 (plan 3b; `screenwidth` from plan 3a replaces the literal), and `setdesc.go` echoes at 72 to match them.
 - **Hard line breaks in authored text.** Of 468 help files, 434 have prose broken by hand into lines of 45 columns or more, and help rides `CategoryScreen`, which the pipeline does not wrap. So plan 4 covers every help page's prose as well as the 170 aligned ones: on a session under 80 columns, the lines of a paragraph are joined and wrapped to the reader's width.
+Amended 2026-11-12 (plan 4, owner ruling): help files state their layout with ::rows, ::list and ::keep markers instead of the game guessing paragraph bounds; see docs/superpowers/plans/2026-11-12-webclient-base-4-help-pages.md.
 - **Rendering without a reader.** `help.go:222` calls `Process` with user id 0, so plan 4 passes the reader through.
 
 `motdBox` needs a narrow form (plan 3a): seen at 42 columns on 2026-11-09, its spaced-out title is cut off, and URLs too long for the box burst through its sides. `motdrestyle.js` matches the box by its shape and did not remove it at that width, so plan 5 checks it at narrow widths.

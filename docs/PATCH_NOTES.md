@@ -1,5 +1,14 @@
 # DOGMud Patch Notes
 
+## 2026-11-12: Help fits your screen
+
+- Every help page now fits your window, down to the narrowest phone.
+  Long lines wrap neatly, and a command is never cut in two.
+- Usage lists show each command with what it does on the same line.
+- Help pages keep their brackets and plus signs for screen readers, so
+  optional parts of a command still read as optional.
+- Species help no longer shows empty brackets after a creature's attack.
+
 ## 2026-11-11: More screens fit your window
 
 - `craft list` and `craft` now show why a recipe is locked, and where and

@@ -731,6 +731,16 @@ contradicted. See "Targeted search" in
 - All three commands use the same unified search score calculation
 
 This package serves as the primary interface between players and the game world, providing a rich and comprehensive command system that supports all aspects of gameplay from basic interaction to advanced administrative functions.
+## Help rendering (web client base plan 4)
+
+`GetHelpContents(input string, width int) (string, error)` (`help.go`) renders a
+help page laid out for a screen `width` columns wide. In game the caller passes
+`user.WrapWidth()`; `modules/webhelp` passes `templates.FullWidth`. The bare
+`help` index (`help/help`), `help bounty` (`admin.bounty.go`) and `help rename`
+(`renameself.go`) render through `templates.ProcessHelp` at the reader's
+`WrapWidth()`. Admin help is unchanged (spec ruling 25). The markup the pages
+use and the layout pass are described in `internal/templates/context.md`.
+
 ## Files: one command per file
 
 186 non-test files (recounted for lighting plan 5a, which added `hood.go`), and enumerating them would be noise — the filename **is**

@@ -51,6 +51,21 @@ package main.
   `coulee_dash_guard_test.go` (#375 phase 7:
   the Coulee pass's quests and the Coulee and antechamber dialogue and
   conversation files, read as parsed YAML so comments are never checked).
+- **Help guards** (web client base plan 4). `help_markup_guard_test.go`
+  (`TestHelpFilesStateTheirLayout`, with `TestHelpMarkupRulesCanFail` as its
+  probe) holds every help template to the markers: unmarked text is paragraphs
+  only (no gap of two or more spaces, no list marker, no command alone inside
+  a paragraph, no change of indent without a line ending in `:`), `::rows`
+  entries have a label and a gap and continue at the entry's text column,
+  `::list` entries have a marker, `::keep` lines are at most 30 columns unless
+  the page is in `helpWide` (`help/map-examples`, `help/colors`).
+  `help_render_guard_test.go` renders every help page through
+  `usercommands.GetHelpContents` at 30, 42 and 80 (`TestEveryHelpPageFitsEveryWidth`,
+  `TestHelpIndexFitsEveryWidth`), and `TestHelpLayoutKeepsEveryWord` checks no
+  word is lost (`helpWordsKept` lets only a token wider than the line split;
+  `TestHelpWordsCanFail` is its probe). `TestDumpHelpPages` writes every page
+  at 30 and 80 to the folder in `HELP_DUMP` for a report and checks nothing.
+  `template_width_guard_test.go` points its `help/` class at the render guard.
 - **CI guard.** `ci_run_patterns_guard_test.go` checks every `go test -run`
   pattern in the CI action, the workflows and the Makefile names a real test
   in the package it targets.
