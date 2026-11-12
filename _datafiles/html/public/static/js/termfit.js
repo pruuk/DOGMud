@@ -44,10 +44,11 @@
             // phone on its side with the keyboard up.
             if (!body || body.clientWidth < 160 || body.clientHeight < 1 ||
                 (body.clientHeight < 80 && body.clientWidth !== lastW)) return;
-            var font = Math.max(opts.fontSize(), opts.minFont);
-            if (!forcePending && body.clientWidth === lastW && body.clientHeight === lastH &&
-                window.devicePixelRatio === lastDpr && font === lastFont) return;
+            var colsChanged = false, cols;
             try {
+                var font = Math.max(opts.fontSize(), opts.minFont);
+                if (!forcePending && body.clientWidth === lastW && body.clientHeight === lastH &&
+                    window.devicePixelRatio === lastDpr && font === lastFont) return;
                 if (font !== lastFont) term.setOption('fontSize', font);
                 // Measure the letters again unless only the height changed
                 // (the keyboard). A font load and a display-scale change (zoom,
@@ -63,31 +64,87 @@
                 // A zoom or another monitor changes the display scale. The
                 // canvas renderer works its cell size out from the scale and
                 // updates it only from its own watcher, which can run after
-                // this fit; update it now so the columns are counted against
-                // the new cell. Private xterm 4.19 internals.
+                // this fit; update it now so the fit addon counts the rows
+                // against the new cell. Private xterm 4.19 internals.
                 if (window.devicePixelRatio !== lastDpr && term._core && term._core._renderService &&
                     term._core._renderService.onDevicePixelRatioChange) {
                     term._core._renderService.onDevicePixelRatioChange();
                 }
                 // A terminal that cannot measure yet is not fitted, and the
                 // fit is not remembered, so the next one tries again.
+                // The fit addon gives the rows. Its columns are not used: it
+                // divides by xterm's cell width, which is the canvas width
+                // over the CURRENT column count, so its answer drifts with
+                // that count: a window exactly 80 columns wide fitted from 41
+                // columns got 79, and a keyboard move at one width could
+                // flip between two counts (review 2026-11-12).
                 var d = fitAddon.proposeDimensions();
-                if (!d || isNaN(d.cols) || isNaN(d.rows)) return;
-                var cols = Math.min(MAX_COLS, d.cols);
-                var colsChanged = cols !== term.cols;
+                if (!d || isNaN(d.rows)) return;
+                if (heightOnly) {
+                    cols = term.cols;            // the keyboard changes only the rows
+                } else {
+                    cols = colsThatFit();
+                    if (!cols) return;
+                }
+                colsChanged = cols !== term.cols;
                 if (colsChanged || d.rows !== term.rows) {
                     term._core._renderService.clear();
                     term.resize(cols, d.rows);
                 }
                 lastW = body.clientWidth; lastH = body.clientHeight;
                 lastDpr = window.devicePixelRatio; lastFont = font; forcePending = false;
-                if (colsChanged && opts.onCols) opts.onCols(cols);
+            } catch (e) { return; }
+            // The fit is remembered; each listener is told on its own, so one
+            // that throws cannot keep the other from hearing.
+            try {
                 var w80 = widthFor80();
                 if (w80 && w80 !== lastW80) {
                     lastW80 = w80;
                     if (opts.onGameWidth) opts.onGameWidth(w80);   // the page keeps the last one (Task 8)
                 }
             } catch (e) {}
+            try {
+                if (colsChanged && opts.onCols) opts.onCols(cols);
+            } catch (e) {}
+        }
+
+        // The columns that fit the host, at most 80, with the same arithmetic
+        // as widthFor80, so a host widthFor80 wide holds exactly 80. The
+        // width is the one xterm-addon-fit measures: the computed width of
+        // the element xterm opened in, less the terminal element's side
+        // padding and the scrollbar (none without scrollback). Null until
+        // xterm has measured its letters. Private xterm 4.19 fields.
+        function colsThatFit() {
+            var cell = cellWidth();
+            var el = term.element, parent = el && el.parentElement;
+            if (!cell || !parent) return null;
+            var ps = window.getComputedStyle(parent), es = window.getComputedStyle(el);
+            var width = Math.max(0, parseInt(ps.getPropertyValue('width'))) -
+                (parseInt(es.getPropertyValue('padding-right')) + parseInt(es.getPropertyValue('padding-left'))) -
+                scrollBarWidth();
+            if (isNaN(width)) return null;
+            // The small allowance keeps a width of exactly 80 cells from
+            // counting 79.99999 in floating point.
+            return Math.min(MAX_COLS, Math.max(2, Math.floor(width / cell + 1e-6)));
+        }
+
+        // One cell in CSS pixels, the way the canvas renderer sizes it:
+        // floor(letter * display scale) device pixels. Null before xterm has
+        // measured its letters.
+        function cellWidth() {
+            var cs = term._core && term._core._charSizeService;
+            if (!cs || !cs.width) return null;
+            var dpr = window.devicePixelRatio || 1;
+            var scaled = Math.floor(cs.width * dpr);
+            return scaled ? scaled / dpr : null;
+        }
+
+        // xterm-addon-fit leaves no room for a scrollbar when there is no
+        // scrollback.
+        function scrollBarWidth() {
+            var core = term._core;
+            if (term.options && term.options.scrollback === 0) return 0;
+            return core && core.viewport ? core.viewport.scrollBarWidth : 0;
         }
 
         // The pixel width the terminal needs for exactly 80 columns at the
@@ -101,12 +158,10 @@
         // not from dimensions.actualCellWidth, which is canvasWidth / cols and
         // drifts by a pixel when the terminal has fewer than 80 columns.
         function widthFor80() {
-            var core = term._core;
-            var cs = core && core._charSizeService;
+            var cs = term._core && term._core._charSizeService;
             if (!cs || !cs.width) return null;
             var dpr = window.devicePixelRatio || 1;
-            var sb = core.viewport ? core.viewport.scrollBarWidth : 0;
-            return Math.ceil(Math.floor(cs.width * dpr) * MAX_COLS / dpr + sb);
+            return Math.ceil(Math.floor(cs.width * dpr) * MAX_COLS / dpr + scrollBarWidth());
         }
 
         return { fit: fit, cols: function () { return term.cols; }, widthFor80: widthFor80 };
