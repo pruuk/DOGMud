@@ -10,8 +10,10 @@ the target, and everything before it is the item.
 
 <ansi fg="yellow">Examples:</ansi>
 
+::keep
   <ansi fg="command">plant iron dagger merchant</ansi>
   <ansi fg="command">plant potion chest</ansi>
+::
 
 Uses the same skill check as <ansi fg="command">steal</ansi>.
 Being hidden improves your chances. Cannot be used on
@@ -20,4 +22,6 @@ other players.
 Requires <ansi fg="skill">skullduggery</ansi> rank 1. Every character starts at
 rank 1, so anyone can try.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help steal</ansi>, <ansi fg="command">help skullduggery</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help steal</ansi>, <ansi fg="command">help skullduggery</ansi>
+::

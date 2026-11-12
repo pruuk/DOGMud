@@ -4,15 +4,17 @@ The <ansi fg="command">discord</ansi> command allows Mudlet client users to cust
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">discord</ansi>               - Shows current settings and available commands
   
   <ansi fg="command">discord info on|off</ansi>   - Enable/disable Discord application info
-  <ansi fg="command">discord status on|off</ansi> - Enable/disable Discord status updates
+  <ansi fg="command">discord status on|off</ansi>  Enable/disable Discord status updates
 
   <ansi fg="command">discord area on|off</ansi>   - Show/hide current area in status
   <ansi fg="command">discord party on|off</ansi>  - Show/hide party information
   <ansi fg="command">discord name on|off</ansi>   - Show/hide character name
   <ansi fg="command">discord level on|off</ansi>  - Show/hide character level
+::
   
 
 <ansi fg="yellow-bold">Notes:</ansi>
@@ -26,4 +28,6 @@ The <ansi fg="command">discord</ansi> command allows Mudlet client users to cust
 - Settings persist between sessions
 - Running <ansi fg="command">discord</ansi> without arguments shows current settings
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help client</ansi>, <ansi fg="command">checkclient</ansi> 
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help client</ansi>, <ansi fg="command">checkclient</ansi> 
+::

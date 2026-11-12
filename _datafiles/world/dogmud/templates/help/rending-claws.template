@@ -3,11 +3,15 @@
 Your fingers split and lengthen into hooked, serrated claws made for
 opening flesh.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive (Ravener)
 <ansi fg="yellow">Rarity:</ansi>   Uncommon
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Your unarmed strikes hit harder and tear ragged, bleeding wounds —
   the more blows you land, the worse the bleeding grows
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

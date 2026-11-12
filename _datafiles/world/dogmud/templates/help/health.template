@@ -34,6 +34,7 @@ when you are out of combat. Certain spells and items can
 speed the healing process.
 
 <ansi fg="yellow">Related: </ansi>
+::keep
   <ansi fg="command">help vitality</ansi>
   <ansi fg="command">help death</ansi>
   <ansi fg="command">help stamina</ansi>
@@ -41,4 +42,5 @@ speed the healing process.
   <ansi fg="command">help status</ansi>
   <ansi fg="command">help armor</ansi>
   <ansi fg="command">help toxicity</ansi>
+::
 

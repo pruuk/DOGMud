@@ -5,8 +5,12 @@ green — a soothing drink that aids recovery and eases fatigue.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       cooking (minimum 5)
   <ansi fg="yellow">Station:</ansi>     cooking fire
-  <ansi fg="yellow">Ingredients:</ansi> healers root (x1), water flask (x1)
+  <ansi fg="yellow">Ingredients: </ansi> healers root (x1), water flask (x1)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cooking</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cooking</ansi>, <ansi fg="command">help craft</ansi>
+::

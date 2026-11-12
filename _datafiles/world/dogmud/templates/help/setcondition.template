@@ -7,16 +7,22 @@ first search match).
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">setcondition [conditionId]</ansi>
+::
   Apply a condition to yourself, by id or name.
 
   <ansi fg="command">setcondition [target] [conditionId]</ansi>
   Apply a condition to a player or mob in the room, by id or name.
 
+::keep
   <ansi fg="command">setcondition search [text]</ansi>
+::
   Search conditions by name.
 
+::keep
   <ansi fg="command">setcondition list</ansi>
+::
   List every condition and its id.
 
 A condition whose spec stacks (multiple applications building up over

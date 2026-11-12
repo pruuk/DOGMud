@@ -71,7 +71,9 @@ Ranged-combat improves through use. Shots that connect have a
 chance to advance the skill. Perception governs aimed-shot
 accuracy and damage.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help ranged-combat</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help ranged-combat</ansi>,
   <ansi fg="command">help stamina</ansi>, <ansi fg="command">help equip</ansi>,
   <ansi fg="command">help sneak</ansi>, <ansi fg="command">help skullduggery</ansi>,
   <ansi fg="command">help ambush</ansi>, <ansi fg="command">help special</ansi>
+::

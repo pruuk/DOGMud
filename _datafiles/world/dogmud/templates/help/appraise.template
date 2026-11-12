@@ -5,7 +5,9 @@ reveal the properties of an item in your backpack.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">appraise sword</ansi>
+::
 
 Costs 20 gold per item. You must be in a room with a
 merchant.
@@ -18,5 +20,7 @@ If you know the <ansi fg="spellname">identify</ansi> spell, you
 can examine items anywhere without a merchant. See
 <ansi fg="command">help identify</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help identify</ansi>, <ansi fg="command">help inventory</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help identify</ansi>, <ansi fg="command">help inventory</ansi>
+::
 

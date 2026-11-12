@@ -7,14 +7,20 @@ venomous or toxic enemies.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast cleansing-wave</ansi>
+::
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Help Area
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> 10
   <ansi fg="yellow">Conv. Cost:  </ansi> 80
   <ansi fg="yellow">Effect:      </ansi> Purges poisons and Blood Boil from all allies in the room
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::

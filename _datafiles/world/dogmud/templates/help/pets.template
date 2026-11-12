@@ -7,7 +7,9 @@ carry objects for you.
 
 When you first get a <ansi fg="petname">pet</ansi>, you can give it a name:
 
-  <ansi fg="command">pet name {newname}</ansi> - This will name your pet.
+::rows
+  <ansi fg="command">pet name {newname}</ansi>  This will name your pet.
+::
 
 <ansi fg="alert-4">Beware</ansi>, you can only name a pet once. Try looking at your pet to get some quick
 information about their wellbeing.

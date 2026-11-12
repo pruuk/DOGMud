@@ -27,10 +27,12 @@ cooldown is consumed.
 
 <ansi fg="yellow">━━━ Range ━━━</ansi>
 
+::list
   - <ansi fg="stat">Same room:</ansi> <ansi fg="command">fire <target></ansi>
   - <ansi fg="stat">Adjacent room:</ansi> <ansi fg="command">fire <target> <direction></ansi>
       Cross-room fire does not pull you into melee. The target
       must close the distance to engage in melee combat.
+::
 
 <ansi fg="yellow">━━━ A Clear Shot ━━━</ansi>
 
@@ -48,9 +50,13 @@ ambush, and it leaves your cover intact. See
 <ansi fg="yellow">━━━ Progression ━━━</ansi>
 
 This skill improves through use:
+::list
   - Landing shots with a ranged weapon
   - Perception advances from aimed-shot attacks
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help fire</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help fire</ansi>,
   <ansi fg="command">help stamina</ansi>, <ansi fg="command">help skills</ansi>,
   <ansi fg="command">help ambush</ansi>, <ansi fg="command">help sneak</ansi>
+::

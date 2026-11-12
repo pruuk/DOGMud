@@ -5,11 +5,13 @@ contents.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">inventory</ansi>             Show all equipment and carried items.
   <ansi fg="command">inventory wood</ansi>         Filter to items with "wood" in the name.
   <ansi fg="command">inventory wearable</ansi>     Filter to wearable items.
   <ansi fg="command">inventory weapons</ansi>      Filter to weapons.
   <ansi fg="command">inventory potions</ansi>      Filter to potions.
+::
 
 Identical items are stacked together with a count, for example:
 <ansi fg="itemname">iron ingot</ansi> <ansi fg="uses-left">(x5)</ansi> means you are carrying five iron ingots.
@@ -29,5 +31,7 @@ To learn more about an item's properties, use the
 <ansi fg="spellname">identify</ansi> spell or visit a merchant and
 use <ansi fg="command">appraise</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help identify</ansi>, <ansi fg="command">help appraise</ansi>, <ansi fg="command">help item-names</ansi>, <ansi fg="command">help sort</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help identify</ansi>, <ansi fg="command">help appraise</ansi>, <ansi fg="command">help item-names</ansi>, <ansi fg="command">help sort</ansi>
+::
 

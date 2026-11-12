@@ -9,9 +9,13 @@ perfection, once reached, need not be temporary.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       enchanting (minimum 50)
   <ansi fg="yellow">Station:</ansi>     enchanting_circle
-  <ansi fg="yellow">Ingredients:</ansi> Healer's Root (x2), Chrysalis Setting (x1), Binding Paste (x1)
+  <ansi fg="yellow">Ingredients: </ansi> Healer's Root (x2), Chrysalis Setting (x1), Binding Paste (x1)
   <ansi fg="yellow">Learned:</ansi>     part of Veyra's bandolier secret: talk veyra
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help enchanting</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help enchanting</ansi>, <ansi fg="command">help craft</ansi>
+::

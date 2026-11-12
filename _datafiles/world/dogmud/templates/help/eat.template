@@ -17,7 +17,9 @@ reaches for the food first.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">eat sandwich</ansi>
+::
   This would eat your sandwich.
 
 Find out more about referring to items by name by typing

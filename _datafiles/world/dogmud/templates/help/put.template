@@ -4,8 +4,12 @@ The <ansi fg="command">put</ansi> command puts objects into containers.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">put stick in chest</ansi>
+::
   This would put a stick you hold into the chest in the room.
+::keep
   <ansi fg="command">put 10 gold into chest</ansi>
+::
   This would put 10 gold into the chest.
 

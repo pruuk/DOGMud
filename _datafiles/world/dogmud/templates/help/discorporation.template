@@ -3,8 +3,10 @@
 Your body stops being quite real — you are more presence than flesh,
 and blades pass through the blur of you.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
+::
 <ansi fg="yellow">Requires:</ansi> Ether Gland and Second Sight
 
 <ansi fg="yellow">Benefits:</ansi>
@@ -15,4 +17,6 @@ and blades pass through the blur of you.
   Barely made of matter, you draw little protection from armor and your
   physical strength wanes
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

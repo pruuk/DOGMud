@@ -16,9 +16,13 @@ it early. It is found, never taught.
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Help Single
   <ansi fg="yellow">School:      </ansi> Mental
   <ansi fg="yellow">Conv. Cost:  </ansi> 50
   <ansi fg="yellow">Effect:      </ansi> Takes the light away around its target
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help darkness</ansi>, <ansi fg="command">help chrysalis-glow</ansi>, <ansi fg="command">help spells</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help darkness</ansi>, <ansi fg="command">help chrysalis-glow</ansi>, <ansi fg="command">help spells</ansi>
+::

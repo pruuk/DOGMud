@@ -12,9 +12,13 @@ Consider a backup short blade.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 22)
   <ansi fg="yellow">Station:</ansi>     forge
-  <ansi fg="yellow">Ingredients:</ansi> lake-iron nodule (x3), iron ingot (x1),
+  <ansi fg="yellow">Ingredients: </ansi> lake-iron nodule (x3), iron ingot (x1),
                  leather strip (x1), sinew (x1)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>
+::

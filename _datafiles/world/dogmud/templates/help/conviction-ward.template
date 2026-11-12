@@ -10,9 +10,12 @@ caster's willpower and spellcasting skill.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">cast conviction-ward</ansi>              Wards yourself.
   <ansi fg="command">cast conviction-ward [target]</ansi>     Wards a nearby ally.
+::
 
+::rows
 <ansi fg="yellow">Base Folds:  </ansi> <ansi fg="white-bold">4</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Single ally (or self)</ansi>
 <ansi fg="yellow">Defense:     </ansi> <ansi fg="white-bold">None, help spells always apply</ansi>
@@ -21,10 +24,15 @@ caster's willpower and spellcasting skill.
 <ansi fg="yellow">Blocks:      </ansi> <ansi fg="white-bold">Physical damage only</ansi>
 <ansi fg="yellow">Conv. Cost:  </ansi> <ansi fg="white-bold">30</ansi>
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Enhancement</ansi>
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - A target holds one ward at a time. A new ward replaces the old one.
   - Potions, gear and mutations that protect you still add on top.
   - Casting it again on the same target renews it.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help wards</ansi>, <ansi fg="command">help conviction-bulwark</ansi>, <ansi fg="command">help chrysalis-cocoon</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help wards</ansi>, <ansi fg="command">help conviction-bulwark</ansi>, <ansi fg="command">help chrysalis-cocoon</ansi>
+::

@@ -5,16 +5,22 @@ Other players see an AFK tag next to your name in the room.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">afk</ansi>                Toggle AFK on or off.
   <ansi fg="command">afk <message></ansi>      Set AFK with a custom message.
+::
 
 <ansi fg="yellow">Examples: </ansi>
 
+::rows
   <ansi fg="command">afk</ansi>                You are now AFK.
   <ansi fg="command">afk getting coffee</ansi>  AFK: getting coffee
   <ansi fg="command">afk</ansi>                You are no longer AFK.
+::
 
 Typing any other command while AFK automatically clears the
 AFK status.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help online</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help online</ansi>
+::

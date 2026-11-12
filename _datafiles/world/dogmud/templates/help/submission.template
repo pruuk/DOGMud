@@ -12,6 +12,7 @@ in-round prompts. Combat is too fast for that.
 
 <ansi fg="yellow">━━━ Submission Policies ━━━</ansi>
 
+::rows
   <ansi fg="command">mercy</ansi>    — Release the opponent cleanly. They go on living.
             Brief recovery weakness. No persistent damage.
 
@@ -27,6 +28,7 @@ in-round prompts. Combat is too fast for that.
   <ansi fg="command">lethal</ansi>   — Finish them. Full death — including for players,
             with full deprogression and corpse loot. Requires
             confirmation the first time you set it.
+::
 
 <ansi fg="yellow">━━━ Position Matters ━━━</ansi>
 
@@ -40,7 +42,9 @@ interacts with grapples.
 
 <ansi fg="yellow">━━━ Setting Your Policy ━━━</ansi>
 
+::keep
   <ansi fg="command">set submission</ansi>
+::
     Show current policy.
 
   <ansi fg="command">set submission <mercy|subdue|cripple|lethal></ansi>
@@ -50,5 +54,7 @@ Your policy applies to ALL submissions you successfully lock in,
 against all opponents. Choose based on the kind of person your
 character is.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help grapple</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help grapple</ansi>,
   <ansi fg="command">help reach</ansi>
+::

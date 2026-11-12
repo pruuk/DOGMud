@@ -5,10 +5,12 @@ physical damage to all enemies in the room.
 
 <ansi fg="yellow">Crafting:</ansi>
 
-  <ansi fg="stat">Skill:</ansi> Alchemy (minimum 25)
-  <ansi fg="stat">Station:</ansi> Alchemy Bench
-  <ansi fg="stat">Ingredients:</ansi> Putrid Residue, Coal Dust, Bottle
-  <ansi fg="stat">Time:</ansi> 4 rounds
+::rows
+  <ansi fg="stat">Skill: </ansi> Alchemy (minimum 25)
+  <ansi fg="stat">Station: </ansi> Alchemy Bench
+  <ansi fg="stat">Ingredients: </ansi> Putrid Residue, Coal Dust, Bottle
+  <ansi fg="stat">Time: </ansi> 4 rounds
+::
 
 <ansi fg="yellow">Effect:</ansi>
 
@@ -25,4 +27,6 @@ Use with the <ansi fg="command">throw</ansi> command during combat.
   they go bad. Spoiled firebombs left in your backpack may
   explode!
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help throw</ansi>, <ansi fg="command">help sort</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help throw</ansi>, <ansi fg="command">help sort</ansi>, <ansi fg="command">help craft</ansi>
+::

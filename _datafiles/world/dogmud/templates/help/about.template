@@ -35,9 +35,11 @@ cure.
 Three moons hang in the sky of Gaius. The people of Thera study them,
 worship them, and build their calendars around them:
 
+::rows
   <ansi fg="yellow">Swiftmoon</ansi>     the large fast moon, linked to dexterity and quick thought
   <ansi fg="yellow">The Wanderer</ansi>  the middle moon, linked to perception and foresight
   <ansi fg="yellow">The Eye</ansi>       the small bright moon, linked to charisma and force of will
+::
 
 Their pull on the Chrysalis is real, and no one can say why. The temples
 call it divine favour and the almanac-keepers call it astrology. The oldest
@@ -55,6 +57,7 @@ such as <ansi fg="yellow">Thornwall</ansi> and the capital at <ansi fg="yellow">
 
 <ansi fg="yellow">━━━ What Kind of Game Is This? ━━━</ansi>
 
+::rows
 <ansi fg="white">Skill-based.</ansi>  There are no classes and no class restrictions. You become
   what you practice. Fight with weapons: weapon combat improves. Cast
   spells: spellcasting improves. Forge iron: blacksmithing improves. Skills
@@ -78,9 +81,11 @@ such as <ansi fg="yellow">Thornwall</ansi> and the capital at <ansi fg="yellow">
 <ansi fg="white">Crafting.</ansi>  Raw materials become gear through skill and a working
   station. A forge makes blades. An alchemy bench makes potions. What you
   can craft depends on your skill and what you can find or gather.
+::
 
 <ansi fg="yellow">If you've played other MUDs, three things work differently here:</ansi>
 
+::rows
 <ansi fg="white">Three pools, not two.</ansi>  Actions draw on Health, Stamina (SP), and
   Conviction (CP). Watch all three in a fight, not just health. Running a
   pool dry has consequences beyond that pool.
@@ -90,9 +95,11 @@ such as <ansi fg="yellow">Thornwall</ansi> and the capital at <ansi fg="yellow">
 
 <ansi fg="white">Death is not deletion.</ansi>  Falling routes you through injury and waking
   (and, if you've earned it, a justice system), never a lost character.
+::
 
 <ansi fg="yellow">━━━ Getting Started ━━━</ansi>
 
+::rows
   <ansi fg="command">look</ansi>              See your surroundings.
   <ansi fg="command">help combat</ansi>       How fighting works.
   <ansi fg="command">help loot</ansi>         Taking gear and gold from a corpse.
@@ -101,6 +108,7 @@ such as <ansi fg="yellow">Thornwall</ansi> and the capital at <ansi fg="yellow">
   <ansi fg="command">help status</ansi>       Your stats, health, and condition.
   <ansi fg="command">help mutations</ansi>    The Chrysalis mutation system.
   <ansi fg="command">help species</ansi>      Playable species and their traits.
+::
 
 <ansi fg="yellow">━━━ Under the Hood ━━━</ansi>
 

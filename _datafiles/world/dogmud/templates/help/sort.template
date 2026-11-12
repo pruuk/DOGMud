@@ -6,8 +6,10 @@ grenades into your equipped bandolier.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">sort</ansi>     Move materials, potions, and grenades into
            their containers.
+::
 
 You must have a component bag and/or a bandolier equipped.
 Materials are items flagged as crafting components (ores,
@@ -23,4 +25,6 @@ the appropriate container if one is equipped and has space.
 The <ansi fg="command">sort</ansi> command is for organizing items that were already
 in your backpack before you equipped the container.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help inventory</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help inventory</ansi>, <ansi fg="command">help craft</ansi>
+::

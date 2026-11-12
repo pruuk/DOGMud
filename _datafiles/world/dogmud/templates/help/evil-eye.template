@@ -3,11 +3,15 @@
 One of your eyes darkens to a fathomless, baleful thing that fixes on
 whatever you fight.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive (Trickster)
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   When you strike a foe, your baleful gaze fixes on them — their aim
   drifts and their guard sags under the curse
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

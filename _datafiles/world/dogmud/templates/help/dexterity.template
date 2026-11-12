@@ -14,6 +14,8 @@ Dexterity improves through use -- the more you rely on
 speed and agility in your adventures, the more it grows.
 
 <ansi fg="yellow">Related: </ansi>
+::keep
   <ansi fg="command">help status</ansi>
   <ansi fg="command">help combat</ansi>
+::
 

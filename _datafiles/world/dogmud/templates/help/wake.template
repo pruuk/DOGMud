@@ -4,7 +4,9 @@ Wake someone who is asleep in the same room as you.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">wake marn</ansi>
+::
 
 When you can only make out a shape, type <ansi fg="command">wake figure</ansi> (or
 <ansi fg="command">wake 2.figure</ansi> for the second one).

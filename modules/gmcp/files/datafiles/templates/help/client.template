@@ -18,4 +18,6 @@ This game supports various MUD clients with special features to enhance your gam
 - Custom UI elements (Mudlet only)
 - Client Mapping support (Mudlet only)
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mudletui</ansi>, <ansi fg="command">help mudletmap</ansi>, <ansi fg="command">checkclient</ansi> 
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mudletui</ansi>, <ansi fg="command">help mudletmap</ansi>, <ansi fg="command">checkclient</ansi> 
+::

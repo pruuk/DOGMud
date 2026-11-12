@@ -46,5 +46,7 @@ back on themselves and elementals roam freely.
   stake 100 gold or more. Sable names the word to type to
   enter.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help instances</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help instances</ansi>,
   <ansi fg="command">help arena</ansi>, <ansi fg="command">help party</ansi>
+::

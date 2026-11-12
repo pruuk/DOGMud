@@ -15,9 +15,11 @@ at once. It spends your special move. See <ansi fg="command">help ambush</ansi>.
 <ansi fg="yellow">━━━ Attack Mechanics ━━━</ansi>
 
 Your attack success is based on:
+::list
   - <ansi fg="stat">Combat Skill:</ansi> Weapon, Unarmed, or Ranged Combat
   - <ansi fg="stat">Dexterity:</ansi> Affects accuracy and swing count
   - <ansi fg="stat">Stamina:</ansi> Low stamina reduces hit chance and damage
+::
 
 <ansi fg="red">Critical Hits:</ansi> Skill advantage increases crit chance
 <ansi fg="red">Fumbles:</ansi> Even skilled attacks can go badly wrong
@@ -25,6 +27,7 @@ Your attack success is based on:
 <ansi fg="yellow">━━━ Unarmed Combat ━━━</ansi>
 
 Fighting with fists, claws, or bare hands:
+::list
   - <ansi fg="stat">Both Hands:</ansi> Attack with all empty hands (up to 6 fists
     with extra arms mutation)
   - <ansi fg="stat">Fist/Claws Weapons:</ansi> Count as unarmed, train the skill
@@ -37,22 +40,37 @@ Fighting with fists, claws, or bare hands:
   - <ansi fg="stat">Grapple Advantage:</ansi> Fists and claws fit comfortably
     in any grapple, and long weapons lose effectiveness in close
     quarters. See <ansi fg="command">help grapple</ansi>.
+::
 
 <ansi fg="yellow">━━━ Layered Defense System ━━━</ansi>
 
 When attacked, all available defenses are rolled simultaneously.
 The defense that wins by the widest margin is used:
 
+::list
   1. <ansi fg="stat">Dodge:</ansi> Unarmed Combat + Dexterity
+::
+::list
      - Available to everyone
+::
+::list
   2. <ansi fg="stat">Parry:</ansi> Weapon Combat + weapon parry rating
+::
+::list
      - Requires a weapon (not fists/claws)
+::
+::list
   3. <ansi fg="stat">Block:</ansi> Weapon Combat + shield block rating
+::
+::list
      - Requires a shield equipped
+::
+::list
   4. <ansi fg="stat">Quell:</ansi> Willpower + Spellcasting, against spells that
      attack the mind. Costs conviction.
   5. <ansi fg="stat">Defy:</ansi> Willpower + Rhetoric, against taunts. Costs
      conviction.
+::
 
 <ansi fg="yellow">━━━ Defense Crits ━━━</ansi>
 
@@ -76,21 +94,25 @@ the top of that range, when a defence goes perfectly.
 
 Wield two weapons for extra attacks, but with tradeoffs. An empty hand is not
 a second weapon, so a weapon and a free hand pay none of the penalty below.
+::list
   - <ansi fg="stat">Extra Attacks:</ansi> Offhand weapon gets reduced swing count
   - <ansi fg="stat">Accuracy Penalty:</ansi> Two weapons cost you hit chance. More
     weapon-combat skill makes the cost smaller
   - <ansi fg="stat">Skill Progression:</ansi> Each weapon trains its own skill
   - <ansi fg="stat">Defense:</ansi> Can parry with either weapon
+::
 
 <ansi fg="yellow">━━━ Special Combat Moves ━━━</ansi>
 
 Tactical moves with cooldowns that can turn the tide:
 
+::rows
   <ansi fg="command">bash</ansi>    - Shield strike with a chance to knock down
   <ansi fg="command">trip</ansi>    - Reliable leg sweep with light damage
   <ansi fg="command">kick</ansi>    - Strong strike with a chance to knock down
   <ansi fg="command">taunt</ansi>   - Verbal assault (conviction damage)
-  <ansi fg="command">grapple</ansi> - Grabs and restrains an opponent.
+  <ansi fg="command">grapple</ansi>  Grabs and restrains an opponent.
+::
 
 All share the special-move cooldown. Knockdowns apply prone.
 
@@ -100,17 +122,21 @@ decisively win a grapple round from a dominant position. See
 
 <ansi fg="yellow">━━━ Target Switching ━━━</ansi>
 
+::list
   - Use <ansi fg="command">attack <new-target></ansi> to retarget mid-combat
   - Free switch when your current target is dead or gone
   - Contested switch against a living target costs a round
+::
 
 <ansi fg="yellow">━━━ Resource Management ━━━</ansi>
 
-  <ansi fg="stat">Stamina:</ansi> Fuels attacks, physical defenses, ranged
+::rows
+  <ansi fg="stat">Stamina: </ansi> Fuels attacks, physical defenses, ranged
     actions, special moves, fleeing, and grapple upkeep.
-  <ansi fg="stat">Conviction:</ansi> Fuels spells, rhetoric actions, quell,
+  <ansi fg="stat">Conviction: </ansi> Fuels spells, rhetoric actions, quell,
     and defy, and is attacked by taunts.
-  <ansi fg="stat">Health:</ansi> Reach 0 and you die, then wake at safety
+  <ansi fg="stat">Health: </ansi> Reach 0 and you die, then wake at safety
+::
 
 For physical actions, load raises the price while the governing skill lowers
 it. Governing skill also lowers the price of acts of will. Voluntary actions
@@ -129,4 +155,6 @@ nothing.
   <ansi fg="command">help unarmed-combat</ansi>, <ansi fg="command">help stamina</ansi>,
   <ansi fg="command">help conviction</ansi>, <ansi fg="command">help skills</ansi>,
   <ansi fg="command">help progression</ansi>, <ansi fg="command">help ambush</ansi>,
+::keep
   <ansi fg="command">help sneak</ansi>
+::

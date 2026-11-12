@@ -15,16 +15,21 @@ little more of you to keep than a skeleton or a wraith.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">cast raise-zombie [corpse]</ansi>     Animate nearby remains.
+::
 
+::rows
 <ansi fg="yellow">Base Folds:  </ansi> Brief channel
 <ansi fg="yellow">Corpse:      </ansi> <ansi fg="white-bold">Requires modest remains</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Nearby corpse or ground loot</ansi>
 <ansi fg="yellow">Cast Cost:   </ansi> Modest, and paid only once
 <ansi fg="yellow">Held Cost:   </ansi> Modest, for as long as you keep it
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Manifestation</ansi>
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - The zombie appears under your command and aids you in combat.
   - Once raised, the undead servant remains active as a companion.
   - Use the <ansi fg="command">assess</ansi> command to evaluate a corpse's quality.
@@ -37,6 +42,9 @@ little more of you to keep than a skeleton or a wraith.
     buys you a larger following as well as a stronger one.
   - If your conviction is already spoken for, the raising is refused
     outright rather than leaving you weaker, and costs you nothing.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help manifestation</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cast</ansi>, <ansi fg="command">help manifestation</ansi>,
   <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help reservation</ansi>
+::

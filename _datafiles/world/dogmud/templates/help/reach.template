@@ -42,6 +42,7 @@ tracks it.
 
 <ansi fg="yellow">━━━ Tactical Notes ━━━</ansi>
 
+::list
   - Carrying a dagger in your offhand is a sound counter to
     grapplers. Each weapon is evaluated independently per swing,
     so the dagger swings at full damage in mount while your
@@ -53,7 +54,10 @@ tracks it.
   - You can manually remove a long weapon and fight unarmed. This
     is slower to set up than an offhand dagger but remains an
     option.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help grapple</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help grapple</ansi>,
   <ansi fg="command">help unarmed-combat</ansi>,
   <ansi fg="command">help weapon-combat</ansi>
+::

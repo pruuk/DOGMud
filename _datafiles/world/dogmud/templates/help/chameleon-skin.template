@@ -3,8 +3,10 @@
 Your skin runs with colour and shadow at will, folding you into any
 surroundings until you are all but invisible in the dark.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
+::
 <ansi fg="yellow">Requires:</ansi> Padded Soles and Compound Eyes (and skin)
 
 <ansi fg="yellow">Benefits:</ansi>
@@ -17,4 +19,6 @@ surroundings until you are all but invisible in the dark.
 
 <ansi fg="yellow">Conflicts:</ansi> Thick Hide, Bioluminescence
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

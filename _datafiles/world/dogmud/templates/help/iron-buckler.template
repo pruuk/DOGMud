@@ -5,8 +5,12 @@ into tight quarters, sturdy enough to turn aside a blade.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 5)
   <ansi fg="yellow">Station:</ansi>     forge
-  <ansi fg="yellow">Ingredients:</ansi> iron ingot (x2), wooden plank (x1)
+  <ansi fg="yellow">Ingredients: </ansi> iron ingot (x2), wooden plank (x1)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>
+::

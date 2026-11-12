@@ -7,6 +7,7 @@ to see everything you have equipped and carried.
 
 <ansi fg="yellow">━━━ Equipment Slots ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Weapon</ansi>       Your primary weapon.
   <ansi fg="yellow">Offhand</ansi>      A shield, parrying dagger, or second weapon.
   <ansi fg="yellow">Head</ansi>         Helmets, hoods, circlets.
@@ -22,6 +23,7 @@ to see everything you have equipped and carried.
   <ansi fg="yellow">Feet</ansi>         Boots, sandals, sabatons.
   <ansi fg="yellow">Components</ansi>   A crafting component bag (see below).
   <ansi fg="yellow">Light</ansi>        A candle, lantern or torch to see by.
+::
 
 <ansi fg="yellow">━━━ Back Slot: Cloaks vs. Backpacks ━━━</ansi>
 
@@ -83,19 +85,25 @@ backpack.
 
 Some mutations alter your available slots:
 
+::rows
   <ansi fg="yellow">Extra Arms</ansi>   Unlocks additional arm and wrist slots,
                grouped in pairs:
                Level 1-2: Pair B (arms 3-4, wrists 3-4)
                Level 3-4: Pair C (arms 5-6, wrists 5-6)
+::
 
                Two-handed weapons fill a whole pair. Shields
                and one-handed weapons fill a single slot.
                Arm 1 holds weapons only; arms 2-6 hold
                weapons or shields.
 
+::rows
   <ansi fg="yellow">Tail</ansi>         Replaces your legs slot with a tail slot.
                Changes how certain combat moves work.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help armor</ansi>, <ansi fg="command">help inventory</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help armor</ansi>, <ansi fg="command">help inventory</ansi>,
   <ansi fg="command">help component-bag</ansi>, <ansi fg="command">help leather-bandolier</ansi>,
   <ansi fg="command">help equip</ansi>, <ansi fg="command">help light</ansi>
+::

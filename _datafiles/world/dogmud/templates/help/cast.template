@@ -4,17 +4,23 @@ The <ansi fg="command">cast</ansi> command attempts to cast a learned spell.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast illum</ansi>
+::
   This would attempt to cast the "Illuminate" spell, if it's in your spell book.
 
   Spells can also be cast by using their shorthand/ID directly, such as: <ansi fg="command">illum</ansi>
 
 <ansi fg="yellow">━━━ Targets ━━━</ansi>
 
+::keep
   <ansi fg="command">cast heal Kesh</ansi>
+::
   Aim at someone by name.
 
+::keep
   <ansi fg="command">cast heal</ansi>
+::
   With no name, a harmful spell aims at your foe and a helpful one at you.
 
 You must be able to see what you aim at. In the dark you can cast only
@@ -38,5 +44,7 @@ shares the special-move cooldown.
 You cannot begin a cast while crafting or salvaging. Finish your
 work first.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help grapple</ansi>, <ansi fg="command">help special</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help grapple</ansi>, <ansi fg="command">help special</ansi>
+::
 

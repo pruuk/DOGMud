@@ -9,13 +9,17 @@ dodge while others are caught in the blast. A badly
 fumbled throw can backfire and hit you instead.
 
 Throwable items include grenades crafted through alchemy:
+::rows
   <ansi fg="itemname">flashbang</ansi>     Stuns and blinds targets.
   <ansi fg="itemname">firebomb</ansi>      Explodes for physical damage.
   <ansi fg="itemname">toxic flask</ansi>   Releases a lingering toxic cloud.
+::
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">throw flashbang</ansi>
+::
 
 You can throw to open a fight as well as during one. A
 throw that connects draws the creatures it hit onto you.
@@ -41,6 +45,8 @@ spent, the exact item, cooldown, and combat state remain unchanged.
 
   Use <ansi fg="command">sort</ansi> to move grenades into your bandolier.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help flashbang</ansi>, <ansi fg="command">help firebomb</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help flashbang</ansi>, <ansi fg="command">help firebomb</ansi>,
   <ansi fg="command">help toxic-flask</ansi>, <ansi fg="command">help stamina</ansi>,
   <ansi fg="command">help craft</ansi>, <ansi fg="command">help sort</ansi>
+::

@@ -4,7 +4,9 @@ The <ansi fg="command">mudletmap</ansi> command sends map data to Mudlet clients
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">mudletmap</ansi> - Sends or refreshes map data to your Mudlet client
+::rows
+  <ansi fg="command">mudletmap</ansi>  Sends or refreshes map data to your Mudlet client
+::
 
 <ansi fg="yellow-bold">Notes:</ansi>
 - This command only works if you are using a Mudlet client
@@ -12,4 +14,6 @@ The <ansi fg="command">mudletmap</ansi> command sends map data to Mudlet clients
 - This command runs automatically when you log in with Mudlet
 - If your map isn't displaying properly, you can run this command to refresh it
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mudletui</ansi>, <ansi fg="command">checkclient</ansi> 
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mudletui</ansi>, <ansi fg="command">checkclient</ansi> 
+::

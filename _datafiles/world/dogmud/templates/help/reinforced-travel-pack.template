@@ -6,15 +6,21 @@ The best weight reduction available for the <ansi fg="yellow">Back</ansi> slot.
 
 <ansi fg="yellow">━━━ Stats ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Weight Reduction:</ansi>  50% of backpack contents
   <ansi fg="yellow">Protection:</ansi>        slight physical mitigation
   <ansi fg="yellow">Slot:</ansi>              Back
+::
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       tailoring (minimum 25)
   <ansi fg="yellow">Station:</ansi>     loom
-  <ansi fg="yellow">Ingredients:</ansi> leather strip (x4), cloth strip (x2),
+  <ansi fg="yellow">Ingredients: </ansi> leather strip (x4), cloth strip (x2),
                thread spool (x2), bone needle (x2)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help inventory</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help inventory</ansi>
+::

@@ -11,10 +11,14 @@ when facing venomous creatures or cursed environments.
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Help Single
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> N/A
   <ansi fg="yellow">Conv. Cost:  </ansi> 75
   <ansi fg="yellow">Effect:      </ansi> Purges poisons and afflictions from a single target
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::

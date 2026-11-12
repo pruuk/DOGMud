@@ -7,11 +7,13 @@ becomes the ambush on its own.
 
 <ansi fg="yellow">━━━ Setting One Up ━━━</ansi>
 
+::list
   1. Use <ansi fg="command">sneak</ansi> to slip out of sight.
   2. For a melee ambush, use <ansi fg="command">cooldowns</ansi> to check that your special
      move has come back. A shot does not need it.
   3. <ansi fg="command">attack <target></ansi> to open in melee, or <ansi fg="command">fire <target></ansi> to open
      from cover.
+::
 
 Requires the <ansi fg="skill">skullduggery</ansi> skill, which is what hides you in the first place.
 

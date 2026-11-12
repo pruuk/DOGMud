@@ -6,4 +6,6 @@ guild members who are online.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">gc <message></ansi>   - Say something to your guild
+::

@@ -5,9 +5,13 @@ about each one.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">spells</ansi>
+::
   To get help on a particular spell: <ansi fg="command">help spell [spellId]</ansi>
+::rows
   To cast a spell: <ansi fg="command">cast [spellId]</ansi>  (or just type the spell ID directly)
+::
 
 <ansi fg="yellow">How spellcasting works — folds:</ansi>
 
@@ -56,4 +60,6 @@ Initiating a cast uses the shared <ansi fg="white-bold">special-move</ansi> slot
 kick, trip, or begin another cast until that cooldown clears. See
 <ansi fg="command">help special</ansi> for details.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help special</ansi>, <ansi fg="command">help cooldowns</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cast</ansi>, <ansi fg="command">help special</ansi>, <ansi fg="command">help cooldowns</ansi>
+::

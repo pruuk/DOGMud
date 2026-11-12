@@ -23,4 +23,6 @@ and the cycle begins anew.
 <ansi fg="yellow">Bounties</ansi>: serious crimes can put a price on your head that others
 may collect. See <ansi fg="command">help bounty</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">arrest</ansi>, <ansi fg="command">fine</ansi>, <ansi fg="command">payfine</ansi>, <ansi fg="command">bounty</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">arrest</ansi>, <ansi fg="command">fine</ansi>, <ansi fg="command">payfine</ansi>, <ansi fg="command">bounty</ansi>
+::

@@ -3,8 +3,10 @@
 A charge crawls across your skin -- strike it and it strikes back in a
 snapping arc.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive (one flavor of Reflect Skin)
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   A share of the harm done to you lashes back into whoever struck you,
@@ -16,4 +18,6 @@ snapping arc.
   you is decided by the moons on the night it wakes. They cannot be
   held together.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

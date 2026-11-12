@@ -6,7 +6,9 @@ without having to walk into each room.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">scan</ansi>
+::
   Scans all visible exits and reports what you see in each
   adjacent room.
 
@@ -19,4 +21,6 @@ Secret exits are not revealed by scanning.
 
 <ansi fg="yellow">See Also:</ansi>
 
+::keep
   <ansi fg="command">help look</ansi>
+::

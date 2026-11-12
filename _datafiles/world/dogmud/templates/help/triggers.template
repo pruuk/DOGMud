@@ -20,6 +20,7 @@ an optional condition to decide what to do.
   <ansi fg="command">Triggers & Timers</ansi> panel — there is no typed
   command for them.
 
+::rows
   <ansi fg="command">+ New</ansi>         Open the editor to create a trigger.
   <ansi fg="command">Toggle</ansi>        Enable or disable a trigger without
                  deleting it. Disabled triggers never fire.
@@ -27,6 +28,7 @@ an optional condition to decide what to do.
                  once.
   <ansi fg="command">Right-click</ansi>   Open the context menu to Edit, Duplicate,
                  or Remove a trigger.
+::
 
 <ansi fg="yellow">Patterns & wildcards:</ansi>
 
@@ -37,15 +39,19 @@ an optional condition to decide what to do.
 
   You can use those captures inside your commands:
 
+::rows
     Pattern:  <ansi fg="command">* hits you for * damage.</ansi>
     Command:  <ansi fg="command">say $1 just hit me!</ansi>
+::
 
   If the line <ansi fg="command">A troll hits you for heavy damage.</ansi>
   matches, then <ansi fg="command">$1</ansi> is <ansi fg="command">A troll</ansi> and <ansi fg="command">$2</ansi> is <ansi fg="command">heavy</ansi>.
 
   Separate multiple commands with a semicolon:
 
+::keep
     <ansi fg="command">cast heal;say Healing up!</ansi>
+::
 
 <ansi fg="yellow">Optional condition (if/else):</ansi>
 
@@ -55,10 +61,14 @@ an optional condition to decide what to do.
 
   The condition has five sources:
 
+::keep
   <ansi fg="command">HP % / SP % / CP %</ansi>
+::
     Check your current usable pool percentage.
-    Operators: <ansi fg="command">is below</ansi>, <ansi fg="command">is above</ansi>, <ansi fg="command">equals</ansi>.
-    Value: a number from 0 to 100.
+::rows
+    Operators:  <ansi fg="command">is below</ansi>, <ansi fg="command">is above</ansi>, <ansi fg="command">equals</ansi>.
+    Value:  a number from 0 to 100.
+::
 
     Pool percentages are measured against your
     <ansi fg="command">usable (unreserved)</ansi> pool, not the full pool.
@@ -67,29 +77,45 @@ an optional condition to decide what to do.
     your usable health bar is below 30%, not the whole
     bar.
 
+::keep
   <ansi fg="command">My conditions</ansi>
+::
     Check whether a status effect is active on you.
-    Operators: <ansi fg="command">includes</ansi>, <ansi fg="command">excludes</ansi>.
-    Value: a status name (e.g. <ansi fg="command">poisoned</ansi>, <ansi fg="command">bleeding</ansi>).
+::rows
+    Operators:  <ansi fg="command">includes</ansi>, <ansi fg="command">excludes</ansi>.
+    Value:  a status name (e.g. <ansi fg="command">poisoned</ansi>, <ansi fg="command">bleeding</ansi>).
+::
 
+::keep
   <ansi fg="command">A pattern capture</ansi>
+::
     Check the text captured by a wildcard (<ansi fg="command">$1</ansi>, <ansi fg="command">$2</ansi>...).
-    Operators: <ansi fg="command">equals</ansi>, <ansi fg="command">contains</ansi>.
-    Value: the text to compare against.
+::rows
+    Operators:  <ansi fg="command">equals</ansi>, <ansi fg="command">contains</ansi>.
+    Value:  the text to compare against.
+::
 
+::keep
   <ansi fg="command">My target</ansi>
+::
     Check the name of your current combat target.
-    Operators: <ansi fg="command">is one of</ansi>, <ansi fg="command">is not one of</ansi>.
-    Value: a comma-separated list of names. Matches
-    any name in the list.
+::rows
+    Operators:  <ansi fg="command">is one of</ansi>, <ansi fg="command">is not one of</ansi>.
+    Value:  a comma-separated list of names. Matches
+      any name in the list.
+::
 
+::keep
   <ansi fg="command">The ability cooldown</ansi>
+::
     Your special abilities — kick, trip, bash, grapple,
     taunt, rally, warcry, and casting any spell — all share
     one cooldown. This checks whether that shared cooldown
     is free (no value to enter).
-    Operators: <ansi fg="command">is ready</ansi>, <ansi fg="command">is not ready</ansi>.
-    "Ready" means you are not currently on that cooldown.
+::rows
+    Operators:  <ansi fg="command">is ready</ansi>, <ansi fg="command">is not ready</ansi>.
+      "Ready" means you are not currently on that cooldown.
+::
 
 <ansi fg="yellow">Cooldown:</ansi>
 
@@ -104,11 +130,13 @@ an optional condition to decide what to do.
   matches, you can push it onto a shared action queue
   that drains one command per ability cooldown.
 
+::rows
   <ansi fg="command">Fire immediately</ansi>  Default. The command runs right now.
   <ansi fg="command">Queue at back</ansi>     Adds the command to the end of the queue.
   <ansi fg="command">Queue at front</ansi>    Adds it to the front — priority. If several
                      "front" items land at once they keep the
                      order they arrived in (priority FIFO).
+::
 
   Kick, trip, bash, grapple, taunt, rally, warcry,
   and every spell all share <ansi fg="command">one</ansi> ability cooldown. When
@@ -116,13 +144,15 @@ an optional condition to decide what to do.
   triggers can all queue up and fire in sequence as
   the cooldown frees — instead of stomping each other.
 
-  <ansi fg="command">Dedup:</ansi> if the same command is already waiting in
-  the queue, the trigger will not add a second copy.
-  The queue holds at most <ansi fg="command">10</ansi> entries.
+::rows
+  <ansi fg="command">Dedup: </ansi> if the same command is already waiting in
+    the queue, the trigger will not add a second copy.
+    The queue holds at most <ansi fg="command">10</ansi> entries.
 
-  <ansi fg="command">Clear:</ansi> the panel has a Clear button that empties the
-  queue instantly. The queue also clears on death and
-  on any page reload or reconnect.
+  <ansi fg="command">Clear: </ansi> the panel has a Clear button that empties the
+    queue instantly. The queue also clears on death and
+    on any page reload or reconnect.
+::
 
   <ansi fg="command">No auto-retry.</ansi> If a queued action fails — say, you
   lose concentration mid-cast — the queue does not
@@ -135,40 +165,56 @@ an optional condition to decide what to do.
 
 <ansi fg="yellow">Examples:</ansi>
 
+::keep
   <ansi fg="command">Auto-eat when hungry</ansi>
+::
+::rows
     Pattern:  <ansi fg="command">*you are hungry*</ansi>
     Command:  <ansi fg="command">eat ration</ansi>
     Queue:    Fire immediately. No condition needed.
+::
 
+::keep
   <ansi fg="command">Reply using a capture</ansi>
+::
+::rows
     Pattern:  <ansi fg="command">* tells you '*'</ansi>
     Command:  <ansi fg="command">reply $1, got it</ansi>
-    The first <ansi fg="command">*</ansi> captures the sender's name into
-    <ansi fg="command">$1</ansi>; the second <ansi fg="command">*</ansi> captures the message body
-    into <ansi fg="command">$2</ansi>. This example echoes the sender's name
-    back in the reply.
+      The first <ansi fg="command">*</ansi> captures the sender's name into
+      <ansi fg="command">$1</ansi>; the second <ansi fg="command">*</ansi> captures the message body
+      into <ansi fg="command">$2</ansi>. This example echoes the sender's name
+      back in the reply.
+::
 
   <ansi fg="command">Emergency heal at low HP (condition + priority queue)</ansi>
+::rows
     Pattern:  <ansi fg="command">*you are bleeding*</ansi>
-    If HP % is below <ansi fg="command">30</ansi>
+      If HP % is below <ansi fg="command">30</ansi>
     Then:     <ansi fg="command">cast heal self</ansi>
     Queue:    Queue at front
-    Jumps ahead of any pending re-casts so the heal
-    fires as soon as the cooldown opens.
+      Jumps ahead of any pending re-casts so the heal
+      fires as soon as the cooldown opens.
+::
 
   <ansi fg="command">Re-cast rally when it wears off (queue back)</ansi>
+::rows
     Pattern:  <ansi fg="command">*your rally drains away*</ansi>
     Command:  <ansi fg="command">rally</ansi>
     Queue:    Queue at back
-    Rally (and warcry) now print an expiry message
-    when they wear off, making this pattern reliable.
+      Rally (and warcry) now print an expiry message
+      when they wear off, making this pattern reliable.
+::
 
   <ansi fg="command">Re-queue a failed cast (queue back)</ansi>
+::rows
     Pattern:  <ansi fg="command">*lose your concentration*</ansi>
     Command:  <ansi fg="command">cast heal self</ansi>
     Queue:    Queue at back
-    Because the queue never auto-retries, this trigger
-    catches the failure message and puts the cast back
-    in line for the next free cooldown.
+      Because the queue never auto-retries, this trigger
+      catches the failure message and puts the cast back
+      in line for the next free cooldown.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help ticks</ansi>, <ansi fg="command">help macros</ansi>, <ansi fg="command">help alias</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help ticks</ansi>, <ansi fg="command">help macros</ansi>, <ansi fg="command">help alias</ansi>
+::

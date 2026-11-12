@@ -5,11 +5,13 @@ impact, impairing all enemies in the room.
 
 <ansi fg="yellow">Crafting:</ansi>
 
-  <ansi fg="stat">Skill:</ansi> Alchemy (minimum 35)
-  <ansi fg="stat">Station:</ansi> Alchemy Bench
-  <ansi fg="stat">Ingredients:</ansi> Putrid Residue (x2), Salt Pouch (x2),
+::rows
+  <ansi fg="stat">Skill: </ansi> Alchemy (minimum 35)
+  <ansi fg="stat">Station: </ansi> Alchemy Bench
+  <ansi fg="stat">Ingredients: </ansi> Putrid Residue (x2), Salt Pouch (x2),
                Chrysalis Core, Bottle
-  <ansi fg="stat">Time:</ansi> 5 rounds
+  <ansi fg="stat">Time: </ansi> 5 rounds
+::
 
 <ansi fg="yellow">Effect:</ansi>
 
@@ -27,4 +29,6 @@ Use with the <ansi fg="command">throw</ansi> command during combat.
   they go bad. Spoiled flashbangs left in your backpack may
   go off!
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help throw</ansi>, <ansi fg="command">help sort</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help throw</ansi>, <ansi fg="command">help sort</ansi>, <ansi fg="command">help craft</ansi>
+::

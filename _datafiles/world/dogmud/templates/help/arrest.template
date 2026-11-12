@@ -23,13 +23,21 @@ taken in.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">set arrest</ansi>
+::
     Show your current arrest policy.
 
+::keep
   <ansi fg="command">set arrest surrender</ansi>
+::
     Go quietly when arrested (default).
 
+::keep
   <ansi fg="command">set arrest resist</ansi>
+::
     Fight the guards rather than be taken.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">justice</ansi>, <ansi fg="command">fine</ansi>, <ansi fg="command">payfine</ansi>, <ansi fg="command">bounty</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">justice</ansi>, <ansi fg="command">fine</ansi>, <ansi fg="command">payfine</ansi>, <ansi fg="command">bounty</ansi>
+::

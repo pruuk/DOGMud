@@ -10,11 +10,13 @@ different resources, and has different requirements.
 When attacked, all available defenses are rolled and the best
 result wins. Each defense uses different skills and resources:
 
+::rows
   <ansi fg="stat">Dodge</ansi>  low stamina cost, always available
   <ansi fg="stat">Parry</ansi>  moderate stamina cost, requires a weapon
   <ansi fg="stat">Block</ansi>  highest stamina cost, requires a shield
   <ansi fg="stat">Quell</ansi>  costs conviction, answers spells that attack the mind
   <ansi fg="stat">Defy</ansi>   costs conviction, answers taunts
+::
 
 <ansi fg="yellow">━━━ Degrees of Success ━━━</ansi>
 
@@ -34,14 +36,18 @@ which is what makes a long fight a war of attrition.
 
 Your first line of defense, available to everyone.
 
-  <ansi fg="stat">Skills Used:</ansi> Unarmed Combat + Dexterity
-  <ansi fg="stat">Stamina Cost:</ansi> Low
-  <ansi fg="stat">Requirements:</ansi> None (always available)
+::rows
+  <ansi fg="stat">Skills Used: </ansi> Unarmed Combat + Dexterity
+  <ansi fg="stat">Stamina Cost: </ansi> Low
+  <ansi fg="stat">Requirements: </ansi> None (always available)
+::
 
   <ansi fg="stat">Effectiveness Reduced By:</ansi>
+::list
   - Heavy armor (reduces mobility)
   - High encumbrance (too much weight)
   - Being prone (severely reduced)
+::
 
 Dodge is your bread-and-butter defense. Even heavily armored fighters rely
 on dodge as their first chance to take the force out of a blow.
@@ -50,16 +56,22 @@ on dodge as their first chance to take the force out of a blow.
 
 Use your weapon to deflect incoming attacks.
 
-  <ansi fg="stat">Skills Used:</ansi> Weapon Combat + weapon parry rating
-  <ansi fg="stat">Stamina Cost:</ansi> Moderate
-  <ansi fg="stat">Requirements:</ansi> Weapon equipped in primary or offhand
+::rows
+  <ansi fg="stat">Skills Used: </ansi> Weapon Combat + weapon parry rating
+  <ansi fg="stat">Stamina Cost: </ansi> Moderate
+  <ansi fg="stat">Requirements: </ansi> Weapon equipped in primary or offhand
+::
 
   <ansi fg="stat">Bonuses:</ansi>
+::list
   - Two-handed weapons get parry bonus
   - Can parry with either hand when dual wielding
+::
 
   <ansi fg="stat">Penalties:</ansi>
+::list
   - Being prone (noticeably reduced)
+::
 
 Parry is more stamina-intensive than dodge but can be very effective with
 the right weapon. Two-handed weapons excel at parrying.
@@ -68,17 +80,23 @@ the right weapon. Two-handed weapons excel at parrying.
 
 Use your shield to absorb the blow.
 
-  <ansi fg="stat">Skills Used:</ansi> Weapon Combat + shield block rating
-  <ansi fg="stat">Stamina Cost:</ansi> High (most expensive defense)
-  <ansi fg="stat">Requirements:</ansi> Shield equipped in offhand
+::rows
+  <ansi fg="stat">Skills Used: </ansi> Weapon Combat + shield block rating
+  <ansi fg="stat">Stamina Cost: </ansi> High (most expensive defense)
+  <ansi fg="stat">Requirements: </ansi> Shield equipped in offhand
+::
 
   <ansi fg="stat">Benefits:</ansi>
+::list
   - High effectiveness with quality shields
   - Works reasonably well even when prone (slightly reduced)
+::
 
   <ansi fg="stat">Penalties:</ansi>
+::list
   - Highest stamina cost
   - Cannot dual wield weapons (shield takes offhand slot)
+::
 
 Block is your final defense layer. Shields are stamina-hungry but provide
 excellent protection when your other defenses fail.
@@ -91,9 +109,11 @@ excellent protection when your other defenses fail.
   imposes severe combat penalties.
 
   <ansi fg="stat">Equipment Choices:</ansi>
+::list
   - Dual wield: More attacks, only dodge and parry
   - Sword + Shield: Fewer attacks, all three defenses
   - Two-handed weapon: Moderate attacks, strong parry, no block
+::
 
   <ansi fg="stat">While Prone:</ansi>
   All defenses are severely reduced when knocked down, and attacks against
@@ -114,12 +134,14 @@ excellent protection when your other defenses fail.
 A defense does not only spare you damage. Defend decisively enough and
 your opponent leaves an opening:
 
+::list
   - A decisive dodge, parry or block earns a free answering swing the
     attacker must defend in turn, at reduced damage. A decisive quell
     earns the same.
   - A decisive defy answers with words instead: a retort that wounds
     the other side's nerve, whether they taunted you or tried to charm
     you.
+::
 
 You do not choose this and it costs you no action. It falls out of
 defending well, which is another reason to carry defenses you can
@@ -127,19 +149,23 @@ actually use.
 
 Two things worth knowing:
 
+::list
   - Every attack channel can be answered, not just weapons.
   - Reach and aim decide it. Someone shooting you from another room
     cannot be answered, because you cannot reach them. A working or a
     sweep that reaches everyone in the room earns no answer either: the
     free strike is for an attack aimed at you alone.
+::
 
 <ansi fg="yellow">━━━ Defense Skills ━━━</ansi>
 
 Improve your defenses by progressing these skills:
 
-  <ansi fg="stat">Unarmed Combat:</ansi> Improves dodge effectiveness
-  <ansi fg="stat">Weapon Combat:</ansi> Improves parry and block effectiveness
-  <ansi fg="stat">Dexterity Stat:</ansi> Improves dodge chance (use-based progression)
+::rows
+  <ansi fg="stat">Unarmed Combat: </ansi> Improves dodge effectiveness
+  <ansi fg="stat">Weapon Combat: </ansi> Improves parry and block effectiveness
+  <ansi fg="stat">Dexterity Stat: </ansi> Improves dodge chance (use-based progression)
+::
 
 Train these skills through combat and see your survivability increase
 dramatically.

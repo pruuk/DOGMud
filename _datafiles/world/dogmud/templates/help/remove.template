@@ -5,11 +5,17 @@ and returns it to your backpack.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">remove stick</ansi>
+::
   Stop wielding the stick and put it in your backpack.
+::keep
   <ansi fg="command">remove cloak</ansi>
+::
   Take off the cloak and put it in your backpack.
+::keep
   <ansi fg="command">remove all</ansi>
+::
   Take off everything you have equipped.
 
 Cursed items refuse to be removed. Anything a companion is wearing

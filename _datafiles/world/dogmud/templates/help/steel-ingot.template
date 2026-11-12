@@ -5,8 +5,12 @@ metal used in advanced armors, shields, and high-quality weapons.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 4)
   <ansi fg="yellow">Station:</ansi>     forge
-  <ansi fg="yellow">Ingredients:</ansi> iron ingot (x3), coal dust (x1)
+  <ansi fg="yellow">Ingredients: </ansi> iron ingot (x3), coal dust (x1)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>
+::

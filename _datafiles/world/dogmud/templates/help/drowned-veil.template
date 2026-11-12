@@ -8,9 +8,13 @@ casting.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       enchanting (minimum 40)
   <ansi fg="yellow">Station:</ansi>     enchanting circle
-  <ansi fg="yellow">Ingredients:</ansi> stillwater pearl (x2), chrysalis setting (x2),
+  <ansi fg="yellow">Ingredients: </ansi> stillwater pearl (x2), chrysalis setting (x2),
                  binding paste (x1)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help enchanting</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help enchanting</ansi>, <ansi fg="command">help craft</ansi>
+::

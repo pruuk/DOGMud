@@ -8,20 +8,24 @@ reputation with the issuing faction.
 
   <ansi fg="command">bounty list</ansi> [<ansi fg="yellow">filter</ansi>]
     List open bounties. Optional filter:
+::rows
       <ansi fg="yellow">mob</ansi>                 only bounties on creatures
       <ansi fg="yellow">player</ansi>              only bounties on players
       <ansi fg="yellow"><faction-slug></ansi>       only bounties from that faction
                            e.g. <ansi fg="command">bounty list thornwall_guards</ansi>
+::
 
   <ansi fg="command">bounty show</ansi> <ansi fg="yellow"><id></ansi>
     Show full detail of a single open bounty.
 
 <ansi fg="yellow">Examples:</ansi>
 
+::keep
   <ansi fg="command">bounty list</ansi>
   <ansi fg="command">bounty list mob</ansi>
   <ansi fg="command">bounty list thornwall_guards</ansi>
   <ansi fg="command">bounty show 3</ansi>
+::
 
 Notice boards in guard barracks and constabulary offices also
 display current postings in-fiction.

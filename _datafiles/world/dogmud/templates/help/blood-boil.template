@@ -7,10 +7,13 @@ cannot stop the damage once the blood begins to cook.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast blood-boil [target]</ansi>
+::
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Harm Single
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> 6
@@ -19,5 +22,8 @@ cannot stop the damage once the blood begins to cook.
                  softens what lands
   <ansi fg="yellow">Effect:      </ansi> Damage over time: the target bleeds for several
                  rounds. Purge Affliction or Cleansing Wave ends it
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::

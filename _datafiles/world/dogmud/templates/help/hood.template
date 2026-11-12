@@ -2,8 +2,10 @@
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">hood</ansi>     Close the hood of the lantern in your light slot.
   <ansi fg="command">unhood</ansi>   Open it again.
+::
 
 A hooded lantern trims its light to your eyes every time you walk
 into a new place, so it never dazzles you there.
@@ -18,4 +20,6 @@ eye for detail all suffer until you move on.
 
 Look at your lantern to find its hood.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help equipment</ansi>, <ansi fg="command">help light</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help equipment</ansi>, <ansi fg="command">help light</ansi>
+::

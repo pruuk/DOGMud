@@ -6,6 +6,8 @@ Typing <ansi fg="command">go</ansi> is unnecessary though, you can just type the
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">go north</ansi>
+::
   This is identical to typing <ansi fg="command">north</ansi> by itself to exit the room.
 

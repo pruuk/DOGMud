@@ -3,11 +3,15 @@
 A resonating organ behind your sternum emits a subsonic grind that
 scatters the concentration of anyone fighting near you.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive (aura)
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   While you fight, enemies in the room with you are disrupted — their
   aim wanders and their spellcraft falters
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

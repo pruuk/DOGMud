@@ -6,24 +6,34 @@ damage. It attacks their will to fight rather than their body.
 
 <ansi fg="yellow">Requirements:</ansi>
 
+::list
   - Must be in active combat
   - Cannot be used if special move cooldown is active
+::
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">taunt</ansi>
+::
   Hurl a scathing verbal attack at your current combat target
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Hit Check:</ansi> Opposed roll
+::rows
+  <ansi fg="stat">Hit Check: </ansi> Opposed roll
+::
+::list
     - Attacker: Charisma + Rhetoric skill
     - Defender: Willpower + Rhetoric skill
-  <ansi fg="stat">Damage:</ansi> Based on Charisma, Rhetoric skill, and target's
+::
+::rows
+  <ansi fg="stat">Damage: </ansi> Based on Charisma, Rhetoric skill, and target's
     conviction mitigation
-  <ansi fg="stat">Damage Type:</ansi> Conviction (mental/social)
-  <ansi fg="stat">Cooldown:</ansi> Shared by every special move. See <ansi fg="command">help special</ansi>.
-  <ansi fg="stat">Skill:</ansi> Progresses Rhetoric
+  <ansi fg="stat">Damage Type: </ansi> Conviction (mental/social)
+  <ansi fg="stat">Cooldown: </ansi> Shared by every special move. See <ansi fg="command">help special</ansi>.
+  <ansi fg="stat">Skill: </ansi> Progresses Rhetoric
+::
 
 Taunting spends Conviction and requires full payment before the contest or
 engagement begins. <ansi fg="skill">Rhetoric</ansi> lowers the price; carried

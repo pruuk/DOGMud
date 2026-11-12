@@ -18,12 +18,14 @@ thing. For a sign, a book or writing on a wall, <ansi fg="command">read</ansi> w
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">look</ansi>              Look at the room you are in.
   <ansi fg="command">look [thing]</ansi>      Look closely at a colored word in the room.
   <ansi fg="command">look north</ansi>        Peer into the room to the north.
   <ansi fg="command">look dave</ansi>         Look at the player or NPC named dave.
   <ansi fg="command">look sword</ansi>        Examine a sword you are carrying or wearing.
   <ansi fg="command">look 2.sword</ansi>      Examine the second sword (backpack + equipped).
+::
 
 The <ansi fg="command">look</ansi> command searches your backpack and equipped
 items as a single pool. If you have a dagger in your pack and
@@ -38,5 +40,7 @@ type <ansi fg="command">search</ansi> and its name, such as <ansi fg="command">s
 such as push or pry are not needed. If you type one, the game will
 point you to <ansi fg="command">look</ansi> or <ansi fg="command">search</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help search</ansi>, <ansi fg="command">help item-names</ansi>, <ansi fg="command">help identify</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help search</ansi>, <ansi fg="command">help item-names</ansi>, <ansi fg="command">help identify</ansi>
+::
 

@@ -15,6 +15,8 @@ hardship and push through physical challenges, the more
 it grows.
 
 <ansi fg="yellow">Related: </ansi>
+::keep
   <ansi fg="command">help health</ansi>
   <ansi fg="command">help status</ansi>
+::
 

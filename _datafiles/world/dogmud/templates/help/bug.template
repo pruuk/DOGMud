@@ -15,4 +15,6 @@ timestamp so we can track it down.
 Reports go into a log reviewed by admins. The more detail you give, the
 easier it is to fix.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help suggest</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help suggest</ansi>
+::

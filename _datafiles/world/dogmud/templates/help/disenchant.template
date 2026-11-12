@@ -5,13 +5,17 @@ item, severing the bond between the mutation and your gear.
 
 <ansi fg="yellow">━━━ Requirements ━━━</ansi>
 
+::rows
   Station:   An <ansi fg="yellow">enchanting_circle</ansi> must be in the room with you.
   Item:      The enchanted item must be in your inventory, not equipped.
              Once disenchanted, the item returns to its original state.
+::
 
 <ansi fg="yellow">━━━ Usage ━━━</ansi>
 
+::rows
   <ansi fg="command">disenchant <item></ansi>    Remove the enchantment from the named item.
+::
 
 <ansi fg="yellow">━━━ Warning ━━━</ansi>
 

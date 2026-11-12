@@ -6,34 +6,43 @@ pools, and equipment.
 
 <ansi fg="yellow">Resource Pools: </ansi>
 
+::rows
   <ansi fg="red">Health</ansi>     - Physical well-being (based on Vitality)
   <ansi fg="green">Stamina</ansi>    - Physical energy for combat moves
-  <ansi fg="cyan">Conviction</ansi> - Mental energy for spells and abilities
+    <ansi fg="cyan">Conviction</ansi> - Mental energy for spells and abilities
+::
 
 <ansi fg="yellow">Stats: </ansi>
 
+::rows
   <ansi fg="command">Strength</ansi>   - Physical might and carrying capacity
   <ansi fg="command">Dexterity</ansi>  - Speed, agility, and coordination
-  <ansi fg="command">Perception</ansi> - Awareness and attention to detail
+  <ansi fg="command">Perception</ansi>  Awareness and attention to detail
   <ansi fg="command">Vitality</ansi>   - Physical hardiness and endurance
   <ansi fg="command">Willpower</ansi>  - Mental fortitude and magical defense
   <ansi fg="command">Charisma</ansi>   - Personality and social influence
+::
 
 All stats improve through use -- the more you rely on a
 stat in your adventures, the more it grows over time.
 
 <ansi fg="yellow">Grapple Policies: </ansi>
 
-  <ansi fg="command">Submission</ansi> - What you do when you lock a submission.
+::rows
+  <ansi fg="command">Submission</ansi>  What you do when you lock a submission.
     (<ansi fg="command">mercy</ansi> / <ansi fg="command">subdue</ansi> / <ansi fg="command">cripple</ansi> / <ansi fg="command">lethal</ansi>)
     See <ansi fg="command">help submission</ansi>.
+::
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">status</ansi> - Show your character status
+::rows
+  <ansi fg="command">status</ansi>  Show your character status
+::
 
 <ansi fg="yellow">Related: </ansi>
 
+::keep
   <ansi fg="command">help skills</ansi>
   <ansi fg="command">help health</ansi>
   <ansi fg="command">help stamina</ansi>
@@ -41,4 +50,5 @@ stat in your adventures, the more it grows over time.
   <ansi fg="command">help armor</ansi>
   <ansi fg="command">help submission</ansi>
   <ansi fg="command">help progression</ansi>
+::
 

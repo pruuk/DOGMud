@@ -4,6 +4,8 @@ The <ansi fg="command">hire</ansi> command hires mercenaries offered by merchant
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">hire guard</ansi>
+::
   This hires the guard, if you have the gold and the merchant offers a guard.
 

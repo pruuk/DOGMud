@@ -5,12 +5,14 @@ bleeding-out stage, so nobody can save you after the blow lands. Any spell
 you were casting is lost, and every condition on you ends, good or bad.
 
 <ansi fg="yellow-bold">Death Penalties:</ansi>
+::list
   - One of your core attributes, picked at random, may permanently weaken
     slightly.
   - One of your skills, picked at random, may grow rusty and lose a little.
     Any skill can be picked, even one you use every day.
   - You wake at your home point with your health, stamina and conviction
     nearly empty. Rest and recover before you go back out.
+::
 
 <ansi fg="yellow-bold">A Word on Early Forgiveness:</ansi>
   Only your first few lessons are protected. Until you have trained a
@@ -32,5 +34,7 @@ when to <ansi fg="command">flee</ansi>.
   in either case.
   See <ansi fg="command">help submission</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help sethome</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help sethome</ansi>,
   <ansi fg="command">help submission</ansi>
+::

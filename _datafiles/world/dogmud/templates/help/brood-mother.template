@@ -3,8 +3,10 @@
 You have become a wellspring of life, endlessly birthing and
 sustaining a brood.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
+::
 <ansi fg="yellow">Requires:</ansi> Sustaining Presence and Hive Mind
 
 <ansi fg="yellow">Benefits:</ansi>
@@ -13,4 +15,6 @@ sustaining a brood.
   no companion at all, your body simply births another -- you are
   never without your brood
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

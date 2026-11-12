@@ -8,11 +8,17 @@ the cast will fail and no conviction is spent.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">cast fold-recall</ansi>     Teleport to your anchor.
+::
 
+::rows
 <ansi fg="yellow">Base Folds:  </ansi> <ansi fg="white-bold">6</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Self</ansi>
 <ansi fg="yellow">Conv. Cost:  </ansi> <ansi fg="white-bold">50</ansi>
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Enhancement</ansi>
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help fold-anchor</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help fold-anchor</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>
+::

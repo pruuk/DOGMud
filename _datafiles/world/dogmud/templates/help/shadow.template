@@ -5,8 +5,10 @@ automatically follow when they move.
 
 <ansi fg="yellow">Usage:</ansi>
 
-  <ansi fg="command">shadow [target]</ansi> - Begin shadowing
+::rows
+  <ansi fg="command">shadow [target]</ansi>  Begin shadowing
   <ansi fg="command">shadow stop</ansi>     - Stop shadowing
+::
 
 You must be hidden to begin. Each room transition checks
 whether observers spot you. Your target may also sense
@@ -14,4 +16,6 @@ they are being followed.
 
 Requires <ansi fg="skill">skullduggery</ansi> rank 3.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help sneak</ansi>, <ansi fg="command">help skullduggery</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help sneak</ansi>, <ansi fg="command">help skullduggery</ansi>
+::

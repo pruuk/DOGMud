@@ -24,9 +24,11 @@ automatically adapts to the combat situation:
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">kick</ansi>       Auto-selects variant based on position.
   <ansi fg="command">stomp</ansi>      Alias for kick (stomps if target is prone).
   <ansi fg="command">knee</ansi>       Alias for kick (knees if in dominant grapple position).
+::
 
 Requires being in combat. Shares one cooldown with every other special
 move (see <ansi fg="command">help special</ansi>). Uses the <ansi fg="skill">unarmed-combat</ansi> skill.
@@ -36,6 +38,8 @@ Carried load raises the price, while <ansi fg="skill">unarmed-combat</ansi>
 skill lowers it. If you are too spent, no cooldown, combat round, or effect is
 consumed.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help bash</ansi>, <ansi fg="command">help trip</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help bash</ansi>, <ansi fg="command">help trip</ansi>,
   <ansi fg="command">help grapple</ansi>, <ansi fg="command">help stamina</ansi>,
   <ansi fg="command">help special</ansi>
+::

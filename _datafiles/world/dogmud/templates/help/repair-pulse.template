@@ -11,4 +11,6 @@ stalling the party's progress.
   damage sponge — so peel off and destroy it before it heals the boss
   back to full. Ignore it and the fight will not end.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help core-discharge</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help core-discharge</ansi>
+::

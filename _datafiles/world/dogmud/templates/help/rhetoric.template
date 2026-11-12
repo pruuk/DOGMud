@@ -17,21 +17,25 @@ rather than their body.
 
 <ansi fg="yellow">Effects of Rank:</ansi>
 
+::list
   - Higher rhetoric sharply increases your conviction damage —
     a master's words cut several times deeper than a novice's
   - Adds to your hit check when attacking with taunt
   - Adds to your defense when targeted by taunt
+::
 
 <ansi fg="yellow">Profession:</ansi> Orator (Rhetoric + Bartering)
 
 <ansi fg="yellow">Abilities:</ansi>
 
+::rows
   <ansi fg="command">taunt</ansi>  — Verbal assault that deals conviction damage
              and forces the target to attack you
-  <ansi fg="command">warcry</ansi> — Battle cry that boosts physical damage for
+    <ansi fg="command">warcry</ansi> — Battle cry that boosts physical damage for
              all allies in the room
   <ansi fg="command">rally</ansi>  — Rallying shout that improves dodge, parry,
              and block for all allies in the room
+::
 
 All three share the special move cooldown.
 

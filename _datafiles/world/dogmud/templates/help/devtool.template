@@ -5,7 +5,9 @@ content. It is intended for use during zone construction and world maintenance.
 
 <ansi fg="yellow">Subcommands:</ansi>
 
+::keep
   <ansi fg="command">devtool check [zone]</ansi>
+::
   Scan every room in a zone and report broken or missing exits, dead links,
   and orphaned rooms.
 
@@ -17,7 +19,9 @@ content. It is intended for use during zone construction and world maintenance.
   Add a bidirectional exit between any two rooms, including across zone
   boundaries.
 
+::keep
   <ansi fg="command">devtool json [json_string]</ansi>
+::
   Execute any of the above operations via a structured JSON request. Returns
   a JSON response suitable for scripting or AI tool calls.
 

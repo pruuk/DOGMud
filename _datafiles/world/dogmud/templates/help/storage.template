@@ -5,7 +5,9 @@ retrieve items at storage locations around the world.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">storage</ansi>
+::
   See what you have in storage. Each slot is numbered.
 
   <ansi fg="command">storage add <item></ansi>
@@ -17,7 +19,9 @@ retrieve items at storage locations around the world.
   <ansi fg="command">storage add all <item></ansi>
   Put every one of that item you carry into storage.
 
+::keep
   <ansi fg="command">storage add all</ansi>
+::
   Put everything in your backpack and your component bag into
   storage.
 
@@ -31,10 +35,14 @@ retrieve items at storage locations around the world.
   Take every one of that item out of storage. You can also type
   <ansi fg="command">storage remove all.<item></ansi>.
 
+::keep
   <ansi fg="command">storage remove 3</ansi>
+::
   Take out whatever is in slot 3 of your storage list.
 
+::keep
   <ansi fg="command">storage remove all</ansi>
+::
   Take everything out of storage.
 
 When you add an item by name, your backpack is searched first,
@@ -51,5 +59,7 @@ bank</ansi> for details.
 No storage will hold a trinket stolen in the same town within
 the last three days. See <ansi fg="command">help steal</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help stow</ansi>, <ansi fg="command">help stash</ansi>, <ansi fg="command">help sort</ansi>, <ansi fg="command">help component-bag</ansi>,
-<ansi fg="command">help bank</ansi>, <ansi fg="command">help give</ansi>, <ansi fg="command">help sell</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help stow</ansi>, <ansi fg="command">help stash</ansi>, <ansi fg="command">help sort</ansi>, <ansi fg="command">help component-bag</ansi>,
+  <ansi fg="command">help bank</ansi>, <ansi fg="command">help give</ansi>, <ansi fg="command">help sell</ansi>
+::

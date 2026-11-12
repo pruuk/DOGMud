@@ -5,7 +5,11 @@ They get a look at it, and you keep it.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">show sword sam</ansi>
+::
   This shows your sword to sam.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help give</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help give</ansi>
+::

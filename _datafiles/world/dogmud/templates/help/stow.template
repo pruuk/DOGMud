@@ -7,8 +7,10 @@ backpack) and leaves your gear, consumables, and quest items alone.
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">stow</ansi> - Deposit every crafting component
-  into this room's storage
+::rows
+  <ansi fg="command">stow</ansi>  Deposit every crafting component
+    into this room's storage
+::
 
 You must be standing at a storage location to use it. For selective
 deposits or full control over what goes in and out, use the

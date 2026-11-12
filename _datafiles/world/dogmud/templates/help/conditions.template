@@ -27,5 +27,7 @@ and other harmful conditions.
   <ansi fg="stat">Stunned:</ansi>
     A brief stagger — lasts one round and clears automatically.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help submission</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help submission</ansi>,
   <ansi fg="command">help prone</ansi>
+::

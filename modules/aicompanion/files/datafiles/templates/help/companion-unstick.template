@@ -8,4 +8,6 @@ can use it about once a minute.
 
 <ansi fg="yellow">━━━ Usage ━━━</ansi>
 
+::rows
   <ansi fg="command">companion-unstick</ansi>    Reset your bonded companion.
+::

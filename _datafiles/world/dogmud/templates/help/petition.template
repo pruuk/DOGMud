@@ -16,4 +16,6 @@ automatically.
 Petitions go into a queue the staff review, even if none are online right now.
 Please send one at a time.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help bug</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help bug</ansi>
+::

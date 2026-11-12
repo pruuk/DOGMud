@@ -12,14 +12,20 @@ It is the stronger form of <ansi fg="command">Vital Surge</ansi>, and it costs m
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Help Single
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> 10
   <ansi fg="yellow">Conv. Cost:  </ansi> 80
   <ansi fg="yellow">Healing:     </ansi> Strong, over a while
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - A target holds one healing spell at a time. A new one replaces the old.
   - Salves, potions and food that heal you still add on top.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help vital-surge</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help vital-surge</ansi>, <ansi fg="command">help cast</ansi>
+::

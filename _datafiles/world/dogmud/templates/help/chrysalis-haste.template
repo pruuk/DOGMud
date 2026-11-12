@@ -10,10 +10,14 @@ the duration. Targets under haste act with unnatural swiftness.
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Help Single
   <ansi fg="yellow">School:      </ansi> Enhancement
   <ansi fg="yellow">Base Folds:  </ansi> 8
   <ansi fg="yellow">Conv. Cost:  </ansi> 70
   <ansi fg="yellow">Effect:      </ansi> Haste condition, accelerates movement and actions
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::

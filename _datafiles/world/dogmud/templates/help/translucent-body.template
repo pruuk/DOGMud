@@ -3,8 +3,10 @@
 Your flesh turns to glass — light slides through you, and at rest you
 all but vanish.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Very Rare
+::
 <ansi fg="yellow">Requires:</ansi> Quicksilver Nerves and Corvid Brain
 
 <ansi fg="yellow">Benefits:</ansi>
@@ -15,4 +17,6 @@ all but vanish.
   Your glassy flesh is fragile — it turns aside far less of any blow
   that does land
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

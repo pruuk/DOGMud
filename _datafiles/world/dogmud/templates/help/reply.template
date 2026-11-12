@@ -5,7 +5,9 @@ person who whispered to you.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">reply <message></ansi>    Whisper back to your last sender.
+::
 
 If no one has whispered to you since you logged in, or if the
 sender has gone offline, the command will let you know.
@@ -13,4 +15,6 @@ sender has gone offline, the command will let you know.
 Reply supports chains — when you reply, the other person can
 reply back to you, and so on.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help whisper</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help whisper</ansi>
+::

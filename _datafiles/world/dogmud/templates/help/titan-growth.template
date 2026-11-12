@@ -4,8 +4,10 @@ Your frame swells past any natural bound. You tower, and there is
 simply more of you to endure a fight, but a target this large is
 hard to miss.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Very Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Toughens your body, deepening your reserves of health
@@ -13,11 +15,15 @@ hard to miss.
   weapon in your weapon hand alone
 
 <ansi fg="yellow">Drawbacks:</ansi>
-  Slows your reflexes: your sheer size makes blows easier to land
-  on you
-  Your growing body holds part of your conviction in reserve, leaving
-  less for companions
+::rows
+  Slows your reflexes:  your sheer size makes blows easier to land
+    on you
+    Your growing body holds part of your conviction in reserve, leaving
+    less for companions
+::
 
 <ansi fg="yellow">Conflicts:</ansi> Hollow Bones
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

@@ -15,7 +15,9 @@ farther, read more detail from tracks, and pursue more distant prey.
 
 <ansi fg="yellow">━━━ The track Command ━━━</ansi>
 
+::rows
   <ansi fg="command">track <target></ansi>  Find the trail of a creature or player.
+::
 
 <ansi fg="yellow">━━━ Skill Progression ━━━</ansi>
 
@@ -23,12 +25,16 @@ The <ansi fg="skill">search</ansi> skill improves through use. Each time you
 track, you have a small chance to deepen your mastery. As your
 <ansi fg="skill">search</ansi> skill grows, you unlock new capabilities:
 
+::rows
   Novice tracker  — See the most recent trail through a room.
   Adept tracker   — See all recent trails, not just the most recent.
   Expert tracker  — Read detailed exit information from tracks.
   Master tracker  — Your map skill shows nearby creatures and players.
+::
 
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help search</ansi>, <ansi fg="command">help map</ansi>,
+::keep
   <ansi fg="command">help skills</ansi>
+::

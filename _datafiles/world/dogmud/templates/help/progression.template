@@ -38,6 +38,7 @@ What does <ansi fg="red">not</ansi> matter:
 Use it. That is genuinely the whole answer, but the useful version is
 knowing what trains what:
 
+::rows
   <ansi fg="stat">Strength</ansi>      Hitting things in melee.
   <ansi fg="stat">Dexterity</ansi>     Attacking, dodging and parrying. It fires constantly,
                 so each chance is deliberately smaller.
@@ -48,6 +49,7 @@ knowing what trains what:
   <ansi fg="stat">Willpower</ansi>     Casting, and holding a spell together when you are
                 struck.
   <ansi fg="stat">Charisma</ansi>      Taunting, haggling, and manifestation.
+::
 
 Skills train from the obvious thing: fighting with a weapon trains
 weapon-combat, brewing trains alchemy, studying a corpse trains
@@ -61,8 +63,10 @@ teaches you something too, though less than causing it.
 
 <ansi fg="yellow">━━━ Where To See It ━━━</ansi>
 
+::rows
   <ansi fg="command">status</ansi>   your attributes, described in words
   <ansi fg="command">skills</ansi>   your skills and their tiers
+::
 
 Both describe where you are rather than printing raw numbers, which is
 deliberate. The feel of a thing is what you play with.
@@ -73,4 +77,6 @@ Creatures bound to you improve the same way you do, within limits. A
 companion that has already come a very long way may have stopped
 improving. It keeps everything it has earned. See <ansi fg="command">help companion</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help skills</ansi>, <ansi fg="command">help status</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help companion</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help skills</ansi>, <ansi fg="command">help status</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help companion</ansi>
+::

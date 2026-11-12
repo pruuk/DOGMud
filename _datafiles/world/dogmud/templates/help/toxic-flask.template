@@ -5,10 +5,12 @@ cloud of choking poison that damages all enemies over time.
 
 <ansi fg="yellow">Crafting:</ansi>
 
-  <ansi fg="stat">Skill:</ansi> Alchemy (minimum 20)
-  <ansi fg="stat">Station:</ansi> Alchemy Bench
-  <ansi fg="stat">Ingredients:</ansi> Putrid Residue, Venom Sac, Bottle
-  <ansi fg="stat">Time:</ansi> 4 rounds
+::rows
+  <ansi fg="stat">Skill: </ansi> Alchemy (minimum 20)
+  <ansi fg="stat">Station: </ansi> Alchemy Bench
+  <ansi fg="stat">Ingredients: </ansi> Putrid Residue, Venom Sac, Bottle
+  <ansi fg="stat">Time: </ansi> 4 rounds
+::
 
 <ansi fg="yellow">Effect:</ansi>
 
@@ -25,4 +27,6 @@ Use with the <ansi fg="command">throw</ansi> command during combat.
   they go bad. Spoiled flasks left in your backpack may
   burst!
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help throw</ansi>, <ansi fg="command">help sort</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help throw</ansi>, <ansi fg="command">help sort</ansi>, <ansi fg="command">help craft</ansi>
+::

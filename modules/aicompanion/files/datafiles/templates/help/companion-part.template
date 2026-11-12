@@ -9,7 +9,9 @@ within a minute.
 
 <ansi fg="yellow">━━━ Usage ━━━</ansi>
 
+::rows
   <ansi fg="command">companion-part</ansi>    Part ways (asks once for confirmation).
+::
 
 Their memories are kept. An administrator can bring them back with
 <ansi fg="command">aicompanion grant</ansi>.

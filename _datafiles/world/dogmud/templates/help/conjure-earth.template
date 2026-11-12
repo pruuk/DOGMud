@@ -13,17 +13,22 @@ elemental.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast conjure-earth</ansi>
+::
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Neutral
   <ansi fg="yellow">School:      </ansi> Manifestation
   <ansi fg="yellow">Base Folds:  </ansi> Brief channel
   <ansi fg="yellow">Cast Cost:   </ansi> Notable, and paid only once
   <ansi fg="yellow">Held Cost:   </ansi> Heavy, for as long as you keep it
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - No component is required to cast this spell.
   - Earth elementals have a natural bash ability.
   - The elemental persists until destroyed or dismissed.
@@ -38,6 +43,9 @@ elemental.
     are needed and none are consumed.
   - If your conviction is already spoken for, the binding is refused
     outright rather than leaving you weaker, and costs you nothing.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
   <ansi fg="command">help reservation</ansi>
+::

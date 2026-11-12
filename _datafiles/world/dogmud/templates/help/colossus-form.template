@@ -3,8 +3,10 @@
 You are a giant now, mountainous and unstoppable, each blow landing
 with the weight of a falling wall.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
+::
 <ansi fg="yellow">Requires:</ansi> Dense Muscles and the fullest Titan Growth
 
 <ansi fg="yellow">Benefits:</ansi>
@@ -19,4 +21,6 @@ with the weight of a falling wall.
   Your growing body holds part of your conviction in reserve, leaving
   less for companions
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

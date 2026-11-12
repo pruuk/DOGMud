@@ -7,10 +7,15 @@ same window.
 <ansi fg="yellow">Special moves that share this cooldown:</ansi>
 
   <ansi fg="command">bash</ansi>, <ansi fg="command">kick</ansi>, <ansi fg="command">trip</ansi>, <ansi fg="command">grapple</ansi>
+::list
               - Melee control moves: stagger, disorient, knock down, restrain.
+::
   <ansi fg="command">taunt</ansi>, <ansi fg="command">warcry</ansi>, <ansi fg="command">rally</ansi>
+::list
               - Shouts and rallying cries; the voice spends from the
                 same well of focus.
+::
+::rows
   <ansi fg="command">throw</ansi>     - Hurling a grenade or other throwable item.
   <ansi fg="command">cast</ansi>      - Starting most spells. Spells that summon a helper out
               of nothing use their own, longer recovery instead.
@@ -25,8 +30,11 @@ same window.
   <ansi fg="command">attack</ansi>    - Only when you engage from hiding. That opening blow is
               an ambush and spends the cooldown. Ordinary swings do not.
               See <ansi fg="command">help ambush</ansi>.
-  <ansi fg="command">gore</ansi>, <ansi fg="command">maul</ansi>, <ansi fg="command">rake</ansi>, <ansi fg="command">pounce</ansi>, <ansi fg="command">throttle</ansi>, <ansi fg="command">drain</ansi>
+    <ansi fg="command">gore</ansi>, <ansi fg="command">maul</ansi>, <ansi fg="command">rake</ansi>, <ansi fg="command">pounce</ansi>, <ansi fg="command">throttle</ansi>, <ansi fg="command">drain</ansi>
+::
+::list
               - Natural-weapon moves for bodies shaped to use them.
+::
   Mutation abilities (<ansi fg="command">venom-coat</ansi>, <ansi fg="command">cocoon</ansi>) share it too.
   The <ansi fg="command">kick</ansi> variants <ansi fg="command">stomp</ansi> and <ansi fg="command">knee</ansi>, and <ansi fg="command">tailsweep</ansi> for <ansi fg="command">trip</ansi>,
   are the same moves under another name.
@@ -51,8 +59,10 @@ cooldown, item, ammunition, combat round, or effect.
   Use <ansi fg="command">cooldowns</ansi> to see all active cooldowns, including how many rounds
   remain before your next special move is available.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help bash</ansi>, <ansi fg="command">help kick</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help bash</ansi>, <ansi fg="command">help kick</ansi>,
   <ansi fg="command">help cast</ansi>, <ansi fg="command">help cooldowns</ansi>,
   <ansi fg="command">help submission</ansi>, <ansi fg="command">help stamina</ansi>,
   <ansi fg="command">help conviction</ansi>, <ansi fg="command">help ambush</ansi>,
   <ansi fg="command">help fire</ansi>, <ansi fg="command">help consider</ansi>, <ansi fg="command">help search</ansi>
+::

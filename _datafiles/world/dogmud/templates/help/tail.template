@@ -4,8 +4,10 @@ A thick, muscular tail has grown from the base of your spine. It
 grants a powerful sweep attack and can be fitted with attachments,
 but makes wearing leg armor impossible.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Very Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Slightly improved dexterity — the tail provides balance and
@@ -21,4 +23,6 @@ but makes wearing leg armor impossible.
 
 <ansi fg="yellow">Conflicts:</ansi> Small
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

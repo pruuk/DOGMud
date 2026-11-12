@@ -3,8 +3,10 @@
 Your whole body seals inside a thick, living shell that grows and
 repairs itself endlessly.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
+::
 <ansi fg="yellow">Requires:</ansi> Thick Hide and Regrowth
 
 <ansi fg="yellow">Benefits:</ansi>
@@ -12,4 +14,6 @@ repairs itself endlessly.
   back with a vengeance, you cannot be knocked down or grappled, and
   enemies are drawn to attack you first
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

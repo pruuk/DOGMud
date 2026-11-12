@@ -5,9 +5,11 @@ you are holding, a crafting activity, or a multi-round command.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">cancel</ansi>              Abort whatever you are currently doing.
   <ansi fg="command">cancel <spell></ansi>      Let go of a lasting spell, such as
                       <ansi fg="command">cancel glow</ansi>.
+::
 
 If you are holding spell folds, cancelling loses the conviction you
 already spent. If no cancellable action is active, the command does
@@ -17,5 +19,7 @@ Some spells can be let go of before they run out. Chrysalis Glow is
 one: <ansi fg="command">cancel glow</ansi> puts it out at once. While you are casting, any
 <ansi fg="command">cancel</ansi> stops the cast instead.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help craft</ansi>,
-<ansi fg="command">help chrysalis-glow</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cast</ansi>, <ansi fg="command">help craft</ansi>,
+  <ansi fg="command">help chrysalis-glow</ansi>
+::

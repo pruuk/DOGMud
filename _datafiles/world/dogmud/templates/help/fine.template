@@ -11,4 +11,6 @@ Pay the fine with <ansi fg="command">payfine</ansi>.
 
 <ansi fg="yellow">See Also:</ansi>
 
+::keep
   <ansi fg="command">help payfine</ansi>
+::

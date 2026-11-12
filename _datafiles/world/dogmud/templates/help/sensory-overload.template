@@ -11,11 +11,15 @@ unable to act with their full capability.
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Harm Single
   <ansi fg="yellow">School:      </ansi> Mental
   <ansi fg="yellow">Base Folds:  </ansi> 10
   <ansi fg="yellow">Conv. Cost:  </ansi> 80
   <ansi fg="yellow">Defense:     </ansi> Mental — willpower resists the sensory flood
   <ansi fg="yellow">Effect:      </ansi> Weakening effect — blinds the target and reduces their speed
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::

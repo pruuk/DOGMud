@@ -6,14 +6,20 @@ give up cloak stats for practical carrying relief.
 
 <ansi fg="yellow">━━━ Stats ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Weight Reduction:</ansi>  35% of backpack contents
   <ansi fg="yellow">Slot:</ansi>              Back
+::
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       tailoring (minimum 12)
   <ansi fg="yellow">Station:</ansi>     loom
-  <ansi fg="yellow">Ingredients:</ansi> leather strip (x3), thread spool (x2),
+  <ansi fg="yellow">Ingredients: </ansi> leather strip (x3), thread spool (x2),
                bone needle
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help inventory</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help inventory</ansi>
+::

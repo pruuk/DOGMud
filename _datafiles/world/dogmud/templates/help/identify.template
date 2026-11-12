@@ -5,8 +5,10 @@ properties of an item you are carrying or wearing.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::rows
   <ansi fg="command">cast identify sword</ansi>       Identify a sword.
   <ansi fg="command">cast identify 2.sword</ansi>     Identify the second sword.
+::
 
 Searches both your backpack and equipped items as a single
 pool, so you can identify a wielded weapon without removing
@@ -18,4 +20,6 @@ Requires the <ansi fg="skill">spellcasting</ansi> skill. Costs conviction to cas
 For a non-magical alternative, visit a merchant and use the
 <ansi fg="command">appraise</ansi> command.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help appraise</ansi>, <ansi fg="command">help item-names</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help appraise</ansi>, <ansi fg="command">help item-names</ansi>
+::

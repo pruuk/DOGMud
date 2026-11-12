@@ -4,11 +4,13 @@ A healing spell does not close wounds at once. It makes its target heal
 faster than normal for a while, in battle as well as at rest. Each healing
 spell has its own pace.
 
+::rows
   <ansi fg="command">Mend Flesh</ansi>          One ally. Gentle, and lasts a long time.
   <ansi fg="command">Mend Wounds</ansi>         One ally. Strong, but over quickly.
   <ansi fg="command">Mend All</ansi>            Everyone here. Light, and over quickly.
   <ansi fg="command">Communion of Flesh</ansi>  Everyone here. Steady, and lasts a long time.
   <ansi fg="command">Mass Mend</ansi>           Everyone here. Strong, but over quickly.
+::
 
 Vital Surge and Chrysalis Regeneration are healing spells too.
 
@@ -21,5 +23,7 @@ and mutations that help you heal still add on top.
 
 Type <ansi fg="command">conditions</ansi> to see which healing spell is on you.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help heal</ansi>, <ansi fg="command">help mend-wounds</ansi>, <ansi fg="command">help mend-all</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help heal</ansi>, <ansi fg="command">help mend-wounds</ansi>, <ansi fg="command">help mend-all</ansi>,
           <ansi fg="command">help communion-of-flesh</ansi>, <ansi fg="command">help mass-mend</ansi>
+::

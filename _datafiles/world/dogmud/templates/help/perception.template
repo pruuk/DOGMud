@@ -14,7 +14,9 @@ Perception improves through use -- the more you stay
 alert and rely on keen observation, the more it grows.
 
 <ansi fg="yellow">Related: </ansi>
+::keep
   <ansi fg="command">help map</ansi>
   <ansi fg="command">help search</ansi>
   <ansi fg="command">help status</ansi>
+::
 

@@ -9,21 +9,27 @@ protection also softens critical hits.
 <ansi fg="yellow">Physical Mitigation</ansi>
   Reduces damage from melee attacks, ranged weapons, and
   physical spells. Comes from:
+::list
   - Worn equipment (plate armor, shields, helmets)
   - Natural armor (species traits, mutations)
   - Magical effects (shield spells, enchantments)
+::
 
 <ansi fg="yellow">Magical Mitigation</ansi>
   Reduces damage from offensive spells that target the
   mind. Comes from:
+::list
   - Enchanted equipment (robes, amulets, rings)
   - Mutation-based magical resistance
+::
 
 <ansi fg="yellow">Conviction Mitigation</ansi>
   Reduces conviction damage from social attacks like
   <ansi fg="command">taunt</ansi>. Comes from:
+::list
   - Willpower-themed gear (amulets, pendants)
   - Mental fortitude items
+::
 
 <ansi fg="yellow">Viewing Your Mitigation</ansi>
   Use <ansi fg="command">status</ansi> to see your current stats and equipment.
@@ -31,4 +37,6 @@ protection also softens critical hits.
 
 <ansi fg="yellow">Related: </ansi>
   <ansi fg="command">help combat</ansi>, <ansi fg="command">help equip</ansi>, <ansi fg="command">help status</ansi>,
+::keep
   <ansi fg="command">help taunt</ansi>
+::

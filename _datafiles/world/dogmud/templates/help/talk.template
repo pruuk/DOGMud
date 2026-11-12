@@ -30,9 +30,11 @@ light first.
   <ansi fg="command">help quests</ansi>.
 
   When you choose a quest from the list, they tell you what they want.
-  Then two lines appear: <ansi fg="yellow">1. Accept</ansi> takes the quest, and <ansi fg="yellow">2. Leave</ansi>
-  says no for now. Pressing Enter also means Leave. Either way, the list
-  comes back, and you can ask about the quest again later.
+::rows
+  Then two lines appear:  <ansi fg="yellow">1. Accept</ansi> takes the quest, and <ansi fg="yellow">2. Leave</ansi>
+    says no for now. Pressing Enter also means Leave. Either way, the list
+    comes back, and you can ask about the quest again later.
+::
 
   Above those two lines, the quest shows what to do first and what you
   get for it. Sometimes the reward is a surprise, and you only get a
@@ -44,11 +46,13 @@ light first.
 
   A mark in front of a line in the list tells you what it is:
 
+::rows
   <ansi fg="yellow">[!]</ansi>  a new quest they can give you.
   <ansi fg="yellow">[?]</ansi>  a quest you can finish with them now. Choose it to report
        what you did.
   <ansi fg="yellow">[*]</ansi>  something important you have not heard yet. It can also be
        one step of a quest you are on. Choose it to report that step.
+::
 
   A line you have already heard shows in grey. You can choose it again.
   A line that moves a quest forward goes away once that step is done.
@@ -70,8 +74,10 @@ light first.
 
 <ansi fg="yellow">Examples: </ansi>
 
+::keep
   <ansi fg="command">talk toke</ansi>
   <ansi fg="command">talk to tamsin</ansi>
+::
 
 <ansi fg="yellow">See Also: </ansi>
   <ansi fg="command">help quests</ansi>, <ansi fg="command">help give</ansi>, <ansi fg="command">help hint</ansi>

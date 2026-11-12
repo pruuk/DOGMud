@@ -6,14 +6,16 @@ Market Square.
 
 <ansi fg="yellow">Gold Commands: </ansi>
 
-  <ansi fg="command">bank</ansi> - See your gold on hand and
-  in the bank
+::rows
+  <ansi fg="command">bank</ansi>  See your gold on hand and
+    in the bank
 
-  <ansi fg="command">bank deposit [amount/all]</ansi> - Deposit
-  gold into the bank
+  <ansi fg="command">bank deposit [amount/all]</ansi>  Deposit
+    gold into the bank
 
-  <ansi fg="command">bank withdraw [amount/all]</ansi> - Withdraw
-  gold from the bank
+  <ansi fg="command">bank withdraw [amount/all]</ansi>  Withdraw
+    gold from the bank
+::
 
 <ansi fg="yellow">Item Storage: </ansi>
 
@@ -32,5 +34,7 @@ forfeit your least valuable stacks first and notify you via
 <ansi fg="command">inbox</ansi>. Keep gold deposited to
 cover your storage costs.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help storage</ansi>, <ansi fg="command">help stow</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help storage</ansi>, <ansi fg="command">help stow</ansi>
+::
 

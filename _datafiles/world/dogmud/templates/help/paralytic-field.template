@@ -3,8 +3,10 @@
 You trail a constant, smothering field of drifting silk and grinding
 dissonance that bogs down everything hostile nearby.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
+::
 <ansi fg="yellow">Requires:</ansi> Sticky Secretion and Grasping Tendrils
 
 <ansi fg="yellow">Benefits:</ansi>
@@ -12,4 +14,6 @@ dissonance that bogs down everything hostile nearby.
   spell or shout together, while the churning field helps turn blows
   away from you
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

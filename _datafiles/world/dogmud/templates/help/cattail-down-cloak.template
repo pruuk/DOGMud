@@ -8,9 +8,13 @@ cloth.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       tailoring (minimum 20)
   <ansi fg="yellow">Station:</ansi>     loom
-  <ansi fg="yellow">Ingredients:</ansi> cattail down (x4), cloth strip (x3),
+  <ansi fg="yellow">Ingredients: </ansi> cattail down (x4), cloth strip (x3),
                  thread spool (x2)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>
+::

@@ -5,8 +5,12 @@ you, and how long each of you would need to beat the other.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">consider goblin</ansi>
+::
+::rows
   <ansi fg="command">consider figure</ansi>   in the dark, when you can only make out shapes
+::
 
 It reads both of you as you stand right now. Your spells, potions, wards and
 enchantments count, and so do theirs.
@@ -30,5 +34,7 @@ so you can't consider and use a special move in the same breath.
   <ansi fg="red-bold">You'd lose badly.</ansi>
   <ansi fg="red-bold">What could you possibly be thinking? You have zero chance.</ansi>
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cooldowns</ansi>, <ansi fg="command">help special</ansi>,
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cooldowns</ansi>, <ansi fg="command">help special</ansi>,
   <ansi fg="command">help search</ansi>
+::

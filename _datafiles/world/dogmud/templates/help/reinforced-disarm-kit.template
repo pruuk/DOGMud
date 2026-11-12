@@ -7,9 +7,13 @@ delicate operations.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 22)
   <ansi fg="yellow">Station:</ansi>     forge
-  <ansi fg="yellow">Ingredients:</ansi> steel bar (x1), iron ingot (x2),
+  <ansi fg="yellow">Ingredients: </ansi> steel bar (x1), iron ingot (x2),
                   crafting steel (x1), bone needle (x2)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help defuse</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help defuse</ansi>
+::

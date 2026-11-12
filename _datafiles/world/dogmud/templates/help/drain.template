@@ -7,26 +7,32 @@ successful hit also leaves the target bleeding.
 
 <ansi fg="yellow">Requirements:</ansi>
 
+::list
   - Must have the LifeDrain species flag (vampire only)
   - Must be in active combat
   - Cannot be used if special move cooldown is active
+::
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">drain</ansi>
+::
   Attempt to drain your current combat target
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Moderate, lighter than a full melee strike; the
+::rows
+  <ansi fg="stat">Damage: </ansi> Moderate, lighter than a full melee strike; the
     lifesteal makes up the difference in sustained fights.
-  <ansi fg="stat">Lifesteal:</ansi> On a hit, the attacker heals for a fraction of
+  <ansi fg="stat">Lifesteal: </ansi> On a hit, the attacker heals for a fraction of
     damage dealt.
-  <ansi fg="stat">Bleed:</ansi> Each hit opens a bleeding wound on the target,
+  <ansi fg="stat">Bleed: </ansi> Each hit opens a bleeding wound on the target,
     dealing ongoing damage each round. Wounds from repeated hits
     add up, and they keep bleeding after the fight ends.
-  <ansi fg="stat">Cooldown:</ansi> Shared with other special moves.
-  <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
+  <ansi fg="stat">Cooldown: </ansi> Shared with other special moves.
+  <ansi fg="stat">Skill: </ansi> Progresses Unarmed Combat
+::
 
 Drain spends Stamina and requires full payment before the strike. Carried load
 raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.

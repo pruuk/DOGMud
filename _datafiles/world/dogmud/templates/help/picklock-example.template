@@ -53,4 +53,6 @@
     <ansi fg="item">lockpicks</ansi>!</ansi> <ansi fg="yellow-bold">***</ansi>
 
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help keyring</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help keyring</ansi>
+::
