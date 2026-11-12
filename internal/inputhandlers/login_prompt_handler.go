@@ -9,6 +9,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -230,7 +231,7 @@ func CreatePromptHandler(steps []*PromptStep, onComplete CompletionFunc) connect
 					// Cache the mask template string if needed
 					if state.maskTemplate == "" && currentStep.MaskTemplate != "" {
 
-						if maskStr, err := templates.Process(currentStep.MaskTemplate, nil); err != nil {
+						if maskStr, err := renderLoginTemplate(clientInput.ConnectionId, currentStep.MaskTemplate, nil); err != nil {
 							mudlog.Error("Mask template error", "template", currentStep.MaskTemplate, "error", err)
 							state.maskTemplate = "*" // Fallback mask
 						} else {
@@ -299,7 +300,7 @@ func CreatePromptHandler(steps []*PromptStep, onComplete CompletionFunc) connect
 			/////////////////////////////////////////////////////////////////
 
 			errMsg := err.Error() // Use the error message directly (could be from language.T)
-			connections.SendTo([]byte(errMsg), clientInput.ConnectionId)
+			sendLoginText(clientInput.ConnectionId, errMsg)
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 
 			if currentStep.ID == `password-new-verify` {
@@ -310,7 +311,7 @@ func CreatePromptHandler(steps []*PromptStep, onComplete CompletionFunc) connect
 			// Increment failure counter in case we want to disconnect the user
 			currentStep.FailureCount++
 			if currentStep.FailureCount >= 3 {
-				connections.SendTo([]byte(term.CRLFStr+`Too many mistakes.`+term.CRLFStr+term.CRLFStr), clientInput.ConnectionId)
+				sendLoginText(clientInput.ConnectionId, term.CRLFStr+`Too many mistakes.`+term.CRLFStr+term.CRLFStr)
 				connections.Remove(clientInput.ConnectionId)
 				state.CurrentStepIndex += 99
 				return false
@@ -370,8 +371,8 @@ func sendPrompt(step *PromptStep, clientInput *connections.ClientInput, results 
 		templateData = make(map[string]any)
 	}
 
-	// Process the template
-	promptTxt, err := templates.Process(templateName, templateData)
+	// Process the template for the reader's width
+	promptTxt, err := renderLoginTemplate(clientInput.ConnectionId, templateName, templateData)
 	if err != nil {
 		mudlog.Error("Prompt template error", "template", templateName, "error", err)
 		promptTxt = fmt.Sprintf("Error generating prompt '%s'", step.ID) // Fallback
@@ -394,6 +395,55 @@ func sendPrompt(step *PromptStep, clientInput *connections.ClientInput, results 
 	}
 
 	connections.SendTo([]byte(parsedPrompt), clientInput.ConnectionId)
+}
+
+// LoginTemplateAtWidth renders a template sent to the web client before
+// login (a prompt, the password mask) for a screen width columns wide, as
+// sendPrompt sends it: rendered for that width (templates.ProcessForWidth)
+// and laid out by FitLoginText. internal/guards renders every login template
+// through it at 30, 42 and 80.
+func LoginTemplateAtWidth(name string, data any, width int) (string, error) {
+	out, err := templates.ProcessForWidth(name, data, false, width)
+	if err != nil {
+		return out, err
+	}
+	return FitLoginText(out, width), nil
+}
+
+// FitLoginText lays out text sent to the web client before login for a
+// screen width columns wide: word wrapped to the width with its trailing
+// spaces kept on its last line (messaging.WrapPrompt), so a prompt's cursor
+// stays after its ": ". Every word is kept and a line that fits is
+// untouched; only the breaks in a line too wide change.
+func FitLoginText(text string, width int) string {
+	return messaging.WrapPrompt(text, width)
+}
+
+// renderLoginTemplate renders a login template for the connection it goes
+// to. A web client gets it laid out for its width (users.LoginWrapWidth). A
+// telnet client gets templates.Process, as it always has, byte for byte: its
+// terminal wraps what it shows.
+func renderLoginTemplate(id connections.ConnectionId, name string, data any) (string, error) {
+	if !connections.IsWebsocket(id) {
+		return templates.Process(name, data)
+	}
+	return LoginTemplateAtWidth(name, data, users.LoginWrapWidth(id))
+}
+
+// loginTextFor is text for the connection it goes to, laid out as
+// renderLoginTemplate lays out a template: for a web client's width, and
+// unchanged for telnet.
+func loginTextFor(id connections.ConnectionId, text string) string {
+	if !connections.IsWebsocket(id) {
+		return text
+	}
+	return FitLoginText(text, users.LoginWrapWidth(id))
+}
+
+// sendLoginText sends text to a connection that has no user yet (a refusal,
+// a validation error), laid out for its width.
+func sendLoginText(id connections.ConnectionId, text string) {
+	connections.SendTo([]byte(loginTextFor(id, text)), id)
 }
 
 // advanceAndSendPrompt finds the next valid step and sends its prompt.

@@ -617,6 +617,12 @@ splash fits) and by `Client.Display` (`modules/gmcp`). Both go through
 returns the width. `ParseReportedCols(s)` reads the address's text value:
 whole numbers only, unclamped.
 
+Before login there is no user, so `LoginWrapWidth(id) int` gives the width
+from the connection: a websocket's stored `Display.ScreenWidth`, clamped to
+30..80 again, or 80 when it stored none; every other connection 80, whatever
+its terminal reports. `internal/inputhandlers` lays the login prompts and
+their errors out to it for a web client, and sends telnet's unchanged.
+
 ### Game menu session (#375 phase 0)
 
 A player has at most one open game menu (`activeMenu`, with its

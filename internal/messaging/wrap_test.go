@@ -176,6 +176,76 @@ func displayWidth(s string) int {
 	return w
 }
 
+// A login prompt wrapped for a phone keeps its ": " on its last line, so the
+// cursor sits after it, keeps every word, and keeps its colour tags
+// balanced. A prompt that fits is unchanged byte for byte.
+func TestWrapPromptKeepsTheCursorAfterTheColon(t *testing.T) {
+	prompt := "<ansi fg=\"8\">AI players: connect on port 55555. Using this port as an AI risks a ban.</ansi>\r\n" +
+		`<ansi fg="39">Username</ansi><ansi fg="black-bold"> (or "</ansi><ansi fg="green-bold">new</ansi><ansi fg="black-bold">"): </ansi>`
+	yn := `<ansi fg="yellow-bold">Would you like to create a new user/login named <ansi fg="magenta">Bartholomew_Thistlewood_Iron</ansi>?</ansi> ` +
+		`<ansi fg="black-bold">[<ansi fg="green-bold">y</ansi>/<ansi fg="red-bold">n</ansi>]: </ansi>`
+	words := func(s string) string { return strings.Join(strings.Fields(stripTags(s)), " ") }
+	if got := WrapPrompt(prompt, 80); got != prompt {
+		t.Errorf("a prompt that fits 80 changed:\n%q\n%q", prompt, got)
+	}
+	for _, text := range []string{prompt, yn} {
+		for width := 30; width <= 80; width++ {
+			got := WrapPrompt(text, width)
+			lines := strings.Split(got, "\n")
+			for i, line := range lines {
+				if w := displayWidth(strings.TrimSuffix(line, "\r")); w > width {
+					t.Errorf("at %d line %d is %d wide: %q", width, i+1, w, line)
+				}
+			}
+			last := stripTags(lines[len(lines)-1])
+			if !strings.HasSuffix(last, ": ") || strings.TrimSpace(last) == ":" {
+				t.Errorf("at %d the last line %q does not end in its prompt and \": \"", width, last)
+			}
+			if words(got) != words(text) {
+				t.Errorf("at %d the words changed:\n%s\n%s", width, words(text), words(got))
+			}
+			if o, c := strings.Count(got, "<ansi"), strings.Count(got, "</ansi>"); o != c {
+				t.Errorf("at %d the wrap opens %d tags and closes %d: %q", width, o, c, got)
+			}
+		}
+	}
+}
+
+// When the prompt's last word ends exactly at the width, its ": " has no
+// room, so the text is wrapped narrower and the word moves down with it.
+func TestWrapPromptMakesRoomForTheTrailingSpace(t *testing.T) {
+	text := `<ansi fg="39">aaaa bbbb cc:</ansi><ansi fg="black-bold"> </ansi>`
+	// "aaaa bbbb cc:" is 13 wide: at 13 a plain wrap leaves no room for the space.
+	got := WrapPrompt(text, 13)
+	lines := strings.Split(got, "\n")
+	last := stripTags(lines[len(lines)-1])
+	if last != "cc: " {
+		t.Fatalf("last line = %q, want %q (whole: %q)", last, "cc: ", got)
+	}
+	for i, line := range lines {
+		if w := displayWidth(line); w > 13 {
+			t.Errorf("line %d is %d wide: %q", i+1, w, line)
+		}
+	}
+}
+
+// stripTags removes <ansi …> and </ansi> tags.
+func stripTags(s string) string {
+	var b strings.Builder
+	inTag := false
+	for _, r := range s {
+		switch {
+		case r == '<':
+			inTag = true
+		case r == '>' && inTag:
+			inTag = false
+		case !inTag:
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
 // TestWrapAnsiReopensNestedTagsAcrossBreak is the regression test for the
 // scalar-openTag bug. The input is the exact shape applyCategoryColor
 // produces: an outer category tag around prose that already carries an

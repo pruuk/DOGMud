@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/inputhandlers"
 	"github.com/GoMudEngine/GoMud/internal/language"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -64,12 +65,12 @@ var templateClassNames = map[string][]string{
 	// sized by the terminal width the client reports, so it fits that terminal
 	// and the map test does not render it.
 	"sized by its command": {"maps/map", "tables/lockpicking"},
-	// Sent outside the pipeline, before a reader has a width or as they
-	// leave; the terminal soft-wraps them.
-	"raw": {"goodbye", "login/email-new.prompt",
-		"login/password-new-verify.prompt", "login/password-new.prompt",
-		"login/password.mask", "login/password.prompt", "login/username-new.prompt",
-		"login/username.prompt", "generic/prompt.yn"},
+	// Sent outside the pipeline as a player leaves (quit, a duplicate login
+	// taking over the session, shutdown); the terminal soft-wraps it. It is
+	// art 50 columns wide with no narrow form yet. The login prompts left
+	// this class in plan 5: they are laid out for the web client's width
+	// (inputhandlers.LoginTemplateAtWidth) and fit at every width.
+	"raw": {"goodbye"},
 	// Wrapped to the reader by the caller (actions/roster.go) or the
 	// pipeline (CategoryLogout).
 	"wrapped": {"descriptions/who", "descriptions/ontheground", "player-despawn"},
@@ -98,12 +99,16 @@ var templateClassPrefixes = map[string]string{
 // test ends. more are further data the template is rendered with too, such
 // as a second mode of the same screen. wrapped says the template goes out on
 // a category the pipeline wraps to the reader, so the guard wraps it the same
-// way before measuring.
+// way before measuring. login says the template is sent before login and is
+// rendered as the login prompts render it for a web client
+// (inputhandlers.LoginTemplateAtWidth: drawn for the width and word wrapped
+// to it, the prompt's ": " kept on its last line).
 type templateFixture struct {
 	setup   func(t *testing.T)
 	data    func() any
 	more    []func() any
 	wrapped bool
+	login   bool
 }
 
 // templateFits are the templates that must fit at every width.
@@ -159,6 +164,20 @@ var templateFits = map[string]templateFixture{
 	// before login, drawn to the columns on the web client's websocket
 	// address (main.go), and takes no data.
 	"login/connect-splash": {data: func() any { return nil }},
+	// The login prompts and the password mask, with the data login.go
+	// gives them; the yes or no questions with every text the login asks,
+	// the new user one with a name of NameSizeMax (28).
+	"login/username.prompt":            {data: noLoginData, login: true},
+	"login/password.prompt":            {data: noLoginData, login: true},
+	"login/username-new.prompt":        {data: noLoginData, login: true},
+	"login/password-new.prompt":        {data: noLoginData, login: true},
+	"login/password-new-verify.prompt": {data: noLoginData, login: true},
+	"login/password.mask":              {data: func() any { return nil }, login: true},
+	"login/email-new.prompt": {data: func() any { return map[string]any{"emailIsOptional": true} },
+		more: []func() any{func() any { return map[string]any{"emailIsOptional": false} }}, login: true},
+	"generic/prompt.yn": {data: loginYesNo("User is already connected. Kick them?"),
+		more:  []func() any{loginYesNo("Are you using a screen reader?"), loginCreateUser("Bartholomew_Thistlewood_Iron"), loginCreateUser("Ann")},
+		login: true},
 	// The notice screens (notice_screens_test.go).
 	"mail/message": {data: mailWide, more: []func() any{mailCaptured, mailPlain, mailRead, mailLongWord}},
 	// The auction broadcasts, read from the module's own templates.
@@ -450,7 +469,11 @@ func TestFittingTemplatesFitAtEveryWidth(t *testing.T) {
 			}
 			for i, data := range append([]func() any{fixture.data}, fixture.more...) {
 				for _, width := range templateWidths {
-					out, err := templates.ProcessAtWidth(name, data(), width)
+					render := templates.ProcessAtWidth
+					if fixture.login {
+						render = inputhandlers.LoginTemplateAtWidth
+					}
+					out, err := render(name, data(), width)
 					if err != nil {
 						t.Errorf("%s (data %d) at %d: %v", name, i, width, err)
 						continue
@@ -499,6 +522,63 @@ func TestConnectSplashByWidthFitsAndIsWordsOnly(t *testing.T) {
 				t.Errorf("at %d columns the splash lost %q", width, words)
 			}
 		}
+	}
+}
+
+// noLoginData is the data a login prompt with no GetDataFunc gets.
+func noLoginData() any { return map[string]any{} }
+
+// loginYesNo is the data login.go gives generic/prompt.yn for a question.
+func loginYesNo(prompt string) func() any {
+	return func() any {
+		return map[string]any{"prompt": prompt, "options": []string{"y", "n"}, "default": "n"}
+	}
+}
+
+// loginCreateUser is the new user question for name, as login.go asks it.
+func loginCreateUser(name string) func() any {
+	return func() any {
+		return loginYesNo(language.T("Login.CreateUser", map[any]any{"Username": name}))()
+	}
+}
+
+var guardAnsiTags = regexp.MustCompile(`</?ansi[^>]*>`)
+
+// The login prompts keep every word and their cursor place at every width
+// from 30 to 80 (spec ruling 3, plan 5): the last line ends in the prompt and
+// its ": ", so what the player types goes after it.
+func TestLoginPromptsKeepTheirWordsAndCursorAtEveryWidth(t *testing.T) {
+	templateRenderSetup(t)
+	words := func(s string) string { return strings.Join(strings.Fields(guardAnsiTags.ReplaceAllString(s, "")), " ") }
+	checked := 0
+	for name, fixture := range templateFits {
+		if !fixture.login || name == "login/password.mask" {
+			continue
+		}
+		for i, data := range append([]func() any{fixture.data}, fixture.more...) {
+			full, err := templates.Process(name, data())
+			if err != nil {
+				t.Fatalf("%s (data %d): %v", name, i, err)
+			}
+			for width := 30; width <= 80; width++ {
+				out, err := inputhandlers.LoginTemplateAtWidth(name, data(), width)
+				if err != nil {
+					t.Fatalf("%s (data %d) at %d: %v", name, i, width, err)
+				}
+				checked++
+				lines := strings.Split(out, "\n")
+				last := guardAnsiTags.ReplaceAllString(lines[len(lines)-1], "")
+				if !strings.HasSuffix(last, ": ") || strings.TrimSpace(last) == ":" {
+					t.Errorf("%s (data %d) at %d: the last line %q does not end in its prompt and \": \"", name, i, width, last)
+				}
+				if words(out) != words(full) {
+					t.Errorf("%s (data %d) at %d changed its words:\n%s\n%s", name, i, width, words(full), words(out))
+				}
+			}
+		}
+	}
+	if checked < 8*51 {
+		t.Fatalf("checked only %d renders; the login fixtures are not being found", checked)
 	}
 }
 

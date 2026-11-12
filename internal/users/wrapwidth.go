@@ -45,6 +45,23 @@ func StoreReportedCols(id connections.ConnectionId, cols int) int {
 	return width
 }
 
+// LoginWrapWidth is the width text sent to a connection before it has a user
+// is laid out for: the login prompts, their errors and the yes or no
+// questions (internal/inputhandlers). A web client's columns are stored on
+// connect (from the cols on its websocket address) and again by
+// Client.Display, so a websocket gets them, clamped to
+// MinWrapWidth..MaxAutoWrapWidth as WrapWidth clamps them, and 80 when it
+// reported none. Every other connection gets 80 whatever its terminal
+// reports: the width telnet login text was written for, which inputhandlers
+// sends unchanged.
+func LoginWrapWidth(id connections.ConnectionId) int {
+	if !connections.IsWebsocket(id) {
+		return MaxAutoWrapWidth
+	}
+	width := connections.GetClientSettings(id).Display.GetScreenWidth()
+	return min(max(width, MinWrapWidth), MaxAutoWrapWidth)
+}
+
 // NarrowFormWidth is the width of the narrow form of a screen built in Go
 // for a reader width columns wide (web client base spec, section 2): 42, or
 // 30 below that (or the reader's width, if narrower still). It is a band

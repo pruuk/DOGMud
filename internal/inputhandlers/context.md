@@ -88,6 +88,20 @@ Documentation structure for system commands.
   - Masked input for password fields
   - Dynamic data generation for prompts
   - Completion callbacks for workflow finalization
+- **Login text width** (web client base plan 5): everything sent before
+  login (each prompt, the password mask, the validation errors, the
+  refusals in `login.go`) goes to a web client laid out for its width,
+  `users.LoginWrapWidth` (the columns its websocket address or
+  `Client.Display` stored, 30 to 80). `LoginTemplateAtWidth(name, data,
+  width)` renders a template with `templates.ProcessForWidth` and
+  `FitLoginText`, which is `messaging.WrapPrompt`: it word wraps and keeps a
+  prompt's `": "` and the cursor on the last line. `sendLoginText` does the
+  same for plain text. A telnet connection gets `templates.Process` and the
+  plain text unchanged, byte for byte. `internal/guards` renders every login
+  template through `LoginTemplateAtWidth` at 30, 42 and 80
+  (`template_width_guard_test.go`); `login_width_test.go` holds the width
+  choice per connection. The `goodbye` template, sent as a player leaves,
+  is not login text.
 
 ### Terminal Protocol Handling
 - **ANSI Processing**: Handles ANSI escape sequences for terminal control

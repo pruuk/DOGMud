@@ -126,3 +126,35 @@ func TestStoreReportedCols(t *testing.T) {
 		require.Equal(t, uint32(tt.want), stored(), "cols %d", tt.cols)
 	}
 }
+
+// Before login there is no user, so the width comes from the connection: a
+// websocket's stored columns, clamped again, or 80 when it stored none; a
+// telnet connection is 80 whatever its terminal reported.
+func TestLoginWrapWidth(t *testing.T) {
+	const webConn, bareWebConn, telnetConn uint64 = 97105, 97106, 97107
+	connections.RegisterTestWebsocketConnection(webConn)
+	connections.RegisterTestWebsocketConnection(bareWebConn)
+	connections.RegisterTestConnection(telnetConn)
+	t.Cleanup(func() {
+		for _, c := range []uint64{webConn, bareWebConn, telnetConn} {
+			connections.UnregisterTestConnection(c)
+		}
+	})
+	setWidth := func(id uint64, w uint32) {
+		cs := connections.GetClientSettings(id)
+		cs.Display.ScreenWidth = w
+		connections.OverwriteClientSettings(id, cs)
+	}
+
+	require.Equal(t, 80, LoginWrapWidth(bareWebConn), "a web client that reported no columns")
+	for _, tt := range []struct {
+		stored uint32
+		want   int
+	}{{43, 43}, {42, 42}, {30, 30}, {80, 80}, {12, 30}, {200, 80}} {
+		setWidth(webConn, tt.stored)
+		require.Equal(t, tt.want, LoginWrapWidth(webConn), "web client stored %d", tt.stored)
+	}
+	setWidth(telnetConn, 40)
+	require.Equal(t, 80, LoginWrapWidth(telnetConn), "a telnet terminal that reported 40 columns")
+	require.Equal(t, 80, LoginWrapWidth(97199), "a connection that is not registered")
+}
