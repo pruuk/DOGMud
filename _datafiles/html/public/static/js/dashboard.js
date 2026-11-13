@@ -1,8 +1,15 @@
-/* dashboard.js — Dashboard controller + responsive column-stack reflow
- * Three breakpoints:
- *   wide  >= 1100px : default three-column layout (no changes)
- *   rail  700–1100px: left+right cols hidden; side panels in a tabbed rail
- *   phone < 700px   : center fills; fixed bottom tab-bar; slide-up drawer
+/* dashboard.js: Dashboard controller and the layout ladder (owner 2026-11-12).
+ * The game window is on the left, exactly as wide as 80 columns
+ * (setGameWidth, from termfit.js). The side panels take the room right of
+ * it, in #dash-panels, and layoutpick.js picks one of four modes from that
+ * room:
+ *   wide   : Layout D, every side panel open (spec ruling 9)
+ *   column : Map, Health and Conditions open; the other four on the tab bar
+ *   slim   : Health and Conditions open; the other five on the tab bar
+ *   phone  : every side panel on the tab bar under the game
+ * One tab bar and slide-up drawer serve column, slim and phone; the CSS
+ * hides the buttons of the panels a mode keeps open. Pop-out windows are a
+ * wide-only feature.
  */
 "use strict";
 
@@ -10,7 +17,26 @@
 
   var SIDE_PANELS = ["map", "quests", "vitals", "art", "chat", "status", "trig"];
 
-  // Game tab names and line icons, shared by the rail and the phone bar.
+  // The game column is termfit's 80-column width plus the Game panel's
+  // border (1px each side, dashboard.css .dash-panel) and 4px of slack: a
+  // page zoomed below 100% snaps the border to a device pixel and the fit
+  // addon rounds a pixel away, which gave 79 columns without it (plan 5,
+  // Task 7 step 2). termfit caps the terminal at 80, so the slack is harmless.
+  var FEED_BORDER = 2, SLACK = 4;
+
+  // The modes whose side panels open from the tab bar, and each mode's
+  // enter and exit.
+  var TABBED = { column: true, slim: true, phone: true };
+  var ENTER = { wide: "_enterWide", column: "_enterColumn", slim: "_enterSlim", phone: "_enterPhone" };
+  var EXIT = { column: "_exitColumn", slim: "_exitSlim", phone: "_exitPhone" };
+
+  // Saved layout: folded and popped-out panels and the pop-out windows'
+  // sizes and places. v1 also held a column arrangement and widths, which
+  // the ladder replaced; restoreLayout carries the rest over once.
+  var LAYOUT_KEY = "dogmud.dashboard.layout.v2";
+  var OLD_LAYOUT_KEY = "dogmud.dashboard.layout.v1";
+
+  // Game tab names and line icons, used by the one tab bar.
   // Names are client-only labels (2026-11-01); the panel ids stay as they
   // are. Icons are 24x24 stroke paths so they look the same on every device,
   // unlike emoji.
@@ -122,14 +148,12 @@
   }
 
   var Dashboard = {
-    mode: null,         // current mode: "wide" | "rail" | "phone"
-    activeSide: "map",  // last-active side panel name
+    mode: null,         // current mode: "wide" | "column" | "slim" | "phone"
+    gameW: null,        // the measured game column's width in px, or null before termfit measures it (the layout then uses LayoutPick.GAME_W_DEFAULT)
+    ready: false,       // init has run: setGameWidth may be called
 
     // DOM refs created once
-    _rail: null,
-    _railTabs: null,    // makeTabBar() handle
     _phoneTabs: null,   // makeTabBar() handle
-    _railBody: null,
     _tabbar: null,
     _drawer: null,
     _drawerBody: null,
@@ -149,15 +173,13 @@
         if (col) panel.dataset.homeCol = col.id;
       });
 
-      // Build rail (inside #dashboard, in the grid area "rail")
-      this._buildRail();
-
       // Build tab-bar and drawer (OUTSIDE #dashboard, appended to body
       // parent so position:fixed is not clipped by the grid container)
       this._buildPhone();
 
-      // Apply initial mode
-      this._apply();
+      // Apply the first mode, from the page's game width (pageGameWidth).
+      this.setGameWidth(this.pageGameWidth());
+      this.ready = true;
 
       // Window resize listener
       var self = this;
@@ -170,11 +192,38 @@
         document.fonts.ready.then(function () { self._relayoutTabs(); });
       }
 
-      // Optional hooks for later tasks (splitters, rearrange, popout, layout restore)
-      this.initSplitters  && this.initSplitters();
-      this.initRearrange  && this.initRearrange();
+      // Folding, pop-out and the saved layout
+      this.initCollapse   && this.initCollapse();
       this.initPopout     && this.initPopout();
       this.restoreLayout  && this.restoreLayout();
+    },
+
+    // The game window's width at 80 columns (termfit.js widthFor80), or
+    // null before it is measured. The game column is that plus the Game
+    // panel's border and the slack; the CSS reads it as --game-w on the
+    // root (not #dashboard: the tab bar and drawer live outside it). Until
+    // termfit measures, the column is LayoutPick.GAME_W_DEFAULT, so a
+    // desktop never gets the phone layout only for lack of a width. The
+    // wide, column and slim grids use var(--game-w) with no fallback, so
+    // it is always set.
+    // The game width the page has for the layout now (webclient-pure.html,
+    // plan 5 Task 8). termfit reports before this script sets itself up,
+    // so the page keeps its numbers on window. Until the web font is in
+    // (window.dogmudFontReady), a width measured in the fallback font is
+    // about 80px narrow, so the layout takes the width the font will give
+    // (window.dogmudPredictGameWidth), and nothing moves when it lands.
+    // Null when the page has neither: the default column holds.
+    pageGameWidth: function () {
+      if (window.dogmudFontReady) return window.dogmudGameWidth || null;
+      return typeof window.dogmudPredictGameWidth === "function" ?
+        window.dogmudPredictGameWidth() || null : null;
+    },
+
+    setGameWidth: function (px) {
+      this.gameW = px ? px + FEED_BORDER + SLACK : null;
+      document.documentElement.style.setProperty("--game-w",
+        (this.gameW || LayoutPick.GAME_W_DEFAULT) + "px");
+      this._apply();
     },
 
     // ---------------------------------------------------------------
@@ -198,29 +247,25 @@
         document.querySelectorAll(".dash-panel.collapsed").forEach(function (p) {
           p.classList.remove("collapsed");
         });
-        // 3. Re-home panels in default order (clear the saved arrangement first
-        //    so _enterWide uses the default SIDE_PANELS order, not the custom one).
-        this._savedArrange = null;
+        // 3. Re-home panels in their page order by entering the current
+        //    mode again, whichever of the four it is.
         this._poppedWhileNarrow = null;
         this._boxGeom = null;
         document.querySelectorAll(".dash-panel").forEach(function (p) { p.style.display = ""; });
-        if (this.mode === "rail" && this._enterRail) this._enterRail();
-        else if (this.mode === "phone" && this._enterPhone) this._enterPhone();
-        else if (this._enterWide) this._enterWide();
+        if (this.mode && ENTER[this.mode]) this[ENTER[this.mode]]();
         // 4. Forget the persisted layout so a later reload also starts clean.
-        try { localStorage.removeItem("dogmud.dashboard.layout.v1"); } catch (e) {}
+        try { localStorage.removeItem(LAYOUT_KEY); } catch (e) {}
         // 5. Confirm — no disconnect this time.
         this._toast("Layout reset to default.");
       } catch (e) {
         // Anything unexpected: fall back so the button always does *something*.
-        try { localStorage.removeItem("dogmud.dashboard.layout.v1"); } catch (e2) {}
+        try { localStorage.removeItem(LAYOUT_KEY); } catch (e2) {}
         location.reload();
       }
     },
 
     _relayoutTabs: function () {
-      if (this.mode === "rail" && this._railTabs) this._railTabs.relayout();
-      if (this.mode === "phone" && this._phoneTabs) this._phoneTabs.relayout();
+      if (TABBED[this.mode] && this._phoneTabs) this._phoneTabs.relayout();
     },
 
     // Brief, self-dismissing notification (bottom-center, leather-styled).
@@ -239,23 +284,36 @@
     // ---------------------------------------------------------------
     // Mode application
     // ---------------------------------------------------------------
+    // A phone always gets the phone layout: a touch screen whose short side
+    // is under 600px. The touch test keeps a zoomed-in desktop on a small
+    // screen (1280x720 at 125% has a short side under 600) on the ladder.
     _computeMode: function () {
       var w = document.getElementById("dashboard").clientWidth;
-      if (w >= 1100) return "wide";
-      if (w >= 700)  return "rail";
-      return "phone";
+      var phone = ViewportFit.isPhone(screen.width, screen.height) &&
+                  matchMedia("(pointer: coarse)").matches;
+      return LayoutPick.pick(w, this.gameW || LayoutPick.GAME_W_DEFAULT, phone);
+    },
+
+    // The panel area's width, for the column mode's tab bar and drawer.
+    // It changes on every resize within a mode too.
+    _measurePanels: function () {
+      var panels = document.getElementById("dash-panels");
+      if (!panels) return;
+      document.documentElement.style.setProperty("--panels-w",
+        Math.round(panels.getBoundingClientRect().width) + "px");
     },
 
     _apply: function () {
+      this._measurePanels();
       var newMode = this._computeMode();
       if (newMode === this.mode) return; // guard: no-op when mode unchanged
 
       var prev = this.mode;
       this.mode = newMode;
 
-      // Tear down previous mode before setting up new one
-      if (prev === "rail")  this._exitRail();
-      if (prev === "phone") this._exitPhone();
+      // Tear down previous mode before setting up new one. Wide has nothing
+      // to tear down; its pop-outs are docked just below.
+      if (prev && EXIT[prev]) this[EXIT[prev]]();
 
       // Pop-out windows are a wide-screen feature: dock them when the screen
       // narrows (a floating Game window covered a phone) and pop them out
@@ -263,10 +321,14 @@
       if (newMode !== "wide") this._dockPoppedForNarrow();
 
       document.getElementById("dashboard").dataset.mode = newMode;
+      // For the CSS that hides tab bar buttons and places the bar and drawer.
+      var rootClasses = document.documentElement.classList;
+      rootClasses.toggle("layout-column", newMode === "column");
+      rootClasses.toggle("layout-slim", newMode === "slim");
 
-      if (newMode === "wide")  this._enterWide();
-      if (newMode === "rail")  this._enterRail();
-      if (newMode === "phone") this._enterPhone();
+      this[ENTER[newMode]]();
+      // The panel area has just changed shape.
+      this._measurePanels();
 
       if (newMode === "wide") this._repopAfterNarrow();
     },
@@ -306,58 +368,22 @@
     // Wide mode
     // ---------------------------------------------------------------
     _enterWide: function () {
-      // Re-home side panels honoring the saved arrangement order when available
-      // (prevents a wide→rail→wide round-trip from resetting a custom layout).
-      // Falls back to the default SIDE_PANELS order when no saved arrange exists.
-      var arrange = this._savedArrange;
-      if (arrange && typeof arrange === "object") {
-        // Replay saved column order: for each column append panels in saved sequence.
-        // Any panel not listed in saved arrange falls through to the default below.
-        var placed = {};
-        ["dash-col-left", "dash-col-center", "dash-col-right"].forEach(function (colId) {
-          var col = document.getElementById(colId);
-          if (!col) return;
-          var names = arrange[colId];
-          if (!Array.isArray(names)) return;
-          names.forEach(function (name) {
-            var panel = document.getElementById("panel-" + name);
-            if (!panel) return;
-            if (panel.dataset.popped === "1") return;
-            col.appendChild(panel);
-            panel.dataset.homeCol = colId;
-            panel.style.display = "";
-            placed[name] = true;
-          });
-        });
-        // Catch any panels not covered by the saved arrange (new panels added after save)
-        SIDE_PANELS.forEach(function (name) {
-          if (placed[name]) return;
-          var panel = document.getElementById("panel-" + name);
-          if (!panel) return;
-          if (panel.dataset.popped === "1") return;
-          var homeId = panel.dataset.homeCol;
-          if (!homeId) return;
-          var col = document.getElementById(homeId);
-          if (col) col.appendChild(panel);
-          panel.style.display = "";
-        });
-      } else {
-        // No saved arrangement — use default SIDE_PANELS order
-        // (map/vitals/art → left, chat/status/trig → right)
-        SIDE_PANELS.forEach(function (name) {
-          var panel = document.getElementById("panel-" + name);
-          if (!panel) return;
-          if (panel.dataset.popped === "1") return; // skip popped-out panels
-          var homeId = panel.dataset.homeCol;
-          if (!homeId) return;
-          var col = document.getElementById(homeId);
-          if (col) col.appendChild(panel);
-          panel.style.display = "";
-        });
-      }
+      // Every side panel back in its home column, in the page's order
+      // (map/quests/vitals/art left, chat/status/trig right). The columns
+      // are display: contents in #dash-panels, so the CSS grid areas place
+      // each panel in Layout D.
+      SIDE_PANELS.forEach(function (name) {
+        var panel = document.getElementById("panel-" + name);
+        if (!panel) return;
+        if (panel.dataset.popped === "1") return; // skip popped-out panels
+        var homeId = panel.dataset.homeCol;
+        if (!homeId) return;
+        var col = document.getElementById(homeId);
+        if (col) col.appendChild(panel);
+        panel.style.display = "";
+      });
 
-      // Hide rail, tabbar, drawer
-      if (this._rail)   this._rail.style.display   = "none";
+      // Hide tabbar, drawer
       if (this._tabbar) this._tabbar.style.display  = "none";
       if (this._drawer) {
         this._drawer.classList.remove("open");
@@ -366,94 +392,17 @@
     },
 
     // ---------------------------------------------------------------
-    // Rail mode
+    // Column, slim and phone modes: one tab bar and drawer. The CSS
+    // decides which panels stay open in #dash-panels, which tab bar
+    // buttons show, and where the bar and the drawer sit.
     // ---------------------------------------------------------------
-    _buildRail: function () {
-      var rail = document.createElement("div");
-      rail.id = "dash-rail";
-      rail.style.display = "none";
+    _enterColumn: function () { this._enterTabbed(); },
+    _exitColumn:  function () { this._exitTabbed(); },
+    _enterSlim:   function () { this._enterTabbed(); },
+    _exitSlim:    function () { this._exitTabbed(); },
+    _enterPhone:  function () { this._enterTabbed(); },
+    _exitPhone:   function () { this._exitTabbed(); },
 
-      var self = this;
-      var tabs = makeTabBar("gtabs-rail", function (name) { self._setRailActive(name); });
-      rail.appendChild(tabs.el);
-
-      var body = document.createElement("div");
-      body.className = "rail-body";
-      rail.appendChild(body);
-
-      document.getElementById("dashboard").appendChild(rail);
-
-      this._rail     = rail;
-      this._railTabs = tabs;
-      this._railBody = body;
-    },
-
-    _enterRail: function () {
-      var self = this;
-
-      // Show rail, hide phone chrome
-      this._rail.style.display = "";
-      if (this._tabbar) this._tabbar.style.display = "none";
-      if (this._drawer) {
-        this._drawer.classList.remove("open");
-        this._drawer.style.display = "none";
-      }
-
-      // Move all side panels into rail body
-      SIDE_PANELS.forEach(function (name) {
-        var panel = document.getElementById("panel-" + name);
-        if (!panel) return;
-        if (panel.dataset.popped === "1") return; // skip popped-out panels
-        // Return from drawer if it was there
-        if (self._drawerBody && self._drawerBody.contains(panel)) {
-          self._drawerBody.removeChild(panel);
-        }
-        self._railBody.appendChild(panel);
-        panel.style.display = "none"; // will show only the active tab's panel
-      });
-
-      // Restore last-active or default to "map"
-      this._setRailActive(this.activeSide);
-    },
-
-    _setRailActive: function (name) {
-      this.activeSide = name;
-
-      this._railTabs.setOpen(name);
-
-      // Show only the active panel
-      SIDE_PANELS.forEach(function (pName) {
-        var panel = document.getElementById("panel-" + pName);
-        if (!panel) return;
-        if (panel.dataset.popped === "1") return; // skip popped-out panels
-        panel.style.display = (pName === name) ? "" : "none";
-      });
-    },
-
-    _exitRail: function () {
-      // Move panels back to home cols (wide will re-place them)
-      var self = this;
-      SIDE_PANELS.forEach(function (name) {
-        var panel = document.getElementById("panel-" + name);
-        if (!panel) return;
-        if (panel.dataset.popped === "1") return; // skip popped-out panels
-        if (self._railBody && self._railBody.contains(panel)) {
-          self._railBody.removeChild(panel);
-          var homeId = panel.dataset.homeCol;
-          if (homeId) {
-            var col = document.getElementById(homeId);
-            if (col) col.appendChild(panel);
-          }
-        }
-        panel.style.display = "";
-      });
-
-      this._rail.style.display = "none";
-    },
-
-    // ---------------------------------------------------------------
-    // Phone mode
-    // ---------------------------------------------------------------
     _buildPhone: function () {
       var self = this;
       var parent = document.getElementById("dashboard").parentNode;
@@ -491,7 +440,6 @@
       closeBtn.textContent = "✕︎";
       closeBtn.title = "Close";
       closeBtn.setAttribute("aria-label", "Close");
-      closeBtn.setAttribute("draggable", "false");
       closeBtn.addEventListener("click", function (ev) {
         ev.stopPropagation();
         self._closeDrawer();
@@ -508,21 +456,17 @@
       this._drawerActive = null;
     },
 
-    _enterPhone: function () {
-      // Show tab-bar; hide rail
+    _enterTabbed: function () {
+      // Show tab-bar
       if (this._tabbar) this._tabbar.style.display = "";
-      if (this._rail)   this._rail.style.display   = "none";
 
-      // Ensure all side panels are in their home cols (hidden via CSS)
+      // Ensure all side panels are in their home cols (the CSS hides those
+      // the mode puts on the tab bar)
       var self = this;
       SIDE_PANELS.forEach(function (name) {
         var panel = document.getElementById("panel-" + name);
         if (!panel) return;
         if (panel.dataset.popped === "1") return; // skip popped-out panels
-        // If it's in rail body, move it home
-        if (self._railBody && self._railBody.contains(panel)) {
-          self._railBody.removeChild(panel);
-        }
         // If it's in drawer, move it home
         if (self._drawerBody && self._drawerBody.contains(panel)) {
           self._drawerBody.removeChild(panel);
@@ -544,7 +488,7 @@
       this._updateTabbarActive(null);
     },
 
-    _exitPhone: function () {
+    _exitTabbed: function () {
       // Return any drawer panel to its home col
       this._closeDrawer();
 
@@ -633,24 +577,12 @@
     },
 
     // ---------------------------------------------------------------
-    // Layout persistence (localStorage key: dogmud.dashboard.layout.v1)
+    // Layout persistence (localStorage key: LAYOUT_KEY, v2)
     // ---------------------------------------------------------------
-
-    // In-memory copy of the last-saved arrange block so _enterWide can
-    // honor it after a wide→rail→wide round-trip without re-reading LS.
-    _savedArrange: null,
 
     saveLayout: function () {
       if (this._suspendSave) return;
       try {
-        var el = document.getElementById("dashboard");
-
-        // Column widths (always safe to capture from the #dashboard style)
-        var cols = {
-          l: el ? el.style.getPropertyValue("--col-l-w") : "",
-          r: el ? el.style.getPropertyValue("--col-r-w") : ""
-        };
-
         // Collapsed panels (class survives mode changes — always safe)
         var collapsed = [];
         document.querySelectorAll(".dash-panel.collapsed").forEach(function (p) {
@@ -661,79 +593,54 @@
         // Include panels docked only for a narrow screen, so they pop out again.
         var popped = Object.keys(this._popped || {}).concat(this._poppedWhileNarrow || []);
 
-        // Arrange: only valid in wide mode. In rail/phone the panels are
-        // relocated away from their columns, so DOM order is not the real
-        // arrangement. Preserve whatever was previously saved for arrange
-        // and only overwrite it when we're actually in wide mode.
-        var arrange;
-        if (this.mode === "wide") {
-          arrange = {};
-          ["dash-col-left", "dash-col-center", "dash-col-right"].forEach(function (colId) {
-            var col = document.getElementById(colId);
-            if (!col) return;
-            arrange[colId] = [];
-            col.querySelectorAll(".dash-panel").forEach(function (p) {
-              if (p.dataset.panel) arrange[colId].push(p.dataset.panel);
-            });
-          });
-          this._addPoppedToArrange(arrange);
-          this._savedArrange = arrange;
-        } else {
-          // Read whatever was already persisted so we can write it back unchanged
-          try {
-            var existing = JSON.parse(localStorage.getItem("dogmud.dashboard.layout.v1") || "{}");
-            arrange = existing.arrange || this._savedArrange || null;
-          } catch (e) {
-            arrange = this._savedArrange || null;
-          }
-        }
-
-        var payload = { cols: cols, collapsed: collapsed, popped: popped };
-        if (arrange) payload.arrange = arrange;
+        // No arrangement or column widths: panels always sit in the page's
+        // order, and the ladder places them. A popped panel docks back
+        // before its anchor (redock), which is its place in that order
+        // (#768 review item 14).
+        var payload = { collapsed: collapsed, popped: popped };
         if (this._boxGeom && Object.keys(this._boxGeom).length) payload.boxes = this._boxGeom;
 
-        localStorage.setItem("dogmud.dashboard.layout.v1", JSON.stringify(payload));
+        localStorage.setItem(LAYOUT_KEY, JSON.stringify(payload));
       } catch (e) {
         // localStorage may be unavailable (private browsing, quota, etc.) — ignore
       }
     },
 
-    // A popped panel is out of its column while its window is open, but it
-    // still owns a place there: it docks back just before its anchor. Save it
-    // at that place, so a narrow screen or a reload brings it back to the
-    // same spot instead of the bottom of its column (#768 review item 14).
-    _addPoppedToArrange: function (arrange) {
-      var self = this;
-      var pending = Object.keys(this._popped || {});
-      function listFor(name) {
-        var panel = document.getElementById("panel-" + name);
-        var list = panel ? arrange[panel.dataset.homeCol] : null;
-        return Array.isArray(list) ? list : null;
+    // The saved layout, or null. An old v1 entry with no v2 is carried over
+    // once: its folded panels, popped-out panels and window places move to
+    // v2, its column arrangement and widths are dropped, and v1 goes.
+    _readLayout: function () {
+      try {
+        if (localStorage.getItem(LAYOUT_KEY) === null) {
+          var old = localStorage.getItem(OLD_LAYOUT_KEY);
+          if (old !== null) {
+            // v1 goes only once v2 holds what it carried (or v1 held
+            // nothing to carry), so a failed write keeps it for next time.
+            try {
+              var o = JSON.parse(old);
+              if (o && typeof o === "object") {
+                var carried = {};
+                if (Array.isArray(o.collapsed)) carried.collapsed = o.collapsed;
+                if (Array.isArray(o.popped)) carried.popped = o.popped;
+                if (o.boxes && typeof o.boxes === "object") carried.boxes = o.boxes;
+                localStorage.setItem(LAYOUT_KEY, JSON.stringify(carried));
+              }
+              localStorage.removeItem(OLD_LAYOUT_KEY);
+            } catch (e) {
+              // A v1 that is not JSON can never be carried: drop it.
+              if (e instanceof SyntaxError) {
+                try { localStorage.removeItem(OLD_LAYOUT_KEY); } catch (e2) {}
+              }
+            }
+          }
+        }
+        var raw = localStorage.getItem(LAYOUT_KEY);
+        if (!raw) return null;
+        var data = JSON.parse(raw);
+        return data && typeof data === "object" ? data : null;
+      } catch (e) {
+        return null;
       }
-      // Several panels can be popped at once, and one's anchor can be another
-      // popped panel, so place whatever can be placed until nothing moves.
-      var progress = true;
-      while (pending.length && progress) {
-        progress = false;
-        pending = pending.filter(function (name) {
-          var list = listFor(name);
-          if (!list || list.indexOf(name) >= 0) return false;
-          var anchor = self._dockAnchor ? self._dockAnchor[name] : null;
-          var anchorName = anchor && anchor.dataset ? anchor.dataset.panel : null;
-          if (!anchorName) { list.push(name); progress = true; return false; }
-          var at = list.indexOf(anchorName);
-          if (at < 0) return true;
-          list.splice(at, 0, name);
-          progress = true;
-          return false;
-        });
-      }
-      // An anchor that left the column (dragged away): the end of the column,
-      // where redock would put it too.
-      pending.forEach(function (name) {
-        var list = listFor(name);
-        if (list && list.indexOf(name) < 0) list.push(name);
-      });
     },
 
     // Pop-out window size and place per panel, kept while the window is
@@ -761,49 +668,10 @@
 
     restoreLayout: function () {
       var self = this;
-      var data;
-      try {
-        var raw = localStorage.getItem("dogmud.dashboard.layout.v1");
-        if (!raw) return;
-        data = JSON.parse(raw);
-        if (!data || typeof data !== "object") return;
-      } catch (e) {
-        return;
-      }
+      var data = this._readLayout();
+      if (!data) return;
 
-      // 1. Column widths
-      try {
-        var el = document.getElementById("dashboard");
-        if (el && data.cols) {
-          if (data.cols.l) el.style.setProperty("--col-l-w", data.cols.l);
-          if (data.cols.r) el.style.setProperty("--col-r-w", data.cols.r);
-        }
-      } catch (e) {}
-
-      // 2. Arrange — only apply if we're currently in wide mode
-      try {
-        if (this.mode === "wide" && data.arrange && typeof data.arrange === "object") {
-          this._savedArrange = data.arrange;
-          var arrange = data.arrange;
-          ["dash-col-left", "dash-col-center", "dash-col-right"].forEach(function (colId) {
-            var col = document.getElementById(colId);
-            if (!col) return;
-            var names = arrange[colId];
-            if (!Array.isArray(names)) return;
-            names.forEach(function (name) {
-              var panel = document.getElementById("panel-" + name);
-              if (!panel) return;
-              col.appendChild(panel);
-              panel.dataset.homeCol = colId;
-            });
-          });
-        } else if (data.arrange) {
-          // Cache it so _enterWide can use it later even if we're in rail/phone now
-          this._savedArrange = data.arrange;
-        }
-      } catch (e) {}
-
-      // Pop-out window sizes and places, before any panel pops out below.
+      // 1. Pop-out window sizes and places, before any panel pops out below.
       try {
         if (data.boxes && typeof data.boxes === "object") {
           Object.keys(data.boxes).forEach(function (name) {
@@ -812,7 +680,7 @@
         }
       } catch (e) {}
 
-      // 3. Collapsed panels
+      // 2. Collapsed panels
       try {
         if (Array.isArray(data.collapsed)) {
           data.collapsed.forEach(function (name) {
@@ -822,7 +690,7 @@
         }
       } catch (e) {}
 
-      // 4. Popped panels — do this LAST (depends on panels being in place)
+      // 3. Popped panels, LAST (depends on panels being in place)
       try {
         if (Array.isArray(data.popped)) {
           data.popped.forEach(function (name) {
@@ -931,147 +799,13 @@
     },
 
     // ---------------------------------------------------------------
-    // Column-width splitters (wide mode only)
+    // Fold toggle (the ▾ button), in every mode
     // ---------------------------------------------------------------
-    initSplitters: function () {
+    initCollapse: function () {
       var self = this;
-      var el = document.getElementById("dashboard");
-
-      function clamp(v, min, max) {
-        return Math.max(min, Math.min(max, v));
-      }
-
-      function makeSplitter(id, edge) {
-        var s = document.createElement("div");
-        s.id = id;
-        s.className = "dash-splitter col";
-        s.dataset.edge = edge;
-        el.appendChild(s);
-
-        var rect = null;
-
-        s.addEventListener("pointerdown", function (ev) {
-          if (self.mode !== "wide") return;
-          rect = el.getBoundingClientRect();
-          s.classList.add("dragging");
-          s.setPointerCapture(ev.pointerId);
-          ev.preventDefault();
-        });
-
-        s.addEventListener("pointermove", function (ev) {
-          if (!s.classList.contains("dragging")) return;
-          if (edge === "l") {
-            var w = clamp(ev.clientX - rect.left, 180, rect.width * 0.45);
-            el.style.setProperty("--col-l-w", w + "px");
-          } else {
-            var w = clamp(rect.right - ev.clientX, 180, rect.width * 0.45);
-            el.style.setProperty("--col-r-w", w + "px");
-          }
-        });
-
-        s.addEventListener("pointerup", function (ev) {
-          if (!s.classList.contains("dragging")) return;
-          s.classList.remove("dragging");
-          s.releasePointerCapture(ev.pointerId);
-          self.saveLayout && self.saveLayout();
-        });
-      }
-
-      makeSplitter("dash-splitter-l", "l");
-      makeSplitter("dash-splitter-r", "r");
-    },
-
-    // ---------------------------------------------------------------
-    // Drag-to-swap panel rearrange + collapse toggle (wide mode only)
-    // ---------------------------------------------------------------
-    initRearrange: function () {
-      var self = this;
-      var dragSourcePanel = null; // data-panel value of the panel being dragged
-
-      // Helper: swap two <section> elements in the DOM, regardless of
-      // whether they live in the same or different parent columns.
-      function swapNodes(a, b) {
-        var marker = document.createComment("swap");
-        a.parentNode.insertBefore(marker, a);
-        b.parentNode.insertBefore(a, b);
-        marker.parentNode.insertBefore(b, marker);
-        marker.parentNode.removeChild(marker);
-      }
-
-      // Update data-homeCol for a panel to reflect its current column.
-      function updateHomeCol(panel) {
-        var col = panel.closest(".dash-col");
-        if (col) panel.dataset.homeCol = col.id;
-      }
-
-      var panels = document.querySelectorAll(".dash-panel");
-
-      panels.forEach(function (panel) {
+      document.querySelectorAll(".dash-panel").forEach(function (panel) {
         var head = panel.querySelector(".dash-panel-head");
         if (!head) return;
-
-        // --- Drag handle: mark header as draggable ---
-        head.setAttribute("draggable", "true");
-
-        // Prevent the small button spans from initiating a swap drag
-        var btnSpans = head.querySelectorAll(".ph-collapse, .ph-popout");
-        btnSpans.forEach(function (span) {
-          span.setAttribute("draggable", "false");
-        });
-
-        // dragstart — only if wide mode
-        head.addEventListener("dragstart", function (ev) {
-          if (self.mode !== "wide") {
-            ev.preventDefault();
-            return;
-          }
-          dragSourcePanel = panel.dataset.panel;
-          ev.dataTransfer.effectAllowed = "move";
-          ev.dataTransfer.setData("text/plain", dragSourcePanel);
-        });
-
-        head.addEventListener("dragend", function () {
-          dragSourcePanel = null;
-          // clear any lingering drop highlight (e.g. drag released off-window)
-          var hl = document.querySelectorAll("#dashboard .dash-panel.drag-over");
-          for (var i = 0; i < hl.length; i++) hl[i].classList.remove("drag-over");
-        });
-
-        // --- Drop target: the entire panel section ---
-        panel.addEventListener("dragover", function (ev) {
-          if (!dragSourcePanel || self.mode !== "wide") return;
-          if (panel.dataset.panel === dragSourcePanel) return;
-          ev.preventDefault();
-          panel.classList.add("drag-over");
-        });
-
-        panel.addEventListener("dragleave", function () {
-          panel.classList.remove("drag-over");
-        });
-
-        panel.addEventListener("drop", function (ev) {
-          ev.preventDefault();
-          panel.classList.remove("drag-over");
-
-          if (!dragSourcePanel || self.mode !== "wide") return;
-          var targetPanelName = panel.dataset.panel;
-          if (targetPanelName === dragSourcePanel) return;
-
-          var srcPanel = document.getElementById("panel-" + dragSourcePanel);
-          var dstPanel = panel;
-          if (!srcPanel || !dstPanel) return;
-
-          swapNodes(srcPanel, dstPanel);
-
-          // Update data-homeCol for both panels (critical for responsive restore)
-          updateHomeCol(srcPanel);
-          updateHomeCol(dstPanel);
-
-          dragSourcePanel = null;
-          self.saveLayout && self.saveLayout();
-        });
-
-        // --- Collapse toggle ---
         var collapseBtn = head.querySelector(".ph-collapse");
         if (collapseBtn) {
           collapseBtn.addEventListener("click", function (ev) {

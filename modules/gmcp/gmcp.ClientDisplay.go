@@ -49,14 +49,7 @@ func clientDisplayHandler(e events.Event) events.ListenerReturn {
 		mudlog.Debug("gmcp.ClientDisplay", "connectionId", evt.ConnectionId, "ignored", "payload is not a whole column count")
 		return events.Continue
 	}
-	width := min(max(cols, users.MinWrapWidth), users.MaxAutoWrapWidth)
-
-	cs := connections.GetClientSettings(evt.ConnectionId)
-	if cs.Display.GetScreenWidth() == width {
-		return events.Continue
-	}
-	cs.Display.ScreenWidth = uint32(width)
-	connections.OverwriteClientSettings(evt.ConnectionId, cs)
+	users.StoreReportedCols(evt.ConnectionId, cols)
 	return events.Continue
 }
 

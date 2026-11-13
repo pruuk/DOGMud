@@ -1,10 +1,13 @@
 package guards
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -92,9 +95,6 @@ func TestEveryHelpPageFitsEveryWidth(t *testing.T) {
 			if topic == "spell blood-boil" && !strings.Contains(out, "Blood Boil") {
 				t.Errorf("help %s at %d did not render the spell page:\n%s", topic, width, out)
 			}
-			if helpWide["help/"+topic] {
-				continue
-			}
 			if got := templates.WidestLine(out); got > width {
 				t.Errorf("help %s at %d has a line %d wide:\n%s", topic, width, got, out)
 			}
@@ -120,15 +120,38 @@ func TestHelpIndexFitsEveryWidth(t *testing.T) {
 
 // The layout pass moves line breaks and drops marker lines; it never loses,
 // adds or reorders a word (owner ruling 2026-11-12).
+//
+// Each file is rendered at the width it is shown at, so every file is
+// checked: a page with forms at FullWidth (its base), each form at its own
+// width (formFor picks that form there), every other page at 30.
 func TestHelpLayoutKeepsEveryWord(t *testing.T) {
 	helpRenderSetup(t)
+	pages, forms := helpFolderFiles(t)
+	pageForms := helpPageForms(forms)
+	type shown struct {
+		page  string
+		width int
+	}
+	files := map[string]shown{}
+	for name := range pages {
+		files[name] = shown{name, 30}
+		if len(pageForms[name]) > 0 {
+			files[name] = shown{name, templates.FullWidth}
+		}
+	}
+	for name := range forms {
+		if m := helpFormName.FindStringSubmatch(name); m != nil && m[3] != "" {
+			w, _ := strconv.Atoi(m[3])
+			files[name] = shown{m[1], w}
+		}
+	}
 	rendered := 0
-	for name := range helpTemplateFiles(t) {
+	for name, at := range files {
 		var data any
-		if name == "help/help" {
+		if at.page == "help/help" {
 			data = helpIndexFixture()
 		}
-		raw, err := templates.ProcessForWidth(name, data, false, 30)
+		raw, err := templates.ProcessForWidth(at.page, data, false, at.width)
 		if err != nil {
 			continue // a page that needs data; its words are held through GetHelpContents above
 		}
@@ -213,6 +236,212 @@ func helpWords(s string) []string {
 		}
 	}
 	return words
+}
+
+// helpKeptBlocks are the ::keep blocks of a help file's source, each its lines.
+func helpKeptBlocks(t *testing.T, path string) [][]string {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	blocks := [][]string{}
+	var cur []string
+	for _, line := range strings.Split(strings.ReplaceAll(string(raw), "\r\n", "\n"), "\n") {
+		switch {
+		case line == "::keep":
+			cur = []string{}
+		case line == "::" && cur != nil:
+			blocks = append(blocks, cur)
+			cur = nil
+		case cur != nil:
+			cur = append(cur, line)
+		}
+	}
+	return blocks
+}
+
+var helpSwatch = regexp.MustCompile(`<ansi fg="(\d+)" bg="(\d+)"> ?(\d+)</ansi>`)
+
+// helpSwatchGrids are the colour grids of a help colors file: per kept
+// block, per line, each swatch as "fg/bg/number".
+func helpSwatchGrids(t *testing.T, path string) [][][]string {
+	grids := [][][]string{}
+	for _, block := range helpKeptBlocks(t, path) {
+		grid := [][]string{}
+		for _, line := range block {
+			row := []string{}
+			for _, m := range helpSwatch.FindAllStringSubmatch(line, -1) {
+				row = append(row, m[1]+"/"+m[2]+"/"+m[3])
+			}
+			grid = append(grid, row)
+		}
+		grids = append(grids, grid)
+	}
+	return grids
+}
+
+// helpSwatchParity reports how form's grids differ from base's: each base
+// grid, in order, must be matched by the form's next grid, or by several
+// grids of as many rows joined row by row (a grid split in halves one under
+// the other), swatch for swatch. "" when they hold the same.
+func helpSwatchParity(base, form [][][]string) string {
+	j := 0
+	for i, want := range base {
+		if j >= len(form) {
+			return fmt.Sprintf("base grid %d has no form grid", i+1)
+		}
+		got := make([][]string, len(form[j]))
+		for r := range form[j] {
+			got[r] = append([]string{}, form[j][r]...)
+		}
+		j++
+		for len(got) > 0 && len(got[0]) < len(want[0]) && j < len(form) && len(form[j]) == len(got) {
+			for r := range got {
+				got[r] = append(got[r], form[j][r]...)
+			}
+			j++
+		}
+		if fmt.Sprint(got) != fmt.Sprint(want) {
+			return fmt.Sprintf("grid %d differs:\n got %v\nwant %v", i+1, got, want)
+		}
+	}
+	if j != len(form) {
+		return fmt.Sprintf("the form has %d grids past the base's", len(form)-j)
+	}
+	return ""
+}
+
+// The colours page's narrow forms keep every swatch: each form holds the
+// base's numbers and colours in the same order in every grid row, the .w30's
+// halves joined back (plan 5, Task 3).
+func TestHelpColorsFormsKeepEverySwatch(t *testing.T) {
+	pages, forms := helpFolderFiles(t)
+	base := helpSwatchGrids(t, pages["help/colors"])
+	if len(base) < 4 {
+		t.Fatalf("found %d colour grids in help/colors; the parse is not reaching them", len(base))
+	}
+	checked := 0
+	for name, path := range forms {
+		if !strings.HasPrefix(name, "help/colors.w") {
+			continue
+		}
+		checked++
+		if msg := helpSwatchParity(base, helpSwatchGrids(t, path)); msg != "" {
+			t.Errorf("%s: %s", name, msg)
+		}
+	}
+	if checked < 2 {
+		t.Errorf("checked %d colours forms, want the .w42 and the .w30", checked)
+	}
+}
+
+// helpMapRule is a kept line that is only a rule: the narrow map's frame.
+var helpMapRule = regexp.MustCompile(`^─+$`)
+
+// helpBaseMaps are the map columns of each framed example map in the base
+// page: characters 8 to 72 of each framed row, tags removed.
+func helpBaseMaps(t *testing.T, path string) [][][]rune {
+	maps := [][][]rune{}
+	for _, block := range helpKeptBlocks(t, path) {
+		rows := [][]rune{}
+		for _, line := range block {
+			vis := []rune(helpTag.ReplaceAllString(line, ""))
+			if len(vis) != 79 || strings.Contains(string(vis), "-._.-=") {
+				continue
+			}
+			if edge := string(vis[:7]); edge != "( _ __)" && edge != "(__  _)" {
+				continue
+			}
+			rows = append(rows, vis[7:72])
+		}
+		if len(rows) > 0 {
+			maps = append(maps, rows)
+		}
+	}
+	return maps
+}
+
+// helpFormMaps are each kept block's lines between its two rule lines, tags
+// removed: the narrow form's map rows.
+func helpFormMaps(t *testing.T, path string) [][][]rune {
+	maps := [][][]rune{}
+	for _, block := range helpKeptBlocks(t, path) {
+		var rows [][]rune
+		for _, line := range block {
+			vis := helpTag.ReplaceAllString(line, "")
+			if helpMapRule.MatchString(vis) {
+				if rows != nil {
+					maps = append(maps, rows)
+					break
+				}
+				rows = [][]rune{}
+				continue
+			}
+			if rows != nil {
+				rows = append(rows, []rune(vis))
+			}
+		}
+	}
+	return maps
+}
+
+// helpMapSlice reports how a form's maps differ from the base's: each form
+// map, width columns wide, must be the base map's rows cut to width around
+// the "@", which sits at width/2 as the mapper centres it (GetLimitedMap).
+// "" when they match.
+func helpMapSlice(base, form [][][]rune, width int) string {
+	if len(form) != len(base) {
+		return fmt.Sprintf("%d maps, the base has %d", len(form), len(base))
+	}
+	for m := range base {
+		if len(form[m]) != len(base[m]) {
+			return fmt.Sprintf("map %d has %d rows, the base %d", m+1, len(form[m]), len(base[m]))
+		}
+		at := -1
+		for _, row := range base[m] {
+			if i := strings.IndexRune(string(row), '@'); i >= 0 {
+				at = len([]rune(string(row)[:i]))
+			}
+		}
+		start := at - width/2
+		if at < 0 || start < 0 || start+width > len(base[m][0]) {
+			return fmt.Sprintf("map %d: no %d-column cut around the @ at %d", m+1, width, at)
+		}
+		for r := range base[m] {
+			want := strings.TrimRight(string(base[m][r][start:start+width]), " ")
+			if got := strings.TrimRight(string(form[m][r]), " "); got != want {
+				return fmt.Sprintf("map %d row %d:\n got %q\nwant %q", m+1, r+1, got, want)
+			}
+		}
+	}
+	return ""
+}
+
+// The map examples' narrow forms draw the base's maps the way the narrow
+// map command does: each row cut to the form's width around the "@" (plan
+// 5, Task 3).
+func TestHelpMapExamplesFormsCutTheBaseMaps(t *testing.T) {
+	pages, forms := helpFolderFiles(t)
+	base := helpBaseMaps(t, pages["help/map-examples"])
+	if len(base) != 2 {
+		t.Fatalf("found %d framed maps in help/map-examples, want 2; the parse is not reaching them", len(base))
+	}
+	checked := 0
+	for name, path := range forms {
+		m := helpFormName.FindStringSubmatch(name)
+		if m == nil || m[1] != "help/map-examples" || m[3] == "" {
+			continue
+		}
+		checked++
+		width, _ := strconv.Atoi(m[3])
+		if msg := helpMapSlice(base, helpFormMaps(t, path), width); msg != "" {
+			t.Errorf("%s: %s", name, msg)
+		}
+	}
+	if checked < 2 {
+		t.Errorf("checked %d map-examples forms, want the .w42 and the .w30", checked)
+	}
 }
 
 // HELP_DUMP=<folder> writes every page at 30 and 80 for the owner's report

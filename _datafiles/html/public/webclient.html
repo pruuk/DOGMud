@@ -30,7 +30,9 @@
         frame.height = ViewportFit.frameHeight(
             contentContainer.clientHeight, visible, contentContainer.getBoundingClientRect().top);
         // The game takes its phone tab bar out of the keyboard's way (dashboard.css).
-        if (frame.contentDocument) {
+        // While the game page is still loading the frame has no document
+        // element yet; the next viewport event marks it.
+        if (frame.contentDocument && frame.contentDocument.documentElement) {
             frame.contentDocument.documentElement.classList.toggle('keyboard-open',
                 ViewportFit.keyboardOpen(window.innerHeight, visible));
         }

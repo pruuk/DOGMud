@@ -221,6 +221,17 @@ Cached template with metadata for efficient reuse and cache invalidation.
   that fits is always used. Which forms a template has is found once and
   remembered (`formsOf`); a form file added while the server runs is seen
   after a restart.
+- No template is exempt from fitting (web client base plan 5, owner ruling
+  2026-11-12): the web game window cannot scroll sideways, so the map, the
+  lockpicking table and the two wide help pages fit the reader too. `maps/map`
+  has `.w42` and `.w30` forms (title, rules and legend, no rope frame) and
+  `help/colors` and `help/map-examples` have `.w42` and `.w30` forms. A help
+  form (`help/name.w42.template`) works as any other form: `ProcessHelp` and
+  `ProcessForWidth` pick it by width, and it is not a help topic. The
+  login screens follow the same rule: `login/connect-splash` has words-only
+  `.w42` and `.w30` forms (the splash art is only shown where it fits), and
+  `goodbye` has a words-only narrow form ("Goodbye."). Which widths each
+  template is held to is in `internal/guards/template_width_guard_test.go`.
 - A screen-reader file still comes first and has no forms. A `.md` file has
   no forms.
 - `ProcessForWidth(fname, data, screenReader, width)` (forms.go) renders for
@@ -249,7 +260,12 @@ Cached template with metadata for efficient reuse and cache invalidation.
   dot; a pair that fits only without its dot, or whose last word cannot
   share a line with it, goes without the dot. The lead cell is
   wrapped with `wrapspans`, so a coloured name in it stays whole.
-- `ProcessAtWidth` (testing_support.go) renders at a given width for guards.
+- `ProcessAtWidth(fname, data, width)` (forms.go) renders as `Process` does
+  for a reader width columns wide with no screen reader: it measures, so the
+  widest form that fits is used. It is for one reader with no user to measure
+  for (the connect splash, login prompts, the goodbye) and for the guards. A
+  broadcast uses `ProcessForWidth`, which picks by width alone and so can
+  pick a narrower form than fits (a 60-column reader gets the `.w42` form).
 - `internal/guards/template_width_guard_test.go` knows every template and why
   it is safe at 30 columns, and renders the ones that must fit at 30, 42, 80.
 

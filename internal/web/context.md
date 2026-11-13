@@ -401,7 +401,12 @@ file_paths:
   gorilla's default is unlimited and `ReadMessage` buffers a whole frame, so
   without the cap an unauthenticated client can force an arbitrary allocation.
   The handler passed in (`main.HandleWebSocketConnection`) owns removing the
-  connection from the `connections` registry on every exit path.
+  connection from the `connections` registry on every exit path. The web
+  client opens `/ws?cols=<n>`: `Listen` passes the raw `cols` value to the
+  handler as its third argument (empty when absent), and the handler
+  validates and stores it with `users.StoreAddressCols` so the connect
+  splash is drawn to the reader's
+  width before its `Client.Display` report arrives.
 - `GET /favicon.ico` - Favicon redirect
 - `GET /<path>` - Template-processed HTML pages
 

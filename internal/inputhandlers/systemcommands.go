@@ -124,10 +124,7 @@ func trySystemCommand(cmd string, connectionId connections.ConnectionId) bool {
 
 	if cmd == "quit" {
 
-		// Not building complex output, so just preparse the ansi in the template and cache that
-		tplTxt, _ := templates.Process("goodbye", nil)
-
-		connections.SendTo([]byte(templates.AnsiParse(tplTxt)), connectionId)
+		connections.SendTo([]byte(goodbyeFor(connectionId)), connectionId)
 
 		connections.Kick(connectionId, `/quit`)
 		return true

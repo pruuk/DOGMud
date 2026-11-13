@@ -571,7 +571,7 @@ does: a legacy one runs past on its own line at its indent (ruling 8).
   indent 2 (1 at 30), and no corners or side bars (ruling 1). The form is
   42 wide from 42 to 79 columns and 30 below, as a template's forms are
   picked. `motdrestyle.js` matches only the box, so the web client shows the
-  ruled form as sent (plan 5 checks it). Tested with the shipped MOTD read
+  ruled form as sent. Tested with the shipped MOTD read
   from `_datafiles/config.yaml`.
 - **Achievements** (`achievements.go`): `achievementsScreen` builds the list
   from `achievementEntry` rows at `users.RedrawnFormWidth`; a line that fits
@@ -598,6 +598,36 @@ does: a legacy one runs past on its own line at its indent (ruling 8).
 
 `list_screens_test.go` holds these five to the approved drawings
 (`testdata/drawings_3b3/`) and to their goldens.
+
+### The map and lockpicking fit the reader (web client base plan 5)
+
+The web game window cannot scroll sideways, so no screen is exempt from
+fitting (owner ruling 2026-11-12).
+
+- **`map`** (`skill.map.go`). `mapSizeForReader(skillLevel, wide, screenWidth,
+  screenHeight, wrap)` returns the map's width, height and whether the
+  reader is narrow. Under 80 columns (`wrap < users.MaxAutoWrapWidth`) the map
+  is the reader's whole width, at least `users.MinWrapWidth`, and
+  `standardMapHeight` rows; `map wide` cannot be wider than the screen there.
+  At 80 and over it is `mapSizeFor` as before (standard 65 by 21, `map wide`
+  at `wideMapLevel` filling the screen less `mapBorderWidth`). `Map` reads
+  `user.WrapWidth()` once, and a narrow reader's map renders through
+  `templates.ProcessForWidth("maps/map", ...)` at `users.RedrawnFormWidth(wrap)`,
+  which picks `maps/map.w42.template` or `maps/map.w30.template`: a title, a
+  rule, the map lines, a rule and the legend, with no rope frame. Anyone else
+  gets the framed base, even a telnet `map wide` wider than 80.
+  `skill.map_narrow_test.go` holds the sizes (`TestMapSizeForReader`) and the
+  renders at every width (`TestMapRendersFitEveryWidth`).
+- **Lockpicking** (`picklock.go`). `GetLockRender(sequence, entered,
+  viewingUserId)` reads the viewer's `WrapWidth()` and screen-reader setting
+  and calls `lockRenderAt(sequence, entered, width, screenReader)`, which draws
+  the lock as one table of as many steps as fit, then the next. A row holds
+  `lockStepsPerRow(width)` = `(width-3)/8` steps (the template's 2-space
+  indent, 8 columns a step and the closing rule): 9 at 80, 4 at 42, 3 at 30.
+  A lock of 10 steps used to be 83 columns wide on a desktop. A lock in more
+  than one row titles each row "Lock steps A to B:" ("Lock step N:" for a
+  row of one); an empty lock keeps one titled, empty table. `picklock_render_test.go` holds every lock of 2 to 32
+  steps to every width and checks no step is lost.
 
 `start` gives a character still carrying its placeholder name its username,
 checked by `users.ValidateActorName` with the user's own id excluded (an

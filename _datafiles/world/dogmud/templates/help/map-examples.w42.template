@@ -1,0 +1,60 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Example maps</ansi>
+
+<ansi fg="yellow">Example Map: </ansi>
+
+::keep
+<ansi fg="black-bold">.:</ansi> <ansi fg="20">Map for Frostfang</ansi>
+<ansi fg="black-bold">──────────────────────────────────────────</ansi>
+<ansi fg="map-default">                   <ansi fg="map-room"><ansi fg="map-trainer" bg="mapbg-trainer">%</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                     |</ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                     |</ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>   <ansi fg="map-room"><ansi fg="map-shop" bg="mapbg-shop">$</ansi></ansi></ansi>
+<ansi fg="map-default">                     |   |</ansi>
+<ansi fg="map-default">               <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-townsquare" bg="mapbg-townsquare">T</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">               |     |       |</ansi>
+<ansi fg="map-default">               <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>     <ansi fg="map-room"><ansi fg="map-you" bg="mapbg-you">@</ansi></ansi>       <ansi fg="map-room"><ansi fg="map-inn" bg="mapbg-inn">I</ansi></ansi></ansi>
+<ansi fg="map-default">              /      |</ansi>
+<ansi fg="map-default">             <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>       <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                     |</ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-temple" bg="mapbg-temple">+</ansi></ansi></ansi>
+<ansi fg="map-default">                     |</ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                     | |</ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>-<ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+
+<ansi fg="black-bold">──────────────────────────────────────────</ansi>
+<ansi fg="map-legend">Legend</ansi><ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-shop" bg="mapbg-shop">$</ansi></ansi> Shop<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-trainer" bg="mapbg-trainer">%</ansi></ansi> Trainer<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi> Room<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-you" bg="mapbg-you">@</ansi></ansi> You
+<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-inn" bg="mapbg-inn">I</ansi></ansi> Inn<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-townsquare" bg="mapbg-townsquare">T</ansi></ansi> Townsquare<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-temple" bg="mapbg-temple">+</ansi></ansi> Temple
+::
+
+<ansi fg="yellow">Example "Wide" Map: </ansi>
+
+::keep
+<ansi fg="black-bold">.:</ansi> <ansi fg="20">Map for Frostfang</ansi>
+<ansi fg="black-bold">──────────────────────────────────────────</ansi>
+
+
+<ansi fg="map-default">                   <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                   <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>   <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                   <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                    <ansi fg="map-room"><ansi fg="map-trainer" bg="mapbg-trainer">%</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi> <ansi fg="map-room"><ansi fg="map-shop" bg="mapbg-shop">$</ansi></ansi></ansi>
+<ansi fg="map-default">                  <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-townsquare" bg="mapbg-townsquare">T</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                  <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>  <ansi fg="map-room"><ansi fg="map-you" bg="mapbg-you">@</ansi></ansi>   <ansi fg="map-room"><ansi fg="map-inn" bg="mapbg-inn">I</ansi></ansi></ansi>
+<ansi fg="map-default">                 <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi>   <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-temple" bg="mapbg-temple">+</ansi></ansi></ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+<ansi fg="map-default">                     <ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi></ansi>
+
+
+<ansi fg="black-bold">──────────────────────────────────────────</ansi>
+<ansi fg="map-legend">Legend</ansi><ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-shop" bg="mapbg-shop">$</ansi></ansi> Shop<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-trainer" bg="mapbg-trainer">%</ansi></ansi> Trainer<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-room" bg="mapbg-room">*</ansi></ansi> Room<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-you" bg="mapbg-you">@</ansi></ansi> You
+<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-inn" bg="mapbg-inn">I</ansi></ansi> Inn<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-townsquare" bg="mapbg-townsquare">T</ansi></ansi> Townsquare<ansi fg="map-legend"> [</ansi><ansi fg="map-room"><ansi fg="map-temple" bg="mapbg-temple">+</ansi></ansi> Temple
+::
+
+<ansi fg="red">Note:</ansi> The wide map shows more of the area than the normal one only on a wide screen. On a narrow screen like this one, both maps are drawn to fit your screen.
+

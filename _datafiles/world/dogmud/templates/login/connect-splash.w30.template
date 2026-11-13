@@ -1,0 +1,21 @@
+{{- /* The connect splash at 30 columns: words only (spec ruling 23, no
+small art). The spaced title is 41 wide, so the title is plain words,
+centred. Every line is broken by hand to fit 30. Sent before login, so it
+is picked by the width the web client put on its websocket address
+(main.go). */ -}}
+<ansi clear="all"></ansi>
+
+<ansi fg="189">    Delusions of Grandeur</ansi>
+
+<ansi fg="black-bold">.:</ansi> Welcome to
+<ansi fg="45">Delusions of Grandeur</ansi>, a MUD
+set on the world of <ansi fg="45">Gaius</ansi>.
+  <ansi fg="black-bold">... The Chrysalis awaits ...</ansi>
+
+<ansi fg="black-bold">{{ repeat "=" 30 }}</ansi>
+<ansi fg="8">Note: Some legacy clients
+(zMUD, etc.) are not
+supported.</ansi>
+<ansi fg="8">We recommend</ansi> <ansi fg="45">Mudlet</ansi> <ansi fg="8">or the
+web client for the best
+experience.</ansi>

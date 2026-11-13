@@ -11,7 +11,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/moderation"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/species"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -31,7 +30,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 	if connDetails := connections.Get(clientInput.ConnectionId); connDetails != nil && !connDetails.IsLocal() {
 		host := connDetails.ClientIP()
 		if reason, banned := moderation.IsIPBanned(host); banned {
-			connections.SendTo([]byte("Your connection has been banned. Reason: "+reason), clientInput.ConnectionId)
+			sendLoginText(clientInput.ConnectionId, "Your connection has been banned. Reason: "+reason)
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			connections.Remove(clientInput.ConnectionId)
 			return false
@@ -61,9 +60,8 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 
 					existingConnectionId := user.ConnectionId()
 
-					// Send a goodbye message to the currently connected user
-					tplTxt, _ := templates.Process("goodbye", nil)
-					connections.SendTo([]byte(templates.AnsiParse(tplTxt)), existingConnectionId)
+					// Send a goodbye message to the currently connected user.
+					connections.SendTo([]byte(goodbyeFor(existingConnectionId)), existingConnectionId)
 
 					users.SetZombieUser(userid)
 					// Error deliberately discarded, and made explicit because
@@ -83,14 +81,14 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 			tmpUser, err := users.LoadUser(username)
 			if err != nil {
 				mudlog.Error("Failed to load existing user during login", "username", username, "error", err)
-				connections.SendTo([]byte(language.T("Error.LoginFailedGeneric")), clientInput.ConnectionId)
+				sendLoginText(clientInput.ConnectionId, language.T("Error.LoginFailedGeneric"))
 				connections.SendTo(term.CRLF, clientInput.ConnectionId)
 				connections.Remove(clientInput.ConnectionId)
 				return false // Indicate failure, connection removed
 			}
 
 			if !tmpUser.PasswordMatches(password) {
-				connections.SendTo([]byte(`Nope. Bye!`), clientInput.ConnectionId)
+				sendLoginText(clientInput.ConnectionId, `Nope. Bye!`)
 				connections.SendTo(term.CRLF, clientInput.ConnectionId)
 				connections.Remove(clientInput.ConnectionId)
 				return false // Indicate failure, connection removed
@@ -100,7 +98,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 			// (so it can't be used to probe which accounts exist) and before the
 			// character enters the world.
 			if reason, banned := moderation.IsAccountBanned(username); banned {
-				connections.SendTo([]byte("This account has been banned. Reason: "+reason), clientInput.ConnectionId)
+				sendLoginText(clientInput.ConnectionId, "This account has been banned. Reason: "+reason)
 				connections.SendTo(term.CRLF, clientInput.ConnectionId)
 				connections.Remove(clientInput.ConnectionId)
 				return false
@@ -108,7 +106,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 
 			loggedInUser, msg, err := users.LoginUser(tmpUser, clientInput.ConnectionId)
 			if err != nil {
-				connections.SendTo([]byte(msg), clientInput.ConnectionId)
+				sendLoginText(clientInput.ConnectionId, msg)
 				connections.SendTo(term.CRLF, clientInput.ConnectionId)
 				connections.Remove(clientInput.ConnectionId)
 				return false // Indicate failure, connection removed
@@ -117,14 +115,14 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 			sharedState["UserObject"] = loggedInUser // For main loop
 
 			if len(msg) > 0 {
-				connections.SendTo([]byte(msg), clientInput.ConnectionId)
+				sendLoginText(clientInput.ConnectionId, msg)
 				connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			}
 			mudlog.Info("User logged in", "username", username, "connectionId", clientInput.ConnectionId)
 			return true // Indicate success, handler can be removed
 
 		} else {
-			connections.SendTo([]byte(`Invalid login.`), clientInput.ConnectionId)
+			sendLoginText(clientInput.ConnectionId, `Invalid login.`)
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			connections.Remove(clientInput.ConnectionId)
 			return false // Indicate failure, connection removed
@@ -141,7 +139,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 
 		confirmCreate, exists := results["confirm_create"] // Assumes step ID "confirm_create"
 		if !exists || confirmCreate != "y" {
-			connections.SendTo([]byte(`Okay, bye!`), clientInput.ConnectionId) // Use language key
+			sendLoginText(clientInput.ConnectionId, `Okay, bye!`) // Use language key
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			connections.Remove(clientInput.ConnectionId)
 			return false // Indicate failure, connection removed
@@ -151,7 +149,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 		password := results["password-new"]
 
 		if users.Exists(results["username-new"]) {
-			connections.SendTo([]byte(`I'm sorry, that user already exists!`), clientInput.ConnectionId) // Use language key
+			sendLoginText(clientInput.ConnectionId, `I'm sorry, that user already exists!`) // Use language key
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			connections.Remove(clientInput.ConnectionId)
 			return false
@@ -164,14 +162,14 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 		// Error handling for SetUsername/SetPassword might be redundant if validation passed, but good practice
 		if err := newUser.SetUsername(username); err != nil {
 			mudlog.Error("Internal error setting username post-validation", "username", username, "error", err)
-			connections.SendTo([]byte(language.T("Error.UserCreationFailed")), clientInput.ConnectionId) // Generic creation error
+			sendLoginText(clientInput.ConnectionId, language.T("Error.UserCreationFailed")) // Generic creation error
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			connections.Remove(clientInput.ConnectionId)
 			return false
 		}
 		if err := newUser.SetPassword(password); err != nil {
 			mudlog.Error("Internal error setting password post-validation", "username", username, "error", err)
-			connections.SendTo([]byte(language.T("Error.UserCreationFailed")), clientInput.ConnectionId) // Generic creation error
+			sendLoginText(clientInput.ConnectionId, language.T("Error.UserCreationFailed")) // Generic creation error
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			connections.Remove(clientInput.ConnectionId)
 			return false
@@ -180,7 +178,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 		// Character name is the same as the username
 		if err := newUser.SetCharacterName(username); err != nil {
 			mudlog.Error("Internal error setting character name from username", "name", username, "error", err)
-			connections.SendTo([]byte(language.T("Error.UserCreationFailed")), clientInput.ConnectionId)
+			sendLoginText(clientInput.ConnectionId, language.T("Error.UserCreationFailed"))
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			connections.Remove(clientInput.ConnectionId)
 			return false
@@ -199,7 +197,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 		if err := users.CreateUser(newUser); err != nil {
 			mudlog.Error("Could not create user", "username", username, "error", err)
 			// Try to give specific feedback if possible, otherwise generic
-			connections.SendTo([]byte(err.Error()), clientInput.ConnectionId)
+			sendLoginText(clientInput.ConnectionId, err.Error())
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			connections.Remove(clientInput.ConnectionId)
 			return false // Indicate failure, connection removed

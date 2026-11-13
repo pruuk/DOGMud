@@ -583,14 +583,16 @@ func main() {
 	// block until a signal comes in
 	<-sigChan
 
-	tplTxt, err := templates.Process("goodbye", nil)
-	if err != nil {
-		mudlog.Error("Template Error", "error", err)
+	// The goodbye, drawn for each player's screen (a phone gets the
+	// words-only form), sent now: connections.Cleanup below closes them.
+	for _, u := range users.GetAllActiveUsers() {
+		tplTxt, err := templates.Process("goodbye", nil, u.UserId)
+		if err != nil {
+			mudlog.Error("Template Error", "error", err)
+			continue
+		}
+		connections.SendTo([]byte(templates.AnsiParse(tplTxt)), u.ConnectionId())
 	}
-
-	events.AddToQueue(events.Broadcast{
-		Text: templates.AnsiParse(tplTxt),
-	})
 
 	serverAlive.Store(false) // immediately stop processing incoming connections
 
@@ -1281,7 +1283,12 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 // websocket's own RemoteAddr() is the TCP peer of the HTTP upgrade, which
 // behind a reverse proxy is the proxy itself — recording only that is what made
 // IP bans inert for every web-client player.
-func HandleWebSocketConnection(conn *websocket.Conn, clientIP string) {
+//
+// reportedCols is the raw cols value of the websocket address: the web
+// client's column count, which draws the connect splash to the reader's
+// width before its Client.Display report can arrive. A missing or bad value
+// leaves the connection at the default 80.
+func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCols string) {
 
 	var userObject *users.UserRecord
 	connDetails := connections.Add(nil, conn)
@@ -1369,8 +1376,12 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string) {
 	}
 
 	// --- Send Initial Welcome/Splash ---
-	// (This part was mostly correct before)
-	splashTxt, _ := templates.Process("login/connect-splash", nil)
+	// The splash goes out before the client's Client.Display report can
+	// arrive, so the width comes from the websocket address (/ws?cols=57),
+	// validated and clamped as Client.Display is. There is no user to measure
+	// for yet, so it is drawn for the width: the widest form that fits.
+	splashWidth := users.StoreAddressCols(connDetails.ConnectionId(), reportedCols)
+	splashTxt, _ := templates.ProcessAtWidth("login/connect-splash", nil, splashWidth)
 	connections.SendTo([]byte(templates.AnsiParse(splashTxt)), connDetails.ConnectionId())
 
 	// --- Trigger the Prompt Handler to initialize state and send the FIRST prompt ---

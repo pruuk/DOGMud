@@ -1,5 +1,14 @@
 # DOGMud Patch Notes
 
+## 2026-11-12: The game window fits your screen
+
+- Game text in the web client is now one readable size on every device, and it never shrinks or grows to fit. On a phone the lines fit your screen instead. (If you have raised your browser's minimum text size, the game uses that size.)
+- On a computer the game sits on the left at its full width, with the map and your panels to the right. Narrow the window and the panels tuck behind the round buttons; the game itself stays put.
+- The map, lockpicking and the colour chart in help redraw themselves to fit a narrow screen. Lockpicking long locks no longer runs off the edge on a desktop either.
+- The login screen and its prompts fit a phone too, and so does the goodbye when you leave.
+- Zooming the page to 200% now makes the text bigger, as it should.
+- The map's legend starts folded, so the map has more room. Press Legend under the map to open it.
+
 ## 2026-11-12: Help fits your screen
 
 - Every help page now fits your window, down to the narrowest phone.

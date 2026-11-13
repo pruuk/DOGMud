@@ -601,6 +601,13 @@ the source because `☠` is dropped elsewhere.
 `map wide` (a screen-sized map) is also level 4 and up
 (`mapSizeFor`, `wideMapLevel`).
 
+A reader whose text wraps under 80 columns (a phone on the web client, or
+`set linewidth` below 80 on telnet) gets a map drawn to their whole width,
+at least 30, and 21 rows tall (`mapSizeForReader`); `map wide` cannot be wider
+than the screen there. The frame is replaced by plain rules (the
+`maps/map.w42` and `maps/map.w30` forms). `GetLimitedMap` is given that
+width and height; nothing in this package changes.
+
 Detail level (visible radius, secret/locked display) scales with
 Perception. This path is text-only and has no awareness of the
 `SnapshotExit` extended flags or `Zone.Map.Party`.

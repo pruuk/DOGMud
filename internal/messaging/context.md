@@ -600,6 +600,14 @@ Functions:
   item tag. A move name in `{attack}` renders untagged through
   `items.RenderMoveDefenseMessage`, and `{bodypart}` is never tagged.
 - `WrapAnsi(text string, maxWidth int) string`
+- `WrapPrompt(text string, maxWidth int) string` (plan 5): `WrapAnsi` for
+  text that ends where the reader types, such as a login prompt's `": "`. It
+  sets aside the trailing run of spaces and `</ansi>` closers, wraps the
+  rest, and puts the run back, so the spaces stay on the last line and the
+  cursor after them (a plain fold drops a line's trailing spaces). When the
+  last line has no room for the spaces, the rest is wrapped narrower by
+  their count. A text that fits is returned byte for byte. Used by
+  `internal/inputhandlers` for the login prompts on a web client.
 - `PackUnits(units []string, first, rest, width int, names ...string) []string`
   (plan 3b-3): lays units out in lines of at most width, indented first then
   rest, breaking only between units; a unit wider than the room at rest
@@ -739,7 +747,7 @@ The package is the pipeline, one stage per file, plus the fan-out (`trio.go`):
 | `anonymize.go` | Replacing names the observer should not see (infrared fallback, whole-line) |
 | `hidenames.go` | `HideNames`, `NameHider`, `HideSpeakerNames` (sight gates slice 5b): replacing specific names in bare prose, longest-first, whole-word |
 | `hidenames_tagged.go` | Identity-tag-aware name replacement `HideNames` and `Anonymize` share, including the trailing adjective span |
-| `wrap.go` | `WrapAnsi`, ANSI-aware folding of lines wider than a caller-supplied width measured in display columns; a line that fits is copied byte for byte; called by the pipeline for the categories `shouldWrap` admits, and directly by `motd.go` for its box-bordered banner |
+| `wrap.go` | `WrapAnsi`, ANSI-aware folding of lines wider than a caller-supplied width measured in display columns; a line that fits is copied byte for byte; called by the pipeline for the categories `shouldWrap` admits, and directly by `motd.go` for its box-bordered banner; and `WrapPrompt`, which keeps a prompt's trailing `": "` on its last line (the login prompts) |
 | `pack.go` | `PackUnits`, `PackUnitsKeepIndent` (plan 3b-3): lines that break only between whole units, for the narrow screen forms and the two-line table form |
 | `predicates.go` | `ParticipantSight` (the optics primitive) plus `CanSeeClearly`/`CanSeeShapes`/`CanSeeSightImpairedOnly`, the one-line attention policies built on it; `SeesThroughExit` and `FixedLight` (lighting plan 5c); `SensesHeatThroughExit` (lighting plan 6) |
 | `window.go` | `SightThroughWindow`, the pure window-model function `ParticipantSight` calls, `clampShift`, `ExitThroughWindow` (lighting plan 5c), `LightTrimTarget` (lighting plan 5a, reparameterized in 5b to take `dazzleAbove` instead of reading the now-retired `windowDazzleEdge` constant), `DarknessTrimTarget` (lighting plan 5d), plus its two remaining unexported constants (`windowShiftCap`, `windowFloor`) |

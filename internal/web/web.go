@@ -305,8 +305,11 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 //
 // webSocketHandler receives the upgraded connection plus the resolved real
 // client IP. That second argument exists because the socket peer of a proxied
-// websocket is the reverse proxy, not the player — see ResolveClientIP.
-func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string)) {
+// websocket is the reverse proxy, not the player; see ResolveClientIP. The
+// third is the address's raw cols value (/ws?cols=57, empty when absent): the
+// web client's columns, so the connect splash can be drawn to them before
+// its Client.Display report arrives. The handler validates it.
+func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string, string)) {
 
 	networkConfig := configs.GetNetworkConfig()
 
@@ -352,6 +355,7 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string)) 
 		// Resolve before the upgrade — once the connection is hijacked the
 		// request headers are no longer reachable.
 		clientIP := ResolveClientIP(r)
+		reportedCols := r.URL.Query().Get("cols")
 
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -371,7 +375,7 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string)) 
 		// magnitude under this; exceeding it closes the connection.
 		conn.SetReadLimit(wsMaxMessageBytes)
 
-		webSocketHandler(conn, clientIP)
+		webSocketHandler(conn, clientIP, reportedCols)
 	})
 
 	// No world lock: serving a CSS or JS file has nothing to do with game

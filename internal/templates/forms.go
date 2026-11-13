@@ -106,6 +106,16 @@ func ProcessForWidth(fname string, data any, screenReader bool, width int) (stri
 	return processPicked(fname, data, templateConfig{ScreenReader: screenReader}, width, false)
 }
 
+// ProcessAtWidth renders fname as Process does for a reader whose screen is
+// width columns wide, without a screen reader: it measures, so the widest
+// form that fits is used. For one reader who has no user to measure for
+// (the connect splash, login prompts, the goodbye; internal/inputhandlers
+// and main.go), and for guards that hold every template to the width it is
+// shown at (internal/guards). A broadcast uses ProcessForWidth instead.
+func ProcessAtWidth(fname string, data any, width int) (string, error) {
+	return process(fname, data, templateConfig{}, width)
+}
+
 // formFor is the form a render by width alone uses: 0 (the base) at
 // FullWidth and wider or when there are no forms, else the widest form
 // drawn to no more than width, or the narrowest when width is narrower than

@@ -282,3 +282,53 @@ func WrapAnsi(text string, maxWidth int) (wrapped string) {
 	out.WriteString(line.String())
 	return out.String()
 }
+
+// WrapPrompt wraps text that ends where the reader types, such as a login
+// prompt ending in ": ", to maxWidth as WrapAnsi does, and keeps its trailing
+// spaces on its last line, so the cursor stays after the ": " instead of
+// dropping to a line of its own (WrapAnsi folds a line's trailing spaces
+// away). The run of spaces and </ansi> closers the text ends with is set
+// aside, the rest is wrapped, and the run is put back. When the last line
+// then has no room for the spaces, the rest is wrapped narrower by their
+// count. A text that already fits is returned byte for byte.
+func WrapPrompt(text string, maxWidth int) string {
+	if maxWidth <= 0 || text == "" {
+		return text
+	}
+	cut := len(text)
+	for cut > 0 {
+		if text[cut-1] == ' ' {
+			cut--
+			continue
+		}
+		if strings.HasSuffix(text[:cut], ansiCloser) {
+			cut -= len(ansiCloser)
+			continue
+		}
+		break
+	}
+	body, tail := text[:cut], text[cut:]
+	spaces := strings.Count(tail, " ")
+	wrapped := WrapAnsi(body, maxWidth)
+	if spaces > 0 && spaces < maxWidth && lastLineColumns(wrapped)+spaces > maxWidth {
+		wrapped = WrapAnsi(body, maxWidth-spaces)
+	}
+	return wrapped + tail
+}
+
+// lastLineColumns is the display columns of the text after its last newline,
+// colour tags not counted.
+func lastLineColumns(text string) int {
+	last := text[strings.LastIndexByte(text, '\n')+1:]
+	cols := 0
+	for i := 0; i < len(last); {
+		if tagLen := ansiTagLen(last[i:]); tagLen > 0 {
+			i += tagLen
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(last[i:])
+		cols += runeColumns(r)
+		i += size
+	}
+	return cols
+}

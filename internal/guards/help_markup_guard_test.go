@@ -5,9 +5,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/templates"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -47,32 +50,104 @@ func helpTextColumn(indent int, body string) int {
 	return indent + len([]rune(body[:loc[3]]))
 }
 
-// helpWide are help templates whose kept lines may run past 30 (ruling 3:
-// maps and wide tables may scroll sideways): map-examples' maps, and colors'
-// swatch grids, whose rows are gradients that must not reflow. Keep in step
-// with templateClassNames["wide"].
-var helpWide = map[string]bool{"help/map-examples": true, "help/colors": true}
+// helpFormName is a help file that is not a page of its own: a narrow form
+// (colors.w42) or a screen-reader file, which belong to their base page.
+var helpFormName = regexp.MustCompile(`^(.+)\.(w(\d+)|screenreader)$`)
 
-func helpTemplateFiles(t *testing.T) map[string]string {
+// helpFolderFiles walks the help folders once: the pages (help topics) and
+// the form and screen-reader files beside them, each "help/<file name less
+// .template>" to its path.
+func helpFolderFiles(t *testing.T) (pages, forms map[string]string) {
 	t.Helper()
-	files := map[string]string{}
+	pages, forms = map[string]string{}, map[string]string{}
 	for _, folder := range templateFolders(t) {
 		matches, err := filepath.Glob(filepath.Join(folder, "help", "*.template"))
 		if err != nil {
 			t.Fatal(err)
 		}
 		for _, m := range matches {
-			files["help/"+strings.TrimSuffix(filepath.Base(m), ".template")] = m
+			name := "help/" + strings.TrimSuffix(filepath.Base(m), ".template")
+			if helpFormName.MatchString(name) {
+				forms[name] = m
+				continue
+			}
+			pages[name] = m
 		}
 	}
-	if len(files) < 480 {
-		t.Fatalf("found %d help templates; the folders are not being reached", len(files))
+	if len(pages) < 480 {
+		t.Fatalf("found %d help templates; the folders are not being reached", len(pages))
 	}
-	return files
+	return pages, forms
+}
+
+// helpTemplateFiles are the help pages: every help file that is a topic.
+func helpTemplateFiles(t *testing.T) map[string]string {
+	t.Helper()
+	pages, _ := helpFolderFiles(t)
+	return pages
+}
+
+// helpPageForms lists, per page, the widths it has a form drawn to.
+func helpPageForms(forms map[string]string) map[string][]int {
+	have := map[string][]int{}
+	for name := range forms {
+		if m := helpFormName.FindStringSubmatch(name); m != nil && m[3] != "" {
+			w, _ := strconv.Atoi(m[3])
+			have[m[1]] = append(have[m[1]], w)
+		}
+	}
+	return have
+}
+
+// helpShownWidth is the narrowest width a help file is ever shown at: the
+// narrowest width templates' formFor (forms.go) maps to it. A page with
+// forms is shown only at FullWidth and wider. A form is shown from its own
+// width up to the next form, and the page's narrowest form below its own
+// width too, down to the narrowest screen. A page with no forms, and a
+// screen-reader file, is shown at the narrowest screen.
+func helpShownWidth(name string, pageForms map[string][]int) int {
+	if widths := pageForms[name]; len(widths) > 0 {
+		return templates.FullWidth
+	}
+	m := helpFormName.FindStringSubmatch(name)
+	if m == nil || m[3] == "" {
+		return users.MinWrapWidth
+	}
+	own, _ := strconv.Atoi(m[3])
+	for _, w := range pageForms[m[1]] {
+		if w < own {
+			return own
+		}
+	}
+	return users.MinWrapWidth
+}
+
+// The shown width follows formFor: a page with forms at 80, a form at its
+// own width when a narrower form exists, the narrowest form and a page with
+// no forms at 30.
+func TestHelpShownWidth(t *testing.T) {
+	pageForms := map[string][]int{"help/a": {42, 30}, "help/b": {42}, "help/c": {42, 40, 30}}
+	for name, want := range map[string]int{
+		"help/a": 80, "help/a.w42": 42, "help/a.w30": 30,
+		"help/b": 80, "help/b.w42": 30,
+		"help/c.w42": 42, "help/c.w40": 40, "help/c.w30": 30,
+		"help/plain": 30, "help/a.screenreader": 30,
+	} {
+		assert.Equal(t, want, helpShownWidth(name, pageForms), name)
+	}
 }
 
 func TestHelpFilesStateTheirLayout(t *testing.T) {
-	for name, path := range helpTemplateFiles(t) {
+	pages, forms := helpFolderFiles(t)
+	pageForms := helpPageForms(forms)
+	all := map[string]string{}
+	for name, path := range pages {
+		all[name] = path
+	}
+	for name, path := range forms {
+		all[name] = path
+	}
+	for name, path := range all {
 		raw, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
@@ -84,13 +159,15 @@ func TestHelpFilesStateTheirLayout(t *testing.T) {
 		if strings.Contains(text, " ") {
 			t.Errorf("%s: a no-break space (the layout pass's own joiner)", name)
 		}
-		for _, p := range helpMarkupProblems(name, strings.Split(text, "\n")) {
+		for _, p := range helpMarkupProblems(strings.Split(text, "\n"), helpShownWidth(name, pageForms)) {
 			t.Errorf("%s: %s", name, p)
 		}
 	}
 }
 
-func helpMarkupProblems(name string, lines []string) []string {
+// helpMarkupProblems lists the layout problems in a help file's lines. Kept
+// lines are judged at keepWidth, the narrowest width the file is shown at.
+func helpMarkupProblems(lines []string, keepWidth int) []string {
 	problems := []string{}
 	add := func(n int, msg string) { problems = append(problems, fmt.Sprintf("line %d: %s", n+1, msg)) }
 	open, base := "", -1
@@ -150,8 +227,8 @@ func helpMarkupProblems(name string, lines []string) []string {
 			}
 			continue
 		case "::keep":
-			if !helpWide[name] && len([]rune(trimmed)) > 30 {
-				add(i, "a kept line wider than 30 columns")
+			if len([]rune(trimmed)) > keepWidth {
+				add(i, fmt.Sprintf("a kept line wider than %d columns", keepWidth))
 			}
 			continue
 		}
@@ -221,7 +298,7 @@ func TestHelpMarkupRulesCanFail(t *testing.T) {
 		"lone command after a sentence":  {"See this.", `<ansi fg="command">help x</ansi>`},
 	}
 	for name, lines := range bad {
-		assert.NotEmpty(t, helpMarkupProblems("help/x", lines), name)
+		assert.NotEmpty(t, helpMarkupProblems(lines, 30), name)
 	}
 	good := []string{
 		".: Help for look", "", "The look command shows you what is", "around you.", "", "Usage:",
@@ -246,5 +323,10 @@ func TestHelpMarkupRulesCanFail(t *testing.T) {
 		"",
 		"Explains the command.",
 	}
-	assert.Empty(t, helpMarkupProblems("help/x", good))
+	assert.Empty(t, helpMarkupProblems(good, 30))
+	// A kept line is judged at the width the file is shown at: 42 wide passes
+	// a file shown at 42 and fails one shown at 30.
+	kept42 := []string{"::keep", strings.Repeat("x", 42), "::"}
+	assert.Empty(t, helpMarkupProblems(kept42, 42))
+	assert.NotEmpty(t, helpMarkupProblems(kept42, 30))
 }

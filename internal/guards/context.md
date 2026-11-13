@@ -57,8 +57,11 @@ package main.
   only (no gap of two or more spaces, no list marker, no command alone inside
   a paragraph, no change of indent without a line ending in `:`), `::rows`
   entries have a label and a gap and continue at the entry's text column,
-  `::list` entries have a marker, `::keep` lines are at most 30 columns unless
-  the page is in `helpWide` (`help/map-examples`, `help/colors`).
+  `::list` entries have a marker, and `::keep` lines fit the narrowest width
+  the file is ever shown at (`helpShownWidth`: 80 for a page that has narrow
+  forms, a form's own width when the page has a narrower form too, otherwise
+  30). Narrow forms (`help/name.w42.template`) are checked as help files but
+  are not topics.
   `help_render_guard_test.go` renders every help page through
   `usercommands.GetHelpContents` at 30, 42 and 80 (`TestEveryHelpPageFitsEveryWidth`,
   `TestHelpIndexFitsEveryWidth`), and `TestHelpLayoutKeepsEveryWord` checks no
@@ -66,6 +69,16 @@ package main.
   `TestHelpWordsCanFail` is its probe). `TestDumpHelpPages` writes every page
   at 30 and 80 to the folder in `HELP_DUMP` for a report and checks nothing.
   `template_width_guard_test.go` points its `help/` class at the render guard.
+- **Template width guard** (`template_width_guard_test.go`, plan 5). No
+  template is exempt from fitting: the `"wide"` class and `helpWide` are gone,
+  and the `"raw"` class (text sent before a reader has a width) is empty. The
+  map and lockpicking are the `"sized by its command"` class, held by their
+  own tests in `internal/usercommands` (`TestMapRendersFitEveryWidth`,
+  `TestLockRenderFitsEveryWidth`). The login templates are rendered through
+  `inputhandlers.LoginTemplateAtWidth` at 30, 42 and 80, the connect splash
+  and `goodbye` through their narrow forms, and `help/colors` and
+  `help/map-examples` through their `.w42` and `.w30` forms. Form files are
+  checked as forms, never as topics.
 - **CI guard.** `ci_run_patterns_guard_test.go` checks every `go test -run`
   pattern in the CI action, the workflows and the Makefile names a real test
   in the package it targets.

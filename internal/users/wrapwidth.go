@@ -1,6 +1,10 @@
 package users
 
-import "github.com/GoMudEngine/GoMud/internal/connections"
+import (
+	"strconv"
+
+	"github.com/GoMudEngine/GoMud/internal/connections"
+)
 
 const (
 	// MinWrapWidth is the narrowest a web session wraps. WCAG 2.2 AA reflow at
@@ -10,6 +14,78 @@ const (
 	// shows at most 80 columns.
 	MaxAutoWrapWidth = 80
 )
+
+// ParseReportedCols reads a column count a web client sent as text: the
+// cols value on its websocket address (/ws?cols=57), sent so the connect
+// splash is drawn before its Client.Display report arrives. Only a whole
+// number counts (a leading sign is accepted, and a negative is clamped
+// later); a fraction, a unit, a space or an empty value is refused.
+// The count is not clamped here; StoreReportedCols clamps it.
+func ParseReportedCols(s string) (int, bool) {
+	cols, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, false
+	}
+	return cols, true
+}
+
+// StoreReportedCols stores a web client's reported column count as its
+// connection's screen width, clamped to MinWrapWidth..MaxAutoWrapWidth, and
+// returns the width. It writes only when the width differs. Both places a
+// web client reports its columns use it: the websocket address on connect
+// (main.go) and Client.Display (modules/gmcp). The caller checks that the
+// connection is a websocket.
+func StoreReportedCols(id connections.ConnectionId, cols int) int {
+	width := min(max(cols, MinWrapWidth), MaxAutoWrapWidth)
+	cs := connections.GetClientSettings(id)
+	if cs.Display.GetScreenWidth() != width {
+		cs.Display.ScreenWidth = uint32(width)
+		connections.OverwriteClientSettings(id, cs)
+	}
+	return width
+}
+
+// LoginWrapWidth is the width text sent to a connection before it has a user
+// is laid out for: the login prompts, their errors and the yes or no
+// questions (internal/inputhandlers). A web client's columns are stored on
+// connect (from the cols on its websocket address) and again by
+// Client.Display, so a websocket gets them, clamped to
+// MinWrapWidth..MaxAutoWrapWidth as WrapWidth clamps them, and 80 when it
+// reported none. Every other connection gets 80 whatever its terminal
+// reports: the width telnet login text was written for, which inputhandlers
+// sends unchanged.
+func LoginWrapWidth(id connections.ConnectionId) int {
+	if !connections.IsWebsocket(id) {
+		return MaxAutoWrapWidth
+	}
+	width := connections.GetClientSettings(id).Display.GetScreenWidth()
+	return min(max(width, MinWrapWidth), MaxAutoWrapWidth)
+}
+
+// ConnectionWrapWidth is the width of a connection that may or may not have
+// a user logged in: that user's WrapWidth (which applies set linewidth) when
+// there is one, else LoginWrapWidth. For text sent to one connection as it
+// leaves (the goodbye on quit or on a duplicate login).
+func ConnectionWrapWidth(id connections.ConnectionId) int {
+	if u := GetByConnectionId(id); u != nil {
+		return u.WrapWidth()
+	}
+	return LoginWrapWidth(id)
+}
+
+// StoreAddressCols takes the raw cols value of a web client's websocket
+// address (/ws?cols=57; empty when absent), stores it as StoreReportedCols
+// does when it is a whole number, and returns the width to draw the connect
+// splash at: the stored width, or connections.DefaultScreenWidth when the
+// value is missing or bad. The caller checks that the connection is a
+// websocket.
+func StoreAddressCols(id connections.ConnectionId, raw string) int {
+	cols, ok := ParseReportedCols(raw)
+	if !ok {
+		return connections.DefaultScreenWidth
+	}
+	return StoreReportedCols(id, cols)
+}
 
 // NarrowFormWidth is the width of the narrow form of a screen built in Go
 // for a reader width columns wide (web client base spec, section 2): 42, or

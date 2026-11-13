@@ -58,8 +58,6 @@ var typeExemptLines = map[string]string{
 	typePublic + "webclient-pure.html|'font-size:1px;line-height:1;font-family:monospace;';":         "probe for the browser's minimum font size, never shown",
 	typePublic + "webclient-pure.html|console.log(\"%cterminal commands:\", \"font-weight:bold;\");": "developer console only",
 	typePublic + "webclient-pure.html|console.log(\"%cconsole commands:\", \"font-weight:bold;\");":  "developer console only",
-	typePublic + "webclient-pure.html|el.style.fontFamily = o.fontFamily;":                           "xterm's own cell measure; plan 5 removes it",
-	typePublic + "webclient-pure.html|el.style.fontSize = o.fontSize + 'px';":                        "xterm's own cell measure; plan 5 removes it",
 	typePublic + "static/css/gomud.css|font-family: \"JetBrains Mono\";":                             "the @font-face names the family",
 	typePublic + "static/css/gomud.css|font-style: normal; font-weight: 600; font-display: swap;":    "the @font-face of the one bold",
 }

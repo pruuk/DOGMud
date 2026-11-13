@@ -46,7 +46,7 @@ function element(childSelectors) {
 }
 
 var sockets = [];
-function FakeSocket() { this.readyState = FakeSocket.CONNECTING; sockets.push(this); }
+function FakeSocket(url) { this.url = url; this.readyState = FakeSocket.CONNECTING; sockets.push(this); }
 FakeSocket.CONNECTING = 0; FakeSocket.OPEN = 1; FakeSocket.CLOSING = 2; FakeSocket.CLOSED = 3;
 FakeSocket.prototype.send = function () {};
 FakeSocket.prototype.close = function () { this.readyState = FakeSocket.CLOSING; };
@@ -62,7 +62,11 @@ global.document = { getElementById: function (id) {
 } };
 global.location = { protocol: 'http:', host: 'test' };
 global.WebSocket = FakeSocket;
-global.term = { writeln: function () {}, write: function () {}, clear: function () {} };
+global.term = { cols: 57, writeln: function () {}, write: function () {}, clear: function () {} };
+// The page's width reporter (static/js/displayreport.js): onopen reports the
+// game window's columns, because the server starts every connection at 80.
+var reported = [];
+global.displayReport = { connected: function (cols) { reported.push(cols); }, columns: function () {} };
 global.debugLog = function () {};
 global.stopAutomation = function () {};
 global.companionGlue = null;
@@ -101,6 +105,10 @@ if (!label) {
 // The page connects on load.
 connect.click();
 check('the first click opens a socket', sockets.length === 1, 'sockets ' + sockets.length);
+// The server sends the connect splash the moment the socket opens, before
+// the Client.Display report arrives, so the address carries the columns.
+check('the address carries the game window\'s columns', sockets[0].url === 'ws://test/ws?cols=57',
+    'url ' + sockets[0].url);
 check('the bar says it is connecting', label.textContent === ', connecting', 'label ' + label.textContent);
 check('Enter Game is disabled while connecting', session.disabled === true, 'disabled ' + session.disabled);
 
@@ -109,6 +117,8 @@ connect.click();
 check('a click while connecting opens no second socket', sockets.length === 1, 'sockets ' + sockets.length);
 
 sockets[0].open();
+check('opening tells the server the game window\'s columns', reported.length === 1 && reported[0] === 57,
+    'reported ' + JSON.stringify(reported));
 // Open but at the login prompt: amber, not green (#818).
 var dot = session.querySelector('.sess-dot');
 check('the bar says not logged in at the login prompt', label.textContent === ', not logged in', 'label ' + label.textContent);
@@ -131,6 +141,15 @@ check('the bar says not connected after close', label.textContent === ', not con
 check('Enter Game is enabled after close', session.disabled === false, 'disabled ' + session.disabled);
 connect.click();
 check('a click after close opens a new socket', sockets.length === 2, 'sockets ' + sockets.length);
+
+// A copyover reconnect: the token goes first, then the width.
+var order = [];
+sockets[1].send = function (d) { order.push('send ' + d); };
+displayReport.connected = function (cols) { order.push('width ' + cols); };
+pendingReconnectToken = 'TOKEN';
+sockets[1].open();
+check('a reconnect sends the token before the width', order.join(', ') === 'send TOKEN, width 57',
+    'order ' + order.join(', '));
 
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

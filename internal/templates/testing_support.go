@@ -38,10 +38,3 @@ func SetFSForTest(t *testing.T, filesystems ...fs.ReadFileFS) {
 		formCache.Clear()
 	})
 }
-
-// ProcessAtWidth renders fname as Process does for a reader whose screen is
-// width columns wide, without a screen reader. For guards that hold every
-// template to the width it is shown at (internal/guards).
-func ProcessAtWidth(fname string, data any, width int) (string, error) {
-	return process(fname, data, templateConfig{}, width)
-}

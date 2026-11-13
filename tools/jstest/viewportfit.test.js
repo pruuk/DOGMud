@@ -21,16 +21,21 @@ check('a phone on its side is a phone', VF.isPhone(844, 390), true);
 check('a small tablet is not a phone', VF.isPhone(600, 960), false);
 check('a laptop is not a phone', VF.isPhone(1920, 1080), false);
 
-check('upright phone', VF.isUprightPhone(390, 844, 'portrait-primary'), true);
-check('sideways phone', VF.isUprightPhone(844, 390, 'landscape-primary'), false);
-check('iOS sizes do not swap: the orientation wins', VF.isUprightPhone(390, 844, 'landscape-secondary'), false);
-check('no orientation API, upright', VF.isUprightPhone(390, 844, undefined), true);
-check('no orientation API, sideways', VF.isUprightPhone(844, 390, undefined), false);
-check('an upright tablet is not an upright phone', VF.isUprightPhone(768, 1024, 'portrait-primary'), false);
+check('upright phone', VF.isUprightPhone(390, 844, 'portrait-primary', true), true);
+check('sideways phone', VF.isUprightPhone(844, 390, 'landscape-primary', true), false);
+check('iOS sizes do not swap: the orientation wins', VF.isUprightPhone(390, 844, 'landscape-secondary', true), false);
+check('no orientation API, upright', VF.isUprightPhone(390, 844, undefined, true), true);
+check('no orientation API, sideways', VF.isUprightPhone(844, 390, undefined, true), false);
+check('an upright tablet is not an upright phone', VF.isUprightPhone(768, 1024, 'portrait-primary', true), false);
+// Plan 5 decision 13: a portrait screen under 600 wide without touch (a
+// desktop monitor turned upright, or zoomed in) keeps the 16px text.
+check('a portrait screen under 600 wide without touch is not an upright phone',
+    VF.isUprightPhone(540, 960, 'portrait-primary', false), false);
 (function () {
     var classes = {}, handlers = {};
     var win = {
         screen: { width: 390, height: 844, orientation: { type: 'portrait-primary' } },
+        matchMedia: function (q) { return { matches: q === '(pointer: coarse)' }; },
         document: { documentElement: { classList: { toggle: function (n, on) { classes[n] = on; } } } },
         addEventListener: function (n, f) { handlers[n] = f; }
     };
@@ -54,6 +59,18 @@ check('an upright tablet is not an upright phone', VF.isUprightPhone(768, 1024, 
     };
     VF.watchUprightPhone(win);
     check('old iOS held sideways: window.orientation wins', classes['upright-phone'], false);
+}());
+
+(function () {
+    var classes = {};
+    var win = {
+        screen: { width: 540, height: 960, orientation: { type: 'portrait-primary' } },
+        matchMedia: function () { return { matches: false }; },
+        document: { documentElement: { classList: { toggle: function (n, on) { classes[n] = on; } } } },
+        addEventListener: function () {}
+    };
+    VF.watchUprightPhone(win);
+    check('a desktop with no touch screen never gets the upright phone class', classes['upright-phone'], false);
 }());
 
 check('a phone opens full screen', VF.wantFullScreen(null, true), true);
@@ -185,10 +202,13 @@ check('home screen icon opens the game', manifest.start_url, '/webclient');
 // 2026-11-07 hotfix: the terminal came out three rows taller than the Game
 // panel (exits and prompt hidden). It refits once the font's real size is in,
 // and when the panel body (what termfit measures) changes size.
+// webFontIn (plan 5) lets the layout take the real game width, then refits.
+check('webFontIn refits the terminal',
+    /function webFontIn\(\) \{\s*window\.dogmudFontReady = true;\s*resizeTerminal\(true\);/.test(game), true);
 check('the terminal refits after the font swap, on the next frame',
-    /term\.setOption\('fontFamily', termFont\);\s*resizeTerminal\(true\);[\s\S]{0,600}requestAnimationFrame\(function \(\) \{ resizeTerminal\(true\); \}\);/.test(game), true);
+    /term\.setOption\('fontFamily', termFont\);(\s*\/\/[^\n]*)*\s*webFontIn\(\);[\s\S]{0,600}requestAnimationFrame\(function \(\) \{ resizeTerminal\(true\); \}\);/.test(game), true);
 check('the terminal refits once every font has loaded',
-    /document\.fonts\.ready\.then\(function \(\) \{ resizeTerminal\(true\); \}\);/.test(game), true);
+    /document\.fonts\.ready\.then\(function \(\) \{ webFontIn\(\); \}\);/.test(game), true);
 check('the Game panel body is observed, not only the panel',
     /_feedBody = _feedPanel\.querySelector\('\.dash-panel-body'\);\s*if \(_feedBody\) _feedObserver\.observe\(_feedBody\);/.test(game), true);
 check('a tab that wraps alone keeps its own size',

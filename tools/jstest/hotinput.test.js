@@ -318,6 +318,13 @@ var toggleAt = page.indexOf('id="map-legend-toggle"');
 check('the Legend button is inside the map button row',
     controlsAt >= 0 && toggleAt > controlsAt && toggleAt < page.indexOf('</div>', controlsAt), true);
 check('the old Map legend line is gone', /<summary>Map legend<\/summary>/.test(page), false);
+// The key starts folded on every screen (owner 2026-11-13).
+check('the map legend starts folded in the markup',
+    /<div id="map-legend" class="map-legend" hidden>/.test(page)
+    && /id="map-legend-toggle"[^>]*aria-expanded="false"/.test(page), true);
+check('the map legend starts folded at any window height',
+    /initMapLegend[\s\S]*?show\(false\);/.test(page)
+    && !/show\(window\.innerHeight/.test(page), true);
 
 // The Chat tab has no typing box of its own: players chat from the command
 // box (Malia 2026-11-06).

@@ -215,7 +215,17 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/roomtitlebold.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/viewportfit.js?v={{ .ASSET_VERSION }}"></script>
+    <script>
+        // Set in the head, before the first paint: phones keep the bright
+        // dim grey (gomud.css :root.phone), and a touch phone paints the
+        // phone grid before dashboard.js applies a mode (dashboard.css).
+        if (window.ViewportFit.isPhone(window.screen.width, window.screen.height)) {
+            document.documentElement.classList.add('phone');
+        }
+    </script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/termfit.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/displayreport.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/layoutpick.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js?v={{ .ASSET_VERSION }}"></script>
@@ -230,7 +240,8 @@
          itself on load, and onclose shows it when the player is not connected. -->
     <button id="connect-button" style="display:none">Enter Game</button>
 
-    <!-- DOCKED DASHBOARD GRID (arrangement C) -->
+    <!-- DOCKED DASHBOARD GRID: the game on the left, the panels on the
+         layout ladder around it (dashboard.js, layoutpick.js) -->
     <div id="dashboard">
       <div id="dash-session">
         <span class="sess-name" id="sess-name">—</span>
@@ -276,6 +287,27 @@
         <button class="brass" id="btn-reset-layout" title="Reset layout" aria-label="Reset layout" onclick="window.Dashboard && Dashboard.resetLayout && Dashboard.resetLayout()"><span class="btn-icon" aria-hidden="true">↺</span><span class="btn-label">Reset layout</span></button>
       </div>
 
+      <!-- CENTER column: Game Feed · Command. First, so the game and the
+           command box come before the panels in the keyboard's Tab order. -->
+      <div class="dash-col" id="dash-col-center">
+        <section class="dash-panel" id="panel-feed" data-panel="feed">
+          <div class="dash-panel-head"><span class="ph-title">Game</span>
+            <span class="ph-btns"><span class="ph-btn ph-popout">⧉</span></span></div>
+          <div class="dash-panel-body"><div id="terminal"></div></div>
+        </section>
+
+        <section class="dash-panel" id="panel-cmd" data-panel="cmd">
+          <div class="dash-panel-body">
+            <input type="text" id="command-input" placeholder="Enter command..." style="flex:1">
+          </div>
+        </section>
+      </div>
+
+      <!-- The panel area, right of the game (dashboard.js and dashboard.css,
+           the layout ladder). The two columns sit inside it; in every layout
+           but the phone one they use display: contents, so each panel is a
+           grid item of this area. -->
+      <div id="dash-panels">
       <!-- LEFT column: Map · Quests · Health · Inventory -->
       <div class="dash-col" id="dash-col-left">
         <section class="dash-panel" id="panel-map" data-panel="map">
@@ -289,11 +321,12 @@
                  (Malia 2026-11-06); it opens and folds the key below. -->
             <div id="map-controls" class="map-controls">
               <button type="button" id="map-legend-toggle" class="map-legend-toggle"
-                      aria-expanded="true" aria-controls="map-legend">Legend <span class="map-legend-arrow" aria-hidden="true">▾</span></button>
+                      aria-expanded="false" aria-controls="map-legend">Legend <span class="map-legend-arrow" aria-hidden="true">▸</span></button>
             </div>
             <!-- The map's key, under the map rather than drawn over the rooms
-                 (2026-11-02). The Legend button above opens and folds it. -->
-            <div id="map-legend" class="map-legend">
+                 (2026-11-02). The Legend button above opens and folds it;
+                 it starts folded (owner 2026-11-13). -->
+            <div id="map-legend" class="map-legend" hidden>
               <ul>
                 <li><svg viewBox="0 0 16 12" aria-hidden="true"><circle cx="8" cy="3.5" r="2" fill="#6dac9d"/><path d="M4.5 10.5 Q8 5 11.5 10.5 Z" fill="#6dac9d"/></svg>Party member</li>
                 <li><svg viewBox="0 0 16 12" aria-hidden="true"><circle cx="8" cy="6" r="5" fill="#2a1d12" stroke="#b5a26c" stroke-width="1.2"/><text x="8" y="8.4" text-anchor="middle" font-size="7" font-weight="bold" fill="#b5a26c">$</text></svg>Bank / Shop / Store</li>
@@ -329,21 +362,6 @@
               <button type="button" class="inv-tab subtab" aria-pressed="false" data-tab="backpack">Backpack</button>
             </div>
             <div id="inv-grid" class="inv-grid"></div>
-          </div>
-        </section>
-      </div>
-
-      <!-- CENTER column: Game Feed · Command -->
-      <div class="dash-col" id="dash-col-center">
-        <section class="dash-panel" id="panel-feed" data-panel="feed">
-          <div class="dash-panel-head"><span class="ph-title">Game</span>
-            <span class="ph-btns"><span class="ph-btn ph-popout">⧉</span></span></div>
-          <div class="dash-panel-body"><div id="terminal"></div></div>
-        </section>
-
-        <section class="dash-panel" id="panel-cmd" data-panel="cmd">
-          <div class="dash-panel-body">
-            <input type="text" id="command-input" placeholder="Enter command..." style="flex:1">
           </div>
         </section>
       </div>
@@ -403,6 +421,7 @@
           </div>
         </section>
       </div>
+      </div><!-- #dash-panels -->
     </div>
 
     <script>
@@ -421,20 +440,22 @@
         // Terminal Setup
         //
         /////////////////////////////////////////////
-        // Phones keep the bright dim grey (gomud.css :root.phone).
-        if (window.ViewportFit.isPhone(window.screen.width, window.screen.height)) {
-            document.documentElement.classList.add('phone');
-        }
         // xterm needs plain colour strings, so the palette is read once from
         // the --term-* tokens in gomud.css :root.
         const rootStyle = getComputedStyle(document.documentElement);
         const termColor = (name) => rootStyle.getPropertyValue('--term-' + name).trim();
         const termFont = rootStyle.getPropertyValue('--font-mono').trim();
+        // The game text size: the --text token (gomud.css), read each fit
+        // because an upright phone changes it.
+        function textSize() {
+            var px = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text'));
+            return isNaN(px) ? 16 : px;
+        }
         const term = new window.Terminal({
-            cols: 80,
+            cols: 80,  // resized to what fits by termfit.js
             rows: 60,
             cursorBlink: true,
-            fontSize: 20,
+            fontSize: textSize(),
             // The one bold (--bold in gomud.css); room titles use it.
             fontWeightBold: '600',
             // Give rapid-fire feed text vertical breathing room so lines don't
@@ -461,30 +482,6 @@
         const fitAddon = new window.FitAddon.FitAddon();
         term.loadAddon(fitAddon);
         term.open(document.getElementById('terminal'));
-
-        // The scale resizeTerminal() applies to the game text (1 = none).
-        // xterm measures its letters with getBoundingClientRect, which includes
-        // that scale, so a scaled terminal measured its cells too small and
-        // shrank twice (tiny, garbled text with a raised minimum font). Undo
-        // the scale in the measurement. Private xterm 4.19 internals; if they
-        // change, this quietly does nothing.
-        var termScale = 1;
-        (function () {
-            var cs = term._core && term._core._charSizeService;
-            var strat = cs && cs._measureStrategy;
-            if (!strat || !strat._measureElement || !strat._result) return;
-            strat.measure = function () {
-                var el = this._measureElement, o = this._optionsService.rawOptions;
-                el.style.fontFamily = o.fontFamily;
-                el.style.fontSize = o.fontSize + 'px';
-                var r = el.getBoundingClientRect();
-                if (r.width && r.height) {
-                    this._result.width = r.width / termScale;
-                    this._result.height = Math.ceil(r.height / termScale - 0.01);
-                }
-                return this._result;
-            };
-        })();
 
         // Keep the feed's text from sliding out of view sideways (playtest
         // 2026-10-17). See static/js/feedscroll.js for the causes it covers.
@@ -516,22 +513,66 @@
             } catch (e) { return 1; }
         })();
 
-        // Fit the game text to the panel (static/js/termfit.js).
+        // Tell the server the game window's columns (static/js/displayreport.js).
+        // SendGMCP is declared further down this script, so it is hoisted.
+        var displayReport = window.DisplayReport.create({
+            send: function (cols) { return SendGMCP('Client.Display', { cols: cols }); }
+        });
+        // Fit the game window to the panel (static/js/termfit.js). The text
+        // stays at the --text size; the columns follow the panel, at most 80.
         var termFitter = window.TermFit.create({
             term: term,
             fitAddon: fitAddon,
             host: document.getElementById('terminal'),
             minFont: browserMinFont,
-            setScale: function (s) { termScale = s; }
+            fontSize: textSize,
+            onCols: function (cols) { displayReport.columns(cols); },
+            // The layout gives the game window this width (dashboard.js).
+            // Kept on window too: dashboard.js loads at the end of the page
+            // and sets itself up on DOMContentLoaded, so the first reports
+            // arrive before it exists. Dashboard.init reads the last one.
+            onGameWidth: function (px) {
+                window.dogmudGameWidth = px;
+                giveLayoutGameWidth();
+            }
         });
+        // The layout takes the measured game width only once the web font is
+        // in: a width measured in the fallback font is about 80px narrower,
+        // and taking it would narrow the game window and widen it again on
+        // load. Until then it takes the width the font will give, worked out
+        // from the text size (termfit.js predictWidthFor80), so nothing moves
+        // when the font lands. Dashboard.pageGameWidth picks between the two,
+        // for Dashboard.init and for every later report. A browser that
+        // cannot tell when fonts load has nothing to wait for.
+        window.dogmudFontReady = !(document.fonts && document.fonts.load);
+        window.dogmudPredictGameWidth = function () {
+            return termFitter.predictWidthFor80(Math.max(textSize(), browserMinFont));
+        };
+        function giveLayoutGameWidth() {
+            if (window.Dashboard && window.Dashboard.ready) {
+                window.Dashboard.setGameWidth(window.Dashboard.pageGameWidth());
+            }
+        }
+        // The web font has loaded (or will not): the layout takes the
+        // measured width, then the terminal is fitted against it.
+        function webFontIn() {
+            window.dogmudFontReady = true;
+            resizeTerminal(true);
+            // A fit that found the same width reports nothing new, so pass on
+            // the width it already holds.
+            giveLayoutGameWidth();
+        }
         // force: true measures again at the same panel size. Event and frame
         // callbacks pass their own argument, so only a literal true counts.
         function resizeTerminal(force) {
             termFitter.fit(force === true);
         }
         window.addEventListener('resize', resizeTerminal);
+        // Turning a phone upright changes the --text token (14px); some
+        // browsers fire this after resize, so measure again then.
+        window.addEventListener('orientationchange', function () { resizeTerminal(true); });
         // Re-fit whenever the feed panel itself changes size (grid reflow,
-        // splitters, pop-out) so xterm tracks the bounded box and keeps its
+        // a layout change, pop-out) so xterm tracks the bounded box and keeps its
         // row count sane. Without this the terminal can over-size and lag.
         // Watch the panel's BODY too: termfit measures the body, and a title
         // bar that grows after the first fit (a late web font, a bigger
@@ -555,8 +596,9 @@
         requestAnimationFrame(resizeTerminal); // fit once after first grid paint
         resizeTerminal();
 
-        // The 80-col grid is measured from glyph width, so it must be computed
-        // against the real font, not a fallback. font-display:swap
+        // The column count (and the width 80 columns need) is measured from
+        // glyph width, so it must be computed against the real font, not a
+        // fallback. font-display:swap
         // renders in a fallback until JetBrains Mono loads; once it does, re-assign
         // fontFamily (forces xterm to rebuild its glyph atlas) and refit.
         if (document.fonts && document.fonts.load) {
@@ -565,7 +607,10 @@
                 document.fonts.load('600 16px "JetBrains Mono"')
             ]).then(function () {
                 term.setOption('fontFamily', termFont);
-                resizeTerminal(true);
+                // Lets the layout take the real width, then refits; termfit
+                // tells the layout before it counts the columns, so the
+                // window widens first and never shows fewer than 80.
+                webFontIn();
                 // xterm measures the new font's letters after this tick, so a
                 // refit in the same tick still used the fallback's shorter rows:
                 // the terminal came out about three rows taller than its panel,
@@ -573,11 +618,11 @@
                 // the new size is in.
                 requestAnimationFrame(function () { resizeTerminal(true); });
                 setTimeout(function () { resizeTerminal(true); }, 300);
-            }).catch(function () { resizeTerminal(true); });
+            }).catch(function () { webFontIn(); });   // the fallback is the font, then
             // Any later web font (the panels' type) can still change the
             // layout: refit once every font has loaded.
             if (document.fonts.ready) {
-                document.fonts.ready.then(function () { resizeTerminal(true); });
+                document.fonts.ready.then(function () { webFontIn(); });
             }
         }
 
@@ -611,8 +656,9 @@
         })();
 
         // The "Legend ▾" button in the map's button row opens and folds the
-        // map's key underneath it. On a short window (under 800px tall) the
-        // key starts folded, so the map keeps more of its card.
+        // map's key underneath it. The key starts folded on every screen, so
+        // the map keeps its card (owner 2026-11-13; it used to start open on
+        // windows 800px tall and up).
         (function initMapLegend() {
             var btn = document.getElementById('map-legend-toggle');
             var legend = document.getElementById('map-legend');
@@ -626,7 +672,7 @@
                 btn.setAttribute('aria-expanded', open ? 'true' : 'false');
                 btn.querySelector('.map-legend-arrow').textContent = open ? '▾' : '▸';
             }
-            show(window.innerHeight >= 800);
+            show(false);
             btn.addEventListener('click', function () { show(legend.hidden); });
         })();
 
@@ -2887,8 +2933,12 @@
             if (!pendingReconnectToken) { setSessionState('connecting'); }
 
             var wsProto = location.protocol === 'https:' ? 'wss://' : 'ws://';
-            debugLog("Connecting to: " + wsProto+location.host +'/ws');
-            socket = new WebSocket(wsProto+location.host +'/ws');
+            // The server sends the connect splash as the socket opens, before
+            // the Client.Display report below can arrive, so the address
+            // carries the game window's columns for the splash.
+            var wsAddress = wsProto + location.host + '/ws?cols=' + encodeURIComponent(term.cols);
+            debugLog("Connecting to: " + wsAddress);
+            socket = new WebSocket(wsAddress);
 
             socket.onopen = function() {
                 term.writeln("Connected to the server!");
@@ -2911,6 +2961,9 @@
                     pendingReconnectToken = null;
                     socket.send(t);
                 }
+                // The server starts every connection at 80 columns. After the
+                // token, so a copyover reconnect reads the token first.
+                displayReport.connected(term.cols);
                 reconnectAttempts = 0;
 
                 // A new connection is a new login: the relay glue waits for

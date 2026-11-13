@@ -109,6 +109,36 @@ longStart = Date.now();
 MotdRestyle.restyle(longClosed);
 check('a very long closed row is read quickly', Date.now() - longStart < 500, true);
 
+// The MOTD as the browser gets it for a two-line message: the server text of
+// motdRuled(text, 42) (the narrow form, rules and text, no corners or bars)
+// and motdBox(text, 80) (the box), each through templates.AnsiParse, behind
+// the cursor-column and erase-line prefix of hooks/Message_SendMessages.go,
+// with every \n sent as \r\n (connections/connectiondetails.go prepareOutput).
+// Generated 2026-11-12 from a throwaway Go test in internal/usercommands, for
+// the text "LIGHT AND DARK. Rooms are now bright, dim or pitch black.\n" +
+// "Full patch notes: https://example.org/PATCH_NOTES.md".
+var NARROW_RULED_WIRE =
+    "\x1b[G\x1b[2K\x1b[38;5;3m\x1b[49m══════════════════════════════════════════" + "\r\n" +
+    "  \x1b[38;5;14m\x1b[49m.:  M E S S A G E   O F   T H E   D A Y\x1b[38;5;3m\x1b[49m" + "\r\n" +
+    "══════════════════════════════════════════" + "\r\n" +
+    "  LIGHT AND DARK. Rooms are now bright," + "\r\n" +
+    "  dim or pitch black." + "\r\n" +
+    "  Full patch notes:" + "\r\n" +
+    "  https://example.org/PATCH_NOTES.md" + "\r\n" +
+    "══════════════════════════════════════════\x1b[0m" + "\r\n";
+var WIDE_BOX_WIRE =
+    "\x1b[G\x1b[2K\x1b[38;5;3m\x1b[49m ╔═════════════════════════════════════════════════════════════════════════════╗" + "\r\n" +
+    " ║  \x1b[38;5;14m\x1b[49m.:  M E S S A G E   O F   T H E   D A Y\x1b[38;5;3m\x1b[49m                                    ║" + "\r\n" +
+    " ╠═════════════════════════════════════════════════════════════════════════════╣" + "\r\n" +
+    " ║ LIGHT AND DARK. Rooms are now bright, dim or pitch black.                   ║" + "\r\n" +
+    " ║ Full patch notes: https://example.org/PATCH_NOTES.md                        ║" + "\r\n" +
+    " ╚═════════════════════════════════════════════════════════════════════════════╝\x1b[0m" + "\r\n";
+
+check('the narrow ruled MOTD passes through the restyle untouched',
+    MotdRestyle.restyle(NARROW_RULED_WIRE), NARROW_RULED_WIRE);
+check('the 80-column MOTD box with the same text IS restyled',
+    MotdRestyle.restyle(WIDE_BOX_WIRE) !== WIDE_BOX_WIRE, true);
+
 // The page loads the script and passes incoming text through it.
 var page = fs.readFileSync(path.join(
     __dirname, '..', '..', '_datafiles', 'html', 'public', 'webclient-pure.html'), 'utf8');
