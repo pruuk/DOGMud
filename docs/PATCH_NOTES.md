@@ -7,6 +7,7 @@
 - The map, lockpicking and the colour chart in help redraw themselves to fit a narrow screen. Lockpicking long locks no longer runs off the edge on a desktop either.
 - The login screen and its prompts fit a phone too, and so does the goodbye when you leave.
 - Zooming the page to 200% now makes the text bigger, as it should.
+- The map's legend starts folded, so the map has more room. Press Legend under the map to open it.
 
 ## 2026-11-12: Help fits your screen
 
