@@ -87,6 +87,13 @@ Read 2026-11-12 from branch `feature/webclient-base-4-help` at `b39f53b45` (PR #
 14. **An old saved layout carries over once**: folded panels, popped-out panels and their window places move from the `v1` key to `v2`; the column arrangement and widths are dropped.
 15. **The thresholds are measured, not written down.** `layoutpick.js` compares the room beside the game, using the game width termfit reports from the real letters, against 360, 200 and 120px. Those three numbers are the only constants.
 
+Added during the build (2026-11-12, Task 9a; reviewed by a BAR round 2026-11-13 before the owner test):
+
+16. **The web client sends its columns on the websocket address (`/ws?cols=N`)** as well as by `Client.Display`, because the server sends the connect splash the moment the socket opens, before any GMCP report can arrive. The value is parsed as a whole number and clamped exactly as `Client.Display` is (one shared `users.StoreReportedCols`). If wrong: drop the query value and the splash goes back to 80 columns on every screen; nothing else depends on it until login.
+17. **The connect splash, the login prompts and the goodbye get words-only narrow forms** (spec ruling 23: full art or words only). The splash's 42 and 30 forms drop the logo; the goodbye's narrow form is "Goodbye.". If wrong: the forms are template files; deleting them restores the art at every width.
+18. **Login prompts wrap to the connection's width before there is a user** (`users.LoginWrapWidth`: the websocket's stored columns, else 80; telnet is always 80 and byte for byte unchanged). A prompt keeps its trailing ": " on its last line (`messaging.WrapPrompt`) so the cursor sits after it. If wrong: prompts go back to `templates.Process` at 80.
+19. **A script error on `webclient.html` while the game frame is still loading is fixed in this plan** although it was already on master, because plan 5's phone check is what found it.
+
 ---
 
 ## File structure
@@ -1082,6 +1089,21 @@ Expected: every line `ok`.
 git add tools/jstest/motdrestyle.test.js
 git commit -m "test(webclient): the MOTD's narrow form passes through the restyle untouched"
 ```
+
+---
+
+### Task 9a: The login screen fits a phone (added during the build)
+
+Not in the plan as approved. Task 9's headless phone check (390 and 320 wide) found that everything a phone sees before login was drawn at 80 columns: the connect splash went out as the socket opened, before `displayreport.js` could send `Client.Display`, so the logo was chopped up and the notes broke mid-word; the login prompts broke mid-word ("Using th" / "is port as an AI risks a ban."); the goodbye art is 50 columns of pictures. It also found a script error on the site page. Built and code-reviewed commit by commit on 2026-11-12; decisions 16 to 19 above; BAR round on these commits 2026-11-13.
+
+| Commit | What |
+|---|---|
+| `d48cf6f4d`, review fixes `2bf61c14a` | `WP` opens `/ws?cols=<term.cols>`. `web.Listen` passes the raw `cols` query value to the handler; `HandleWebSocketConnection` (`main.go`) parses it with `users.ParseReportedCols` (whole numbers only), stores it with `users.StoreReportedCols` (clamped 30 to 80, written only on change; `gmcp.ClientDisplay` now calls the same function), and renders `login/connect-splash` with `templates.ProcessForWidth` at that width. New `login/connect-splash.w42.template` and `.w30.template`, words only. The template guard renders the splash at every width. |
+| `c91e856e3` | `users.LoginWrapWidth(id)`: a websocket's stored columns clamped 30 to 80, else 80; 80 for telnet. `inputhandlers.LoginTemplateAtWidth` renders each login prompt and the password mask with `ProcessForWidth` then `messaging.WrapPrompt` (`WrapAnsi` keeping a trailing ": " on the last line). Validation errors and login refusals go through the same wrap. Telnet output unchanged byte for byte. The template guard moves the login prompts, the mask and `generic/prompt.yn` from `"raw"` to the fitting class and checks every width 30 to 80 keeps the words and the ": " last. |
+| `00e549d9c` | `goodbye.w42.template` and `.w30.template` say "Goodbye."; quit and a duplicate login draw the goodbye for the leaving connection's width; telnet keeps the art. The guard's `"raw"` class is now empty. |
+| `05a6656ca` | `webclient.html` no longer throws when it marks the game frame for the phone keyboard before the frame has a document. |
+
+Each commit's tests: `internal/users/wrapwidth_test.go`, `internal/inputhandlers/login_width_test.go`, `internal/messaging/wrap_test.go`, `internal/guards/template_width_guard_test.go`, `tools/jstest/webclient-connect.test.js`.
 
 ---
 
