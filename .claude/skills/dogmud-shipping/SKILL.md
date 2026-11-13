@@ -114,7 +114,7 @@ catch what CI cannot see or what wastes a CI round-trip.
    `0 issues`. Takes about 60s.
 
    🔑 **This is the only local gate that sees what CI's lint gate sees.** CI
-   runs golangci-lint with `--new-from-patch`, and its linter set is wider than
+   runs golangci-lint with `--new-from-rev=<PR base>` (since #864), and its linter set is wider than
    `go vet` and `gofmt` combined: `unconvert`, `staticcheck` and friends are in
    it and in neither of those. A push can pass steps 1 and 2 cleanly and still
    redden CI on a linter you never ran.
@@ -186,8 +186,8 @@ catch what CI cannot see or what wastes a CI round-trip.
    prompt stops for good.
 
 7. **Push, open the PR, watch the checks.** A green check is **not** proof: a
-   run can pass while emitting annotations, and the lint gate is configured
-   `only-new-issues`. Confirm with `gh run view <id> --repo pruuk/DOGMud
+   run can pass while emitting annotations, and the lint gate reports only
+   issues new since the base revision. Confirm with `gh run view <id> --repo pruuk/DOGMud
    --log-failed` rather than trusting the summary.
 
 8. After merge, delete the stray `refs/tags/master` if it re-seeds on origin.
@@ -316,10 +316,15 @@ asked:
   currently knows about, not the full expected set. Before merging anything
   touching a path-filtered trigger, confirm the expected workflows actually
   ran with `gh run list`. [[feedback-gh-pr-checks-can-return-early]]
-- **A red `validate / lint` check on a large PR can be meaningless.** The
-  `only-new-issues` gate asks GitHub's API for the PR patch; when that call
-  fails the action cannot tell new findings from old and reports the entire
-  grandfathered backlog as if the branch introduced it.
+- **FIXED 2026-11-13 by #864; kept as history.** The lint job now computes
+  its base from git (full-history checkout, `--new-from-rev`), so no API diff
+  limit applies. A big PR's red lint is real again. The step "lint base
+  revision" prints the base it used. What follows describes the old gate.
+- **A red `validate / lint` check on a large PR could be meaningless.** The
+  `only-new-issues` gate asked GitHub's API for the PR patch; when that call
+  failed the action could not tell new findings from old and reported the entire
+  grandfathered backlog as if the branch introduced it. PR #863 (493 files)
+  hit it 2026-11-12.
 
   🔴 **TWO separate limits trigger it, and this note used to name only one.**
   The API refuses a diff over **20,000 lines**, AND it pages the file list at
