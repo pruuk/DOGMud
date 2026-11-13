@@ -6,14 +6,18 @@ you steal: you grab whatever you can get your hands on.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::rows
   <ansi fg="command">steal <npc name></ansi>     Steal from an NPC
   <ansi fg="command">steal <container></ansi>    Steal from a container
   <ansi fg="command">steal <thing></ansi>        Take something that belongs to a household
+::
 
 <ansi fg="yellow">Examples:</ansi>
 
+::keep
   <ansi fg="command">steal merchant</ansi>
   <ansi fg="command">steal chest</ansi>
+::
 
 Being hidden improves your chances. On failure, your cover
 is blown and the target may attack. Cannot be used on
@@ -63,4 +67,6 @@ A thief who has been caught stealing wins back a little of the
 goodwill that cost with each thing they return, though never as
 much as the catch itself, and never more than they lost.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help plant</ansi>, <ansi fg="command">help skullduggery</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help plant</ansi>, <ansi fg="command">help skullduggery</ansi>
+::

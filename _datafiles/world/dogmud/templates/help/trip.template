@@ -6,22 +6,28 @@ a tactical move rather than a finisher.
 
 <ansi fg="yellow">Requirements:</ansi>
 
+::list
   - Must be in active combat
   - Cannot be used if special move cooldown is active
+::
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">trip</ansi>
+::
   Attempt to trip your current combat target
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Light. The goal is the floor, not the hit.
-  <ansi fg="stat">Knockdown Chance:</ansi> The most reliable knockdown of the three
-    special moves, resolved against the defender's Dexterity and
-    combat skill.
-  <ansi fg="stat">Cooldown:</ansi> Shared by every special move. See <ansi fg="command">help special</ansi>.
-  <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
+::rows
+  <ansi fg="stat">Damage: </ansi> Light. The goal is the floor, not the hit.
+  <ansi fg="stat">Knockdown Chance: </ansi> The most reliable knockdown of the three
+                     special moves, resolved against the defender's Dexterity and
+                     combat skill.
+  <ansi fg="stat">Cooldown: </ansi> Shared by every special move. See <ansi fg="command">help special</ansi>.
+  <ansi fg="stat">Skill: </ansi> Progresses Unarmed Combat
+::
 
 Trip spends Stamina and requires full payment before the sweep. Carried load
 raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.

@@ -3,11 +3,15 @@
 Your will sheathes you in a taut skin of telekinetic force — strike it
 and the force answers.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive (Ethereal)
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   A share of the harm done to you rebounds on whoever struck you, and
   the recoil leaves them staggering and off-balance
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

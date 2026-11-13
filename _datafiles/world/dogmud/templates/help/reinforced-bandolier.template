@@ -7,10 +7,14 @@ carrying capacity.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       tailoring (minimum 20)
   <ansi fg="yellow">Station:</ansi>     loom
-  <ansi fg="yellow">Ingredients:</ansi> leather strip (x3), iron ingot (x1),
-                 thread spool (x2), bone needle (x1)
+  <ansi fg="yellow">Ingredients: </ansi> leather strip (x3), iron ingot (x1),
+                thread spool (x2), bone needle (x1)
   <ansi fg="yellow">Capacity:</ansi>    12 potions
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>
+::

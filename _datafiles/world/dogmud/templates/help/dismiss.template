@@ -5,7 +5,9 @@ your companions, releasing them from your service.
 
 <ansi fg="yellow">━━━ Usage ━━━</ansi>
 
+::rows
   <ansi fg="command">dismiss <name></ansi>    Release the named companion.
+::
 
 <ansi fg="yellow">━━━ WARNING: Betrayal ━━━</ansi>
 
@@ -23,6 +25,7 @@ with a new enemy and no time to replace it.
 
 <ansi fg="yellow">━━━ What Happens After ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Summoned</ansi>    The creature unmakes itself and fades from
               the world. It does not linger after dismissal.
   <ansi fg="yellow">Raised</ansi>      The reanimated body collapses and crumbles.
@@ -30,6 +33,7 @@ with a new enemy and no time to replace it.
   <ansi fg="yellow">Charmed</ansi>     The creature's will is its own again, and it
               remembers who took it. You may charm it again if
               you can win the contest a second time.
+::
 
 <ansi fg="yellow">━━━ Gear Is Not Returned ━━━</ansi>
 
@@ -44,4 +48,6 @@ If you simply want a companion to stop fighting alongside you
 without releasing it, use <ansi fg="command">companion assist <name></ansi> to
 toggle auto-assist off instead.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help companion</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help companion</ansi>
+::

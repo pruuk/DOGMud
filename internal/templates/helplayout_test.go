@@ -1,0 +1,245 @@
+package templates
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestLayoutHelp(t *testing.T) {
+	cases := []struct {
+		name  string
+		in    string
+		width int
+		want  string
+	}{
+		{"a paragraph that fits keeps its breaks",
+			"Hello world.\nSecond line.", 30,
+			"Hello world.\nSecond line."},
+		{"a paragraph that does not fit rewraps",
+			"The quick brown fox jumps over\nthe lazy dog.", 20,
+			"The quick brown fox\njumps over the lazy\ndog."},
+		{"an indented paragraph keeps its indent",
+			"  aaa bbb ccc ddd", 10,
+			"  aaa bbb\n  ccc ddd"},
+		{"a line ending in a colon ends its paragraph",
+			"Usage:\n  look at the very long thing now", 20,
+			"Usage:\n  look at the very\n  long thing now"},
+		{"a row takes the same-line form and wraps two in",
+			"::rows\n  look  Look at the room you are in.\n::", 30,
+			"  look  Look at the room you\n    are in."},
+		{"a row is laid out the same way at 80",
+			"::rows\n  look          Look at the room.\n::", 80,
+			"  look  Look at the room."},
+		{"a label ending in a colon takes one space",
+			"::rows\nName:        Blood Boil\n::", 30,
+			"Name: Blood Boil"},
+		{"a label too long to share its line takes its own",
+			"::rows\n  bank withdraw [amount/all]  Withdraw gold from the bank\n::", 30,
+			"  bank withdraw [amount/all]\n    Withdraw gold from the\n    bank"},
+		{"a row's deeper lines continue it",
+			"::rows\n  look  Look at\n        the room.\n::", 80,
+			"  look  Look at the room."},
+		{"a list item hangs under its text when it does not fit",
+			"::list\n  - Heavy armor (reduces mobility)\n::", 20,
+			"  - Heavy armor\n    (reduces\n    mobility)"},
+		{"a list that fits keeps its lines",
+			"::list\n  - Heavy armor\n  - Being prone\n::", 30,
+			"  - Heavy armor\n  - Being prone"},
+		{"kept lines are never joined",
+			"::keep\n  quaff poultice\n  quaff draught\n::", 30,
+			"  quaff poultice\n  quaff draught"},
+		{"a rule heading drops marks until it fits",
+			`<ansi fg="yellow">━━━ What Kind of Game Is This? ━━━</ansi>`, 30,
+			`<ansi fg="yellow">━ What Kind of Game Is This? ━</ansi>`},
+		{"a command that fits a line is never split",
+			`See <ansi fg="command">help item-names</ansi> now`, 16,
+			"See\n" + `<ansi fg="command">help item-names</ansi>` + "\nnow"},
+		{"blank lines inside and between blocks are kept",
+			"One.\n\n::rows\n  a  b\n\n  c  d\n::\n\nTwo.", 30,
+			"One.\n\n  a  b\n\n  c  d\n\nTwo."},
+		{"carriage returns are dropped",
+			"a\r\nb", 30,
+			"a\nb"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert.Equal(t, c.want, LayoutHelp(c.in, c.width))
+		})
+	}
+}
+
+// Review fixes (task 1 review, 2026-11-12).
+func TestLayoutHelpReviewFixes(t *testing.T) {
+	cases := []struct {
+		name  string
+		in    string
+		width int
+		want  string
+	}{
+		{"an opener inside an open block closes it and is dropped",
+			"::keep\n  x\n::rows\n  a  b\n", 30,
+			"  x\n  a  b\n"},
+		{"a stray closer is dropped",
+			"para\n::\nmore", 30,
+			"para\nmore"},
+		{"markers with trailing spaces are recognised",
+			"::rows \n  a  b\n:: ", 30,
+			"  a  b"},
+		{"a label wider than the line takes its own lines, text below",
+			"::rows\n  bank withdraw some very long arguments list [x]  text here\n::", 20,
+			"  bank withdraw some\n    very long\n    arguments list\n    [x]\n    text here"},
+		{"an exact-fit label keeps its indent",
+			"::rows\n  bank withdraw [amount/all] x  Withdraw gold\n::", 30,
+			"  bank withdraw [amount/all] x\n    Withdraw gold"},
+		{"trailing spaces are trimmed on a paragraph that fits",
+			"Use this command to look   \nat things.", 25,
+			"Use this command to look\nat things."},
+		{"trailing spaces before a closing tag are trimmed",
+			`<ansi fg="red">ab   </ansi>`, 5,
+			`<ansi fg="red">ab</ansi>`},
+		{"trailing spaces are trimmed on a list that fits",
+			"::list\n  - a   \n::", 30,
+			"  - a"},
+		{"kept lines keep their trailing spaces",
+			"::keep\n  a  \n::", 30,
+			"  a  "},
+		{"a heading too long even bare packs its title alone",
+			"━━━ Melee Ambushes Need Your Special Move ━━━", 30,
+			"Melee Ambushes Need Your\nSpecial Move"},
+		{"a heading keeps its inner spans when marks drop",
+			`<ansi fg="yellow">━━━ </ansi><ansi fg="white">What Kind of Game Is This?</ansi><ansi fg="yellow"> ━━━</ansi>`, 30,
+			`<ansi fg="yellow">━ </ansi><ansi fg="white">What Kind of Game Is This?</ansi><ansi fg="yellow"> ━</ansi>`},
+		{"a width of zero means the full width",
+			strings.Repeat("word ", 15) + "end", 0,
+			strings.Repeat("word ", 15) + "end"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert.Equal(t, c.want, LayoutHelp(c.in, c.width))
+		})
+	}
+}
+
+// Re-review fixes (task 1, 2026-11-12).
+const helpTitleFixture = `<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi>` +
+	`<ansi fg="skill">master's component case</ansi> (tailoring recipe)`
+
+func TestLayoutHelpSpanTrailingSpaceStaysABreak(t *testing.T) {
+	out := ansiTag.ReplaceAllString(LayoutHelp(helpTitleFixture, 30), "")
+	assert.Equal(t, ".: Help for\nmaster's component case\n(tailoring recipe)", out)
+}
+
+func TestWrapSpansSpanTrailingSpaceStaysABreak(t *testing.T) {
+	out := wrapSpans(helpTitleFixture, 30)
+	for _, l := range strings.Split(out, "\n") {
+		assert.LessOrEqual(t, util.VisibleWidth(l), 30, l)
+	}
+}
+
+// A chain of spans written back to back is one unit; when it cannot fit, the
+// widest spans that fit are kept whole and a break remains between them.
+func TestSpanChainsNeverOverflowWhenABreakIsPossible(t *testing.T) {
+	cases := []struct {
+		name, in string
+		width    int
+		whole    []string // visible texts that must sit on one line
+	}{
+		{"words then two touching spans",
+			`Help: <ansi fg="a">aaaa bbbb cccc</ansi><ansi fg="b">dddd eeee ff</ansi>`, 20,
+			[]string{"aaaa bbbb cccc"}},
+		{"a short span glued to a wide one",
+			`<ansi fg="a">ccc )</ansi><ansi fg="b">help look help look help look</ansi>`, 30,
+			[]string{"help look help look help look"}},
+	}
+	for _, c := range cases {
+		render := map[string]string{
+			"wrapSpans":  wrapSpans(c.in, c.width),
+			"LayoutHelp": LayoutHelp(c.in, c.width),
+		}
+		for fn, out := range render {
+			plainLines := strings.Split(ansiTag.ReplaceAllString(out, ""), "\n")
+			for _, l := range plainLines {
+				assert.LessOrEqual(t, util.VisibleWidth(l), c.width, "%s %s: %q", c.name, fn, l)
+			}
+			for _, w := range c.whole {
+				found := false
+				for _, l := range plainLines {
+					found = found || strings.Contains(l, w)
+				}
+				assert.True(t, found, "%s %s: %q is split in %q", c.name, fn, w, plainLines)
+			}
+		}
+	}
+}
+
+func TestLayoutHelpReReviewFixes(t *testing.T) {
+	cases := []struct {
+		name  string
+		in    string
+		width int
+		want  string
+	}{
+		{"a whitespace-only line is trimmed",
+			"aaa\n          \nbbb", 5,
+			"aaa\n\nbbb"},
+		{"a shrunk heading leaves no empty colour pair",
+			`<ansi fg="y">━━━ </ansi><ansi fg="w">Title</ansi><ansi fg="y"> ━━━</ansi>`, 5,
+			`<ansi fg="w">Title</ansi>`},
+		{"a fitting heading candidate has no trailing space",
+			"━━━ Title  ━━━", 9,
+			"Title"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert.Equal(t, c.want, LayoutHelp(c.in, c.width))
+		})
+	}
+}
+
+func TestLayoutHelpGluedSpansStartNoLineWithASpace(t *testing.T) {
+	in := `<ansi fg="a">aaa bbb</ansi><ansi fg="b">ccc ddd</ansi> eee`
+	out := LayoutHelp(in, 10)
+	for _, l := range strings.Split(out, "\n") {
+		assert.False(t, strings.HasPrefix(ansiTag.ReplaceAllString(l, ""), " "), l)
+		assert.LessOrEqual(t, util.VisibleWidth(l), 10, l)
+	}
+	assert.Equal(t, "aaa bbbccc ddd eee",
+		strings.ReplaceAll(ansiTag.ReplaceAllString(out, ""), "\n", " "))
+}
+
+func TestLayoutHelpClampsAnIndentToHalfTheWidth(t *testing.T) {
+	out := LayoutHelp("          aaa bbb ccc ddd", 8)
+	for _, l := range strings.Split(out, "\n") {
+		assert.LessOrEqual(t, util.VisibleWidth(l), 8, l)
+	}
+	assert.Equal(t, "aaa bbb ccc ddd", strings.Join(strings.Fields(out), " "))
+}
+
+// A colour span cut by a line break is closed at the end of the line and
+// reopened on the next, so a packed line stands alone (WrapAnsi's rule). A
+// paragraph or list kept as authored passes its tags through unchanged.
+func TestLayoutHelpBalancesTagsAtEachBreak(t *testing.T) {
+	out := LayoutHelp(`<ansi fg="white">aaa bbb ccc</ansi>`, 7)
+	lines := strings.Split(out, "\n")
+	assert.Len(t, lines, 2)
+	for _, l := range lines {
+		assert.Equal(t, strings.Count(l, "<ansi"), strings.Count(l, "</ansi>"), l)
+		assert.LessOrEqual(t, util.VisibleWidth(l), 7, l)
+	}
+}
+
+// The spell page's labels carry their padding inside the colour span.
+func TestLayoutHelpRowLabelPaddedInsideItsSpan(t *testing.T) {
+	in := "::rows\n" + `<ansi fg="yellow">SpellID:     </ansi> <ansi fg="white-bold">blood-boil</ansi>` + "\n::"
+	out := LayoutHelp(in, 30)
+	assert.Equal(t, "SpellID: blood-boil", ansiTag.ReplaceAllString(out, ""))
+}
+
+// Directive lines never reach the reader, even an unclosed block.
+func TestLayoutHelpDropsMarkers(t *testing.T) {
+	out := LayoutHelp("::keep\n  x\n", 30)
+	assert.NotContains(t, out, "::")
+}

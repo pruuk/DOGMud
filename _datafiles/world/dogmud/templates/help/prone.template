@@ -6,10 +6,12 @@ the ground by special attacks like <ansi fg="command">bash</ansi>,
 
 <ansi fg="yellow">How to Become Prone:</ansi>
 
+::list
   - Hit by a successful <ansi fg="command">bash</ansi> attack
   - Hit by a successful <ansi fg="command">trip</ansi> attack (the most reliable
     knockdown of the three)
   - Hit by a successful <ansi fg="command">kick</ansi> attack
+::
 
   All knockdown attempts are modified by opposed skill checks. A
   skilled defender is harder to floor than a novice.
@@ -17,36 +19,52 @@ the ground by special attacks like <ansi fg="command">bash</ansi>,
 <ansi fg="yellow">Effects While Prone:</ansi>
 
   <ansi fg="red">Attack Penalties:</ansi>
+::list
     - Attacking from the ground is substantially harder. Both your
       accuracy and the force behind each swing suffer.
+::
 
   <ansi fg="red">Defense Penalties:</ansi>
+::list
     - Dodging while prone is nearly impossible; parrying is awkward;
       blocking still works, though not as well as upright.
+::
 
   <ansi fg="red">Vulnerability:</ansi>
+::list
     - Standing opponents find you a much easier target.
+::
 
   <ansi fg="red">Restrictions:</ansi>
+::list
     - Cannot flee from combat
     - Cannot move to other rooms
+::
 
 <ansi fg="yellow">Recovery:</ansi>
 
 You have two ways to recover from being prone:
 
+::list
   1. <ansi fg="stat">Automatic Recovery:</ansi>
+::
+::list
      - After a short delay you automatically attempt to stand each round.
      - Getting up for free is a contest against whoever is holding
        you down (their Dexterity and unarmed skill against yours).
        If nobody is attacking you, you simply stand back up.
        Each attempt costs your action for that round.
      - No stamina cost.
+::
 
+::list
   2. <ansi fg="stat">Manual Recovery:</ansi> (<ansi fg="command">help stand</ansi>)
+::
+::list
      - Use <ansi fg="command">stand</ansi> for guaranteed success at the
        cost of some stamina.
      - Still uses your action for that round.
+::
 
 <ansi fg="yellow">Strategy:</ansi>
 

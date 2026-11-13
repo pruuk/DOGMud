@@ -5,10 +5,16 @@ All suggestions are saved and reviewed.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">suggest <your idea></ansi>
+::
 
   Examples:
+
     <ansi fg="command">suggest It would be cool if we could craft arrows at the workbench.</ansi>
+
     <ansi fg="command">suggest The training dummy in Sanctum Basin should give feedback on form.</ansi>
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help bug</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help bug</ansi>
+::

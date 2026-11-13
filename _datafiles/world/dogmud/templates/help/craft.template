@@ -6,21 +6,25 @@ skill, the right ingredients, and in most cases a crafting station.
 
 <ansi fg="yellow">━━━ Basic Usage ━━━</ansi>
 
+::rows
   <ansi fg="command">craft list</ansi>                    Show all known recipes.
   <ansi fg="command">craft</ansi>                         Same as craft list.
   <ansi fg="command">craft <recipe></ansi>                Start crafting.
   <ansi fg="command">craft <enchant> <item></ansi>        Enchant a specific item.
+::
 
 <ansi fg="yellow">━━━ Crafting Skills ━━━</ansi>
 
 There are six crafting skills, each with its own station and recipes:
 
+::rows
   <ansi fg="skill">blacksmithing</ansi>  Weapons, shields, heavy armor. Station: forge.
   <ansi fg="skill">alchemy</ansi>        Potions, salves, draughts. Station: alchemy bench.
   <ansi fg="skill">tailoring</ansi>      Cloth and leather armor, cloaks. Station: loom.
   <ansi fg="skill">cooking</ansi>        Food and meals with temporary benefits. Station: hearth.
   <ansi fg="skill">jewelcrafting</ansi>  Rings, pendants, chrysalis settings. Station: jeweler bench.
   <ansi fg="skill">enchanting</ansi>     Chrysalis enchantments bound to gear. Station: enchanting circle.
+::
 
 The first four are standalone trades. Jewelcrafting and enchanting
 together form the <ansi fg="yellow">artificer</ansi> profession — jewelcrafting produces
@@ -31,8 +35,10 @@ into equipment.
 
 When enchanting, you can specify which item to enchant by name:
 
+::rows
   <ansi fg="command">craft keen dagger</ansi>     Enchant the dagger named "dagger".
   <ansi fg="command">craft keen 2.sword</ansi>    Enchant the second sword.
+::
 
 Enchanting searches both your backpack and equipped items, so
 you can enchant a wielded weapon without unequipping it. If
@@ -41,11 +47,13 @@ numbered list to choose from.
 
 <ansi fg="yellow">━━━ The Crafting Loop ━━━</ansi>
 
+::list
   1. <ansi fg="command">forage</ansi> or loot raw materials from the world.
   2. Find the right crafting station.
   3. <ansi fg="command">craft <recipe></ansi> to begin working.
   4. Wait for the work to complete (several rounds).
   5. Use, equip, or enchant the result.
+::
 
 Higher skill means fewer wasted materials. A seasoned crafter rarely
 fails, but even masters are not perfect.
@@ -65,21 +73,25 @@ idea. The more you know, the harder new discoveries come.
 
 <ansi fg="yellow">━━━ Crafting Stations ━━━</ansi>
 
+::rows
   <ansi fg="yellow">forge</ansi>              Smithing station — in Pothole Coulee and most towns.
   <ansi fg="yellow">alchemy_bench</ansi>      Alchemy station — in Pothole Coulee and most towns.
   <ansi fg="yellow">loom</ansi>               Tailoring station — in Pothole Coulee and most towns.
   <ansi fg="yellow">hearth</ansi>             Kitchen or tavern hearth.
   <ansi fg="yellow">jeweler_bench</ansi>      Jeweler's Workshop — Thornwall City.
   <ansi fg="yellow">enchanting_circle</ansi>  Enchanter's Circle — east of Jeweler's Workshop.
+::
 
 <ansi fg="yellow">━━━ Getting Ingredients ━━━</ansi>
 
 Materials come from many sources:
 
+::rows
   <ansi fg="command">forage</ansi>     Search outdoor areas for herbs, ore, stones, gems.
   <ansi fg="yellow">Mob drops</ansi>  Kill creatures that carry raw materials.
   <ansi fg="yellow">Vendors</ansi>    Some NPCs sell crafting supplies.
   <ansi fg="yellow">Floor</ansi>      Check crafting station rooms for stock.
+::
 
 <ansi fg="yellow">See Also:</ansi>
 

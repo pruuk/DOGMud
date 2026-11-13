@@ -27,5 +27,7 @@ just as a second light adds less than the first did.
 
   A darkness is not a light. It never gives you away when you sneak.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help light</ansi>, <ansi fg="command">help chrysalis-pall</ansi>, <ansi fg="command">help heat-sight</ansi>,
-  <ansi fg="command">help night-vision</ansi>, <ansi fg="command">help seasons</ansi>, <ansi fg="command">help moons</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help light</ansi>, <ansi fg="command">help chrysalis-pall</ansi>, <ansi fg="command">help heat-sight</ansi>,
+           <ansi fg="command">help night-vision</ansi>, <ansi fg="command">help seasons</ansi>, <ansi fg="command">help moons</ansi>
+::

@@ -13,4 +13,6 @@ Spells cost <ansi fg="yellow">Conviction</ansi> and require
 concentration through fold accumulation. Being knocked prone or
 taking heavy damage can break your concentration.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help skills</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help skills</ansi>
+::

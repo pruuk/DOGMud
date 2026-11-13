@@ -5,6 +5,7 @@ fists, claws, and bare hands.
 
 <ansi fg="yellow">━━━ Attacks ━━━</ansi>
 
+::list
   - <ansi fg="stat">Both Hands:</ansi> Every empty hand attacks as a fist.
     Two arms = two fists. Six arms = six fists.
   - <ansi fg="stat">Fist/Claws Weapons:</ansi> These train unarmed-combat,
@@ -20,6 +21,7 @@ fists, claws, and bare hands.
     is the primary skill that determines who wins each round of a
     grapple's drift toward advance, hold, reversal, or escape.
     See <ansi fg="command">help grapple</ansi> for the full picture.
+::
 
 <ansi fg="yellow">━━━ Speed ━━━</ansi>
 
@@ -44,13 +46,17 @@ when short, but resolve without this skill.
 <ansi fg="yellow">━━━ Progression ━━━</ansi>
 
 This skill improves through use:
+::list
   - Landing hits with fists or claws
   - Using <ansi fg="command">kick</ansi>, <ansi fg="command">trip</ansi>,
     and <ansi fg="command">grapple</ansi>
   - Dodging attacks
   - Each arm that hits progresses the skill independently
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help combat</ansi>,
-  <ansi fg="command">help kick</ansi>, <ansi fg="command">help trip</ansi>,
-  <ansi fg="command">help grapple</ansi>, <ansi fg="command">help submission</ansi>,
-  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help combat</ansi>,
+           <ansi fg="command">help kick</ansi>, <ansi fg="command">help trip</ansi>,
+           <ansi fg="command">help grapple</ansi>, <ansi fg="command">help submission</ansi>,
+           <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>
+::

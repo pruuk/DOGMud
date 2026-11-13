@@ -10,25 +10,26 @@ baseline mutations: a wolf's tail, a vampire's regenerative tissue, an ascended 
 resistance to magic. These intrinsic traits stack with any mutations the creature acquires.
 
 Species are affected by Size:
-    <ansi fg="yellow">Small</ansi>  - 1-Handed weapons require 2 hands. 2-Handed weapons cannot be used.
-    <ansi fg="yellow">Medium</ansi> - Can use 1-Handed weapons with a shield, and sometimes dual-wield.
-    <ansi fg="yellow">Large</ansi>  - 2-Handed weapons require 1 hand. Can sometimes dual-wield 2-Handed
+::rows
+    <ansi fg="yellow">Small:</ansi>   1-Handed weapons require 2 hands. 2-Handed weapons cannot be used.
+    <ansi fg="yellow">Medium:</ansi>  Can use 1-Handed weapons with a shield, and sometimes dual-wield.
+    <ansi fg="yellow">Large:</ansi>   2-Handed weapons require 1 hand. Can sometimes dual-wield 2-Handed
              weapons. A body grown large by mutation grips one only in the
              weapon hand, until Colossus Form.
+::
 
 Here is some useful species detail:
-
-{{ range $index, $speciesInfo := . }}{{ $slotCount := len $speciesInfo.GetEnabledSlots }}
-┌──────────────────────────────────────────────────────────────────────────────┐
-
-  <ansi fg="yellow">Species Name:</ansi>   <ansi fg="yellow-bold">{{ $speciesInfo.Name }}</ansi>
-  <ansi fg="yellow">Description:</ansi> <ansi fg="white">{{ splitstring $speciesInfo.Description 65 "               " }}</ansi>
-  <ansi fg="yellow">Size:</ansi>        {{ $speciesInfo.Size }}
-  <ansi fg="yellow">Unarmed:</ansi>     <ansi fg="white-bold">{{ $speciesInfo.UnarmedName }}</ansi> (<ansi fg="red">{{ $speciesInfo.Damage.DiceRoll }}</ansi>)
-  <ansi fg="yellow">First Aid:</ansi>   {{ if $speciesInfo.KnowsFirstAid }}<ansi fg="123">Yes</ansi>{{ else }}<ansi fg="210">No</ansi>{{ end }}
-  <ansi fg="yellow">Gear Slots:</ansi>  {{ if eq (len $speciesInfo.GetEnabledSlots) 0 }}<ansi fg="234">*None*</ansi>{{end}}{{ range $slotIndex, $slotName := $speciesInfo.GetEnabledSlots }}{{if gt $slotIndex 0 }}{{ if eq (mod $slotIndex 5) 0 }}{{ printf "\n               " }}{{ end }}{{ end }}<ansi fg="157">{{ padRight 9 (uc $slotName) }}</ansi>{{ end }}
-  <ansi fg="yellow">Stat Gains:</ansi>  <ansi fg="234">None -- every character begins at the human baseline (all six stats near 100) and grows through use, not from species.</ansi>
-  <ansi fg="yellow">Conditions:</ansi>  {{if eq (len $speciesInfo.ConditionIds) 0}}<ansi fg="234">*None*</ansi>{{end}}{{ range $slotIndex, $conditionId := $speciesInfo.ConditionIds }}{{if gt $slotIndex 0 }}{{ printf "\n               " }}{{ end }}<ansi fg="condition">{{ conditionname $conditionId }}</ansi>{{ end }}
-
-└──────────────────────────────────────────────────────────────────────────────┘
+{{ range $index, $speciesInfo := . }}
+{{ padRight screenwidth "" "─" }}
+::rows
+  <ansi fg="yellow">Species:</ansi>      <ansi fg="yellow-bold">{{ $speciesInfo.Name }}</ansi>
+  <ansi fg="yellow">Description:</ansi>  <ansi fg="white">{{ $speciesInfo.Description }}</ansi>
+  <ansi fg="yellow">Size:</ansi>         {{ $speciesInfo.Size }}
+  <ansi fg="yellow">Unarmed:</ansi>      <ansi fg="white-bold">{{ $speciesInfo.UnarmedName }}</ansi>
+  <ansi fg="yellow">First Aid:</ansi>    {{ if $speciesInfo.KnowsFirstAid }}<ansi fg="123">Yes</ansi>{{ else }}<ansi fg="210">No</ansi>{{ end }}
+  <ansi fg="yellow">Gear Slots:</ansi>   {{ if eq (len $speciesInfo.GetEnabledSlots) 0 }}<ansi fg="234">*None*</ansi>{{ else }}<ansi fg="157">{{ uc (join $speciesInfo.GetEnabledSlots ", ") }}</ansi>{{ end }}
+  <ansi fg="yellow">Stat Gains:</ansi>   <ansi fg="234">None -- every character begins at the human baseline (all six stats near 100) and grows through use, not from species.</ansi>
+  <ansi fg="yellow">Conditions:</ansi>   {{ if eq (len $speciesInfo.ConditionIds) 0 }}<ansi fg="234">*None*</ansi>{{ else }}{{ range $i, $conditionId := $speciesInfo.ConditionIds }}{{ if $i }}, {{ end }}<ansi fg="condition">{{ conditionname $conditionId }}</ansi>{{ end }}{{ end }}
+::
+{{ padRight screenwidth "" "─" }}
 {{ end }}

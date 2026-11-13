@@ -3,8 +3,10 @@
 Predatory adrenal glands flood you the moment a fight turns against
 you. Wounded, you come off the chain.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive (triggered)
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   When you drop below half health in a fight you enter a frenzy and
@@ -13,4 +15,6 @@ you. Wounded, you come off the chain.
 <ansi fg="yellow">Drawbacks:</ansi>
   While frenzied you cannot flee — you can only fight
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

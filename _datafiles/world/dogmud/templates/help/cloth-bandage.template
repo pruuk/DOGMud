@@ -5,8 +5,12 @@ but essential first-aid item for binding wounds in the field.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       tailoring (minimum 5)
   <ansi fg="yellow">Station:</ansi>     loom
-  <ansi fg="yellow">Ingredients:</ansi> cloth strip (x1), thread spool (x1)
+  <ansi fg="yellow">Ingredients: </ansi> cloth strip (x1), thread spool (x1)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>
+::

@@ -7,15 +7,21 @@ flee or escape through magical means.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast psychic-anchor [target]</ansi>
+::
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Harm Single
   <ansi fg="yellow">School:      </ansi> Mental
   <ansi fg="yellow">Base Folds:  </ansi> 8
   <ansi fg="yellow">Conv. Cost:  </ansi> 60
   <ansi fg="yellow">Defense:     </ansi> Mental — willpower resists the anchoring
   <ansi fg="yellow">Effect:      </ansi> Immobilizes the target, preventing movement or teleport
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::

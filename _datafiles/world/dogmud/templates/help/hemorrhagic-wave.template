@@ -7,16 +7,22 @@ wider reach and more sustainable conviction cost.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast hemorrhagic-wave</ansi>
+::
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Harm Area
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> 20
   <ansi fg="yellow">Conv. Cost:  </ansi> 80
   <ansi fg="yellow">Defense:     </ansi> Physical — quick reflexes can dodge it; armor only
-                 softens what lands
+                softens what lands
   <ansi fg="yellow">Effect:      </ansi> Moderate damage to all enemies in the room
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::

@@ -4,9 +4,11 @@ Great membranous wings unfurl from your back and the ground releases
 its claim on you. You move above the fight -- always aloft, no command
 needed.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (always on)
 <ansi fg="yellow">Rarity:</ansi>   Apex
-<ansi fg="yellow">Requires:</ansi> Hollow Bones and a tail
+<ansi fg="yellow">Requires: </ansi> Hollow Bones and a tail
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   You strike down at earthbound foes from a superior angle and are
@@ -18,4 +20,6 @@ needed.
   Reaching flight means hollowing your bones, so your lightened frame
   takes wounds more easily
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

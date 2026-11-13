@@ -6,7 +6,9 @@ takes food or a cooked drink.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">drink tea</ansi>
+::
   This would drink your tea.
 
 Potions are different. Drink a potion with <ansi fg="command">quaff</ansi>

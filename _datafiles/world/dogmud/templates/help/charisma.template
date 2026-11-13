@@ -14,6 +14,8 @@ social interactions and put your personality to work, the
 more it grows.
 
 <ansi fg="yellow">Related: </ansi>
+::keep
   <ansi fg="command">help status</ansi>
   <ansi fg="command">help consider</ansi>
+::
 

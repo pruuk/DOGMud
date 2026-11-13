@@ -4,23 +4,31 @@ New arms sprout from your torso, one with each change, each able to
 wield a weapon of its own. The grotesque sight of extra flailing limbs
 draws hostile attention and unsettles everyone around you.
 
+::rows
 <ansi fg="yellow">Requires:</ansi>  Arms (a species with explicit grasping limbs)
 <ansi fg="yellow">Type:</ansi>     Active Ability
 <ansi fg="yellow">Rarity:</ansi>   Extremely Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
-  Unlocks additional weapon slots: each change grows one more arm,
-  up to six arms in all, so you can wield more weapons at once than a
-  normal combatant
-  Slightly improved dexterity from the additional limb coordination
+::list
+  - Unlocks additional weapon slots: each change grows one more arm,
+    up to six arms in all, so you can wield more weapons at once than a
+    normal combatant
+  - Slightly improved dexterity from the additional limb coordination
+::
 
 <ansi fg="yellow">Drawbacks:</ansi>
-  Greatly reduced charisma: so many arms are deeply disturbing to
-  behold
-  Draws significantly more hostile attention from enemies
-  Your body holds part of your conviction in reserve, and the last
-  change holds more than the others
+::list
+  - Greatly reduced charisma: so many arms are deeply disturbing to
+    behold
+  - Draws significantly more hostile attention from enemies
+  - Your body holds part of your conviction in reserve, and the last
+    change holds more than the others
+::
 
 <ansi fg="yellow">Conflicts:</ansi> Clawed Hands, Elongated Limbs
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

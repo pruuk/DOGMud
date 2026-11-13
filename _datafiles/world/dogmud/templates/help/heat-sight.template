@@ -16,9 +16,13 @@ dazzles you.
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Help Single
   <ansi fg="yellow">School:      </ansi> Mental
   <ansi fg="yellow">Conv. Cost:  </ansi> 80
   <ansi fg="yellow">Effect:      </ansi> Sees the shapes of living warmth in darkness
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help light</ansi>, <ansi fg="command">help night-vision</ansi>, <ansi fg="command">help spells</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help light</ansi>, <ansi fg="command">help night-vision</ansi>, <ansi fg="command">help spells</ansi>
+::

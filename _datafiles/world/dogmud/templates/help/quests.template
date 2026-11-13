@@ -9,10 +9,12 @@ a reward when you finish.
   When you look at a room, a mark in front of a person's name tells you
   they have something for you:
 
+::rows
   <ansi fg="yellow">[!]</ansi>  they have a new quest for you.
   <ansi fg="yellow">[?]</ansi>  you can finish a quest with them now.
   <ansi fg="yellow">[*]</ansi>  they have something important to tell you, or you can
        report a step of a quest to them.
+::
 
   To take a quest, type <ansi fg="command">talk</ansi> <ansi fg="cyan"><name></ansi> and choose the <ansi fg="yellow">[!]</ansi> line from
   the numbered list. They tell you what they want. Then choose <ansi fg="yellow">Accept</ansi>
@@ -36,17 +38,27 @@ a reward when you finish.
   and some work can only be done a set number of times. Until it is time,
   they do not offer it. Add <ansi fg="command">all</ansi> to the list to see each one you finished:
 
+::rows
   <ansi fg="yellow">Ready to take on again</ansi>   talk to the person and take it once more.
   <ansi fg="yellow">Not offered again yet</ansi>    wait a while, then it comes back.
   <ansi fg="yellow">Done for good</ansi>            you have done it as often as it allows.
+::
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">quests</ansi>              Show the quests you are working on
   <ansi fg="command">quests all</ansi>          Show every quest you have started, finished ones too
+::
+::keep
   <ansi fg="command">quests focus <name></ansi>
-        Follow that quest: the map and the hint point to it.
+::
+::rows
+        Follow that quest:  the map and the hint point to it.
+::
+::keep
   <ansi fg="command">quests abandon <name></ansi>
+::
         Set the quest aside. Talk to whoever gave it to you to take it up
         again, right where you left off.
 
@@ -54,4 +66,6 @@ Stuck on a step? <ansi fg="command">hint</ansi> gives a nudge for your current q
 <ansi fg="command">hint [name]</ansi> gives one for a quest you name. When you have no quest
 in progress, <ansi fg="command">hint</ansi> tells you how to find one.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help talk</ansi>, <ansi fg="command">help hint</ansi>, <ansi fg="command">help look</ansi>, <ansi fg="command">help search</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help talk</ansi>, <ansi fg="command">help hint</ansi>, <ansi fg="command">help look</ansi>, <ansi fg="command">help search</ansi>
+::

@@ -4,7 +4,9 @@ The <ansi fg="command">trash</ansi> command destroys an item you carry, for good
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">trash stick</ansi>
+::
   This would destroy a stick if you had it in your backpack.
 
 Find out more about referring to items by name by typing <ansi fg="command">help item-names</ansi>.

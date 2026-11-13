@@ -3,9 +3,11 @@
 The final work of the self-made -- you craft a living copy of
 yourself to fight at your side.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
-<ansi fg="yellow">Requires:</ansi> Walking Chrysalis and Faithwrought
+<ansi fg="yellow">Requires: </ansi> Walking Chrysalis and Faithwrought
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   A boss-tier copy of you is forged and fights at your side, its
@@ -16,4 +18,6 @@ yourself to fight at your side.
   Sustaining your great work claims nearly all your conviction --
   it is, in truth, the only companion you will have room for
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

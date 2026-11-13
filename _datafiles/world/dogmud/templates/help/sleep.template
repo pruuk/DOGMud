@@ -12,11 +12,13 @@ hostile territory is an invitation to assassination.
 
 <ansi fg="yellow">You wake when:</ansi>
 
+::list
   - You take any damage.
   - Someone fails a steal or pickpocket against you.
   - Someone shouts in your room.
   - Someone enters your room carrying a light source.
   - You use <ansi fg="command">stand</ansi>.
+::
 
 NPCs follow daily routines and may be asleep at night. See
 <ansi fg="command">help time</ansi>.

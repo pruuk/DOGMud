@@ -9,4 +9,6 @@ are roofed or underground. See <ansi fg="command">help light</ansi>.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">biome</ansi>
+::

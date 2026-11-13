@@ -28,8 +28,9 @@ import (
 //
 // The classes are the state of the work, not a permanent exemption list:
 // plan 3b-3 gave every template screen it held a narrow form and removed its
-// class; plan 4 does "help/". When that is done, only "wide" and the classes
-// that never reach a narrow screen unwrapped remain.
+// class. Plan 4 is done for "help/": the help pages are held by
+// help_render_guard_test.go, so the folder is a class here. Only "wide" and
+// the classes that never reach a narrow screen unwrapped remain otherwise.
 
 // templateFolders are every place a template is read from: the live world,
 // and each module's own files (modules/<name>/files/datafiles/templates).
@@ -54,7 +55,7 @@ var templateWidths = []int{30, 42, 80}
 // templateClassNames lists the templates in each exact-name class.
 var templateClassNames = map[string][]string{
 	// Maps and wide tables may scroll sideways (ruling 3).
-	"wide": {"maps/map", "tables/lockpicking"},
+	"wide": {"maps/map", "tables/lockpicking", "help/map-examples", "help/colors"},
 	// Sent outside the pipeline, before a reader has a width or as they
 	// leave; the terminal soft-wraps them.
 	"raw": {"goodbye", "login/connect-splash", "login/email-new.prompt",
@@ -80,8 +81,8 @@ var templateClassNames = map[string][]string{
 // templateClassPrefixes are the classes held by a folder.
 var templateClassPrefixes = map[string]string{
 	"generic/splash/": "caption", // narrow readers get the scene's words (Splash_Deliver)
-	"help/":           "help",    // plan 4
-	"admincommands/":  "admin",   // out of scope (ruling 25)
+	"help/":           "help, held by help_render_guard_test.go",
+	"admincommands/":  "admin", // out of scope (ruling 25)
 }
 
 // templateFixture is data that makes a template as wide as it gets in play.
@@ -169,7 +170,9 @@ func templateClasses(name string) []string {
 		}
 	}
 	for prefix, class := range templateClassPrefixes {
-		if strings.HasPrefix(name, prefix) {
+		// A help page that is also named in an exact class ("wide") is held
+		// by that class; the help folder class covers the rest.
+		if strings.HasPrefix(name, prefix) && len(hits) == 0 {
 			hits = append(hits, class)
 		}
 	}

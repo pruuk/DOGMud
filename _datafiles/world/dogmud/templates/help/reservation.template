@@ -45,22 +45,26 @@ Type <ansi fg="command">status</ansi> and look at the reserve line under your po
 SP reserve and CP reserve. Each pool gets a word of its own, and each word
 measures how close you are to the limit rather than to your whole pool:
 
+::rows
   <ansi fg="green">none</ansi> or <ansi fg="green">slight</ansi>    Nothing worth worrying about.
   <ansi fg="green">modest</ansi>            A real cost, comfortably borne.
   <ansi fg="yellow">notable</ansi>           You are giving up something to keep this.
   <ansi fg="red">heavy</ansi>             Well along. Choose the next one with care.
   <ansi fg="red-bold">near limit</ansi>        Almost no room left. The next thing may be refused.
   <ansi fg="red-bold">at limit</ansi>          You cannot add anything more to this pool.
+::
 
 When the game speaks to you in a sentence it uses the same rungs in
 longer words, so you can match one to the other without doing any sums:
 
+::rows
   <ansi fg="green">slight</ansi>            a slight part
   <ansi fg="green">modest</ansi>            a modest share
   <ansi fg="yellow">notable</ansi>           a notable share
   <ansi fg="red">heavy</ansi>             a heavy share
   <ansi fg="red-bold">near limit</ansi>        nearly all you can set aside
   <ansi fg="red-bold">at limit</ansi>          all you can set aside
+::
 
 <ansi fg="yellow">━━━ Your Body ━━━</ansi>
 

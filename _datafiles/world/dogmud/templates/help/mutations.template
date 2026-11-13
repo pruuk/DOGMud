@@ -10,11 +10,17 @@ from a menu; it grows from how you play.
 Mutations are arranged as a great ring of nine <ansi fg="white-bold">clusters</ansi>, each a distinct way
 of being:
 
-  <ansi fg="yellow">Colossus</ansi>   size and smashing might      <ansi fg="yellow">Ravener</ansi>    feral, unarmed ferocity
-  <ansi fg="yellow">Ironhide</ansi>   the hide that fights back     <ansi fg="yellow">Stalker</ansi>    stealth and venom
-  <ansi fg="yellow">Ethereal</ansi>   incorporeal, psychic power    <ansi fg="yellow">Manifester</ansi> brood and summoning
-  <ansi fg="yellow">Zealot</ansi>     voice, presence, command      <ansi fg="yellow">Weaver</ansi>     control, web, disruption
-  <ansi fg="yellow">Trickster</ansi>  illusion and quicksilver guile
+::rows
+  <ansi fg="yellow">Colossus</ansi>    size and smashing might
+  <ansi fg="yellow">Ravener</ansi>     feral, unarmed ferocity
+  <ansi fg="yellow">Ironhide</ansi>    the hide that fights back
+  <ansi fg="yellow">Stalker</ansi>     stealth and venom
+  <ansi fg="yellow">Ethereal</ansi>    incorporeal, psychic power
+  <ansi fg="yellow">Manifester</ansi>  brood and summoning
+  <ansi fg="yellow">Zealot</ansi>      voice, presence, command
+  <ansi fg="yellow">Weaver</ansi>      control, web, disruption
+  <ansi fg="yellow">Trickster</ansi>   illusion and quicksilver guile
+::
 
 Clusters lean to one of two <ansi fg="white-bold">poles</ansi> — the <ansi fg="magenta">Body</ansi> (raw flesh) or <ansi fg="magenta">Belief</ansi> (will
 made real). A few are hybrids, shallow on both. Commit deeply to one pole and the
@@ -57,8 +63,12 @@ like are untouched by the Chrysalis entirely.
 
 <ansi fg="yellow">━━━ Commands ━━━</ansi>
 
+::rows
   <ansi fg="command">mutations</ansi>           List your current mutations and what they do.
   <ansi fg="command">status</ansi>              Shows your mutations in your stat panel.
+::
 
-<ansi fg="yellow">See Also:</ansi> <ansi fg="command">help status</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help progression</ansi>,
-  <ansi fg="command">help dogmud</ansi>
+::rows
+<ansi fg="yellow">See Also:</ansi>  <ansi fg="command">help status</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help progression</ansi>,
+           <ansi fg="command">help dogmud</ansi>
+::

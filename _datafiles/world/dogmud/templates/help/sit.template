@@ -10,15 +10,19 @@ no free critical hit on you.
 
 <ansi fg="yellow">You get up when:</ansi>
 
+::list
   - You use <ansi fg="command">stand</ansi>. Getting up from a seat costs nothing.
   - You walk out of the room.
   - Someone attacks you, or you start a fight. You leap to your feet.
+::
 
 <ansi fg="yellow">You can't sit:</ansi>
 
+::list
   - In a fight.
   - While asleep, knocked down, or locked in a grapple.
   - While casting, crafting or salvaging.
+::
 
 If you are asleep, type <ansi fg="command">wake</ansi> first.
 

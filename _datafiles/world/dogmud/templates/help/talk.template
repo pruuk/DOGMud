@@ -44,11 +44,13 @@ light first.
 
   A mark in front of a line in the list tells you what it is:
 
+::rows
   <ansi fg="yellow">[!]</ansi>  a new quest they can give you.
   <ansi fg="yellow">[?]</ansi>  a quest you can finish with them now. Choose it to report
        what you did.
   <ansi fg="yellow">[*]</ansi>  something important you have not heard yet. It can also be
        one step of a quest you are on. Choose it to report that step.
+::
 
   A line you have already heard shows in grey. You can choose it again.
   A line that moves a quest forward goes away once that step is done.
@@ -70,8 +72,10 @@ light first.
 
 <ansi fg="yellow">Examples: </ansi>
 
+::keep
   <ansi fg="command">talk toke</ansi>
   <ansi fg="command">talk to tamsin</ansi>
+::
 
 <ansi fg="yellow">See Also: </ansi>
   <ansi fg="command">help quests</ansi>, <ansi fg="command">help give</ansi>, <ansi fg="command">help hint</ansi>

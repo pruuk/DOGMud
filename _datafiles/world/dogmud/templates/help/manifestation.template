@@ -44,6 +44,7 @@ follow you at once, whatever your will could otherwise hold.
 
 <ansi fg="yellow">━━━ Companion Types ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Summoned</ansi>    Called from nothing. Strength scales
               with your Charisma and skill, and is the
               same wherever you stand.
@@ -55,6 +56,7 @@ follow you at once, whatever your will could otherwise hold.
   <ansi fg="yellow">Raised</ansi>      Necromantic reanimation of the fallen.
               Drawn partly from the remains, so better
               remains make a better servant.
+::
 
 <ansi fg="yellow">━━━ Necromancy ━━━</ansi>
 
@@ -74,5 +76,7 @@ toggle assist behavior, or check each companion's condition.
 Use <ansi fg="command">dismiss</ansi> to end a bond, but be warned: dismissing
 a companion can have consequences.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help progression</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help dismiss</ansi>,
-  <ansi fg="command">help reservation</ansi>, <ansi fg="command">help assess</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help progression</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help dismiss</ansi>,
+           <ansi fg="command">help reservation</ansi>, <ansi fg="command">help assess</ansi>
+::

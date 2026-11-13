@@ -3,8 +3,10 @@
 Overlapping plates of dense chitin lock across your body like a
 beetle's shell. (A bridge between the Colossus and Ironhide ways.)
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Heavy natural armor, and the muscle to carry it lends you real
@@ -13,4 +15,6 @@ beetle's shell. (A bridge between the Colossus and Ironhide ways.)
 <ansi fg="yellow">Drawbacks:</ansi>
   The weight of the plating costs you some of your quickness
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

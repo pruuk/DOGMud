@@ -28,19 +28,23 @@ what you can make.
 
 <ansi fg="yellow">━━━ Requirements ━━━</ansi>
 
+::rows
   Station:   An <ansi fg="yellow">enchanting circle</ansi> in the room.
-  Materials: Binding paste, chrysalis settings, and catalysts.
+  Materials:  Binding paste, chrysalis settings, and catalysts.
   Target:    The item must be <ansi fg="yellow">equipped</ansi> (not in your backpack).
+::
 
 <ansi fg="yellow">━━━ Targeting ━━━</ansi>
 
 Enchanting targets your equipped gear by slot name:
 
+::rows
   <ansi fg="command">craft honed-edge</ansi>           Enchants your wielded weapon.
   <ansi fg="command">craft honed-edge weapon#2</ansi>   Enchants your offhand weapon.
   <ansi fg="command">craft thornguard shield</ansi>     Enchants your shield.
   <ansi fg="command">craft ironblood ring#2</ansi>      Enchants your second ring.
   <ansi fg="command">craft chitin-brace 2.wrist</ansi>  Enchants your second wrist slot.
+::
 
 For slots with only one item (head, neck, body, etc.), just use
 the recipe name, with no slot specifier needed.
@@ -67,10 +71,12 @@ Type <ansi fg="command">help <recipe-name></ansi> for details on any recipe.
 
 <ansi fg="yellow">━━━ Commands ━━━</ansi>
 
+::rows
   <ansi fg="command">craft list</ansi>          Show all recipes with status.
   <ansi fg="command">craft <recipe></ansi>      Begin enchanting an item.
   <ansi fg="command">disenchant <item></ansi>   Remove an enchantment from an item in your pack.
   <ansi fg="command">skills</ansi>              Check your current enchanting skill level.
+::
 
 <ansi fg="yellow">See Also:</ansi>
 

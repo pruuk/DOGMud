@@ -6,18 +6,26 @@ caster pays for it with a small measure of their own health.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast communion-of-flesh</ansi>
+::
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Help Area
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> 12
   <ansi fg="yellow">Conv. Cost:  </ansi> 100
   <ansi fg="yellow">Healing:     </ansi> Steady, over a long time, for all allies here
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - This spell also costs a small amount of the caster's own health.
   - Each ally holds one healing spell at a time. A new one replaces the old.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help cast</ansi>
+::

@@ -5,12 +5,16 @@ the ground.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">drop stick</ansi>            Drop a stick.
   <ansi fg="command">drop 2.stick</ansi>           Drop the second stick.
   <ansi fg="command">drop all.potion</ansi>        Drop all potions.
+::
 
 Find out more about referring to items by name by typing
 <ansi fg="command">help item-names</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help get</ansi>, <ansi fg="command">help inventory</ansi>, <ansi fg="command">help item-names</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help get</ansi>, <ansi fg="command">help inventory</ansi>, <ansi fg="command">help item-names</ansi>
+::
 

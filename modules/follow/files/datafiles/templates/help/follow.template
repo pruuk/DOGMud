@@ -5,9 +5,11 @@ room, you go with them through the same exit.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">follow <name></ansi>  Start following someone in the room with you.
   <ansi fg="command">follow stop</ansi>    Stop following. <ansi fg="command">unfollow</ansi> does the same.
   <ansi fg="command">follow lose</ansi>    Make everyone who follows you stop. <ansi fg="command">lose</ansi> does the same.
+::
 
 <ansi fg="yellow">Parties</ansi>
 
@@ -26,4 +28,6 @@ room, you go with them through the same exit.
   then. Party members stay in the party, and follow the leader again
   next time they can see the leader leave.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help party</ansi>, <ansi fg="command">help light</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help party</ansi>, <ansi fg="command">help light</ansi>
+::

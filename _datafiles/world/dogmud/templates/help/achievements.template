@@ -6,8 +6,10 @@ points. Points also feed the achievements leaderboard.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">achievements</ansi>           - Show all your accolades
   <ansi fg="command">achievements combat</ansi>    - Show one category (combat, exploration,
-                            wealth, progression, quests)
+                         wealth, progression, quests)
+::
 
 Accolades unlock on their own as you play — you will be told when you earn one.

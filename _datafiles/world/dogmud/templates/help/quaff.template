@@ -4,11 +4,14 @@ The <ansi fg="command">quaff</ansi> command drinks a potion you carry.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">quaff healing salve</ansi>
+::
   This would drink your healing salve.
 
 <ansi fg="yellow">Good to know:</ansi>
 
+::list
   - If you wear a potion bandolier, <ansi fg="command">quaff</ansi> draws from it first
     (oldest potion first), then from your backpack.
   - Potions age: a brew grows stronger as it ferments toward its
@@ -21,5 +24,6 @@ The <ansi fg="command">quaff</ansi> command drinks a potion you carry.
     crafting, salvaging, or casting.
   - Food and cooked drinks such as tea or wine are not potions.
     Use <ansi fg="command">eat</ansi> or <ansi fg="command">drink</ansi> for those.
+::
 
 Find out more about referring to items by name by typing <ansi fg="command">help item-names</ansi>.

@@ -11,19 +11,24 @@ through an exit or open a container.
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">keyring</ansi> - This will list all keys and lockpick sequences you have.
-            It will tell you the Type, Location, exit or container name, and 
-            as the lockpick sequence if applicable.
+::rows
+  <ansi fg="command">keyring</ansi>  This will list all keys and lockpick sequences you have.
+           It will tell you the Type, Location, exit or container name, and 
+           as the lockpick sequence if applicable.
+::
 
 <ansi fg="yellow">Example: </ansi>
 
     <ansi fg="black-bold">[HP:66/66 MP:35/35]:</ansi> <ansi fg="command">keyring</ansi>
+::keep
     <ansi fg="black-bold">.:</ansi> <ansi fg="table-title">Your Keyring:</ansi>
-    <ansi fg="yellow-bold">╒══════════╕══════════════════════════════╕═══════╕══════════╕
-    │ <ansi fg="white-bold">Type</ansi>     │ <ansi fg="white-bold">Location</ansi>                     │ <ansi fg="white-bold">Where</ansi> │ <ansi fg="white-bold">Sequence</ansi> │
-    └──────────┘──────────────────────────────┘───────┘──────────┘
-    │ <ansi fg="white-bold">Key</ansi>      │ <ansi fg="magenta">#110 Inside of the Catacombs</ansi> │ <ansi fg="exit">west</ansi>  │ <ansi fg="black-bold">-</ansi>        │
-    │ <ansi fg="white-bold">Lockpick</ansi> │ <ansi fg="magenta">#784 Inside a Residence</ansi>      │ <ansi fg="container">chest</ansi> │ <ansi fg="green-bold">D U U</ansi>    │
-    └──────────┘──────────────────────────────┘───────┘──────────┘</ansi>
+::
+::rows
+    <ansi fg="white-bold">Type</ansi>      <ansi fg="white-bold">Location</ansi>, <ansi fg="white-bold">Where</ansi>, <ansi fg="white-bold">Sequence</ansi>
+    <ansi fg="white-bold">Key</ansi>       <ansi fg="magenta">#110 Inside of the Catacombs</ansi>, <ansi fg="exit">west</ansi>, <ansi fg="black-bold">-</ansi>
+    <ansi fg="white-bold">Lockpick</ansi>  <ansi fg="magenta">#784 Inside a Residence</ansi>, <ansi fg="container">chest</ansi>, <ansi fg="green-bold">D U U</ansi>
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help picklock</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help picklock</ansi>
+::

@@ -5,9 +5,13 @@ root, capable of clearing mild poisons from the body.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       cooking (minimum 10)
   <ansi fg="yellow">Station:</ansi>     cooking fire
-  <ansi fg="yellow">Ingredients:</ansi> wild vegetables (x1), healers root (x1),
-                 water flask (x1)
+  <ansi fg="yellow">Ingredients: </ansi> wild vegetables (x1), healers root (x1),
+                water flask (x1)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cooking</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cooking</ansi>, <ansi fg="command">help craft</ansi>
+::

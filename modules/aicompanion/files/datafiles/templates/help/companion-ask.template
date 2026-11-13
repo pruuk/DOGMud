@@ -12,6 +12,7 @@ companion cannot be asked.
   <ansi fg="command">companion-ask <who> about <what></ansi>
 
   <ansi fg="command">companion-ask smith about the ore</ansi>
+
   This sends your companion to put that question to the smith.
 
 The person is named by one word, as with other commands. Everything after

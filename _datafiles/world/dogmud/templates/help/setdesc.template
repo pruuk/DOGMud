@@ -5,9 +5,11 @@ This is what other players see when they look at you.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">setdesc</ansi>                  Show your current description.
   <ansi fg="command">setdesc <text></ansi>            Set a new description.
   <ansi fg="command">setdesc clear</ansi>             Reset to default.
+::
 
 Write in third person — describe what someone sees when they
 look at your character. Your description is automatically
@@ -19,4 +21,6 @@ word-wrapped for MUD display.
   calloused hands. A faded scar runs from their left
   temple to their jaw, half-hidden by unkempt hair.</ansi>
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help look</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help look</ansi>
+::

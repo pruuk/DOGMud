@@ -5,37 +5,18 @@ retrieve items at storage locations around the world.
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">storage</ansi>
-  See what you have in storage. Each slot is numbered.
-
-  <ansi fg="command">storage add <item></ansi>
-  Put one item into storage.
-
-  <ansi fg="command">storage add 5 <item></ansi>
-  Put up to five of that item into storage.
-
-  <ansi fg="command">storage add all <item></ansi>
-  Put every one of that item you carry into storage.
-
-  <ansi fg="command">storage add all</ansi>
-  Put everything in your backpack and your component bag into
-  storage.
-
-  <ansi fg="command">storage remove <item></ansi>
-  Take one item out of storage. <ansi fg="command">unstore <item></ansi> does the same.
-
-  <ansi fg="command">storage remove 5 <item></ansi>
-  Take up to five of that item out of storage.
-
-  <ansi fg="command">storage remove all <item></ansi>
-  Take every one of that item out of storage. You can also type
-  <ansi fg="command">storage remove all.<item></ansi>.
-
-  <ansi fg="command">storage remove 3</ansi>
-  Take out whatever is in slot 3 of your storage list.
-
-  <ansi fg="command">storage remove all</ansi>
-  Take everything out of storage.
+::rows
+  <ansi fg="command">storage</ansi>  See what you have in storage. Each slot is numbered.
+  <ansi fg="command">storage add <item></ansi>  Put one item into storage.
+  <ansi fg="command">storage add 5 <item></ansi>  Put up to five of that item into storage.
+  <ansi fg="command">storage add all <item></ansi>  Put every one of that item you carry into storage.
+  <ansi fg="command">storage add all</ansi>  Put everything in your backpack and your component bag into storage.
+  <ansi fg="command">storage remove <item></ansi>  Take one item out of storage. <ansi fg="command">unstore <item></ansi> does the same.
+  <ansi fg="command">storage remove 5 <item></ansi>  Take up to five of that item out of storage.
+  <ansi fg="command">storage remove all <item></ansi>  Take every one of that item out of storage. You can also type <ansi fg="command">storage remove all.<item></ansi>.
+  <ansi fg="command">storage remove 3</ansi>  Take out whatever is in slot 3 of your storage list.
+  <ansi fg="command">storage remove all</ansi>  Take everything out of storage.
+::
 
 When you add an item by name, your backpack is searched first,
 then your component bag.
@@ -45,11 +26,12 @@ then your component bag.
 Most storage locations hold up to 20 items. The Thornwall
 Bank (south of Market Square) offers unlimited storage
 but charges a monthly fee of 1 gold per item, deducted
-from your bank balance. Type <ansi fg="command">help
-bank</ansi> for details.
+from your bank balance. Type <ansi fg="command">help bank</ansi> for details.
 
 No storage will hold a trinket stolen in the same town within
 the last three days. See <ansi fg="command">help steal</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help stow</ansi>, <ansi fg="command">help stash</ansi>, <ansi fg="command">help sort</ansi>, <ansi fg="command">help component-bag</ansi>,
-<ansi fg="command">help bank</ansi>, <ansi fg="command">help give</ansi>, <ansi fg="command">help sell</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help stow</ansi>, <ansi fg="command">help stash</ansi>, <ansi fg="command">help sort</ansi>, <ansi fg="command">help component-bag</ansi>,
+           <ansi fg="command">help bank</ansi>, <ansi fg="command">help give</ansi>, <ansi fg="command">help sell</ansi>
+::

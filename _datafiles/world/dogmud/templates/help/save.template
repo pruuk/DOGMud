@@ -6,6 +6,8 @@ this manually.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">save</ansi>                Save your character now.
+::
 
 Safe to run at any time.

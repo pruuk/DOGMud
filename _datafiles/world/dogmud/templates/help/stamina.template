@@ -7,6 +7,7 @@ out halfway through one.
 
 <ansi fg="yellow">━━━ What Stamina Powers ━━━</ansi>
 
+::list
   - <ansi fg="stat">Attacking</ansi>: every swing you throw costs stamina, and a fast
     fighter who strikes several times in a round pays for each blow. A
     flurry costs more than a single strike.
@@ -18,6 +19,7 @@ out halfway through one.
   - <ansi fg="stat">Fleeing</ansi>: each command spends stamina once as you try to escape.
   - <ansi fg="stat">Getting back up</ansi>: standing from prone takes a real effort.
   - <ansi fg="stat">Movement</ansi>: travelling costs stamina, and load raises the price.
+::
 
 <ansi fg="yellow">━━━ The Cost of Defending ━━━</ansi>
 
@@ -84,4 +86,5 @@ and conditions raise Vitality (and so stamina) as well.
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help health</ansi>, <ansi fg="command">help conviction</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help stand</ansi>
+
   <ansi fg="command">help flee</ansi>, <ansi fg="command">help status</ansi>, <ansi fg="command">help encumbrance</ansi>

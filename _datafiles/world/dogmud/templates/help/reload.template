@@ -11,17 +11,27 @@ command. Shooting readies the next round by itself. Just type
 <ansi fg="command">reload</ansi> re-reads a server data file while the game is running,
 so content can be edited without a restart.
 
+::keep
   <ansi fg="command">reload items</ansi>
+::
       Re-read the item definitions.
 
+::keep
   <ansi fg="command">reload biomes</ansi>
+::
       Re-read the biome definitions.
 
+::keep
   <ansi fg="command">reload translations</ansi>
+::
       Re-read the language files.
 
+::keep
   <ansi fg="command">reload mapcache</ansi>
+::
       Clear the mapper cache. The next map is rebuilt from the
       current room data.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help fire</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help fire</ansi>
+::

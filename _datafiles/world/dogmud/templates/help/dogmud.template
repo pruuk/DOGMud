@@ -6,10 +6,11 @@ your footing on the frontier of Gaius.
 
 <ansi fg="yellow">━━━ What Makes DOGMud Its Own Thing ━━━</ansi>
 
-<ansi fg="white">You become what you do.</ansi>  No classes, no levels. Skills and stats rise through use,
+::list
+- <ansi fg="white">You become what you do.</ansi>  No classes, no levels. Skills and stats rise through use,
   and the Chrysalis reshapes your very body to match how you live and fight.
 
-<ansi fg="white">The mutation graph.</ansi>  This is the heart of it. Your mutations form a great ring of
+- <ansi fg="white">The mutation graph.</ansi>  This is the heart of it. Your mutations form a great ring of
   nine <ansi fg="white-bold">clusters</ansi> — Colossus, Ironhide, Ravener, Stalker, Ethereal, Manifester,
   Zealot, Weaver, Trickster — around a generalist Center and a maker's path for
   crafters. You never pick a mutation from a list; the skills you practise <ansi fg="white">drift</ansi>
@@ -17,17 +18,20 @@ your footing on the frontier of Gaius.
   towering <ansi fg="white-bold">apex</ansi> transformation you must earn. Two creatures who fight the same
   monsters can end up utterly different beings. See <ansi fg="command">help mutations</ansi>.
 
-<ansi fg="white">Three pools, not two.</ansi>  Health, Stamina, and Conviction all matter in a fight.
+- <ansi fg="white">Three pools, not two.</ansi>  Health, Stamina, and Conviction all matter in a fight.
 
-<ansi fg="white">Loot is on the body,</ansi> and <ansi fg="white">death is not deletion</ansi> — falling routes you through
+- <ansi fg="white">Loot is on the body,</ansi> and <ansi fg="white">death is not deletion</ansi> — falling routes you through
   injury and waking, never a lost character.
+::
 
 <ansi fg="yellow">━━━ Learn More ━━━</ansi>
 
+::rows
   <ansi fg="command">help about</ansi>       The world of Gaius, the Chrysalis, and the three moons.
   <ansi fg="command">help mutations</ansi>   The cluster graph in full.
   <ansi fg="command">help combat</ansi>      How fighting works.
   <ansi fg="command">help craft</ansi>       The crafting system and the maker's path.
   <ansi fg="command">help species</ansi>     Playable species and their traits.
+::
 
 <ansi fg="8">Built on the <ansi fg="white">GoMud</ansi> engine. Repository: <ansi fg="51">github.com/pruuk/DOGMud</ansi></ansi>

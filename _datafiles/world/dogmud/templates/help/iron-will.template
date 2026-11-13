@@ -12,9 +12,12 @@ it worthwhile for extended fights or dangerous zones.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">cast iron-will</ansi>              Fortifies yourself.
   <ansi fg="command">cast iron-will [target]</ansi>     Fortifies a nearby ally.
+::
 
+::rows
 <ansi fg="yellow">Base Folds:  </ansi> <ansi fg="white-bold">6</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Single ally (or self)</ansi>
 <ansi fg="yellow">Defense:     </ansi> <ansi fg="white-bold">None -- help spells always apply</ansi>
@@ -22,12 +25,17 @@ it worthwhile for extended fights or dangerous zones.
 <ansi fg="yellow">Effects:     </ansi> <ansi fg="white-bold">Willpower boost + magical and conviction mitigation</ansi>
 <ansi fg="yellow">Conv. Cost:  </ansi> <ansi fg="white-bold">45</ansi>
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Enhancement</ansi>
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - Boosts willpower, which improves spell damage and magical defenses.
   - Adds direct mitigation against magical and conviction damage channels.
   - Stacks with Chrysalis Cocoon for broad multi-channel protection.
   - Casting again while Iron Will is active overwrites the existing condition.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help chrysalis-cocoon</ansi>,
-          <ansi fg="command">help conviction-ward</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help chrysalis-cocoon</ansi>,
+           <ansi fg="command">help conviction-ward</ansi>
+::

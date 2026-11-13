@@ -11,13 +11,17 @@ it holds first.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">loot wolf corpse</ansi>      Take all loot from the wolf's corpse.
   <ansi fg="command">loot wolf</ansi>             Same - the corpse name is matched loosely.
   <ansi fg="command">loot corpse</ansi>           Loot the corpse in the room.
+::
 
 You can only take what belongs to you. A fresh kill is yours to loot
 first; after a short while an unlooted corpse opens up to anyone in
 the room. In a party, who gets what follows your party's loot rules --
 see <ansi fg="command">help party</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help get</ansi>, <ansi fg="command">help party</ansi>, <ansi fg="command">help inventory</ansi>, <ansi fg="command">help item-names</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help get</ansi>, <ansi fg="command">help party</ansi>, <ansi fg="command">help inventory</ansi>, <ansi fg="command">help item-names</ansi>
+::

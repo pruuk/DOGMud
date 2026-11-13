@@ -5,7 +5,9 @@ stand, including any weather system moving through the area.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">weather</ansi>   Report the local weather conditions.
+::
 
 Weather moves across the world as fronts. A storm born over open
 water may roll inland, batter the coast, and spend itself against
@@ -14,5 +16,7 @@ and plan your travels accordingly.
 
 Cloud, rain, snow and storms dim the light of the sun and the moons.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help biome</ansi>, <ansi fg="command">help light</ansi>, <ansi fg="command">help seasons</ansi>,
-<ansi fg="command">help moons</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help biome</ansi>, <ansi fg="command">help light</ansi>, <ansi fg="command">help seasons</ansi>,
+           <ansi fg="command">help moons</ansi>
+::

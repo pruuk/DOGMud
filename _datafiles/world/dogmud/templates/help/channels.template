@@ -11,7 +11,9 @@ The channels are <ansi fg="cyan">chat</ansi> (general),
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">channels</ansi>              list all channels and their state
   <ansi fg="command">channels newbie</ansi>       toggle the newbie channel
   <ansi fg="command">channels trade off</ansi>    turn the trade channel off
   <ansi fg="command">channels trade on</ansi>     turn the trade channel on
+::

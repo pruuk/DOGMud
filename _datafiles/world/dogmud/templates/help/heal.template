@@ -9,18 +9,26 @@ grows with your willpower and spellcasting skill.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">cast heal</ansi>              Heals yourself.
   <ansi fg="command">cast heal [target]</ansi>     Heals a nearby ally.
+::
 
+::rows
 <ansi fg="yellow">Base Folds:  </ansi> <ansi fg="white-bold">4</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Single ally (or self)</ansi>
 <ansi fg="yellow">Defense:     </ansi> <ansi fg="white-bold">None, help spells always apply</ansi>
 <ansi fg="yellow">Healing:     </ansi> <ansi fg="white-bold">Gentle, over a long time</ansi>
 <ansi fg="yellow">Conv. Cost:  </ansi> <ansi fg="white-bold">25</ansi>
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Vital</ansi>
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - A target holds one healing spell at a time. A new one replaces the old.
   - Salves, potions and healing food still add on top.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help mend-wounds</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help mend-wounds</ansi>, <ansi fg="command">help cast</ansi>
+::

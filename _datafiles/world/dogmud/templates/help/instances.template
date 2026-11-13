@@ -6,6 +6,7 @@ tougher the enemies, and the better the potential loot.
 
 <ansi fg="yellow">How It Works:</ansi>
 
+::list
   1. Find Sable the riftkeeper in the Rift Chamber, down
      from the Temple District in Thornwall.
   2. Type <ansi fg="command">talk sable</ansi> and choose where to go.
@@ -13,6 +14,7 @@ tougher the enemies, and the better the potential loot.
      The gold is taken at once. The least Sable takes is
      100 gold.
   4. Sable names the word to type to step into the rift.
+::
 
   The gold you invest determines how tough the enemies
   are and how good the loot can be. Invest more for a
@@ -58,14 +60,18 @@ tougher the enemies, and the better the potential loot.
 
 <ansi fg="yellow">Available Zones:</ansi>
 
+::rows
   <ansi fg="command">Arena</ansi>      A brutal linear gauntlet. Death ends
              your run. No recall. Fast and dangerous.
   <ansi fg="command">Oasis</ansi>      A three-dimensional elemental maze.
              Death allows re-entry. Recall works.
              Methodical exploration rewarded.
-  <ansi fg="command">Crash Site</ansi> A buried place in the Eastern
-             Highlands. Death allows re-entry. No
-             recall. Bring a group.
+  <ansi fg="command">Crash Site</ansi>  A buried place in the Eastern
+              Highlands. Death allows re-entry. No
+              recall. Bring a group.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help arena</ansi>,
-  <ansi fg="command">help oasis</ansi>, <ansi fg="command">help party</ansi>, <ansi fg="command">help combat</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help arena</ansi>,
+           <ansi fg="command">help oasis</ansi>, <ansi fg="command">help party</ansi>, <ansi fg="command">help combat</ansi>
+::

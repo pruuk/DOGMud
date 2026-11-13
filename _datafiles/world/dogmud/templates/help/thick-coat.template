@@ -3,11 +3,15 @@
 A dense pelt of coarse fur grows in over your whole body, trapping
 warmth and turning the bite of wind and cold.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Uncommon
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Greater endurance against cold and rough country, and the matted coat
   turns aside a little of any blow that lands
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

@@ -14,7 +14,9 @@ Strength improves through use -- the more you rely on raw
 power in your adventures, the more it grows.
 
 <ansi fg="yellow">Related: </ansi>
+::keep
   <ansi fg="command">help status</ansi>
   <ansi fg="command">help combat</ansi>
   <ansi fg="command">help encumbrance</ansi>
+::
 

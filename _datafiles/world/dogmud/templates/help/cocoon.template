@@ -4,8 +4,10 @@ On command, you fold inward and a hardened chrysalis shell snaps shut
 around you. For a few rounds the world's blows barely reach you, and
 the fight loses sight of you entirely.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Active (command: <ansi fg="command">cocoon</ansi>)
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Encases you in a near-impervious shell for a short while, and
@@ -15,4 +17,6 @@ the fight loses sight of you entirely.
   Sealing yourself away spends your special-move readiness and your
   stamina, and costs you the moment
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

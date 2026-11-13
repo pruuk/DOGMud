@@ -3,12 +3,16 @@
 A third awareness opens behind your eyes — you feel a blow forming
 before the muscle moves to throw it.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive (Ethereal)
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   You notice anything hidden, your sharpened perception and early
   warning make blows far harder to land on you, and you can hardly be
   ambushed
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

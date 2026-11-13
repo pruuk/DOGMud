@@ -3,13 +3,17 @@
 You become a beacon that never dims — those who fight beside you are
 bathed in an unrelenting exaltation.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
-<ansi fg="yellow">Requires:</ansi> Commanding Presence and Zealous Conviction
+<ansi fg="yellow">Requires: </ansi> Commanding Presence and Zealous Conviction
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Allies fighting near you are constantly lifted body and spirit, your
   towering presence draws the enemy's attention onto you, and your own
   command grows greater still
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

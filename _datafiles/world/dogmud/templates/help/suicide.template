@@ -6,8 +6,12 @@ to the usual death penalties and respawn rules.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">suicide</ansi>             End your character's life.
+::
 
 Use with caution — death carries penalties.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help death</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help death</ansi>
+::

@@ -5,29 +5,31 @@ creatures bound to you through manifestation magic.
 
 <ansi fg="yellow">━━━ Usage ━━━</ansi>
 
+::rows
   <ansi fg="command">companion</ansi>            List all your active companions.
   <ansi fg="command">companion <name></ansi>     Show detailed info for one companion.
-  <ansi fg="command">companion <name> assist on/off</ansi>
-                       Toggle auto-assist on or off for that
-                       companion. When assist is on, the
-                       companion joins combat alongside you
-                       automatically.
-  <ansi fg="command">companion <name> name <nickname></ansi>
-                       Give your companion a personal name.
-                       It will be known as "Nickname the Type"
-                       (e.g., "Fred the Spirit Wolf"). Names
-                       must be unique and letters only.
+  <ansi fg="command">companion <name> assist on/off</ansi>  Toggle auto-assist on or off for that
+                                  companion. When assist is on, the
+                                  companion joins combat alongside you
+                                  automatically.
+  <ansi fg="command">companion <name> name <nickname></ansi>  Give your companion a personal name.
+                                    It will be known as "Nickname the Type"
+                                    (e.g., "Fred the Spirit Wolf"). Names
+                                    must be unique and letters only.
+::
 
 <ansi fg="yellow">━━━ What the Display Shows ━━━</ansi>
 
 For each companion you will see:
 
+::rows
   <ansi fg="yellow">Name</ansi>         The creature's name and bond type
                (summoned, charmed, raised, etc.).
   <ansi fg="yellow">Condition</ansi>    A rough sense of how healthy the
                companion currently is.
   <ansi fg="yellow">Auto-assist</ansi>  Whether the companion will fight with
                you automatically.
+::
 
 <ansi fg="yellow">━━━ The Cost of Keeping Them ━━━</ansi>
 
@@ -89,5 +91,7 @@ a new one to replace it. Guard your companions carefully
 in dangerous areas. Gear you lent a companion may be lost
 with it, so lend only what you can afford to lose.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help progression</ansi>, <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help dismiss</ansi>,
-  <ansi fg="command">help reservation</ansi>, <ansi fg="command">help conviction</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help progression</ansi>, <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help dismiss</ansi>,
+           <ansi fg="command">help reservation</ansi>, <ansi fg="command">help conviction</ansi>
+::

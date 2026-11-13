@@ -17,9 +17,13 @@ display modes.
   lists them.
 
 <ansi fg="yellow">Usage:</ansi>
+::rows
   <ansi fg="command">set charset</ansi>    Toggle between UTF-8 and ASCII
   <ansi fg="command">set</ansi>            View your current charset setting
+::
 
 Your preference is saved and persists across sessions.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help set</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help set</ansi>
+::

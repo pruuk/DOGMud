@@ -13,6 +13,8 @@ The `internal/templates` package provides a comprehensive template processing sy
 - **layout.go**: Template layout and structure management
 - **layout_test.go**: Layout system unit tests
 - **name_description.go**: Name and description template utilities
+- **helplayout.go**: `ProcessHelp` and `LayoutHelp`, the help page layout
+  pass (see "Help layout" below)
 - **testing_support.go**: `SetFSForTest`, a test-only helper (not a `_test.go`
   file, so it ships in the binary but is only ever called from tests, mirroring
   `configs.SetConfigForTest`)
@@ -256,6 +258,38 @@ Cached template with metadata for efficient reuse and cache invalidation.
 - **Core Templates**: Built-in game templates
 - **Priority System**: Plugin templates override core templates
 - **Fallback Mechanism**: Graceful fallback to available templates
+
+## Help layout (`helplayout.go`, web client base plan 4)
+
+Help pages state their layout; the game never guesses it (owner ruling
+2026-11-12). Four marker lines at column 0: `::rows`, `::list` and `::keep`
+open a block and `::` closes it. Blocks never nest. Outside a block the text is
+paragraphs.
+
+```go
+func ProcessHelp(fname string, data any, width int) (string, error)
+func LayoutHelp(text string, width int) string
+```
+
+- `ProcessHelp` renders a help template through `ProcessForWidth` with the
+  screen-reader cleanup off, then runs `LayoutHelp`. The cleanup blanks `[`,
+  `]` and `+`, which help pages use for optional arguments and formulas.
+- `LayoutHelp` lays a rendered page out to `width` (at most `FullWidth`; zero or
+  less means `FullWidth`). A paragraph or list whose lines all fit keeps its
+  authored breaks; one that does not is rejoined and packed. A row always takes
+  the same-line form: its label, then its text wrapping two columns in. A
+  `::keep` line is never touched. Marker lines are dropped. A line ending in
+  `:` ends its paragraph, and a `━━━ Title ━━━` heading stands alone.
+- **The joiner is U+00A0.** While a unit is packed, the spaces inside it are
+  swapped for U+00A0 (`helpJoin`): one column to `util.VisibleWidth` and to
+  `WrapAnsi`, and never a break. `\x1f`, which `wrapSpans` uses, will not do
+  here because `VisibleWidth` measures it as 0.
+- **`protectSpans` is shared with `wrapSpans`.** It was extracted from
+  `wrapSpans` (`templatesfunctions.go`); both treat a colour span the same way.
+  A single space at a span's edge is a break point, a run of two or more spaces
+  is protected padding, and a chain of touching spans is measured as a whole.
+- The source rules live in `internal/guards/help_markup_guard_test.go`; the
+  render rules (every page at 30, 42 and 80) in `help_render_guard_test.go`.
 
 ## Gotcha: the helpfile guards cover 27 of 454 templates
 

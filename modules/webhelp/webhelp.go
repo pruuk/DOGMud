@@ -122,7 +122,7 @@ func (w *WebHelpModule) getHelpCommand(r *http.Request) map[string]any {
 	if searchTerm == `` || searchTerm == `help` { // skip empty searches and circular help searches
 		data[`error`] = `"` + searchTerm + `" Not Found`
 	} else {
-		contents, err := usercommands.GetHelpContents(searchTerm)
+		contents, err := usercommands.GetHelpContents(searchTerm, templates.FullWidth)
 		if err != nil {
 			data[`error`] = `"` + searchTerm + `" Not Found`
 		} else {

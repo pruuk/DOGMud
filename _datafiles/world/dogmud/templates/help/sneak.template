@@ -24,6 +24,8 @@ your own room. It needs your special move ready, a defender can still
 answer it, and it always gives your hiding place away. Read
 <ansi fg="command">help ambush</ansi> before you rely on it.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help skullduggery</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help steal</ansi>, <ansi fg="command">help ambush</ansi>,
-  <ansi fg="command">help fire</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help skullduggery</ansi>, <ansi fg="command">help stamina</ansi>,
+           <ansi fg="command">help steal</ansi>, <ansi fg="command">help ambush</ansi>,
+           <ansi fg="command">help fire</ansi>
+::

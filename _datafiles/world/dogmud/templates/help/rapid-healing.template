@@ -3,10 +3,14 @@
 Your flesh knits with unnatural speed. Rest a moment and wounds
 close that should have scarred for weeks.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Uncommon
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Quickens how fast your wounds close
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

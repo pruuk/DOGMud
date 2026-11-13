@@ -14,4 +14,6 @@ its own core, healing the Guardian and building toward a <ansi fg="command">Core
   limited resource: spend them on the drains, or save them for the
   discharge? That choice is the fight.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help core-discharge</ansi>, <ansi fg="command">help throw</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help core-discharge</ansi>, <ansi fg="command">help throw</ansi>
+::

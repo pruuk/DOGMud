@@ -20,6 +20,11 @@ Both are registered as plugin web pages through `WebConfig.WebPage`.
 
 ## Gotchas
 
+- **Web help renders at `templates.FullWidth`.** `getHelpCommand` calls
+  `usercommands.GetHelpContents(searchTerm, templates.FullWidth)`, so a page
+  keeps its authored layout (`::rows`, `::list`, `::keep`; see
+  `internal/templates/context.md`) rather than wrapping to a phone.
+
 - **Help content is authored for an 80-column terminal.** It renders acceptably
   as HTML, but tables and alignment done with spaces will not survive; keep
   help files to the supported Markdown subset.

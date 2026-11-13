@@ -17,7 +17,10 @@ game reminds you to use <ansi fg="command">talk</ansi> and nothing else happens.
 <ansi fg="yellow">Examples: </ansi>
 
   <ansi fg="command">ask wolf where did you come from</ansi>
+
+::keep
   <ansi fg="command">ask wolf about the old road</ansi>
+::
 
 <ansi fg="yellow">See Also: </ansi>
   <ansi fg="command">help talk</ansi>, <ansi fg="command">help companion</ansi>

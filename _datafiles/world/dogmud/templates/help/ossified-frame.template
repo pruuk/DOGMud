@@ -3,8 +3,10 @@
 Your skeleton thickens and fuses into a single braced structure,
 rooted through the hips like an old oak.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive (Colossus)
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Nothing can take you off your feet — you cannot be knocked down,
@@ -14,4 +16,6 @@ rooted through the hips like an old oak.
   Slightly easier to hit — the rigidity costs you a fraction of your
   ability to slip a blow
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

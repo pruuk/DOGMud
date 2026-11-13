@@ -51,12 +51,14 @@ key instead: set it up from the web client's Companion key button. Your key
 stays in your browser and never reaches this server; what would have gone
 to OpenAI goes to your key's provider instead, and you pay for it.
 
+::list
   - Put a spending limit on the key with its provider before you use it.
   - Do not use a work computer, or any computer you share.
   - Passers-by who talk to your companion cannot spend your key: they get
     a few set lines. <ansi fg="command">companion-ai strangers on</ansi> lets them talk
     to your companion properly, paid for from your key, within a daily
     limit; <ansi fg="command">companion-ai strangers off</ansi> stops it again.
+::
 
 Nothing checks what your own key's provider has your companion say, so
 every word they say that way is logged here as yours to answer for. If you
@@ -64,5 +66,7 @@ are muted, so are they, whichever key they answer on.
 
 <ansi fg="yellow">━━━ Related ━━━</ansi>
 
+::rows
   <ansi fg="command">help companion-part</ansi>      Part ways for good.
   <ansi fg="command">help companion-unstick</ansi>   Reset a companion that seems stuck.
+::

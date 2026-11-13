@@ -6,8 +6,10 @@ you recover -- higher skill means better returns.
 
 <ansi fg="yellow">━━━ Usage ━━━</ansi>
 
+::rows
   <ansi fg="command">salvage <item></ansi>       Break down an item for materials.
   <ansi fg="command">salvage 2.sword</ansi>      Disambiguate with diku-style numbering.
+::
 
 <ansi fg="yellow">━━━ What Can Be Salvaged ━━━</ansi>
 

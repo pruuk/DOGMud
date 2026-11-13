@@ -7,8 +7,10 @@ health.
 
 <ansi fg="yellow">━━━ Usage ━━━</ansi>
 
+::keep
   <ansi fg="command">defuse</ansi> <ansi fg="yellow">[direction]</ansi>
   <ansi fg="command">defuse</ansi> <ansi fg="yellow">[container name]</ansi>
+::
 
 <ansi fg="yellow">━━━ Requirements ━━━</ansi>
 
@@ -37,4 +39,6 @@ not consume the kit.
 Each defuse attempt trains your <ansi fg="skill">skullduggery</ansi>
 skill, win or lose. The closer the call, the more you learn.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help picklock</ansi>, <ansi fg="command">help skullduggery</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help picklock</ansi>, <ansi fg="command">help skullduggery</ansi>
+::

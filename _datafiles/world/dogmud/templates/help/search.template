@@ -11,8 +11,10 @@ skilled you are, the more you can uncover.
 
 <ansi fg="yellow">━━━ The search Command ━━━</ansi>
 
+::rows
   <ansi fg="command">search</ansi>          Search the whole room.
   <ansi fg="command">search [thing]</ansi>  Search one thing in the room, carefully.
+::
 
 <ansi fg="command">look</ansi> and <ansi fg="command">search</ansi> are the two ways you deal with the things in a room. Use
 <ansi fg="command">look</ansi> to learn more about something the description mentions (see
@@ -47,14 +49,18 @@ discover things you previously missed.
 
 Your <ansi fg="skill">search</ansi> skill also powers two other commands:
 
+::rows
   <ansi fg="command">track</ansi>  Follow trails left by creatures and players.
-            Higher search skill lets you follow trails farther and read
-            more detail from the tracks you find.
+         Higher search skill lets you follow trails farther and read
+         more detail from the tracks you find.
+::
 
-  <ansi fg="command">forage</ansi> Gather herbs, wood, ore, and materials from
-            natural environments. Your search skill determines what
-            quality materials you can uncover, and how rare the finds
-            might be.
+::rows
+  <ansi fg="command">forage</ansi>  Gather herbs, wood, ore, and materials from
+          natural environments. Your search skill determines what
+          quality materials you can uncover, and how rare the finds
+          might be.
+::
 
 <ansi fg="yellow">━━━ Skill Progression ━━━</ansi>
 

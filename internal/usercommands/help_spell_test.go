@@ -31,7 +31,7 @@ func TestGetHelpContents_SpellRendersThroughTheSpellTemplate(t *testing.T) {
 	useDogmudTemplates(t)
 
 	for _, topic := range []string{"spell probe-bolt", "spell Probe Bolt"} {
-		out, err := GetHelpContents(topic)
+		out, err := GetHelpContents(topic, 80)
 		require.NoError(t, err, topic)
 		assert.NotContains(t, out, "TEMPLATE ERROR", topic)
 		assert.Contains(t, out, "Probe Bolt", topic)

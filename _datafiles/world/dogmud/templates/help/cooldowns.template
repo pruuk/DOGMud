@@ -16,12 +16,16 @@ tactical timing rather than chaining knockdown attempts. See
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">cooldowns</ansi> - Display your active cooldowns
+::rows
+  <ansi fg="command">cooldowns</ansi>  Display your active cooldowns
+::
 
 <ansi fg="yellow">See Also: </ansi>
+::keep
   <ansi fg="command">help bash</ansi>
   <ansi fg="command">help trip</ansi>
   <ansi fg="command">help kick</ansi>
   <ansi fg="command">help combat</ansi>
   <ansi fg="command">help search</ansi>
+::
 

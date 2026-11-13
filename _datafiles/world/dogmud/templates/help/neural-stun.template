@@ -7,15 +7,21 @@ for a killing blow.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast neural-stun [target]</ansi>
+::
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Harm Single
   <ansi fg="yellow">School:      </ansi> Mental
   <ansi fg="yellow">Base Folds:  </ansi> 8
   <ansi fg="yellow">Conv. Cost:  </ansi> 50
   <ansi fg="yellow">Defense:     </ansi> Mental — willpower and constitution resist the stun
   <ansi fg="yellow">Effect:      </ansi> Stun — target is incapacitated for a brief time
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+::

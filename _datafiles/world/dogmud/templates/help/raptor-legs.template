@@ -3,12 +3,18 @@
 Your legs re-tension into digitigrade, talon-clawed limbs, built to
 run prey down and open it up.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Uncommon
+::
 
 <ansi fg="yellow">Benefits:</ansi>
-  Heightens your Dexterity
-  Your <ansi fg="command">kick</ansi> lands far harder and is more likely to knock a
-  foe from their feet
+::list
+  - Heightens your Dexterity
+  - Your <ansi fg="command">kick</ansi> lands far harder and is more likely to knock a
+    foe from their feet
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

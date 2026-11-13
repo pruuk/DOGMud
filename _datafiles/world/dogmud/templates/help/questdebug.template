@@ -7,8 +7,10 @@ regardless of the global QuestLogLevel config setting.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::rows
   <ansi fg="command">questdebug <player></ansi>       Enable verbose quest logging
   <ansi fg="command">questdebug <player> off</ansi>   Disable quest logging
+::
 
 <ansi fg="yellow">When to use:</ansi>
 

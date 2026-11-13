@@ -11,10 +11,14 @@ the room. A prepared player survives one blast, but it hurts.
   ordinary knockdown. Land one of these on Warden-Prime while its core is
   charging and the blast is cancelled:
 
+::rows
     <ansi fg="command">throw flashbang</ansi>          a thrown grenade disrupts the core
     <ansi fg="command">cast neural-stun</ansi>         (or sensory-overload, kinetic-shove)
+::
 
   A plain <ansi fg="command">bash</ansi> or <ansi fg="command">kick</ansi> will NOT interrupt it. This is the fight that
   teaches the Core Guardian's discharge, so practise the interrupt here.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help core-discharge</ansi>, <ansi fg="command">help throw</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help core-discharge</ansi>, <ansi fg="command">help throw</ansi>
+::

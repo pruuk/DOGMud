@@ -4,9 +4,13 @@ The <ansi fg="command">history</ansi> shows a list of logged events for your cha
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">history</ansi>
+::
   Show all history for all categories.
 
+::keep
   <ansi fg="command">history [category name]</ansi>
+::
   Show all history for the category name supplied, such as "combat".
 

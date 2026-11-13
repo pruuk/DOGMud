@@ -5,8 +5,12 @@ dulled senses.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       alchemy (minimum 10)
   <ansi fg="yellow">Station:</ansi>     alchemy bench
-  <ansi fg="yellow">Ingredients:</ansi> chrysalis core (x1), bitter thistle (x2), bottle (x1)
+  <ansi fg="yellow">Ingredients: </ansi> chrysalis core (x1), bitter thistle (x2), bottle (x1)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help craft</ansi>
+::

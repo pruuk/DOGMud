@@ -7,10 +7,12 @@ values mobility and grace over heavy protection. The skill is governed by
 
 <ansi fg="yellow">━━━ Requirements ━━━</ansi>
 
+::rows
   Station:   A <ansi fg="yellow">loom</ansi> must be in the room with you.
              You'll find a loom in Pothole Coulee and most towns.
-  Materials: Cloth strips, leather strips, and thread.
-             Find them on the ground in the Workshop or loot from foraging.
+  Materials:  Cloth strips, leather strips, and thread.
+              Find them on the ground in the Workshop or loot from foraging.
+::
 
 <ansi fg="yellow">━━━ Known Recipes ━━━</ansi>
 
@@ -27,9 +29,11 @@ There is no trainer for tailoring — practice is the only teacher.
 
 <ansi fg="yellow">━━━ Commands ━━━</ansi>
 
+::rows
   <ansi fg="command">craft list</ansi>          Show all recipes, including tailoring ones, with status.
   <ansi fg="command">craft <recipe></ansi>      Begin crafting a tailoring recipe.
   <ansi fg="command">skills</ansi>              Check your current tailoring skill level.
+::
 
 <ansi fg="yellow">See Also:</ansi>
 

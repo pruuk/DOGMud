@@ -7,16 +7,22 @@ target yourself.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::rows
   <ansi fg="command">assist</ansi>             Attack your party leader's target.
   <ansi fg="command">assist [name]</ansi>      Attack a specific party member's target.
+::
 
 If you are the party leader, <ansi fg="command">assist</ansi> with no argument
 will target whatever the first fighting party member is
 engaged with.
 
 <ansi fg="yellow">Requirements:</ansi>
+::list
   - Must be in a party
   - The party member must be in the same room
   - The party member must be in combat
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help attack</ansi>, <ansi fg="command">help party</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help attack</ansi>, <ansi fg="command">help party</ansi>
+::

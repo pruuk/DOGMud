@@ -10,17 +10,22 @@ who is not already carrying a heavy bond.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast summon-steppe-spirit</ansi>
+::
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Help Single
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> Brief channel
   <ansi fg="yellow">Cast Cost:   </ansi> Modest, and paid only once
   <ansi fg="yellow">Held Cost:   </ansi> Modest, for as long as you keep it
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - The spirit wolf fights alongside you as a loyal companion.
   - Spiritual entities ignore terrain hazards that hinder living allies.
   - Summoning it costs conviction once. Keeping it sets conviction
@@ -35,6 +40,9 @@ who is not already carrying a heavy bond.
   - If your conviction is already spoken for, the summoning is
     refused outright rather than leaving you weaker, and costs
     you nothing.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
-  <ansi fg="command">help reservation</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
+           <ansi fg="command">help reservation</ansi>
+::

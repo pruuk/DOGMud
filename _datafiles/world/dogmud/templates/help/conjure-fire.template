@@ -11,17 +11,22 @@ with room to spare should hold one alongside other bonds.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast conjure-fire</ansi>
+::
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Neutral
   <ansi fg="yellow">School:      </ansi> Manifestation
   <ansi fg="yellow">Base Folds:  </ansi> Moderate channel
   <ansi fg="yellow">Cast Cost:   </ansi> Notable, and paid only once
   <ansi fg="yellow">Held Cost:   </ansi> Heavy, for as long as you keep it
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - No component is required to cast this spell.
   - Enemies that strike the fire elemental with unarmed attacks
     or natural weapons take burn damage in return.
@@ -37,6 +42,9 @@ with room to spare should hold one alongside other bonds.
     are needed and none are consumed.
   - If your conviction is already spoken for, the binding is refused
     outright rather than leaving you weaker, and costs you nothing.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
-  <ansi fg="command">help reservation</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
+           <ansi fg="command">help reservation</ansi>
+::

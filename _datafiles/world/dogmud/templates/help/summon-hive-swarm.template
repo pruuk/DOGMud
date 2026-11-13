@@ -11,17 +11,22 @@ whose will is already largely spoken for.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast summon-hive-swarm</ansi>
+::
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Help Single
   <ansi fg="yellow">School:      </ansi> Mental
   <ansi fg="yellow">Base Folds:  </ansi> Long channel
   <ansi fg="yellow">Cast Cost:   </ansi> Light, and paid only once
   <ansi fg="yellow">Held Cost:   </ansi> Slight, for as long as you keep it
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - Requires a Hive Fragment in your inventory to cast.
   - The swarm persists until destroyed or dismissed.
   - Summoning it costs conviction once. Keeping it sets conviction
@@ -36,6 +41,9 @@ whose will is already largely spoken for.
   - If your conviction is already spoken for, the summoning is
     refused outright rather than leaving you weaker, and costs
     you nothing.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
-  <ansi fg="command">help reservation</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
+           <ansi fg="command">help reservation</ansi>
+::

@@ -3,8 +3,10 @@
 Your hide bristles with hardened barbs -- anything that strikes you
 tears itself on them.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive (one flavor of Reflect Skin)
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   A large share of the harm done to you lashes back into whoever
@@ -15,4 +17,6 @@ tears itself on them.
   you is decided by the moons on the night it wakes. They cannot be
   held together.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

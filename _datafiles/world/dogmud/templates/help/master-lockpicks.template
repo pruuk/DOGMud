@@ -6,9 +6,13 @@ feel every subtle resistance in even the most complex locks.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       jewelcrafting (minimum 25)
   <ansi fg="yellow">Station:</ansi>     jeweler's workbench
-  <ansi fg="yellow">Ingredients:</ansi> silver bar (x1), masterwork gem (x2),
-                  crafting steel (x2)
+  <ansi fg="yellow">Ingredients: </ansi> silver bar (x1), masterwork gem (x2),
+                crafting steel (x2)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help jewelcrafting</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help picklock</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help jewelcrafting</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help picklock</ansi>
+::

@@ -6,8 +6,12 @@ tincture from a skilled alchemist sees deeper and lasts longer.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       alchemy (minimum 30)
   <ansi fg="yellow">Station:</ansi>     alchemy bench
-  <ansi fg="yellow">Ingredients:</ansi> heat-pit organ (x1), moonpetal (x2), bottle (x1)
+  <ansi fg="yellow">Ingredients: </ansi> heat-pit organ (x1), moonpetal (x2), bottle (x1)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help light</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help light</ansi>
+::

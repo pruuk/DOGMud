@@ -6,18 +6,26 @@ lightest of the group heals, and the cheapest.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">cast mend-all</ansi>
+::
 
 <ansi fg="yellow">Details: </ansi>
 
+::rows
   <ansi fg="yellow">Type:        </ansi> Help Area
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> 10
   <ansi fg="yellow">Conv. Cost:  </ansi> 50
   <ansi fg="yellow">Healing:     </ansi> Light, over a short time, for all allies here
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - Also costs a small amount of the caster's own health to cast.
   - Each ally holds one healing spell at a time. A new one replaces the old.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help cast</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help cast</ansi>
+::

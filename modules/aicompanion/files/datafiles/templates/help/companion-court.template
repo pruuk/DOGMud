@@ -16,6 +16,8 @@ with a few set lines, and nothing more grows between you.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">companion-court</ansi>    Say yes to the next step.
+::
 
 See also <ansi fg="command">help companion-boundary</ansi> and <ansi fg="command">help aicompanion</ansi>.

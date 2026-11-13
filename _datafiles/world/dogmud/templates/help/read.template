@@ -4,6 +4,8 @@ The <ansi fg="command">read</ansi> command reads notes and maps you carry.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">read map</ansi>
+::
   This reads the item in your inventory and shows you was it written on it.
 

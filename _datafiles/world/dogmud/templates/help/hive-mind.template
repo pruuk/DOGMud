@@ -3,12 +3,16 @@
 A shared nerve-web binds you to your brood, widening how many you can
 hold in mind at once.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Rare
-<ansi fg="yellow">Requires:</ansi> Sustaining Presence
+<ansi fg="yellow">Requires: </ansi> Sustaining Presence
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   You can maintain more companions at once than most summoners ever
   could
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

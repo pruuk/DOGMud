@@ -4,14 +4,17 @@ The <ansi fg="command">mudletui</ansi> command allows Mudlet client users to man
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">mudletui</ansi>         - Shows status information and available commands
-  <ansi fg="command">mudletui install</ansi> - Installs the GoMud UI package in your Mudlet client
-  <ansi fg="command">mudletui remove</ansi>  - Removes the GoMud UI package from your Mudlet client
-  <ansi fg="command">mudletui update</ansi>  - Manually check for updates to the GoMud UI package
-  <ansi fg="command">mudletui hide</ansi>    - Hides automatic Mudlet UI prompts when logging in
-  <ansi fg="command">mudletui show</ansi>    - Re-enables automatic Mudlet UI prompts when logging in
+::rows
+  <ansi fg="command">mudletui</ansi>          Shows status information and available commands
+  <ansi fg="command">mudletui install</ansi>  Installs the GoMud UI package in your Mudlet client
+  <ansi fg="command">mudletui remove</ansi>   Removes the GoMud UI package from your Mudlet client
+  <ansi fg="command">mudletui update</ansi>   Manually check for updates to the GoMud UI package
+  <ansi fg="command">mudletui hide</ansi>     Hides automatic Mudlet UI prompts when logging in
+  <ansi fg="command">mudletui show</ansi>     Re-enables automatic Mudlet UI prompts when logging in
+::
 
 <ansi fg="yellow-bold">Notes:</ansi>
+::list
 - These commands only work if you are using a Mudlet client
 - The UI package enhances your gameplay experience with custom windows and controls
 - If the installation doesn't work automatically, check for prompts in your Mudlet client
@@ -19,5 +22,8 @@ The <ansi fg="command">mudletui</ansi> command allows Mudlet client users to man
 - Using <ansi fg="command">mudletui hide</ansi> or <ansi fg="command">mudletui install</ansi> will hide the automatic prompts
 - Using <ansi fg="command">mudletui show</ansi> will re-enable the automatic prompts
 - Running <ansi fg="command">mudletui</ansi> without arguments shows current status and available commands
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help client</ansi>, <ansi fg="command">checkclient</ansi> 
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help client</ansi>, <ansi fg="command">checkclient</ansi> 
+::

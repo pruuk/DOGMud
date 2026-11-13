@@ -5,7 +5,9 @@ visiting. Some merchants may even offer help for hire!
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">list</ansi>
+::
   This would list whatever the merchant is carrying.
 
 A shop that buys from players also lists, below its own goods, a table

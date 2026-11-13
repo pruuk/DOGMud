@@ -5,8 +5,12 @@ providing solid protection without sacrificing too much mobility.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 25)
   <ansi fg="yellow">Station:</ansi>     forge
-  <ansi fg="yellow">Ingredients:</ansi> chain link (x3), iron ingot (x1)
+  <ansi fg="yellow">Ingredients: </ansi> chain link (x3), iron ingot (x1)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>
+::

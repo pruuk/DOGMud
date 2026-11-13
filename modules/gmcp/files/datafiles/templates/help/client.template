@@ -4,18 +4,26 @@ This game supports various MUD clients with special features to enhance your gam
 
 <ansi fg="yellow">Supported Clients: </ansi>
 
-  <ansi fg="white-bold">Mudlet</ansi> - Full support with custom UI, mapping, and GMCP features
+::rows
+  <ansi fg="white-bold">Mudlet</ansi>  Full support with custom UI, mapping, and GMCP features
+::
     Use <ansi fg="command">help mudletui</ansi> and <ansi fg="command">help mudletmap</ansi> for more information.
 
-  <ansi fg="white-bold">Other Clients</ansi> - Basic support with standard MUD protocol features
+::rows
+  <ansi fg="white-bold">Other Clients</ansi>  Basic support with standard MUD protocol features
+::
     For the best experience, we recommend using a client that supports GMCP.
 
 <ansi fg="yellow-bold">GMCP Features:</ansi>
+::list
 - Character information and status updates
 - Room and environment data
 - Communication channels
 - Party information
 - Custom UI elements (Mudlet only)
 - Client Mapping support (Mudlet only)
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mudletui</ansi>, <ansi fg="command">help mudletmap</ansi>, <ansi fg="command">checkclient</ansi> 
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mudletui</ansi>, <ansi fg="command">help mudletmap</ansi>, <ansi fg="command">checkclient</ansi> 
+::

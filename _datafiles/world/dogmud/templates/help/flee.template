@@ -9,4 +9,6 @@ Your chance of escaping depends on how fast you are relative to
 each attacker — a quicker combatant has a much better chance of
 breaking away. You cannot flee while grappled or prone.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help grapple</ansi>, <ansi fg="command">help combat</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help grapple</ansi>, <ansi fg="command">help combat</ansi>
+::

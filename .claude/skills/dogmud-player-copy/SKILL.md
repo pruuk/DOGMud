@@ -92,6 +92,43 @@ for the text in them:
 9. Validators enforce the checkable rules (length, no dashes, no duplicate
    labels in one menu, no "Ask:" / "Task:" prefix): `menu.LintLabels`.
 
+## Help file layout
+
+Help files state their layout with marker lines at column 0; the game never
+guesses it, and a guard fails any file that leaves a layout to a guess.
+
+```
+Help for look                          a paragraph: its lines join and
+The look command shows you what is     rewrap when a line does not fit
+around you.
+
+Usage:                                 ends in ":", so the paragraph ends
+::rows
+  look              Look at the room.  a row: label, two or more spaces, text
+  look [thing]      Look closely at a
+                    colored word.      a continuation starts exactly at the
+::                                     row's text column
+::keep
+  quaff poultice                       kept exactly, never joined (30 wide)
+::
+::list
+  - Heavy armor (reduces mobility)     "- ", "* " or "1. "; continuations
+  - Being prone                        go deeper
+::
+```
+
+- Markers open at column 0, `::` closes, blocks never nest.
+- Outside a block: paragraphs only. No run of two spaces, no list marker, no
+  line that is only a command inside a paragraph, and the indent changes only
+  after a line ending in `:`. A `━━━ Title ━━━` heading stands alone between
+  blank lines.
+- Guards: `TestHelpFilesStateTheirLayout` (source rules, in
+  `internal/guards/help_markup_guard_test.go`) and
+  `TestEveryHelpPageFitsEveryWidth` / `TestHelpLayoutKeepsEveryWord` (every
+  page at 30, 42 and 80 columns with every word kept, in
+  `help_render_guard_test.go`). `tools/help_markup_convert.py` was the one-time
+  converter, kept as a record and for module authors.
+
 ## Sources
 
 - [[feedback_esl_clear_language_player_copy]]

@@ -5,5 +5,7 @@ automatically attempt to flee.
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">set wimpy 0</ansi>  - Disable wimpy
-  <ansi fg="command">set wimpy 10</ansi> - At 10% or lower health you will flee combat.
+::rows
+  <ansi fg="command">set wimpy 0</ansi>    Disable wimpy
+  <ansi fg="command">set wimpy 10</ansi>  At 10% or lower health you will flee combat.
+::

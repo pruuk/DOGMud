@@ -3,12 +3,18 @@
 Your breathing reorganizes into a lattice of insectile spiracles —
 tireless, and indifferent to bad air.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Uncommon
+::
 
 <ansi fg="yellow">Benefits:</ansi>
-  Quickens how fast your stamina returns
-  Shrugs off gas, poison, and foul air, and lets you hold your
-  breath far longer than any lung should allow
+::list
+  - Quickens how fast your stamina returns
+  - Shrugs off gas, poison, and foul air, and lets you hold your
+    breath far longer than any lung should allow
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

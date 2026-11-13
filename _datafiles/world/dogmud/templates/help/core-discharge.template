@@ -11,11 +11,15 @@ rounds, then a devastating blast hits everyone in the room.
   ordinary knockdown. Land one of these on the Guardian while its core is
   charging and the discharge is cancelled:
 
+::rows
     <ansi fg="command">throw flashbang</ansi>          a thrown grenade disrupts the core
     <ansi fg="command">cast neural-stun</ansi>         (or sensory-overload, kinetic-shove)
+::
 
   A plain <ansi fg="command">bash</ansi> or <ansi fg="command">kick</ansi> will NOT interrupt it. Keep an interrupt in
   reserve. A prepared player can survive one blast, but a party that lets
   them through will not last.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help core-drain</ansi>, <ansi fg="command">help warden-discharge</ansi>, <ansi fg="command">help throw</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help core-drain</ansi>, <ansi fg="command">help warden-discharge</ansi>, <ansi fg="command">help throw</ansi>
+::

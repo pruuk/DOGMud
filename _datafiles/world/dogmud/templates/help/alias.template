@@ -6,22 +6,32 @@ sign, the replacement goes right.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">alias</ansi>              List all aliases, including defaults.
   <ansi fg="command">alias name=value</ansi>   Create a custom alias.
   <ansi fg="command">alias name=</ansi>        Clear an alias.
+::
 
 <ansi fg="yellow">Examples:</ansi>
 
+::keep
   <ansi fg="command">alias ms=cast mind-spike</ansi>
+::
     Now typing <ansi fg="command">ms</ansi> will cast mind-spike.
 
+::keep
   <ansi fg="command">alias aa=attack</ansi>
+::
     Now typing <ansi fg="command">aa</ansi> will attack your current target.
 
+::keep
   <ansi fg="command">alias hw=cast heal warrior</ansi>
+::
     Now typing <ansi fg="command">hw</ansi> will heal a player named warrior.
 
+::keep
   <ansi fg="command">alias ms=</ansi>
+::
     Clears the <ansi fg="command">ms</ansi> alias.
 
 Aliases persist across sessions. Do not use brackets or
@@ -31,4 +41,6 @@ quotes around the name or value — just plain text.
 <ansi fg="command">Triggers & Timers</ansi> panel for point-and-click
 editing.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help macros</ansi>, <ansi fg="command">help ticks</ansi>, <ansi fg="command">help triggers</ansi>, <ansi fg="command">help set</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help macros</ansi>, <ansi fg="command">help ticks</ansi>, <ansi fg="command">help triggers</ansi>, <ansi fg="command">help set</ansi>
+::

@@ -20,7 +20,7 @@ import (
 func RenameSelf(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	newName := strings.TrimSpace(rest)
 	if newName == `` {
-		infoOutput, _ := templates.Process("help/rename", nil, user.UserId)
+		infoOutput, _ := templates.ProcessHelp("help/rename", nil, user.WrapWidth())
 		user.SendText(messaging.CategorySystem, infoOutput)
 		return true, nil
 	}

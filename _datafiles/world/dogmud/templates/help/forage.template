@@ -6,9 +6,13 @@ Perception and the biome you are in.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">forage</ansi>              Search the current room for materials.
+::
 
 Cannot be used in combat. Each room has a limited foraging yield
 that replenishes over time.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help foraging</ansi>, <ansi fg="command">help biome</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help foraging</ansi>, <ansi fg="command">help biome</ansi>
+::

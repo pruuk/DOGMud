@@ -6,13 +6,19 @@ timestamp so we can track it down.
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">bug <description></ansi>
+::
 
   Examples:
+
     <ansi fg="command">bug The door to the east doesn't open even when I have the key.</ansi>
+
     <ansi fg="command">bug Typo: the sign says "welome" instead of "welcome".</ansi>
 
 Reports go into a log reviewed by admins. The more detail you give, the
 easier it is to fix.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help suggest</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help suggest</ansi>
+::

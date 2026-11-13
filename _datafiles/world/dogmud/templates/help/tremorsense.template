@@ -5,16 +5,24 @@ through stone and soil. You feel footsteps, heartbeats, the shift
 of weight before a strike — but the constant noise overwhelms your
 fine motor control.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
-  Detect hidden creatures through ground vibrations — concealment
-  offers little protection against you
-  Moderately improved perception from the wealth of sensory data
+::list
+  - Detect hidden creatures through ground vibrations — concealment
+    offers little protection against you
+  - Moderately improved perception from the wealth of sensory data
+::
 
 <ansi fg="yellow">Drawbacks:</ansi>
-  Slightly reduced dexterity — the constant vibration noise
-  disrupts fine motor control
+::list
+  - Slightly reduced dexterity — the constant vibration noise
+    disrupts fine motor control
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

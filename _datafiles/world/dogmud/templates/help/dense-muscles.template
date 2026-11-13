@@ -3,8 +3,10 @@
 Your muscles condense into cables of extraordinary power. Strength
 surges, but endurance suffers.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive (Colossus)
 <ansi fg="yellow">Rarity:</ansi>   Uncommon
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Moderately increased strength — your condensed muscle fibers
@@ -17,4 +19,6 @@ surges, but endurance suffers.
 
 <ansi fg="yellow">Conflicts:</ansi> Hollow Bones
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

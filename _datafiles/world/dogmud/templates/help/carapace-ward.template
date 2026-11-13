@@ -5,13 +5,15 @@ carapace.
 
 <ansi fg="yellow">━━━ Recipe ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       enchanting (minimum 3)
   <ansi fg="yellow">Station:</ansi>     enchanting circle
   <ansi fg="yellow">Target:</ansi>      body (must be equipped)
-  <ansi fg="yellow">Ingredients:</ansi> chrysalis setting (x1), mutation catalyst (x1),
+  <ansi fg="yellow">Ingredients: </ansi> chrysalis setting (x1), mutation catalyst (x1),
                 binding paste (x1)
   <ansi fg="yellow">Time:</ansi>        4 rounds
   <ansi fg="yellow">Reserve:</ansi>     health (1% at tier 0, scaling with tier)
+::
 
 <ansi fg="yellow">━━━ Effect ━━━</ansi>
 
@@ -20,4 +22,6 @@ Provides physical damage mitigation.
 The enchantment grows stronger through combat use, advancing
 through five tiers of increasing power and reserve cost.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help enchanting</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help enchanting</ansi>, <ansi fg="command">help craft</ansi>
+::

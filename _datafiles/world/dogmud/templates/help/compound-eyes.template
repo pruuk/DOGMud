@@ -3,11 +3,17 @@
 Your eyes facet into hundreds of glinting lenses. Nothing crosses
 your field of view unseen, and nothing flanks you.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Uncommon
+::
 
 <ansi fg="yellow">Benefits:</ansi>
-  You notice hidden creatures and things others miss
-  Sharpens your reflexes, making blows harder to land on you
+::list
+  - You notice hidden creatures and things others miss
+  - Sharpens your reflexes, making blows harder to land on you
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

@@ -3,11 +3,15 @@
 Your body has become its own workshop -- forge, loom, and bench all
 folded inside you.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Rare
-<ansi fg="yellow">Requires:</ansi> Provident Hands
+<ansi fg="yellow">Requires: </ansi> Provident Hands
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   You can craft anything, anywhere, needing no station or tools
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

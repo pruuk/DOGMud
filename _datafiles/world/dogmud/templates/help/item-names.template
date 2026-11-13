@@ -24,8 +24,10 @@ on the ground:
 Referring to "axe" or "heavy" is ambiguous. You can target a specific
 item using either of these formats:
 
+::rows
   <ansi fg="command">get 2.heavy</ansi>    Diku-style — number before the name.
   <ansi fg="command">get heavy#2</ansi>    Hash-style — number after the name.
+::
 
 Both would get the second match: the <ansi fg="item">heavy sword</ansi>.
 
@@ -34,8 +36,10 @@ Both would get the second match: the <ansi fg="item">heavy sword</ansi>.
 Use <ansi fg="command">all</ansi> to affect every item on the ground, or
 <ansi fg="command">all.<name></ansi> to affect every item matching a name:
 
+::rows
   <ansi fg="command">get all</ansi>           Pick up everything on the ground.
   <ansi fg="command">drop all.potion</ansi>   Drop all potions from your backpack.
+::
 
 <ansi fg="yellow">━━━ Backpack vs. Equipped ━━━</ansi>
 
@@ -43,11 +47,15 @@ Commands like <ansi fg="command">look</ansi> and <ansi fg="command">identify</an
 backpack and equipped items as a single pool. If you have a
 dagger in your backpack and another wielded:
 
+::rows
   <ansi fg="command">look dagger</ansi>      Looks at the first (backpack) dagger.
   <ansi fg="command">look 2.dagger</ansi>    Looks at the second (wielded) dagger.
+::
 
 The game tells you whether the item is in your backpack or
 equipped when you examine it.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help get</ansi>, <ansi fg="command">help drop</ansi>, <ansi fg="command">help inventory</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help get</ansi>, <ansi fg="command">help drop</ansi>, <ansi fg="command">help inventory</ansi>
+::
 

@@ -3,8 +3,10 @@
 A long, dexterous tail grows from the base of your spine — quick,
 sensitive, and always in motion.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Uncommon
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Steadier balance and finer control (heightened dexterity and harder
@@ -14,4 +16,6 @@ sensitive, and always in motion.
 
 <ansi fg="yellow">Conflicts:</ansi> Tail
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

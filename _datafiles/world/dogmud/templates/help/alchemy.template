@@ -7,24 +7,28 @@ matter more than brute force.
 
 <ansi fg="yellow">━━━ Requirements ━━━</ansi>
 
+::rows
   Station:   An <ansi fg="yellow">alchemy bench</ansi> must be in the room with you.
              You'll find an alchemy bench in Pothole Coulee and most towns.
-  Materials: Herbs, reagents, and an empty bottle for most brews — a
-             glass vial or any other container with the bottle tag.
-             Forage for herbs in the wild or buy from herbalists.
+  Materials:  Herbs, reagents, and an empty bottle for most brews — a
+              glass vial or any other container with the bottle tag.
+              Forage for herbs in the wild or buy from herbalists.
+::
 
 <ansi fg="yellow">━━━ Starter Recipes ━━━</ansi>
 
-  <ansi fg="yellow">Healing Salve</ansi>       Skill 0   2x healers-root, 1x bottle
-  <ansi fg="yellow">Stamina Tonic</ansi>       Skill 0   2x bitter-thistle, 1x bottle
-  <ansi fg="yellow">Conviction Draught</ansi>  Skill 3   1x healers-root, 1x bitter-thistle,
-                                1x bottle
-  <ansi fg="yellow">Minor Antidote</ansi>      Skill 8   1x bitter-thistle, 1x dustwalk-herb,
-                                1x bottle
-  <ansi fg="yellow">Clarity Tonic</ansi>       Skill 15  1x chrysalis-core, 1x bitter-thistle,
-                                1x beeswax, 1x bottle
-  <ansi fg="yellow">Fire Resist Draught</ansi> Skill 20  2x dustwalk-herb, 1x healers-root,
-                                1x oak-bark, 1x bottle
+::rows
+  <ansi fg="yellow">Healing Salve</ansi>        Skill 0: 2x healers-root, 1x bottle
+  <ansi fg="yellow">Stamina Tonic</ansi>        Skill 0: 2x bitter-thistle, 1x bottle
+  <ansi fg="yellow">Conviction Draught</ansi>   Skill 3: 1x healers-root, 1x bitter-thistle,
+                       1x bottle
+  <ansi fg="yellow">Minor Antidote</ansi>       Skill 8: 1x bitter-thistle, 1x dustwalk-herb,
+                       1x bottle
+  <ansi fg="yellow">Clarity Tonic</ansi>        Skill 15: 1x chrysalis-core, 1x bitter-thistle,
+                       1x beeswax, 1x bottle
+  <ansi fg="yellow">Fire Resist Draught</ansi>  Skill 20: 2x dustwalk-herb, 1x healers-root,
+                       1x oak-bark, 1x bottle
+::
 
 Dozens more await discovery. <ansi fg="command">craft list</ansi> always shows the live recipe
 list with exact ingredients — trust it over any written table.
@@ -33,8 +37,10 @@ list with exact ingredients — trust it over any written table.
 
 Crafted potions and poultices are drunk with the <ansi fg="command">quaff</ansi> command:
 
+::keep
   <ansi fg="command">quaff poultice</ansi>
   <ansi fg="command">quaff draught</ansi>
+::
 
 They apply their effect immediately. Check <ansi fg="command">inventory</ansi> to see what you are carrying,
 and <ansi fg="command">conditions</ansi> to see active effects.
@@ -49,10 +55,12 @@ There is no trainer for alchemy — practice is the only teacher.
 
 <ansi fg="yellow">━━━ Commands ━━━</ansi>
 
+::rows
   <ansi fg="command">craft list</ansi>          Show all recipes, including alchemy ones, with status.
   <ansi fg="command">craft <recipe></ansi>      Begin crafting an alchemy recipe.
   <ansi fg="command">quaff <item></ansi>        Consume a crafted potion or poultice.
   <ansi fg="command">skills</ansi>              Check your current alchemy skill level.
+::
 
 <ansi fg="yellow">━━━ Tolerance ━━━</ansi>
 

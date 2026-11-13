@@ -80,7 +80,7 @@ func bountyAdminUsage(user *users.UserRecord) {
 }
 
 func bountyUserUsage(user *users.UserRecord) {
-	if out, err := templates.Process("help/bounty", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
+	if out, err := templates.ProcessHelp("help/bounty", nil, user.WrapWidth()); err == nil && strings.TrimSpace(out) != "" {
 		user.SendText(messaging.CategoryUsage, out)
 		return
 	}

@@ -9,8 +9,10 @@ Turn any channel on or off with <ansi fg="command">channels</ansi>.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::keep
   <ansi fg="command">chat anyone around?</ansi>
   <ansi fg="command">` anyone around?</ansi>
+::
 
   Output to everyone with chat on:
 

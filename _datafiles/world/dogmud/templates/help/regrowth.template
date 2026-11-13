@@ -2,11 +2,15 @@
 
 Torn flesh knits itself closed even in the thick of a fight.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive
 <ansi fg="yellow">Rarity:</ansi>   Rare
-<ansi fg="yellow">Requires:</ansi> Thick Hide
+<ansi fg="yellow">Requires: </ansi> Thick Hide
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Your wounds close markedly faster, mending even while you fight
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

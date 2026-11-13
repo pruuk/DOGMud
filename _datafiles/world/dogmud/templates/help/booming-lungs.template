@@ -3,12 +3,16 @@
 Your chest deepens and resonating chambers grow behind your ribs —
 when you raise your voice it fills a room and rattles the people in it.
 
+::rows
 <ansi fg="yellow">Type:</ansi>     Passive (Zealot)
 <ansi fg="yellow">Rarity:</ansi>   Rare
+::
 
 <ansi fg="yellow">Benefits:</ansi>
   Your forceful, carrying voice strengthens everything you do through
   presence and command — rallies, war cries, and taunts land with far
   greater weight
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help mutations</ansi>
+::

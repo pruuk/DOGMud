@@ -6,26 +6,36 @@ to the ground.
 
 <ansi fg="yellow">Requirements:</ansi>
 
+::list
   - Must be in active combat
   - Must have a shield equipped
   - Cannot be used if special move cooldown is active
+::
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">bash</ansi>
+::
   Bash your current combat target with your shield
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Solid but not as heavy as a full weapon swing; the
-    goal is the knockdown, not the wound.
-  <ansi fg="stat">Knockdown Chance:</ansi> Decent, resolved against the defender's
-    Dexterity and combat skill. Not as reliable as trip, but
-    you hit harder getting there.
+::rows
+  <ansi fg="stat">Damage: </ansi> Solid but not as heavy as a full weapon swing; the
+           goal is the knockdown, not the wound.
+  <ansi fg="stat">Knockdown Chance: </ansi> Decent, resolved against the defender's
+                     Dexterity and combat skill. Not as reliable as trip, but
+                     you hit harder getting there.
+::
+::list
     - Attacker: Weapon Combat skill + Strength
     - Defender: Combat skill + Dexterity
-  <ansi fg="stat">Cooldown:</ansi> Shared by every special move. See <ansi fg="command">help special</ansi>.
-  <ansi fg="stat">Skill:</ansi> Progresses Weapon Combat
+::
+::rows
+  <ansi fg="stat">Cooldown: </ansi> Shared by every special move. See <ansi fg="command">help special</ansi>.
+  <ansi fg="stat">Skill: </ansi> Progresses Weapon Combat
+::
 
 Bash spends Stamina and requires full payment before the strike. Carried load
 raises the price, while <ansi fg="skill">weapon-combat</ansi> skill lowers it.

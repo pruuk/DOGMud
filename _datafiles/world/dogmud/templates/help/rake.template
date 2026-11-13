@@ -6,24 +6,30 @@ damage and applies a bleeding condition on a successful strike.
 
 <ansi fg="yellow">Requirements:</ansi>
 
+::list
   - Must have natural claws (clawed species only)
   - Must be in active combat
   - Cannot be used if special move cooldown is active
+::
 
 <ansi fg="yellow">Usage:</ansi>
 
+::keep
   <ansi fg="command">rake</ansi>
+::
   Attempt to rake your current combat target
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Moderate. The slashing strike itself deals real harm.
-  <ansi fg="stat">Bleed:</ansi> A successful rake opens a wound that keeps bleeding
-    for a while, dealing additional damage beyond the initial
-    strike. Every new rake opens another wound on top of the old
-    ones, and open wounds keep bleeding after the fight ends.
-  <ansi fg="stat">Cooldown:</ansi> Shared with other special moves.
-  <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
+::rows
+  <ansi fg="stat">Damage: </ansi> Moderate. The slashing strike itself deals real harm.
+  <ansi fg="stat">Bleed: </ansi> A successful rake opens a wound that keeps bleeding
+          for a while, dealing additional damage beyond the initial
+          strike. Every new rake opens another wound on top of the old
+          ones, and open wounds keep bleeding after the fight ends.
+  <ansi fg="stat">Cooldown: </ansi> Shared with other special moves.
+  <ansi fg="stat">Skill: </ansi> Progresses Unarmed Combat
+::
 
 Rake spends Stamina and requires full payment before the strike. Carried load
 raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.

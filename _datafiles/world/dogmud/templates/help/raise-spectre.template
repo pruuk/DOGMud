@@ -16,16 +16,21 @@ in the middle of the raised undead in what it asks of you to keep.
 
 <ansi fg="yellow">Usage: </ansi>
 
+::rows
   <ansi fg="command">cast raise-spectre [corpse]</ansi>     Animate nearby remains.
+::
 
+::rows
 <ansi fg="yellow">Base Folds:  </ansi> Extended channel
 <ansi fg="yellow">Corpse:      </ansi> <ansi fg="white-bold">Requires powerful remains</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Nearby corpse or ground loot</ansi>
 <ansi fg="yellow">Cast Cost:   </ansi> Moderate, and paid only once
 <ansi fg="yellow">Held Cost:   </ansi> Modest, for as long as you keep it
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Manifestation</ansi>
+::
 
 <ansi fg="white-bold">Notes:</ansi>
+::list
   - The spectre appears under your command and aids you in combat.
   - Once raised, the undead servant remains active as a companion.
   - Use the <ansi fg="command">assess</ansi> command to evaluate a corpse's quality.
@@ -38,6 +43,9 @@ in the middle of the raised undead in what it asks of you to keep.
     buys you a larger following as well as a stronger one.
   - If your conviction is already spoken for, the raising is refused
     outright rather than leaving you weaker, and costs you nothing.
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help manifestation</ansi>,
-  <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help reservation</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help cast</ansi>, <ansi fg="command">help manifestation</ansi>,
+           <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help reservation</ansi>
+::

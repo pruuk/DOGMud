@@ -20,7 +20,9 @@ together weeds; a skilled forager finds rare roots and choice timber.
 
 <ansi fg="yellow">━━━ The forage Command ━━━</ansi>
 
+::rows
   <ansi fg="command">forage</ansi>          Search the current room for harvestable materials.
+::
 
 Some rooms have nothing to forage. Wilderness, dungeons, and natural
 environments tend to yield more than city streets or polished floors.
@@ -32,8 +34,10 @@ Herbs gathered in the wild become alchemy ingredients; ore and wood become
 blacksmithing stock.
 
 You can also find crafting materials by:
+::list
   - Picking them up from the floor in crafting rooms.
   - Looting mobs that carry them (cave goblins, feral herbalists, rats).
+::
 
 <ansi fg="yellow">━━━ Skill Progression ━━━</ansi>
 
@@ -43,23 +47,25 @@ the range of materials you can find.
 
 <ansi fg="yellow">━━━ Material Types ━━━</ansi>
 
+::rows
   <ansi fg="yellow">healers-root</ansi>     Used in: Healing Poultice, Conviction
-                      Draught (alchemy)
+                   Draught (alchemy)
   <ansi fg="yellow">bitter-thistle</ansi>   Used in: Stamina Draught, Conviction
-                      Draught (alchemy)
+                   Draught (alchemy)
   <ansi fg="yellow">cloth-strip</ansi>      Used in: Healing Poultice (alchemy)
   <ansi fg="yellow">iron-ingot</ansi>       Found in: caves, mountains
-                      (blacksmithing)
+                   (blacksmithing)
   <ansi fg="yellow">leather-strip</ansi>    Used in: Iron Dagger (blacksmithing)
   <ansi fg="yellow">wooden-plank</ansi>     Used in: Iron Buckler (blacksmithing)
   <ansi fg="yellow">small-vial</ansi>       Used in: Stamina Draught, Conviction
-                      Draught (alchemy)
+                   Draught (alchemy)
   <ansi fg="yellow">polished-stone</ansi>   Found in: mountains, cliffs
-                      (jewelcrafting)
+                   (jewelcrafting)
   <ansi fg="yellow">raw-gem</ansi>          Found in: caves (jewelcrafting)
   <ansi fg="yellow">gem-dust</ansi>         Found in: caves (jewelcrafting)
   <ansi fg="yellow">chrysalis-shard</ansi>  Found in: caves, rare (enchanting)
-  <ansi fg="yellow">mutation-catalyst</ansi> Found in: caves, very rare (enchanting)
+  <ansi fg="yellow">mutation-catalyst</ansi>  Found in: caves, very rare (enchanting)
+::
 
 Some rare materials can only be found in dangerous places. The deeper you
 go, the stranger the things you find.

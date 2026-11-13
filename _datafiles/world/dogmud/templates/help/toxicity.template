@@ -28,17 +28,21 @@ builds up, and how much your body will take is your tolerance.
   Watch the <ansi fg="command">status</ansi> screen, or add the toxicity tag to your
   prompt with <ansi fg="command">set-prompt</ansi>. It moves through these stages:
 
+::rows
   <ansi fg="green">clear</ansi>       nothing to speak of
   <ansi fg="black-bold">sour</ansi>        a faint taste you cannot wash away
   <ansi fg="white">unsettled</ansi>   your stomach is uneasy
+::
 
   Neither of those two costs you anything. They are a warning,
   so you can see it coming.
 
+::rows
   <ansi fg="yellow">queasy</ansi>      senses dull, recovery slows
   <ansi fg="red">sick</ansi>        reflexes suffer as well
   <ansi fg="red-bold">critical</ansi>    recovery and awareness both fail badly,
               and the poison starts doing real harm
+::
 
   At <ansi fg="red-bold">critical</ansi> the toxicity also clears more slowly, so it
   is far easier to get into than out of. Do not sit there.
@@ -57,5 +61,7 @@ builds up, and how much your body will take is your tolerance.
   weakened for a while afterwards, so it is a way out of
   trouble rather than a routine part of drinking.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help quaff</ansi>, <ansi fg="command">help craft</ansi>,
-  <ansi fg="command">help health</ansi>, <ansi fg="command">help status</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help quaff</ansi>, <ansi fg="command">help craft</ansi>,
+           <ansi fg="command">help health</ansi>, <ansi fg="command">help status</ansi>
+::

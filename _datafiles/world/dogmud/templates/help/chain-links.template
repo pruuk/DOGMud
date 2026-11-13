@@ -5,9 +5,13 @@ subcomponent used in the production of chainmail armor.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
 
+::rows
   <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 7)
   <ansi fg="yellow">Station:</ansi>     forge
-  <ansi fg="yellow">Ingredients:</ansi> iron ingot (x2)
+  <ansi fg="yellow">Ingredients: </ansi> iron ingot (x2)
   <ansi fg="yellow">Produces:</ansi>    3 sets of chain links per craft
+::
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>
+::rows
+<ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>
+::
