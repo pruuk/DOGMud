@@ -11,7 +11,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/moderation"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/species"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -61,10 +60,8 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 
 					existingConnectionId := user.ConnectionId()
 
-					// Send a goodbye message to the currently connected user,
-					// drawn for that connection's width.
-					tplTxt, _ := templates.ProcessForWidth("goodbye", nil, false, users.LoginWrapWidth(existingConnectionId))
-					connections.SendTo([]byte(templates.AnsiParse(tplTxt)), existingConnectionId)
+					// Send a goodbye message to the currently connected user.
+					connections.SendTo([]byte(goodbyeFor(existingConnectionId)), existingConnectionId)
 
 					users.SetZombieUser(userid)
 					// Error deliberately discarded, and made explicit because

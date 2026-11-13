@@ -615,13 +615,18 @@ splash fits) and by `Client.Display` (`modules/gmcp`). Both go through
 `StoreReportedCols(id, cols) int`, which clamps to `MinWrapWidth`..
 `MaxAutoWrapWidth`, writes `Display.ScreenWidth` only when it differs, and
 returns the width. `ParseReportedCols(s)` reads the address's text value:
-whole numbers only, unclamped.
+whole numbers only, unclamped. `StoreAddressCols(id, raw) int` is the
+address path in one call: parse, store, and return the width to draw the
+splash at (80 when the value is missing or bad).
 
 Before login there is no user, so `LoginWrapWidth(id) int` gives the width
 from the connection: a websocket's stored `Display.ScreenWidth`, clamped to
 30..80 again, or 80 when it stored none; every other connection 80, whatever
 its terminal reports. `internal/inputhandlers` lays the login prompts and
 their errors out to it for a web client, and sends telnet's unchanged.
+`ConnectionWrapWidth(id) int` is for text sent to a connection that may or
+may not have a user (the goodbye as it leaves): the logged-in user's
+`WrapWidth` when there is one, else `LoginWrapWidth`.
 
 ### Game menu session (#375 phase 0)
 

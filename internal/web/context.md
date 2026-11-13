@@ -404,8 +404,8 @@ file_paths:
   connection from the `connections` registry on every exit path. The web
   client opens `/ws?cols=<n>`: `Listen` passes the raw `cols` value to the
   handler as its third argument (empty when absent), and the handler
-  validates it with `users.ParseReportedCols` and stores it with
-  `users.StoreReportedCols` so the connect splash is drawn to the reader's
+  validates and stores it with `users.StoreAddressCols` so the connect
+  splash is drawn to the reader's
   width before its `Client.Display` report arrives.
 - `GET /favicon.ico` - Favicon redirect
 - `GET /<path>` - Template-processed HTML pages

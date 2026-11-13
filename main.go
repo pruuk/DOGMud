@@ -583,14 +583,16 @@ func main() {
 	// block until a signal comes in
 	<-sigChan
 
-	tplTxt, err := templates.Process("goodbye", nil)
-	if err != nil {
-		mudlog.Error("Template Error", "error", err)
+	// The goodbye, drawn for each player's screen (a phone gets the
+	// words-only form), sent now: connections.Cleanup below closes them.
+	for _, u := range users.GetAllActiveUsers() {
+		tplTxt, err := templates.Process("goodbye", nil, u.UserId)
+		if err != nil {
+			mudlog.Error("Template Error", "error", err)
+			continue
+		}
+		connections.SendTo([]byte(templates.AnsiParse(tplTxt)), u.ConnectionId())
 	}
-
-	events.AddToQueue(events.Broadcast{
-		Text: templates.AnsiParse(tplTxt),
-	})
 
 	serverAlive.Store(false) // immediately stop processing incoming connections
 
@@ -1377,12 +1379,9 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCo
 	// The splash goes out before the client's Client.Display report can
 	// arrive, so the width comes from the websocket address (/ws?cols=57),
 	// validated and clamped as Client.Display is. There is no user to measure
-	// for yet, so the form is picked by width alone.
-	splashWidth := connections.DefaultScreenWidth
-	if cols, ok := users.ParseReportedCols(reportedCols); ok {
-		splashWidth = users.StoreReportedCols(connDetails.ConnectionId(), cols)
-	}
-	splashTxt, _ := templates.ProcessForWidth("login/connect-splash", nil, false, splashWidth)
+	// for yet, so it is drawn for the width: the widest form that fits.
+	splashWidth := users.StoreAddressCols(connDetails.ConnectionId(), reportedCols)
+	splashTxt, _ := templates.ProcessAtWidth("login/connect-splash", nil, splashWidth)
 	connections.SendTo([]byte(templates.AnsiParse(splashTxt)), connDetails.ConnectionId())
 
 	// --- Trigger the Prompt Handler to initialize state and send the FIRST prompt ---

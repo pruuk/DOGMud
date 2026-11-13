@@ -496,16 +496,15 @@ func TestFittingTemplatesFitAtEveryWidth(t *testing.T) {
 	}
 }
 
-// The connect splash goes out before login, picked by width alone
-// (templates.ProcessForWidth in main.go's websocket handler), not measured as
-// TestFittingTemplatesFitAtEveryWidth measures it. At every width from 30 to
-// 79 it fits and is words only (spec ruling 23: no small art); at 80 it is
-// the full art.
+// The connect splash goes out before login, rendered as main.go's websocket
+// handler renders it (templates.ProcessAtWidth at the address's columns). At
+// every width from 30 to 79 it fits and is words only (spec ruling 23: no
+// small art); at 80 it is the full art.
 func TestConnectSplashByWidthFitsAndIsWordsOnly(t *testing.T) {
 	templateRenderSetup(t)
 	const logo = `|____/`
 	for width := 30; width <= 80; width++ {
-		out, err := templates.ProcessForWidth("login/connect-splash", nil, false, width)
+		out, err := templates.ProcessAtWidth("login/connect-splash", nil, width)
 		if err != nil {
 			t.Fatalf("at %d: %v", width, err)
 		}

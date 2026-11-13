@@ -124,10 +124,7 @@ func trySystemCommand(cmd string, connectionId connections.ConnectionId) bool {
 
 	if cmd == "quit" {
 
-		// Drawn for this connection's width: a phone gets the words-only form.
-		tplTxt, _ := templates.ProcessForWidth("goodbye", nil, false, users.LoginWrapWidth(connectionId))
-
-		connections.SendTo([]byte(templates.AnsiParse(tplTxt)), connectionId)
+		connections.SendTo([]byte(goodbyeFor(connectionId)), connectionId)
 
 		connections.Kick(connectionId, `/quit`)
 		return true

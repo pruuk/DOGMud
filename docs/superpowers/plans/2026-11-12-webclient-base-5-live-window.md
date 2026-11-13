@@ -1105,6 +1105,14 @@ Not in the plan as approved. Task 9's headless phone check (390 and 320 wide) fo
 
 Each commit's tests: `internal/users/wrapwidth_test.go`, `internal/inputhandlers/login_width_test.go`, `internal/messaging/wrap_test.go`, `internal/guards/template_width_guard_test.go`, `tools/jstest/webclient-connect.test.js`.
 
+**BAR 2026-11-13 (one round, Opus).** No Critical. Fixed:
+- Important: the goodbye was picked by width band (`ProcessForWidth`), so every screen from 50 to 79 columns got "Goodbye." though the 50-column art fits (spec ruling 22, widest form that fits). Text for one reader with no user now renders with `templates.ProcessAtWidth`, which measures; it moved from `testing_support.go` to `forms.go`. Used by the splash, `LoginTemplateAtWidth` and the new `inputhandlers.goodbyeFor` (quit and duplicate login share it). Test `TestGoodbyeIsTheWidestFormThatFits`, shown to fail on the old code.
+- The quit and duplicate-login goodbye now count a logged-in player's `set linewidth` (`users.ConnectionWrapWidth`), as the despawn goodbye already did. So a telnet player keeps the art unless their line width is under 50, the same rule as decision 1; the "telnet keeps the art" wording above means at the default width.
+- The shutdown goodbye was one 80-column broadcast; it is now `templates.Process` per player, sent before `connections.Cleanup`.
+- The address wiring is `users.StoreAddressCols(id, raw)`, unit tested; `main.go` calls it in one line.
+
+Accepted, no change: `WrapPrompt` cannot break one word longer than the width (no shipped prompt has one; the guard renders the longest new-user name at every width); the per-key password mask never runs on the web client (the web sends a whole line; telnet is unchanged); the splash may be drawn a column or two off the final count before the web font lands (the forms are 80, 42 and 30, and `Client.Display` corrects everything after); the keyboard mark after the frame loads is already set by the page's `load` handler, which waits for the frame.
+
 ---
 
 ### Task 10: Docs

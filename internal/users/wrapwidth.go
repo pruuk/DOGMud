@@ -62,6 +62,31 @@ func LoginWrapWidth(id connections.ConnectionId) int {
 	return min(max(width, MinWrapWidth), MaxAutoWrapWidth)
 }
 
+// ConnectionWrapWidth is the width of a connection that may or may not have
+// a user logged in: that user's WrapWidth (which applies set linewidth) when
+// there is one, else LoginWrapWidth. For text sent to one connection as it
+// leaves (the goodbye on quit or on a duplicate login).
+func ConnectionWrapWidth(id connections.ConnectionId) int {
+	if u := GetByConnectionId(id); u != nil {
+		return u.WrapWidth()
+	}
+	return LoginWrapWidth(id)
+}
+
+// StoreAddressCols takes the raw cols value of a web client's websocket
+// address (/ws?cols=57; empty when absent), stores it as StoreReportedCols
+// does when it is a whole number, and returns the width to draw the connect
+// splash at: the stored width, or connections.DefaultScreenWidth when the
+// value is missing or bad. The caller checks that the connection is a
+// websocket.
+func StoreAddressCols(id connections.ConnectionId, raw string) int {
+	cols, ok := ParseReportedCols(raw)
+	if !ok {
+		return connections.DefaultScreenWidth
+	}
+	return StoreReportedCols(id, cols)
+}
+
 // NarrowFormWidth is the width of the narrow form of a screen built in Go
 // for a reader width columns wide (web client base spec, section 2): 42, or
 // 30 below that (or the reader's width, if narrower still). It is a band

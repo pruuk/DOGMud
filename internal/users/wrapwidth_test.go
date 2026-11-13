@@ -127,6 +127,58 @@ func TestStoreReportedCols(t *testing.T) {
 	}
 }
 
+// The raw cols value of the websocket address is what the connect splash is
+// drawn at: stored and clamped when it is a whole number, else 80 and nothing
+// stored.
+func TestStoreAddressCols(t *testing.T) {
+	const conn uint64 = 97108
+	connections.RegisterTestWebsocketConnection(conn)
+	t.Cleanup(func() { connections.UnregisterTestConnection(conn) })
+	stored := func() uint32 { return connections.GetClientSettings(conn).Display.ScreenWidth }
+
+	for _, tt := range []struct {
+		raw        string
+		want       int
+		wantStored uint32
+	}{
+		{"43", 43, 43}, {"12", 30, 30}, {"500", 80, 80}, {"-1", 30, 30},
+	} {
+		require.Equal(t, tt.want, StoreAddressCols(conn, tt.raw), "%q", tt.raw)
+		require.Equal(t, tt.wantStored, stored(), "%q", tt.raw)
+	}
+
+	cs := connections.GetClientSettings(conn)
+	cs.Display.ScreenWidth = 0
+	connections.OverwriteClientSettings(conn, cs)
+	for _, raw := range []string{"", "42px", "abc", "99999999999999999999999"} {
+		require.Equal(t, 80, StoreAddressCols(conn, raw), "%q", raw)
+		require.Equal(t, uint32(0), stored(), "%q stores nothing", raw)
+	}
+}
+
+// A leaving connection's width: its logged-in user's WrapWidth (so set
+// linewidth counts), else the login width.
+func TestConnectionWrapWidth(t *testing.T) {
+	const userConn, loginConn uint64 = 97109, 97110
+	connections.RegisterTestWebsocketConnection(userConn)
+	connections.RegisterTestWebsocketConnection(loginConn)
+	t.Cleanup(func() {
+		connections.UnregisterTestConnection(userConn)
+		connections.UnregisterTestConnection(loginConn)
+	})
+	for _, c := range []uint64{userConn, loginConn} {
+		cs := connections.GetClientSettings(c)
+		cs.Display.ScreenWidth = 60
+		connections.OverwriteClientSettings(c, cs)
+	}
+	u := NewTestUser(9713, "leaver", "Leaver", userConn)
+	u.LineWidth = 40
+	t.Cleanup(SeedUsersForTest(map[int]*UserRecord{u.UserId: u}))
+
+	require.Equal(t, 40, ConnectionWrapWidth(userConn), "the user's set linewidth narrows the screen")
+	require.Equal(t, 60, ConnectionWrapWidth(loginConn), "no user: the connection's stored columns")
+}
+
 // Before login there is no user, so the width comes from the connection: a
 // websocket's stored columns, clamped again, or 80 when it stored none; a
 // telnet connection is 80 whatever its terminal reported.

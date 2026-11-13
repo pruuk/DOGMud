@@ -260,7 +260,12 @@ Cached template with metadata for efficient reuse and cache invalidation.
   dot; a pair that fits only without its dot, or whose last word cannot
   share a line with it, goes without the dot. The lead cell is
   wrapped with `wrapspans`, so a coloured name in it stays whole.
-- `ProcessAtWidth` (testing_support.go) renders at a given width for guards.
+- `ProcessAtWidth(fname, data, width)` (forms.go) renders as `Process` does
+  for a reader width columns wide with no screen reader: it measures, so the
+  widest form that fits is used. It is for one reader with no user to measure
+  for (the connect splash, login prompts, the goodbye) and for the guards. A
+  broadcast uses `ProcessForWidth`, which picks by width alone and so can
+  pick a narrower form than fits (a 60-column reader gets the `.w42` form).
 - `internal/guards/template_width_guard_test.go` knows every template and why
   it is safe at 30 columns, and renders the ones that must fit at 30, 42, 80.
 

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/language"
 	"github.com/GoMudEngine/GoMud/internal/templates"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	textlang "golang.org/x/text/language"
 )
@@ -149,5 +150,49 @@ func TestLoginTextIsLaidOutForTheConnection(t *testing.T) {
 	}
 	if got := loginTextFor(phone, "\r\nToo many mistakes.\r\n\r\n"); got != "\r\nToo many mistakes.\r\n\r\n" {
 		t.Errorf("a short message that fits changed: %q", got)
+	}
+}
+
+// The goodbye on /quit or a duplicate login keeps its full art wherever the
+// art fits (it is 50 columns) and is the words-only form only on a narrower
+// screen; a logged-in player's set linewidth counts (BAR 2026-11-13: a width
+// band gave every screen under 80 the words-only form).
+func TestGoodbyeIsTheWidestFormThatFits(t *testing.T) {
+	loginRenderSetup(t)
+	phone, _, telnet := loginTestConns(t)
+	const sixty, sixtyNarrowed connections.ConnectionId = 97304, 97305
+	for _, id := range []connections.ConnectionId{sixty, sixtyNarrowed} {
+		connections.RegisterTestWebsocketConnection(id)
+		cs := connections.GetClientSettings(id)
+		cs.Display.ScreenWidth = 60
+		connections.OverwriteClientSettings(id, cs)
+	}
+	t.Cleanup(func() {
+		connections.UnregisterTestConnection(sixty)
+		connections.UnregisterTestConnection(sixtyNarrowed)
+	})
+	player := users.NewTestUser(9731, "leaver", "Leaver", sixtyNarrowed)
+	player.LineWidth = 40
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{player.UserId: player}))
+
+	isArt := func(s string) bool { return strings.Contains(s, "⣿") && !strings.Contains(s, "Goodbye.") }
+	for _, tt := range []struct {
+		name  string
+		id    connections.ConnectionId
+		width int
+		art   bool
+	}{
+		{"a web client at 60 columns", sixty, 60, true},
+		{"a phone at 43 columns", phone, 43, false},
+		{"telnet before login", telnet, 80, true},
+		{"a web player at 60 with set linewidth 40", sixtyNarrowed, 40, false},
+	} {
+		got := goodbyeFor(tt.id)
+		if isArt(got) != tt.art {
+			t.Errorf("%s: art %v, want %v: %q", tt.name, isArt(got), tt.art, got)
+		}
+		if w := templates.WidestLine(got); w > tt.width {
+			t.Errorf("%s: a line %d wide, wider than %d", tt.name, w, tt.width)
+		}
 	}
 }

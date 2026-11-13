@@ -399,15 +399,26 @@ func sendPrompt(step *PromptStep, clientInput *connections.ClientInput, results 
 
 // LoginTemplateAtWidth renders a template sent to the web client before
 // login (a prompt, the password mask) for a screen width columns wide, as
-// sendPrompt sends it: rendered for that width (templates.ProcessForWidth)
-// and laid out by FitLoginText. internal/guards renders every login template
-// through it at 30, 42 and 80.
+// sendPrompt sends it: rendered for that width (templates.ProcessAtWidth,
+// which measures, so the widest form that fits is used) and laid out by
+// FitLoginText. internal/guards renders every login template through it at
+// 30, 42 and 80.
 func LoginTemplateAtWidth(name string, data any, width int) (string, error) {
-	out, err := templates.ProcessForWidth(name, data, false, width)
+	out, err := templates.ProcessAtWidth(name, data, width)
 	if err != nil {
 		return out, err
 	}
 	return FitLoginText(out, width), nil
+}
+
+// goodbyeFor is the goodbye for a connection that is leaving (/quit, or the
+// old session on a duplicate login), ANSI-parsed and ready to send: drawn
+// for the connection's width (users.ConnectionWrapWidth, so a logged-in
+// player's set linewidth counts) and measured, so the full art is kept
+// wherever it fits and a narrower screen gets the words-only form.
+func goodbyeFor(id connections.ConnectionId) string {
+	tplTxt, _ := templates.ProcessAtWidth("goodbye", nil, users.ConnectionWrapWidth(id))
+	return templates.AnsiParse(tplTxt)
 }
 
 // FitLoginText lays out text sent to the web client before login for a
