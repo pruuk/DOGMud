@@ -26,25 +26,46 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      # Full history so the base revision below exists locally.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       # golangci-lint-action keeps its own cache; this job must not save the
       # Go build cache the test job needs (see .github/actions/setup-go).
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: false
-      # only-new-issues grandfathers the pre-existing findings (97 as of
-      # 2026-08-10) so this gates what a change introduces without first
-      # clearing the backlog. It works on push as well as pull_request: the
-      # action asks the GitHub API for the diff of the push (before..after) and
-      # feeds it to --new-from-patch. That is why master can run the identical
-      # job rather than a weaker one. fetch-depth: 0 is only needed for
-      # merge_group events, which this repo does not use.
+      # Only new issues fail the job: the pre-existing findings (97 as of
+      # 2026-08-10) are grandfathered so this gates what a change introduces
+      # without first clearing the backlog.
+      #
+      # The base is computed from git, not fetched from the API. The action's
+      # own only-new-issues asks the GitHub API for the diff, and that API
+      # refuses a diff of more than 300 files; the action then linted the whole
+      # repo and failed on the grandfathered backlog (PR #863, 493 files).
+      #   pull_request: the PR's base commit (the checkout is the merge commit).
+      #   push:         the commit before the push; a tag or new branch has no
+      #                 "before" (all zeros), so it uses the parent commit.
+      - name: lint base revision
+        id: base
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          base="$PR_BASE"
+          if [ -z "$base" ]; then base="$BEFORE"; fi
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base="$(git rev-parse HEAD^)"
+          fi
+          echo "lint issues new since $base"
+          echo "rev=$base" >> "$GITHUB_OUTPUT"
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.12.2
-          only-new-issues: true
+          args: --new-from-rev=${{ steps.base.outputs.rev }}
 
   javascript:
     runs-on: ubuntu-latest
