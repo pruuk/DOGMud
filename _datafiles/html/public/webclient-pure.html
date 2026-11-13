@@ -321,11 +321,12 @@
                  (Malia 2026-11-06); it opens and folds the key below. -->
             <div id="map-controls" class="map-controls">
               <button type="button" id="map-legend-toggle" class="map-legend-toggle"
-                      aria-expanded="true" aria-controls="map-legend">Legend <span class="map-legend-arrow" aria-hidden="true">▾</span></button>
+                      aria-expanded="false" aria-controls="map-legend">Legend <span class="map-legend-arrow" aria-hidden="true">▸</span></button>
             </div>
             <!-- The map's key, under the map rather than drawn over the rooms
-                 (2026-11-02). The Legend button above opens and folds it. -->
-            <div id="map-legend" class="map-legend">
+                 (2026-11-02). The Legend button above opens and folds it;
+                 it starts folded (owner 2026-11-13). -->
+            <div id="map-legend" class="map-legend" hidden>
               <ul>
                 <li><svg viewBox="0 0 16 12" aria-hidden="true"><circle cx="8" cy="3.5" r="2" fill="#6dac9d"/><path d="M4.5 10.5 Q8 5 11.5 10.5 Z" fill="#6dac9d"/></svg>Party member</li>
                 <li><svg viewBox="0 0 16 12" aria-hidden="true"><circle cx="8" cy="6" r="5" fill="#2a1d12" stroke="#b5a26c" stroke-width="1.2"/><text x="8" y="8.4" text-anchor="middle" font-size="7" font-weight="bold" fill="#b5a26c">$</text></svg>Bank / Shop / Store</li>
@@ -655,8 +656,9 @@
         })();
 
         // The "Legend ▾" button in the map's button row opens and folds the
-        // map's key underneath it. On a short window (under 800px tall) the
-        // key starts folded, so the map keeps more of its card.
+        // map's key underneath it. The key starts folded on every screen, so
+        // the map keeps its card (owner 2026-11-13; it used to start open on
+        // windows 800px tall and up).
         (function initMapLegend() {
             var btn = document.getElementById('map-legend-toggle');
             var legend = document.getElementById('map-legend');
@@ -670,7 +672,7 @@
                 btn.setAttribute('aria-expanded', open ? 'true' : 'false');
                 btn.querySelector('.map-legend-arrow').textContent = open ? '▾' : '▸';
             }
-            show(window.innerHeight >= 800);
+            show(false);
             btn.addEventListener('click', function () { show(legend.hidden); });
         })();
 
