@@ -208,6 +208,20 @@
    jumps to the top of the page. */
 #panel-cmd { flex: 0 0 auto; margin-top: auto; }
 #panel-cmd .dash-panel-body { display: flex; padding: 4px; }
+/* Plan 6 (ruling 14): the Close keyboard X at the end of the command box,
+   only while the on-screen keyboard is open (viewportfit.js), so the box is
+   full width the rest of the time. 48px: the command box's height. */
+#cmd-close-kbd {
+  display: none;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  margin-left: 4px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+html.keyboard-open #cmd-close-kbd { display: flex; }
 
 /* The command box is the Game window's bottom strip: one frame, no gap, so
    the prompt sits right above where the player types. Only while the two are

@@ -299,6 +299,9 @@
         <section class="dash-panel" id="panel-cmd" data-panel="cmd">
           <div class="dash-panel-body">
             <input type="text" id="command-input" placeholder="Enter command..." style="flex:1">
+            <!-- Plan 6 (ruling 14): closes the on-screen keyboard; shown only
+                 while it is open (dashboard.css). -->
+            <button type="button" id="cmd-close-kbd" class="brass" aria-label="Close keyboard" title="Close keyboard"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M4 4l12 12M16 4L4 16"/></svg></button>
           </div>
         </section>
       </div>
@@ -3203,6 +3206,15 @@
                 }
             }
         }) : null;
+
+        // The Close keyboard X (plan 6, ruling 14). pointerdown keeps focus
+        // where it is, so the tap does not move focus before the click.
+        (function () {
+            var closeKbd = document.getElementById('cmd-close-kbd');
+            if (!closeKbd) return;
+            closeKbd.addEventListener('pointerdown', function (e) { e.preventDefault(); });
+            closeKbd.addEventListener('click', function () { textInput.blur(); });
+        })();
 
         textInput.addEventListener('keydown', function(event) {
             // Macro support: F-keys

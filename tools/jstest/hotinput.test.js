@@ -499,6 +499,21 @@ var outer = fs.readFileSync(path.join(
 check('the framed page gets --visible-h from webclient.html',
     /setProperty\('--visible-h', Math\.floor\(visible\) \+ 'px'\)/.test(outer), true);
 
+// Plan 6, ruling 14: a Close keyboard X at the end of the command box, shown
+// only while the on-screen keyboard is open, at least 44px.
+var cmdAt = page.indexOf('<section class="dash-panel" id="panel-cmd"');
+var xAt = page.indexOf('id="cmd-close-kbd"');
+check('the X is inside the command box, after the input',
+    cmdAt >= 0 && xAt > page.indexOf('id="command-input"', cmdAt) && xAt < page.indexOf('</section>', cmdAt), true);
+check('the X is a real button named for screen readers',
+    /<button type="button" id="cmd-close-kbd" class="brass" aria-label="Close keyboard"/.test(page), true);
+check('the X is hidden unless the keyboard is open',
+    /#cmd-close-kbd \{[^}]*display: none;/.test(css) && /html\.keyboard-open #cmd-close-kbd \{ display: flex; \}/.test(css), true);
+check('the X is 48px', /#cmd-close-kbd \{[^}]*width: 48px;[^}]*height: 48px;/.test(css), true);
+check('the X closes the keyboard without taking focus first',
+    /closeKbd\.addEventListener\('pointerdown', function \(e\) \{ e\.preventDefault\(\); \}\);/.test(page)
+    && /closeKbd\.addEventListener\('click', function \(\) \{ textInput\.blur\(\); \}\);/.test(page), true);
+
 // --- result ----------------------------------------------------------------
 
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
