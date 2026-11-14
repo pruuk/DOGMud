@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/require"
 )
 
@@ -71,4 +72,29 @@ func TestProcessInput_DefersTheDoneMarker(t *testing.T) {
 			`if typed && seq > 0 \{\s+defer queueInputDone\(userId, seq\)\s+\}`), s)
 	require.Equal(t, 2, len(regexp.MustCompile(`w\.processInput\(input\.UserId, input\.InputText, [^\n]*, input\.Seq\)`).FindAllString(s, -1)),
 		"both callers pass input.Seq")
+}
+
+// Both ends count the same frames: the client counts every string it sends,
+// and its GMCP goes as binary, so only text frames advance the count (R7).
+func TestCountLineFrame_CountsTextFramesOnly(t *testing.T) {
+	require.Equal(t, uint64(1), countLineFrame(websocket.TextMessage, 0))
+	require.Equal(t, uint64(5), countLineFrame(websocket.TextMessage, 4))
+	require.Equal(t, uint64(4), countLineFrame(websocket.BinaryMessage, 4))
+}
+
+// The count must advance before anything in the loop can skip the frame
+// (the copyover token, an input handler), and the websocket's line carries it.
+func TestWebSocketLoop_CountsEveryFrameAndPassesTheNumber(t *testing.T) {
+	src, err := os.ReadFile("main.go")
+	require.NoError(t, err)
+	s := string(src)
+	require.Regexp(t, regexp.MustCompile(
+		`msgType, message, err := conn\.ReadMessage\(\)`), s)
+	readAt := regexp.MustCompile(`msgType, message, err := conn\.ReadMessage\(\)`).FindStringIndex(s)[0]
+	countAt := regexp.MustCompile(`lineSeq = countLineFrame\(msgType, lineSeq\)`).FindStringIndex(s)
+	require.NotNil(t, countAt)
+	tokenAt := regexp.MustCompile(`copyover\.ConsumeReconnectToken`).FindStringIndex(s)[0]
+	require.True(t, readAt < countAt[0] && countAt[0] < tokenAt,
+		"count each frame right after the read, before the copyover token check")
+	require.Regexp(t, regexp.MustCompile(`Seq:\s+lineSeq,`), s)
 }
