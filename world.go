@@ -140,7 +140,7 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 
 		}
 
-		w.processInput(input.UserId, input.InputText, input.Flags)
+		w.processInput(input.UserId, input.InputText, input.Flags, input.Seq)
 
 		return events.Continue
 	}
@@ -183,7 +183,7 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 
 	}
 
-	w.processInput(input.UserId, input.InputText, events.EventFlag(input.Flags))
+	w.processInput(input.UserId, input.InputText, events.EventFlag(input.Flags), input.Seq)
 
 	w.userInputEventTracker[input.UserId] = struct{}{}
 
@@ -979,7 +979,15 @@ func inputEventFor(wi WorldInput) events.Input {
 	}
 }
 
-func (w *World) processInput(userId int, inputText string, flags events.EventFlag) {
+// queueInputDone queues the marker that the server has finished one typed web
+// client line (plan 6, R6). Priority 1 puts it after every line of text the
+// command queued at the default priority 0, even ones queued later in the
+// same event pass, so the client reads the menu state the command left.
+func queueInputDone(userId int, seq uint64) {
+	events.AddToQueue(events.InputDone{UserId: userId, Seq: seq}, 1)
+}
+
+func (w *World) processInput(userId int, inputText string, flags events.EventFlag, seq uint64) {
 
 	user := users.GetByUserId(userId)
 	if user == nil { // Something went wrong. User not found.
@@ -988,6 +996,11 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 	}
 
 	typed := flags.Has(events.CmdTyped)
+	// Plan 6 (R6, R7): tell the web client this line is done, after all its
+	// text, on every return below. Its number, never its text.
+	if typed && seq > 0 {
+		defer queueInputDone(userId, seq)
+	}
 
 	// A typed line goes to an open game menu first (#375). A line the menu
 	// does not recognise has closed it and runs below as a command.
