@@ -201,7 +201,7 @@ func validatePurchase(
 		tradeItemName = tradeItm.Name()
 		if _, found := char.FindInBackpack(tradeItemName); !found {
 			if buyer.IsPlayer() {
-				buyer.SendText(messaging.CategoryError, fmt.Sprintf(`You must have %s<ansi fg="itemname">%s</ansi> to trade for that.`, items.ArticlePrefix(tradeItm.DisplayName()), items.MidSentenceName(tradeItm.DisplayName())))
+				buyer.SendText(messaging.CategoryError, fmt.Sprintf(`You must have %s<ansi fg="itemname">%s</ansi> to trade for that.`, items.ArticleFor(tradeItm.ItemId, tradeItm.DisplayName()), items.MidSentenceName(tradeItm.DisplayName())))
 			}
 			return purchaseContext{}, BuyReasonMissingTradeItem, false
 		}
@@ -262,9 +262,9 @@ func validatePurchase(
 			}
 
 			if tradeInString != "" {
-				tradeInString += fmt.Sprintf(` and %s<ansi fg="itemname">%s</ansi>`, items.ArticlePrefix(itm.DisplayName()), items.MidSentenceName(itm.DisplayName()))
+				tradeInString += fmt.Sprintf(` and %s<ansi fg="itemname">%s</ansi>`, items.ArticleFor(itm.ItemId, itm.DisplayName()), items.MidSentenceName(itm.DisplayName()))
 			} else {
-				tradeInString = fmt.Sprintf(`%s<ansi fg="itemname">%s</ansi>`, items.ArticlePrefix(itm.DisplayName()), items.MidSentenceName(itm.DisplayName()))
+				tradeInString = fmt.Sprintf(`%s<ansi fg="itemname">%s</ansi>`, items.ArticleFor(itm.ItemId, itm.DisplayName()), items.MidSentenceName(itm.DisplayName()))
 			}
 		}
 	}
@@ -772,7 +772,7 @@ func executePurchaseItem(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRec
 	if shopMob != nil {
 		if buyer.IsPlayer() {
 			if u := users.GetByUserId(buyer.GetUserId()); u != nil {
-				u.EventLog.Add(`shop`, fmt.Sprintf(`Purchased %s<ansi fg="itemname">%s</ansi> from <ansi fg="mobname">%s</ansi> for %s`, items.ArticlePrefix(newItm.DisplayName()), items.MidSentenceName(newItm.DisplayName()), shopMob.Character.Name, tradeInString))
+				u.EventLog.Add(`shop`, fmt.Sprintf(`Purchased %s<ansi fg="itemname">%s</ansi> from <ansi fg="mobname">%s</ansi> for %s`, items.ArticleFor(newItm.ItemId, newItm.DisplayName()), items.MidSentenceName(newItm.DisplayName()), shopMob.Character.Name, tradeInString))
 			}
 		}
 		// "the" stands in for a name's own article: not "the A Torn Page".
@@ -784,7 +784,7 @@ func executePurchaseItem(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRec
 	} else if shopUser != nil {
 		if buyer.IsPlayer() {
 			if u := users.GetByUserId(buyer.GetUserId()); u != nil {
-				u.EventLog.Add(`shop`, fmt.Sprintf(`Purchased %s<ansi fg="itemname">%s</ansi> from <ansi fg="username">%s</ansi> for %s.`, items.ArticlePrefix(newItm.DisplayName()), items.MidSentenceName(newItm.DisplayName()), shopUser.Character.Name, tradeInString))
+				u.EventLog.Add(`shop`, fmt.Sprintf(`Purchased %s<ansi fg="itemname">%s</ansi> from <ansi fg="username">%s</ansi> for %s.`, items.ArticleFor(newItm.ItemId, newItm.DisplayName()), items.MidSentenceName(newItm.DisplayName()), shopUser.Character.Name, tradeInString))
 			}
 		}
 		theName := items.NameWithoutArticle(newItm.DisplayName())

@@ -48,6 +48,19 @@ func ArticlePrefix(name string) string {
 	return `a `
 }
 
+// ArticleFor is ArticlePrefix for the item template itemId: "" when the
+// template is marked proper_name (its name opens with one person's
+// possessive, "Edvar's Map-Fragment"), otherwise ArticlePrefix(name). Every
+// line that puts an article before an item's name calls this one, with the
+// id of the item the name belongs to, so a flagged item reads the same in
+// every line (#799). An id with no template gets the plain rule.
+func ArticleFor(itemId int, name string) string {
+	if spec := GetItemSpec(itemId); spec != nil && spec.ProperName {
+		return ``
+	}
+	return ArticlePrefix(name)
+}
+
 // MidSentenceName returns name as it reads after ArticlePrefix: a name that
 // opens with its own article ("A Sheaf of Gleaned Grain") has that article
 // lowercased, so the line reads "You find a Sheaf of Gleaned Grain." rather

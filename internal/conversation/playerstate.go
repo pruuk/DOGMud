@@ -79,7 +79,7 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 					"userId", user.UserId, "itemId", itemId)
 				return false
 			}
-			send(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>.`, items.ArticlePrefix(newItem.DisplayName()), items.MidSentenceName(newItem.DisplayName())))
+			send(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>.`, items.ArticleFor(newItem.ItemId, newItem.DisplayName()), items.MidSentenceName(newItem.DisplayName())))
 			return true
 		},
 		GetQuestFlag: func(key string) string {

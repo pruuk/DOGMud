@@ -318,7 +318,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 						need: neededItems[inputItemId], name: tmpItem.DisplayName()})
 				}
 				finalName := finalItem.DisplayName()
-				for _, line := range containerRecipeLines(finalName, inputs, formWidth) {
+				for _, line := range containerRecipeLines(finalItem.ItemId, finalName, inputs, formWidth) {
 					user.SendText(messaging.CategoryScreen, line)
 				}
 			}
@@ -972,7 +972,7 @@ type containerRecipeInput struct {
 // units (`To receive`, the output name, `[have/need]`, the input name), the
 // rest 2 past the line's start; a name wider than the room there splits at
 // a space and keeps that indent (ruling 3).
-func containerRecipeLines(output string, inputs []containerRecipeInput, formWidth int) []string {
+func containerRecipeLines(outputId int, output string, inputs []containerRecipeInput, formWidth int) []string {
 	lead, row := 4, 8
 	switch {
 	case formWidth < 42:
@@ -981,7 +981,7 @@ func containerRecipeLines(output string, inputs []containerRecipeInput, formWidt
 		lead, row = 2, 4
 	}
 	msgs := []string{strings.Join(messaging.PackUnits([]string{`<ansi fg="230">To receive</ansi>`,
-		fmt.Sprintf(`<ansi fg="230">%s<ansi fg="itemname">%s</ansi>:</ansi>`, items.ArticlePrefix(output), items.MidSentenceName(output))},
+		fmt.Sprintf(`<ansi fg="230">%s<ansi fg="itemname">%s</ansi>:</ansi>`, items.ArticleFor(outputId, output), items.MidSentenceName(output))},
 		lead, lead+2, formWidth), "\n")}
 	for _, in := range inputs {
 		colorClass := "8" // None fulfilled

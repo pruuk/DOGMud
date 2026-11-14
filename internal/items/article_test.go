@@ -96,6 +96,33 @@ func TestArticleIsJudgedOnTheVisibleName(t *testing.T) {
 	}
 }
 
+// TestArticleFor: a template marked proper_name takes no article, an
+// unmarked trade possessive keeps the plain rule, and an unknown id falls
+// back to the plain rule (#799).
+func TestArticleFor(t *testing.T) {
+	const person, trade = 91701, 91702
+	defer SeedItemsForTest(map[int]*ItemSpec{
+		person: {ItemId: person, Name: "Edvar's Map-Fragment", ProperName: true},
+		trade:  {ItemId: trade, Name: "Foreman's Tally-Book"},
+	})()
+
+	for _, c := range []struct {
+		id   int
+		name string
+		want string
+	}{
+		{person, "Edvar's Map-Fragment", ""},
+		{person, "<ansi fg=\"questflag\">★</ansi>Edvar's Map-Fragment", ""},
+		{trade, "Foreman's Tally-Book", "a "},
+		{0, "Foreman's Tally-Book", "a "},
+		{99999, "Iron Lockpicks", "some "},
+	} {
+		if got := ArticleFor(c.id, c.name); got != c.want {
+			t.Errorf("ArticleFor(%d, %q) = %q, want %q", c.id, c.name, got, c.want)
+		}
+	}
+}
+
 // TestNameWithoutArticle: a compound noun that brings its own article or count
 // drops the name's ("4 Culvert Slime corpses", #572).
 func TestNameWithoutArticle(t *testing.T) {

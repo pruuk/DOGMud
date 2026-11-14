@@ -3,6 +3,7 @@ package quests
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/stretchr/testify/require"
 )
 
@@ -43,6 +44,23 @@ func TestRewardSummary_Table(t *testing.T) {
 		q := &Quest{Rewards: c.r}
 		require.Equal(t, c.want, RewardSummary(q, testNames()), c.name)
 	}
+}
+
+// A reward named for a person reads bare ("Edvar's Map-Fragment"); a trade
+// possessive keeps its article ("a Foreman's Tally-Book") (#799).
+func TestRewardSummary_ProperNameTakesNoArticle(t *testing.T) {
+	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
+		9101: {ItemId: 9101, Name: "Edvar's Map-Fragment", ProperName: true},
+		9102: {ItemId: 9102, Name: "Foreman's Tally-Book"},
+	})()
+	names := RewardNames{Item: func(id int) string {
+		return map[int]string{9101: "Edvar's Map-Fragment", 9102: "Foreman's Tally-Book"}[id]
+	}}
+
+	require.Equal(t, "Edvar's Map-Fragment", RewardSummary(&Quest{Rewards: QuestReward{ItemId: 9101}}, names))
+	require.Equal(t, "a Foreman's Tally-Book", RewardSummary(&Quest{Rewards: QuestReward{ItemId: 9102}}, names))
+	require.Equal(t, "Edvar's Map-Fragment and a Foreman's Tally-Book",
+		RewardSummary(&Quest{Rewards: QuestReward{ItemInfo: "9101,9102"}}, names))
 }
 
 // A skill grant the character already meets pays nothing (the payout only

@@ -222,7 +222,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		// Item reward?
 		if questInfo.Rewards.ItemId > 0 {
 			newItm := items.New(questInfo.Rewards.ItemId)
-			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>!`, items.ArticlePrefix(newItm.DisplayName()), items.MidSentenceName(newItm.DisplayName())))
+			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>!`, items.ArticleFor(newItm.ItemId, newItm.DisplayName()), items.MidSentenceName(newItm.DisplayName())))
 			// The seam raises ItemOwnership{Gained}, and CheckItemQuests
 			// grants the item's QuestToken from it, so the token is not
 			// hand-fired here (it used to be, when this site raised no
@@ -236,6 +236,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		// reward, mirroring the skill/stat/recipe multi-grants above.
 		for _, grant := range quests.ParseItemGrants(questInfo.Rewards.ItemInfo) {
 			var firstName string
+			firstId := 0
 			granted := 0
 			for i := 0; i < grant.Qty; i++ {
 				newItm := items.New(grant.ItemId)
@@ -243,6 +244,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 					break // unknown item id — skip the whole grant
 				}
 				firstName = newItm.DisplayName()
+				firstId = newItm.ItemId
 				acquire.AcquireItem(questUser, newItm, acquire.AcquireReward)
 				granted++
 			}
@@ -254,7 +256,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			if granted > 1 {
 				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="itemname">%s</ansi> (x%d)!`, firstName, granted))
 			} else {
-				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>!`, items.ArticlePrefix(firstName), items.MidSentenceName(firstName)))
+				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>!`, items.ArticleFor(firstId, firstName), items.MidSentenceName(firstName)))
 			}
 		}
 		// Condition reward?
