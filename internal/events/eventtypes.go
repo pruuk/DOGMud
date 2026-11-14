@@ -91,13 +91,19 @@ func (m MenuChanged) Type() string { return `MenuChanged` }
 // InputDone is queued after the server has handled one typed web client line
 // (plan 6, spec 2026-11-14 R6). gmcp pushes it as Char.Input.Done {seq, menu}
 // so the phone keyboard can wait for its own line. It carries the line's
-// number, never its text (R7).
+// number, never its text (R7). It is queued at InputDonePriority.
 type InputDone struct {
 	UserId int
 	Seq    uint64
 }
 
 func (i InputDone) Type() string { return `InputDone` }
+
+// InputDonePriority is the queue priority of InputDone: after every event that
+// writes a command's text or opens a menu (the highest is 50 today), before
+// the prompt redraw at 100. A guard test in the root package fails if any
+// other call queues at or above it.
+const InputDonePriority = 99
 
 // Used for giving/taking quest progress
 type Quest struct {

@@ -29,8 +29,8 @@ func inputDoneHandler(e events.Event) events.ListenerReturn {
 	if !isWebClientConnection(connId) || !isGMCPEnabled(connId) {
 		return events.Continue
 	}
-	// Default priority: InputDone itself popped after the command's text, so
-	// this frame follows that text too.
+	// Default priority 0: InputDone popped at events.InputDonePriority, after
+	// the command's text and menu events, and the frame follows their frames.
 	events.AddToQueue(GMCPOut{
 		UserId:  evt.UserId,
 		Module:  `Char.Input.Done`,

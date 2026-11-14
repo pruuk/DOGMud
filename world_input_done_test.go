@@ -1,8 +1,14 @@
 package main
 
 import (
+	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"regexp"
+	"sort"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -50,8 +56,9 @@ func TestQueueInputDone_PopsAfterTheCommandsText(t *testing.T) {
 
 	queueInputDone(7, 3)
 	events.AddToQueue(events.Message{UserId: 7, Text: "You look around."})
+	events.AddToQueue(events.Message{UserId: 7, Text: "A menu shown last."}, 50)
 
-	require.Equal(t, []string{`Message`, `InputDone`}, queuedOurs(t))
+	require.Equal(t, []string{`Message`, `Message`, `InputDone`}, queuedOurs(t))
 	done := events.DrainQueuedByTypeForTest(`InputDone`)
 	require.Len(t, done, 1)
 	require.Equal(t, events.InputDone{UserId: 7, Seq: 3}, done[0])
@@ -90,11 +97,110 @@ func TestWebSocketLoop_CountsEveryFrameAndPassesTheNumber(t *testing.T) {
 	s := string(src)
 	require.Regexp(t, regexp.MustCompile(
 		`msgType, message, err := conn\.ReadMessage\(\)`), s)
-	readAt := regexp.MustCompile(`msgType, message, err := conn\.ReadMessage\(\)`).FindStringIndex(s)[0]
+	readIdx := regexp.MustCompile(`msgType, message, err := conn\.ReadMessage\(\)`).FindStringIndex(s)
+	require.NotNil(t, readIdx)
 	countAt := regexp.MustCompile(`lineSeq = countLineFrame\(msgType, lineSeq\)`).FindStringIndex(s)
 	require.NotNil(t, countAt)
-	tokenAt := regexp.MustCompile(`copyover\.ConsumeReconnectToken`).FindStringIndex(s)[0]
-	require.True(t, readAt < countAt[0] && countAt[0] < tokenAt,
+	tokenIdx := regexp.MustCompile(`copyover\.ConsumeReconnectToken`).FindStringIndex(s)
+	require.NotNil(t, tokenIdx)
+	require.True(t, readIdx[0] < countAt[0] && countAt[0] < tokenIdx[0],
 		"count each frame right after the read, before the copyover token check")
-	require.Regexp(t, regexp.MustCompile(`Seq:\s+lineSeq,`), s)
+	require.Len(t, regexp.MustCompile(
+		`WorldInput\{\s*FromId:\s+userObject\.UserId,\s*InputText:\s+string\(clientInput\.Buffer\),\s*Seq:\s+lineSeq,`).FindAllString(s, -1), 1,
+		"the websocket's WorldInput carries lineSeq")
+}
+
+// The input worker must build its event through inputEventFor, or Seq is lost.
+func TestInputWorker_UsesInputEventFor(t *testing.T) {
+	src, err := os.ReadFile("world.go")
+	require.NoError(t, err)
+	require.Len(t, regexp.MustCompile(`events\.AddToQueue\(inputEventFor\(wi\)\)`).FindAllString(string(src), -1), 1)
+}
+
+var (
+	queueCallRe = regexp.MustCompile(`(?:AddToQueue|sendTextAt)\((.*),\s*(-?[A-Za-z0-9_.]+)\)\s*$`)
+	prioConstRe = regexp.MustCompile(`\bconst\s+(\w+)\s*=\s*(\d+)\b`)
+)
+
+// priorityConsts reads every `const Name = <int>` in the given sources.
+func priorityConsts(sources map[string]string) map[string]int {
+	out := map[string]int{}
+	for _, src := range sources {
+		for _, m := range prioConstRe.FindAllStringSubmatch(src, -1) {
+			n, _ := strconv.Atoi(m[2])
+			out[m[1]] = n
+		}
+	}
+	return out
+}
+
+// queueOverreaches lists "file:line" of every AddToQueue/sendTextAt call whose
+// priority (an integer literal, or an identifier found in consts) is at or
+// above limit, except the prompt redraw and InputDone itself, which are meant
+// to pop at or after it. Unresolvable identifiers are skipped.
+func queueOverreaches(sources map[string]string, consts map[string]int, limit int) []string {
+	var bad []string
+	for file, src := range sources {
+		for i, line := range strings.Split(src, "\n") {
+			m := queueCallRe.FindStringSubmatch(line)
+			if m == nil || strings.Contains(m[1], "RedrawPrompt{") || strings.Contains(m[1], "InputDone{") {
+				continue
+			}
+			prio, err := strconv.Atoi(m[2])
+			if err != nil {
+				name := m[2][strings.LastIndex(m[2], ".")+1:]
+				var ok bool
+				if prio, ok = consts[name]; !ok {
+					continue
+				}
+			}
+			if prio >= limit {
+				bad = append(bad, fmt.Sprintf("%s:%d: priority %d >= %d", file, i+1, prio, limit))
+			}
+		}
+	}
+	sort.Strings(bad)
+	return bad
+}
+
+// The guard can fail: a sample with priority 99 literal and a const that
+// resolves to 100 is caught, while the redraw and InputDone lines are not.
+func TestQueueOverreaches_CatchesASampleThatMustFail(t *testing.T) {
+	sample := map[string]string{"a.go": "const loud = 100\n" +
+		"events.AddToQueue(events.Message{UserId: 1}, 99)\n" +
+		"u.sendTextAt(cat, txt, loud)\n" +
+		"events.AddToQueue(events.Message{UserId: 1}, 50)\n" +
+		"events.AddToQueue(events.RedrawPrompt{UserId: 1}, 100)\n" +
+		"events.AddToQueue(events.InputDone{UserId: 1}, events.InputDonePriority)\n"}
+	bad := queueOverreaches(sample, priorityConsts(sample), 99)
+	require.Equal(t, []string{"a.go:2: priority 99 >= 99", "a.go:3: priority 100 >= 99"}, bad)
+}
+
+// Nothing may queue at or above InputDonePriority except the prompt redraw, or
+// the done marker could pop before a command's last text or menu event.
+func TestInputDonePriority_NothingElseQueuesAtOrAbove(t *testing.T) {
+	sources := map[string]string{}
+	for _, root := range []string{"internal", "modules", "."} {
+		_ = filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return nil
+			}
+			if d.IsDir() {
+				if root == "." && p != "." {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if strings.HasSuffix(p, ".go") && !strings.HasSuffix(p, "_test.go") {
+				b, rerr := os.ReadFile(p)
+				if rerr == nil {
+					sources[filepath.ToSlash(p)] = string(b)
+				}
+			}
+			return nil
+		})
+	}
+	require.Greater(t, len(sources), 100, "the scan must actually find the source")
+	bad := queueOverreaches(sources, priorityConsts(sources), events.InputDonePriority)
+	require.Empty(t, bad, "these queue at or above InputDonePriority:\n%s", strings.Join(bad, "\n"))
 }

@@ -60,6 +60,19 @@ func TestInputDone_SendsNothingToTelnetOrUnknownUsers(t *testing.T) {
 	require.Empty(t, drainGMCPOut(t))
 }
 
+func TestInputDone_WebClientWithoutGMCPNegotiatedGetsNothing(t *testing.T) {
+	u := inputDoneUser(t, 9844, 98844, true)
+	for _, s := range []GMCPSettings{
+		{GMCPAccepted: false, HelloReceived: true},
+		{GMCPAccepted: true, HelloReceived: false},
+	} {
+		s.Client.Name = `WebClient`
+		gmcpModule.cache.Add(98844, s)
+		inputDoneHandler(events.InputDone{UserId: u.UserId, Seq: 1})
+		require.Empty(t, drainGMCPOut(t))
+	}
+}
+
 // R7: nothing typed is ever sent back. The event has no field that could
 // hold text, and the payload has exactly its two keys.
 func TestInputDone_CarriesNoTypedText(t *testing.T) {

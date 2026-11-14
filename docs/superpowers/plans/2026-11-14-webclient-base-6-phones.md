@@ -325,6 +325,8 @@ func queueInputDone(userId int, seq uint64) {
 }
 ```
 
+*Amended in review: priority is `events.InputDonePriority` (99), see the spec 1a.*
+
 Change the signature and add the defer right after `typed := ...`:
 
 ```go

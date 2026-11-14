@@ -980,11 +980,11 @@ func inputEventFor(wi WorldInput) events.Input {
 }
 
 // queueInputDone queues the marker that the server has finished one typed web
-// client line (plan 6, R6). Priority 1 puts it after every line of text the
-// command queued at the default priority 0, even ones queued later in the
-// same event pass, so the client reads the menu state the command left.
+// client line (plan 6, R6). events.InputDonePriority puts it after every event
+// that writes the command's text or opens a menu in the same pass, so the
+// client reads the menu state the command left.
 func queueInputDone(userId int, seq uint64) {
-	events.AddToQueue(events.InputDone{UserId: userId, Seq: seq}, 1)
+	events.AddToQueue(events.InputDone{UserId: userId, Seq: seq}, events.InputDonePriority)
 }
 
 func (w *World) processInput(userId int, inputText string, flags events.EventFlag, seq uint64) {
