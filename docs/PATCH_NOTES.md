@@ -1,5 +1,12 @@
 # DOGMud Patch Notes
 
+## 2026-11-14: Clearer panels
+
+- The Map's title names the level you are on, and a line under the map says where you are and where your quest is taking you. The map itself is easier to read with the labels off it.
+- Quests has three tabs: Active, Repeat (with how many are ready again) and Completed, a list of everything you have finished.
+- The Chat panel is now called Comms. Its Chat channel is unchanged.
+- Menus show the item, quest or automation name large at the top, with the actions below it. On a phone, press and hold an item, quest or automation to open its menu; tap an item to open its menu too.
+
 ## 2026-11-14: Playing on a phone
 
 - An open tab now takes less of the screen on a phone, so more of the game stays in view.

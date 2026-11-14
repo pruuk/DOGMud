@@ -592,6 +592,15 @@ the area name over `target_rooms` that are on the map (`_drawQuestWash`), a
 `guide`. `tools/webclient-tests/quest-destination-map.js` runs it, and
 `quest-destination-demo.html` draws it in a browser.
 
+## Char.Quests: status `done` (`gmcp.Char.go`; web client base plan 7)
+
+A `Char.Quests` row's `status` is `ready` or `waiting` for a finished
+repeatable (`finishedRepeatQuests`), and `done` for a quest finished for good
+(`completedQuestRows`, from `usercommands.CompletedQuestIds`; constants
+`questStatusReady`, `questStatusWaiting`, `questStatusDone`). The web client's
+Quests panel (`static/js/questtabs.js`) splits the rows into Active, Repeat and
+Completed tabs; `done` rows are the Completed tab and carry a name only.
+
 ## Char.Quests: abandon (`gmcp.CharOp.go`, `gmcp.Char.go`; #375 phase 5)
 
 - `GMCPCharModule_Payload_Quest.Abandonable` (`abandonable`, omitted when
