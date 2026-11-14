@@ -100,3 +100,32 @@ func TestAppraiseOffer_LitRoom_Deal(t *testing.T) {
 	require.NotContains(t, joined, actions.ShopSightRefusalText)
 	require.Contains(t, joined, "Keeper")
 }
+
+// #851: appraise looks across everything the player carries, not the backpack
+// alone: a wielded or worn item, the bandolier and the component bag all
+// reach the appraiser, who takes the same fee as for a backpack item.
+func TestAppraise_FindsEveryCarriedPlace(t *testing.T) {
+	for _, tc := range []struct {
+		place string
+		put   func(u *users.UserRecord)
+	}{
+		{"backpack", func(u *users.UserRecord) { u.Character.StoreItem(items.New(84001)) }},
+		{"wielded", func(u *users.UserRecord) { u.Character.Equipment.Weapon = items.New(84001) }},
+		{"bandolier", func(u *users.UserRecord) { u.Character.PotionItems = []items.Item{items.New(84001)} }},
+		{"component bag", func(u *users.UserRecord) { u.Character.ComponentItems = []items.Item{items.New(84001)} }},
+	} {
+		t.Run(tc.place, func(t *testing.T) {
+			user, room := listSightRoom(t, "city")
+			tc.put(user)
+			user.Character.Gold = 100
+
+			handled, err := Appraise("tin cup", user, room, 0)
+			require.NoError(t, err)
+			require.True(t, handled)
+
+			joined := strings.Join(listSightPlain(events.DrainQueuedMessagesForTest(8411)), "\n")
+			require.Contains(t, joined, "to appraise", "the appraiser took the item")
+			require.Equal(t, 80, user.Character.Gold, "the appraisal fee was paid")
+		})
+	}
+}
