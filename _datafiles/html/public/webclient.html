@@ -35,6 +35,11 @@
         if (frame.contentDocument && frame.contentDocument.documentElement) {
             frame.contentDocument.documentElement.classList.toggle('keyboard-open',
                 ViewportFit.keyboardOpen(window.innerHeight, visible));
+            // The game's open-tab cap reads this while the keyboard is up
+            // (dashboard.css, plan 6). The frame is already this tall.
+            if (typeof visible === 'number') {
+                frame.contentDocument.documentElement.style.setProperty('--visible-h', Math.floor(visible) + 'px');
+            }
         }
     }
 

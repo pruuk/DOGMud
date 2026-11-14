@@ -481,6 +481,24 @@ check('the Map can shrink to 150px', /#panel-map\s+\{ flex: 1 1 0; min-height: 1
 check('a folded tab drops its own height',
     /min-height: 0 !important;\s*height: auto !important;/.test(css), true);
 
+// Plan 6 R3: an open tab is at most 30% of the visible height where it
+// covers game text (phone, slim); column keeps its older cap.
+check('phone and slim tabs are 30% of the screen',
+    /--drawer-cap: max\(80px, 30vh\);/.test(css) && /--drawer-cap: max\(80px, 30dvh\);/.test(css), true);
+check('with the keyboard up, 30% of what is visible',
+    /html\.keyboard-open #dash-drawer \{[^}]*--drawer-cap: max\(60px, calc\(0\.3 \* var\(--visible-h, 100dvh\)\)\);/.test(css), true);
+check('column keeps its cap, keyboard down',
+    /html\.layout-column #dash-drawer \{\s*--drawer-cap: max\(80px, min\(50vh,/.test(css), true);
+check('column keeps its cap, keyboard up',
+    /html\.layout-column\.keyboard-open #dash-drawer \{\s*--drawer-cap: max\(60px, min\(50vh,/.test(css), true);
+check('the page opened on its own sets --visible-h',
+    /setProperty\('--visible-h', Math\.floor\(visible\) \+ 'px'\)/.test(page), true);
+var outer = fs.readFileSync(path.join(
+    __dirname, '..', '..', '_datafiles', 'html', 'public', 'webclient.html'
+), 'utf8');
+check('the framed page gets --visible-h from webclient.html',
+    /setProperty\('--visible-h', Math\.floor\(visible\) \+ 'px'\)/.test(outer), true);
+
 // --- result ----------------------------------------------------------------
 
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
