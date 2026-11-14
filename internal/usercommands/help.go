@@ -210,9 +210,14 @@ func GetHelpContents(input string, width int) (string, error) {
 	}
 
 	if helpName == `spell` {
-		sData := spells.GetSpell(helpRest)
-		if sData == nil {
-			sData = spells.FindSpellByName(helpRest)
+		// An empty name would prefix-match whichever spell the registry
+		// map yields first, so a bare `help spell` shows the list instead.
+		var sData *spells.SpellData
+		if helpRest != `` {
+			sData = spells.GetSpell(helpRest)
+			if sData == nil {
+				sData = spells.FindSpellByName(helpRest)
+			}
 		}
 
 		if sData == nil {
