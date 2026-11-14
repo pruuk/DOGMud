@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -99,8 +100,13 @@ func TestMain(m *testing.M) {
 		panic("usercommands test: loading the shipped special-move store: " + err.Error())
 	}
 
+	usersBefore := snapshotRealUsers()
 	code := m.Run()
 	_ = os.RemoveAll(dataDir)
+	if after := snapshotRealUsers(); after != usersBefore {
+		fmt.Fprintf(os.Stderr, "FAIL: a test wrote to the real users folder %s (#826).\nbefore:\n%s\nafter:\n%s\n", realUsersDir, usersBefore, after)
+		code = 1
+	}
 	os.Exit(code)
 }
 
