@@ -239,7 +239,7 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 
 /* Per-panel stack proportions (flex-basis 0 → grow ratios set the heights;
    the --f-* vars may tune them). Left: Map / Vitals / Scene;
-   Right: Chat / Conditions / Triggers (~equal). */
+   Right: Comms / Conditions / Triggers (~equal). */
 /* Left column auto-balances by content: the Map absorbs slack (large when the
    inventory is short) but keeps a min; the Inventory panel sizes to its content
    (grows with a long eq list — e.g. extra-arms — and scrolls only once the Map
@@ -410,7 +410,7 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 .qonmap { color:var(--party-teal); font-style:normal; white-space:nowrap; }
 #panel-vitals { flex: 0 0 auto; }                    /* content-compact; grows with party rows */
 #panel-art    { flex: 0 1 auto; min-height: 120px; } /* inventory: content-sized, grows w/ eq list */
-/* Chat gets twice the share of Conditions and Automation. */
+/* Comms gets twice the share of Conditions and Automation. */
 #panel-chat   { flex: var(--f-chat, 2) 1 0; }
 #panel-status { flex: var(--f-status, 1) 1 0; }
 #panel-trig   { flex: var(--f-trig, 1) 1 0; }
@@ -423,7 +423,7 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 }
 
 /* A tab folded with its ▾ button shows only its title bar, on every tab
-   (Map, Quests, Health, Inventory, Chat, Conditions, Automation) and every
+   (Map, Quests, Health, Inventory, Comms, Conditions, Automation) and every
    screen. The !important is needed here: several tabs have their own rules
    for their size and layout, and the fold must beat all of them, or
    that tab's ▾ button seems to do nothing. */
@@ -461,7 +461,7 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   min-width: 0;
   min-height: 0;
   /* The Map is square: at most 58% of the panel area's width and about half
-     its height. Below it, two rows split 60/40: Chat and Quests on the wide
+     its height. Below it, two rows split 60/40: Comms and Quests on the wide
      side, Inventory and Automation on the narrow side. Three tracks, so the
      Map's edge and the 60/40 line can fall in different places. */
   --map-w: min(58%, calc((100vh - 192px) * 0.52));
@@ -496,7 +496,7 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 
 /* Column: 200 to 359px right of the game. Map, Health and Conditions stay
    open, stacked (the column is too narrow for Health and Conditions side
-   by side); Chat, Quests, Inventory and Automation open from the round
+   by side); Comms, Quests, Inventory and Automation open from the round
    buttons at the column's foot, over the lower part of the column, so the
    game text is never covered. */
 #dashboard[data-mode="column"] {
@@ -562,7 +562,7 @@ html.layout-column #dash-tabbar { left: auto; right: 6px; bottom: 0; width: var(
 html.layout-column #dash-drawer { left: auto; right: 6px; width: var(--panels-w); bottom: calc(var(--tabbar-h) + var(--tabname-h)); }
 
 /* Slim: 120 to 199px right of the game. Health over Conditions beside the
-   game; Map, Chat, Quests, Inventory and Automation on the tab bar under
+   game; Map, Comms, Quests, Inventory and Automation on the tab bar under
    the game, and an opened one over the lower part of the game, as on a
    phone. */
 #dashboard[data-mode="slim"] {
@@ -862,7 +862,7 @@ html.layout-column.keyboard-open #dash-drawer {
 /* No room on a phone's session bar once the full screen button is there. */
 #dashboard[data-mode="phone"] #btn-reset-layout { display: none; }
 
-/* On a phone, a tab (Map, Chat, Health and the rest) opens as a card that
+/* On a phone, a tab (Map, Comms, Health and the rest) opens as a card that
    slides up from the bottom of the screen. */
 #dash-drawer {
   position: fixed;
@@ -968,8 +968,8 @@ html.layout-column.keyboard-open #dash-drawer {
 #dash-drawer .auto-list {
   flex: 0 1 auto;
 }
-/* The Map and Chat tabs always use the card's full height. The map needs
-   a set space to draw in, and Chat scrolls itself to show the newest
+/* The Map and Comms tabs always use the card's full height. The map needs
+   a set space to draw in, and Comms scrolls itself to show the newest
    message, which only works when the card has a set height. */
 #dash-drawer #panel-map,
 #dash-drawer #panel-chat {
@@ -1012,7 +1012,7 @@ html.layout-column.keyboard-open #dash-drawer {
 /* Sub-tabs: Chat channels, Inventory, Automation (Malia 2026-11-01)   */
 /* ------------------------------------------------------------------ */
 /* One look for every tab strip inside a panel: brass buttons that look
-   tappable, Chat's reading size, nothing dimmed. The open tab is pressed in.
+   tappable, Comms's reading size, nothing dimmed. The open tab is pressed in.
    Buttons fill the row and wrap to a second row rather than scroll, so every
    Chat channel stays in sight on a phone.
    Measured on the shiny brass with the darker text #1a1206 (#774): label 13.77
@@ -1027,7 +1027,7 @@ html.layout-column.keyboard-open #dash-drawer {
   flex-shrink: 0;
 }
 /* The last row: an empty spacer takes the space left over, so a tab that
-   wraps alone (Trade in a narrow Chat) keeps its own size instead of
+   wraps alone (Trade in a narrow Comms) keeps its own size instead of
    stretching across the whole panel (Calabe 2026-11-07). Full rows still
    fill edge to edge, as before. */
 .subtabs::after {
@@ -1081,7 +1081,7 @@ html.layout-column.keyboard-open #dash-drawer {
 }
 .chat-hint code { font-family: var(--font-mono); }
 /* Phones (Calabe and Malia 2026-11-07, on her phone): the 44px sub-tabs took
-   two or three rows and, with the 50px title bar, most of an open Chat tab,
+   two or three rows and, with the 50px title bar, most of an open Comms tab,
    upright and sideways. On a touch screen under 600px wide or under 500px
    tall (a phone either way up, never a tablet) they are 30px, still above
    the 24px minimum target, with less padding so more fit on a
@@ -1096,9 +1096,9 @@ html.layout-column.keyboard-open #dash-drawer {
   #dash-drawer .dash-panel-head .ph-collapse::before { font-size: var(--text); padding-bottom: 3px; }
 }
 /* Sideways only: the tab name pill under the game tabs goes too (the
-   pressed circle already shows which is open), and Chat says that Full
+   pressed circle already shows which is open), and Comms says that Full
    screen gives it room (Calabe 2026-11-07): with the browser's bars showing
-   a sideways phone has too little height left to read Chat. The line hides
+   a sideways phone has too little height left to read Comms. The line hides
    once full screen is on (the frame's .fullscreen-on, set from the outer
    page) and in the home screen app, which has no bars. */
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
@@ -1321,10 +1321,11 @@ html.layout-column.keyboard-open #dash-drawer {
   border-top: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
 }
 /* Dimmed: brightness carries the meaning, no hue. (Folded from the Quests
-   copy, the only one that had it.) */
+   copy, the only one that had it.) --toast-desc, a grey: 5.22 on the menu
+   (--text-secondary was 4.40); the rows are 9.70. */
 .ctx-menu .ctx-row.ctx-disabled,
 .ctx-menu .ctx-row.ctx-disabled:hover {
-  color: var(--text-secondary);
+  color: var(--toast-desc);
   background: none;
   cursor: default;
 }
@@ -1792,7 +1793,7 @@ html.layout-column.keyboard-open #dash-drawer {
 /* Title bars on every panel, the Game's included. */
 :root[data-theme="light"][data-client] .dash-panel-head { background: #b4b4a3; }
 :root[data-theme="light"][data-client] .dash-panel-head .ph-title { color: #252015; }
-/* The tab strips inside Chat, Inventory and Automation sit on the panel's own
+/* The tab strips inside Comms, Inventory and Automation sit on the panel's own
    light body (Malia: no grey behind the buttons). */
 :root[data-theme="light"][data-client] .subtabs { background: var(--panel-bg); }
 /* Light mode details found by the BAR (2026-11-02). Each pair is measured on

@@ -191,7 +191,7 @@
             box-shadow: 0 0 0 2px var(--cmd-ring-focus);
         }
 
-        /* Chat tab: the channel buttons on top, the messages below them
+        /* Comms tab: the channel buttons on top, the messages below them
            filling the rest of the card. There is no typing box here: players
            chat from the command box (for example "say hello"). */
         #panel-chat .dash-panel-body {
@@ -2758,7 +2758,7 @@
             if (outer) {
                 button.style.display = '';
                 outer.onChange(function (on) {
-                    // The sideways Chat line about Full screen hides while it is on.
+                    // The sideways Comms line about Full screen hides while it is on.
                     document.documentElement.classList.toggle('fullscreen-on', on);
                     // The visible words and the spoken name start the same, so
                     // voice control can say what it sees (WCAG 2.5.3).
@@ -4063,7 +4063,7 @@
     </div>
 
     <script>
-        // Chat tab buttons (Say, Whisper, Party and the rest): pressing one
+        // Comms tab buttons (Say, Whisper, Party and the rest): pressing one
         // shows that channel's messages and clears its unread count. Players
         // send messages from the command box, not from here.
         document.addEventListener('DOMContentLoaded', () => {
@@ -4471,10 +4471,13 @@
                 while (menu.firstChild) menu.removeChild(menu.firstChild);
 
                 var nameEl = row.querySelector(".qname");
-                var hdr = document.createElement("div");
-                hdr.className = "ctx-header";
-                hdr.textContent = nameEl ? nameEl.textContent : "";
-                menu.appendChild(hdr);
+                var qName = nameEl ? nameEl.textContent : "";
+                if (qName) {
+                    var hdr = document.createElement("div");
+                    hdr.className = "ctx-header";
+                    hdr.textContent = qName;
+                    menu.appendChild(hdr);
+                }
 
                 menu.appendChild(makeCtxRow("Focus", true, function() {
                     SendGMCP("Char.Quests.Focus", { id: id });

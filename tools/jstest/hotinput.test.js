@@ -528,8 +528,6 @@ check('the X closes the keyboard without taking focus first',
     && /closeKbd\.addEventListener\('mousedown', function \(e\) \{ e\.preventDefault\(\); \}\);/.test(page)
     && /closeKbd\.addEventListener\('click', function \(\) \{ textInput\.blur\(\); \}\);/.test(page), true);
 
-// --- result ----------------------------------------------------------------
-
 // Plan 7, ruling 16: the panel is Comms; the Chat channel keeps its name.
 check('the Comms panel title', /<span class="ph-title">Comms<\/span>/.test(page), true);
 check('no panel says Chat any more', /<span class="ph-title">Chat<\/span>|aria-label="Chat channels"|read Chat\./.test(page), false);
@@ -540,8 +538,14 @@ check('the phone tab is Comms', /chat:\s*\{ label: "Comms",/.test(dash), true);
 ['inv-ctx', 'auto-ctx', 'quest-ctx'].forEach(function (cls) {
     check(cls + ' is built as a shared ctx-menu', new RegExp('el\\.className = "' + cls + ' ctx-menu";').test(page), true);
 });
-check('the menu header is the name at the title size, boxed, regular weight',
-    /\.ctx-menu \.ctx-header \{[^}]*font-size: var\(--title\);[^}]*font-weight: 400;[^}]*border: 1px solid var\(--gold-rule\);/.test(css), true);
+check('the shared menu is a fixed box above the page',
+    /\.ctx-menu \{[^}]*position: fixed;[^}]*z-index: 9000;/.test(css), true);
+check('the menu header is the name at the title size, boxed, regular weight, in gold',
+    /\.ctx-menu \.ctx-header \{[^}]*margin: 6px;[^}]*font-size: var\(--title\);[^}]*font-weight: 400;[^}]*color: var\(--title-gold\);[^}]*border: 1px solid var\(--gold-rule\);/.test(css), true);
+check('a dimmed menu row does not use --text-secondary (4.40 on the menu)',
+    /\.ctx-menu \.ctx-row\.ctx-disabled,\s*\.ctx-menu \.ctx-row\.ctx-disabled:hover \{[^}]*color: var\(--toast-desc\);/.test(css), true);
+check('the quest menu skips the header when the row has no name',
+    /if \(qName\) \{\s*var hdr = document\.createElement\("div"\);/.test(page), true);
 check('menu rows are indented under the name and tall enough to tap',
     /\.ctx-menu \.ctx-row \{[^}]*padding: 8px 10px 8px 24px;/.test(css), true);
 check('no per-menu copies of the menu rules are left',
@@ -549,6 +553,8 @@ check('no per-menu copies of the menu rules are left',
 check('a dimmed menu row keeps its look under the shared menu',
     /\.ctx-menu \.ctx-row\.ctx-disabled:hover \{[^}]*background: none;/.test(css), true);
 check('the unused empty-tile rule is gone', /\.inv-tile\.empty\b/.test(css), false);
+// --- result ----------------------------------------------------------------
+
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
 if (failures > 0) {
     console.log(failures + ' FAILED');

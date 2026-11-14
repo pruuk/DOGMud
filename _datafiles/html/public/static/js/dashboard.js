@@ -548,7 +548,7 @@
       panel.style.display = "";
 
       // Put the ✕ in this tab's title bar, after its ▾ button, and name it
-      // for screen readers ("Close Chat", "Close Map" and so on).
+      // for screen readers ("Close Comms","Close Map" and so on).
       var btns = panel.querySelector(".ph-btns");
       if (btns && this._drawerClose) {
         btns.appendChild(this._drawerClose);
@@ -563,7 +563,7 @@
       this._drawer.getBoundingClientRect();
       this._drawer.classList.add("open");
 
-      // Moving a tab into the card scrolls it back to the top. For Chat that
+      // Moving a tab into the card scrolls it back to the top. For Comms that
       // would show the oldest messages, so once the card is open, jump back
       // to the newest one.
       this._scrollChatToNewest(panel);
