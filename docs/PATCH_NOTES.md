@@ -1,5 +1,9 @@
 # DOGMud Patch Notes
 
+## 2026-11-14: Passwords stay private
+
+- Changing your password in game no longer shows what you type, and the up arrow no longer brings it back. Telnet and the web client both show stars instead.
+
 ## 2026-11-12: The game window fits your screen
 
 - Game text in the web client is now one readable size on every device, and it never shrinks or grows to fit. On a phone the lines fit your screen instead. (If you have raised your browser's minimum text size, the game uses that size.)
