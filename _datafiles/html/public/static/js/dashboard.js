@@ -196,6 +196,8 @@
       this.initCollapse   && this.initCollapse();
       this.initPopout     && this.initPopout();
       this.restoreLayout  && this.restoreLayout();
+      // The sideways phone note (plan 6).
+      this._watchSideways && this._watchSideways();
     },
 
     // The game window's width at 80 columns (termfit.js widthFor80), or
@@ -269,16 +271,40 @@
     },
 
     // Brief, self-dismissing notification (bottom-center, leather-styled).
-    _toast: function (msg) {
+    // opts: { ms } how long it shows (2.6s by default); { lifted } sits it
+    // above the command box and tab bar, for phones (plan 6).
+    _toast: function (msg, opts) {
+      opts = opts || {};
       var t = document.createElement("div");
-      t.className = "dash-toast";
+      t.className = "dash-toast" + (opts.lifted ? " lifted" : "");
+      t.setAttribute("role", "status");
       t.textContent = msg;
       document.body.appendChild(t);
       requestAnimationFrame(function () { t.classList.add("show"); });
       setTimeout(function () {
         t.classList.remove("show");
         setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 400);
-      }, 2600);
+      }, opts.ms || 2600);
+    },
+
+    // A phone turned sideways gets one note per browser tab (layout spec
+    // ruling 15, plan 6), at load or when it turns.
+    _sidewaysMemo: {},
+    _watchSideways: function () {
+      var self = this;
+      var VF = window.ViewportFit;
+      if (!VF) return;
+      var check = function () {
+        var coarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+        if (!VF.isSidewaysPhone(screen.width, screen.height, VF.orientationType(window), coarse)) return;
+        var store = null;
+        try { store = window.sessionStorage; } catch (e) { /* blocked: memo alone */ }
+        if (!VF.takeSidewaysToast(store, self._sidewaysMemo)) return;
+        self._toast(VF.SIDEWAYS_TOAST, { ms: 4000, lifted: true });
+      };
+      check();
+      window.addEventListener("orientationchange", check);
+      window.addEventListener("resize", check);
     },
 
     // ---------------------------------------------------------------

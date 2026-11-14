@@ -1797,6 +1797,10 @@ html.layout-column.keyboard-open #dash-drawer {
   transition: opacity .28s ease, transform .28s ease;
 }
 .dash-toast.show { opacity: 1; transform: translate(-50%, 0); }
+/* Plan 6: on a phone the toast sits above the command box and the tab bar
+   rather than over the round buttons. The fallbacks are the phone sizes:
+   the toast is on body, outside the elements that set these. */
+.dash-toast.lifted { bottom: calc(var(--cmdbox-h, 64px) + var(--tabbar-h, 64px) + 12px); }
 
 /* ------------------------------------------------------------------ */
 /* Light mode: game panels (round 2, Malia 2026-11-02)                 */

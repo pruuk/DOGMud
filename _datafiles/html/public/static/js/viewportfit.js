@@ -30,17 +30,45 @@
         return !!coarse && isPhone(screenW, screenH) && !landscape;
     }
 
-    function markUprightPhone(win) {
-        var s = win.screen;
+    // A phone held sideways (plan 6, ruling 15): the mirror of isUprightPhone.
+    // Judged from the screen, so the on-screen keyboard cannot trigger it.
+    function isSidewaysPhone(screenW, screenH, orientationType, coarse) {
+        var landscape = orientationType ? orientationType.indexOf('landscape') === 0 : screenW >= screenH;
+        return !!coarse && isPhone(screenW, screenH) && landscape;
+    }
+
+    // The screen's orientation type, or undefined where the browser gives no
+    // signal. iOS before 16.4 has no screen.orientation; window.orientation is
+    // its only true signal.
+    function orientationType(win) {
+        var s = win.screen || {};
         var type = s.orientation && s.orientation.type;
-        // iOS before 16.4 has no screen.orientation; window.orientation is its
-        // only true signal.
         if (!type && typeof win.orientation === 'number') {
             type = Math.abs(win.orientation) === 90 ? 'landscape-primary' : 'portrait-primary';
         }
+        return type;
+    }
+
+    function markUprightPhone(win) {
+        var s = win.screen;
         var coarse = !!(win.matchMedia && win.matchMedia('(pointer: coarse)').matches);
         win.document.documentElement.classList.toggle('upright-phone',
-            isUprightPhone(s.width, s.height, type, coarse));
+            isUprightPhone(s.width, s.height, orientationType(win), coarse));
+    }
+
+    // The sideways note (layout spec ruling 15), once per browser tab:
+    // sessionStorage survives a reload but not a new tab. memo stops a repeat
+    // on this page where storage is missing or blocked.
+    var SIDEWAYS_TOAST = 'This game is easier to play with your phone held upright.';
+    var SIDEWAYS_KEY = 'dogmud.sidewaysToast';
+    function takeSidewaysToast(storage, memo) {
+        if (memo.shown) return false;
+        memo.shown = true;
+        try {
+            if (storage.getItem(SIDEWAYS_KEY) === '1') return false;
+            storage.setItem(SIDEWAYS_KEY, '1');
+        } catch (e) { /* missing or blocked storage: memo alone */ }
+        return true;
     }
 
     function watchUprightPhone(win) {
@@ -101,6 +129,10 @@
         keyboardOpen: keyboardOpen,
         isPhone: isPhone,
         isUprightPhone: isUprightPhone,
+        isSidewaysPhone: isSidewaysPhone,
+        orientationType: orientationType,
+        takeSidewaysToast: takeSidewaysToast,
+        SIDEWAYS_TOAST: SIDEWAYS_TOAST,
         watchUprightPhone: watchUprightPhone,
         wantFullScreen: wantFullScreen,
         fullScreenShown: fullScreenShown,

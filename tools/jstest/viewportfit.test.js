@@ -214,5 +214,49 @@ check('the Game panel body is observed, not only the panel',
 check('a tab that wraps alone keeps its own size',
     /\.subtabs::after \{\s*content: "";\s*flex: 999 1 auto;/.test(dashCss), true);
 
+// Plan 6, ruling 15: a phone turned sideways, judged from the screen so the
+// keyboard cannot trigger it.
+check('sideways phone', VF.isSidewaysPhone(844, 390, 'landscape-primary', true), true);
+check('upright phone is not sideways', VF.isSidewaysPhone(390, 844, 'portrait-primary', true), false);
+check('iOS sizes do not swap: the orientation wins', VF.isSidewaysPhone(390, 844, 'landscape-secondary', true), true);
+check('no orientation API, sideways', VF.isSidewaysPhone(844, 390, undefined, true), true);
+check('a sideways tablet is not a sideways phone', VF.isSidewaysPhone(1024, 768, 'landscape-primary', true), false);
+check('a desktop is not a sideways phone', VF.isSidewaysPhone(1920, 1080, 'landscape-primary', false), false);
+
+check('orientation from the API',
+    VF.orientationType({ screen: { orientation: { type: 'landscape-primary' } } }), 'landscape-primary');
+check('iOS before 16.4: window.orientation 90 is landscape',
+    VF.orientationType({ screen: {}, orientation: 90 }), 'landscape-primary');
+check('iOS before 16.4: window.orientation 0 is portrait',
+    VF.orientationType({ screen: {}, orientation: 0 }), 'portrait-primary');
+check('no signal at all', VF.orientationType({ screen: {} }), undefined);
+
+// Once per browser tab: sessionStorage survives a reload but not a new tab.
+(function () {
+    var store = {};
+    var ss = { getItem: function (k) { return k in store ? store[k] : null; }, setItem: function (k, v) { store[k] = String(v); } };
+    var memo = {};
+    check('first time in a tab: show it', VF.takeSidewaysToast(ss, memo), true);
+    check('again on this page: not again', VF.takeSidewaysToast(ss, memo), false);
+    check('after a reload in the same tab: not again', VF.takeSidewaysToast(ss, {}), false);
+    check('a new tab: show it', VF.takeSidewaysToast({ getItem: function () { return null; }, setItem: function () {} }, {}), true);
+    var blocked = { getItem: function () { throw new Error('blocked'); }, setItem: function () { throw new Error('blocked'); } };
+    var m2 = {};
+    check('storage blocked: show it once', VF.takeSidewaysToast(blocked, m2), true);
+    check('storage blocked: not twice on one page', VF.takeSidewaysToast(blocked, m2), false);
+    check('no storage at all: show it once', VF.takeSidewaysToast(null, {}), true);
+})();
+check('the toast words', VF.SIDEWAYS_TOAST, 'This game is easier to play with your phone held upright.');
+
+// The dashboard wires it, and its toast can be lifted and held longer.
+var dashSrc = fs.readFileSync(path.join(PUBLIC, 'static', 'js', 'dashboard.js'), 'utf8');
+check('the dashboard watches for a sideways phone',
+    /this\._watchSideways && this\._watchSideways\(\);/.test(dashSrc)
+    && /VF\.takeSidewaysToast\(store, self\._sidewaysMemo\)/.test(dashSrc), true);
+check('the sideways toast is lifted above the command box and shown 4s',
+    /self\._toast\(VF\.SIDEWAYS_TOAST, \{ ms: 4000, lifted: true \}\)/.test(dashSrc), true);
+check('a lifted toast sits above the command box and tab bar',
+    /\.dash-toast\.lifted \{ bottom: calc\(var\(--cmdbox-h, 64px\) \+ var\(--tabbar-h, 64px\) \+ 12px\); \}/.test(dashCss), true);
+
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);
