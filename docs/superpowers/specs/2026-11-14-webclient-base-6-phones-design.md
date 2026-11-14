@@ -31,6 +31,10 @@ Read 2026-11-14 from master `95e61dddf`. `WP` is `_datafiles/html/public/webclie
 | GMCP from the server is parsed in `socket.onmessage` and handed to `handleGMCP` | `WP:2976-3015` |
 | The server takes input every turn; turns are 50ms in the shipped config | `_datafiles/config.yaml:189` |
 | Every connection line becomes `events.Input` with `CmdTyped`; `processInput` handles it, returning early after a menu answer | `world.go:961-967`, `:973-993` |
+| The websocket loop reads every frame with `conn.ReadMessage()` and drops the frame type; GMCP from the client is binary (`SendGMCP`), typed lines are text (`SendData`), as is the copyover token | `main.go:1403`; `WP:3244`, `:2962`, `:3250-3263` |
+| `WorldInput{FromId, InputText, ReadyTurn}` is built at three sites (telnet, resumed telnet, websocket) and sent through `World.SendInput` | `world.go:37-41`, `:249`; `main.go:1085`, `:1265`, `:1555` |
+| `events.Input{UserId, MobInstanceId, InputText, ReadyTurn, Flags}`; `processInput` is called from two places | `internal/events/eventtypes.go:144-150`; `world.go:141`, `:184` |
+| A typed line in a prompt becomes the answer and the prompt's command runs in its place; `password` asks every password through its prompt | `internal/users/userrecord.promptroute.go:12-24`; `internal/usercommands/password.go` |
 | Event priority: a higher number is delivered after every lower-numbered line in flight | `internal/users/userrecord.go:504-506`; `internal/events/events.go:91` |
 | `Char.Menu` is queued at priority -1, ahead of the menu's text | `modules/gmcp/gmcp.Menu.go:76-90` |
 | `isWebClientConnection` and `isGMCPEnabled` gate GMCP by connection | `modules/gmcp/gmcp.go:79-93` |
@@ -49,6 +53,7 @@ Owner, 2026-11-14 (memory `feedback-phone-keyboard-plan6-rulings`):
 - R4. The mock is approved as drawn (2026-11-14).
 - R5. The wait is timed from the game's reply, not from Enter, so a slow connection only delays the close (chosen over a fixed 350ms after Enter).
 - R6. The server marks each command done, with whether a menu or prompt is open, so other players' lines cannot be mistaken for the reply (chosen over the client guessing from the first text after Enter). Plan 6 gains this small server piece.
+- R7. The marker never carries typed text: lines are numbered at the socket on both ends and the marker carries the number (chosen over echoing ordinary commands only, after the owner flagged that an echo would send an in-game password back).
 
 ## What players see
 
@@ -58,7 +63,7 @@ On a phone, an open tab takes at most 30% of the screen, so about 21 lines of ga
 
 ### 1. Keyboard after a send (`JS/hotinput.js`, `WP` send handler)
 
-`shouldHideKeyboardAfterSend` becomes `keyboardAfterSend(s)` and returns `'keep'`, `'close'` or `'wait'`. `s` gains `line`, the text exactly as typed.
+`shouldHideKeyboardAfterSend` becomes `keyboardAfterSend(s)` and returns `'keep'` or `'wait'`. `s` gains `line`, the text exactly as typed. (No command closes the keyboard at once any more: every in-game command that is not chat waits for its marker.)
 
 - Not a touch phone (`touchOnly && phoneWidth`), nothing sent, not in game, a menu already open, or the password prompt: `'keep'`. This is today's behaviour, unchanged.
 - The line is a chat line: `'keep'`.
@@ -66,10 +71,10 @@ On a phone, an open tab takes at most 30% of the screen, so about 21 lines of ga
 
 `isChatLine(line)` is exported beside it. The first word, lowercased, is matched against `CHAT_WORDS`: `say`, `whisper`, `reply`, `chat`, `newbie`, `trade`, `shout`, `emote`, `yell`, `scream`, `holler`, `/w`. A line starting `.` or the backtick counts whether or not a space follows (`.hello` is say). `party` and `guild` count when their second word is in `PARTY_TALK` (`chat`, `say`) or `GUILD_TALK` (`chat`, `say`, `gc`). The constants carry a comment naming R1 as the principle. A `talk` or `ask` line is not in the list: it waits, and the menu it opens keeps the keyboard (R2).
 
-The send handler acts on the answer. `'close'` blurs as today. `'wait'` waits for the server to say it has finished the command (R5, R6, section 1a), so a slow connection only delays the close and other players' lines cannot end the wait:
+The send handler acts on the answer. `'wait'` waits for the server to say it has finished the command (R5, R6, section 1a), so a slow connection only delays the close and other players' lines cannot end the wait:
 
-1. A `'wait'` remembers its line, trimmed.
-2. Each `Char.Input.Done` from the server echoes the line it answers. The first one whose `line` equals the waiting line ends the wait. A marker for an earlier, different line (the player typed `look` then quickly `talk hadwen`) does not.
+1. The client numbers its text frames: `linesSent` counts every string it sends on the socket (`SendData`, and the copyover token at `WP:2962`), starting at 0 when a socket opens. A `'wait'` remembers its line's number.
+2. Each `Char.Input.Done` carries the number of the line it answers (`seq`), never the line's text (R7). A marker with the waiting number ends the wait with its `menu`. A marker with a higher number means the waiting line never reached the world (an admin system command, a dropped line), so the wait ends at once with `menuOpen`. A lower number (an earlier command's marker) is ignored.
 3. The input is then blurred only if all of these hold: the message's `menu` is false, the command box still has focus, and its value is empty (the player has not started the next command).
 4. `MENU_WAIT_CEILING_MS` (2000) after the send, step 3 runs anyway with `menuOpen` in place of `menu`, for a line the server never answers (a dropped connection, a line the server discards).
 
@@ -77,9 +82,11 @@ A new `'wait'` replaces the previous one. Typing time never counts: the wait sta
 
 ### 1a. The server marks each command done (`world.go`, `modules/gmcp`)
 
-`processInput` (`world.go:973`) handles every line a player sends, typed (`events.CmdTyped`, set for every connection line at `world.go:966`) or queued by the game. For a typed line, a deferred step at its top queues a new `events.InputDone{UserId}` at priority 1, so it is delivered after every line of text the command queued at the default priority 0, including lines queued later in the same event pass (`internal/users/userrecord.go:504-506`). The defer covers every return, including the menu-answer early return at `world.go:985-993`.
+**Numbering.** The websocket read loop (`HandleWebSocketConnection`, `main.go:1403`) counts text frames from the moment the connection opens, the same frames the client counts; binary frames (the client's GMCP) are not counted. The count rides with the line: `WorldInput.Seq` (`world.go:37`, set at `main.go:1555`), copied by the input worker onto a new `events.Input.Seq` (`world.go:961-967`), and passed to `processInput` by both of its callers (`world.go:141`, `:184`). Telnet lines carry 0, as do lines the game queues itself (macro expansions at `world.go:1024-1029`, `user.Command`).
 
-`modules/gmcp` gets a listener beside `menuChangedHandler` (`gmcp.Menu.go:76-90`). For a web client connection only (`isWebClientConnection`, `gmcp.go:92`) with GMCP on (`isGMCPEnabled`), it sends `Char.Input.Done` with `{"line": <the line, trimmed>, "menu": <user.MenuOrPromptOpen()>}`, the menu state read when the event is handled, so it reports the state the command left. The line goes only back to the connection that sent it. Telnet clients get nothing new.
+**The marker.** `processInput` (`world.go:973`) handles every line a player sends. For a typed line with a number, a deferred step at its top queues a new `events.InputDone{UserId, Seq}` at priority 1, so it is delivered after every line of text the command queued at the default priority 0, including lines queued later in the same event pass (`internal/users/userrecord.go:504-506`). The defer covers every return, including the menu-answer early return at `world.go:985-993`.
+
+`modules/gmcp` gets a listener beside `menuChangedHandler` (`gmcp.Menu.go:76-90`). For a web client connection only (`isWebClientConnection`, `gmcp.go:92`) with GMCP on (`isGMCPEnabled`), it sends `Char.Input.Done` with `{"seq": <n>, "menu": <user.MenuOrPromptOpen()>}`, the menu state read when the event is handled, so it reports the state the command left. No typed text is ever sent back (R7): a password typed into the in-game `password` prompt travels to the server once and nowhere else. Telnet clients get nothing new.
 
 `Char.Menu` itself is unchanged and still sent ahead of the menu's text (priority -1, `gmcp.Menu.go:80-89`); the client keeps using it to queue automations.
 
@@ -110,8 +117,9 @@ The toast gets a `.dash-toast.lifted` variant that sits just above the command b
 | Decision | Why | If wrong |
 |---|---|---|
 | A 2s ceiling, one named constant | Long enough for a poor mobile link, short enough that a lost answer still closes the keyboard | Raised or lowered in one line after Malia's #834 test on mobile data |
-| The message is `Char.Input.Done` `{"line", "menu"}`, web client only, one per typed in-game line | Named beside `Char.Menu`; telnet GMCP clients have no use for it yet | Sending it to telnet GMCP clients is one condition |
-| Markers are matched to the wait by the echoed line, not by counting | Login lines never reach `processInput`, so a count of lines sent would drift from the server's from the first login; the echo needs no shared count | Two identical lines in a row match either marker; both describe the same command, so the answer is the same |
+| The message is `Char.Input.Done` `{"seq", "menu"}`, web client only, one per typed in-game line | Named beside `Char.Menu`; telnet GMCP clients have no use for it yet | Sending it to telnet GMCP clients is one condition |
+| Both ends count every text frame from the socket's open, login and copyover token included | Counting at the socket, not at the world, means login lines and lines the server swallows cannot make the two counts drift: each end counts the same frames | A future client text frame that is not a line (none today: GMCP is binary) must be counted on both ends or neither |
+| A server macro (`=1` style, `world.go:1014-1031`) marks only the line typed, not its expansions | The expansions are queued with no number, so the wait ends once the macro has been expanded, before its commands run | A macro whose command opens a menu closes the keyboard, as today |
 | The wait blurs only if the box is focused and empty | A player who already started typing the next command should not lose the keyboard mid-word | None known |
 | `ask` waits rather than keeps | Under R2 the game decides: `ask` with a menu keeps the keyboard, `ask` answered in one line closes it | If `ask` should always keep, it joins `CHAT_WORDS` |
 | "Once per visit" is once per browser tab (`sessionStorage`) | A reload is not a new visit; a new tab is | `localStorage` would show it once ever |
@@ -126,8 +134,8 @@ The command bar (#779), movement by touch (#781), the panel changes of plan 7 (M
 ## Testing
 
 - `tools/jstest/hotinput.test.js`: `isChatLine` for every chat word and shortcut, `.hello` and the backtick without a space, `party chat hi` and `guild gc hi` keep, `party invite bob` and `guild deposit 5` do not, mixed case. `keyboardAfterSend` returns `'keep'` for each of today's keep cases, `'keep'` for chat, `'wait'` for `look` and `talk hadwen`. The existing cases are kept, renamed to the new function.
-- The wait itself as pure steps: `blurAfterWait({menu, focused, value})` is `true` only for no menu, focused, empty; and the wait's matching (its own line's marker ends it, an earlier different line's marker does not, surrounding spaces are ignored, the ceiling with no marker, a new wait replacing the old) runs against fake timers.
-- Go: a typed line through `processInput` queues exactly one `InputDone`, after the command's text, on every path (a command, an unknown command, a menu answer, a prompt answer); a line queued by the game queues none. The gmcp listener sends `Char.Input.Done` with `menu: true` after `talk` to a menu NPC and `false` after `look`, and nothing to a telnet connection.
+- The wait itself as pure steps: `blurAfterWait({menu, focused, value})` is `true` only for no menu, focused, empty; and the wait's matching (its own number's marker ends it with that marker's `menu`, a lower number does not, a higher number ends it with `menuOpen`, the ceiling with no marker, a new wait replacing the old, a new socket clearing it) runs against fake timers.
+- Go: only a text frame advances the websocket count; `events.Input` carries `WorldInput.Seq`; a typed line with a number queues exactly one `InputDone` after the command's text, and a line with no number or not typed queues none; `processInput` defers it at its top (source guard, since `processInput` needs a running world). The gmcp listener sends `Char.Input.Done` `{seq, menu}` with `menu: true` while a prompt is open and `false` otherwise, sends nothing to a telnet connection, and its payload has no field holding typed text.
 - `tools/jstest/viewportfit.test.js`: `isSidewaysPhone` for an upright and sideways phone, a sideways tablet, a desktop, and an iOS device with no orientation API.
 - A dashboard test for the toast's once-per-tab rule with a stub `sessionStorage`, and with one that throws.
 - Headless Playwright check (plan 5's script, Playwright from `workspace/metaprompter/node_modules`): on a 390x844 touch phone, the Map tab's height is 30% (253px) with the keyboard down and 30% of the visible height with a simulated keyboard; on a 1000x700 column layout it is unchanged from master.
