@@ -45,6 +45,7 @@ Owner, 2026-11-14 (memory `feedback-webclient-plan7-rulings`):
 - P3. The long-press is a stopgap: contextual buttons belong to the touchscreen arc (#779, #780; noted on #780).
 - P4. Quests get a third tab, Completed.
 - P5. The menu and Quests mocks are approved as drawn, with P4 added.
+- P6. The zone-exit labels stay on the map art (`→ Greenford` at the edge, `JS/gmcp.js:1141-1148`): they are the only place the client says where a zone exit leads. Single-character marks stay too (compass N, shop and bank glyphs, `?`, stairs). Asked while planning, after the spec was approved.
 
 ## What players see
 
