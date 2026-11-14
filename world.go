@@ -183,7 +183,7 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 
 	}
 
-	w.processInput(input.UserId, input.InputText, events.EventFlag(input.Flags), input.Seq)
+	w.processInput(input.UserId, input.InputText, input.Flags, input.Seq)
 
 	w.userInputEventTracker[input.UserId] = struct{}{}
 
