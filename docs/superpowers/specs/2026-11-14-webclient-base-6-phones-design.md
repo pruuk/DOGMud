@@ -100,7 +100,7 @@ Ruling 13's aliases-and-macros exclusion stands: the client sees only the typed 
 - Phone and slim with the keyboard up: `--drawer-cap: max(60px, calc(0.3 * var(--visible-h, 100dvh)))`. `vh` cannot be used here: inside `/webclient` the frame is resized above the keyboard (`webclient.html:26-38`), so `vh` is the visible height, but the page opened on its own keeps `vh` at the layout height while only `body` is shrunk (`WP:2711-2713`). So both keyboard watches, the outer page's `fitFrameHeight` and the page's own, also set `--visible-h` on the game document's root, in px, from the same `visibleHeight` they already compute.
 - Column: the cap rules move under `html.layout-column` unchanged, so a laptop's tab beside the game keeps its size, keyboard up or down.
 
-Amended 2026-11-14 (plan 6 browser check): the keyboard counts as open only while a text field has focus (ViewportFit.keyboardOpen, editableFocused); the Reset layout button no longer widens a phone's page before a layout is applied; the command box input may shrink beside the X.
+Amended 2026-11-14 (plan 6 browser check): the keyboard counts as open only while a text field has focus (ViewportFit.keyboardOpen, editableFocused); the Reset layout button no longer widens a phone's page before a layout is applied; the command box input may shrink beside the X. Amended 2026-11-14 (plan 6 review): every toast is a `role="status"` live region whose text is set after it is in the page, so screen readers announce it (this includes the Reset layout toast); the X also cancels `mousedown`, so it does not take focus where the browser allows that; on `/webclient` the frame's focus watch starts from `DOMContentLoaded`, after the frame exists.
 
 ### 3. The X (`WP` `#panel-cmd`)
 
