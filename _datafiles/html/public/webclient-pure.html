@@ -166,6 +166,10 @@
         /* Command input inside cmd panel */
         #command-input {
             flex: 1;
+            /* A flex item will not shrink below its size="20" width unless
+               told: on a 320px phone it pushed the Close keyboard X past the
+               box (plan 6 check). */
+            min-width: 0;
             /* 48px meets the Apple (44) and Google (48) touch target minimums;
                16px text stops iOS Safari zooming the page on focus. */
             box-sizing: border-box;
@@ -2714,7 +2718,7 @@
             // On its own, this page fits itself above the on-screen keyboard.
             var vv = window.visualViewport;
             if (!vv) return;
-            vv.addEventListener('resize', function () {
+            var fitOwnPage = function () {
                 var visible = window.ViewportFit.visibleHeight(vv);
                 if (vv.scale <= 1.01) window.scrollTo(0, 0);
                 // gomud.css holds the body at 100dvh, which ignores the keyboard.
@@ -2723,8 +2727,14 @@
                 // The tab cap reads this while the keyboard is up (dashboard.css).
                 document.documentElement.style.setProperty('--visible-h', Math.floor(visible) + 'px');
                 document.documentElement.classList.toggle('keyboard-open',
-                    window.ViewportFit.keyboardOpen(window.innerHeight, visible));
-            });
+                    window.ViewportFit.keyboardOpen(window.innerHeight, visible,
+                        window.ViewportFit.editableFocused(document)));
+            };
+            vv.addEventListener('resize', fitOwnPage);
+            // A blur or a focus without a viewport resize must still set or
+            // clear keyboard-open (plan 6 check).
+            document.addEventListener('focusin', fitOwnPage);
+            document.addEventListener('focusout', fitOwnPage);
         })();
 
         // Session bar: one button that reads Leave Game while a character is

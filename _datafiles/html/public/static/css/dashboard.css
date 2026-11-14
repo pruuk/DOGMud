@@ -754,6 +754,9 @@ html.layout-column #dash-drawer {
       "center";
   }
   html.phone #dashboard:not([data-mode]) #dash-panels { display: none; }
+  /* It widened a 320px phone's page at load, before a mode is applied
+     (plan 6 check). */
+  html.phone #dashboard:not([data-mode]) #btn-reset-layout { display: none; }
 }
 
 /* Bottom tab-bar — appended to body (outside #dashboard) so

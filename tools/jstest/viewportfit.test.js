@@ -116,9 +116,34 @@ check('at normal zoom the visible height counts', VF.visibleHeight({ height: 400
 check('zoomed in with no keyboard, the page is still all visible', VF.visibleHeight({ height: 370, scale: 2 }), 740);
 check('zoomed in with the keyboard, the keyboard still counts', VF.visibleHeight({ height: 220, scale: 2 }), 440);
 
-check('no visual viewport: no keyboard', VF.keyboardOpen(740, undefined), false);
-check('an address bar hiding is not a keyboard', VF.keyboardOpen(740, 680), false);
-check('a keyboard is a keyboard', VF.keyboardOpen(740, 440), true);
+check('no visual viewport: no keyboard', VF.keyboardOpen(740, undefined, true), false);
+check('an address bar hiding is not a keyboard', VF.keyboardOpen(740, 680, true), false);
+check('a keyboard is a keyboard', VF.keyboardOpen(740, 440, true), true);
+// Plan 6 check: a keyboard needs a focused text field.
+check('200px short with no field focused: not a keyboard', VF.keyboardOpen(740, 540, false), false);
+check('200px short, third argument missing: not a keyboard', VF.keyboardOpen(740, 540), false);
+check('200px short with a field focused: a keyboard', VF.keyboardOpen(740, 540, true), true);
+check('50px short with a field focused: not a keyboard', VF.keyboardOpen(740, 690, true), false);
+function docWith(el) { return { activeElement: el }; }
+check('editable: input text', VF.editableFocused(docWith({ tagName: 'INPUT', type: 'text' })), true);
+check('editable: input with no type', VF.editableFocused(docWith({ tagName: 'INPUT' })), true);
+check('editable: input checkbox', VF.editableFocused(docWith({ tagName: 'INPUT', type: 'checkbox' })), false);
+check('editable: input button', VF.editableFocused(docWith({ tagName: 'INPUT', type: 'button' })), false);
+check('editable: textarea', VF.editableFocused(docWith({ tagName: 'TEXTAREA' })), true);
+check('editable: contenteditable', VF.editableFocused(docWith({ tagName: 'DIV', isContentEditable: true })), true);
+check('editable: a button', VF.editableFocused(docWith({ tagName: 'BUTTON' })), false);
+check('editable: null activeElement', VF.editableFocused(docWith(null)), false);
+check('editable: no document', VF.editableFocused(null), false);
+check('the page and the outer page both pass editableFocused to keyboardOpen',
+    /keyboardOpen\(window\.innerHeight, visible,\s*window\.ViewportFit\.editableFocused\(document\)\)/.test(fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8'))
+    && /keyboardOpen\(window\.innerHeight, visible,\s*ViewportFit\.editableFocused\(frame\.contentDocument\)\)/.test(fs.readFileSync(path.join(PUBLIC, 'webclient.html'), 'utf8')), true);
+check('both watches re-run on focusin and focusout',
+    /document\.addEventListener\('focusin', fitOwnPage\);\s*document\.addEventListener\('focusout', fitOwnPage\);/.test(fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8'))
+    && /doc\.addEventListener\('focusin', fitFrameHeight\);\s*doc\.addEventListener\('focusout', fitFrameHeight\);/.test(fs.readFileSync(path.join(PUBLIC, 'webclient.html'), 'utf8')), true);
+check('Reset layout is hidden on a phone before a mode is applied',
+    /html\.phone #dashboard:not\(\[data-mode\]\) #btn-reset-layout \{ display: none; \}/.test(fs.readFileSync(path.join(PUBLIC, 'static', 'css', 'dashboard.css'), 'utf8')), true);
+check('the command input can shrink beside the X',
+    /#command-input \{\s*flex: 1;[^}]*min-width: 0;/.test(fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8')), true);
 
 var dashCss = fs.readFileSync(path.join(PUBLIC, 'static', 'css', 'dashboard.css'), 'utf8');
 check('the phone tab bar steps aside for the keyboard',

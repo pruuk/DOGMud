@@ -35,7 +35,8 @@
         // element yet; the next viewport event marks it.
         if (frame.contentDocument && frame.contentDocument.documentElement) {
             frame.contentDocument.documentElement.classList.toggle('keyboard-open',
-                ViewportFit.keyboardOpen(window.innerHeight, visible));
+                ViewportFit.keyboardOpen(window.innerHeight, visible,
+                    ViewportFit.editableFocused(frame.contentDocument)));
             // The game's open-tab cap reads this while the keyboard is up
             // (dashboard.css, plan 6). It is the frame's own height, which is
             // the visible height less the site header above the frame.
@@ -141,6 +142,20 @@
         });
         window.visualViewport.addEventListener('scroll', holdPageAtTop);
     }
+    // A blur or a focus inside the game without a viewport resize must still
+    // set or clear keyboard-open. The frame's document is replaced on each
+    // load, so listen on every load (plan 6 check).
+    (function () {
+        var frame = document.getElementById('webclient-frame');
+        function watchFocus() {
+            var doc = frame.contentDocument;
+            if (!doc) return;
+            doc.addEventListener('focusin', fitFrameHeight);
+            doc.addEventListener('focusout', fitFrameHeight);
+        }
+        frame.addEventListener('load', watchFocus);
+        watchFocus();
+    })();
     window.addEventListener('beforeunload', function(event) {
         event.preventDefault();
         event.returnValue = 'Leave/Disconnect from the MUD?';
