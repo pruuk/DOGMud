@@ -58,7 +58,7 @@ These are the owner's and Malia's decisions of 2026-11-09. They are recorded in 
 1. All wrapping goes through one place and follows the device width.
 2. The automatic width is at most 80 columns.
 3. Templates must work down to 30 columns, to meet WCAG 2.2 AA reflow at 320px. Maps and wide tables are exempt and may scroll sideways.
-   Amended 2026-11-12 (plan 5, owner ruling): the web game window cannot scroll sideways, so maps and wide tables fit the reader too; see docs/superpowers/plans/2026-11-12-webclient-base-5-live-window.md.
+   Amended 2026-11-12 (plan 5, owner ruling): the web game window cannot scroll sideways, so maps and wide tables fit the reader too; see docs/superpowers/plans/completed/2026-11-12-webclient-base-5-live-window.md.
 
 **Type**
 4. One font in the client: JetBrains Mono, with ligatures off. Atkinson Hyperlegible Mono and Fira Mono were second and third. All are SIL OFL 1.1.
@@ -150,12 +150,12 @@ Every form shows all of the information: no screen moves content behind a separa
 Measuring limits. `Process` reads and parses a template on every call (`internal/templates/templates.go:212-214`), so each extra form tried costs one more read, parse and execute. Forms are tried only when the base is wider than the session and only for a template that has variants, widest first, stopping at the first that fits, so a phone pays at most three renders for a player-requested screen. Measuring never runs on a per-round or per-broadcast path. Plan 3a measures the cost on the production-sized machine limit before merging, and adds a parsed-template cache if it shows up. Measuring counts columns with `util.VisibleWidth` and executes nothing new: player text is passed as template data, as it is today, and `text/template` does not evaluate data as a template.
 
 Rendered at 30, 42 and 80 columns, no line may exceed the width and no column may break, apart from the exemption in ruling 3.
-Amended 2026-11-12 (plan 5, owner ruling): the exemption in ruling 3 is withdrawn; no screen is exempt from fitting. See docs/superpowers/plans/2026-11-12-webclient-base-5-live-window.md.
+Amended 2026-11-12 (plan 5, owner ruling): the exemption in ruling 3 is withdrawn; no screen is exempt from fitting. See docs/superpowers/plans/completed/2026-11-12-webclient-base-5-live-window.md.
 
 Three kinds of wrapping sit inside templates, outside plan 1's sweep, and belong to plans 3 and 4:
 - **Fixed widths in templates.** 11 lines in 10 template files call `splitstring` with a literal 59 to 73 (plan 3b; `screenwidth` from plan 3a replaces the literal), and `setdesc.go` echoes at 72 to match them.
 - **Hard line breaks in authored text.** Of 468 help files, 434 have prose broken by hand into lines of 45 columns or more, and help rides `CategoryScreen`, which the pipeline does not wrap. So plan 4 covers every help page's prose as well as the 170 aligned ones: on a session under 80 columns, the lines of a paragraph are joined and wrapped to the reader's width.
-Amended 2026-11-12 (plan 4, owner ruling): help files state their layout with ::rows, ::list and ::keep markers instead of the game guessing paragraph bounds; see docs/superpowers/plans/2026-11-12-webclient-base-4-help-pages.md.
+Amended 2026-11-12 (plan 4, owner ruling): help files state their layout with ::rows, ::list and ::keep markers instead of the game guessing paragraph bounds; see docs/superpowers/plans/completed/2026-11-12-webclient-base-4-help-pages.md.
 - **Rendering without a reader.** `help.go:222` calls `Process` with user id 0, so plan 4 passes the reader through.
 
 `motdBox` needs a narrow form (plan 3a): seen at 42 columns on 2026-11-09, its spaced-out title is cut off, and URLs too long for the box burst through its sides. `motdrestyle.js` matches the box by its shape and did not remove it at that width, so plan 5 checks it at narrow widths.
