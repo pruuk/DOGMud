@@ -216,6 +216,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/questtabs.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mapwhere.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/longpress.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSET_VERSION }}"></script>
@@ -4246,7 +4247,20 @@
                 var tile = e.target.closest(".inv-tile[data-handle]");
                 if (!tile || !tile.dataset.handle) return;
                 e.preventDefault();
-                openMenu(e, tile);
+                // Android may send this after our long-press already opened the menu.
+                if (window.LongPress) LongPress.once(tile, function () { openMenu(e, tile); });
+                else openMenu(e, tile);
+            });
+            // A tap (or a click) on a tile opens its menu at the tile
+            // (ruling 20); a long touch opens it where the finger is (P2).
+            document.addEventListener("click", function(e) {
+                var tile = e.target.closest(".inv-tile[data-handle]");
+                if (!tile || !tile.dataset.handle) return;
+                var r = tile.getBoundingClientRect();
+                openMenu({ clientX: r.left + r.width / 2, clientY: r.bottom, preventDefault: function () {} }, tile);
+            });
+            if (window.LongPress) LongPress.attach(document, ".inv-tile[data-handle]", function (x, y, el) {
+                openMenu({ clientX: x, clientY: y, preventDefault: function () {} }, el);
             });
         })();
         // ── End inventory context menu ───────────────────────────────────────
@@ -4417,7 +4431,12 @@
                 var row = e.target.closest(".auto-chip[data-auto-type], .auto-row[data-auto-type]");
                 if (!row) return;
                 e.preventDefault();
-                openMenu(e, row);
+                if (window.LongPress) LongPress.once(row, function () { openMenu(e, row); });
+                else openMenu(e, row);
+            });
+            // A tap keeps its job (run the automation); a long touch opens the menu (P2).
+            if (window.LongPress) LongPress.attach(document, ".auto-chip[data-auto-type], .auto-row[data-auto-type]", function (x, y, el) {
+                openMenu({ clientX: x, clientY: y, preventDefault: function () {} }, el);
             });
         })();
         // ── End automation context menu ──────────────────────────────────────
@@ -4526,7 +4545,12 @@
                 var row = e.target.closest(".qrow[data-quest-id]");
                 if (!row) return;
                 e.preventDefault();
-                openMenu(e, row);
+                if (window.LongPress) LongPress.once(row, function () { openMenu(e, row); });
+                else openMenu(e, row);
+            });
+            // A tap keeps its job (focus the quest); a long touch opens the menu (P2).
+            if (window.LongPress) LongPress.attach(document, ".qrow[data-quest-id]", function (x, y, el) {
+                openMenu({ clientX: x, clientY: y, preventDefault: function () {} }, el);
             });
         })();
         // ── End quest context menu ───────────────────────────────────────────

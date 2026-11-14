@@ -553,6 +553,19 @@ check('no per-menu copies of the menu rules are left',
 check('a dimmed menu row keeps its look under the shared menu',
     /\.ctx-menu \.ctx-row\.ctx-disabled:hover \{[^}]*background: none;/.test(css), true);
 check('the unused empty-tile rule is gone', /\.inv-tile\.empty\b/.test(css), false);
+// Plan 7, P2: a long-press opens each menu on touch; a tap on an item tile
+// opens its menu; other taps keep their jobs.
+check('the page loads longpress.js', /static\/js\/longpress\.js\?v=/.test(page), true);
+['.inv-tile[data-handle]', '.auto-chip[data-auto-type], .auto-row[data-auto-type]', '.qrow[data-quest-id]'].forEach(function (sel) {
+    check('long-press opens the menu on ' + sel,
+        page.indexOf('LongPress.attach(document, "' + sel + '"') >= 0, true);
+});
+check('a tap or click on an item tile opens its menu at the tile',
+    /addEventListener\("click", function\(e\) \{\s*var tile = e\.target\.closest\("\.inv-tile\[data-handle\]"\);/.test(page), true);
+check('a long touch on these does not select text or raise the iOS callout',
+    /\.inv-tile, \.qrow, \.auto-chip, \.auto-row \{[^}]*-webkit-touch-callout: none;[^}]*user-select: none;/.test(css), true);
+check('a native contextmenu after a long press does not open a menu twice',
+    (page.match(/LongPress\.once\(/g) || []).length, 3);
 // --- result ----------------------------------------------------------------
 
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
