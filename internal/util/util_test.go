@@ -562,7 +562,9 @@ func TestFindMatchIn(t *testing.T) {
 		{"partial match", "HELM", expected{"", "HELMET"}},
 		{"partial but not first item", "G", expected{"", "GEM"}},
 		{"contains fallback", "iel", expected{"", "SHIELD"}}, // if logic tries "contains"
-		{"helmet partial #2", "helm#2", expected{"", "HELMET"}},
+		// #865: numbering walks one order (starts-with hits, then contains hits),
+		// so #2 is the next distinct item, not HELMET again.
+		{"helmet partial #2", "helm#2", expected{"", "BIG HELM"}},
 	}
 
 	for _, tt := range tests {

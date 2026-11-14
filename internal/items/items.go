@@ -758,6 +758,27 @@ func FindMatchIn(itemName string, items ...Item) (pMatch Item, fMatch Item) {
 	return findMatchInOrder(itemName, itemNumber, items)
 }
 
+// containsRank is the best util.ContainsRank over the names NameMatch reads
+// (name, simple name, adjective-prefixed name); 2 when only a bauble keyword
+// or bauble word matched. matchStrength (bauble.go) stays separate: it weighs
+// a bauble against a real item and also reads typed-word order and keywords.
+func (i *Item) containsRank(input string) int {
+	best := 2
+	names := []string{i.Name(), i.NameSimple()}
+	if len(i.Adjectives) > 0 {
+		names = append(names, strings.Join(i.Adjectives, " ")+" "+i.NameSimple())
+	}
+	for _, n := range names {
+		if n == "" || !strings.Contains(util.NormalizeForMatch(n), util.NormalizeForMatch(input)) {
+			continue
+		}
+		if r := util.ContainsRank(input, n); r < best {
+			best = r
+		}
+	}
+	return best
+}
+
 // findMatchInOrder is FindMatchIn's list-order rule: the itemNumber-th full
 // match, else the itemNumber-th partial match, else the itemNumber-th item
 // whose name merely contains itemName.
@@ -792,19 +813,21 @@ func findMatchInOrder(itemName string, itemNumber int, items []Item) (pMatch Ite
 
 	// If no "starts with" or "exact" matches are found, try and find the first items that contain the supplied name
 	// Note: Can't have an exact match if there was never a close match
+	// The candidates are ranked and numbered by util.FallbackOrder, the same
+	// order util.FindMatchIndexIn uses (#865): starts-with hits first, then
+	// whole-word, word-start and mid-word contains hits.
 	if closeMatchItem.ItemId == 0 {
-		closeMatchItemCt = 0
-		for _, i := range items {
-			part, _ := i.NameMatch(itemName, true)
-
-			if part {
-				closeMatchItemCt++
-				if closeMatchItemCt == itemNumber {
-					closeMatchItem = i
-					break
-				}
+		isPrefix := make([]bool, len(items))
+		ranks := make([]int, len(items))
+		for idx := range items {
+			isPrefix[idx], _ = items[idx].NameMatch(itemName, false)
+			ranks[idx] = -1
+			if part, _ := items[idx].NameMatch(itemName, true); part {
+				ranks[idx] = items[idx].containsRank(itemName)
 			}
-
+		}
+		if order := util.FallbackOrder(isPrefix, ranks); itemNumber >= 1 && itemNumber <= len(order) {
+			closeMatchItem = items[order[itemNumber-1]]
 		}
 	}
 

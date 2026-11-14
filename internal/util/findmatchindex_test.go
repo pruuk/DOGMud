@@ -17,7 +17,7 @@ func TestFindMatchIndexIn_SameAnswersAsFindMatchIn(t *testing.T) {
 		{"HELM", -1, 4},
 		{"G", -1, 5},
 		{"iel", -1, 2},
-		{"helm#2", -1, 4},
+		{"helm#2", -1, 3}, // #865: next distinct item (was HELMET again)
 	}
 	for _, tc := range cases {
 		m, c := FindMatchIndexIn(tc.search, items...)
@@ -64,6 +64,11 @@ func TestFindMatchIndexIn_FallbackRanking(t *testing.T) {
 		{"exact", "rusty pot", onna, 1, 1},
 		{"exact beats earlier prefix", "pot", []string{"Potion", "Pot"}, 1, 0},
 		{"prefix beats whole-word later", "pot", []string{"Potion", "Rusty Pot"}, -1, 0},
+		// Numbered targets walk one order: starts-with hits, then ranked contains.
+		{"2.pot reaches Rusty Pot after Potion", "2.pot", []string{"Potion", "Rusty Pot"}, -1, 1},
+		{"1.pot is Potion", "pot", []string{"Potion", "Rusty Pot"}, -1, 0},
+		{"3.pot is none", "3.pot", []string{"Potion", "Rusty Pot"}, -1, -1},
+		{"apostrophe removed: word start", "edvar", []string{"Spotted Edvar", "Edvar's Ring"}, -1, 1},
 		{"number prefix on prefix", "2.pot", []string{"Potion", "Pot", "Potato"}, -1, 1},
 	}
 	for _, tc := range cases {
