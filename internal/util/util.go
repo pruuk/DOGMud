@@ -441,26 +441,64 @@ func FindMatchIndexIn(searchName string, items ...string) (match int, closeMatch
 
 	}
 
-	// If no "starts with" or "exact" matches are found, try and find the first item that contain the supplied name
+	// If no "starts with" or "exact" matches are found, fall back to items that
+	// contain the supplied name anywhere. These are ranked (#865), best first:
+	//   0. the text is whole word(s) of the name   ("pot" in "rusty pot")
+	//   1. the text starts a word                  ("pot" in "small red potion")
+	//   2. the text is inside a word               ("pot" in "spotted cloak")
+	// Ties keep list order, and "2.pot" is the second candidate in that
+	// ranked order. Only this fallback is ranked: exact and starts-with
+	// results above are unchanged.
 	// Note: Can't have an exact match if there was never a close match
 	if closeMatch < 0 {
-		closeMatchCt = 0
+		var ranked [3][]int
 		for idx, i := range items {
 			part, _ := stringMatch(searchName, i, true)
-
 			if part {
+				r := containsRank(searchName, i)
+				ranked[r] = append(ranked[r], idx)
+			}
+		}
+		closeMatchCt = 0
+		for _, tier := range ranked {
+			for _, idx := range tier {
 				closeMatchCt++
 				if closeMatchCt == searchNumber {
-					closeMatch = idx
-					break
+					return match, idx
 				}
 			}
-
 		}
-
 	}
 
 	return match, closeMatch
+}
+
+// containsRank ranks how well searchFor (already known to be contained in
+// searchIn) sits in searchIn: 0 whole word(s), 1 starts a word, 2 mid-word.
+// Both are normalized as stringMatch does; a word is a run of letters/digits.
+func containsRank(searchFor, searchIn string) int {
+	searchFor = NormalizeForMatch(searchFor)
+	searchIn = NormalizeForMatch(searchIn)
+	isWordChar := func(b byte) bool {
+		return b >= '0' && b <= '9' || b >= 'a' && b <= 'z' || b >= 0x80
+	}
+	best := 2
+	for from := 0; from <= len(searchIn)-len(searchFor); {
+		at := strings.Index(searchIn[from:], searchFor)
+		if at < 0 {
+			break
+		}
+		start := from + at
+		end := start + len(searchFor)
+		if start == 0 || !isWordChar(searchIn[start-1]) {
+			if end == len(searchIn) || !isWordChar(searchIn[end]) {
+				return 0
+			}
+			best = 1
+		}
+		from = start + 1
+	}
+	return best
 }
 
 // Searches for a partial or full match of a string
