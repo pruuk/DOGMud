@@ -50,6 +50,26 @@ The items system is built around two main components:
   `DisplayName` opens with are skipped, so "★An Old Key" gets "" and
   "★Old Key" gets "an " (plan 3b-3 review: a recipe line read "To receive a
   ★An Old Key").
+- `ArticleFor(itemId, name) string` is what those lines actually call: ""
+  when the template carries `proper_name: true` (`ItemSpec.ProperName`), else
+  `ArticlePrefix(name)`. `proper_name` marks a name that opens with the
+  possessive of one person or one unique creature ("Edvar's Map-Fragment",
+  "Soren's Iron Pin", "Old White's Fang", "Sentinel's Heartstone"), so the
+  line reads "You receive Edvar's Map-Fragment." (#799). A trade or role
+  possessive ("Foreman's Tally-Book", "Bounty Hunter's Cloak") leaves it off
+  and keeps its article. The text carries no sign of which kind it is, so
+  `proper_name_guard_test.go` lists every shipped possessive-opening name in
+  one set or the other; a new one fails until it is classified. A caller with
+  only a name (no item) has no flag to read: pass the id of the item it came
+  from. The flag describes the item's full name: a line that shows only the
+  noun (`NameSimple`, as give's room line does) uses plain `ArticlePrefix`.
+- `IsProperName(name) bool` answers the same question from a name alone, for
+  `messaging.DropDoubledItemArticles`, which has no item id: it reads a set
+  of normalised proper_name item names rebuilt with the authored-name
+  snapshot whenever item specs load, save or are seeded. messaging already
+  imports items, so no cycle needed breaking. The normalizer drops "the" or a
+  possessive determiner ("their", "your", "his", "her", "its") before such a
+  name only; a trade possessive keeps them.
 - `MidSentenceName(name) string` is the name half of that pair: a leading
   article of the name's own (A, An, The, Some), after any opening colour
   tags and quest star, is lowercased ("★an Old Key"), every other capital

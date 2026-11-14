@@ -303,7 +303,7 @@ func containerRecipeScreen(t *testing.T, width int, more ...int) string {
 // where it read `To receive a ★An Old Key:` (review of plan 3b-3).
 func TestContainerRecipeArticleSkipsTheQuestStar(t *testing.T) {
 	itm := items.Item{ItemId: 97010, Spec: &items.ItemSpec{ItemId: 97010, Name: "An Old Key", QuestToken: "q-1"}}
-	lines := containerRecipeLines(itm.DisplayName(), nil, 80)
+	lines := containerRecipeLines(itm.ItemId, itm.DisplayName(), nil, 80)
 	require.Equal(t, []string{"    To receive ★an Old Key:"}, plainLines(strings.Join(lines, "\n")))
 }
 

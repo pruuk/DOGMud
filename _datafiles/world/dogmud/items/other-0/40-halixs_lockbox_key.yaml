@@ -1,5 +1,6 @@
 itemid: 40
 name: Halix's Lockbox Key
+proper_name: true
 not_salable: true
 namesimple: key
 keylockid: 3040-lockbox

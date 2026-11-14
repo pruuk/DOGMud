@@ -1,5 +1,6 @@
 itemid: 40179
 name: Old White's Fang
+proper_name: true
 namesimple: fang
 vendor_categories:
 - jewelcrafting

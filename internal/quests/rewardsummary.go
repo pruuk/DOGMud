@@ -39,7 +39,7 @@ func RewardSummary(q *Quest, n RewardNames) string {
 		parts = append(parts, fmt.Sprintf("%d gold", r.Gold))
 	}
 	if name := lookupInt(n.Item, r.ItemId); name != "" {
-		parts = append(parts, articled(name))
+		parts = append(parts, articled(r.ItemId, name))
 	}
 	for _, g := range ParseItemGrants(r.ItemInfo) {
 		name := lookupInt(n.Item, g.ItemId)
@@ -49,7 +49,7 @@ func RewardSummary(q *Quest, n RewardNames) string {
 		if g.Qty > 1 {
 			parts = append(parts, fmt.Sprintf("%s (x%d)", name, g.Qty))
 		} else {
-			parts = append(parts, articled(name))
+			parts = append(parts, articled(g.ItemId, name))
 		}
 	}
 	for _, id := range ParseRecipeGrants(r.RecipeInfo) {
@@ -122,9 +122,9 @@ func lookupStr(f func(string) string, id string) string {
 }
 
 // articled puts "a", "an" or "some" before an item name, by the one rule
-// the game uses (items.ArticlePrefix).
-func articled(name string) string {
-	return items.ArticlePrefix(name) + name
+// the game uses (items.ArticleFor, which leaves a person's possessive bare).
+func articled(itemId int, name string) string {
+	return items.ArticleFor(itemId, name) + name
 }
 
 // joinParts joins "A", "A and B", "A, B, and C".

@@ -1,5 +1,6 @@
 itemid: 10032
 name: Elgar's Hook-spear
+proper_name: true
 vendor_categories:
 - blacksmithing
 namesimple: spear
