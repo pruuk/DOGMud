@@ -86,6 +86,10 @@ type UserRecord struct {
 	// guarded by sessionMu.
 	textMaskSent bool
 	textMaskConn uint64
+	// inputMasked is what InputMasked returns: the masked state SyncTextMask
+	// last computed on the world goroutine, so the connection goroutine reads
+	// one locked bool and never the prompt; guarded by sessionMu.
+	inputMasked  bool
 	isZombie     bool // are they a zombie currently?
 	inputBlocked bool // Whether input is currently intentionally turned off (for a certain category of commands)
 }
@@ -836,6 +840,9 @@ func (u *UserRecord) StartPrompt(command string, rest string) (*prompt.Prompt, b
 	p := u.activePrompt
 	u.signalMenuStateLocked(wasOpen)
 	u.sessionMu.Unlock()
+
+	// The prompt it replaced may have held a secret question (#868).
+	u.SyncTextMask()
 
 	if replaced != nil {
 		u.afterMenuClosed(replaced, menu.CloseReplaced, false)

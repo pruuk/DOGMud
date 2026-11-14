@@ -28,6 +28,7 @@ func TestInputMasked(t *testing.T) {
 		t.Fatal("plain question: not masked")
 	}
 	p.Ask("secret?", []string{}).MaskInput()
+	u.SyncTextMask()
 	if !u.InputMasked() {
 		t.Fatal("masked question: masked")
 	}
@@ -35,8 +36,42 @@ func TestInputMasked(t *testing.T) {
 	u.sessionMu.Lock()
 	u.activeMenu = &openMenu{m: testMenu(), s: r.session()}
 	u.sessionMu.Unlock()
+	u.SyncTextMask()
 	if u.InputMasked() {
 		t.Fatal("a menu open over the prompt: not masked")
+	}
+}
+
+// InputMasked is called from the connection goroutine, so it returns only
+// the stored flag and never reads the prompt (#868 review).
+func TestInputMasked_ReadsStoredFlagNotPrompt(t *testing.T) {
+	captureTextMask(t, false)
+	u := NewTestUser(705, "maskuser5", "Mask5", 7006)
+	p, _ := u.StartPrompt("password", "")
+	q := p.Ask("secret?", []string{}).MaskInput()
+	u.SyncTextMask()
+	if !u.InputMasked() {
+		t.Fatal("stored true after sync")
+	}
+	q.Flags = 0 // mutated without a sync
+	if !u.InputMasked() {
+		t.Fatal("InputMasked must not look at the prompt")
+	}
+	u.SyncTextMask()
+	if u.InputMasked() {
+		t.Fatal("the next sync must clear it")
+	}
+}
+
+func TestStartPromptReplacingMaskedPromptClearsIt(t *testing.T) {
+	sent := captureTextMask(t, true)
+	u := NewTestUser(706, "maskuser6", "Mask6", 7007)
+	p, _ := u.StartPrompt("password", "")
+	p.Ask("secret?", []string{}).MaskInput()
+	u.SyncTextMask()
+	u.StartPrompt("other", "")
+	if u.InputMasked() || len(*sent) != 2 || (*sent)[1] != "TEXTMASK:false" {
+		t.Fatalf("replacing the prompt must unmask: masked=%v sent=%v", u.InputMasked(), *sent)
 	}
 }
 

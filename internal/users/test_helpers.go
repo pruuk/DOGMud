@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
@@ -21,6 +22,17 @@ func init() {
 		panic("test_helpers: failed to generate test password hash: " + err.Error())
 	}
 	testPasswordHash = string(hash)
+}
+
+// CaptureTextMaskForTest replaces the TEXTMASK send seams: every connection
+// counts as a websocket (or none, when websocket is false) and the frames
+// sent are appended to the returned slice. Call the returned func to restore.
+func CaptureTextMaskForTest(websocket bool) (sent *[]string, restore func()) {
+	frames := []string{}
+	oldWS, oldSend := textMaskIsWebsocket, textMaskSend
+	textMaskIsWebsocket = func(connections.ConnectionId) bool { return websocket }
+	textMaskSend = func(b []byte, _ ...connections.ConnectionId) { frames = append(frames, string(b)) }
+	return &frames, func() { textMaskIsWebsocket, textMaskSend = oldWS, oldSend }
 }
 
 // SeedUsersForTest replaces the global userManager with a fresh instance
