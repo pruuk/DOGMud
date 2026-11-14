@@ -137,9 +137,48 @@ check('editable: no document', VF.editableFocused(null), false);
 check('the page and the outer page both pass editableFocused to keyboardOpen',
     /keyboardOpen\(window\.innerHeight, visible,\s*window\.ViewportFit\.editableFocused\(document\)\)/.test(fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8'))
     && /keyboardOpen\(window\.innerHeight, visible,\s*ViewportFit\.editableFocused\(frame\.contentDocument\)\)/.test(fs.readFileSync(path.join(PUBLIC, 'webclient.html'), 'utf8')), true);
-check('both watches re-run on focusin and focusout',
-    /document\.addEventListener\('focusin', fitOwnPage\);\s*document\.addEventListener\('focusout', fitOwnPage\);/.test(fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8'))
-    && /doc\.addEventListener\('focusin', fitFrameHeight\);\s*doc\.addEventListener\('focusout', fitFrameHeight\);/.test(fs.readFileSync(path.join(PUBLIC, 'webclient.html'), 'utf8')), true);
+check('the page on its own re-runs on focusin and focusout',
+    /document\.addEventListener\('focusin', fitOwnPage\);\s*document\.addEventListener\('focusout', fitOwnPage\);/.test(fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8')), true);
+// webclient.html behaviourally: its script runs at parse time, before the
+// frame exists. Run it in a fake page and fire DOMContentLoaded and load.
+(function () {
+    var vm = require('vm');
+    var html = fs.readFileSync(path.join(PUBLIC, 'webclient.html'), 'utf8');
+    var m = /<script type="text\/javascript">([\s\S]*?)<\/script>/.exec(html);
+    check('webclient.html has one inline script with fitFrameHeight', !!m && /function fitFrameHeight/.test(m[1]), true);
+    if (!m) return;
+    var winL = {}, docL = {}, frameL = {}, frameDocL = {};
+    function recorder(store) {
+        return function (name, fn) { (store[name] = store[name] || []).push(fn); };
+    }
+    var frameDoc = { addEventListener: recorder(frameDocL), documentElement: { classList: { toggle: function () {} }, style: { setProperty: function () {} } } };
+    var frame = { addEventListener: recorder(frameL), contentDocument: frameDoc, style: {} };
+    var domReady = false;
+    var el = { style: {}, clientWidth: 300, clientHeight: 500, getBoundingClientRect: function () { return { top: 0 }; } };
+    var fakeDoc = {
+        addEventListener: recorder(docL),
+        getElementById: function (id) { return id === 'webclient-frame' ? (domReady ? frame : null) : el; },
+        getElementsByTagName: function () { return []; }
+    };
+    var fakeWin = { addEventListener: recorder(winL), screen: { width: 390, height: 844 }, innerHeight: 800, scrollTo: function () {} };
+    // As in a browser, the window is the global object: window.X is a global X.
+    var sandbox = fakeWin;
+    fakeWin.document = fakeDoc;
+    fakeWin.window = fakeWin;
+    fakeWin.ViewportFit = VF;
+    var threw = null;
+    try { vm.runInNewContext(m[1], sandbox); } catch (e) { threw = e; }
+    check('webclient.html script runs at parse time without throwing', threw === null, true);
+    check('beforeunload is registered at parse time', (winL.beforeunload || []).length, 1);
+    check('no frame yet: no focus listeners', Object.keys(frameDocL).length, 0);
+    domReady = true;
+    try { (docL.DOMContentLoaded || []).forEach(function (f) { f(); }); } catch (e) { threw = e; }
+    if (threw) console.log('threw: ' + threw.stack.split('\n').slice(0, 3).join(' | '));
+    check('DOMContentLoaded handlers do not throw', threw === null, true);
+    (frameL.load || []).forEach(function (f) { f(); });
+    check('the frame document watches focusin', (frameDocL.focusin || []).length >= 1, true);
+    check('the frame document watches focusout', (frameDocL.focusout || []).length >= 1, true);
+})();
 check('Reset layout is hidden on a phone before a mode is applied',
     /html\.phone #dashboard:not\(\[data-mode\]\) #btn-reset-layout \{ display: none; \}/.test(fs.readFileSync(path.join(PUBLIC, 'static', 'css', 'dashboard.css'), 'utf8')), true);
 check('the command input can shrink beside the X',
