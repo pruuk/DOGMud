@@ -758,11 +758,13 @@ func FindMatchIn(itemName string, items ...Item) (pMatch Item, fMatch Item) {
 	return findMatchInOrder(itemName, itemNumber, items)
 }
 
-// containsRank is the best util.ContainsRank over the names NameMatch reads
+// ContainsRank is the best util.ContainsRank over the names NameMatch reads
 // (name, simple name, adjective-prefixed name); 2 when only a bauble keyword
 // or bauble word matched. matchStrength (bauble.go) stays separate: it weighs
 // a bauble against a real item and also reads typed-word order and keywords.
-func (i *Item) containsRank(input string) int {
+// Callers that pick among matching items by their own order (the bandolier's
+// oldest-first) use it to rank first and keep their order as the tie-break.
+func (i *Item) ContainsRank(input string) int {
 	best := 2
 	names := []string{i.Name(), i.NameSimple()}
 	if len(i.Adjectives) > 0 {
@@ -823,7 +825,7 @@ func findMatchInOrder(itemName string, itemNumber int, items []Item) (pMatch Ite
 			isPrefix[idx], _ = items[idx].NameMatch(itemName, false)
 			ranks[idx] = -1
 			if part, _ := items[idx].NameMatch(itemName, true); part {
-				ranks[idx] = items[idx].containsRank(itemName)
+				ranks[idx] = items[idx].ContainsRank(itemName)
 			}
 		}
 		if order := util.FallbackOrder(isPrefix, ranks); itemNumber >= 1 && itemNumber <= len(order) {

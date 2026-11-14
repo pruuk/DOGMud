@@ -104,6 +104,25 @@ func TestGetCompanion_PartialMatch(t *testing.T) {
 	assert.Equal(t, "Steppe Spirit Wolf", found.Name)
 }
 
+// #865: a whole word beats a word that merely contains the text, and N.
+// walks one order (starts-with, then ranked contains).
+func TestGetCompanion_WholeWordBeatsMidWord(t *testing.T) {
+	c := New()
+	c.Skills[string(skills.Manifestation)] = 19
+	c.Companions = []CompanionInfo{
+		{MobId: 1, InstanceId: 1, Name: "Spotted Hound"},
+		{MobId: 2, InstanceId: 2, Name: "Rusty Pot Golem"},
+	}
+
+	found := c.GetCompanion("pot")
+	require.NotNil(t, found)
+	assert.Equal(t, 2, found.InstanceId, "whole word 'pot' beats 'Spotted'")
+	found = c.GetCompanion("2.pot")
+	require.NotNil(t, found)
+	assert.Equal(t, 1, found.InstanceId, "2. is the next candidate in ranked order")
+	assert.Nil(t, c.GetCompanion("3.pot"))
+}
+
 func TestGetCompanion_NotFound(t *testing.T) {
 	c := New()
 	c.Skills[string(skills.Manifestation)] = 19
