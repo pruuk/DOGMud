@@ -174,6 +174,28 @@ s.closed();
 check('music keeps playing while a restart reconnects', musicStops === 0, 'stops ' + musicStops);
 check('the client is retrying', label.textContent === ', reconnecting', 'label ' + label.textContent);
 
+// The server sends !!MUSIC(Off) at login to stop the intro track. MP3Player.stop
+// with no URL does nothing, so the page has to call stopAll. This runs the
+// page's real onmessage handler.
+connect.disabled = false;
+connect.click();
+s = sockets[sockets.length - 1];
+s.open();
+global.payloadsReceived = 0; global.totalBytesReceived = 0;
+global.handleWebclientCommand = function () { return false; };
+global.handleGMCP = function () {};
+global.stripAnsi = function (t) { return t; };
+global.runTriggers = function () {};
+var stopCalls = [];
+MusicPlayer.stop = function (u) { stopCalls.push(u); };
+musicStops = 0;
+s.onmessage({ data: '!!MUSIC(Off)' });
+check('the login !!MUSIC(Off) stops the intro music', musicStops === 1,
+    'stopAll calls ' + musicStops + ', stop(url) calls ' + stopCalls.length);
+musicStops = 0;
+s.onmessage({ data: '!!MUSIC(Off U=http://x/m/)' });
+check('!!MUSIC(Off U=...) only sets the base URL', musicStops === 0, 'stopAll calls ' + musicStops);
+
 // The reconnect attempts run out.
 connect.disabled = false;
 connect.click();

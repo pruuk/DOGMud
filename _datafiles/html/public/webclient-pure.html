@@ -3033,7 +3033,7 @@
                                     baseMp3Url += "/";
                                 }
                             } else {
-                                MusicPlayer.stop();
+                                MusicPlayer.stopAll(); // stop(url) with no URL does nothing (#838)
                             }
                         } else {
                             let soundLevel = 1.0;
