@@ -552,14 +552,6 @@ func (c *Character) FindItem(itemName string) (items.Item, string, bool) {
 		}
 	}
 
-	// The handle path above reaches the component bag's contents, so the
-	// name path does too (#851).
-	for _, item := range c.ComponentItems {
-		if item.ItemId > 0 {
-			pool = append(pool, candidate{item, "in your component bag"})
-		}
-	}
-
 	slotItems := []struct {
 		item   items.Item
 		source string
