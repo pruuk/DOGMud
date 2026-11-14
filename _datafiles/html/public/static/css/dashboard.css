@@ -1203,17 +1203,8 @@ html.layout-column.keyboard-open #dash-drawer {
   width: 78%;
   height: 78%;
   object-fit: contain;
-  pointer-events: none;   /* clicks fall through to the tile action menu */
+  pointer-events: none;   /* a tap or click falls through to the tile, which opens its menu */
 }
-
-/* Empty slot — dashed outline, no icon */
-.inv-tile.empty {
-  background: var(--well-empty);
-  border-style: dashed;
-  border-color: var(--panel-border);
-  cursor: default;
-}
-.inv-tile.empty:hover { border-color: var(--panel-border); }
 
 /* Slot label below the tile. Off: a 46px column fits about four letters at
    the text size (spec, Equipped panel). */
@@ -1279,10 +1270,13 @@ html.layout-column.keyboard-open #dash-drawer {
   text-align: center;
 }
 
-/* ── Inventory right-click context menu ─────────────────────────────────── */
-.inv-ctx {
+/* Right-click and long-press menus: items, Automation and Quests share one
+   look (plan 7, ruling 20). The name sits boxed at the title size, apart from
+   the actions, which are indented under it and tall enough to tap. */
+.ctx-menu {
   position: fixed;
-  min-width: 120px;
+  min-width: 160px;
+  padding-bottom: 4px;
   background: var(--ink-deep);
   border: 1px solid var(--gold-rule);
   border-radius: 5px;
@@ -1292,31 +1286,44 @@ html.layout-column.keyboard-open #dash-drawer {
   font-family: var(--font-body);
   font-size: var(--text);
 }
-.inv-ctx .ctx-header {
-  padding: 5px 10px 4px;
-  font-size: var(--text);
-  color: var(--text-secondary);
-  border-bottom: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
+.ctx-menu .ctx-header {
+  margin: 6px;
+  padding: 6px 10px;
+  font-size: var(--title);
+  font-weight: 400;
+  color: var(--title-gold);
+  background: var(--panel-bg);
+  border: 1px solid var(--gold-rule);
+  border-radius: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: min(34ch, 80vw);
+  max-width: min(28ch, 80vw);
   pointer-events: none;
   user-select: none;
 }
-.inv-ctx .ctx-row {
-  padding: 5px 10px;
+.ctx-menu .ctx-row {
+  padding: 8px 10px 8px 24px;
   color: var(--vellum);
   cursor: pointer;
   white-space: nowrap;
 }
-.inv-ctx .ctx-row:hover,
-.inv-ctx .ctx-row.ctx-default {
+.ctx-menu .ctx-row:hover,
+.ctx-menu .ctx-row.ctx-default {
   background: var(--panel-border);
   color: var(--ink-gold);
 }
-.inv-ctx .ctx-sep {
+.ctx-menu .ctx-sep {
+  margin: 0 6px;
   border-top: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
+}
+/* Dimmed: brightness carries the meaning, no hue. (Folded from the Quests
+   copy, the only one that had it.) */
+.ctx-menu .ctx-row.ctx-disabled,
+.ctx-menu .ctx-row.ctx-disabled:hover {
+  color: var(--text-secondary);
+  background: none;
+  cursor: default;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1479,94 +1486,6 @@ html.layout-column.keyboard-open #dash-drawer {
   font-size: var(--text);
   padding: 16px 8px;
   text-align: center;
-}
-
-/* ── Automation context menu — mirrors .inv-ctx exactly ─────────────────── */
-.auto-ctx {
-  position: fixed;
-  min-width: 120px;
-  background: var(--ink-deep);
-  border: 1px solid var(--gold-rule);
-  border-radius: 5px;
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--shadow) 65%, transparent);
-  overflow: hidden;
-  z-index: 9000;
-  font-family: var(--font-body);
-  font-size: var(--text);
-}
-/* Shared row/header/sep styles from .inv-ctx also apply to .auto-ctx */
-.auto-ctx .ctx-header {
-  padding: 5px 10px 4px;
-  font-size: var(--text);
-  color: var(--text-secondary);
-  border-bottom: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: min(34ch, 80vw);
-  pointer-events: none;
-  user-select: none;
-}
-.auto-ctx .ctx-row {
-  padding: 5px 10px;
-  color: var(--vellum);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.auto-ctx .ctx-row:hover,
-.auto-ctx .ctx-row.ctx-default {
-  background: var(--panel-border);
-  color: var(--ink-gold);
-}
-.auto-ctx .ctx-sep {
-  border-top: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
-}
-
-/* ── Quest context menu (#375 p5) — mirrors .auto-ctx ────────────────────── */
-.quest-ctx {
-  position: fixed;
-  min-width: 120px;
-  background: var(--ink-deep);
-  border: 1px solid var(--gold-rule);
-  border-radius: 5px;
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--shadow) 65%, transparent);
-  overflow: hidden;
-  z-index: 9000;
-  font-family: var(--font-body);
-  font-size: var(--text);
-}
-.quest-ctx .ctx-header {
-  padding: 5px 10px 4px;
-  font-size: var(--text);
-  color: var(--text-secondary);
-  border-bottom: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: min(34ch, 80vw);
-  pointer-events: none;
-  user-select: none;
-}
-.quest-ctx .ctx-row {
-  padding: 5px 10px;
-  color: var(--vellum);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.quest-ctx .ctx-row:hover,
-.quest-ctx .ctx-row.ctx-default {
-  background: var(--panel-border);
-  color: var(--ink-gold);
-}
-.quest-ctx .ctx-sep {
-  border-top: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
-}
-/* Dimmed: brightness carries the meaning, no hue. */
-.quest-ctx .ctx-row.ctx-disabled,
-.quest-ctx .ctx-row.ctx-disabled:hover {
-  color: var(--text-secondary);
-  background: none;
-  cursor: default;
 }
 
 /* ── Automation modal overlay ────────────────────────────────────────────── */

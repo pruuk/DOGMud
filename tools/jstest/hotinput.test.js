@@ -536,6 +536,19 @@ check('no panel says Chat any more', /<span class="ph-title">Chat<\/span>|aria-l
 check('the Comms channels are named for screen readers', /aria-label="Comms channels"/.test(page), true);
 check('the Chat channel keeps its name', /id="comm-tab-chat"[^>]*data-label="Chat"/.test(page), true);
 check('the phone tab is Comms', /chat:\s*\{ label: "Comms",/.test(dash), true);
+// Plan 7, ruling 20: one menu look for items, Automation and Quests.
+['inv-ctx', 'auto-ctx', 'quest-ctx'].forEach(function (cls) {
+    check(cls + ' is built as a shared ctx-menu', new RegExp('el\\.className = "' + cls + ' ctx-menu";').test(page), true);
+});
+check('the menu header is the name at the title size, boxed, regular weight',
+    /\.ctx-menu \.ctx-header \{[^}]*font-size: var\(--title\);[^}]*font-weight: 400;[^}]*border: 1px solid var\(--gold-rule\);/.test(css), true);
+check('menu rows are indented under the name and tall enough to tap',
+    /\.ctx-menu \.ctx-row \{[^}]*padding: 8px 10px 8px 24px;/.test(css), true);
+check('no per-menu copies of the menu rules are left',
+    /\.(inv|auto|quest)-ctx\b/.test(css), false);
+check('a dimmed menu row keeps its look under the shared menu',
+    /\.ctx-menu \.ctx-row\.ctx-disabled:hover \{[^}]*background: none;/.test(css), true);
+check('the unused empty-tile rule is gone', /\.inv-tile\.empty\b/.test(css), false);
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
 if (failures > 0) {
     console.log(failures + ' FAILED');

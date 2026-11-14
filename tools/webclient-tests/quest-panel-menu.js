@@ -163,7 +163,7 @@ function rightClick(row) {
   (docListeners.contextmenu || []).forEach((fn) => fn(ev));
   return prevented;
 }
-function menuEl() { return body.children.find((c) => c.className === 'quest-ctx') || null; }
+function menuEl() { return body.children.find((c) => /(^| )quest-ctx( |$)/.test(c.className)) || null; }
 function menuRow(label) {
   const m = menuEl();
   return m ? m.children.find((c) => c.textContent === label) : null;
