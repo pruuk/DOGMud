@@ -37,11 +37,28 @@ type Question struct {
 	DefaultResponse string     // What is the default response?
 	Response        string     // What was the response last submitted
 	Done            bool       // Was it seen and responded to?
-	Flags           int        // Mask reply etc
+	Flags           int        // FlagMaskInput etc
 	Menu            *menu.Menu // set by AskMenu: the question is a menu (#375)
 	// LastResult is what the last Answer meant to the menu, so the caller
 	// can say why a line was refused.
 	LastResult menu.ResultKind
+}
+
+// Question flags (Question.Flags).
+const (
+	// FlagMaskInput marks a question whose answer is a secret, such as a
+	// password: the player's typing echoes as *, stays out of input
+	// history, and a web client types it into a password field (#868).
+	FlagMaskInput = 1 << iota
+)
+
+// Masked reports whether the question's answer is a secret (#868).
+func (q *Question) Masked() bool { return q != nil && q.Flags&FlagMaskInput != 0 }
+
+// MaskInput marks the question's answer as a secret and returns the question.
+func (q *Question) MaskInput() *Question {
+	q.Flags |= FlagMaskInput
+	return q
 }
 
 type Prompt struct {
