@@ -215,6 +215,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/questtabs.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mapwhere.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSET_VERSION }}"></script>
@@ -330,6 +331,12 @@
             <div id="map-controls" class="map-controls">
               <button type="button" id="map-legend-toggle" class="map-legend-toggle"
                       aria-expanded="false" aria-controls="map-legend">Legend <span class="map-legend-arrow" aria-hidden="true">▸</span></button>
+            </div>
+            <!-- Where you are and where your focused quest leads (plan 7,
+                 ruling 17); the map art carries no words (P1). -->
+            <div id="map-where" class="map-where">
+              <span class="mw-loc" hidden><span class="mw-k">Location:</span> <span class="mw-v"></span></span>
+              <span class="mw-dest" hidden><span class="mw-k">Destination:</span> <span class="mw-v"></span></span>
             </div>
             <!-- The map's key, under the map rather than drawn over the rooms
                  (2026-11-02). The Legend button above opens and folds it;
@@ -850,6 +857,7 @@
                         gr.addRoom(r);
                     }
                     gr.centerOnRoom(r.RoomId);
+                    updateMapWhere();
                 }
 
             },
@@ -992,7 +1000,7 @@
                     gr.setZoneSnapshot(obj.Map.zone, obj.Map.rooms || [], obj.Map.cz || 0, obj.Map.party || [], obj.Map.full !== false);
                     // Update map panel title if we can find it
                     var mapTitle = document.querySelector('#panel-map .ph-title');
-                    if (mapTitle) mapTitle.textContent = 'Map (' + obj.Map.zone + ')';
+                    if (mapTitle) mapTitle.textContent = 'Map (' + obj.Map.zone + ', Level ' + (obj.Map.cz || 0) + ')';
                 }
             },
             "Char.Inventory": function() {
@@ -1000,6 +1008,7 @@
             },
             "Char.Quests": function() {
                 renderQuests();
+                updateMapWhere();
                 if (gr && gr.setQuestMarker) {
                     var data = (GMCPStructs.Char && GMCPStructs.Char.Quests) ? GMCPStructs.Char.Quests : [];
                     var f = Array.isArray(data) ? data.filter(function (q) { return q.focused; })[0] : null;
@@ -1143,6 +1152,21 @@
                     ? window.itemIconSVG(item.type, item.subtype) : "";
                 if (svg) tile.insertAdjacentHTML("afterbegin", svg);
             }
+        }
+
+        // The Map's Location / Destination bar (plan 7, ruling 17).
+        function updateMapWhere() {
+            if (!window.MapWhere) { return; }
+            var room = (GMCPStructs.Room && GMCPStructs.Room.Info) ? GMCPStructs.Room.Info.name : "";
+            var data = (GMCPStructs.Char && GMCPStructs.Char.Quests) ? GMCPStructs.Char.Quests : [];
+            var f = Array.isArray(data) ? data.filter(function (q) { return q && q.focused && !q.status; })[0] : null;
+            var t = MapWhere.text(room, f);
+            [[".mw-loc", t.location], [".mw-dest", t.destination]].forEach(function (p) {
+                var el = document.querySelector("#map-where " + p[0]);
+                if (!el) { return; }
+                el.querySelector(".mw-v").textContent = p[1];
+                el.hidden = !p[1];
+            });
         }
 
         function renderQuests() {

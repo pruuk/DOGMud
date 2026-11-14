@@ -344,6 +344,13 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 }
 .map-legend li { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .map-legend svg { width: 20px; height: 15px; flex: none; }
+/* The Map's Location / Destination bar (plan 7, ruling 17). Two spans that
+   wrap to two lines when narrow; each ellipsises inside the panel. */
+.map-where { display: flex; flex-wrap: wrap; gap: 2px 16px; margin: 6px 4px 0; padding: 6px 4px 0; border-top: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent); font-family: var(--font-body); font-size: var(--text); line-height: 1.2; }
+.map-where > span { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-where .mw-k { color: var(--ink-gold); }
+.map-where .mw-v { color: var(--title-gold); }
+.map-where .mw-dest .mw-v { color: var(--quest-name-focus); }
 /* Quests is as tall as its list, up to 220px, and gives height back (down
    to 80px, then its list scrolls) when the left column runs out, so a
    short laptop window never scrolls the whole page (#768 review item 5). */
