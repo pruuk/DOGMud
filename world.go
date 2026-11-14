@@ -978,6 +978,10 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 		return
 	}
 
+	// The web client's command box follows whether the next line is a secret
+	// answer (#868), whichever way this line is handled.
+	defer user.SyncTextMask()
+
 	typed := flags.Has(events.CmdTyped)
 
 	// A typed line goes to an open game menu first (#375). A line the menu
