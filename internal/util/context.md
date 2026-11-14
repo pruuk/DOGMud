@@ -69,6 +69,10 @@ func StringWildcardMatch(stringToSearch, patternToSearch string) bool
 length of a MUD string bears no relation to how wide it prints. Every wrapping
 and alignment decision must use `VisibleWidth`, and `SplitString` already does.
 
+`SplitString` keeps trailing punctuation on the word before it, including
+punctuation that follows `</ansi>` tags (`hold.</ansi>"` stays one unit), so a
+closing quote is never left alone on a line (#603).
+
 `ConvertToAscii` (backed by the `unicodeToAscii` table) and
 `StripCharsForScreenReaders` serve the accessibility and
 limited-client paths — a client that has not converged on UTF-8 gets readable

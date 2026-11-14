@@ -18,6 +18,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"crypto/md5"
@@ -232,6 +233,15 @@ func VisibleWidth(s string) int {
 	return runewidth.StringWidth(ansiTagRegex.ReplaceAllString(s, ``))
 }
 
+const ansiCloseTag = `</ansi>`
+
+// startsWithPunctuation reports whether the token's first rune is punctuation
+// (not a space), so a token like ` "` that opens a new phrase is not glued.
+func startsWithPunctuation(tok string) bool {
+	r, _ := utf8.DecodeRuneInString(tok)
+	return r != utf8.RuneError && unicode.IsPunct(r)
+}
+
 func SplitString(input string, lineWidth int) []string {
 	var result []string
 	var currentLine string
@@ -248,22 +258,37 @@ func SplitString(input string, lineWidth int) []string {
 		// start its line without the space that followed the word.
 		afterLongWord := false
 
-		skip := false
+		skipCount := 0
 		for idx, word := range words {
-			if skip {
-				skip = false
+			if skipCount > 0 {
+				skipCount--
 				continue
 			}
 
 			wordLen := VisibleWidth(word)
 
+			// Trailing punctuation rides on the word before it, and so does
+			// any closing punctuation that follows closing tags: the quote in
+			// `hold.</ansi>"` must not wrap onto a line of its own (#603).
+			glued := 0
 			if idx < l-1 && punctuationRegex.MatchString(words[idx+1]) {
-				wordLen += VisibleWidth(words[idx+1])
-				word += words[idx+1]
-				skip = true
-			} else {
-				skip = false
+				glued = 1
 			}
+			for {
+				next := idx + 1 + glued
+				for next < l && words[next] == ansiCloseTag {
+					next++
+				}
+				if next >= l || !startsWithPunctuation(words[next]) {
+					break
+				}
+				glued = next - idx
+			}
+			for g := 1; g <= glued; g++ {
+				wordLen += VisibleWidth(words[idx+g])
+				word += words[idx+g]
+			}
+			skipCount = glued
 
 			if afterLongWord {
 				word = strings.TrimLeft(word, " ")
