@@ -38,6 +38,8 @@ type WorldInput struct {
 	FromId    int
 	InputText string
 	ReadyTurn uint64
+	// Seq is the web client line number (main.go countLineFrame); 0 for telnet.
+	Seq uint64
 }
 
 func (wi WorldInput) Id() int {
@@ -959,14 +961,21 @@ loop:
 			break loop
 		case wi := <-w.worldInput:
 
-			events.AddToQueue(events.Input{
-				UserId:    wi.FromId,
-				InputText: wi.InputText,
-				ReadyTurn: util.GetTurnCount(),
-				Flags:     events.CmdTyped,
-			})
+			events.AddToQueue(inputEventFor(wi))
 
 		}
+	}
+}
+
+// inputEventFor is the event a connection line becomes: typed, ready now, and
+// carrying the web client's line number for the done marker (plan 6).
+func inputEventFor(wi WorldInput) events.Input {
+	return events.Input{
+		UserId:    wi.FromId,
+		InputText: wi.InputText,
+		ReadyTurn: util.GetTurnCount(),
+		Flags:     events.CmdTyped,
+		Seq:       wi.Seq,
 	}
 }
 

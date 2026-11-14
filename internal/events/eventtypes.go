@@ -88,6 +88,17 @@ type MenuChanged struct {
 
 func (m MenuChanged) Type() string { return `MenuChanged` }
 
+// InputDone is queued after the server has handled one typed web client line
+// (plan 6, spec 2026-11-14 R6). gmcp pushes it as Char.Input.Done {seq, menu}
+// so the phone keyboard can wait for its own line. It carries the line's
+// number, never its text (R7).
+type InputDone struct {
+	UserId int
+	Seq    uint64
+}
+
+func (i InputDone) Type() string { return `InputDone` }
+
 // Used for giving/taking quest progress
 type Quest struct {
 	UserId     int
@@ -147,6 +158,10 @@ type Input struct {
 	InputText     string
 	ReadyTurn     uint64
 	Flags         EventFlag
+	// Seq numbers a web client's line: the count of text frames its
+	// connection has sent, the same count the client keeps (plan 6, R7).
+	// 0 for telnet and for lines the game queues itself.
+	Seq uint64
 }
 
 func (i Input) Type() string { return `Input` }
