@@ -98,6 +98,8 @@ Already as ruled (46px columns, slot labels off, empty slots not drawn). The unu
 
 Amended 2026-11-14 (plan 7 plan): the three quest tabs share one list host rather than one host per tab, so the tab strip re-renders one container; `quests all` was not rewritten onto `CompletedQuestIds`, and `TestCompletedQuestIds_MatchesQuestsAll` (which reads `quests all`'s own row builders) holds the two together instead.
 
+Amended 2026-11-14 (plan 7 plan): a desktop left-click on an item tile opens its menu too, through one handler for click and tap (a click did nothing before); right-click is unchanged.
+
 Amended 2026-11-14 (plan 7 build): "Ready now" is drawn in `--quest-name-focus`, because brass fails 4.5:1 on the light panel. Quest rows that are not ready, and Completed rows, are quieted by regular weight as well as colour, because a dimmer colour alone fails contrast in light mode. The map bar's Destination uses `--cp-mid` (#e6b058), the map's own quest gold, in every theme. Dimmed menu rows use `--toast-desc` (5.22:1).
 
 ## Out of scope

@@ -286,7 +286,7 @@ class RoomGridSVG {
       this.roomsGroup = document.createElementNS(LEATHER_NS, 'g');
       this.worldSvg.appendChild(this.roomsGroup);
 
-      // overlayGroup — the compass, drawn in 320×300 design coords on
+      // overlayGroup: the compass, drawn in 320×300 design coords on
       // TOP of worldSvg so the pannable room world never covers it.
       this.overlayGroup = document.createElementNS(LEATHER_NS, 'g');
       this.svg.appendChild(this.overlayGroup);

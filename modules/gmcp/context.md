@@ -584,12 +584,12 @@ re-sends Char.Quests on every move, since all of these depend on the player's
 current room.
 
 The web client reads them in `gmcp.js` (slice 2): the quest handler passes
-`{targetRoom, nextRoom, nextDir, name, kind, label, targetRooms, inside}` to
-`RoomGridSVG.setQuestMarker`, which draws a brass wash with a dashed outline and
-the area name over `target_rooms` that are on the map (`_drawQuestWash`), a
-"Somewhere in <label>" banner when `inside` is true for an area or zone
-(`_drawQuestBanner`), and a brass pin on `target_room`. The quest panel shows
-`guide`. `tools/webclient-tests/quest-destination-map.js` runs it, and
+`{targetRoom, nextRoom, nextDir, kind, targetRooms}` to
+`RoomGridSVG.setQuestMarker`, which draws a brass wash with a dashed outline
+over `target_rooms` that are on the map (`_drawQuestWash`) and a brass pin on
+`target_room`. The wash carries no words: the Map's Location / Destination bar
+(`static/js/mapwhere.js`) names the place (plan 7, owner P1). The quest panel
+shows `guide`. `tools/webclient-tests/quest-destination-map.js` runs it, and
 `quest-destination-demo.html` draws it in a browser.
 
 ## Char.Quests: status `done` (`gmcp.Char.go`; web client base plan 7)
