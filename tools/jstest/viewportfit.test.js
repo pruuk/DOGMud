@@ -253,9 +253,9 @@ var sideways = mediaBlock('@media (pointer: coarse) and (orientation: landscape)
 check('a phone either way up gets 30px sub-tabs', /\.subtab \{ min-height: 30px;/.test(phones), true);
 check('a phone either way up gets 30px title buttons', /\.dash-panel-head \.ph-btn \{ width: 32px; height: 30px;/.test(phones), true);
 check('a phone held sideways hides the tab name pill', /\.gtab-pill \{ display: none; \}/.test(sideways), true);
-check('a phone held sideways out of full screen says Full screen gives Chat room',
+check('a phone held sideways out of full screen says Full screen gives Comms room',
     /html:not\(\.fullscreen-on\) \.chat-fs-hint \{ display: block; \}/.test(sideways) &&
-    game.indexOf('<p class="chat-fs-hint">Turn on Full screen for more room to read Chat.</p>') !== -1, true);
+    game.indexOf('<p class="chat-fs-hint">Turn on Full screen for more room to read Comms.</p>') !== -1, true);
 check('the frame knows when full screen is on',
     /classList\.toggle\('fullscreen-on', on\)/.test(game), true);
 

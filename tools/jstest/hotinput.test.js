@@ -530,6 +530,12 @@ check('the X closes the keyboard without taking focus first',
 
 // --- result ----------------------------------------------------------------
 
+// Plan 7, ruling 16: the panel is Comms; the Chat channel keeps its name.
+check('the Comms panel title', /<span class="ph-title">Comms<\/span>/.test(page), true);
+check('no panel says Chat any more', /<span class="ph-title">Chat<\/span>|aria-label="Chat channels"|read Chat\./.test(page), false);
+check('the Comms channels are named for screen readers', /aria-label="Comms channels"/.test(page), true);
+check('the Chat channel keeps its name', /id="comm-tab-chat"[^>]*data-label="Chat"/.test(page), true);
+check('the phone tab is Comms', /chat:\s*\{ label: "Comms",/.test(dash), true);
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
 if (failures > 0) {
     console.log(failures + ' FAILED');

@@ -45,7 +45,7 @@
     quests: { label: "Quests",     icon: ["M7 3h10a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2V5a2 2 0 0 1 2-2z", "M9 8h6M9 12h4"] },
     vitals: { label: "Health",     icon: ["M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z", "M7 12h3l1.5-2 2 4 1.5-2H17"] },
     art:    { label: "Inventory",  icon: ["M6 8h12l-1 12H7z", "M9 8V6a3 3 0 0 1 6 0v2", "M9 13h6"] },
-    chat:   { label: "Chat",       icon: ["M4 5h16v10H9l-5 4z", "M8 9h8M8 12h5"] },
+    chat:   { label: "Comms",      icon: ["M4 5h16v10H9l-5 4z", "M8 9h8M8 12h5"] },
     status: { label: "Conditions",   icon: ["M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z", "M9 12l2 2 4-4"] },
     trig:   { label: "Automation", icon: ["M12 6a7 7 0 1 0 0 14a7 7 0 1 0 0-14z", "M12 9v4l3 2M9 3h6"] },
   };
