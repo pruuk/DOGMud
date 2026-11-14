@@ -48,7 +48,7 @@ func completedQuestRows(c *characters.Character, lookup func(int) *quests.Quest)
 
 // finishedRepeatQuests are the Char.Quests rows for repeatables c has
 // finished and holds no progress on, not secret and not at their cap,
-// sorted by id. Done-for-good ones are left to "quests all".
+// sorted by id. Done-for-good ones are left to completedQuestRows.
 func finishedRepeatQuests(c *characters.Character, lookup func(int) *quests.Quest) []GMCPCharModule_Payload_Quest {
 	progress := c.GetQuestProgress()
 	var ids []int
@@ -689,8 +689,8 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 		for questId, questStep := range user.Character.GetQuestProgress() {
 
-			// Completed quests aren't sent — the panel is a live list of what
-			// the player is working on, not a full history. Keeps it uncluttered.
+			// This loop is the active list, so it skips "end": finished
+			// quests are sent as "done" rows by completedQuestRows below.
 			if questStep == "end" {
 				continue
 			}
