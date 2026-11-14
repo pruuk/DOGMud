@@ -214,6 +214,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/questtabs.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSET_VERSION }}"></script>
@@ -349,7 +350,11 @@
         <section class="dash-panel" id="panel-quests" data-panel="quests">
           <div class="dash-panel-head"><span class="ph-title">Quests</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
-          <div class="dash-panel-body"><div id="quests-list"><div class="quests-empty">No active quests.</div></div></div>
+          <div class="dash-panel-body"><div id="quest-tabs" class="subtabs" role="group" aria-label="Quests">
+            <button type="button" class="subtab active" aria-pressed="true" data-qtab="active">Active</button>
+            <button type="button" class="subtab" aria-pressed="false" data-qtab="repeat">Repeat</button>
+            <button type="button" class="subtab" aria-pressed="false" data-qtab="done">Completed</button>
+          </div><div id="quests-list"><div class="quests-empty">No active quests.</div></div></div>
         </section>
 
         <section class="dash-panel" id="panel-vitals" data-panel="vitals">
@@ -1150,25 +1155,33 @@
             // signature stale, and the next render whose markup matched that
             // stale value would be skipped -- leaving the panel showing
             // something the player no longer has (finding 19).
-            // Finished repeatables (status set) are listed under their own
-            // label, dimmed and unfocusable (#375 P6); the rest are active.
-            var repeats = quests.filter(function (q) { return !!q.status; });
-            quests = quests.filter(function (q) { return !q.status; });
-            var repeatsHTML = "";
-            if (repeats.length) {
-                repeats.sort(function (a, b) { return (a.name || "").localeCompare(b.name || ""); });
-                repeatsHTML = '<div class="qgroup">Repeatable work</div>';
-                repeats.forEach(function (q) {
-                    var line = q.status === "ready" ? "Ready to take on again." : "Not offered again yet.";
-                    repeatsHTML += '<div class="qrepeatrow" data-quest-id="' + Number(q.id) + '">'
-                        + '<span class="qname">' + escapeHTML(q.name || "") + '</span>'
-                        + '<span class="qrepeat">(repeatable)</span>'
-                        + '<div class="qhint">' + line + '</div>'
-                        + '</div>';
+            // Plan 7: Active, Repeat and Completed tabs (QuestTabs). The list
+            // host shows the selected tab; the choice lives on the function so
+            // it survives every push, per page load.
+            var QT = window.QuestTabs;
+            var tabs = QT.split(quests);
+            var tab = renderQuests.tab = QT.tabOrDefault(renderQuests.tab);
+            updateQuestTabs(tab, tabs.ready);
+            if (tab === "repeat" || tab === "done") {
+                var rows = tab === "repeat" ? tabs.repeat : tabs.done;
+                var listHTML = rows.length ? "" : '<div class="quests-empty">' + QT.EMPTY[tab] + '</div>';
+                rows.forEach(function (q) {
+                    if (tab === "repeat") {
+                        var ready = q.status === "ready";
+                        listHTML += '<div class="qrepeatrow' + (ready ? ' ready' : '') + '" data-quest-id="' + Number(q.id) + '">'
+                            + '<span class="qname">' + escapeHTML(q.name || "") + '</span>'
+                            + '<span class="qstate">' + (ready ? 'Ready now' : 'Not yet') + '</span></div>';
+                    } else {
+                        listHTML += '<div class="qdonerow" data-quest-id="' + Number(q.id) + '">'
+                            + '<span class="qname">' + escapeHTML(q.name || "") + '</span></div>';
+                    }
                 });
+                writeQuestsHTML(host, listHTML);
+                return;
             }
+            quests = tabs.active;
             if (!quests.length) {
-                writeQuestsHTML(host, '<div class="quests-empty">No active quests.</div>' + repeatsHTML);
+                writeQuestsHTML(host, '<div class="quests-empty">' + QT.EMPTY.active + '</div>');
                 return;
             }
             quests.sort(function (a, b) {
@@ -1238,7 +1251,6 @@
                 }
             });
             renderQuests.hintOpen = keepOpen; // forget quests that left the panel
-            html += repeatsHTML;
             // Attach handlers ONLY when the markup was actually rewritten. The
             // rows are recreated by that write, so binding without it would add
             // a second listener to rows that already have one, and a single
@@ -1276,6 +1288,28 @@
             host.innerHTML = html;
             return true;
         }
+
+        // The Quests tab bar: which tab is pressed, and the Repeat count.
+        function updateQuestTabs(tab, ready) {
+            var bar = document.getElementById("quest-tabs");
+            if (!bar) { return; }
+            Array.prototype.forEach.call(bar.querySelectorAll("button[data-qtab]"), function (b) {
+                var on = b.getAttribute("data-qtab") === tab;
+                b.classList.toggle("active", on);
+                b.setAttribute("aria-pressed", on ? "true" : "false");
+                if (b.getAttribute("data-qtab") === "repeat") { b.textContent = window.QuestTabs.repeatLabel(ready); }
+            });
+        }
+        (function () {
+            var bar = document.getElementById("quest-tabs");
+            if (!bar) { return; }
+            bar.addEventListener("click", function (e) {
+                var b = e.target.closest("button[data-qtab]");
+                if (!b) { return; }
+                renderQuests.tab = b.getAttribute("data-qtab");
+                renderQuests();
+            });
+        })();
 
         function renderInventory() {
             var inv = (GMCPStructs["Char"] || {}).Inventory;

@@ -59,12 +59,14 @@ function makeEnv(gmcp) {
     var factory = new Function('document', 'window', 'GMCPStructs', 'gr', 'SendGMCP', [
         funcSrc('escapeHTML'),
         funcSrc('writeQuestsHTML'),
+        funcSrc('updateQuestTabs'),
         funcSrc('renderQuests'),
         funcSrc('charDisplayName'),
         funcSrc('updateStatusPanel'),
         'return { escapeHTML: escapeHTML, renderQuests: renderQuests, updateStatusPanel: updateStatusPanel };'
     ].join('\n'));
-    var fns = factory(document, {}, gmcp, { rooms: new Map() }, function () {});
+    var QuestTabs = require(path.join(__dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'js', 'questtabs.js'));
+    var fns = factory(document, { QuestTabs: QuestTabs }, gmcp, { rooms: new Map() }, function () {});
     return { fns: fns, html: function (id) { return document.getElementById(id).innerHTML; } };
 }
 
@@ -107,6 +109,35 @@ function noMarkupFrom(html) {
     check('a quest name is shown escaped', html.indexOf('&lt;img src=x onerror=alert(1)&gt;&quot; onmouseover=&quot;') !== -1, true);
     check('a non-number quest id cannot leave its attribute', html.indexOf('onclick') === -1, true);
     check('a non-number completion cannot leave its style', html.indexOf('50%"') === -1, true);
+}());
+
+// Plan 7: the Repeat and Completed tabs write names through the same host.
+(function () {
+    var env = makeEnv({
+        Char: {
+            Quests: [
+                { id: 1, name: 'active', completion: 1 },
+                { id: '2" onclick="alert(1)', name: BOTH, repeatable: true, status: 'ready' },
+                { id: 3, name: '<script>alert(1)</script>', repeatable: true, status: 'waiting' },
+                { id: 4, name: '<script>alert(2)</script>' + BOTH, status: 'done' }
+            ]
+        }
+    });
+    ['repeat', 'done'].forEach(function (tab) {
+        env.fns.renderQuests.tab = tab;
+        env.fns.renderQuests();
+        var html = env.html('quests-list');
+        check(tab + ' tab was rendered', html.indexOf(tab === 'repeat' ? 'qrepeatrow' : 'qdonerow') !== -1, true);
+        check(tab + ' tab has no raw script', html.indexOf('<script') === -1, true);
+        check(tab + ' tab escapes the script name', html.indexOf('&lt;script&gt;') !== -1, true);
+        check(tab + ' tab: no quest field becomes markup', noMarkupFrom(html), true);
+        check(tab + ' tab: a non-number id cannot leave its attribute', html.indexOf('onclick') === -1, true);
+    });
+    env.fns.renderQuests.tab = 'repeat';
+    env.fns.renderQuests();
+    var rhtml = env.html('quests-list');
+    check('repeat tab: ready row says Ready now', rhtml.indexOf('Ready now') !== -1, true);
+    check('repeat tab: waiting row says Not yet', rhtml.indexOf('Not yet') !== -1, true);
 }());
 
 // A hint over the 200-character cap renders the clamp and its "more" toggle

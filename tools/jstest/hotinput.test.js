@@ -470,11 +470,17 @@ check('a wide gap keeps the fold and close buttons apart',
     /#dash-drawer \.ph-btns \{ gap: 16px;/.test(css), true);
 // Repeatable quests are quieted by colour, never see-through: see-through
 // faded them to about 2:1 in Light and Dark mode (#768 review item 3).
-var repeatRules = (css.match(/\.(qrepeat|qgroup|qrepeatrow) \{[^}]*\}/g) || []).join('\n');
-check('the repeatable quest styles are found', repeatRules.split('\n').length, 3);
-check('repeatable quests are not see-through', /opacity/.test(repeatRules), false);
-check('the repeatable heading and tag use the quest hint colour',
-    /\.qrepeat \{[^}]*color: var\(--quest-progress\)/.test(css) && /\.qgroup \{[^}]*color: var\(--quest-progress\)/.test(css), true);
+// Plan 7, rulings 18 and 19, P4: Quests has Active, Repeat and Completed tabs.
+check('the page loads questtabs.js', /static\/js\/questtabs\.js\?v=/.test(page), true);
+check('the Quests panel has its three tabs in the existing subtab pattern',
+    /<div id="quest-tabs" class="subtabs" role="group" aria-label="Quests">\s*<button type="button" class="subtab active" aria-pressed="true" data-qtab="active">Active<\/button>\s*<button type="button" class="subtab" aria-pressed="false" data-qtab="repeat">Repeat<\/button>\s*<button type="button" class="subtab" aria-pressed="false" data-qtab="done">Completed<\/button>\s*<\/div>/.test(page), true);
+check('the old "Repeatable work" heading is gone', /Repeatable work/.test(page), false);
+check('Repeat rows end "Ready now" or "Not yet"', /'Ready now' : 'Not yet'/.test(page), true);
+check('the quest list uses the game window line spacing',
+    /\.qrow \.qname \{[^}]*line-height:\s*1\.2;/.test(css) && /\.qhint \{[^}]*line-height:\s*1\.2;/.test(css) && /\.qprogress \{[^}]*line-height:\s*1\.2;/.test(css), true);
+check('a not-ready Repeat row and a Completed row are dimmed by colour, never see-through',
+    /\.qrepeatrow:not\(\.ready\)[^{]*\{[^}]*color: var\(--quest-dim\)/.test(css) && /\.qdonerow[^{]*\{[^}]*color: var\(--quest-dim\)/.test(css)
+    && !/\.(qrepeatrow|qdonerow)[^{]*\{[^}]*opacity/.test(css), true);
 // The Map may shrink to 150px (master's value) so a short laptop window
 // with a few quests does not scroll the whole page (#768 review item 5).
 check('the Map can shrink to 150px', /#panel-map\s+\{ flex: 1 1 0; min-height: 150px; \}/.test(css), true);

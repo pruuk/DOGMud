@@ -50,6 +50,7 @@ const renderQuestsSrc = funcSrc(html, 'function renderQuests(');
 const handleGMCPSrc = funcSrc(html, 'function handleGMCP(');
 const escapeHTMLSrc = funcSrc(html, 'function escapeHTML(');
 const writeQuestsHTMLSrc = funcSrc(html, 'function writeQuestsHTML(');
+const updateQuestTabsSrc = funcSrc(html, 'function updateQuestTabs(');
 
 // ---------------------------------------------------------------- DOM stub
 function El(tag) {
@@ -81,7 +82,10 @@ global.document = {
   querySelectorAll: () => [],
   addEventListener: () => {},
 };
-global.window = { addEventListener: () => {} };
+global.window = {
+  addEventListener: () => {},
+  QuestTabs: require(path.join(__dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'js', 'questtabs.js')),
+};
 global.GMCPStructs = {};
 global.console_ = console;
 
@@ -111,6 +115,7 @@ global.gr = { setQuestMarker: (m) => markerCalls.push(m), rooms: mapRooms };
   escapeHTMLSrc,
   renderQuestsSrc,
   writeQuestsHTMLSrc,
+  updateQuestTabsSrc,
   handlersMap.replace(/^\{/, 'globalThis.GMCPUpdateHandlers = {') + ';',
   handleGMCPSrc,
 ].join('\n'));
@@ -202,17 +207,31 @@ handleGMCP('Char.Quests', [
 var p6 = panelText();
 check('active repeatable shows "(repeatable)"', /Cull the Wash<\/span><span class="qrepeat">\(repeatable\)/.test(p6), p6.slice(0, 300));
 check('the one-off quest has no tag', !/Last Delivery<\/span><span class="qrepeat">/.test(p6), p6.slice(0, 300));
-check('a "Repeatable work" group follows the active quests', p6.indexOf('Repeatable work') > p6.indexOf('Last Delivery'), p6);
-check('waiting status in words', p6.includes('Back to the Forge') && p6.includes('Not offered again yet.'), p6);
-check('ready status in words', p6.includes('Reading the Stones') && p6.includes('Ready to take on again.'), p6);
+check('the Active tab does not list finished repeatables', !p6.includes('Back to the Forge') && !p6.includes('Reading the Stones'), p6);
 check('finished rows are not focusable rows', !/class="qrow[^"]*" data-quest-id="54"/.test(p6), p6);
+global.window.QuestTabs && (function () {
+  const rq = (0, eval)('renderQuests');
+  rq.tab = 'repeat';
+  rq();
+  const pr = panelText();
+  check('the Repeat tab lists waiting in words', pr.includes('Back to the Forge') && pr.includes('Not yet'), pr);
+  check('the Repeat tab lists ready in words', pr.includes('Reading the Stones') && pr.includes('Ready now'), pr);
+  check('the Repeat tab does not list active quests', !pr.includes('Last Delivery'), pr);
+  rq.tab = 'active';
+}());
 
 console.log('SCENARIO 7: only finished repeatables, nothing active');
 reset();
 handleGMCP('Char.Quests', [{ id: 54, name: 'Back to the Forge', repeatable: true, status: 'ready' }]);
 var p7 = panelText();
 check('empty state still says no active quests', p7.includes('No active quests'), p7);
-check('and the repeatable work is listed', p7.includes('Back to the Forge') && p7.includes('Ready to take on again.'), p7);
+(function () {
+  const rq = (0, eval)('renderQuests');
+  rq.tab = 'repeat';
+  rq();
+  check('and the repeatable work is on the Repeat tab', panelText().includes('Back to the Forge') && panelText().includes('Ready now'), panelText());
+  rq.tab = 'active';
+}());
 
 console.log('SCENARIO 8: a long hint is clamped with a "more" toggle; the direction stays outside the clamp (#375 P8)');
 // The cap is 200 characters after whitespace collapses (questloop.HintMaxRunes).

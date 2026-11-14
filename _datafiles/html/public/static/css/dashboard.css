@@ -357,13 +357,13 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 .qrow .qdot { flex:0 0 auto; width:1.2em; text-align:center; font-size: var(--text); color:var(--quest-dim); }
 .qrow.focus .qdot { color:var(--brass-mid); }
 /* Quest title: the prominent line, bold, warm parchment. */
-.qrow .qname { flex:1; min-width:0; overflow-wrap:anywhere; font-family:var(--font-body); font-size: var(--text); font-weight: var(--bold); letter-spacing:.2px; line-height:1.25; color:var(--quest-name); }
+.qrow .qname { flex:1; min-width:0; overflow-wrap:anywhere; font-family:var(--font-body); font-size: var(--text); font-weight: var(--bold); letter-spacing:.2px; line-height:1.2; color:var(--quest-name); }
 .qrow.focus .qname { color:var(--quest-name-focus); }
 .qbar { flex:0 0 auto; align-self:center; width:48px; height:4px; background:var(--quest-bar-track); border:1px solid var(--panel-border); border-radius:3px; overflow:hidden; }
 .qbar > i { display:block; height:100%; background:linear-gradient(var(--brass-light),var(--brass-mid)); }
 /* Hint: clearly secondary — muted, indented under its title
    with a thin brass rule tying it to the quest above. */
-.qhint { margin:0 0 5px 20px; padding:1px 0 1px 8px; border-left:1px solid color-mix(in srgb, var(--brass-mid) 35%, transparent); font-family: var(--font-body); font-size: var(--text); line-height:1.4; color:var(--quest-progress); }
+.qhint { margin:0 0 5px 20px; padding:1px 0 1px 8px; border-left:1px solid color-mix(in srgb, var(--brass-mid) 35%, transparent); font-family: var(--font-body); font-size: var(--text); line-height:1.2; color:var(--quest-progress); }
 /* A hint over the 200-character cap (#375 P8) shows three lines until the
    player asks for more. Only the text span clamps; the toggle and the
    direction follow it, outside the clamp, so they always show. */
@@ -372,18 +372,28 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 .qhint-more:hover, .qhint-more:focus-visible { color:var(--quest-name-focus); }
 /* Progress of a count or explore step (#375 phase 3b slice 4): plain text
    under its quest, indented like the hint, in the hint's muted colour. */
-.qprogress { margin:0 0 5px 20px; padding:0 0 0 9px; font-family: var(--font-body); font-size: var(--text); line-height:1.4; color:var(--quest-progress); }
+.qprogress { margin:0 0 5px 20px; padding:0 0 0 9px; font-family: var(--font-body); font-size: var(--text); line-height:1.2; color:var(--quest-progress); }
 .qprogress + .qrow { margin-top:1px; }
-/* The "(repeatable)" tag, the "Repeatable work" heading and the finished
-   repeatable quests under it. They are quieter than active quests because
-   they use the muted quest hint colour, not because they are see-through:
+/* The "(repeatable)" tag on an active row. It is quieter than the name
+   because it uses the muted quest hint colour, not because it is see-through:
    see-through text faded to about 2:1 against the panel (unreadable in
-   Light and Dark mode). The hint colour reads at about 5:1 in both modes.
-   Words still say the status ("Not offered again yet."), never colour alone. */
+   Light and Dark mode). The hint colour reads at about 5:1 in both modes. */
 .qrepeat { margin-left: 0.4em; font-size: var(--text); color: var(--quest-progress); }
-.qgroup { margin-top: 0.6em; font-size: var(--text); text-transform: uppercase; letter-spacing: 0.05em; color: var(--quest-progress); }
-.qrepeatrow { padding: 2px 0; cursor: default; }
-.qrepeatrow .qname { font-family:var(--font-body); font-size: var(--text); font-weight: var(--bold); color:var(--quest-progress); }
+/* Repeat tab (plan 7, ruling 18): name, then "Ready now" or "Not yet" at the
+   right. A row not ready yet is quieter by colour, never see-through (#768
+   review item 3). Completed rows are quiet the same way. Words still say the
+   status, never colour alone. Measured (text needs 4.5): --quest-dim on the
+   dark panel #201913 4.92, on the light body #cec6aa 5.31 (#d6cfb5 5.81);
+   --quest-progress 4.95 dark, 4.97 light; the Ready now colour
+   --quest-name-focus 12.86 dark, 7.20 light (--brass-mid was 5.10 dark but
+   1.99 on the light body, so it is not used for text here). */
+.qrepeatrow, .qdonerow { display: flex; align-items: baseline; gap: 8px; padding: 5px 5px 4px; font-family: var(--font-body); font-size: var(--text); line-height: 1.2; }
+.qrepeatrow .qname, .qdonerow .qname { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: var(--bold); color: var(--quest-name); }
+.qrepeatrow .qstate { flex: 0 0 auto; color: var(--quest-progress); }
+.qrepeatrow.ready .qstate { color: var(--quest-name-focus); }
+.qrepeatrow:not(.ready), .qrepeatrow:not(.ready) .qname, .qrepeatrow:not(.ready) .qstate { color: var(--quest-dim); }
+.qdonerow, .qdonerow .qname { color: var(--quest-dim); }
+#quest-tabs { margin: 0 0 4px; }
 .qonmap { color:var(--party-teal); font-style:normal; white-space:nowrap; }
 #panel-vitals { flex: 0 0 auto; }                    /* content-compact; grows with party rows */
 #panel-art    { flex: 0 1 auto; min-height: 120px; } /* inventory: content-sized, grows w/ eq list */
