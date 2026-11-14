@@ -208,15 +208,74 @@ var p6 = panelText();
 check('active repeatable shows "(repeatable)"', /Cull the Wash<\/span><span class="qrepeat">\(repeatable\)/.test(p6), p6.slice(0, 300));
 check('the one-off quest has no tag', !/Last Delivery<\/span><span class="qrepeat">/.test(p6), p6.slice(0, 300));
 check('the Active tab does not list finished repeatables', !p6.includes('Back to the Forge') && !p6.includes('Reading the Stones'), p6);
-check('finished rows are not focusable rows', !/class="qrow[^"]*" data-quest-id="54"/.test(p6), p6);
-global.window.QuestTabs && (function () {
+(function () {
   const rq = (0, eval)('renderQuests');
   rq.tab = 'repeat';
   rq();
   const pr = panelText();
+  check('finished rows are not focusable rows', !/class="qrow[^"]*" data-quest-id="(54|58)"/.test(pr) && /class="qrepeatrow[^"]*" data-quest-id="54"/.test(pr), pr);
   check('the Repeat tab lists waiting in words', pr.includes('Back to the Forge') && pr.includes('Not yet'), pr);
   check('the Repeat tab lists ready in words', pr.includes('Reading the Stones') && pr.includes('Ready now'), pr);
   check('the Repeat tab does not list active quests', !pr.includes('Last Delivery'), pr);
+  rq.tab = 'active';
+}());
+
+console.log('SCENARIO 6b: the selected tab survives a push, and one click is one Focus');
+(function () {
+  const rq = (0, eval)('renderQuests');
+  // A tab bar with real button stubs, so aria-pressed and the label can be read.
+  const buttons = ['active', 'repeat', 'done'].map((t) => {
+    const b = { attrs: { 'data-qtab': t }, textContent: t, cls: {} };
+    b.getAttribute = (k) => b.attrs[k];
+    b.setAttribute = (k, v) => { b.attrs[k] = v; };
+    b.classList = { toggle: (c, on) => { b.cls[c] = !!on; } };
+    return b;
+  });
+  els['quest-tabs'] = { querySelectorAll: () => buttons };
+  // Rows the page binds click handlers to: fresh objects on every write, as
+  // in a real DOM where a write replaces the rows (so old listeners are gone).
+  let lastRows = [];
+  const host = el('quests-list');
+  host.querySelectorAll = (sel) => {
+    if (sel !== '.qrow') return [];
+    lastRows = [];
+    const re = /class="qrow[^"]*" data-quest-id="(\d+)"/g;
+    let m;
+    while ((m = re.exec(host.innerHTML))) {
+      const row = { id: m[1], handlers: [] };
+      row.getAttribute = (a) => (a === 'data-quest-id' ? row.id : null);
+      row.addEventListener = (ev, fn) => row.handlers.push({ ev, fn });
+      lastRows.push(row);
+    }
+    return lastRows;
+  };
+  const sent = [];
+  const realSend = global.SendGMCP;
+  global.SendGMCP = (mod, payload) => sent.push({ mod, payload });
+  const PUSH = [
+    { id: 7, name: 'The Last Delivery', completion: 50, focused: false },
+    { id: 54, name: 'Back to the Forge', repeatable: true, status: 'waiting' },
+    { id: 58, name: 'Reading the Stones', repeatable: true, status: 'ready' },
+  ];
+  rq.tab = 'repeat';
+  handleGMCP('Char.Quests', PUSH);
+  const pr = panelText();
+  check('a push while on Repeat renders the Repeat rows', pr.includes('Reading the Stones') && !pr.includes('Last Delivery'), pr);
+  const rb = buttons[1];
+  check('the Repeat button is pressed', rb.attrs['aria-pressed'] === 'true' && buttons[0].attrs['aria-pressed'] === 'false', JSON.stringify(buttons.map((b) => b.attrs)));
+  check('the Repeat button label counts the ready ones', rb.textContent === 'Repeat (1)', rb.textContent);
+  rq.tab = 'active'; handleGMCP('Char.Quests', PUSH);
+  rq.tab = 'repeat'; handleGMCP('Char.Quests', PUSH);
+  rq.tab = 'active'; handleGMCP('Char.Quests', PUSH);
+  check('back on Active the active row is shown', panelText().includes('Last Delivery'), panelText());
+  const row = lastRows.find((r) => r.id === '7');
+  const clicks = row ? row.handlers.filter((h) => h.ev === 'click') : [];
+  clicks.forEach((h) => h.fn({}));
+  const focus = sent.filter((s) => s.mod === 'Char.Quests.Focus');
+  check('one click on an active row, after Active-Repeat-Active, sends exactly one Focus',
+    clicks.length === 1 && focus.length === 1 && focus[0].payload.id === 7, JSON.stringify({ clicks: clicks.length, sent }));
+  global.SendGMCP = realSend;
+  host.querySelectorAll = () => [];
   rq.tab = 'active';
 }());
 

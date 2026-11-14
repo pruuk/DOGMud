@@ -4515,7 +4515,8 @@
 
             // The menu lives on document.body, outside the row, so its own
             // clicks never reach the row's left-click Focus handler. Finished
-            // repeatables render as .qrepeatrow and get no menu.
+            // repeatables render as .qrepeatrow and finished quests as
+            // .qdonerow; neither gets a menu.
             document.addEventListener("contextmenu", function(e) {
                 var row = e.target.closest(".qrow[data-quest-id]");
                 if (!row) return;

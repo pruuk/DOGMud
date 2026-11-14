@@ -400,6 +400,9 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 .qrepeatrow.ready .qstate { color: var(--quest-name-focus); }
 .qrepeatrow:not(.ready), .qrepeatrow:not(.ready) .qname, .qrepeatrow:not(.ready) .qstate { color: var(--quest-dim); }
 .qdonerow, .qdonerow .qname { color: var(--quest-dim); }
+/* In Light mode --quest-dim is darker than --quest-name, so colour alone cannot
+   make these rows quieter there. Weight does it in both modes. */
+.qrepeatrow:not(.ready) .qname, .qdonerow .qname { font-weight: 400; }
 #quest-tabs { margin: 0 0 4px; }
 .qonmap { color:var(--party-teal); font-style:normal; white-space:nowrap; }
 #panel-vitals { flex: 0 0 auto; }                    /* content-compact; grows with party rows */

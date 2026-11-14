@@ -481,6 +481,8 @@ check('the quest list uses the game window line spacing',
 check('a not-ready Repeat row and a Completed row are dimmed by colour, never see-through',
     /\.qrepeatrow:not\(\.ready\)[^{]*\{[^}]*color: var\(--quest-dim\)/.test(css) && /\.qdonerow[^{]*\{[^}]*color: var\(--quest-dim\)/.test(css)
     && !/\.(qrepeatrow|qdonerow)[^{]*\{[^}]*opacity/.test(css), true);
+check('a not-ready Repeat row and a Completed row are quieter by weight (Light mode dim is darker than the name)',
+    /\.qrepeatrow:not\(\.ready\) \.qname, \.qdonerow \.qname \{[^}]*font-weight: 400;/.test(css), true);
 // The Map may shrink to 150px (master's value) so a short laptop window
 // with a few quests does not scroll the whole page (#768 review item 5).
 check('the Map can shrink to 150px', /#panel-map\s+\{ flex: 1 1 0; min-height: 150px; \}/.test(css), true);
