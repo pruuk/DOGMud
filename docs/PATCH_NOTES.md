@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-11-14: Small fixes
+
+- When you name something by part of its name, a whole word now wins over a word that only contains it: `buy pot` at Trader Onna buys the Rusty Pot, not a potion. This works the same everywhere you name an item, a creature or a companion, and numbered picks like `2.pot` now always reach the next one.
+- `appraise` at a merchant works on what you are wearing or wielding, and on your bandolier and component bag, not only your backpack.
+- `help spell` on its own shows the list of spells instead of one picked at random.
+- An item named for a person or a one-of-a-kind creature no longer gets "a" or "an": you receive Edvar's Map-Fragment, not an Edvar's Map-Fragment.
+- A closing quote mark no longer ends up alone on its own line when a line of speech wraps.
+- Web client: the browser no longer pops its own suggestion box over the command box, and phones no longer autocorrect what you type there.
+- Web client: music starts off for new players (turn it up in Settings), the intro music stops when you enter the game, and music stops when you leave or lose the connection.
+
 ## 2026-11-14: Passwords stay private
 
 - Changing your password in game no longer shows what you type, and the up arrow no longer brings it back. Telnet and the web client both show stars instead.
