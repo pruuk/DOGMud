@@ -70,6 +70,8 @@ global.displayReport = { connected: function (cols) { reported.push(cols); }, co
 global.debugLog = function () {};
 global.stopAutomation = function () {};
 global.companionGlue = null;
+var musicStops = 0;
+global.MusicPlayer = { stopAll: function () { musicStops++; } };
 global.textInput = element();
 global.setTimeout = function () { return 0; };
 global.clearTimeout = function () {};
@@ -150,6 +152,58 @@ pendingReconnectToken = 'TOKEN';
 sockets[1].open();
 check('a reconnect sends the token before the width', order.join(', ') === 'send TOKEN, width 57',
     'order ' + order.join(', '));
+
+// Music (#838): it stops when the player is really disconnected, and keeps
+// playing while a live restart reconnects by itself.
+// sockets[1] is open and carries no token: a plain drop, Leave Game, or the
+// player pressing Enter Game while connected all end in onclose.
+musicStops = 0;
+pendingReconnectToken = null;
+sockets[1].closed();
+check('music stops when the connection closes', musicStops === 1, 'stops ' + musicStops);
+
+// A copyover: the server sent a token, the client retries by itself.
+connect.disabled = false;
+connect.click();
+var s = sockets[sockets.length - 1];
+s.open();
+musicStops = 0;
+pendingReconnectToken = 'TOKEN';
+reconnectAttempts = 0;
+s.closed();
+check('music keeps playing while a restart reconnects', musicStops === 0, 'stops ' + musicStops);
+check('the client is retrying', label.textContent === ', reconnecting', 'label ' + label.textContent);
+
+// The server sends !!MUSIC(Off) at login to stop the intro track. MP3Player.stop
+// with no URL does nothing, so the page has to call stopAll. This runs the
+// page's real onmessage handler.
+connect.disabled = false;
+connect.click();
+s = sockets[sockets.length - 1];
+s.open();
+global.payloadsReceived = 0; global.totalBytesReceived = 0;
+global.handleWebclientCommand = function () { return false; };
+global.handleGMCP = function () {};
+global.stripAnsi = function (t) { return t; };
+global.runTriggers = function () {};
+var stopCalls = [];
+MusicPlayer.stop = function (u) { stopCalls.push(u); };
+musicStops = 0;
+s.onmessage({ data: '!!MUSIC(Off)' });
+check('the login !!MUSIC(Off) stops the intro music', musicStops === 1,
+    'stopAll calls ' + musicStops + ', stop(url) calls ' + stopCalls.length);
+musicStops = 0;
+s.onmessage({ data: '!!MUSIC(Off U=http://x/m/)' });
+check('!!MUSIC(Off U=...) only sets the base URL', musicStops === 0, 'stopAll calls ' + musicStops);
+
+// The reconnect attempts run out.
+connect.disabled = false;
+connect.click();
+s = sockets[sockets.length - 1];
+pendingReconnectToken = 'TOKEN';
+reconnectAttempts = 90;
+s.closed();
+check('music stops when reconnecting gives up', musicStops === 1, 'stops ' + musicStops);
 
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);
