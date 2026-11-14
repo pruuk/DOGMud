@@ -3141,12 +3141,14 @@
                     // Give up: restore the normal disconnected UI.
                     pendingReconnectToken = null;
                     reconnectAttempts = 0;
+                    MusicPlayer.stopAll(); // really disconnected (#838)
                     term.writeln("");
                     term.writeln("Could not reconnect — the server may still be restarting. Click Enter Game to try again.");
                     connectButton.disabled = false;
                     setSessionState('offline');
                     return;
                 }
+                MusicPlayer.stopAll(); // not reconnecting: the last track must not keep looping (#838)
                 if (leavingGame) {
                     term.writeln("You have left the game.");
                 } else if (event.wasClean) {
@@ -3322,7 +3324,7 @@
 
         // 1) Define default sliders (and new ones if needed!)
         const defaultSliders = {
-            "music": 75,
+            "music": 0, // off until the player raises it (#838); saved settings are kept
             "combat sounds": 75,
             "movement sounds": 75,
             "environment sounds": 75,
