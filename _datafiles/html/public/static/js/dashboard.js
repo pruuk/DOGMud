@@ -278,9 +278,10 @@
       var t = document.createElement("div");
       t.className = "dash-toast" + (opts.lifted ? " lifted" : "");
       t.setAttribute("role", "status");
-      t.textContent = msg;
       document.body.appendChild(t);
-      requestAnimationFrame(function () { t.classList.add("show"); });
+      // Text goes in after the live region is in the page, so a screen
+      // reader announces it (VoiceOver skips text inserted with the element).
+      requestAnimationFrame(function () { t.textContent = msg; t.classList.add("show"); });
       setTimeout(function () {
         t.classList.remove("show");
         setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 400);
@@ -294,14 +295,17 @@
       var self = this;
       var VF = window.ViewportFit;
       if (!VF) return;
-      var check = function () {
+      function check() {
         var coarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
         if (!VF.isSidewaysPhone(screen.width, screen.height, VF.orientationType(window), coarse)) return;
         var store = null;
         try { store = window.sessionStorage; } catch (e) { /* blocked: memo alone */ }
         if (!VF.takeSidewaysToast(store, self._sidewaysMemo)) return;
         self._toast(VF.SIDEWAYS_TOAST, { ms: 4000, lifted: true });
-      };
+        // Shown once: stop watching.
+        window.removeEventListener("orientationchange", check);
+        window.removeEventListener("resize", check);
+      }
       check();
       window.addEventListener("orientationchange", check);
       window.addEventListener("resize", check);

@@ -3207,12 +3207,14 @@
             }
         }) : null;
 
-        // The Close keyboard X (plan 6, ruling 14). pointerdown keeps focus
-        // where it is, so the tap does not move focus before the click.
+        // The Close keyboard X (plan 6, ruling 14). The pointerdown and
+        // mousedown handlers stop the button taking focus where the browser
+        // allows it; either way the click blurs the command box.
         (function () {
             var closeKbd = document.getElementById('cmd-close-kbd');
             if (!closeKbd) return;
             closeKbd.addEventListener('pointerdown', function (e) { e.preventDefault(); });
+            closeKbd.addEventListener('mousedown', function (e) { e.preventDefault(); });
             closeKbd.addEventListener('click', function () { textInput.blur(); });
         })();
 

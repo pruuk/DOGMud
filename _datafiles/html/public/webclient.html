@@ -27,8 +27,9 @@
         const contentContainer = document.getElementById('content-container');
         const frame = document.getElementById('webclient-frame');
         const visible = ViewportFit.visibleHeight(window.visualViewport);
-        frame.height = ViewportFit.frameHeight(
+        const frameH = ViewportFit.frameHeight(
             contentContainer.clientHeight, visible, contentContainer.getBoundingClientRect().top);
+        frame.height = frameH;
         // The game takes its phone tab bar out of the keyboard's way (dashboard.css).
         // While the game page is still loading the frame has no document
         // element yet; the next viewport event marks it.
@@ -36,9 +37,10 @@
             frame.contentDocument.documentElement.classList.toggle('keyboard-open',
                 ViewportFit.keyboardOpen(window.innerHeight, visible));
             // The game's open-tab cap reads this while the keyboard is up
-            // (dashboard.css, plan 6). The frame is already this tall.
-            if (typeof visible === 'number') {
-                frame.contentDocument.documentElement.style.setProperty('--visible-h', Math.floor(visible) + 'px');
+            // (dashboard.css, plan 6). It is the frame's own height, which is
+            // the visible height less the site header above the frame.
+            if (typeof frameH === 'number') {
+                frame.contentDocument.documentElement.style.setProperty('--visible-h', Math.floor(frameH) + 'px');
             }
         }
     }

@@ -496,8 +496,13 @@ check('the page opened on its own sets --visible-h',
 var outer = fs.readFileSync(path.join(
     __dirname, '..', '..', '_datafiles', 'html', 'public', 'webclient.html'
 ), 'utf8');
-check('the framed page gets --visible-h from webclient.html',
-    /setProperty\('--visible-h', Math\.floor\(visible\) \+ 'px'\)/.test(outer), true);
+check('the framed page gets --visible-h from webclient.html, the frame\'s own height',
+    /setProperty\('--visible-h', Math\.floor\(frameH\) \+ 'px'\)/.test(outer)
+    && /frame\.height = frameH;/.test(outer), true);
+check('column keeps its dvh cap, keyboard down',
+    /@supports \(height: 1dvh\) \{\s*html\.layout-column #dash-drawer \{\s*--drawer-cap: max\(80px, min\(50dvh,/.test(css), true);
+check('column keeps its dvh cap, keyboard up',
+    /@supports \(height: 1dvh\) \{\s*html\.layout-column\.keyboard-open #dash-drawer \{\s*--drawer-cap: max\(60px, min\(50dvh,/.test(css), true);
 
 // Plan 6, ruling 14: a Close keyboard X at the end of the command box, shown
 // only while the on-screen keyboard is open, at least 44px.
@@ -512,6 +517,7 @@ check('the X is hidden unless the keyboard is open',
 check('the X is 48px', /#cmd-close-kbd \{[^}]*width: 48px;[^}]*height: 48px;/.test(css), true);
 check('the X closes the keyboard without taking focus first',
     /closeKbd\.addEventListener\('pointerdown', function \(e\) \{ e\.preventDefault\(\); \}\);/.test(page)
+    && /closeKbd\.addEventListener\('mousedown', function \(e\) \{ e\.preventDefault\(\); \}\);/.test(page)
     && /closeKbd\.addEventListener\('click', function \(\) \{ textInput\.blur\(\); \}\);/.test(page), true);
 
 // --- result ----------------------------------------------------------------
