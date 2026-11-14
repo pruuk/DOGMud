@@ -127,49 +127,47 @@ func queueOverreaches(sources map[string]string, limit int) (bad []string, seen 
 // scanDecl checks the priority-passing calls inside one declaration.
 func scanDecl(fset *token.FileSet, name string, decl ast.Decl, forwarded map[string]bool,
 	consts map[string]int, limit int, bad []string, seen int) ([]string, int) {
-	{
-		ast.Inspect(decl, func(n ast.Node) bool {
-			call, ok := n.(*ast.CallExpr)
-			if !ok {
-				return true
-			}
-			argAt := 0
-			switch calleeName(call.Fun) {
-			case "AddToQueue":
-				argAt = 1
-			case "sendTextAt":
-				argAt = 2
-			default:
-				return true
-			}
-			if len(call.Args) <= argAt {
-				return true // default priority 0
-			}
-			seen++
-			if len(call.Args) > 0 {
-				if tn := litTypeName(call.Args[0]); tn == "RedrawPrompt" || tn == "InputDone" {
-					return true
-				}
-			}
-			where := fset.Position(call.Pos())
-			prio, ok := intLit(call.Args[argAt])
-			if !ok {
-				id := calleeName(call.Args[argAt])
-				if forwarded[id] {
-					return true
-				}
-				prio, ok = consts[id]
-				if id == "" || !ok {
-					bad = append(bad, fmt.Sprintf("%s:%d: priority is not a literal or a const the scan can resolve", name, where.Line))
-					return true
-				}
-			}
-			if prio >= limit {
-				bad = append(bad, fmt.Sprintf("%s:%d: priority %d >= %d", name, where.Line, prio, limit))
-			}
+	ast.Inspect(decl, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
 			return true
-		})
-	}
+		}
+		argAt := 0
+		switch calleeName(call.Fun) {
+		case "AddToQueue":
+			argAt = 1
+		case "sendTextAt":
+			argAt = 2
+		default:
+			return true
+		}
+		if len(call.Args) <= argAt {
+			return true // default priority 0
+		}
+		seen++
+		if len(call.Args) > 0 {
+			if tn := litTypeName(call.Args[0]); tn == "RedrawPrompt" || tn == "InputDone" {
+				return true
+			}
+		}
+		where := fset.Position(call.Pos())
+		prio, ok := intLit(call.Args[argAt])
+		if !ok {
+			id := calleeName(call.Args[argAt])
+			if forwarded[id] {
+				return true
+			}
+			prio, ok = consts[id]
+			if id == "" || !ok {
+				bad = append(bad, fmt.Sprintf("%s:%d: priority is not a literal or a const the scan can resolve", name, where.Line))
+				return true
+			}
+		}
+		if prio >= limit {
+			bad = append(bad, fmt.Sprintf("%s:%d: priority %d >= %d", name, where.Line, prio, limit))
+		}
+		return true
+	})
 	return bad, seen
 }
 
