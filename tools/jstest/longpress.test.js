@@ -41,17 +41,42 @@ check('and its lift is a plain lift', p.up(), false);
 p.down(10, 10); p.cancel(); advance(600);
 check('a cancel (scroll, second finger) stops it', fired.length, 2);
 
-// Android Chrome may also send a native contextmenu on a long touch: the
-// second open for the same element within the window is ignored.
-var opens = 0, clock = 1000, el1 = {}, el2 = {};
-function open() { opens++; }
-function clk() { return clock; }
-LP.once(el1, open, clk);
-clock += 300; LP.once(el1, open, clk);
-check('a second open of the same element within 700ms is ignored', opens, 1);
-LP.once(el2, open, clk);
-check('another element opens', opens, 2);
-clock += 800; LP.once(el1, open, clk);
-check('the same element opens again after the window', opens, 3);
+// attach, with a fake document and the fake timers above.
+var handlers = {};
+var doc = { addEventListener: function (type, f) { handlers[type] = f; } };
+var opened = [];
+LP.attach(doc, '.hit', function (x, y, el) { opened.push([x, y, el.id]); }, { setTimeout: setT, clearTimeout: clearT });
+var hitEl = { id: 'hit1' };
+function target(matching) { return { closest: function () { return matching ? hitEl : null; } }; }
+function touch(x, y) { return { clientX: x, clientY: y }; }
+function ev(matching, touches) {
+    var e = { target: target(matching), touches: touches, prevented: 0 };
+    e.preventDefault = function () { e.prevented++; };
+    return e;
+}
+
+var s = ev(true, [touch(40, 50)]); handlers.touchstart(s); advance(500);
+check('attach: a still 500ms touch on a match opens at the finger', opened, [[40, 50, 'hit1']]);
+var u = ev(true, []); handlers.touchend(u);
+check('attach: its touchend prevents the click', u.prevented, 1);
+
+s = ev(true, [touch(1, 1)]); handlers.touchstart(s); advance(200);
+u = ev(true, []); handlers.touchend(u); advance(1000);
+check('attach: a short touch does not open', opened.length, 1);
+check('attach: and its touchend is not prevented', u.prevented, 0);
+
+handlers.touchstart(ev(true, [touch(1, 1)]));
+handlers.touchstart(ev(true, [touch(1, 1), touch(9, 9)])); advance(600);
+check('attach: a second finger cancels', opened.length, 1);
+handlers.touchend(ev(true, []));
+
+handlers.touchstart(ev(true, [touch(1, 1)]));
+handlers.scroll({}); advance(600);
+check('attach: a scroll cancels', opened.length, 1);
+handlers.touchend(ev(true, []));
+
+handlers.touchstart(ev(false, [touch(1, 1)])); advance(600);
+u = ev(false, []); handlers.touchend(u);
+check('attach: a touch off the selector does nothing', [opened.length, u.prevented], [1, 0]);
 console.log(failures ? failures + ' FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

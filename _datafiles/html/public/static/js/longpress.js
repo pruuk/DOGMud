@@ -13,7 +13,6 @@
 }(typeof self !== 'undefined' ? self : this, function () {
     var DELAY_MS = 500;   // common platform value (Android 400 to 500ms)
     var MOVE_PX = 10;     // a finger that strays further is scrolling
-    var TWICE_MS = 700;   // a native contextmenu right after our long press is the same open
 
     // opts: { setTimeout, clearTimeout, fire(x, y) }
     function createPress(opts) {
@@ -33,25 +32,16 @@
         };
     }
 
-    // Android Chrome may also send a native contextmenu on a long touch, so
-    // one gesture can reach a menu twice. once() runs open() unless it already
-    // ran for the same element within TWICE_MS. now is injectable for tests.
-    var lastEl = null, lastAt = 0;
-    function once(el, open, now) {
-        var t = (now || Date.now)();
-        if (el === lastEl && t - lastAt < TWICE_MS) { return false; }
-        lastEl = el; lastAt = t;
-        open();
-        return true;
-    }
-
     // A long touch on an element matching selector calls open(x, y, el).
-    function attach(doc, selector, open) {
+    // opts (optional, for tests): { setTimeout, clearTimeout }.
+    function attach(doc, selector, open, opts) {
         var el = null;
+        var st = (opts && opts.setTimeout) || function (f, ms) { return setTimeout(f, ms); };
+        var ct = (opts && opts.clearTimeout) || function (t) { clearTimeout(t); };
         var press = createPress({
-            setTimeout: function (f, ms) { return setTimeout(f, ms); },
-            clearTimeout: function (t) { clearTimeout(t); },
-            fire: function (x, y) { if (el) { var target = el; once(target, function () { open(x, y, target); }); } }
+            setTimeout: st,
+            clearTimeout: ct,
+            fire: function (x, y) { if (el) { open(x, y, el); } }
         });
         doc.addEventListener('touchstart', function (e) {
             if (!e.touches || e.touches.length !== 1) { press.cancel(); el = null; return; }
@@ -69,5 +59,5 @@
         doc.addEventListener('scroll', function () { press.cancel(); }, true);
     }
 
-    return { DELAY_MS: DELAY_MS, MOVE_PX: MOVE_PX, TWICE_MS: TWICE_MS, createPress: createPress, once: once, attach: attach };
+    return { DELAY_MS: DELAY_MS, MOVE_PX: MOVE_PX, createPress: createPress, attach: attach };
 }));

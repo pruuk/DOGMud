@@ -1173,7 +1173,9 @@ html.layout-column.keyboard-open #dash-drawer {
 
 /* A long touch opens a menu on these (plan 7): no text selection and no
    iOS callout fighting it. */
-.inv-tile, .qrow, .auto-chip, .auto-row { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+@media (pointer: coarse) {
+  .inv-tile, .qrow, .auto-chip, .auto-row { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+}
 
 /* The square tile — antique leather frame, icon centered */
 .inv-tile {

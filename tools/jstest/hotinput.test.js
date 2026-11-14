@@ -563,9 +563,7 @@ check('the page loads longpress.js', /static\/js\/longpress\.js\?v=/.test(page),
 check('a tap or click on an item tile opens its menu at the tile',
     /addEventListener\("click", function\(e\) \{\s*var tile = e\.target\.closest\("\.inv-tile\[data-handle\]"\);/.test(page), true);
 check('a long touch on these does not select text or raise the iOS callout',
-    /\.inv-tile, \.qrow, \.auto-chip, \.auto-row \{[^}]*-webkit-touch-callout: none;[^}]*user-select: none;/.test(css), true);
-check('a native contextmenu after a long press does not open a menu twice',
-    (page.match(/LongPress\.once\(/g) || []).length, 3);
+    /@media \(pointer: coarse\) \{\s*\.inv-tile, \.qrow, \.auto-chip, \.auto-row \{[^}]*-webkit-touch-callout: none;[^}]*user-select: none;/.test(css), true);
 // --- result ----------------------------------------------------------------
 
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
