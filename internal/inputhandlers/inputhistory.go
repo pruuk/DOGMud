@@ -7,7 +7,9 @@ func HistoryInputHandler(clientInput *connections.ClientInput, sharedState map[s
 	// Save whatever was in the buffer when enter was hit as the last submitted
 	if clientInput.EnterPressed {
 		// copy the bytes over (If not just an enter press)
-		if len(clientInput.Buffer) > 0 {
+		// A secret answer (password prompt) never enters the history, so the
+		// up arrow cannot recall it (#868).
+		if len(clientInput.Buffer) > 0 && !inputMasked(clientInput.ConnectionId) {
 			clientInput.History.Add(clientInput.Buffer)
 		}
 	}

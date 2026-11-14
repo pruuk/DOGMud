@@ -279,6 +279,11 @@ func (w *World) logOutUserByConnectionId(connectionId connections.ConnectionId) 
 func (w *World) enterWorld(userId int, roomId int) {
 
 	if userInfo := users.GetByUserId(userId); userInfo != nil {
+		// Every login, reconnect and copyover reconnect comes through here on
+		// the world goroutine. A reclaimed session keeps its prompt, and the
+		// new connection starts unmasked, so tell it again now (#868).
+		userInfo.SyncTextMask()
+
 		events.AddToQueue(events.PlayerSpawn{
 			UserId:        userInfo.UserId,
 			ConnectionId:  userInfo.ConnectionId(),
@@ -977,6 +982,10 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 		mudlog.Error("User not found", "userId", userId)
 		return
 	}
+
+	// The web client's command box follows whether the next line is a secret
+	// answer (#868), whichever way this line is handled.
+	defer user.SyncTextMask()
 
 	typed := flags.Has(events.CmdTyped)
 
