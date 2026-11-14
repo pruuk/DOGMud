@@ -929,6 +929,48 @@ func TestFindMatchIn(t *testing.T) {
 	})
 }
 
+// #865: the contains fallback ranks whole word, then word start, then
+// mid-word, and numbered targets walk one order (starts-with hits first).
+// This is the lookup get, drop and look use, with Onna's two real items.
+func TestFindMatchIn_FallbackRanking(t *testing.T) {
+	restore := SeedItemsForTest(map[int]*ItemSpec{
+		30001: {ItemId: 30001, Name: "Small Red Potion", Type: Object},
+		20007: {ItemId: 20007, Name: "Rusty Pot", Type: Object},
+		30002: {ItemId: 30002, Name: "Spotted Cloak", Type: Object},
+		30003: {ItemId: 30003, Name: "Potion", Type: Object},
+	})
+	defer restore()
+	potion := Item{ItemId: 30001, UUID: [16]byte{1}}
+	pot := Item{ItemId: 20007, UUID: [16]byte{2}}
+	cloak := Item{ItemId: 30002, UUID: [16]byte{3}}
+	plain := Item{ItemId: 30003, UUID: [16]byte{4}}
+
+	cases := []struct {
+		name   string
+		search string
+		list   []Item
+		want   int // ItemId of the close match, 0 for none
+	}{
+		{"whole word beats word start, potion carried first", "pot", []Item{potion, pot}, 20007},
+		{"2.pot after the ranked first", "2.pot", []Item{potion, pot}, 30001},
+		{"word start beats mid-word", "pot", []Item{cloak, potion}, 30001},
+		{"whole word beats mid-word", "pot", []Item{cloak, pot}, 20007},
+		{"lone potion still found", "pot", []Item{potion, cloak}, 30001},
+		{"starts-with hit is first, then ranked contains", "pot", []Item{plain, pot}, 30003},
+		{"2.pot reaches the contains hit after a starts-with hit", "2.pot", []Item{plain, pot}, 20007},
+		{"3.pot is none", "3.pot", []Item{plain, pot}, 0},
+		{"no hit", "zzz", []Item{potion, pot}, 0},
+	}
+	for _, tc := range cases {
+		partial, full := FindMatchIn(tc.search, tc.list...)
+		assert.Equal(t, 0, full.ItemId, tc.name)
+		assert.Equal(t, tc.want, partial.ItemId, tc.name)
+	}
+
+	_, full := FindMatchIn("rusty pot", potion, pot)
+	assert.Equal(t, 20007, full.ItemId, "exact is unchanged")
+}
+
 // ─── Validate (ItemSpec) ────────────────────────────────────────────────────
 
 func TestItemSpec_Validate(t *testing.T) {

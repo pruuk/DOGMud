@@ -128,6 +128,11 @@ that only read the first silently lose fuzzy matching — this is the routine
 behind most "why doesn't `get lake iron nodule` work" questions, and it matches
 whole multi-word phrases already.
 
+Matching order: exact, then starts-with, then a contains fallback. The fallback
+is ranked (#865): the text as whole word(s) ("pot" in "Rusty Pot"), then at the
+start of a word ("Potion"), then mid-word ("Spotted"); ties keep list order and
+`2.pot` takes the second candidate in that ranked order.
+
 `FindMatchIndexIn` is the same algorithm by position (`FindMatchIn` wraps it);
 use it when two entries can share a name and the caller must know which one
 matched, as `buy` does for shelf rows.

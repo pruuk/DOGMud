@@ -2,7 +2,6 @@ package characters
 
 import (
 	"math"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
@@ -101,18 +100,20 @@ type CompanionInfo struct {
 // Supports N.name / name#N disambiguation (via util.GetMatchNumber).
 // Returns nil if no match is found.
 func (c *Character) GetCompanion(name string) *CompanionInfo {
-	search, matchNum := util.GetMatchNumber(name)
-	lower := strings.ToLower(search)
-	count := 0
+	// The one matching rule (#865): exact, then starts-with, then the ranked
+	// contains fallback (whole word, word start, mid-word), N. counting along it.
+	names := make([]string, len(c.Companions))
 	for i := range c.Companions {
-		if strings.Contains(strings.ToLower(c.Companions[i].Name), lower) {
-			count++
-			if count == matchNum {
-				return &c.Companions[i]
-			}
-		}
+		names[i] = c.Companions[i].Name
 	}
-	return nil
+	match, closeMatch := util.FindMatchIndexIn(name, names...)
+	if match < 0 {
+		match = closeMatch
+	}
+	if match < 0 {
+		return nil
+	}
+	return &c.Companions[match]
 }
 
 // GetCompanionByInstanceId finds a companion by its runtime mob instance ID.

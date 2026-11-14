@@ -441,26 +441,80 @@ func FindMatchIndexIn(searchName string, items ...string) (match int, closeMatch
 
 	}
 
-	// If no "starts with" or "exact" matches are found, try and find the first item that contain the supplied name
+	// If no "starts with" or "exact" matches are found, fall back to items that
+	// contain the supplied name anywhere. These are ranked (#865): see
+	// FallbackOrder. "2.pot" is the second candidate in that one order.
 	// Note: Can't have an exact match if there was never a close match
 	if closeMatch < 0 {
-		closeMatchCt = 0
+		isPrefix := make([]bool, len(items))
+		ranks := make([]int, len(items))
 		for idx, i := range items {
-			part, _ := stringMatch(searchName, i, true)
-
-			if part {
-				closeMatchCt++
-				if closeMatchCt == searchNumber {
-					closeMatch = idx
-					break
-				}
+			isPrefix[idx], _ = stringMatch(searchName, i, false)
+			ranks[idx] = -1
+			if part, _ := stringMatch(searchName, i, true); part {
+				ranks[idx] = ContainsRank(searchName, i)
 			}
-
 		}
-
+		if order := FallbackOrder(isPrefix, ranks); searchNumber >= 1 && searchNumber <= len(order) {
+			closeMatch = order[searchNumber-1]
+		}
 	}
 
 	return match, closeMatch
+}
+
+// FallbackOrder is the one order in which name matches are numbered (`2.pot`)
+// once no exact match answers (#865); items.FindMatchIn uses it too. Input is
+// per item: isPrefix (its name starts with the typed text) and rank
+// (ContainsRank, or -1 when the name does not contain the text). Output is
+// item indices: every starts-with hit first, in list order, then the other
+// contains hits by rank (whole word, word start, mid-word), list order within
+// a rank. No index appears twice.
+func FallbackOrder(isPrefix []bool, ranks []int) []int {
+	var order []int
+	var tiers [3][]int
+	for idx := range ranks {
+		switch {
+		case isPrefix[idx]:
+			order = append(order, idx)
+		case ranks[idx] >= 0:
+			tiers[ranks[idx]] = append(tiers[ranks[idx]], idx)
+		}
+	}
+	for _, tier := range tiers {
+		order = append(order, tier...)
+	}
+	return order
+}
+
+// ContainsRank ranks how well searchFor (already known to be contained in
+// searchIn) sits in searchIn: 0 whole word(s), 1 starts a word, 2 mid-word.
+// Both are normalized as stringMatch does (lowercase, apostrophes removed), so
+// "edvar" in "Edvar's Ring" reads as "edvars ring" and ranks as a word start.
+// A word is a run of letters and digits.
+func ContainsRank(searchFor, searchIn string) int {
+	searchFor = NormalizeForMatch(searchFor)
+	searchIn = NormalizeForMatch(searchIn)
+	isWordChar := func(b byte) bool {
+		return b >= '0' && b <= '9' || b >= 'a' && b <= 'z' || b >= 0x80
+	}
+	best := 2
+	for from := 0; from <= len(searchIn)-len(searchFor); {
+		at := strings.Index(searchIn[from:], searchFor)
+		if at < 0 {
+			break
+		}
+		start := from + at
+		end := start + len(searchFor)
+		if start == 0 || !isWordChar(searchIn[start-1]) {
+			if end == len(searchIn) || !isWordChar(searchIn[end]) {
+				return 0
+			}
+			best = 1
+		}
+		from = start + 1
+	}
+	return best
 }
 
 // Searches for a partial or full match of a string

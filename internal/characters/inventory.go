@@ -349,8 +349,12 @@ func (c *Character) FindInPotionsWhere(itemName string, keep func(items.Item) bo
 		return closeMatch, closeMatch.ItemId != 0
 	}
 
-	// Sort by CraftedRound ascending (oldest first) for consumption priority
+	// Best name match first (items.ContainsRank: whole word, word start,
+	// mid-word, #865), and within one rank the oldest (lowest CraftedRound)
+	// wins, the deliberate consumption priority.
+	typed, _ := util.GetMatchNumber(itemName) // "1.pot" ranks by "pot"
 	oldestIdx := -1
+	bestRank := 3
 	var oldestRound uint64 = ^uint64(0)
 
 	for idx := range c.PotionItems {
@@ -359,8 +363,13 @@ func (c *Character) FindInPotionsWhere(itemName string, keep func(items.Item) bo
 		}
 		closeMatch, fullMatch := items.FindMatchIn(itemName, c.PotionItems[idx])
 		matched := fullMatch.ItemId != 0 || closeMatch.ItemId != 0
-		if matched && c.PotionItems[idx].CraftedRound < oldestRound {
+		if !matched {
+			continue
+		}
+		rank := c.PotionItems[idx].ContainsRank(typed)
+		if rank < bestRank || (rank == bestRank && c.PotionItems[idx].CraftedRound < oldestRound) {
 			oldestIdx = idx
+			bestRank = rank
 			oldestRound = c.PotionItems[idx].CraftedRound
 		}
 	}
