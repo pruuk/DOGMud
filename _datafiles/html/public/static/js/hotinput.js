@@ -144,7 +144,7 @@
     // aliases and macros are out (layout spec ruling 13). party and guild are
     // mostly management, so they count only when talking.
     var CHAT_WORDS = ['say', 'whisper', 'reply', 'chat', 'newbie', 'trade', 'shout',
-                      'emote', 'yell', 'scream', 'holler', '/w'];
+                      'emote', 'yell', 'scream', 'holler', '/w', 'gc', 'pchat', 'psay'];
     var PARTY_TALK = ['chat', 'say'];
     var GUILD_TALK = ['chat', 'say', 'gc'];
     // R2, R5, R6: anything else waits for the server's Char.Input.Done for

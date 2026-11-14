@@ -153,6 +153,8 @@ pendingReconnectToken = 'TOKEN';
 sockets[1].open();
 check('a reconnect sends the token before the width', order.join(', ') === 'send TOKEN, width 57',
     'order ' + order.join(', '));
+// onopen resets the count to 0, then the token frame is counted: 1.
+check('the token frame is counted after onopen', linesSent === 1, 'linesSent ' + linesSent);
 
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

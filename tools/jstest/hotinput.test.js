@@ -290,8 +290,35 @@ check('the old name is gone', typeof HotInput.shouldHideKeyboardAfterSend, 'unde
 ['say hi', 'whisper bob hi', 'reply ok', 'chat hello', 'newbie help?', 'trade wts rope',
  'shout hey', 'emote waves', 'yell hey', 'scream hey', 'holler hey', '/w bob hi',
  '. hi', '.hi', '` hi', '`hi', 'SAY hi', '  say hi  ', 'party chat hi', 'party say hi',
- 'guild chat hi', 'guild say hi', 'guild gc hi', 'PARTY CHAT hi'
+ 'guild chat hi', 'guild say hi', 'guild gc hi', 'PARTY CHAT hi',
+ 'gc hi', 'pchat hi', 'psay hi'
 ].forEach(function (line) { check('chat line: ' + JSON.stringify(line), HotInput.isChatLine(line), true); });
+
+// Guard against drift: every engine alias of a chat command is a chat line.
+// Line-based read of the command-aliases block in keywords.yaml.
+(function () {
+    var yaml = require('fs').readFileSync(path.join(
+        __dirname, '..', '..', '_datafiles', 'world', 'dogmud', 'keywords.yaml'), 'utf8').split(/\r?\n/);
+    var CHAT_TARGETS = ['say', 'chat', 'shout', 'whisper', 'emote', 'reply', 'newbie', 'trade',
+                        'party chat', 'party say', 'guild chat', 'guild say'];
+    var inBlock = false, found = 0;
+    yaml.forEach(function (ln) {
+        if (/^command-aliases:/.test(ln)) { inBlock = true; return; }
+        if (!inBlock) return;
+        if (ln !== '' && !/^\s/.test(ln)) { inBlock = false; return; }
+        var m = /^\s+(?:'([^']+)'|"([^"]+)"|([^:\s'"][^:]*?))\s*:\s*\[(.*)\]/.exec(ln);
+        if (!m) return;
+        var key = m[1] || m[2] || m[3];
+        if (CHAT_TARGETS.indexOf(key) < 0) return;
+        (m[4].match(/'([^']*)'|"([^"]*)"/g) || []).forEach(function (q) {
+            var alias = q.slice(1, -1);
+            found++;
+            check('engine alias of ' + key + ': ' + JSON.stringify(alias),
+                HotInput.isChatLine(alias + ' hi'), true);
+        });
+    });
+    check('the alias scan found at least 8 aliases (found ' + found + ')', found >= 8, true);
+})();
 ['look', 'talk hadwen', 'ask hadwen about rope', 'party invite bob', 'party', 'party loot ffa',
  'guild deposit 5', 'guild', 'sayings', 'emoted', '', '   ', null, undefined
 ].forEach(function (line) { check('not a chat line: ' + JSON.stringify(line), HotInput.isChatLine(line), false); });
@@ -323,6 +350,9 @@ check('already typing the next command: keep', HotInput.blurAfterWait({ menu: fa
     w.start(5);
     w.done(4, true);
     check("an earlier line's marker does not end the wait", settled.length, 0);
+    w.done('5', false);
+    w.done(undefined, false);
+    check('a non-number seq is ignored', settled.length, 0);
     w.done(5, true);
     check('its own marker ends it with that menu state', JSON.stringify(settled), '[true]');
     advance(3000);

@@ -69,7 +69,7 @@ On a phone, an open tab takes at most 30% of the screen, so about 21 lines of ga
 - The line is a chat line: `'keep'`.
 - Anything else: `'wait'`.
 
-`isChatLine(line)` is exported beside it. The first word, lowercased, is matched against `CHAT_WORDS`: `say`, `whisper`, `reply`, `chat`, `newbie`, `trade`, `shout`, `emote`, `yell`, `scream`, `holler`, `/w`. A line starting `.` or the backtick counts whether or not a space follows (`.hello` is say). `party` and `guild` count when their second word is in `PARTY_TALK` (`chat`, `say`) or `GUILD_TALK` (`chat`, `say`, `gc`). The constants carry a comment naming R1 as the principle. A `talk` or `ask` line is not in the list: it waits, and the menu it opens keeps the keyboard (R2).
+`isChatLine(line)` is exported beside it. The first word, lowercased, is matched against `CHAT_WORDS`: `say`, `whisper`, `reply`, `chat`, `newbie`, `trade`, `shout`, `emote`, `yell`, `scream`, `holler`, `/w`, `gc`, `pchat`, `psay`. A line starting `.` or the backtick counts whether or not a space follows (`.hello` is say). `party` and `guild` count when their second word is in `PARTY_TALK` (`chat`, `say`) or `GUILD_TALK` (`chat`, `say`, `gc`). The constants carry a comment naming R1 as the principle. A `talk` or `ask` line is not in the list: it waits, and the menu it opens keeps the keyboard (R2).
 
 The send handler acts on the answer. `'wait'` waits for the server to say it has finished the command (R5, R6, section 1a), so a slow connection only delays the close and other players' lines cannot end the wait:
 
