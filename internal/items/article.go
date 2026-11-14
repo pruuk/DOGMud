@@ -61,6 +61,20 @@ func ArticleFor(itemId int, name string) string {
 	return ArticlePrefix(name)
 }
 
+// IsProperName reports whether name, as a line shows it, is the name of a
+// proper_name item ("Edvar's Map-Fragment"). It reads the snapshot built
+// whenever the item specs change, so the messaging normalizer can ask by
+// name alone, where it has no item id. Colour tags, a quest star and
+// trailing space are ignored, and case is not significant.
+func IsProperName(name string) bool {
+	snap := authored.Load()
+	if snap == nil {
+		return false
+	}
+	_, rest := nameLead(name)
+	return snap.proper[normalizeItemName(nameTag.ReplaceAllString(rest, ``))]
+}
+
 // MidSentenceName returns name as it reads after ArticlePrefix: a name that
 // opens with its own article ("A Sheaf of Gleaned Grain") has that article
 // lowercased, so the line reads "You find a Sheaf of Gleaned Grain." rather

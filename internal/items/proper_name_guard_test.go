@@ -7,14 +7,19 @@ import (
 )
 
 // Every shipped item whose name opens with a possessive is either named for
-// one person (proper_name: true, no article: "You receive Edvar's
-// Map-Fragment.") or a trade or role possessive (an article: "a Foreman's
-// Tally-Book"). Nothing in the data tells the two apart, so each name is
-// classified here by hand and a new one fails until it is (#799). Evidence
-// for each person: a mob or dialogue of that name in _datafiles/world/dogmud.
+// one person or one unique creature (proper_name: true, no article: "You
+// receive Edvar's Map-Fragment.") or a trade or role possessive (an article:
+// "a Foreman's Tally-Book"). Nothing in the data tells the two apart, so each
+// name is classified here by hand and a new one fails until it is (#799).
+// Evidence for each person or creature: a mob or dialogue of that name in
+// _datafiles/world/dogmud.
 var (
 	// properNameItems are the item ids that must carry proper_name: true.
 	properNameItems = map[int]string{
+		// Named for one unique creature (owner ruling): the mob "The Old
+		// White" and the boss The Sentinel.
+		40179: "Old White's Fang",
+		40165: "Sentinel's Heartstone",
 		40113: "Edvar's Map-Fragment",
 		40109: "Ysolde's Purge",
 		40120: "Ostry's Gratitude",
@@ -39,8 +44,8 @@ var (
 		30040: "Preacher's Tincture", 30047: "Cat's Eye Draught",
 		30054: "Savant's Infusion", 40004: "Healer's Root",
 		40074: "Courier's Road-Token", 40100: "Foreman's Tally-Book",
-		40165: "Sentinel's Heartstone", 40184: "Wayfarer's Bottomless Pack",
-		16: "Bandit's Purse", 10023: "Smuggler's Short Blade",
+		40184: "Wayfarer's Bottomless Pack",
+		16:    "Bandit's Purse", 10023: "Smuggler's Short Blade",
 		10026: "Bandit's Longsword", 10044: "Watch-Captain's Blade",
 		10047: "Warden's Lash",
 		// Bounty Hunter, Guard Captain, Pit Fighter: roles.
@@ -50,9 +55,6 @@ var (
 		20085: "Bounty Hunter's Badge", 10037: "Bounty Hunter's Blade",
 		40037: "Guard Captain's Commendation",
 		10085: "Pit Fighter's Knife", 10086: "Pit Fighter's Sword",
-		// Old White is a creature (the mob "The Old White"), not a person:
-		// left with its article until the owner rules.
-		40179: "Old White's Fang",
 	}
 )
 
@@ -63,18 +65,24 @@ func TestPossessiveItemNamesAreClassified(t *testing.T) {
 	for id, spec := range items {
 		_, isPerson := properNameItems[id]
 		_, isTrade := tradePossessiveItems[id]
-		// The first word may sit after "Bounty Hunter's": a possessive
-		// anywhere in the first three words counts as opening with one.
-		words := strings.Fields(spec.Name)
+		// The possessive may sit after "Bounty Hunter's" or "Guard
+		// Captain's": one anywhere in the first three words counts as the
+		// name opening with one. A possessive is a word ending 's, a bare
+		// trailing apostrophe on an s ("Hollis'"), or the curly forms.
+		words := strings.Fields(strings.NewReplacer(`’`, `'`).Replace(spec.Name))
 		if len(words) > 3 {
 			words = words[:3]
 		}
 		opens := false
 		for _, w := range words {
-			if strings.HasSuffix(w, `'s`) {
+			if strings.HasSuffix(w, `'s`) || strings.HasSuffix(w, `s'`) {
 				opens = true
 			}
 		}
+		// Two prefixes are exempt because their possessive is not the name's
+		// opening: "A Surveyor's Marked Map" and its kind lead with their own
+		// article, so the article already reads right, and "Copy of Edvar's
+		// Map" leads with "Copy", which takes the article, not Edvar.
 		if opens && !isPerson && !isTrade && !strings.HasPrefix(strings.ToLower(spec.Name), `a `) &&
 			!strings.HasPrefix(spec.Name, `Copy of `) {
 			unclassified = append(unclassified, spec.Name)

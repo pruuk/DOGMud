@@ -564,6 +564,9 @@ func GetAllItemSpecsMap() map[int]*ItemSpec {
 type authoredSnapshot struct {
 	words map[string]bool
 	names map[string]bool
+	// proper holds the normalised names of the proper_name items, for
+	// IsProperName.
+	proper map[string]bool
 }
 
 var authored atomic.Pointer[authoredSnapshot]
@@ -572,8 +575,9 @@ var authored atomic.Pointer[authoredSnapshot]
 // the items map, where the change is made.
 func rebuildAuthoredKeywords() {
 	snap := &authoredSnapshot{
-		words: make(map[string]bool, len(items)*2),
-		names: make(map[string]bool, len(items)),
+		words:  make(map[string]bool, len(items)*2),
+		names:  make(map[string]bool, len(items)),
+		proper: make(map[string]bool),
 	}
 	for id, spec := range items {
 		if id == BaubleItemId || spec == nil {
@@ -592,6 +596,9 @@ func rebuildAuthoredKeywords() {
 		}
 		if n := normalizeItemName(spec.Name); n != `` {
 			snap.names[n] = true
+			if spec.ProperName {
+				snap.proper[n] = true
+			}
 		}
 	}
 	authored.Store(snap)
