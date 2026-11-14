@@ -509,6 +509,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Mutation.go` | `Mutation` | Mutation roster and reveal events (`Char.Mutation`; a `Silent` gain pushes no card, #680) |
 | `gmcp.Action.go` | `Action` | Clickable action affordances |
 | `gmcp.Menu.go` | `Char.Menu` | Whether a game menu or prompt is open (`{open}`); see "Char.Menu" above |
+| `gmcp.InputDone.go` | `Char.Input.Done` | A typed web client line is done: its number and whether a menu or prompt is open (`{seq, menu}`); see "Char.Input.Done" below |
 | `gmcp.Commands.go` | `Commands` | Command state, modes, cooldowns |
 | `gmcp.Behavior.go` | `Behavior` | Behaviour-tree state (admin/builder tooling) |
 | `gmcp.Build.go` | `Build` | The admin web building tools' data feed. The whole builder is off (owner 2026-10-28, #375 phase 6 postponed until more big arcs land): `refuseWebBuilder` refuses every `Build.*` message in `handleBuildOp` before dispatch. The handlers stay for its return; the loop door in `buildQuestUpdate` is dormant until then |
@@ -543,6 +544,25 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   queued action is not run; the module replies `Char.Action.Result` with status
   `deferred` and reason `menu open`. Every exit from that handler must reply,
   or the client parks its action queue.
+
+## Char.Input.Done: a typed line is finished (`gmcp.InputDone.go`, web client plan 6)
+
+Payload: `{"seq": n, "menu": true|false}`. `seq` is the line's number (the web
+client and `main.go` `countLineFrame` both count text frames from the socket's
+open); `menu` is `user.MenuOrPromptOpen()` after the line.
+
+- Web client only: sent when `isWebClientConnection` and `isGMCPEnabled` hold.
+  Telnet GMCP clients get nothing new.
+- `world.go` `queueInputDone` queues `events.InputDone` at
+  `events.InputDonePriority` (99): after every event that writes a command's
+  text or opens a menu (highest today 50), before the prompt redraw at 100.
+  The handler queues the frame at default priority, so it follows those
+  frames. `TestInputDonePriority_NothingElseQueuesAtOrAbove` holds the line.
+- Never carries the line's text (spec 2026-11-14, R7), so a password typed at a
+  prompt is not echoed back.
+- The phone keyboard waits on it: `hotinput.js` `createSendWait` holds a
+  non-chat line until its `seq` arrives, then keeps the keyboard up if `menu`
+  is true and closes it otherwise. Chat lines keep it up without waiting.
 
 ## Char.Quests: destination fields (`gmcp.Char.go`, #375 phase 4)
 

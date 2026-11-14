@@ -1,5 +1,12 @@
 # DOGMud Patch Notes
 
+## 2026-11-14: Playing on a phone
+
+- An open tab now takes less of the screen on a phone, so more of the game stays in view.
+- The keyboard stays up while you chat, and while you talk to someone or answer a menu. It still closes after other commands, so you can read what happened.
+- A new X at the end of the command box closes the keyboard whenever you like.
+- Turn your phone sideways and the game suggests holding it upright, once per visit.
+
 ## 2026-11-12: The game window fits your screen
 
 - Game text in the web client is now one readable size on every device, and it never shrinks or grows to fit. On a phone the lines fit your screen instead. (If you have raised your browser's minimum text size, the game uses that size.)
