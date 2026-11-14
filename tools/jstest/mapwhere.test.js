@@ -27,6 +27,9 @@ var calls = src.split('\n').filter(function (l) {
 check('the map renderer draws five text kinds: compass N, service glyph, zone-exit label, ?, stairs', calls, 5);
 check('no title, level, room name, quest name, area label or banner text',
     /~ Level |Somewhere in |_drawQuestBanner|data-wash-label|data-quest-banner/.test(src), false);
+// Other ways to draw text: only the lTxt helper itself may create a text element.
+check('exactly one lEl("text") site, the lTxt helper', (src.match(/lEl\(\s*["']text["']/g) || []).length, 1);
+check('no createElementNS text element', /createElementNS\([^)]*["']text["']/.test(src), false);
 check('the zone-exit label stays', /"→ " \+ e\.tozone/.test(src), true);
 
 var page = fs.readFileSync(path.join(PUB, 'webclient-pure.html'), 'utf8');

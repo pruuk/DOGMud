@@ -350,7 +350,10 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 .map-where > span { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .map-where .mw-k { color: var(--ink-gold); }
 .map-where .mw-v { color: var(--title-gold); }
-.map-where .mw-dest .mw-v { color: var(--quest-name-focus); }
+/* The map's quest gold (RoomGridSVG.LEATHER.questGold, #e6b058): 9.3:1 on the
+   map's --ink-black. --cp-mid is the same value in every theme. */
+.map-where .mw-dest .mw-v { color: var(--cp-mid); }
+.map-where[hidden] { display: none; }
 /* Quests is as tall as its list, up to 220px, and gives height back (down
    to 80px, then its list scrolls) when the left column runs out, so a
    short laptop window never scrolls the whole page (#768 review item 5). */

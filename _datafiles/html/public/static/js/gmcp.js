@@ -239,7 +239,7 @@ class RoomGridSVG {
       this._zone = null;
       this._z = null;
       this._party = {}; // keyed by roomId (number or string)
-      this._questMarker = null; // {targetRoom, nextRoom, nextDir, name} or null
+      this._questMarker = null; // {targetRoom, nextRoom, nextDir, kind, targetRooms} or null
       // Instance-stable def IDs (mirror the +iid convention of the leather defs)
       // so a second coexisting map instance never collides on these ids.
       this._questBrassId = "questBrass" + this._iid;
@@ -286,8 +286,8 @@ class RoomGridSVG {
       this.roomsGroup = document.createElementNS(LEATHER_NS, 'g');
       this.worldSvg.appendChild(this.roomsGroup);
 
-      // overlayGroup — compass and quest banner, drawn in 320×300 design coords on
-      // TOP of worldSvg so the pannable room world never covers them.
+      // overlayGroup — the compass, drawn in 320×300 design coords on
+      // TOP of worldSvg so the pannable room world never covers it.
       this.overlayGroup = document.createElementNS(LEATHER_NS, 'g');
       this.svg.appendChild(this.overlayGroup);
 
@@ -639,7 +639,7 @@ class RoomGridSVG {
 
   /**
    * Set (or clear) the focused-quest destination marker + next-step arrow.
-   * marker = {targetRoom, nextRoom, nextDir, name} or null. Only the room(s)
+   * marker = {targetRoom, nextRoom, nextDir, kind, targetRooms} or null. Only the room(s)
    * whose marker actually changed are rebuilt — never the whole map.
    */
   setQuestMarker(marker) {
@@ -647,8 +647,7 @@ class RoomGridSVG {
       const a = this._questMarker, b = marker;
       const same = (!a && !b) || (!!a && !!b
           && a.targetRoom === b.targetRoom && a.nextRoom === b.nextRoom
-          && a.nextDir === b.nextDir && a.name === b.name
-          && a.kind === b.kind && a.label === b.label && !!a.inside === !!b.inside
+          && a.nextDir === b.nextDir && a.kind === b.kind
           && String(a.targetRooms || []) === String(b.targetRooms || []));
       if (same) { return; }
       const oldTarget = a ? a.targetRoom : 0;
@@ -995,7 +994,7 @@ class RoomGridSVG {
       }
 
       // Focused-quest destination marker (brass ring + brass glow +
-      // brass pin + name) on the target room.
+      // brass pin) on the target room.
       const qm = this._questMarker;
       if (qm && qm.targetRoom && (qm.targetRoom === id || qm.targetRoom === String(id))) {
           g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 12, fill: L.questGold, opacity: "0.30" }));
@@ -1395,8 +1394,8 @@ RoomGridSVG.prototype.tintFor = function (biome) {
 
 // ── Leather style palette & render parameters ─────────────────────────────────
 RoomGridSVG.LEATHER = {
-  ink: "#b5a26c", ink2: "#9c8048", title: "#e8d2a0", roomFill: "#2a1d12",
-  label: "#cec6aa", locked: "#dc6b34", water: "#68a8cf", trail: "#a98a55",
+  ink: "#b5a26c", ink2: "#9c8048", roomFill: "#2a1d12",
+  locked: "#dc6b34", water: "#68a8cf", trail: "#a98a55",
   road: "#b5a26c", ridge: "#a98a55", plain: "#9c8048",
   legendBg: "#241810", party: "#6dac9d", partyDk: "#243f3a",
   questGold: "#e6b058",
