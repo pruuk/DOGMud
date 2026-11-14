@@ -1016,6 +1016,12 @@
                 menuOpen = m.open === true;
                 if (wasOpen && !menuOpen) drainQueue();
             },
+            "Char.Input.Done": function() {
+                // The server finished one of our typed lines (plan 6): its
+                // number and whether a menu or prompt is open. Never its text.
+                var d = ((GMCPStructs["Char"] || {}).Input || {}).Done || {};
+                if (sendWait) sendWait.done(d.seq, d.menu === true);
+            },
             "Char.Mutation": function() {
                 var m = (GMCPStructs["Char"] || {}).Mutation;
                 if (m && m.name) { mutationRevealEnqueue(m); }
@@ -2941,6 +2947,8 @@
             socket = new WebSocket(wsAddress);
 
             socket.onopen = function() {
+                linesSent = 0;
+                if (sendWait) sendWait.reset();
                 term.writeln("Connected to the server!");
                 term.clear();
 
@@ -2959,6 +2967,7 @@
                 if (pendingReconnectToken) {
                     var t = pendingReconnectToken;
                     pendingReconnectToken = null;
+                    linesSent++;
                     socket.send(t);
                 }
                 // The server starts every connection at 80 columns. After the
@@ -3168,6 +3177,31 @@
             };
         });
 
+        // Plan 6 (R7): the server numbers this connection's text frames and
+        // answers each typed line with Char.Input.Done {seq, menu}. Count the
+        // same frames here: every string sent on the socket (SendData and the
+        // copyover token). GMCP goes as binary and is not counted.
+        var linesSent = 0;
+
+        // After an in-game command that is not chat, the phone keyboard waits
+        // for that line's marker and stays up if the game left a menu or
+        // prompt open (spec 2026-11-14, R2, R5, R6).
+        var sendWait = window.HotInput ? window.HotInput.createSendWait({
+            setTimeout: function (f, ms) { return window.setTimeout(f, ms); },
+            clearTimeout: function (t) { window.clearTimeout(t); },
+            ceilingMs: window.HotInput.MENU_WAIT_CEILING_MS,
+            currentMenu: function () { return menuOpen; },
+            settle: function (menu) {
+                if (window.HotInput.blurAfterWait({
+                    menu: menu,
+                    focused: document.activeElement === textInput,
+                    value: textInput.value
+                })) {
+                    textInput.blur();
+                }
+            }
+        }) : null;
+
         textInput.addEventListener('keydown', function(event) {
             // Macro support: F-keys
             if (event.key.substring(0, 1) === "F" && event.key.length === 2) {
@@ -3214,21 +3248,23 @@
                     return;
                 }
 
-                var sent = SendData(event.target.value);
+                var line = event.target.value;
+                var sent = SendData(line);
                 if ( sent ) {
                     event.target.value = '';
                 } else {
                     term.writeln("Not connected to the server. Click Enter Game to play.");
                 }
-                // Phones: close the keyboard after an in-game command, so the
-                // player reads what happened first (Malia 2026-11-02). Login,
-                // password and numbered menu answers keep it open (Calabe's
-                // ruling, #768 review). HotInput decides.
-                if (window.HotInput && window.HotInput.shouldHideKeyboardAfterSend({
+                // Phones: chat keeps the keyboard; any other in-game command
+                // waits for the game's answer and keeps it only if a menu or
+                // prompt opened (plan 6, R1 to R7). Login, password and menu
+                // answers keep it (#768 ruling). HotInput decides.
+                if (window.HotInput && sendWait && window.HotInput.keyboardAfterSend({
                     touchOnly: phoneTouchOnly(), phoneWidth: phoneWidth(), sent: sent,
-                    inGame: inGame, menuOpen: menuOpen, password: textInput.type === "password"
-                })) {
-                    textInput.blur();
+                    inGame: inGame, menuOpen: menuOpen, password: textInput.type === "password",
+                    line: line
+                }) === 'wait') {
+                    sendWait.start(linesSent);
                 }
             }
         });
@@ -3241,6 +3277,7 @@
             if (leavingGame && dataToSend !== 'quit') setSessionState('connected');
             payloadsSent++;
             totalBytesSent += dataToSend.length;
+            linesSent++;
             socket.send(dataToSend);
             // Snap the view back to the newest output whenever the player acts.
             // Without this, scrolling up to re-read and then moving (or any

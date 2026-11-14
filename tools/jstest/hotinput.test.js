@@ -259,32 +259,101 @@ check('typing in the chat textarea is left alone', focuses(key('n'), CHAT_TEXTAR
 // Modals own focus while open.
 check('typing is left alone while a modal is open', focuses(key('n'), PLAIN_DIV, true), false);
 
-// --- phone keyboard hides after an in-game send ----------------------------
+// --- phone keyboard after a send (plan 6) ------------------------------------
 //
-// docs/superpowers/plans/completed/2026-11-02-webclient-phone-keyboard.md. True only
-// on a touch-only phone-width screen when an in-game command was sent (owner
-// ruling on #768, 2026-11-07). Login prompts, password prompts and numbered
-// menu answers keep the keyboard, as do tablets, desktops, and a send that
-// did not go out.
+// docs/superpowers/specs/2026-11-14-webclient-base-6-phones-design.md. On a
+// touch-only phone, in game, after a send: chat keeps the keyboard (R1);
+// anything else waits for the server's Char.Input.Done (R2, R5, R6). Login,
+// password and menu answers keep it, as do tablets, desktops and a send that
+// did not go out (owner ruling on #768, 2026-11-07).
 
-var HIDE = { touchOnly: true, phoneWidth: true, inGame: true, menuOpen: false, password: false, sent: true };
-function hide(overrides) {
+var AFTER = { touchOnly: true, phoneWidth: true, inGame: true, menuOpen: false, password: false, sent: true, line: 'look' };
+function after(overrides) {
     var s = {};
-    Object.keys(HIDE).forEach(function (k) { s[k] = HIDE[k]; });
+    Object.keys(AFTER).forEach(function (k) { s[k] = AFTER[k]; });
     Object.keys(overrides || {}).forEach(function (k) { s[k] = overrides[k]; });
-    return HotInput.shouldHideKeyboardAfterSend(s);
+    return HotInput.keyboardAfterSend(s);
 }
-check('phone, in game, sent: keyboard hides', hide(), true);
-check('not touch-only (desktop, touch laptop): keeps the keyboard', hide({ touchOnly: false }), false);
-check('tablet width: keeps the keyboard (arrow history, macros)', hide({ phoneWidth: false }), false);
-check('at a login prompt: keeps the keyboard', hide({ inGame: false }), false);
-check('answering a numbered game menu: keeps the keyboard', hide({ menuOpen: true }), false);
-check('at a password prompt: keeps the keyboard', hide({ password: true }), false);
-check('a password prompt at login: keeps the keyboard', hide({ inGame: false, password: true }), false);
-check('an old call site with no in-game state: keeps the keyboard',
-    HotInput.shouldHideKeyboardAfterSend({ touchOnly: true, phoneWidth: true, sent: true }), false);
-check('nothing was sent: keeps the keyboard', hide({ sent: false }), false);
-check('no state at all: keeps the keyboard', HotInput.shouldHideKeyboardAfterSend(), false);
+check('phone, in game, look: waits for the game', after(), 'wait');
+check('talk to an NPC: waits (its menu keeps the keyboard)', after({ line: 'talk hadwen' }), 'wait');
+check('say: keeps the keyboard', after({ line: 'say hi' }), 'keep');
+check('not touch-only (desktop, touch laptop): keeps the keyboard', after({ touchOnly: false }), 'keep');
+check('tablet width: keeps the keyboard (arrow history, macros)', after({ phoneWidth: false }), 'keep');
+check('at a login prompt: keeps the keyboard', after({ inGame: false }), 'keep');
+check('answering a numbered game menu: keeps the keyboard', after({ menuOpen: true }), 'keep');
+check('at a password prompt: keeps the keyboard', after({ password: true }), 'keep');
+check('nothing was sent: keeps the keyboard', after({ sent: false }), 'keep');
+check('no state at all: keeps the keyboard', HotInput.keyboardAfterSend(), 'keep');
+check('the old name is gone', typeof HotInput.shouldHideKeyboardAfterSend, 'undefined');
+
+// R1: chat words, as typed. Aliases and macros are out (ruling 13).
+['say hi', 'whisper bob hi', 'reply ok', 'chat hello', 'newbie help?', 'trade wts rope',
+ 'shout hey', 'emote waves', 'yell hey', 'scream hey', 'holler hey', '/w bob hi',
+ '. hi', '.hi', '` hi', '`hi', 'SAY hi', '  say hi  ', 'party chat hi', 'party say hi',
+ 'guild chat hi', 'guild say hi', 'guild gc hi', 'PARTY CHAT hi'
+].forEach(function (line) { check('chat line: ' + JSON.stringify(line), HotInput.isChatLine(line), true); });
+['look', 'talk hadwen', 'ask hadwen about rope', 'party invite bob', 'party', 'party loot ffa',
+ 'guild deposit 5', 'guild', 'sayings', 'emoted', '', '   ', null, undefined
+].forEach(function (line) { check('not a chat line: ' + JSON.stringify(line), HotInput.isChatLine(line), false); });
+
+// After the wait: close only if no menu, the box still has focus, and the
+// player has not started the next command.
+check('wait over, no menu, focused, empty: close', HotInput.blurAfterWait({ menu: false, focused: true, value: '' }), true);
+check('a menu opened: keep', HotInput.blurAfterWait({ menu: true, focused: true, value: '' }), false);
+check('focus moved away: leave it', HotInput.blurAfterWait({ menu: false, focused: false, value: '' }), false);
+check('already typing the next command: keep', HotInput.blurAfterWait({ menu: false, focused: true, value: 'n' }), false);
+
+// The wait matches the server's marker by line number (R7), with a ceiling.
+(function () {
+    var now = 0, timers = [], settled = [];
+    function fakeSet(f, ms) { var t = { at: now + ms, f: f, live: true }; timers.push(t); return t; }
+    function fakeClear(t) { if (t) t.live = false; }
+    function advance(ms) {
+        now += ms;
+        timers.forEach(function (t) { if (t.live && t.at <= now) { t.live = false; t.f(); } });
+    }
+    var menuOpenNow = false;
+    var w = HotInput.createSendWait({
+        setTimeout: fakeSet, clearTimeout: fakeClear, ceilingMs: HotInput.MENU_WAIT_CEILING_MS,
+        currentMenu: function () { return menuOpenNow; },
+        settle: function (menu) { settled.push(menu); }
+    });
+    check('the ceiling is 2 seconds', HotInput.MENU_WAIT_CEILING_MS, 2000);
+
+    w.start(5);
+    w.done(4, true);
+    check("an earlier line's marker does not end the wait", settled.length, 0);
+    w.done(5, true);
+    check('its own marker ends it with that menu state', JSON.stringify(settled), '[true]');
+    advance(3000);
+    check('the ceiling does not fire after the marker', settled.length, 1);
+
+    w.start(6);
+    w.done(8, false);
+    menuOpenNow = true;
+    check('a later number means the line never reached the world: ends at once',
+        JSON.stringify(settled), '[true,false]');
+
+    w.start(9);
+    menuOpenNow = true;
+    advance(1999);
+    check('no marker: still waiting at 1999ms', settled.length, 2);
+    advance(1);
+    check('no marker: the ceiling settles with the current menu state', JSON.stringify(settled), '[true,false,true]');
+
+    w.start(10);
+    w.start(11);
+    w.done(10, false);
+    check('a new wait replaces the old one', settled.length, 3);
+    w.done(11, false);
+    check('the new wait ends on its own marker', JSON.stringify(settled), '[true,false,true,false]');
+
+    w.start(12);
+    w.reset();
+    advance(5000);
+    w.done(12, true);
+    check('a new socket clears the wait', settled.length, 4);
+})();
 
 // The page has to call it, after SendData and from its result, and the phone
 // tap and xterm textarea guards must be in place.
@@ -292,12 +361,23 @@ var fs = require('fs');
 var page = fs.readFileSync(path.join(
     __dirname, '..', '..', '_datafiles', 'html', 'public', 'webclient-pure.html'
 ), 'utf8');
-var sendAt = page.indexOf('var sent = SendData(event.target.value);');
-var decideAt = page.indexOf('window.HotInput.shouldHideKeyboardAfterSend({');
+var sendAt = page.indexOf('var sent = SendData(line);');
+var decideAt = page.indexOf('window.HotInput.keyboardAfterSend({');
 check('the command box asks HotInput after sending', sendAt >= 0 && decideAt > sendAt, true);
-check('the decision is fed the send result', /phoneWidth: phoneWidth\(\), sent: sent/.test(page), true);
+check('the decision is fed the send result and the typed line',
+    /phoneWidth: phoneWidth\(\), sent: sent,[\s\S]{0,200}line: line/.test(page), true);
 check('the decision is told about login, menus and password prompts',
     /inGame: inGame, menuOpen: menuOpen, password: textInput\.type === "password"/.test(page), true);
+check('a wait starts with the line number SendData gave it',
+    /=== 'wait'\) \{\s*sendWait\.start\(linesSent\);/.test(page), true);
+check('every string sent on the socket is counted (both ends count text frames, R7)',
+    (page.match(/socket\.send\(/g) || []).length === 3
+    && /linesSent\+\+;\s*socket\.send\(t\);/.test(page)
+    && /linesSent\+\+;\s*socket\.send\(dataToSend\);/.test(page), true);
+check('a new socket starts the count again',
+    /socket\.onopen = function\(\) \{\s*linesSent = 0;\s*if \(sendWait\) sendWait\.reset\(\);/.test(page), true);
+check('Char.Input.Done ends the wait by number',
+    /"Char\.Input\.Done": function\(\) \{[\s\S]{0,400}sendWait\.done\(d\.seq, d\.menu === true\)/.test(page), true);
 check('a phone tap on the game text does not refocus the command box',
     /!isDragging && !selectedText && !\(phoneTouchOnly\(\) && phoneWidth\(\)\)/.test(page), true);
 check("xterm's textarea cannot raise the phone keyboard",

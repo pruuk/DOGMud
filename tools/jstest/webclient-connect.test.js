@@ -71,6 +71,9 @@ global.debugLog = function () {};
 global.stopAutomation = function () {};
 global.companionGlue = null;
 global.textInput = element();
+// The page's phone-keyboard wait (plan 6) sits just above the keydown marker
+// and reads window.HotInput; with none, the page makes no wait.
+global.window = {};
 global.setTimeout = function () { return 0; };
 global.clearTimeout = function () {};
 
