@@ -116,9 +116,73 @@ check('at normal zoom the visible height counts', VF.visibleHeight({ height: 400
 check('zoomed in with no keyboard, the page is still all visible', VF.visibleHeight({ height: 370, scale: 2 }), 740);
 check('zoomed in with the keyboard, the keyboard still counts', VF.visibleHeight({ height: 220, scale: 2 }), 440);
 
-check('no visual viewport: no keyboard', VF.keyboardOpen(740, undefined), false);
-check('an address bar hiding is not a keyboard', VF.keyboardOpen(740, 680), false);
-check('a keyboard is a keyboard', VF.keyboardOpen(740, 440), true);
+check('no visual viewport: no keyboard', VF.keyboardOpen(740, undefined, true), false);
+check('an address bar hiding is not a keyboard', VF.keyboardOpen(740, 680, true), false);
+check('a keyboard is a keyboard', VF.keyboardOpen(740, 440, true), true);
+// Plan 6 check: a keyboard needs a focused text field.
+check('200px short with no field focused: not a keyboard', VF.keyboardOpen(740, 540, false), false);
+check('200px short, third argument missing: not a keyboard', VF.keyboardOpen(740, 540), false);
+check('200px short with a field focused: a keyboard', VF.keyboardOpen(740, 540, true), true);
+check('50px short with a field focused: not a keyboard', VF.keyboardOpen(740, 690, true), false);
+function docWith(el) { return { activeElement: el }; }
+check('editable: input text', VF.editableFocused(docWith({ tagName: 'INPUT', type: 'text' })), true);
+check('editable: input with no type', VF.editableFocused(docWith({ tagName: 'INPUT' })), true);
+check('editable: input checkbox', VF.editableFocused(docWith({ tagName: 'INPUT', type: 'checkbox' })), false);
+check('editable: input button', VF.editableFocused(docWith({ tagName: 'INPUT', type: 'button' })), false);
+check('editable: textarea', VF.editableFocused(docWith({ tagName: 'TEXTAREA' })), true);
+check('editable: contenteditable', VF.editableFocused(docWith({ tagName: 'DIV', isContentEditable: true })), true);
+check('editable: a button', VF.editableFocused(docWith({ tagName: 'BUTTON' })), false);
+check('editable: null activeElement', VF.editableFocused(docWith(null)), false);
+check('editable: no document', VF.editableFocused(null), false);
+check('the page and the outer page both pass editableFocused to keyboardOpen',
+    /keyboardOpen\(window\.innerHeight, visible,\s*window\.ViewportFit\.editableFocused\(document\)\)/.test(fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8'))
+    && /keyboardOpen\(window\.innerHeight, visible,\s*ViewportFit\.editableFocused\(frame\.contentDocument\)\)/.test(fs.readFileSync(path.join(PUBLIC, 'webclient.html'), 'utf8')), true);
+check('the page on its own re-runs on focusin and focusout',
+    /document\.addEventListener\('focusin', fitOwnPage\);\s*document\.addEventListener\('focusout', fitOwnPage\);/.test(fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8')), true);
+// webclient.html behaviourally: its script runs at parse time, before the
+// frame exists. Run it in a fake page and fire DOMContentLoaded and load.
+(function () {
+    var vm = require('vm');
+    var html = fs.readFileSync(path.join(PUBLIC, 'webclient.html'), 'utf8');
+    var m = /<script type="text\/javascript">([\s\S]*?)<\/script>/.exec(html);
+    check('webclient.html has one inline script with fitFrameHeight', !!m && /function fitFrameHeight/.test(m[1]), true);
+    if (!m) return;
+    var winL = {}, docL = {}, frameL = {}, frameDocL = {};
+    function recorder(store) {
+        return function (name, fn) { (store[name] = store[name] || []).push(fn); };
+    }
+    var frameDoc = { addEventListener: recorder(frameDocL), documentElement: { classList: { toggle: function () {} }, style: { setProperty: function () {} } } };
+    var frame = { addEventListener: recorder(frameL), contentDocument: frameDoc, style: {} };
+    var domReady = false;
+    var el = { style: {}, clientWidth: 300, clientHeight: 500, getBoundingClientRect: function () { return { top: 0 }; } };
+    var fakeDoc = {
+        addEventListener: recorder(docL),
+        getElementById: function (id) { return id === 'webclient-frame' ? (domReady ? frame : null) : el; },
+        getElementsByTagName: function () { return []; }
+    };
+    var fakeWin = { addEventListener: recorder(winL), screen: { width: 390, height: 844 }, innerHeight: 800, scrollTo: function () {} };
+    // As in a browser, the window is the global object: window.X is a global X.
+    var sandbox = fakeWin;
+    fakeWin.document = fakeDoc;
+    fakeWin.window = fakeWin;
+    fakeWin.ViewportFit = VF;
+    var threw = null;
+    try { vm.runInNewContext(m[1], sandbox); } catch (e) { threw = e; }
+    check('webclient.html script runs at parse time without throwing', threw === null, true);
+    check('beforeunload is registered at parse time', (winL.beforeunload || []).length, 1);
+    check('no frame yet: no focus listeners', Object.keys(frameDocL).length, 0);
+    domReady = true;
+    try { (docL.DOMContentLoaded || []).forEach(function (f) { f(); }); } catch (e) { threw = e; }
+    if (threw) console.log('threw: ' + threw.stack.split('\n').slice(0, 3).join(' | '));
+    check('DOMContentLoaded handlers do not throw', threw === null, true);
+    (frameL.load || []).forEach(function (f) { f(); });
+    check('the frame document watches focusin', (frameDocL.focusin || []).length >= 1, true);
+    check('the frame document watches focusout', (frameDocL.focusout || []).length >= 1, true);
+})();
+check('Reset layout is hidden on a phone before a mode is applied',
+    /html\.phone #dashboard:not\(\[data-mode\]\) #btn-reset-layout \{ display: none; \}/.test(fs.readFileSync(path.join(PUBLIC, 'static', 'css', 'dashboard.css'), 'utf8')), true);
+check('the command input can shrink beside the X',
+    /#command-input \{\s*flex: 1;[^}]*min-width: 0;/.test(fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8')), true);
 
 var dashCss = fs.readFileSync(path.join(PUBLIC, 'static', 'css', 'dashboard.css'), 'utf8');
 check('the phone tab bar steps aside for the keyboard',
@@ -213,6 +277,50 @@ check('the Game panel body is observed, not only the panel',
     /_feedBody = _feedPanel\.querySelector\('\.dash-panel-body'\);\s*if \(_feedBody\) _feedObserver\.observe\(_feedBody\);/.test(game), true);
 check('a tab that wraps alone keeps its own size',
     /\.subtabs::after \{\s*content: "";\s*flex: 999 1 auto;/.test(dashCss), true);
+
+// Plan 6, ruling 15: a phone turned sideways, judged from the screen so the
+// keyboard cannot trigger it.
+check('sideways phone', VF.isSidewaysPhone(844, 390, 'landscape-primary', true), true);
+check('upright phone is not sideways', VF.isSidewaysPhone(390, 844, 'portrait-primary', true), false);
+check('iOS sizes do not swap: the orientation wins', VF.isSidewaysPhone(390, 844, 'landscape-secondary', true), true);
+check('no orientation API, sideways', VF.isSidewaysPhone(844, 390, undefined, true), true);
+check('a sideways tablet is not a sideways phone', VF.isSidewaysPhone(1024, 768, 'landscape-primary', true), false);
+check('a desktop is not a sideways phone', VF.isSidewaysPhone(1920, 1080, 'landscape-primary', false), false);
+
+check('orientation from the API',
+    VF.orientationType({ screen: { orientation: { type: 'landscape-primary' } } }), 'landscape-primary');
+check('iOS before 16.4: window.orientation 90 is landscape',
+    VF.orientationType({ screen: {}, orientation: 90 }), 'landscape-primary');
+check('iOS before 16.4: window.orientation 0 is portrait',
+    VF.orientationType({ screen: {}, orientation: 0 }), 'portrait-primary');
+check('no signal at all', VF.orientationType({ screen: {} }), undefined);
+
+// Once per browser tab: sessionStorage survives a reload but not a new tab.
+(function () {
+    var store = {};
+    var ss = { getItem: function (k) { return k in store ? store[k] : null; }, setItem: function (k, v) { store[k] = String(v); } };
+    var memo = {};
+    check('first time in a tab: show it', VF.takeSidewaysToast(ss, memo), true);
+    check('again on this page: not again', VF.takeSidewaysToast(ss, memo), false);
+    check('after a reload in the same tab: not again', VF.takeSidewaysToast(ss, {}), false);
+    check('a new tab: show it', VF.takeSidewaysToast({ getItem: function () { return null; }, setItem: function () {} }, {}), true);
+    var blocked = { getItem: function () { throw new Error('blocked'); }, setItem: function () { throw new Error('blocked'); } };
+    var m2 = {};
+    check('storage blocked: show it once', VF.takeSidewaysToast(blocked, m2), true);
+    check('storage blocked: not twice on one page', VF.takeSidewaysToast(blocked, m2), false);
+    check('no storage at all: show it once', VF.takeSidewaysToast(null, {}), true);
+})();
+check('the toast words', VF.SIDEWAYS_TOAST, 'This game is easier to play with your phone held upright.');
+
+// The dashboard wires it, and its toast can be lifted and held longer.
+var dashSrc = fs.readFileSync(path.join(PUBLIC, 'static', 'js', 'dashboard.js'), 'utf8');
+check('the dashboard watches for a sideways phone',
+    /this\._watchSideways && this\._watchSideways\(\);/.test(dashSrc)
+    && /VF\.takeSidewaysToast\(store, self\._sidewaysMemo\)/.test(dashSrc), true);
+check('the sideways toast is lifted above the command box and shown 4s',
+    /self\._toast\(VF\.SIDEWAYS_TOAST, \{ ms: 4000, lifted: true \}\)/.test(dashSrc), true);
+check('a lifted toast sits above the command box and tab bar',
+    /\.dash-toast\.lifted \{ bottom: calc\(var\(--cmdbox-h, 64px\) \+ var\(--tabbar-h, 64px\) \+ 12px\); \}/.test(dashCss), true);
 
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

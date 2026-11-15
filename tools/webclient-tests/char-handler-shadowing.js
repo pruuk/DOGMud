@@ -50,6 +50,7 @@ const EVENT_ONLY = {
   'Char.Action.Result': 'per-action event push',
   'Char.Action.Interrupted': 'per-action event push',
   'Char.Conditions': 'covered by updateStatusPanel(), which the Char handler calls unconditionally',
+  'Char.Input.Done': 'per-line marker for the phone keyboard (plan 6), sent alone after each typed line; never part of the Char node',
 };
 
 // ---------------------------------------------------------------- extraction

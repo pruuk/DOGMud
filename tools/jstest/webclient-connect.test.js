@@ -73,6 +73,9 @@ global.companionGlue = null;
 var musicStops = 0;
 global.MusicPlayer = { stopAll: function () { musicStops++; } };
 global.textInput = element();
+// The page's phone-keyboard wait (plan 6) sits just above the keydown marker
+// and reads window.HotInput; with none, the page makes no wait.
+global.window = {};
 global.setTimeout = function () { return 0; };
 global.clearTimeout = function () {};
 
@@ -152,6 +155,8 @@ pendingReconnectToken = 'TOKEN';
 sockets[1].open();
 check('a reconnect sends the token before the width', order.join(', ') === 'send TOKEN, width 57',
     'order ' + order.join(', '));
+// onopen resets the count to 0, then the token frame is counted: 1.
+check('the token frame is counted after onopen', linesSent === 1, 'linesSent ' + linesSent);
 
 // Music (#838): it stops when the player is really disconnected, and keeps
 // playing while a live restart reconnects by itself.

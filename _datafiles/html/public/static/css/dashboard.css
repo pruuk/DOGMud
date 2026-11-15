@@ -208,6 +208,20 @@
    jumps to the top of the page. */
 #panel-cmd { flex: 0 0 auto; margin-top: auto; }
 #panel-cmd .dash-panel-body { display: flex; padding: 4px; }
+/* Plan 6 (ruling 14): the Close keyboard X at the end of the command box,
+   only while the on-screen keyboard is open (viewportfit.js), so the box is
+   full width the rest of the time. 48px: the command box's height. */
+#cmd-close-kbd {
+  display: none;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  margin-left: 4px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+html.keyboard-open #cmd-close-kbd { display: flex; }
 
 /* The command box is the Game window's bottom strip: one frame, no gap, so
    the prompt sits right above where the player types. Only while the two are
@@ -681,16 +695,14 @@ html.layout-slim #dash-drawer { left: 6px; right: auto; width: var(--game-w); }
      plus the 6px gap under it. An open tab stops this far up, so it never
      covers the command box. */
   --cmdbox-h: 64px;
-  /* The tallest an open tab may get: half the screen, so the game text
-     above the command box always stays in view. On a short screen (a phone
-     on its side) half was too much: the tab covered every line of game
-     text and the Enter Game button. So it also stops --drawer-keep below
-     the top: the session bar (64px with its gap), the Game title bar (28px)
-     and about two lines of game text. */
+  /* The tallest an open tab may get where it covers game text (phone and
+     slim): 30% of the screen, so the game text above it stays in view
+     (layout spec ruling 12; plan 6 R3). Never under 80px, so on a very
+     short screen an open tab still shows more than its title bar. */
+  --drawer-cap: max(80px, 30vh);
+  /* Column's cap (below) stops this far under the top: the session bar
+     (64px with its gap), the Game title bar (28px) and about two lines. */
   --drawer-keep: 136px;
-  /* Never under 80px, so on a very short screen an open tab still shows
-     more than its title bar (it then covers some game text). */
-  --drawer-cap: max(80px, min(50vh, calc(100vh - var(--cmdbox-h) - var(--tabbar-h) - var(--tabname-h) - var(--drawer-keep))));
 }
 /* Newer phones: of what is actually visible. In @supports, because a
    custom property keeps any value, so a second declaration would also
@@ -701,6 +713,17 @@ html.layout-slim #dash-drawer { left: 6px; right: auto; width: var(--game-w); }
   #dashboard[data-mode="slim"],
   #dash-tabbar,
   #dash-drawer {
+    --drawer-cap: max(80px, 30dvh);
+  }
+}
+/* Column puts an open tab beside the game, over the panel column, not over
+   the game text, so it keeps the older, taller cap (plan 6 R3): half the
+   screen, stopping --drawer-keep below the top. */
+html.layout-column #dash-drawer {
+  --drawer-cap: max(80px, min(50vh, calc(100vh - var(--cmdbox-h) - var(--tabbar-h) - var(--tabname-h) - var(--drawer-keep))));
+}
+@supports (height: 1dvh) {
+  html.layout-column #dash-drawer {
     --drawer-cap: max(80px, min(50dvh, calc(100dvh - var(--cmdbox-h) - var(--tabbar-h) - var(--tabname-h) - var(--drawer-keep))));
   }
 }
@@ -731,6 +754,9 @@ html.layout-slim #dash-drawer { left: 6px; right: auto; width: var(--game-w); }
       "center";
   }
   html.phone #dashboard:not([data-mode]) #dash-panels { display: none; }
+  /* It widened a 320px phone's page at load, before a mode is applied
+     (plan 6 check). */
+  html.phone #dashboard:not([data-mode]) #btn-reset-layout { display: none; }
 }
 
 /* Bottom tab-bar — appended to body (outside #dashboard) so
@@ -783,17 +809,25 @@ html.keyboard-open #dashboard[data-mode="slim"] #dash-col-center { padding-botto
 html.keyboard-open #dashboard[data-mode="column"] #dash-panels { padding-bottom: 0; }
 /* In column an open tab stays over the panel column, down to its foot. */
 html.layout-column.keyboard-open #dash-drawer { bottom: 6px; }
-/* With the keyboard up, an open tab sits just above the command box. The
-   tab bar and name strip are hidden then, so the cap must not subtract
-   them: half of what is visible, leaving about two lines of game text
-   (40px) above it, and never under 60px so a Chat being typed into keeps
-   its newest lines. vh first; the dvh twin is below. */
+/* With the keyboard up, an open tab sits just above the command box. The tab
+   bar and name strip are hidden then. Phone and slim: 30% of what is visible
+   above the keyboard (plan 6 R3). --visible-h is set by the keyboard watch
+   (webclient.html fitFrameHeight, or this page's own when opened alone);
+   vh cannot be used, because opened alone the page keeps vh at the full
+   layout height. Never under 60px, so a Comms being typed into keeps its
+   newest lines. */
 html.keyboard-open #dash-drawer {
   bottom: var(--cmdbox-h);
+  --drawer-cap: max(60px, calc(0.3 * var(--visible-h, 100dvh)));
+}
+/* Column: the tab is beside the game, so it keeps half of what is visible,
+   leaving about two lines of game text (40px) above it. vh first; the dvh
+   twin is below. */
+html.layout-column.keyboard-open #dash-drawer {
   --drawer-cap: max(60px, min(50vh, calc(100vh - var(--cmdbox-h) - 40px)));
 }
 @supports (height: 1dvh) {
-  html.keyboard-open #dash-drawer {
+  html.layout-column.keyboard-open #dash-drawer {
     --drawer-cap: max(60px, min(50dvh, calc(100dvh - var(--cmdbox-h) - 40px)));
   }
 }
@@ -1766,6 +1800,10 @@ html.keyboard-open #dash-drawer {
   transition: opacity .28s ease, transform .28s ease;
 }
 .dash-toast.show { opacity: 1; transform: translate(-50%, 0); }
+/* Plan 6: on a phone the toast sits above the command box and the tab bar
+   rather than over the round buttons. The fallbacks are the phone sizes:
+   the toast is on body, outside the elements that set these. */
+.dash-toast.lifted { bottom: calc(var(--cmdbox-h, 64px) + var(--tabbar-h, 64px) + 12px); }
 
 /* ------------------------------------------------------------------ */
 /* Light mode: game panels (round 2, Malia 2026-11-02)                 */

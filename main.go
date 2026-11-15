@@ -1277,6 +1277,18 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 	}
 }
 
+// countLineFrame advances a websocket connection's line count for a text
+// frame. The web client counts the same frames (every string it sends: its
+// lines and the copyover token), and Char.Input.Done carries the count back so
+// the phone keyboard can wait for its own line without the line's text ever
+// being sent back (plan 6, R7). Binary frames are the client's GMCP.
+func countLineFrame(msgType int, seq uint64) uint64 {
+	if msgType == websocket.TextMessage {
+		return seq + 1
+	}
+	return seq
+}
+
 // HandleWebSocketConnection drives one upgraded websocket.
 //
 // clientIP is the proxy-resolved source address from web.ResolveClientIP. The
@@ -1399,8 +1411,11 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCo
 
 	c := configs.GetConfig()
 
+	// The number of text frames this connection has sent (countLineFrame).
+	var lineSeq uint64
+
 	for {
-		_, message, err := conn.ReadMessage()
+		msgType, message, err := conn.ReadMessage()
 
 		if err != nil {
 
@@ -1432,6 +1447,8 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCo
 			}
 			break
 		}
+
+		lineSeq = countLineFrame(msgType, lineSeq)
 
 		// Copyover: a web client reconnecting after a restart sends its one-time
 		// RELOGTKN as its first message. Consume it to re-attach the session and
@@ -1555,6 +1572,7 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCo
 		wi := WorldInput{
 			FromId:    userObject.UserId,
 			InputText: string(clientInput.Buffer),
+			Seq:       lineSeq,
 		}
 
 		// Buffer should be processed as an in-game command

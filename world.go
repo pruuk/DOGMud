@@ -38,6 +38,8 @@ type WorldInput struct {
 	FromId    int
 	InputText string
 	ReadyTurn uint64
+	// Seq is the web client line number (main.go countLineFrame); 0 for telnet.
+	Seq uint64
 }
 
 func (wi WorldInput) Id() int {
@@ -138,7 +140,7 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 
 		}
 
-		w.processInput(input.UserId, input.InputText, input.Flags)
+		w.processInput(input.UserId, input.InputText, input.Flags, input.Seq)
 
 		return events.Continue
 	}
@@ -181,7 +183,7 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 
 	}
 
-	w.processInput(input.UserId, input.InputText, events.EventFlag(input.Flags))
+	w.processInput(input.UserId, input.InputText, input.Flags, input.Seq)
 
 	w.userInputEventTracker[input.UserId] = struct{}{}
 
@@ -964,18 +966,33 @@ loop:
 			break loop
 		case wi := <-w.worldInput:
 
-			events.AddToQueue(events.Input{
-				UserId:    wi.FromId,
-				InputText: wi.InputText,
-				ReadyTurn: util.GetTurnCount(),
-				Flags:     events.CmdTyped,
-			})
+			events.AddToQueue(inputEventFor(wi))
 
 		}
 	}
 }
 
-func (w *World) processInput(userId int, inputText string, flags events.EventFlag) {
+// inputEventFor is the event a connection line becomes: typed, ready now, and
+// carrying the web client's line number for the done marker (plan 6).
+func inputEventFor(wi WorldInput) events.Input {
+	return events.Input{
+		UserId:    wi.FromId,
+		InputText: wi.InputText,
+		ReadyTurn: util.GetTurnCount(),
+		Flags:     events.CmdTyped,
+		Seq:       wi.Seq,
+	}
+}
+
+// queueInputDone queues the marker that the server has finished one typed web
+// client line (plan 6, R6). events.InputDonePriority puts it after every event
+// that writes the command's text or opens a menu in the same pass, so the
+// client reads the menu state the command left.
+func queueInputDone(userId int, seq uint64) {
+	events.AddToQueue(events.InputDone{UserId: userId, Seq: seq}, events.InputDonePriority)
+}
+
+func (w *World) processInput(userId int, inputText string, flags events.EventFlag, seq uint64) {
 
 	user := users.GetByUserId(userId)
 	if user == nil { // Something went wrong. User not found.
@@ -988,6 +1005,11 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 	defer user.SyncTextMask()
 
 	typed := flags.Has(events.CmdTyped)
+	// Plan 6 (R6, R7): tell the web client this line is done, after all its
+	// text, on every return below. Its number, never its text.
+	if typed && seq > 0 {
+		defer queueInputDone(userId, seq)
+	}
 
 	// A typed line goes to an open game menu first (#375). A line the menu
 	// does not recognise has closed it and runs below as a command.

@@ -27,14 +27,22 @@
         const contentContainer = document.getElementById('content-container');
         const frame = document.getElementById('webclient-frame');
         const visible = ViewportFit.visibleHeight(window.visualViewport);
-        frame.height = ViewportFit.frameHeight(
+        const frameH = ViewportFit.frameHeight(
             contentContainer.clientHeight, visible, contentContainer.getBoundingClientRect().top);
+        frame.height = frameH;
         // The game takes its phone tab bar out of the keyboard's way (dashboard.css).
         // While the game page is still loading the frame has no document
         // element yet; the next viewport event marks it.
         if (frame.contentDocument && frame.contentDocument.documentElement) {
             frame.contentDocument.documentElement.classList.toggle('keyboard-open',
-                ViewportFit.keyboardOpen(window.innerHeight, visible));
+                ViewportFit.keyboardOpen(window.innerHeight, visible,
+                    ViewportFit.editableFocused(frame.contentDocument)));
+            // The game's open-tab cap reads this while the keyboard is up
+            // (dashboard.css, plan 6). It is the frame's own height, which is
+            // the visible height less the site header above the frame.
+            if (typeof frameH === 'number') {
+                frame.contentDocument.documentElement.style.setProperty('--visible-h', Math.floor(frameH) + 'px');
+            }
         }
     }
 
@@ -117,6 +125,23 @@
     // for everything inside the frame, which showed it at the browser's default
     // 300x150 until then.
     document.addEventListener("DOMContentLoaded", function () { WebclientFrame.start(); });
+    // A blur or a focus inside the game without a viewport resize must still
+    // set or clear keyboard-open. The frame's document is replaced on each
+    // load, so listen on every load (plan 6 check). The frame is declared after
+    // this script, so this runs from DOMContentLoaded, never at parse time.
+    function watchFrameFocus() {
+        var frame = document.getElementById('webclient-frame');
+        if (!frame) return;
+        function watchFocus() {
+            var doc = frame.contentDocument;
+            if (!doc) return;
+            doc.addEventListener('focusin', fitFrameHeight);
+            doc.addEventListener('focusout', fitFrameHeight);
+        }
+        frame.addEventListener('load', watchFocus);
+        watchFocus();
+    }
+    document.addEventListener("DOMContentLoaded", watchFrameFocus);
     window.addEventListener("load", resizeClientIFrame);
     window.addEventListener('resize', resizeClientIFrame);
     // Phones: the visible area changes when the address bar hides or the

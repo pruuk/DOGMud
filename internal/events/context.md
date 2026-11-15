@@ -228,6 +228,25 @@ GMCP. In Phases 2–3 the same event will be emitted by inbound
 `Char.Automation.Set` / `Char.Automation.Remove` GMCP handlers when
 ticks or triggers are added or removed.
 
+### Input numbering and InputDone (plan 6)
+
+```go
+// Input.Seq numbers a web client's line (0 for telnet and engine-queued lines).
+type InputDone struct {
+    UserId int
+    Seq    uint64
+}
+```
+
+`Seq` numbers a web client's text frames from the socket's open (`main.go`
+`countLineFrame`); the client counts the same frames. `processInput` queues
+`InputDone` at `events.InputDonePriority` (99) for a typed line with a number,
+after all its text: the priority is above every event that writes a command's
+text or opens a menu (highest today 50) and below the prompt redraw at 100.
+`TestInputDonePriority_NothingElseQueuesAtOrAbove` (`world_input_done_guard_test.go`)
+fails if anything else queues at or above it. `modules/gmcp` pushes it as
+`Char.Input.Done`. It never carries the line's text (spec 2026-11-14, R7).
+
 ### Menu Events (#375 phase 0)
 
 ```go

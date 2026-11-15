@@ -135,32 +135,107 @@
         return true;
     }
 
-    // Should the phone keyboard close after a send? Only for an in-game
-    // command, so the player can read what happened; tapping the box opens it
-    // again. Login prompts, password prompts and numbered menu answers keep it
-    // open, because the next thing the player does there is type again (owner
-    // ruling on #768, 2026-11-07, replacing "after every send" of 2026-11-02).
-    // Only on a touch-only phone-width screen and only when something was sent.
-    // Tablets keep the keyboard, since a blur there would also stop arrow
-    // history and macros working. Plan:
-    // docs/superpowers/plans/completed/2026-11-02-webclient-phone-keyboard.md.
+    // --- The phone keyboard after a send (plan 6) --------------------------
+    // docs/superpowers/specs/2026-11-14-webclient-base-6-phones-design.md.
     //
-    // s: { touchOnly, phoneWidth, sent, inGame, menuOpen, password }
-    function shouldHideKeyboardAfterSend(s) {
+    // R1: the keyboard stays up when the player's next act is to type again,
+    // that is chat to other players. These words are today's data under that
+    // principle, not a closed list. Only what was literally typed counts:
+    // aliases and macros are out (layout spec ruling 13). party and guild are
+    // mostly management, so they count only when talking.
+    var CHAT_WORDS = ['say', 'whisper', 'reply', 'chat', 'newbie', 'trade', 'shout',
+                      'emote', 'yell', 'scream', 'holler', '/w', 'gc', 'pchat', 'psay'];
+    var PARTY_TALK = ['chat', 'say'];
+    var GUILD_TALK = ['chat', 'say', 'gc'];
+    // R2, R5, R6: anything else waits for the server's Char.Input.Done for
+    // that line; this long at most if the marker never comes.
+    var MENU_WAIT_CEILING_MS = 2000;
+
+    function isChatLine(line) {
+        var t = String(line == null ? '' : line).trim();
+        if (t === '') return false;
+        // The server reads a leading . or backtick as say or chat with or
+        // without a space (usercommands.SplitInput).
+        var c = t.charAt(0);
+        if (c === '.' || c === '`') return true;
+        var words = t.toLowerCase().split(/\s+/);
+        if (CHAT_WORDS.indexOf(words[0]) >= 0) return true;
+        if (words[0] === 'party') return PARTY_TALK.indexOf(words[1]) >= 0;
+        if (words[0] === 'guild') return GUILD_TALK.indexOf(words[1]) >= 0;
+        return false;
+    }
+
+    // What the phone keyboard does after a send: 'keep' it, or 'wait' for the
+    // game's answer. Only a touch-only phone-width screen, in game, with no
+    // menu open and not at a password prompt ever waits (owner ruling on #768,
+    // 2026-11-07, which these checks keep). Tablets keep the keyboard, since a
+    // blur there would also stop arrow history and macros working.
+    //
+    // s: { touchOnly, phoneWidth, sent, inGame, menuOpen, password, line }
+    function keyboardAfterSend(s) {
         s = s || {};
-        if (!(s.touchOnly && s.phoneWidth && s.sent)) return false;
-        if (!s.inGame || s.menuOpen || s.password) return false;
-        return true;
+        if (!(s.touchOnly && s.phoneWidth && s.sent)) return 'keep';
+        if (!s.inGame || s.menuOpen || s.password) return 'keep';
+        if (isChatLine(s.line)) return 'keep';
+        return 'wait';
+    }
+
+    // Once the wait is over: close the keyboard only if no menu or prompt is
+    // open, the command box still has focus, and the player has not started
+    // typing the next command.
+    function blurAfterWait(s) {
+        s = s || {};
+        return !s.menu && !!s.focused && (s.value || '') === '';
+    }
+
+    // One wait at a time for the marker of line `seq` (the client's count of
+    // text frames; the server counts the same, R7). opts: { setTimeout,
+    // clearTimeout, ceilingMs, currentMenu() -> bool, settle(menu) }.
+    function createSendWait(opts) {
+        var pending = null;   // { seq, timer }
+        function finish(menu) {
+            if (!pending) return;
+            opts.clearTimeout(pending.timer);
+            pending = null;
+            opts.settle(menu);
+        }
+        return {
+            start: function (seq) {
+                if (pending) opts.clearTimeout(pending.timer);
+                var p = { seq: seq };
+                p.timer = opts.setTimeout(function () {
+                    if (pending === p) finish(opts.currentMenu());
+                }, opts.ceilingMs);
+                pending = p;
+            },
+            // The server's marker for line `seq`. A higher number means the
+            // waiting line never reached the world (an admin system command, a
+            // dropped line): settle now with the current menu state.
+            done: function (seq, menu) {
+                if (!pending || typeof seq !== 'number') return;
+                if (seq === pending.seq) finish(menu === true);
+                else if (seq > pending.seq) finish(opts.currentMenu());
+            },
+            // A new socket: its count starts again, so an old wait is void.
+            reset: function () {
+                if (pending) opts.clearTimeout(pending.timer);
+                pending = null;
+            }
+        };
     }
 
     return {
         FOCUSABLE_CONTROL_SELECTOR: FOCUSABLE_CONTROL_SELECTOR,
+        MENU_WAIT_CEILING_MS: MENU_WAIT_CEILING_MS,
         isTypingKey: isTypingKey,
         isEditableField: isEditableField,
         isKeyboardControl: isKeyboardControl,
         isPointerFocused: isPointerFocused,
         watch: watch,
         shouldFocusCommandBar: shouldFocusCommandBar,
-        shouldHideKeyboardAfterSend: shouldHideKeyboardAfterSend
+        isChatLine: isChatLine,
+        keyboardAfterSend: keyboardAfterSend,
+        blurAfterWait: blurAfterWait,
+        createSendWait: createSendWait
     };
 }));
