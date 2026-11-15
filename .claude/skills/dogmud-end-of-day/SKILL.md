@@ -98,7 +98,7 @@ state decide, never the name.**
 
 ```powershell
 "C: free {0:N1} GB" -f ((Get-PSDrive C).Free/1GB)
-foreach ($p in @("$env:LOCALAPPDATA\go-build", "$env:LOCALAPPDATA\Temp\claude\C--Users-Calabe-Davis-workspace-DOGMud", "$env:LOCALAPPDATA\Temp\claude\c--Users-Calabe-Davis-workspace-DOGMud", "C:\tmp", "C:\gotmp")) {
+foreach ($p in @("$env:LOCALAPPDATA\go-build", "$env:LOCALAPPDATA\Temp\claude\1028a153ef5b922d", "$env:LOCALAPPDATA\Temp\claude\C--Users-Calabe-Davis-workspace-DOGMud", "$env:LOCALAPPDATA\Temp\claude\c--Users-Calabe-Davis-workspace-DOGMud", "C:\tmp", "C:\gotmp")) {
   if (Test-Path $p) { $s = (Get-ChildItem $p -Recurse -Force -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum; "{0,8:N1} GB  {1}" -f ($s/1GB), $p }
 }
 ```
@@ -138,9 +138,12 @@ scratchpads): report it, do not delete it.
    `go clean -cache`. It only costs the next build of each Go project a slower
    first run; no source or module is touched. Skip it while a Go build or test
    run of another session is in progress (ask it, or wait).
-7. **DOGMud's own session scratchpads** (`%LOCALAPPDATA%\Temp\claude\` the
-   `C--Users-Calabe-Davis-workspace-DOGMud` folder, either case of the
-   leading `c`): delete each session folder not written in the last two days.
+7. **DOGMud's own session scratchpads** (under `%LOCALAPPDATA%\Temp\claude\`:
+   the folder your own scratchpad path names, `1028a153ef5b922d` since at
+   least 2026-11-13, and the older `C--Users-Calabe-Davis-workspace-DOGMud`
+   folder in either case of the leading `c`; read the current name off your
+   scratchpad path rather than trusting this list): delete each session
+   folder not written in the last two days.
    Never delete the current session's folder, and never delete a folder a
    running process still writes to (a dev server or test log inside it; check
    `Get-CimInstance Win32_Process` command lines for the folder's id before
