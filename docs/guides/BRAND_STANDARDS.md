@@ -108,6 +108,13 @@ All colours come from the palette spec. The roles that define the brand:
   most of an open Comms tab, so there the sub-tabs and the panel title
   buttons are 30px, still above the 24px minimum target (WCAG 2.5.8). Held
   sideways, the tab name pill is also hidden.
+- **The Map on touch screens** (Calabe, 2026-11-15): no Fit, Center, zoom
+  or Legend row on any touch screen, phone or tablet, either way up. The
+  map follows the player's room on every step, and the row took most of a
+  small Map (25px of map left on a 360px phone, 29px on a sideways iPad).
+  On a phone the open Map card may also take 45% of the screen, where every
+  other tab keeps the 30% cap (plan 6 R3), because a player with the Map
+  open is looking at the map. Mouse screens keep the button row.
 
 ## 5. Icons
 

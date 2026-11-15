@@ -295,13 +295,11 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   border-top: 1px solid var(--panel-border);
 }
 #map-controls .rgsvg-brass { min-width: 36px; height: 32px; padding: 0 10px; font-size: var(--text); }
+/* Touch screens (phones and tablets, either way up) have no map button row:
+   see "The Map on a touch screen" further down. Tighter padding round the
+   map gives it the room. */
 @media (pointer: coarse) {
-  #map-controls .rgsvg-brass { min-width: 44px; height: 44px; }
-  /* 44px buttons: tighter padding above and below the map and its button
-     row, and no gap when the row wraps, so the title bar, two rows of
-     buttons and a sliver of map still fit the Map's 150px floor. */
   #panel-map #map-render { padding: 2px 0; }
-  .map-controls { padding: 2px 6px; row-gap: 0; }
 }
 /* The "Legend ▾" button: plain gold words at the right end of the map's
    button row (Malia 2026-11-06), not a brass button, so it reads as "show
@@ -331,7 +329,6 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 }
 .map-legend-arrow { color: #b5a26c; }
 .map-legend-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
-@media (pointer: coarse) { .map-legend-toggle { min-height: 44px; } }
 /* The key itself, under the button row. */
 .map-legend {
   flex: 0 0 auto;
@@ -985,22 +982,24 @@ html.layout-column.keyboard-open #dash-drawer {
      cap the card scrolled by those 2px. */
   height: calc(var(--drawer-cap) - 2px);
 }
-/* The Map on a phone (Calabe 2026-11-15, after Malia's Samsung showed a
-   map about 25px tall). Inside the 30% card the title bar, the Fit / Center
-   / zoom row (44px buttons) and the Location and Destination lines left the
-   map almost nothing. Two changes, phones only:
-   - No button row. The map follows the player's room on every step
-     (centerOnRoom), so Center is not needed, and Fit and zoom are not worth
-     the room on a phone. The row holds the Legend link too, and the key
-     under it goes with it, or the row would stay 44px tall.
-   - The Map card may take 45% of the screen instead of 30% (an exception to
-     plan 6 R3 for the Map only): while the map is open the player is looking
-     at the map. Every other tab keeps 30%; with the keyboard up the Map
-     keeps the keyboard rule, and in column layout the card sits beside the
-     game and keeps its own cap. */
-@media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+/* The Map on a touch screen (Calabe 2026-11-15, after Malia's Samsung showed
+   a map about 25px tall, and a sideways iPad 29px: its 44px buttons wrapped
+   to three rows in the narrow panel column).
+   - Phones and tablets, either way up: no button row. The map follows the
+     player's room on every step (centerOnRoom), so Center is not needed,
+     and Fit and zoom are not worth the room. The row holds the Legend link
+     too, and the key under it goes with it, or the row would keep its
+     height. Mouse screens keep the row. */
+@media (pointer: coarse) {
   #panel-map .map-controls,
   #panel-map .map-legend { display: none; }
+}
+/* - Phones only: the Map card may take 45% of the screen instead of 30% (an
+     exception to plan 6 R3 for the Map only): while the map is open the
+     player is looking at the map. Every other tab keeps 30%; with the
+     keyboard up the Map keeps the keyboard rule, and in column layout the
+     card sits beside the game and keeps its own cap. */
+@media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   html:not(.layout-column):not(.keyboard-open) #dash-drawer:has(#panel-map) { --drawer-cap: max(80px, 45vh); }
   @supports (height: 1dvh) {
     html:not(.layout-column):not(.keyboard-open) #dash-drawer:has(#panel-map) { --drawer-cap: max(80px, 45dvh); }
