@@ -8,22 +8,27 @@ in the same change when a colour moves.
 
 ## 1. The logo
 
-Malia's logo: three moons, the middle one crowned, over the name. Source
-files are hers (Illustrator); the site uses web exports only.
+Malia's logo (2026-11-15, #882): a planet with three moons on two orbits,
+"DELUSIONS OF" above and "GRANDEUR" below. It replaced the crowned three
+moons of 2026-11-02. Source files are hers (Illustrator); the site uses web
+exports only. Each export comes in gold letters (`#efd897` / `#d9ac46`) for
+dark surfaces and the teal bar, and browns (`#473019` / `#6f5418`) for light
+surfaces. Malia names the gold set "_light" (light letters); the site names
+files by the page they suit, so her "_light" ships as our dark-page file.
 
 | Use | File (in `_datafiles/html/public/static/images/branding/`) | Where | Size on screen |
 |---|---|---|---|
-| Full logo, dark surfaces | `logo_full.png` (1200 x 790) | home page hero, Dark mode | up to 560px wide; 86% of a phone's width |
-| Full logo, light surfaces | `logo_full_light.png` (1200 x 790) | home page hero, Light mode | same |
-| D.O.G. mark | `logo_dog.png` (677 x 229) | the teal top bar on every page | 56px tall on wide screens, 48px on phones |
+| Stacked logo, dark surfaces | `logo_stacked.png` (1024 x 1024) | home page hero, Dark mode | up to 560px wide, 86% of a phone's width, and no wider than 55% of the screen's height |
+| Stacked logo, light surfaces | `logo_stacked_light.png` (1024 x 1024) | home page hero, Light mode | same |
+| One-line logo | `logo_bar.png` (468 x 78) | the teal top bar on every page, both themes | 56px tall on wide screens, 48px on phones |
 
 **Rules**
-- **The full logo needs room.** It is stacked and detailed, so below about
-  300px wide the moons and "OF" stop reading. In a thin bar or a small space,
-  use the D.O.G. mark instead.
+- **The stacked logo needs room.** It is detailed, so below about 300px wide
+  the moons and "OF" stop reading. In a thin bar or a small space, use the
+  one-line logo instead.
 - **Match the surface.** The gold version goes on dark surfaces and the teal
-  bar only; on cream or parchment use the light version. The gold letters
-  wash out on light (1.8).
+  bar only; on cream or parchment use the brown version. The brown letters
+  do not read on teal, so the bar keeps the gold logo in Light mode too.
 - **Never recolour, stretch, crop or add effects** (shadows, outlines, glows)
   to the logo files. New colours or crops come from Malia's source files.
 - **Exports:** PNG, trimmed to the artwork (Illustrator: Object > Artboards >
@@ -39,9 +44,9 @@ All colours come from the palette spec. The roles that define the brand:
 
 | Role | Colour | Used for |
 |---|---|---|
-| Logo gold | `#d9ac46` | "DELUSIONS", "OF", the rules; "D" and "O" of D.O.G. |
-| Logo deep gold | `#c3932d` | "GRANDEUR"; "G" of D.O.G. |
-| Logo, light version | `#6f5418` top word, `#473019` "GRANDEUR" | the full logo on light surfaces |
+| Logo cream | `#efd897` | "DELUSIONS OF" and the rules, gold version |
+| Logo gold | `#d9ac46` | "GRANDEUR", gold version |
+| Logo, brown version | `#473019` top words, `#6f5418` "GRANDEUR" | the logo on light surfaces |
 | Website teal | `#085044` (brand teal L30) | the top bar and the footer: "this is the website" |
 | Game umber | `#19140c` to `#39301b` | game surfaces, the round tab bar: "this is the game" |
 | Brass | `#f4dd92` / `#aa8636` / `#736133` | every control you can press in the game |
@@ -113,13 +118,17 @@ All colours come from the palette spec. The roles that define the brand:
 
 | File (in `static/images/`) | Size | Use |
 |---|---|---|
-| `favicon-moons.ico` | 16, 32, 48 | browser tabs; also served at `/favicon.ico` (`internal/web/web.go`) |
-| `favicon-moons.png` | 32 | browser tabs |
-| `apple-touch-icon.png` | 180 | phone home screen |
-| `icon-192.png`, `icon-moons-512.png` | 192, 512 | Android, listed in `static/manifest.json` (the 512 was `icon-512.png` until 2026-11-07, when its 43px see-through strip at the bottom was filled with the panel brown) |
+| `favicon-planet.ico` | 16, 32, 48 | browser tabs; also served at `/favicon.ico` (`internal/web/web.go`) |
+| `favicon-planet.png` | 32 | browser tabs |
+| `apple-touch-icon-planet.png` | 180 | phone home screen |
+| `icon-planet-192.png`, `icon-planet-512.png` | 192, 512 | Android, listed in `static/manifest.json` |
 
-All from Malia's `moonsofgaius.svg` (three moons, no crown) on the panel
-brown `#201913`, moons pulled in from the rounded corners. In-game icons are
+Malia's planet and moons (2026-11-15, #882). The tab icons come from her
+see-through 100px mark; the phone icons from her 512 on the logo brown
+`#473019`, with the 192 and 180 scaled from it. Phone icons need a solid
+background: a phone fills see-through pixels with black or white. They
+replaced the 2026-11-02 three-moons set (`favicon-moons`, `icon-moons-512`).
+In-game icons are
 simple line icons drawn in one style (`PANEL_TABS` in `static/js/dashboard.js`),
 never emoji, which look different on every device.
 
@@ -127,12 +136,14 @@ never emoji, which look different on every device.
 
 `banner_468x60.png`, `emblem_1024.png`, `logo_100.png` and `logo_256.png` in
 the branding folder are for MUD listing sites, which hotlink them, so **never
-rename or delete them**; new art replaces them in place. Redrawn 2026-11-07
-(#820, Malia) on the website teal `#085044`, since they send people to the
-website: the full logo at 1024 and 256, D.O.G. at 100, and a banner with the
-crowned moons, the wordmark and dogmud.org in nav gold `#dfcc94` (logo gold
-is 4.43 on teal, under 4.5 for words). Before that they showed the 2026-07-28
-chrysalis emblem. See [`ADVERTISING_LISTINGS.md`](ADVERTISING_LISTINGS.md).
+rename or delete them**; new art replaces them in place. They sit on the
+website teal `#085044`, since they send people to the website and a listing
+site may show them on any page colour; a see-through listing image would
+vanish on some sites. Since 2026-11-15 (#882) all four are Malia's planet
+logo on teal: the stacked logo at 1024 and 256 (the 256 scaled from her 512),
+D·O·G at 100, and the one-line banner. Before that they showed the crowned
+three moons (2026-11-07, #820) and the 2026-07-28 chrysalis emblem. See
+[`ADVERTISING_LISTINGS.md`](ADVERTISING_LISTINGS.md).
 
 ## 7. Shipping a brand change
 

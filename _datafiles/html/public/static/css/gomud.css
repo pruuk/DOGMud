@@ -599,20 +599,30 @@ pre, code { font-family: var(--font-mono); }
 
 h1, h2, h3, h4 { font-family: var(--font-heading); font-size: var(--title); font-weight: var(--bold); }
 
-/* Malia's logo (2026-11-02): the D.O.G. mark in the top bar, the full logo in
-   the home page hero. Letters in the logo golds #d9ac46 / #c3932d (palette
-   spec, "Logo golds"); made for dark surfaces and the teal bar. */
+/* Malia's logo (2026-11-15, #882): the one-line logo in the top bar, the
+   stacked logo in the home page hero. Gold letters #efd897 / #d9ac46 (13.1
+   and 8.7 on the dark page; 6.7 and 4.43 on the teal bar, where the logotype
+   exception applies); made for dark surfaces and the teal bar. */
 .brand-logo { display: flex; align-items: center; padding: 2px 0; }
 /* The logo follows the screen's height, never squashed (height only; the
    width keeps its shape): a phone held sideways has little height, and the
    bar was taking 76px of its 310 (Calabe 2026-11-07). Full size from 560px
    tall. */
 .brand-logo img { display: block; height: clamp(28px, 10vh, 56px); width: auto; }
-@media (max-width: 768px) { .brand-logo img { height: clamp(28px, 10vh, 48px); } }
+/* Phones: the one-line logo is 6:1, so a 360px-wide phone has no room for it
+   at 48px tall (288 wide) beside the 44px menu button. Its width is capped at
+   the screen less 80px (12 + 8 + 44 + 12 of bar padding, gap and button, with
+   4 to spare) and its height follows, so the button stays on the same row. */
+@media (max-width: 768px) {
+  .brand-logo { min-width: 0; }
+  .brand-logo img { height: auto; max-height: clamp(28px, 10vh, 48px); max-width: calc(100vw - 80px); }
+}
 @media (max-height: 500px) { header { padding-top: 4px; padding-bottom: 4px; } }
-.hero-logo img { display: block; margin: 0 auto; width: min(560px, 86vw); max-width: 100%; height: auto; }
-/* Light mode swaps in the light-page version (letters #6f5418 / #473019,
-   6.0 and 10.4 on the cream page); the gold letters wash out there (1.8). */
+/* The stacked logo is square, so its width is also capped by the screen's
+   height (55vh), which keeps the Play button in view on a 768px-tall laptop. */
+.hero-logo img { display: block; margin: 0 auto; width: min(560px, 86vw, 55vh); max-width: 100%; height: auto; }
+/* Light mode swaps in the light-page version (letters #473019 / #6f5418,
+   10.7 and 6.1 on the cream page); the gold letters wash out there. */
 .hero-logo .logo-light { display: none; }
 :root[data-theme="light"]:not([data-client]) .hero-logo .logo-dark { display: none; }
 :root[data-theme="light"]:not([data-client]) .hero-logo .logo-light { display: block; }

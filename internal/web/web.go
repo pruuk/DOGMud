@@ -220,14 +220,12 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Order plugin-added items by an explicit priority so the tab order is
-		// stable (Go map iteration is non-deterministic) AND sensible — in
-		// particular Achievements and Leaderboards sit next to each other rather
-		// than being split apart by an alphabetical sort. Anything not listed
-		// falls in after the known items, alphabetically.
+		// stable (Go map iteration is non-deterministic) AND sensible: Help
+		// comes last. Anything not listed falls in after the known items,
+		// alphabetically. (Achievements left the menu 2026-11-15, #882.)
 		navOrder := map[string]int{
-			`Achievements`: 1,
-			`Leaderboards`: 2,
-			`Help`:         3,
+			`Leaderboards`: 1,
+			`Help`:         2,
 		}
 		if len(currentNav) > coreCount {
 			pluginNav := currentNav[coreCount:]
@@ -327,7 +325,7 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string, s
 	// the current icon file. A changed icon gets a new file name (brand
 	// standards section 7), and this line moves with it.
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Path = `/static/images/favicon-moons.ico`
+		r.URL.Path = `/static/images/favicon-planet.ico`
 		serveTemplate(w, r)
 	})
 

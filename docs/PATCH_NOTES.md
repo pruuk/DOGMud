@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-11-15: A new logo
+
+- The website has Malia's new logo: a world with three moons on their orbits. It sits on the home page and in the bar at the top of every page, in gold on dark screens and in browns in Light mode.
+- The browser tab icon and the icon you get when you add DOGMud to your phone's home screen show the new world and moons too.
+- Achievements is no longer in the website menu. The page is still there at dogmud.org/achievements, and `achievements` in game shows your progress.
+
 ## 2026-11-15: Sound starts off
 
 - The web client is silent until you turn sound on: open Settings and tick "Sound on". Your own music in another app or tab keeps playing when you open the game.
