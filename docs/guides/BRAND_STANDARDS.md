@@ -115,6 +115,11 @@ All colours come from the palette spec. The roles that define the brand:
   On a phone the open Map card may also take 45% of the screen, where every
   other tab keeps the 30% cap (plan 6 R3), because a player with the Map
   open is looking at the map. Mouse screens keep the button row.
+  The map's key stays reachable on touch screens (Calabe, 2026-11-15): a
+  Legend button in the Map's title bar lays the key over the top of the
+  map, taking none of its height, and a tap on the key folds it. Any
+  control removed from a small screen keeps a way in, or its loss is ruled
+  on by name.
 
 ## 5. Icons
 
