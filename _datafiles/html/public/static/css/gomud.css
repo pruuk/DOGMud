@@ -609,7 +609,14 @@ h1, h2, h3, h4 { font-family: var(--font-heading); font-size: var(--title); font
    bar was taking 76px of its 310 (Calabe 2026-11-07). Full size from 560px
    tall. */
 .brand-logo img { display: block; height: clamp(28px, 10vh, 56px); width: auto; }
-@media (max-width: 768px) { .brand-logo img { height: clamp(28px, 10vh, 48px); } }
+/* Phones: the one-line logo is 6:1, so a 360px-wide phone has no room for it
+   at 48px tall (288 wide) beside the 44px menu button. Its width is capped at
+   the screen less 80px (12 + 8 + 44 + 12 of bar padding, gap and button, with
+   4 to spare) and its height follows, so the button stays on the same row. */
+@media (max-width: 768px) {
+  .brand-logo { min-width: 0; }
+  .brand-logo img { height: auto; max-height: clamp(28px, 10vh, 48px); max-width: calc(100vw - 80px); }
+}
 @media (max-height: 500px) { header { padding-top: 4px; padding-bottom: 4px; } }
 /* The stacked logo is square, so its width is also capped by the screen's
    height (55vh), which keeps the Play button in view on a 768px-tall laptop. */
