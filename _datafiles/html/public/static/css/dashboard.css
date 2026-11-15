@@ -1029,15 +1029,27 @@ html.layout-column.keyboard-open #dash-drawer {
 .map-legend-head { display: none; }
 @media (pointer: coarse) {
   #panel-map .map-controls { display: none; }
+  /* A square icon (a map key: three marks, each with its line) the size of
+     the title bar's ▾ and ✕, not the word, which made it too big (owner
+     2026-11-15). Its name is in aria-label and title. */
   #panel-map .map-legend-head {
     display: inline-flex;
     align-items: center;
-    min-height: 44px;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 44px;
+    height: 44px;
     margin: -2px 0;
-    padding: 0 12px;
-    font-size: var(--text);
-    font-weight: 400;
+    padding: 0;
     line-height: 1;
+  }
+  #panel-map .map-legend-head svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
   }
   #panel-map .map-legend {
     position: absolute;
@@ -1176,6 +1188,8 @@ html.layout-column.keyboard-open #dash-drawer {
   .dash-panel-head .ph-btn { width: 32px; height: 30px; line-height: 28px; font-size: var(--text); margin: 0; }
   .drawer-close { min-width: 32px; min-height: 30px; margin: 0; padding: 2px 8px; }
   #dash-drawer .dash-panel-head .ph-collapse { width: 32px; height: 30px; }
+  #panel-map .map-legend-head { width: 32px; height: 30px; margin: 0; }
+  #panel-map .map-legend-head svg { width: 18px; height: 18px; }
   #dash-drawer .dash-panel-head .ph-collapse::before { font-size: var(--text); padding-bottom: 3px; }
   /* The game text sat flush against the Game window's left border (Malia's
      Samsung, 2026-11-15). A 6px margin each side, set on the element xterm

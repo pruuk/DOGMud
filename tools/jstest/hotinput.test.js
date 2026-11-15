@@ -439,7 +439,14 @@ check('the map legend starts folded at any window height',
 // from a Legend button in the Map's title bar and lies over the map, taking
 // no height from it (owner 2026-11-15, after the phone lost the key).
 check('the Map title bar has a Legend button for the key',
-    /id="panel-map"[\s\S]*?<span class="ph-btns"><button type="button" class="brass map-legend-head" aria-controls="map-legend" aria-expanded="false">Legend<\/button>/.test(page), true);
+    /id="panel-map"[\s\S]*?<span class="ph-btns"><button type="button" class="brass map-legend-head" aria-controls="map-legend" aria-expanded="false" aria-label="Legend" title="Legend"><svg/.test(page), true);
+// The Legend button is an icon the size of the title bar's other buttons
+// (owner 2026-11-15: the word made it too big).
+check('the touch Legend button is a square the size of the panel buttons',
+    /#panel-map \.map-legend-head \{\s*display: inline-flex;[\s\S]*?width: 44px;\s*height: 44px;/.test(fs.readFileSync(path.join(
+        __dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'css', 'dashboard.css'), 'utf8'))
+    && /\(pointer: coarse\) and \(max-width: 599px\)[\s\S]*?#panel-map \.map-legend-head \{ width: 32px; height: 30px; margin: 0; \}/.test(fs.readFileSync(path.join(
+        __dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'css', 'dashboard.css'), 'utf8')), true);
 check('both Legend buttons open the same key',
     /initMapLegend[\s\S]*?querySelector\('#panel-map \.map-legend-head'\)/.test(page), true);
 check('a tap on the key laid over the map folds it',
