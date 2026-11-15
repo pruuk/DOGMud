@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-11-15: Sound starts off
+
+- The web client is silent until you turn sound on: open Settings and tick "Sound on". Your own music in another app or tab keeps playing when you open the game.
+- This applies to everyone, including players who used the web client before. Your volume levels are kept for when you turn sound on.
+- Setting Music to zero now stops the music instead of playing it silently. Raise it again and your area's music comes back.
+
 ## 2026-11-14: Small fixes
 
 - When you name something by part of its name, a whole word now wins over a word that only contains it: `buy pot` at Trader Onna buys the Rusty Pot, not a potion. This works the same everywhere you name an item, a creature or a companion, and numbered picks like `2.pot` now always reach the next one.
