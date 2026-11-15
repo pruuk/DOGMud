@@ -368,7 +368,9 @@ func shippedMotd(t *testing.T) string {
 	require.Contains(t, cfg.Server.Motd, "https://dogmud.org/patch-notes", "config.yaml's MOTD did not load")
 	text, err := templates.ProcessText(cfg.Server.Motd, nil)
 	require.NoError(t, err)
-	require.Contains(t, text, "TALK TO PEOPLE.")
+	// Every MOTD ends with the patch notes link (dogmud-deploying), so this
+	// holds across MOTD changes; the drawing below pins the current text.
+	require.Contains(t, text, "Full patch notes:")
 	return text
 }
 
@@ -394,20 +396,18 @@ func TestMotdIsTheDrawing(t *testing.T) {
 		{42, r42 + `
   .:  M E S S A G E   O F   T H E   D A Y
 ` + r42 + `
-  TALK TO PEOPLE. Type talk <name> for a
-  numbered menu of what someone knows and
-  what they need. A [!] before a name
-  means they have work for you.
-  EVERY STEP HAS A HINT. Your quest log
-  says what to do next, and the map points
-  the way.
-  LOOK AND SEARCH. Type look <thing> to
-  study anything you see, and type search
-  to find what is hidden. Many secrets
-  give way to one or the other, so bring a
-  light.
-  LISTEN TO THE GOSSIPS. Some of what they
-  repeat is worth chasing.
+  PLAY ON YOUR PHONE. The web client fits
+  a phone screen, the keyboard stays up
+  while you chat, and the X closes it.
+  A BIGGER MAP. Laptops open full screen,
+  a line under the map names where you are
+  and where your quest leads, and Legend
+  shows the key.
+  QUESTS IN THREE TABS. Active, Repeat and
+  Completed, with a count of the work that
+  is ready again.
+  SOUND STARTS OFF. Open Settings and tick
+  Sound on when you want music.
   The novel: https://dogmud.org/novel
   Full patch notes:
   https://dogmud.org/patch-notes
@@ -415,25 +415,23 @@ func TestMotdIsTheDrawing(t *testing.T) {
 		{30, r30 + `
   .:  MESSAGE OF THE DAY
 ` + r30 + `
- TALK TO PEOPLE. Type talk
- <name> for a numbered menu of
- what someone knows and what
- they need. A [!] before a
- name means they have work for
- you.
- EVERY STEP HAS A HINT. Your
- quest log says what to do
- next, and the map points the
- way.
- LOOK AND SEARCH. Type look
- <thing> to study anything you
- see, and type search to find
- what is hidden. Many secrets
- give way to one or the other,
- so bring a light.
- LISTEN TO THE GOSSIPS. Some
- of what they repeat is worth
- chasing.
+ PLAY ON YOUR PHONE. The web
+ client fits a phone screen,
+ the keyboard stays up while
+ you chat, and the X closes
+ it.
+ A BIGGER MAP. Laptops open
+ full screen, a line under the
+ map names where you are and
+ where your quest leads, and
+ Legend shows the key.
+ QUESTS IN THREE TABS. Active,
+ Repeat and Completed, with a
+ count of the work that is
+ ready again.
+ SOUND STARTS OFF. Open
+ Settings and tick Sound on
+ when you want music.
  The novel:
  https://dogmud.org/novel
  Full patch notes:

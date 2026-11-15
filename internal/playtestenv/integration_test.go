@@ -469,7 +469,7 @@ func TestDockerIntegration(t *testing.T) {
 		require.Contains(t, strings.ToLower(userYAML), "fresh recruit")
 		require.NotContains(t, userYAML, p.Password)
 
-		loginOut := aiLogin(t, res.Endpoint, p.Username, p.Password)
+		loginOut := aiLogin(t, res.Endpoint, p.Username, p.Password, "fresh recruit")
 		require.Contains(t, strings.ToLower(loginOut), "fresh recruit")
 		require.NoError(t, mustStop(t, s, checkout, res.RunID))
 	})
@@ -566,7 +566,11 @@ func readCredsFile(t *testing.T, path string) integrationCredsFile {
 
 // aiLogin performs a minimal telnet login on the published AI endpoint and
 // returns accumulated server text. It never logs the password.
-func aiLogin(t *testing.T, ep *Endpoint, username, password string) string {
+// aiLogin logs in on the AI port and reads until want, the character's own
+// name, appears after the password. A generic phrase ("you are", "exits")
+// once ended the read inside the MOTD, which says "where you are" since
+// 2026-11-15, before the room that names the character was sent.
+func aiLogin(t *testing.T, ep *Endpoint, username, password, want string) string {
 	t.Helper()
 	require.NotNil(t, ep)
 	addr := net.JoinHostPort(ep.Host, strconv.Itoa(ep.Port))
@@ -606,7 +610,7 @@ func aiLogin(t *testing.T, ep *Endpoint, username, password string) string {
 	readUntil("password")
 	_, err = io.WriteString(conn, password+"\n")
 	require.NoError(t, err)
-	readUntil("fresh recruit", "veteran pathfinder", "you are", "exits")
+	readUntil(want)
 	return buf.String()
 }
 
