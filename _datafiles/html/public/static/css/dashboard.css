@@ -985,6 +985,27 @@ html.layout-column.keyboard-open #dash-drawer {
      cap the card scrolled by those 2px. */
   height: calc(var(--drawer-cap) - 2px);
 }
+/* The Map on a phone (Calabe 2026-11-15, after Malia's Samsung showed a
+   map about 25px tall). Inside the 30% card the title bar, the Fit / Center
+   / zoom row (44px buttons) and the Location and Destination lines left the
+   map almost nothing. Two changes, phones only:
+   - No button row. The map follows the player's room on every step
+     (centerOnRoom), so Center is not needed, and Fit and zoom are not worth
+     the room on a phone. The row holds the Legend link too, and the key
+     under it goes with it, or the row would stay 44px tall.
+   - The Map card may take 45% of the screen instead of 30% (an exception to
+     plan 6 R3 for the Map only): while the map is open the player is looking
+     at the map. Every other tab keeps 30%; with the keyboard up the Map
+     keeps the keyboard rule, and in column layout the card sits beside the
+     game and keeps its own cap. */
+@media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  #panel-map .map-controls,
+  #panel-map .map-legend { display: none; }
+  html:not(.layout-column):not(.keyboard-open) #dash-drawer:has(#panel-map) { --drawer-cap: max(80px, 45vh); }
+  @supports (height: 1dvh) {
+    html:not(.layout-column):not(.keyboard-open) #dash-drawer:has(#panel-map) { --drawer-cap: max(80px, 45dvh); }
+  }
+}
 /* ------------------------------------------------------------------ */
 /* WinBox pop-out — leather theme overlay                              */
 /* ------------------------------------------------------------------ */
