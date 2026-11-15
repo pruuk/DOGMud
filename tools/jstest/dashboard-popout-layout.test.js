@@ -529,6 +529,41 @@ check('the page asks the dashboard which width to use for every later report',
     /function giveLayoutGameWidth\(\) \{\s*if \(window\.Dashboard && window\.Dashboard\.ready\) \{\s*window\.Dashboard\.setGameWidth\(window\.Dashboard\.pageGameWidth\(\)\);/
         .test(fs.readFileSync(path.join(JS, '..', '..', 'webclient-pure.html'), 'utf8')), true);
 
+// The ladder's Map floor reads the frame's height (plan 7b), and the on-screen
+// keyboard shrinks the frame on every touch screen. While the keyboard is up
+// the ladder keeps the height it had before, so a large tablet does not drop
+// from wide to column, and dock its pop-outs, each time the player types.
+check('the ladder ignores the keyboard when it reads the frame height',
+    /_computeMode[\s\S]*?classList\.contains\("keyboard-open"\)[\s\S]*?this\._layoutH = window\.innerHeight[\s\S]*?LayoutPick\.pick\([^)]*this\._layoutH\)/.test(SRC), true);
+
+// The laptop column (plan 7c): dashboard.js lays column out through
+// LayoutPick.columnArrangement and clears it in every other mode.
+check('the column arrangement is set from LayoutPick',
+    /_arrangeColumn: function[\s\S]*?LayoutPick\.columnArrangement\(/.test(SRC)
+    && /_arrangeColumn: function[\s\S]*?dataset\.column = /.test(SRC)
+    && /_arrangeColumn: function[\s\S]*?setProperty\("--col-map"/.test(SRC), true);
+check('the column arrangement is cleared outside column',
+    /_arrangeColumn: function[\s\S]*?if \(this\.mode !== "column"\) \{[\s\S]*?delete dash\.dataset\.column;[\s\S]*?removeProperty\("--col-map"\)/.test(SRC), true);
+check('the arrangement follows Health and the panel area',
+    /new ResizeObserver\([\s\S]*?_arrangeColumn\(\)[\s\S]*?observe\(document\.getElementById\("vitals-bars"\)\)/.test(SRC)
+    && /observe\(document\.getElementById\("dash-panels"\)\)/.test(SRC), true);
+check('_apply arranges the column even when the mode is unchanged',
+    /if \(newMode === this\.mode\) \{ this\._arrangeColumn\(\); return; \}/.test(SRC), true);
+check('the keyboard keeps the arrangement',
+    /_arrangeColumn: function[\s\S]*?keyboard-open[\s\S]*?LayoutPick\.columnMap\(/.test(SRC), true);
+
+// Review fixes (plan 7c): Health is measured from its parts, so a folded Health
+// beside the Map (stretched to the Map's row) does not keep the swap; the
+// observer defers to the next frame, so a swap that resizes Health inside the
+// callback does not raise a ResizeObserver loop error; and the kept
+// arrangement under the keyboard keeps the Map's floor.
+check('Health is measured from its title bar, frame and rows, none when folded',
+    /_arrangeColumn: function[\s\S]*?var vitalsH = head\.offsetHeight \+ \(vitals\.offsetHeight - vitals\.clientHeight\) \+\s*\(vitals\.classList\.contains\("collapsed"\) \? 0 : bars\.offsetHeight\);/.test(SRC), true);
+check('the column observer waits for the next frame',
+    /new ResizeObserver\(function \(\) \{[^}]*?requestAnimationFrame\(function \(\) \{ self\._arrangeQueued = false; self\._arrangeColumn\(\); \}\);/.test(SRC), true);
+check('the kept arrangement under the keyboard keeps the Map floor',
+    /map = Math\.max\(LayoutPick\.STACKED_MAP_MIN, LayoutPick\.columnMap\(arrangement, w, h, vitalsH\)\);/.test(SRC), true);
+
 // --- result ------------------------------------------------------------------
 
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');

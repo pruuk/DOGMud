@@ -15,8 +15,8 @@
   fixture through setZoneSnapshot and centerOnRoom, then given a quest marker:
 
     1. An L-shaped area the player is NOT in, with the arrow's next room
-       beside the player: brass wash, dashed outline, area name.
-    2. The player INSIDE a zone destination: the "Somewhere in ..." banner.
+       beside the player: brass wash and dashed outline (no words; the Destination bar names it).
+    2. The player INSIDE a zone destination: no wash, no words on the art.
     3. A single-room destination: the brass pin plus a next-step arrow.
 
   Automated checks for the same code live in quest-destination-map.js.
@@ -32,9 +32,9 @@
 <body>
 <div class="row">
   <div class="cell"><div id="map1" class="map"></div>
-    <div class="cap">1. Area ahead: the wash covers the six-room L, dashed outline and name. The arrow leaves the player toward it.</div></div>
+    <div class="cap">1. Area ahead: the wash covers the six-room L, and dashed outline, no words. The arrow leaves the player toward it.</div></div>
   <div class="cell"><div id="map2" class="map"></div>
-    <div class="cap">2. Player inside the zone destination: banner reads "Somewhere in Pothole Coulee".</div></div>
+    <div class="cap">2. Player inside the zone destination: nothing is drawn on the art (the Destination bar says where).</div></div>
   <div class="cell"><div id="map3" class="map"></div>
     <div class="cap">3. One-room destination: brass pin plus a next-step arrow.</div></div>
 </div>

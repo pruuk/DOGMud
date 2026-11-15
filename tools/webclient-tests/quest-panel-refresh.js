@@ -50,6 +50,7 @@ const renderQuestsSrc = funcSrc(html, 'function renderQuests(');
 const handleGMCPSrc = funcSrc(html, 'function handleGMCP(');
 const escapeHTMLSrc = funcSrc(html, 'function escapeHTML(');
 const writeQuestsHTMLSrc = funcSrc(html, 'function writeQuestsHTML(');
+const updateQuestTabsSrc = funcSrc(html, 'function updateQuestTabs(');
 
 // ---------------------------------------------------------------- DOM stub
 function El(tag) {
@@ -81,7 +82,10 @@ global.document = {
   querySelectorAll: () => [],
   addEventListener: () => {},
 };
-global.window = { addEventListener: () => {} };
+global.window = {
+  addEventListener: () => {},
+  QuestTabs: require(path.join(__dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'js', 'questtabs.js')),
+};
 global.GMCPStructs = {};
 global.console_ = console;
 
@@ -93,7 +97,7 @@ for (const name of [
   'renderMutationToast', 'onActionResult', 'onActionInterrupted', 'renderCommands',
   'SendGMCP', 'appendGameText', 'updateMapPanelTitle', 'renderParty',
   'drainQueue', 'updateActionBar', 'setCooldowns', 'refreshCommandList',
-  'charDisplayName', 'handleActionResult', 'markInGame',
+  'charDisplayName', 'handleActionResult', 'markInGame', 'updateMapWhere',
 ]) {
   if (!(name in global)) global[name] = noop;
 }
@@ -111,6 +115,7 @@ global.gr = { setQuestMarker: (m) => markerCalls.push(m), rooms: mapRooms };
   escapeHTMLSrc,
   renderQuestsSrc,
   writeQuestsHTMLSrc,
+  updateQuestTabsSrc,
   handlersMap.replace(/^\{/, 'globalThis.GMCPUpdateHandlers = {') + ';',
   handleGMCPSrc,
 ].join('\n'));
@@ -202,17 +207,90 @@ handleGMCP('Char.Quests', [
 var p6 = panelText();
 check('active repeatable shows "(repeatable)"', /Cull the Wash<\/span><span class="qrepeat">\(repeatable\)/.test(p6), p6.slice(0, 300));
 check('the one-off quest has no tag', !/Last Delivery<\/span><span class="qrepeat">/.test(p6), p6.slice(0, 300));
-check('a "Repeatable work" group follows the active quests', p6.indexOf('Repeatable work') > p6.indexOf('Last Delivery'), p6);
-check('waiting status in words', p6.includes('Back to the Forge') && p6.includes('Not offered again yet.'), p6);
-check('ready status in words', p6.includes('Reading the Stones') && p6.includes('Ready to take on again.'), p6);
-check('finished rows are not focusable rows', !/class="qrow[^"]*" data-quest-id="54"/.test(p6), p6);
+check('the Active tab does not list finished repeatables', !p6.includes('Back to the Forge') && !p6.includes('Reading the Stones'), p6);
+(function () {
+  const rq = (0, eval)('renderQuests');
+  rq.tab = 'repeat';
+  rq();
+  const pr = panelText();
+  check('finished rows are not focusable rows', !/class="qrow[^"]*" data-quest-id="(54|58)"/.test(pr) && /class="qrepeatrow[^"]*" data-quest-id="54"/.test(pr), pr);
+  check('the Repeat tab lists waiting in words', pr.includes('Back to the Forge') && pr.includes('Not yet'), pr);
+  check('the Repeat tab lists ready in words', pr.includes('Reading the Stones') && pr.includes('Ready now'), pr);
+  check('the Repeat tab does not list active quests', !pr.includes('Last Delivery'), pr);
+  rq.tab = 'active';
+}());
+
+console.log('SCENARIO 6b: the selected tab survives a push, and one click is one Focus');
+(function () {
+  const rq = (0, eval)('renderQuests');
+  // A tab bar with real button stubs, so aria-pressed and the label can be read.
+  const buttons = ['active', 'repeat', 'done'].map((t) => {
+    const b = { attrs: { 'data-qtab': t }, textContent: t, cls: {} };
+    b.getAttribute = (k) => b.attrs[k];
+    b.setAttribute = (k, v) => { b.attrs[k] = v; };
+    b.classList = { toggle: (c, on) => { b.cls[c] = !!on; } };
+    return b;
+  });
+  els['quest-tabs'] = { querySelectorAll: () => buttons };
+  // Rows the page binds click handlers to: fresh objects on every write, as
+  // in a real DOM where a write replaces the rows (so old listeners are gone).
+  let lastRows = [];
+  const host = el('quests-list');
+  host.querySelectorAll = (sel) => {
+    if (sel !== '.qrow') return [];
+    lastRows = [];
+    const re = /class="qrow[^"]*" data-quest-id="(\d+)"/g;
+    let m;
+    while ((m = re.exec(host.innerHTML))) {
+      const row = { id: m[1], handlers: [] };
+      row.getAttribute = (a) => (a === 'data-quest-id' ? row.id : null);
+      row.addEventListener = (ev, fn) => row.handlers.push({ ev, fn });
+      lastRows.push(row);
+    }
+    return lastRows;
+  };
+  const sent = [];
+  const realSend = global.SendGMCP;
+  global.SendGMCP = (mod, payload) => sent.push({ mod, payload });
+  const PUSH = [
+    { id: 7, name: 'The Last Delivery', completion: 50, focused: false },
+    { id: 54, name: 'Back to the Forge', repeatable: true, status: 'waiting' },
+    { id: 58, name: 'Reading the Stones', repeatable: true, status: 'ready' },
+  ];
+  rq.tab = 'repeat';
+  handleGMCP('Char.Quests', PUSH);
+  const pr = panelText();
+  check('a push while on Repeat renders the Repeat rows', pr.includes('Reading the Stones') && !pr.includes('Last Delivery'), pr);
+  const rb = buttons[1];
+  check('the Repeat button is pressed', rb.attrs['aria-pressed'] === 'true' && buttons[0].attrs['aria-pressed'] === 'false', JSON.stringify(buttons.map((b) => b.attrs)));
+  check('the Repeat button label counts the ready ones', rb.textContent === 'Repeat (1)', rb.textContent);
+  rq.tab = 'active'; handleGMCP('Char.Quests', PUSH);
+  rq.tab = 'repeat'; handleGMCP('Char.Quests', PUSH);
+  rq.tab = 'active'; handleGMCP('Char.Quests', PUSH);
+  check('back on Active the active row is shown', panelText().includes('Last Delivery'), panelText());
+  const row = lastRows.find((r) => r.id === '7');
+  const clicks = row ? row.handlers.filter((h) => h.ev === 'click') : [];
+  clicks.forEach((h) => h.fn({}));
+  const focus = sent.filter((s) => s.mod === 'Char.Quests.Focus');
+  check('one click on an active row, after Active-Repeat-Active, sends exactly one Focus',
+    clicks.length === 1 && focus.length === 1 && focus[0].payload.id === 7, JSON.stringify({ clicks: clicks.length, sent }));
+  global.SendGMCP = realSend;
+  host.querySelectorAll = () => [];
+  rq.tab = 'active';
+}());
 
 console.log('SCENARIO 7: only finished repeatables, nothing active');
 reset();
 handleGMCP('Char.Quests', [{ id: 54, name: 'Back to the Forge', repeatable: true, status: 'ready' }]);
 var p7 = panelText();
 check('empty state still says no active quests', p7.includes('No active quests'), p7);
-check('and the repeatable work is listed', p7.includes('Back to the Forge') && p7.includes('Ready to take on again.'), p7);
+(function () {
+  const rq = (0, eval)('renderQuests');
+  rq.tab = 'repeat';
+  rq();
+  check('and the repeatable work is on the Repeat tab', panelText().includes('Back to the Forge') && panelText().includes('Ready now'), panelText());
+  rq.tab = 'active';
+}());
 
 console.log('SCENARIO 8: a long hint is clamped with a "more" toggle; the direction stays outside the clamp (#375 P8)');
 // The cap is 200 characters after whitespace collapses (questloop.HintMaxRunes).
@@ -297,14 +375,13 @@ handleGMCP('Char.Quests', [{ id: 45, name: 'The Unquiet Grove', completion: 40, 
   target_rooms: [5311, 5312, 5313], inside: false, guide: 'Head north.' }]);
 const m10 = markerCalls[markerCalls.length - 1] || {};
 check('kind passed', m10.kind === 'area', JSON.stringify(m10));
-check('label passed', m10.label === 'the unquiet grove', JSON.stringify(m10));
+check('no names on the marker (the Destination bar says them)', !('label' in m10) && !('name' in m10) && !('inside' in m10), JSON.stringify(m10));
 check('rooms passed', JSON.stringify(m10.targetRooms) === '[5311,5312,5313]', JSON.stringify(m10));
-check('inside passed', m10.inside === false, JSON.stringify(m10));
 reset();
 handleGMCP('Char.Quests', [{ id: 45, name: 'The Unquiet Grove', completion: 40, focused: true, hint: 'Cast.',
   target_kind: 'zone', target_label: 'Pothole Coulee', inside: true, guide: 'You are in Pothole Coulee.' }]);
 const m10b = markerCalls[markerCalls.length - 1];
-check('an inside destination with no pin or hop still reaches the map', !!m10b && m10b.inside === true && m10b.kind === 'zone',
+check('an inside destination with no pin, hop or rooms draws nothing, so no marker', m10b === null || m10b === undefined,
   JSON.stringify(markerCalls));
 
 console.log('SCENARIO 11: the panel shows the server destination line when the pin is not on this map');

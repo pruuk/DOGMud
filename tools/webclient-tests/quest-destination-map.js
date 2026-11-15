@@ -155,12 +155,11 @@ function roomInfo(num, x, z, zone) {
 }
 
 // The wash group is the first child of worldSvg (under connections and rooms).
-// Tiles only: the label's backing plate is also a rect, tagged data-wash-label.
-function washTiles(g) { return g.washGroup.children.filter(c => c.tag === 'rect' && c.attrs['data-wash-label'] !== '1'); }
+function washTiles(g) { return g.washGroup.children.filter(c => c.tag === 'rect'); }
 function washEdges(g) { return g.washGroup.children.filter(c => c.tag === 'line'); }
 function washLabel(g) { return g.washGroup.children.filter(c => c.tag === 'text').map(t => t.textContent).join('|'); }
 
-console.log('SCENARIO 1: an area washes its rooms on this map, with a dashed outer edge and its name');
+console.log('SCENARIO 1: an area washes its rooms on this map, with a dashed outer edge and no words');
 let g = freshMap();
 // An L: 1(0,0) 2(1,0) 3(1,1) in the area; 4(2,0) not.
 zoneMap({ zone: 'Grove', cz: 0, party: [], full: true, rooms: [
@@ -171,7 +170,7 @@ check('one tile per area room on the map', washTiles(g).length === 3, washTiles(
 // Outer sides of the L: room1 3 sides (top, left, bottom), room2 2 (top, right), room3 3 (left, right, bottom) = 8.
 check('a dashed edge on every side not shared with another area room', washEdges(g).length === 8, washEdges(g).length);
 check('every edge is dashed', washEdges(g).every(e => !!e.attrs['stroke-dasharray']), JSON.stringify(washEdges(g).map(e => e.attrs)));
-check('the area name is drawn once', washLabel(g) === 'the unquiet grove', washLabel(g));
+check('the wash carries no text (plan 7, P1)', washLabel(g) === '', washLabel(g));
 check('brass, never the party teal', washTiles(g).every(t => t.attrs.fill === RoomGridSVG.LEATHER.questGold), JSON.stringify(washTiles(g)[0] && washTiles(g)[0].attrs));
 
 console.log('SCENARIO 2: rooms not on this map or floor get no tile; null clears');
@@ -191,22 +190,23 @@ g.setQuestMarker({ targetRoom: 1, nextRoom: 2, nextDir: 'west', name: 'Grove', k
 zoneMap({ zone: 'Grove', cz: 0, party: [], full: true, rooms: [ room(1, 0), room(2, 1), room(3, 1, { y: 1 }), room(4, 2) ] });
 check('redrawn after reset', washTiles(g).length === 3, washTiles(g).length);
 
+// The "Somewhere in <area>" banner is gone (plan 7, P1): no overlay text mentions a destination.
 function bannerText(g) {
-  return g.overlayGroup.children.filter(c => c.attrs && c.attrs['data-quest-banner'] === '1')
+  return g.overlayGroup.children.filter(c => c.tag === 'text' && /Somewhere in/.test(c.textContent || ''))
     .map(c => c.textContent || '').join('|');
 }
-console.log('SCENARIO 5: inside an area or zone, a banner names it; outside, none');
+console.log('SCENARIO 5: inside an area or zone, no banner is drawn');
 g = freshMap();
 zoneMap({ zone: 'Pothole Coulee', cz: 0, party: [], full: true, rooms: [ room(1, 0), room(2, 1) ] });
 g.setQuestMarker({ targetRoom: 0, nextRoom: 0, nextDir: '', name: 'Q', kind: 'zone', label: 'Pothole Coulee', targetRooms: [], inside: true });
-check('banner says Somewhere in <label>', bannerText(g).indexOf('Somewhere in Pothole Coulee') >= 0, bannerText(g));
+check('no banner inside a zone destination', bannerText(g) === '', bannerText(g));
 g.setQuestMarker({ targetRoom: 0, nextRoom: 2, nextDir: 'east', name: 'Q', kind: 'zone', label: 'Pothole Coulee', targetRooms: [], inside: false });
 check('no banner outside', bannerText(g) === '', bannerText(g));
 g.setQuestMarker({ targetRoom: 1, nextRoom: 0, nextDir: '', name: 'Q', kind: 'room', label: '', targetRooms: [], inside: true });
 check('no banner for a room destination', bannerText(g) === '', bannerText(g));
 g.setQuestMarker({ targetRoom: 0, nextRoom: 0, nextDir: '', name: 'Q', kind: 'area', label: 'the unquiet grove', targetRooms: [1, 2], inside: true });
 zoneMap({ zone: 'Pothole Coulee', cz: 0, party: [], full: true, rooms: [ room(1, 0), room(2, 1) ] });
-check('banner survives a full map reset', bannerText(g).indexOf('Somewhere in the unquiet grove') >= 0, bannerText(g));
+check('still no banner after a full map reset', bannerText(g) === '', bannerText(g));
 
 console.log('SCENARIO 6: the pin is brass, never the party teal');
 g = freshMap();

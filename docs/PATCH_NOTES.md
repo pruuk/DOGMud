@@ -12,6 +12,15 @@
 - This applies to everyone, including players who used the web client before. Your volume levels are kept for when you turn sound on.
 - Setting Music to zero now stops the music instead of playing it silently. Raise it again and your area's music comes back.
 
+## 2026-11-14: Clearer panels
+
+- The Map's title names the level you are on, and a line under the map says where you are and where your quest is taking you. The map itself is easier to read with the labels off it.
+- Quests has three tabs: Active, Repeat (with how many are ready again) and Completed, a list of everything you have finished.
+- The Chat panel is now called Comms. Its Chat channel is unchanged.
+- Menus show the item, quest or automation name large at the top, with the actions below it. On a phone, press and hold an item, quest or automation to open its menu; tap an item to open its menu too.
+- On a laptop the web client opens full screen, so every panel fits beside the game. If you leave full screen on a small laptop, the other panels move to the round buttons and the Map grows, with Conditions beside it and Health underneath; a large party puts Health beside the Map instead.
+- On a phone or tablet, the Legend button in the Map's title bar shows the map's key over the map.
+
 ## 2026-11-14: Playing on a phone
 
 - An open tab now takes less of the screen on a phone, so more of the game stays in view.

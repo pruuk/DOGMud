@@ -77,7 +77,10 @@ global.document = {
   addEventListener: (ev, fn) => { (docListeners[ev] = docListeners[ev] || []).push(fn); },
   removeEventListener: (ev, fn) => { docListeners[ev] = (docListeners[ev] || []).filter((f) => f !== fn); },
 };
-global.window = { addEventListener: () => {}, innerWidth: 800, innerHeight: 600 };
+global.window = {
+  addEventListener: () => {}, innerWidth: 800, innerHeight: 600,
+  QuestTabs: require(path.join(__dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'js', 'questtabs.js')),
+};
 global.GMCPStructs = {};
 global.gr = { setQuestMarker: () => {}, rooms: new Map() };
 global.companionGlue = null;
@@ -97,6 +100,7 @@ global.document.getElementById = (id) => (id === 'quests-list' ? host : new El('
   funcSrc(html, 'function escapeHTML('),
   funcSrc(html, 'function renderQuests('),
   funcSrc(html, 'function writeQuestsHTML('),
+  funcSrc(html, 'function updateQuestTabs('),
 ].join('\n'));
 
 let fails = 0;
@@ -111,9 +115,10 @@ global.GMCPStructs = { Char: { Quests: [
   { id: 42, name: 'The Hunt', abandonable: true, focused: true },
   { id: 28, name: 'Waking to Gaius' },
   { id: 54, name: 'Back to the Forge', repeatable: true, status: 'ready' },
+  { id: 61, name: 'The Old Debt', status: 'done' },
 ] } };
 renderQuests();
-const markup = host.innerHTML;
+let markup = host.innerHTML;
 console.log('   markup: ' + JSON.stringify(markup.slice(0, 160)));
 
 // Fake elements derived from the rendered markup.
@@ -158,7 +163,7 @@ function rightClick(row) {
   (docListeners.contextmenu || []).forEach((fn) => fn(ev));
   return prevented;
 }
-function menuEl() { return body.children.find((c) => c.className === 'quest-ctx') || null; }
+function menuEl() { return body.children.find((c) => /(^| )quest-ctx( |$)/.test(c.className)) || null; }
 function menuRow(label) {
   const m = menuEl();
   return m ? m.children.find((c) => c.textContent === label) : null;
@@ -204,12 +209,23 @@ check('Focus sends Char.Quests.Focus {id:28}',
 check('a menu click does not reach the row click handler (menu lives outside the row)',
   menuEl() && !row28.contains(menuEl()), 'menu is inside the row');
 
-console.log('SCENARIO 3: finished repeatable row');
+console.log('SCENARIO 3: finished repeatable row (Repeat tab) and Completed row');
+check('the Active tab shows neither finished row', !/data-quest-id="(54|61)"/.test(markup), markup);
+renderQuests.tab = 'repeat';
+renderQuests();
+markup = host.innerHTML;
 const rep = rowFor('qrepeatrow', 54);
 check('the finished repeatable row exists in the markup', !!rep, markup);
 const before = JSON.stringify(menuEl() && menuEl().children.map((c) => c.textContent));
 check('no menu is opened for it (selector does not match)', rightClick(rep) === false, 'preventDefault called');
 check('and the menu is unchanged', JSON.stringify(menuEl() && menuEl().children.map((c) => c.textContent)) === before, 'menu rebuilt');
+renderQuests.tab = 'done';
+renderQuests();
+markup = host.innerHTML;
+const doneRow = rowFor('qdonerow', 61);
+check('the Completed row exists in the markup', !!doneRow, markup);
+check('no menu is opened for a Completed row', rightClick(doneRow) === false, 'preventDefault called');
+renderQuests.tab = 'active';
 
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);

@@ -435,6 +435,22 @@ check('the map legend starts folded in the markup',
 check('the map legend starts folded at any window height',
     /initMapLegend[\s\S]*?show\(false\);/.test(page)
     && !/show\(window\.innerHeight/.test(page), true);
+// Touch screens have no map button row (Calabe 2026-11-15), so the key opens
+// from a Legend button in the Map's title bar and lies over the map, taking
+// no height from it (owner 2026-11-15, after the phone lost the key).
+check('the Map title bar has a Legend button for the key',
+    /id="panel-map"[\s\S]*?<span class="ph-btns"><button type="button" class="brass map-legend-head" aria-controls="map-legend" aria-expanded="false" aria-label="Legend" title="Legend"><svg/.test(page), true);
+// The Legend button is an icon the size of the title bar's other buttons
+// (owner 2026-11-15: the word made it too big).
+check('the touch Legend button is a square the size of the panel buttons',
+    /#panel-map \.map-legend-head \{\s*display: inline-flex;[\s\S]*?width: 44px;\s*height: 44px;/.test(fs.readFileSync(path.join(
+        __dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'css', 'dashboard.css'), 'utf8'))
+    && /\(pointer: coarse\) and \(max-width: 599px\)[\s\S]*?#panel-map \.map-legend-head \{ width: 32px; height: 30px; margin: 0; \}/.test(fs.readFileSync(path.join(
+        __dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'css', 'dashboard.css'), 'utf8')), true);
+check('both Legend buttons open the same key',
+    /initMapLegend[\s\S]*?querySelector\('#panel-map \.map-legend-head'\)/.test(page), true);
+check('a tap on the key laid over the map folds it',
+    /initMapLegend[\s\S]*?legend\.addEventListener\('click'/.test(page), true);
 
 // The Chat tab has no typing box of its own: players chat from the command
 // box (Malia 2026-11-06).
@@ -445,6 +461,19 @@ check('the Chat tab has no typing box', page.indexOf('chat-input') === -1, true)
 var css = fs.readFileSync(path.join(
     __dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'css', 'dashboard.css'
 ), 'utf8');
+// The touch Legend (owner 2026-11-15; markup checks above, with the key's).
+check('touch screens hide the map button row but keep the key',
+    /@media \(pointer: coarse\) \{\s*#panel-map \.map-controls \{ display: none; \}/.test(css)
+    && !/#panel-map \.map-legend \{ display: none; \}/.test(css), true);
+check('the title bar Legend button shows on touch screens only',
+    /\.map-legend-head \{ display: none; \}/.test(css)
+    && /@media \(pointer: coarse\) \{[\s\S]*?#panel-map \.map-legend-head \{\s*display: inline-flex;/.test(css), true);
+check('on touch the key lies over the map',
+    /@media \(pointer: coarse\) \{[\s\S]*?#panel-map \.map-legend \{\s*position: absolute;/.test(css), true);
+check('a folded Map hides its Legend button, which would open nothing',
+    /@media \(pointer: coarse\) \{[\s\S]*?#panel-map\.collapsed \.map-legend-head \{ display: none; \}/.test(css), true);
+check('a popped-out Map on touch keeps its button row, the only way to its key there',
+    /@media \(pointer: coarse\) \{[\s\S]*?\.winbox\.dash-winbox #panel-map \.map-controls \{ display: flex; \}/.test(css), true);
 check('an open phone tab is not a fixed 62% of the screen', /height:\s*62vh/.test(css), false);
 check('an open phone tab stops above the command box',
     /bottom: calc\(var\(--cmdbox-h\) \+ var\(--tabbar-h\) \+ var\(--tabname-h\)\)/.test(css), true);
@@ -470,11 +499,19 @@ check('a wide gap keeps the fold and close buttons apart',
     /#dash-drawer \.ph-btns \{ gap: 16px;/.test(css), true);
 // Repeatable quests are quieted by colour, never see-through: see-through
 // faded them to about 2:1 in Light and Dark mode (#768 review item 3).
-var repeatRules = (css.match(/\.(qrepeat|qgroup|qrepeatrow) \{[^}]*\}/g) || []).join('\n');
-check('the repeatable quest styles are found', repeatRules.split('\n').length, 3);
-check('repeatable quests are not see-through', /opacity/.test(repeatRules), false);
-check('the repeatable heading and tag use the quest hint colour',
-    /\.qrepeat \{[^}]*color: var\(--quest-progress\)/.test(css) && /\.qgroup \{[^}]*color: var\(--quest-progress\)/.test(css), true);
+// Plan 7, rulings 18 and 19, P4: Quests has Active, Repeat and Completed tabs.
+check('the page loads questtabs.js', /static\/js\/questtabs\.js\?v=/.test(page), true);
+check('the Quests panel has its three tabs in the existing subtab pattern',
+    /<div id="quest-tabs" class="subtabs" role="group" aria-label="Quests">\s*<button type="button" class="subtab active" aria-pressed="true" data-qtab="active">Active<\/button>\s*<button type="button" class="subtab" aria-pressed="false" data-qtab="repeat">Repeat<\/button>\s*<button type="button" class="subtab" aria-pressed="false" data-qtab="done">Completed<\/button>\s*<\/div>/.test(page), true);
+check('the old "Repeatable work" heading is gone', /Repeatable work/.test(page), false);
+check('Repeat rows end "Ready now" or "Not yet"', /'Ready now' : 'Not yet'/.test(page), true);
+check('the quest list uses the game window line spacing',
+    /\.qrow \.qname \{[^}]*line-height:\s*1\.2;/.test(css) && /\.qhint \{[^}]*line-height:\s*1\.2;/.test(css) && /\.qprogress \{[^}]*line-height:\s*1\.2;/.test(css), true);
+check('a not-ready Repeat row and a Completed row are dimmed by colour, never see-through',
+    /\.qrepeatrow:not\(\.ready\)[^{]*\{[^}]*color: var\(--quest-dim\)/.test(css) && /\.qdonerow[^{]*\{[^}]*color: var\(--quest-dim\)/.test(css)
+    && !/\.(qrepeatrow|qdonerow)[^{]*\{[^}]*opacity/.test(css), true);
+check('a not-ready Repeat row and a Completed row are quieter by weight (Light mode dim is darker than the name)',
+    /\.qrepeatrow:not\(\.ready\) \.qname, \.qdonerow \.qname \{[^}]*font-weight: 400;/.test(css), true);
 // The Map may shrink to 150px (master's value) so a short laptop window
 // with a few quests does not scroll the whole page (#768 review item 5).
 check('the Map can shrink to 150px', /#panel-map\s+\{ flex: 1 1 0; min-height: 150px; \}/.test(css), true);
@@ -520,6 +557,42 @@ check('the X closes the keyboard without taking focus first',
     && /closeKbd\.addEventListener\('mousedown', function \(e\) \{ e\.preventDefault\(\); \}\);/.test(page)
     && /closeKbd\.addEventListener\('click', function \(\) \{ textInput\.blur\(\); \}\);/.test(page), true);
 
+// Plan 7, ruling 16: the panel is Comms; the Chat channel keeps its name.
+check('the Comms panel title', /<span class="ph-title">Comms<\/span>/.test(page), true);
+check('no panel says Chat any more', /<span class="ph-title">Chat<\/span>|aria-label="Chat channels"|read Chat\./.test(page), false);
+check('the Comms channels are named for screen readers', /aria-label="Comms channels"/.test(page), true);
+check('the Chat channel keeps its name', /id="comm-tab-chat"[^>]*data-label="Chat"/.test(page), true);
+check('the phone tab is Comms', /chat:\s*\{ label: "Comms",/.test(dash), true);
+// Plan 7, ruling 20: one menu look for items, Automation and Quests.
+['inv-ctx', 'auto-ctx', 'quest-ctx'].forEach(function (cls) {
+    check(cls + ' is built as a shared ctx-menu', new RegExp('el\\.className = "' + cls + ' ctx-menu";').test(page), true);
+});
+check('the shared menu is a fixed box above the page',
+    /\.ctx-menu \{[^}]*position: fixed;[^}]*z-index: 9000;/.test(css), true);
+check('the menu header is the name at the title size, boxed, regular weight, in gold',
+    /\.ctx-menu \.ctx-header \{[^}]*margin: 6px;[^}]*font-size: var\(--title\);[^}]*font-weight: 400;[^}]*color: var\(--title-gold\);[^}]*border: 1px solid var\(--gold-rule\);/.test(css), true);
+check('a dimmed menu row does not use --text-secondary (4.40 on the menu)',
+    /\.ctx-menu \.ctx-row\.ctx-disabled,\s*\.ctx-menu \.ctx-row\.ctx-disabled:hover \{[^}]*color: var\(--toast-desc\);/.test(css), true);
+check('the quest menu skips the header when the row has no name',
+    /if \(qName\) \{\s*var hdr = document\.createElement\("div"\);/.test(page), true);
+check('menu rows are indented under the name and tall enough to tap',
+    /\.ctx-menu \.ctx-row \{[^}]*padding: 8px 10px 8px 24px;/.test(css), true);
+check('no per-menu copies of the menu rules are left',
+    /\.(inv|auto|quest)-ctx\b/.test(css), false);
+check('a dimmed menu row keeps its look under the shared menu',
+    /\.ctx-menu \.ctx-row\.ctx-disabled:hover \{[^}]*background: none;/.test(css), true);
+check('the unused empty-tile rule is gone', /\.inv-tile\.empty\b/.test(css), false);
+// Plan 7, P2: a long-press opens each menu on touch; a tap on an item tile
+// opens its menu; other taps keep their jobs.
+check('the page loads longpress.js', /static\/js\/longpress\.js\?v=/.test(page), true);
+['.inv-tile[data-handle]', '.auto-chip[data-auto-type], .auto-row[data-auto-type]', '.qrow[data-quest-id]'].forEach(function (sel) {
+    check('long-press opens the menu on ' + sel,
+        page.indexOf('LongPress.attach(document, "' + sel + '"') >= 0, true);
+});
+check('a tap or click on an item tile opens its menu at the tile',
+    /addEventListener\("click", function\(e\) \{\s*var tile = e\.target\.closest\("\.inv-tile\[data-handle\]"\);/.test(page), true);
+check('a long touch on these does not select text or raise the iOS callout',
+    /@media \(pointer: coarse\) \{\s*\.inv-tile, \.qrow, \.auto-chip, \.auto-row \{[^}]*-webkit-touch-callout: none;[^}]*user-select: none;/.test(css), true);
 // --- result ----------------------------------------------------------------
 
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');

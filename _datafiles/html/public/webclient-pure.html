@@ -191,7 +191,7 @@
             box-shadow: 0 0 0 2px var(--cmd-ring-focus);
         }
 
-        /* Chat tab: the channel buttons on top, the messages below them
+        /* Comms tab: the channel buttons on top, the messages below them
            filling the rest of the card. There is no typing box here: players
            chat from the command box (for example "say hello"). */
         #panel-chat .dash-panel-body {
@@ -214,6 +214,9 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/questtabs.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mapwhere.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/longpress.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSET_VERSION }}"></script>
@@ -320,8 +323,10 @@
       <!-- LEFT column: Map · Quests · Health · Inventory -->
       <div class="dash-col" id="dash-col-left">
         <section class="dash-panel" id="panel-map" data-panel="map">
+          <!-- The title bar's Legend button shows on touch screens only, which
+               have no map button row (owner 2026-11-15). -->
           <div class="dash-panel-head"><span class="ph-title">Map</span>
-            <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
+            <span class="ph-btns"><button type="button" class="brass map-legend-head" aria-controls="map-legend" aria-expanded="false" aria-label="Legend" title="Legend"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="2"/><path d="M11 6h8"/><circle cx="6" cy="12" r="2"/><path d="M11 12h8"/><circle cx="6" cy="18" r="2"/><path d="M11 18h8"/></svg></button><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body map-body">
             <div id="map-render"></div>
             <!-- The map's Fit / Center / zoom buttons, under the map rather than over
@@ -331,6 +336,12 @@
             <div id="map-controls" class="map-controls">
               <button type="button" id="map-legend-toggle" class="map-legend-toggle"
                       aria-expanded="false" aria-controls="map-legend">Legend <span class="map-legend-arrow" aria-hidden="true">▸</span></button>
+            </div>
+            <!-- Where you are and where your focused quest leads (plan 7,
+                 ruling 17); the map art carries no words (P1). -->
+            <div id="map-where" class="map-where" hidden>
+              <span class="mw-loc" hidden><span class="mw-k">Location:</span> <span class="mw-v"></span></span>
+              <span class="mw-dest" hidden><span class="mw-k">Destination:</span> <span class="mw-v"></span></span>
             </div>
             <!-- The map's key, under the map rather than drawn over the rooms
                  (2026-11-02). The Legend button above opens and folds it;
@@ -351,7 +362,11 @@
         <section class="dash-panel" id="panel-quests" data-panel="quests">
           <div class="dash-panel-head"><span class="ph-title">Quests</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
-          <div class="dash-panel-body"><div id="quests-list"><div class="quests-empty">No active quests.</div></div></div>
+          <div class="dash-panel-body"><div id="quest-tabs" class="subtabs" role="group" aria-label="Quests">
+            <button type="button" class="subtab active" aria-pressed="true" data-qtab="active">Active</button>
+            <button type="button" class="subtab" aria-pressed="false" data-qtab="repeat">Repeat</button>
+            <button type="button" class="subtab" aria-pressed="false" data-qtab="done">Completed</button>
+          </div><div id="quests-list"><div class="quests-empty">No active quests.</div></div></div>
         </section>
 
         <section class="dash-panel" id="panel-vitals" data-panel="vitals">
@@ -375,16 +390,16 @@
         </section>
       </div>
 
-      <!-- RIGHT column: Chat · Conditions · Automation -->
+      <!-- RIGHT column: Comms · Conditions · Automation -->
       <div class="dash-col" id="dash-col-right">
         <section class="dash-panel" id="panel-chat" data-panel="chat">
-          <div class="dash-panel-head"><span class="ph-title">Chat</span>
+          <div class="dash-panel-head"><span class="ph-title">Comms</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body">
-            <p class="chat-fs-hint">Turn on Full screen for more room to read Chat.</p>
-            <!-- COMM window (tabs) — moved from hidden div into chat panel -->
+            <p class="chat-fs-hint">Turn on Full screen for more room to read Comms.</p>
+            <!-- COMM window (tabs), moved from hidden div into the Comms panel -->
             <div id="comm-output" class="tabs">
-              <div class="tab-buttons subtabs" role="group" aria-label="Chat channels">
+              <div class="tab-buttons subtabs" role="group" aria-label="Comms channels">
                 <button type="button" id="comm-tab-say" class="tab-button subtab active" aria-pressed="true" data-tab="comm-say" data-label="Say" data-unread="0" title="What people say in the room you are in. To talk, type say hello.">Say</button>
                 <button type="button" id="comm-tab-whisper" class="tab-button subtab" aria-pressed="false" data-tab="comm-whisper" data-label="Whisper" data-unread="0" title="Private messages between you and one player, wherever they are. Type whisper &lt;name&gt; &lt;message&gt;. reply &lt;message&gt; answers the last one.">Whisper</button>
                 <button type="button" id="comm-tab-party" class="tab-button subtab" aria-pressed="false" data-tab="comm-party" data-label="Party" data-unread="0" title="Only your party hears this. Type party say &lt;message&gt;. No party yet? party create, then party invite &lt;name&gt;.">Party</button>
@@ -676,13 +691,27 @@
             // button; move it to the end of the row so Tab order matches
             // what the player sees (Legend at the right end).
             btn.parentNode.appendChild(btn);
+            // Touch screens have no button row; their Legend button is in the
+            // Map's title bar, and the key lies over the map (owner 2026-11-15).
+            var headBtn = document.querySelector('#panel-map .map-legend-head');
             function show(open) {
                 legend.hidden = !open;
                 btn.setAttribute('aria-expanded', open ? 'true' : 'false');
                 btn.querySelector('.map-legend-arrow').textContent = open ? '▾' : '▸';
+                if (headBtn) headBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
             }
             show(false);
             btn.addEventListener('click', function () { show(legend.hidden); });
+            if (headBtn) headBtn.addEventListener('click', function (ev) {
+                // The title bar's own click must not fold the panel.
+                ev.stopPropagation();
+                show(legend.hidden);
+            });
+            // Over the map, a tap on the key folds it, so it never hides the
+            // map for long. Under the map (a mouse screen) it stays.
+            legend.addEventListener('click', function () {
+                if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) show(false);
+            });
         })();
 
         /////////////////////////////////////////////
@@ -847,6 +876,7 @@
                         gr.addRoom(r);
                     }
                     gr.centerOnRoom(r.RoomId);
+                    updateMapWhere();
                 }
 
             },
@@ -989,7 +1019,7 @@
                     gr.setZoneSnapshot(obj.Map.zone, obj.Map.rooms || [], obj.Map.cz || 0, obj.Map.party || [], obj.Map.full !== false);
                     // Update map panel title if we can find it
                     var mapTitle = document.querySelector('#panel-map .ph-title');
-                    if (mapTitle) mapTitle.textContent = 'Map (' + obj.Map.zone + ')';
+                    if (mapTitle) mapTitle.textContent = 'Map (' + obj.Map.zone + ', Level ' + (obj.Map.cz || 0) + ')';
                 }
             },
             "Char.Inventory": function() {
@@ -997,17 +1027,18 @@
             },
             "Char.Quests": function() {
                 renderQuests();
+                updateMapWhere();
                 if (gr && gr.setQuestMarker) {
                     var data = (GMCPStructs.Char && GMCPStructs.Char.Quests) ? GMCPStructs.Char.Quests : [];
                     var f = Array.isArray(data) ? data.filter(function (q) { return q.focused; })[0] : null;
                     // A cross-zone destination has no room on this map (target_room 0) but still a
-                    // next hop, and an area or zone the player stands in has neither but still draws
-                    // its wash and banner (#375 p4).
-                    if (f && (f.target_room || f.next_room || f.inside || (f.target_rooms && f.target_rooms.length))) {
+                    // next hop, and an area the player stands in has no pin or hop but still draws
+                    // its wash (#375 p4). The marker carries no names: the Destination bar says them (plan 7).
+                    if (f && (f.target_room || f.next_room || (f.target_rooms && f.target_rooms.length))) {
                         gr.setQuestMarker({
                             targetRoom: f.target_room || 0, nextRoom: f.next_room || 0, nextDir: f.next_dir || "",
-                            name: f.name || "", kind: f.target_kind || "", label: f.target_label || "",
-                            targetRooms: Array.isArray(f.target_rooms) ? f.target_rooms : [], inside: !!f.inside
+                            kind: f.target_kind || "",
+                            targetRooms: Array.isArray(f.target_rooms) ? f.target_rooms : []
                         });
                     } else {
                         gr.setQuestMarker(null);
@@ -1142,6 +1173,23 @@
             }
         }
 
+        // The Map's Location / Destination bar (plan 7, ruling 17).
+        function updateMapWhere() {
+            if (!window.MapWhere) { return; }
+            var room = (GMCPStructs.Room && GMCPStructs.Room.Info) ? GMCPStructs.Room.Info.name : "";
+            var data = (GMCPStructs.Char && GMCPStructs.Char.Quests) ? GMCPStructs.Char.Quests : [];
+            var f = Array.isArray(data) ? data.filter(function (q) { return q && q.focused && !q.status; })[0] : null;
+            var t = MapWhere.text(room, f);
+            [[".mw-loc", t.location], [".mw-dest", t.destination]].forEach(function (p) {
+                var el = document.querySelector("#map-where " + p[0]);
+                if (!el) { return; }
+                el.querySelector(".mw-v").textContent = p[1];
+                el.hidden = !p[1];
+            });
+            var bar = document.getElementById("map-where");
+            if (bar) { bar.hidden = !t.location && !t.destination; }
+        }
+
         function renderQuests() {
             var host = document.getElementById("quests-list");
             if (!host) { return; }
@@ -1152,25 +1200,33 @@
             // signature stale, and the next render whose markup matched that
             // stale value would be skipped -- leaving the panel showing
             // something the player no longer has (finding 19).
-            // Finished repeatables (status set) are listed under their own
-            // label, dimmed and unfocusable (#375 P6); the rest are active.
-            var repeats = quests.filter(function (q) { return !!q.status; });
-            quests = quests.filter(function (q) { return !q.status; });
-            var repeatsHTML = "";
-            if (repeats.length) {
-                repeats.sort(function (a, b) { return (a.name || "").localeCompare(b.name || ""); });
-                repeatsHTML = '<div class="qgroup">Repeatable work</div>';
-                repeats.forEach(function (q) {
-                    var line = q.status === "ready" ? "Ready to take on again." : "Not offered again yet.";
-                    repeatsHTML += '<div class="qrepeatrow" data-quest-id="' + Number(q.id) + '">'
-                        + '<span class="qname">' + escapeHTML(q.name || "") + '</span>'
-                        + '<span class="qrepeat">(repeatable)</span>'
-                        + '<div class="qhint">' + line + '</div>'
-                        + '</div>';
+            // Plan 7: Active, Repeat and Completed tabs (QuestTabs). The list
+            // host shows the selected tab; the choice lives on the function so
+            // it survives every push, per page load.
+            var QT = window.QuestTabs;
+            var tabs = QT.split(quests);
+            var tab = renderQuests.tab = QT.tabOrDefault(renderQuests.tab);
+            updateQuestTabs(tab, tabs.ready);
+            if (tab === "repeat" || tab === "done") {
+                var rows = tab === "repeat" ? tabs.repeat : tabs.done;
+                var listHTML = rows.length ? "" : '<div class="quests-empty">' + QT.EMPTY[tab] + '</div>';
+                rows.forEach(function (q) {
+                    if (tab === "repeat") {
+                        var ready = q.status === "ready";
+                        listHTML += '<div class="qrepeatrow' + (ready ? ' ready' : '') + '" data-quest-id="' + Number(q.id) + '">'
+                            + '<span class="qname">' + escapeHTML(q.name || "") + '</span>'
+                            + '<span class="qstate">' + (ready ? 'Ready now' : 'Not yet') + '</span></div>';
+                    } else {
+                        listHTML += '<div class="qdonerow" data-quest-id="' + Number(q.id) + '">'
+                            + '<span class="qname">' + escapeHTML(q.name || "") + '</span></div>';
+                    }
                 });
+                writeQuestsHTML(host, listHTML);
+                return;
             }
+            quests = tabs.active;
             if (!quests.length) {
-                writeQuestsHTML(host, '<div class="quests-empty">No active quests.</div>' + repeatsHTML);
+                writeQuestsHTML(host, '<div class="quests-empty">' + QT.EMPTY.active + '</div>');
                 return;
             }
             quests.sort(function (a, b) {
@@ -1240,7 +1296,6 @@
                 }
             });
             renderQuests.hintOpen = keepOpen; // forget quests that left the panel
-            html += repeatsHTML;
             // Attach handlers ONLY when the markup was actually rewritten. The
             // rows are recreated by that write, so binding without it would add
             // a second listener to rows that already have one, and a single
@@ -1278,6 +1333,28 @@
             host.innerHTML = html;
             return true;
         }
+
+        // The Quests tab bar: which tab is pressed, and the Repeat count.
+        function updateQuestTabs(tab, ready) {
+            var bar = document.getElementById("quest-tabs");
+            if (!bar) { return; }
+            Array.prototype.forEach.call(bar.querySelectorAll("button[data-qtab]"), function (b) {
+                var on = b.getAttribute("data-qtab") === tab;
+                b.classList.toggle("active", on);
+                b.setAttribute("aria-pressed", on ? "true" : "false");
+                if (b.getAttribute("data-qtab") === "repeat") { b.textContent = window.QuestTabs.repeatLabel(ready); }
+            });
+        }
+        (function () {
+            var bar = document.getElementById("quest-tabs");
+            if (!bar) { return; }
+            bar.addEventListener("click", function (e) {
+                var b = e.target.closest("button[data-qtab]");
+                if (!b) { return; }
+                renderQuests.tab = b.getAttribute("data-qtab");
+                renderQuests();
+            });
+        })();
 
         function renderInventory() {
             var inv = (GMCPStructs["Char"] || {}).Inventory;
@@ -2700,7 +2777,7 @@
             if (outer) {
                 button.style.display = '';
                 outer.onChange(function (on) {
-                    // The sideways Chat line about Full screen hides while it is on.
+                    // The sideways Comms line about Full screen hides while it is on.
                     document.documentElement.classList.toggle('fullscreen-on', on);
                     // The visible words and the spoken name start the same, so
                     // voice control can say what it sees (WCAG 2.5.3).
@@ -2825,8 +2902,9 @@
 
         sessionButton.addEventListener('click', function () {
             const open = socket && socket.readyState === WebSocket.OPEN;
-            // On a phone, Enter Game also takes the game full screen, hiding
-            // the browser's address bar (Calabe 2026-11-07). The game usually
+            // On a phone or a laptop, Enter Game also takes the game full
+            // screen, hiding the browser's own bars (Calabe 2026-11-07 for
+            // phones, 2026-11-15 for laptops). The game usually
             // connects on its own at load, so this runs on every Enter Game
             // tap, not only one that opens the connection. Leave Game does not.
             if (!(open && inGame)) {
@@ -3955,7 +4033,7 @@
     </div>
 
     <script>
-        // Chat tab buttons (Say, Whisper, Party and the rest): pressing one
+        // Comms tab buttons (Say, Whisper, Party and the rest): pressing one
         // shows that channel's messages and clears its unread count. Players
         // send messages from the command box, not from here.
         document.addEventListener('DOMContentLoaded', () => {
@@ -3987,7 +4065,7 @@
 
             function buildMenu() {
                 var el = document.createElement("div");
-                el.className = "inv-ctx";
+                el.className = "inv-ctx ctx-menu";
                 el.style.display = "none";
                 document.body.appendChild(el);
                 return el;
@@ -4140,6 +4218,17 @@
                 e.preventDefault();
                 openMenu(e, tile);
             });
+            // A tap (or a click) on a tile opens its menu at the tile
+            // (ruling 20); a long touch opens it where the finger is (P2).
+            document.addEventListener("click", function(e) {
+                var tile = e.target.closest(".inv-tile[data-handle]");
+                if (!tile || !tile.dataset.handle) return;
+                var r = tile.getBoundingClientRect();
+                openMenu({ clientX: r.left + r.width / 2, clientY: r.bottom, preventDefault: function () {} }, tile);
+            });
+            if (window.LongPress) LongPress.attach(document, ".inv-tile[data-handle]", function (x, y, el) {
+                openMenu({ clientX: x, clientY: y, preventDefault: function () {} }, el);
+            });
         })();
         // ── End inventory context menu ───────────────────────────────────────
 
@@ -4215,7 +4304,7 @@
 
             function buildMenu() {
                 var el = document.createElement("div");
-                el.className = "auto-ctx";
+                el.className = "auto-ctx ctx-menu";
                 el.style.display = "none";
                 document.body.appendChild(el);
                 return el;
@@ -4311,6 +4400,10 @@
                 e.preventDefault();
                 openMenu(e, row);
             });
+            // A tap keeps its job (run the automation); a long touch opens the menu (P2).
+            if (window.LongPress) LongPress.attach(document, ".auto-chip[data-auto-type], .auto-row[data-auto-type]", function (x, y, el) {
+                openMenu({ clientX: x, clientY: y, preventDefault: function () {} }, el);
+            });
         })();
         // ── End automation context menu ──────────────────────────────────────
 
@@ -4324,7 +4417,7 @@
 
             function buildMenu() {
                 var el = document.createElement("div");
-                el.className = "quest-ctx";
+                el.className = "quest-ctx ctx-menu";
                 el.style.display = "none";
                 document.body.appendChild(el);
                 return el;
@@ -4363,10 +4456,13 @@
                 while (menu.firstChild) menu.removeChild(menu.firstChild);
 
                 var nameEl = row.querySelector(".qname");
-                var hdr = document.createElement("div");
-                hdr.className = "ctx-header";
-                hdr.textContent = nameEl ? nameEl.textContent : "";
-                menu.appendChild(hdr);
+                var qName = nameEl ? nameEl.textContent : "";
+                if (qName) {
+                    var hdr = document.createElement("div");
+                    hdr.className = "ctx-header";
+                    hdr.textContent = qName;
+                    menu.appendChild(hdr);
+                }
 
                 menu.appendChild(makeCtxRow("Focus", true, function() {
                     SendGMCP("Char.Quests.Focus", { id: id });
@@ -4409,12 +4505,17 @@
 
             // The menu lives on document.body, outside the row, so its own
             // clicks never reach the row's left-click Focus handler. Finished
-            // repeatables render as .qrepeatrow and get no menu.
+            // repeatables render as .qrepeatrow and finished quests as
+            // .qdonerow; neither gets a menu.
             document.addEventListener("contextmenu", function(e) {
                 var row = e.target.closest(".qrow[data-quest-id]");
                 if (!row) return;
                 e.preventDefault();
                 openMenu(e, row);
+            });
+            // A tap keeps its job (focus the quest); a long touch opens the menu (P2).
+            if (window.LongPress) LongPress.attach(document, ".qrow[data-quest-id]", function (x, y, el) {
+                openMenu({ clientX: x, clientY: y, preventDefault: function () {} }, el);
             });
         })();
         // ── End quest context menu ───────────────────────────────────────────

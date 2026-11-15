@@ -130,7 +130,7 @@ for (const name of [
   'renderMutationToast', 'onActionResult', 'onActionInterrupted', 'renderCommands',
   'SendGMCP', 'appendGameText', 'updateMapPanelTitle', 'renderParty',
   'drainQueue', 'updateActionBar', 'setCooldowns', 'refreshCommandList',
-  'charDisplayName', 'handleActionResult', 'renderQuests',
+  'charDisplayName', 'handleActionResult', 'renderQuests', 'updateMapWhere',
 ]) {
   if (!(name in global)) global[name] = noop;
 }

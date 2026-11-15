@@ -3,7 +3,8 @@
  * (setGameWidth, from termfit.js). The side panels take the room right of
  * it, in #dash-panels, and layoutpick.js picks one of four modes from that
  * room:
- *   wide   : Layout D, every side panel open (spec ruling 9)
+ *   wide   : Layout D, every side panel open (spec ruling 9), when its
+ *            square Map would be at least 300px (owner 2026-11-15)
  *   column : Map, Health and Conditions open; the other four on the tab bar
  *   slim   : Health and Conditions open; the other five on the tab bar
  *   phone  : every side panel on the tab bar under the game
@@ -45,7 +46,7 @@
     quests: { label: "Quests",     icon: ["M7 3h10a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2V5a2 2 0 0 1 2-2z", "M9 8h6M9 12h4"] },
     vitals: { label: "Health",     icon: ["M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z", "M7 12h3l1.5-2 2 4 1.5-2H17"] },
     art:    { label: "Inventory",  icon: ["M6 8h12l-1 12H7z", "M9 8V6a3 3 0 0 1 6 0v2", "M9 13h6"] },
-    chat:   { label: "Chat",       icon: ["M4 5h16v10H9l-5 4z", "M8 9h8M8 12h5"] },
+    chat:   { label: "Comms",      icon: ["M4 5h16v10H9l-5 4z", "M8 9h8M8 12h5"] },
     status: { label: "Conditions",   icon: ["M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z", "M9 12l2 2 4-4"] },
     trig:   { label: "Automation", icon: ["M12 6a7 7 0 1 0 0 14a7 7 0 1 0 0-14z", "M12 9v4l3 2M9 3h6"] },
   };
@@ -187,6 +188,20 @@
         self._apply();
         self._relayoutTabs();
       });
+      // The laptop column follows Health (a member joins or leaves) and the
+      // panel area (the tab name pill changes its padding) as well as the
+      // window (plan 7c).
+      if (window.ResizeObserver) {
+        var arrange = new ResizeObserver(function () {
+          // Next frame: a swap resizes Health inside this callback, which
+          // the browser reports as a ResizeObserver loop (review 2026-11-15).
+          if (self._arrangeQueued) return;
+          self._arrangeQueued = true;
+          requestAnimationFrame(function () { self._arrangeQueued = false; self._arrangeColumn(); });
+        });
+        if (document.getElementById("vitals-bars")) arrange.observe(document.getElementById("vitals-bars"));
+        if (document.getElementById("dash-panels")) arrange.observe(document.getElementById("dash-panels"));
+      }
       // The name pill is measured in pixels: measure again once the web font lands.
       if (document.fonts && document.fonts.ready) {
         document.fonts.ready.then(function () { self._relayoutTabs(); });
@@ -321,7 +336,14 @@
       var w = document.getElementById("dashboard").clientWidth;
       var phone = ViewportFit.isPhone(screen.width, screen.height) &&
                   matchMedia("(pointer: coarse)").matches;
-      return LayoutPick.pick(w, this.gameW || LayoutPick.GAME_W_DEFAULT, phone);
+      // The Map floor reads the frame's height (plan 7b). The on-screen
+      // keyboard shrinks the frame on every touch screen (webclient.html
+      // fitFrameHeight), so while it is up the height from before it opened
+      // is kept: a large tablet must not drop from wide to column, and dock
+      // its pop-outs, each time the player types.
+      var keyboard = document.documentElement.classList.contains("keyboard-open");
+      if (!keyboard || !this._layoutH) this._layoutH = window.innerHeight;
+      return LayoutPick.pick(w, this.gameW || LayoutPick.GAME_W_DEFAULT, phone, this._layoutH);
     },
 
     // The panel area's width, for the column mode's tab bar and drawer.
@@ -336,7 +358,8 @@
     _apply: function () {
       this._measurePanels();
       var newMode = this._computeMode();
-      if (newMode === this.mode) return; // guard: no-op when mode unchanged
+      // Unchanged mode: a resize within column still changes its room.
+      if (newMode === this.mode) { this._arrangeColumn(); return; }
 
       var prev = this.mode;
       this.mode = newMode;
@@ -361,6 +384,52 @@
       this._measurePanels();
 
       if (newMode === "wide") this._repopAfterNarrow();
+      this._arrangeColumn();
+    },
+
+    // The laptop column (plan 7c): Conditions beside a larger Map with
+    // Health below, Health and Conditions swapped once Health passes a third
+    // of the column, or the stack where that gives the larger Map
+    // (LayoutPick.columnArrangement). Sets data-column and --col-map on
+    // #dashboard; clears both in every other mode. While the on-screen
+    // keyboard is up the arrangement is kept (as the ladder keeps its
+    // height) and only the Map's size follows the smaller room.
+    _arrangeColumn: function () {
+      var dash = document.getElementById("dashboard");
+      if (!dash) return;
+      if (this.mode !== "column") {
+        delete dash.dataset.column;
+        dash.style.removeProperty("--col-map");
+        return;
+      }
+      var panels = document.getElementById("dash-panels");
+      var vitals = document.getElementById("panel-vitals");
+      var bars = document.getElementById("vitals-bars");
+      if (!panels || !vitals || !bars) return;
+      var cs = getComputedStyle(panels);
+      var w = panels.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      var h = panels.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      // Health's natural height: its frame and title bar plus its rows, not
+      // the cell it was given (the body scrolls when the cell is smaller).
+      // Measured from its parts: a folded Health beside the Map stretches to
+      // the Map's row, so the panel's own height would keep it there (review
+      // 2026-11-15), and a scrollbar in its body would count as height.
+      var head = vitals.querySelector(".dash-panel-head");
+      var vitalsH = head.offsetHeight + (vitals.offsetHeight - vitals.clientHeight) +
+                    (vitals.classList.contains("collapsed") ? 0 : bars.offsetHeight);
+      var keyboard = document.documentElement.classList.contains("keyboard-open");
+      var arrangement, map;
+      if (keyboard && dash.dataset.column) {
+        arrangement = dash.dataset.column;
+        // The stacked floor, so a short frame never clips the Map's title bar.
+        map = Math.max(LayoutPick.STACKED_MAP_MIN, LayoutPick.columnMap(arrangement, w, h, vitalsH));
+      } else {
+        var pick = LayoutPick.columnArrangement(w, h, vitalsH);
+        arrangement = pick.arrangement;
+        map = pick.map;
+      }
+      if (dash.dataset.column !== arrangement) dash.dataset.column = arrangement;
+      dash.style.setProperty("--col-map", Math.max(0, map) + "px");
     },
 
     // Panels docked only because the screen is narrow; popped out again in wide.
@@ -548,7 +617,7 @@
       panel.style.display = "";
 
       // Put the ✕ in this tab's title bar, after its ▾ button, and name it
-      // for screen readers ("Close Chat", "Close Map" and so on).
+      // for screen readers ("Close Comms","Close Map" and so on).
       var btns = panel.querySelector(".ph-btns");
       if (btns && this._drawerClose) {
         btns.appendChild(this._drawerClose);
@@ -563,7 +632,7 @@
       this._drawer.getBoundingClientRect();
       this._drawer.classList.add("open");
 
-      // Moving a tab into the card scrolls it back to the top. For Chat that
+      // Moving a tab into the card scrolls it back to the top. For Comms that
       // would show the oldest messages, so once the card is open, jump back
       // to the newest one.
       this._scrollChatToNewest(panel);

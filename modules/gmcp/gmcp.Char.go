@@ -29,11 +29,26 @@ import (
 const (
 	questStatusReady   = "ready"
 	questStatusWaiting = "waiting"
+	// a quest finished for good: the Completed tab (plan 7)
+	questStatusDone = "done"
 )
+
+// completedQuestRows are the Char.Quests rows for quests c has finished for
+// good, for the web client's Completed tab (plan 7, owner P4), in
+// usercommands.CompletedQuestIds order.
+func completedQuestRows(c *characters.Character, lookup func(int) *quests.Quest) []GMCPCharModule_Payload_Quest {
+	var rows []GMCPCharModule_Payload_Quest
+	for _, id := range usercommands.CompletedQuestIds(c, lookup) {
+		if q := lookup(id); q != nil {
+			rows = append(rows, GMCPCharModule_Payload_Quest{Id: id, Name: q.Name, Repeatable: q.Repeatable, Status: questStatusDone})
+		}
+	}
+	return rows
+}
 
 // finishedRepeatQuests are the Char.Quests rows for repeatables c has
 // finished and holds no progress on, not secret and not at their cap,
-// sorted by id. Done-for-good ones are left to "quests all".
+// sorted by id. Done-for-good ones are left to completedQuestRows.
 func finishedRepeatQuests(c *characters.Character, lookup func(int) *quests.Quest) []GMCPCharModule_Payload_Quest {
 	progress := c.GetQuestProgress()
 	var ids []int
@@ -674,8 +689,8 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 		for questId, questStep := range user.Character.GetQuestProgress() {
 
-			// Completed quests aren't sent — the panel is a live list of what
-			// the player is working on, not a full history. Keeps it uncluttered.
+			// This loop is the active list, so it skips "end": finished
+			// quests are sent as "done" rows by completedQuestRows below.
 			if questStep == "end" {
 				continue
 			}
@@ -743,6 +758,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 		// Finished repeatables, below the active list (#375 P6).
 		payload.Quests = append(payload.Quests, finishedRepeatQuests(user.Character, quests.GetQuestById)...)
+		payload.Quests = append(payload.Quests, completedQuestRows(user.Character, quests.GetQuestById)...)
 
 		if !all {
 			return payload.Quests, `Char.Quests`
@@ -1195,9 +1211,10 @@ type GMCPCharModule_Payload_Quest struct {
 	Id         int    `json:"id"`
 	Name       string `json:"name"`
 	Repeatable bool   `json:"repeatable,omitempty"` // the panel tags it "(repeatable)" (#375 P6)
-	// Status is set only on a finished repeatable: "ready" (can be taken
-	// again) or "waiting" (on cooldown). Such a row has no description,
-	// hint or target and cannot be focused (#375 P6).
+	// Status is set only on a finished quest: "ready" (a repeatable that can
+	// be taken again), "waiting" (a repeatable on cooldown) or "done"
+	// (finished for good, plan 7). Such a row has no description, hint or
+	// target and cannot be focused (#375 P6).
 	Status      string `json:"status,omitempty"`
 	Description string `json:"description"`
 	Completion  int    `json:"completion"`

@@ -332,6 +332,19 @@ already known, so no presence leaks.
 - **Context-aware help**: Relevant command suggestions based on situation
 - **Admin filtering**: Different suggestions for admin vs regular users
 
+#### **Completed quests** (`quests_completed.go`; web client base plan 7)
+- `CompletedQuestIds(c, lookup)` returns the quest ids `c` has finished for
+  good, sorted, for the web client's Completed tab: a quest whose progress is
+  at `end`, plus a repeatable at its repeat cap with no run in progress. A
+  shelved quest and a secret quest are left out, as `quests all` leaves them
+  out; a repeatable that can be taken again belongs to the Repeat tab
+  (`finishedRepeatQuests` in `modules/gmcp`). `modules/gmcp` turns the ids into
+  `done` rows (`completedQuestRows`).
+- `quests all` was not rewritten onto the helper. `TestCompletedQuestIds_MatchesQuestsAll`
+  holds the two together: it reads `quests all`'s own row builders
+  (`activeQuestRecord`, `finishedRepeatRows`) and fails if the helper's set
+  differs.
+
 #### **NPC conversation** (`talk.go`, `ask.go`, `give.go`; #375 phase 1)
 - **talk**: `Talk` parses `talk [to] <npc>`, aims the name by sight
   (`actions.AimBySight`), refuses a player target and a sleeping NPC, then

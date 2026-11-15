@@ -109,7 +109,12 @@ catch what CI cannot see or what wastes a CI round-trip.
 
 1. **`gofmt -l internal/ modules/`** must print nothing. This has its own CI
    gate and has broken a push before. Cheapest possible check; run it first.
-2. **`go build ./...`** and the tests for every package you touched.
+2. **`go build ./...`** and the tests for every package you touched. If you
+   touched any `.js`, also run CI's `validate / javascript` job locally
+   (`.github/workflows/validate.yml`): `node --check` on every non-vendored
+   `.js`, then every `tools/jstest/*.test.js` and every
+   `tools/webclient-tests/*.js`. Plan 6 (PR #869) went red because only
+   `tools/jstest` was run.
 3. **`golangci-lint run --new-from-merge-base=origin/master`** must report
    `0 issues`. Takes about 60s.
 
