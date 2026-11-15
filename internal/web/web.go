@@ -327,7 +327,7 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string, s
 	// the current icon file. A changed icon gets a new file name (brand
 	// standards section 7), and this line moves with it.
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Path = `/static/images/favicon-moons.ico`
+		r.URL.Path = `/static/images/favicon-planet.ico`
 		serveTemplate(w, r)
 	})
 

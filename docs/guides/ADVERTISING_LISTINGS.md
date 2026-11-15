@@ -38,9 +38,12 @@ in `_datafiles/html/public/static/images/branding/`:
 
 - `emblem_1024.png` — the full logo, master square (downscale to any size a site asks for)
 - `logo_256.png` — the full logo, small square
-- `logo_100.png` — D.O.G. (`logo_dog.png`), since the full logo's words cannot be read at 100px
-- `banner_468x60.png` — classic listing banner: the crowned moons, the stacked
-  wordmark, then "play free in your browser" and dogmud.org in nav gold `#dfcc94`
+- `logo_100.png` — the 2026-11-02 D.O.G. mark, since the full logo's words cannot be read at 100px
+- `banner_468x60.png` — classic listing banner. Since 2026-11-15 (#882) it is
+  Malia's new planet emblem and one-line wordmark on the website teal; it no
+  longer carries "play free in your browser" or dogmud.org. The three squares
+  above still show the 2026-11-07 art until Malia sends teal versions of the
+  new logo.
 
 Once deployed they are also web-served, e.g.
 `https://www.dogmud.org/static/images/branding/banner_468x60.png` for sites
