@@ -203,14 +203,6 @@
    feed sideways; static/js/feedscroll.js covers the rest (playtest
    2026-10-17). */
 #panel-feed #terminal .xterm-viewport { overflow-x: hidden; }
-/* Phones: the game text sat flush against the Game window's left border
-   (Malia's Samsung, 2026-11-15). A 6px margin each side, set on the element
-   xterm opens in: termfit's colsThatFit subtracts this element's side
-   padding, so the line width shrinks to match and nothing is cut off.
-   Wider screens keep their exact 80-column width (widthFor80). */
-@media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
-  #panel-feed #terminal .xterm { padding: 0 6px; }
-}
 /* Keeps the command box at the bottom of the game column, even when the
    Game window is popped out into its own box. Without this, the command box
    jumps to the top of the page. */
@@ -994,17 +986,8 @@ html.layout-column.keyboard-open #dash-drawer {
   #panel-map .map-controls,
   #panel-map .map-legend { display: none; }
 }
-/* - Phones only: the Map card may take 45% of the screen instead of 30% (an
-     exception to plan 6 R3 for the Map only): while the map is open the
-     player is looking at the map. Every other tab keeps 30%; with the
-     keyboard up the Map keeps the keyboard rule, and in column layout the
-     card sits beside the game and keeps its own cap. */
-@media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
-  html:not(.layout-column):not(.keyboard-open) #dash-drawer:has(#panel-map) { --drawer-cap: max(80px, 45vh); }
-  @supports (height: 1dvh) {
-    html:not(.layout-column):not(.keyboard-open) #dash-drawer:has(#panel-map) { --drawer-cap: max(80px, 45dvh); }
-  }
-}
+/* - Phones only: the Map card may take 45% of the screen instead of 30%.
+     That rule is in the one phone block below (search "45%"). */
 /* ------------------------------------------------------------------ */
 /* WinBox pop-out — leather theme overlay                              */
 /* ------------------------------------------------------------------ */
@@ -1122,6 +1105,21 @@ html.layout-column.keyboard-open #dash-drawer {
   .drawer-close { min-width: 32px; min-height: 30px; margin: 0; padding: 2px 8px; }
   #dash-drawer .dash-panel-head .ph-collapse { width: 32px; height: 30px; }
   #dash-drawer .dash-panel-head .ph-collapse::before { font-size: var(--text); padding-bottom: 3px; }
+  /* The game text sat flush against the Game window's left border (Malia's
+     Samsung, 2026-11-15). A 6px margin each side, set on the element xterm
+     opens in: termfit's colsThatFit subtracts this element's side padding,
+     so the line width shrinks to match and nothing is cut off. Wider
+     screens keep their exact 80-column width (widthFor80). */
+  #panel-feed #terminal .xterm { padding: 0 6px; }
+  /* The Map card may take 45% of the screen instead of 30% (Calabe
+     2026-11-15; an exception to plan 6 R3 for the Map only): while the map
+     is open the player is looking at the map. Every other tab keeps 30%;
+     with the keyboard up the Map keeps the keyboard rule, and in column
+     layout the card sits beside the game and keeps its own cap. */
+  html:not(.layout-column):not(.keyboard-open) #dash-drawer:has(#panel-map) { --drawer-cap: max(80px, 45vh); }
+  @supports (height: 1dvh) {
+    html:not(.layout-column):not(.keyboard-open) #dash-drawer:has(#panel-map) { --drawer-cap: max(80px, 45dvh); }
+  }
 }
 /* Sideways only: the tab name pill under the game tabs goes too (the
    pressed circle already shows which is open), and Comms says that Full
