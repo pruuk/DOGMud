@@ -1779,6 +1779,13 @@ html.layout-column.keyboard-open #dash-drawer {
    rather than over the round buttons. The fallbacks are the phone sizes:
    the toast is on body, outside the elements that set these. */
 .dash-toast.lifted { bottom: calc(var(--cmdbox-h, 64px) + var(--tabbar-h, 64px) + 12px); }
+/* A sideways phone has too little height for that lift: on a Samsung at
+   780x304 with the site header showing, the game frame is 189px, and a toast
+   lifted 140px off its bottom started 11px above the frame, under the header
+   (Malia 2026-11-15). There it sits 8px below the top of the game instead. */
+@media (max-height: 500px) {
+  .dash-toast.lifted { top: 8px; bottom: auto; }
+}
 
 /* ------------------------------------------------------------------ */
 /* Light mode: game panels (round 2, Malia 2026-11-02)                 */
