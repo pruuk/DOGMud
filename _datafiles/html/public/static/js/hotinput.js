@@ -136,7 +136,7 @@
     }
 
     // --- The phone keyboard after a send (plan 6) --------------------------
-    // docs/superpowers/specs/2026-11-14-webclient-base-6-phones-design.md.
+    // docs/superpowers/specs/completed/2026-11-14-webclient-base-6-phones-design.md.
     //
     // R1: the keyboard stays up when the player's next act is to type again,
     // that is chat to other players. These words are today's data under that

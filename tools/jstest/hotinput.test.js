@@ -261,7 +261,7 @@ check('typing is left alone while a modal is open', focuses(key('n'), PLAIN_DIV,
 
 // --- phone keyboard after a send (plan 6) ------------------------------------
 //
-// docs/superpowers/specs/2026-11-14-webclient-base-6-phones-design.md. On a
+// docs/superpowers/specs/completed/2026-11-14-webclient-base-6-phones-design.md. On a
 // touch-only phone, in game, after a send: chat keeps the keyboard (R1);
 // anything else waits for the server's Char.Input.Done (R2, R5, R6). Login,
 // password and menu answers keep it, as do tablets, desktops and a send that
