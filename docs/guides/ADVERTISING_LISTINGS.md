@@ -33,24 +33,25 @@ channels), MUD Coders Guild.
 
 ## Logo / banner assets
 
-Redrawn 2026-11-07 from Malia's logo (#820), on the website teal `#085044`,
-in `_datafiles/html/public/static/images/branding/`:
+Malia's logo on the website teal `#085044`, in
+`_datafiles/html/public/static/images/branding/`:
 
 - `emblem_1024.png` — the full logo, master square (downscale to any size a site asks for)
 - `logo_256.png` — the full logo, small square
-- `logo_100.png` — the 2026-11-02 D.O.G. mark, since the full logo's words cannot be read at 100px
-- `banner_468x60.png` — classic listing banner. Since 2026-11-15 (#882) it is
-  Malia's new planet emblem and one-line wordmark on the website teal; it no
-  longer carries "play free in your browser" or dogmud.org. The three squares
-  above still show the 2026-11-07 art until Malia sends teal versions of the
-  new logo.
+- `logo_100.png` — D·O·G: a D, the planet and a G, since the full logo's words cannot be read at 100px
+- `banner_468x60.png` — classic listing banner: the planet emblem and the
+  one-line wordmark. Since 2026-11-15 it no longer carries "play free in your
+  browser" or dogmud.org.
+
+All four were replaced 2026-11-15 (#882) with Malia's planet-and-moons logo on
+the website teal. The 256 is scaled from her 512 export.
 
 Once deployed they are also web-served, e.g.
 `https://www.dogmud.org/static/images/branding/banner_468x60.png` for sites
 that want a hosted image URL.
 
-Until 2026-11-07 they showed the old chrysalis emblem (2026-07-28). Keep the
-names, since listing sites hotlink them; a site may show the old picture for
+Before that they showed the crowned three moons (2026-11-07, #820), and before
+that the chrysalis emblem (2026-07-28). Keep the names, since listing sites hotlink them; a site may show the old picture for
 a while from its cache. Brand rules: [`BRAND_STANDARDS.md`](BRAND_STANDARDS.md).
 
 ## Short blurb (~45 words — Grapevine, MudStats)

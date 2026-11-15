@@ -139,10 +139,10 @@ the branding folder are for MUD listing sites, which hotlink them, so **never
 rename or delete them**; new art replaces them in place. They sit on the
 website teal `#085044`, since they send people to the website and a listing
 site may show them on any page colour; a see-through listing image would
-vanish on some sites. The banner is Malia's new logo on teal (2026-11-15,
-#882). The three squares still show the 2026-11-07 art (#820: the full logo
-at 1024 and 256, D.O.G. at 100) until teal versions of the new logo arrive.
-Before that they showed the 2026-07-28 chrysalis emblem. See
+vanish on some sites. Since 2026-11-15 (#882) all four are Malia's planet
+logo on teal: the stacked logo at 1024 and 256 (the 256 scaled from her 512),
+D·O·G at 100, and the one-line banner. Before that they showed the crowned
+three moons (2026-11-07, #820) and the 2026-07-28 chrysalis emblem. See
 [`ADVERTISING_LISTINGS.md`](ADVERTISING_LISTINGS.md).
 
 ## 7. Shipping a brand change
