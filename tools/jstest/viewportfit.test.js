@@ -78,6 +78,16 @@ check('a larger screen does not', VF.wantFullScreen(null, false), false);
 check('a phone player who turned it off stays off', VF.wantFullScreen('0', true), false);
 check('a desktop player who turned it on stays on', VF.wantFullScreen('1', false), true);
 
+// Laptops (owner 2026-11-15): a screen short side under 1000px that is not
+// a phone opens full screen like a phone.
+check('a 13 inch MacBook is a short screen', VF.isShortScreen(1440, 900), true);
+check('a 14 inch MacBook is a short screen', VF.isShortScreen(1512, 982), true);
+check('a 1080p laptop at 125% is a short screen', VF.isShortScreen(1536, 864), true);
+check('a 1080p monitor is not', VF.isShortScreen(1920, 1080), false);
+check('a phone is not a short screen (it is a phone)', VF.isShortScreen(390, 844), false);
+check('a laptop opens full screen', VF.wantFullScreen(null, VF.isShortScreen(1440, 900)), true);
+check('a laptop player who turned it off stays off', VF.wantFullScreen('0', VF.isShortScreen(1440, 900)), false);
+
 check('no keyboard: the frame fills its space', VF.frameHeight(700, 700, 0), 700);
 check('keyboard open: the frame fits above it', VF.frameHeight(700, 400, 0), 400);
 check('a header above the frame counts', VF.frameHeight(600, 400, 100), 300);
@@ -224,7 +234,9 @@ check('a browser that cannot: header showing is not', VF.fullScreenShown(false, 
 
 check('Enter Game on a phone goes full screen', VF.enterFullScreenOnConnect(true, null, true, false), true);
 check('a player who left full screen keeps that', VF.enterFullScreenOnConnect(true, '0', true, false), false);
-check('not on a laptop or tablet', VF.enterFullScreenOnConnect(false, null, true, false), false);
+check('not on a screen that does not default to full screen', VF.enterFullScreenOnConnect(false, null, true, false), false);
+check('Enter Game on a laptop goes full screen', VF.enterFullScreenOnConnect(VF.isShortScreen(1440, 900), null, true, false), true);
+check('a laptop player who left full screen keeps that', VF.enterFullScreenOnConnect(VF.isShortScreen(1440, 900), '0', true, false), false);
 check('not where the browser cannot', VF.enterFullScreenOnConnect(true, null, false, false), false);
 check('not when already full screen', VF.enterFullScreenOnConnect(true, '1', true, true), false);
 

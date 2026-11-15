@@ -80,6 +80,12 @@
                 if (p && p.catch) p.catch(function () {});
             } catch (e) {}
         }
+        // Phones and laptops open full screen unless the player chose
+        // otherwise (owner 2026-11-07 for phones, 2026-11-15 for laptops).
+        function byDefault() {
+            const w = window.screen.width, h = window.screen.height;
+            return ViewportFit.isPhone(w, h) || ViewportFit.isShortScreen(w, h);
+        }
         function shown() {
             return ViewportFit.fullScreenShown(on, browserCan(), browserOn());
         }
@@ -105,8 +111,7 @@
         });
         return {
             start: function () {
-                apply(ViewportFit.wantFullScreen(readPref(),
-                    ViewportFit.isPhone(window.screen.width, window.screen.height)));
+                apply(ViewportFit.wantFullScreen(readPref(), byDefault()));
             },
             setFullScreen: setFullScreen,
             isFullScreen: shown,
@@ -114,8 +119,7 @@
             // go full screen?
             wantsFullScreenOnConnect: function () {
                 return ViewportFit.enterFullScreenOnConnect(
-                    ViewportFit.isPhone(window.screen.width, window.screen.height),
-                    readPref(), browserCan(), browserOn());
+                    byDefault(), readPref(), browserCan(), browserOn());
             },
             onChange: function (fn) { listener = fn; fn(shown()); }
         };

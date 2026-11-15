@@ -2900,8 +2900,9 @@
 
         sessionButton.addEventListener('click', function () {
             const open = socket && socket.readyState === WebSocket.OPEN;
-            // On a phone, Enter Game also takes the game full screen, hiding
-            // the browser's address bar (Calabe 2026-11-07). The game usually
+            // On a phone or a laptop, Enter Game also takes the game full
+            // screen, hiding the browser's own bars (Calabe 2026-11-07 for
+            // phones, 2026-11-15 for laptops). The game usually
             // connects on its own at load, so this runs on every Enter Game
             // tap, not only one that opens the connection. Leave Game does not.
             if (!(open && inGame)) {

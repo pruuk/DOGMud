@@ -19,6 +19,13 @@
         return Math.min(screenW, screenH) < 600;
     }
 
+    // A laptop (owner 2026-11-15): a screen whose short side is under 1000px
+    // and that is not a phone. It opens full screen as a phone does, so the
+    // site's header and footer leave the game their height.
+    function isShortScreen(screenW, screenH) {
+        return !isPhone(screenW, screenH) && Math.min(screenW, screenH) < 1000;
+    }
+
     // An upright phone reads 14/18 instead of 16/20 (gomud.css). Judged from the
     // screen, like isPhone. iOS does not swap screen.width and height when the
     // phone turns, so the orientation API comes first. coarse: the screen is
@@ -79,10 +86,11 @@
     }
 
     // pref is the remembered choice: '1', '0', or null for none yet.
-    function wantFullScreen(pref, phone) {
+    // byDefault: a phone or a laptop (isPhone or isShortScreen).
+    function wantFullScreen(pref, byDefault) {
         if (pref === '1') return true;
         if (pref === '0') return false;
-        return phone;
+        return byDefault;
     }
 
     // layoutH: the height the page gives the frame. visibleH: the visual
@@ -133,17 +141,19 @@
         return browserCan ? (layoutOn && browserOn) : layoutOn;
     }
 
-    // Whether tapping Enter Game should also take a phone full screen
-    // (Calabe 2026-11-07). The browser only allows it from a tap, so it cannot
-    // happen at load. A player who chose to leave full screen keeps that.
-    function enterFullScreenOnConnect(phone, pref, browserCan, browserOn) {
-        return phone && pref !== '0' && browserCan && !browserOn;
+    // Whether tapping Enter Game should also take a phone or a laptop full screen
+    // (Calabe 2026-11-07 for phones, 2026-11-15 for laptops). The browser only
+    // allows it from a tap, so it cannot happen at load. A player who chose to
+    // leave full screen keeps that.
+    function enterFullScreenOnConnect(byDefault, pref, browserCan, browserOn) {
+        return byDefault && pref !== '0' && browserCan && !browserOn;
     }
 
     return {
         keyboardOpen: keyboardOpen,
         editableFocused: editableFocused,
         isPhone: isPhone,
+        isShortScreen: isShortScreen,
         isUprightPhone: isUprightPhone,
         isSidewaysPhone: isSidewaysPhone,
         orientationType: orientationType,
