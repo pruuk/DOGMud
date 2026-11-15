@@ -440,7 +440,8 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 #dash-tabbar,
 #dash-drawer { display: none; }
 
-/* Wide, Layout D: 360px or more right of the game (spec ruling 9). The
+/* Wide, Layout D (spec ruling 9): picked when the Map below would be at
+   least 300px (layoutpick.js copies --map-w; owner 2026-11-15). The
    game column is exactly 80 columns wide; the ladder, not this grid,
    decides when the panels have room. */
 #dashboard[data-mode="wide"] {

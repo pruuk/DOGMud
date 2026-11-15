@@ -3,7 +3,8 @@
  * (setGameWidth, from termfit.js). The side panels take the room right of
  * it, in #dash-panels, and layoutpick.js picks one of four modes from that
  * room:
- *   wide   : Layout D, every side panel open (spec ruling 9)
+ *   wide   : Layout D, every side panel open (spec ruling 9), when its
+ *            square Map would be at least 300px (owner 2026-11-15)
  *   column : Map, Health and Conditions open; the other four on the tab bar
  *   slim   : Health and Conditions open; the other five on the tab bar
  *   phone  : every side panel on the tab bar under the game
@@ -321,7 +322,7 @@
       var w = document.getElementById("dashboard").clientWidth;
       var phone = ViewportFit.isPhone(screen.width, screen.height) &&
                   matchMedia("(pointer: coarse)").matches;
-      return LayoutPick.pick(w, this.gameW || LayoutPick.GAME_W_DEFAULT, phone);
+      return LayoutPick.pick(w, this.gameW || LayoutPick.GAME_W_DEFAULT, phone, window.innerHeight);
     },
 
     // The panel area's width, for the column mode's tab bar and drawer.
