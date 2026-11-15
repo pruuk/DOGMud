@@ -321,8 +321,10 @@
       <!-- LEFT column: Map · Quests · Health · Inventory -->
       <div class="dash-col" id="dash-col-left">
         <section class="dash-panel" id="panel-map" data-panel="map">
+          <!-- The title bar's Legend button shows on touch screens only, which
+               have no map button row (owner 2026-11-15). -->
           <div class="dash-panel-head"><span class="ph-title">Map</span>
-            <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
+            <span class="ph-btns"><button type="button" class="brass map-legend-head" aria-controls="map-legend" aria-expanded="false">Legend</button><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body map-body">
             <div id="map-render"></div>
             <!-- The map's Fit / Center / zoom buttons, under the map rather than over
@@ -687,13 +689,27 @@
             // button; move it to the end of the row so Tab order matches
             // what the player sees (Legend at the right end).
             btn.parentNode.appendChild(btn);
+            // Touch screens have no button row; their Legend button is in the
+            // Map's title bar, and the key lies over the map (owner 2026-11-15).
+            var headBtn = document.querySelector('#panel-map .map-legend-head');
             function show(open) {
                 legend.hidden = !open;
                 btn.setAttribute('aria-expanded', open ? 'true' : 'false');
                 btn.querySelector('.map-legend-arrow').textContent = open ? '▾' : '▸';
+                if (headBtn) headBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
             }
             show(false);
             btn.addEventListener('click', function () { show(legend.hidden); });
+            if (headBtn) headBtn.addEventListener('click', function (ev) {
+                // The title bar's own click must not fold the panel.
+                ev.stopPropagation();
+                show(legend.hidden);
+            });
+            // Over the map, a tap on the key folds it, so it never hides the
+            // map for long. Under the map (a mouse screen) it stays.
+            legend.addEventListener('click', function () {
+                if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) show(false);
+            });
         })();
 
         /////////////////////////////////////////////

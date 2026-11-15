@@ -979,12 +979,37 @@ html.layout-column.keyboard-open #dash-drawer {
    to three rows in the narrow panel column).
    - Phones and tablets, either way up: no button row. The map follows the
      player's room on every step (centerOnRoom), so Center is not needed,
-     and Fit and zoom are not worth the room. The row holds the Legend link
-     too, and the key under it goes with it, or the row would keep its
-     height. Mouse screens keep the row. */
+     and Fit and zoom are not worth the room. Mouse screens keep the row.
+   - The row held the Legend link, so touch screens get a Legend button in
+     the Map's title bar instead, and the key lies over the top of the map
+     rather than under it, taking none of the map's height; a tap on the key
+     folds it (owner 2026-11-15, after the phone lost the key). The key's
+     colours are the map field's own, so its contrast is unchanged. */
+.map-legend-head { display: none; }
 @media (pointer: coarse) {
-  #panel-map .map-controls,
-  #panel-map .map-legend { display: none; }
+  #panel-map .map-controls { display: none; }
+  #panel-map .map-legend-head {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin: -2px 0;
+    padding: 0 12px;
+    font-size: var(--text);
+    font-weight: 400;
+    line-height: 1;
+  }
+  #panel-map .map-legend {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 2;
+    max-height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border-top: 0;
+    border-bottom: 1px solid var(--panel-border);
+    background: var(--ink-black);
+    cursor: pointer;
+  }
 }
 /* - Phones only: the Map card may take 45% of the screen instead of 30%.
      That rule is in the one phone block below (search "45%"). */

@@ -435,6 +435,15 @@ check('the map legend starts folded in the markup',
 check('the map legend starts folded at any window height',
     /initMapLegend[\s\S]*?show\(false\);/.test(page)
     && !/show\(window\.innerHeight/.test(page), true);
+// Touch screens have no map button row (Calabe 2026-11-15), so the key opens
+// from a Legend button in the Map's title bar and lies over the map, taking
+// no height from it (owner 2026-11-15, after the phone lost the key).
+check('the Map title bar has a Legend button for the key',
+    /id="panel-map"[\s\S]*?<span class="ph-btns"><button type="button" class="brass map-legend-head" aria-controls="map-legend" aria-expanded="false">Legend<\/button>/.test(page), true);
+check('both Legend buttons open the same key',
+    /initMapLegend[\s\S]*?querySelector\('#panel-map \.map-legend-head'\)/.test(page), true);
+check('a tap on the key laid over the map folds it',
+    /initMapLegend[\s\S]*?legend\.addEventListener\('click'/.test(page), true);
 
 // The Chat tab has no typing box of its own: players chat from the command
 // box (Malia 2026-11-06).
@@ -445,6 +454,15 @@ check('the Chat tab has no typing box', page.indexOf('chat-input') === -1, true)
 var css = fs.readFileSync(path.join(
     __dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'css', 'dashboard.css'
 ), 'utf8');
+// The touch Legend (owner 2026-11-15; markup checks above, with the key's).
+check('touch screens hide the map button row but keep the key',
+    /@media \(pointer: coarse\) \{\s*#panel-map \.map-controls \{ display: none; \}/.test(css)
+    && !/#panel-map \.map-legend \{ display: none; \}/.test(css), true);
+check('the title bar Legend button shows on touch screens only',
+    /\.map-legend-head \{ display: none; \}/.test(css)
+    && /@media \(pointer: coarse\) \{[\s\S]*?#panel-map \.map-legend-head \{\s*display: inline-flex;/.test(css), true);
+check('on touch the key lies over the map',
+    /@media \(pointer: coarse\) \{[\s\S]*?#panel-map \.map-legend \{\s*position: absolute;/.test(css), true);
 check('an open phone tab is not a fixed 62% of the screen', /height:\s*62vh/.test(css), false);
 check('an open phone tab stops above the command box',
     /bottom: calc\(var\(--cmdbox-h\) \+ var\(--tabbar-h\) \+ var\(--tabname-h\)\)/.test(css), true);
