@@ -83,7 +83,7 @@ Server:
   - checkclient
   # - Motd -
   #   Message of the day. This is displayed when the motd command is run.
-  Motd: '{{ t "TALK TO PEOPLE. Type talk <name> for a numbered menu of what someone knows and what they need. A [!] before a name means they have work for you.\nEVERY STEP HAS A HINT. Your quest log says what to do next, and the map points the way.\nLOOK AND SEARCH. Type look <thing> to study anything you see, and type search to find what is hidden. Many secrets give way to one or the other, so bring a light.\nLISTEN TO THE GOSSIPS. Some of what they repeat is worth chasing.\nThe novel: https://dogmud.org/novel\nFull patch notes: https://dogmud.org/patch-notes" }}'
+  Motd: '{{ t "PLAY ON YOUR PHONE. The web client fits a phone screen, the keyboard stays up while you chat, and the X closes it.\nA BIGGER MAP. Laptops open full screen, a line under the map names where you are and where your quest leads, and Legend shows the key.\nQUESTS IN THREE TABS. Active, Repeat and Completed, with a count of the work that is ready again.\nSOUND STARTS OFF. Open Settings and tick Sound on when you want music.\nThe novel: https://dogmud.org/novel\nFull patch notes: https://dogmud.org/patch-notes" }}'
   # - NextRoomID -
   # This number is auto-updated to the highest number of rooms in the game.
   #   If creating your own rooms but don't want to risk an update conflicting,
