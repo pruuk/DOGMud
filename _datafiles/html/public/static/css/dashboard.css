@@ -203,6 +203,14 @@
    feed sideways; static/js/feedscroll.js covers the rest (playtest
    2026-10-17). */
 #panel-feed #terminal .xterm-viewport { overflow-x: hidden; }
+/* Phones: the game text sat flush against the Game window's left border
+   (Malia's Samsung, 2026-11-15). A 6px margin each side, set on the element
+   xterm opens in: termfit's colsThatFit subtracts this element's side
+   padding, so the line width shrinks to match and nothing is cut off.
+   Wider screens keep their exact 80-column width (widthFor80). */
+@media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  #panel-feed #terminal .xterm { padding: 0 6px; }
+}
 /* Keeps the command box at the bottom of the game column, even when the
    Game window is popped out into its own box. Without this, the command box
    jumps to the top of the page. */
