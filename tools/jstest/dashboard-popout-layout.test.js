@@ -529,9 +529,6 @@ check('the page asks the dashboard which width to use for every later report',
     /function giveLayoutGameWidth\(\) \{\s*if \(window\.Dashboard && window\.Dashboard\.ready\) \{\s*window\.Dashboard\.setGameWidth\(window\.Dashboard\.pageGameWidth\(\)\);/
         .test(fs.readFileSync(path.join(JS, '..', '..', 'webclient-pure.html'), 'utf8')), true);
 
-// --- result ------------------------------------------------------------------
-
-console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
 // The ladder's Map floor reads the frame's height (plan 7b), and the on-screen
 // keyboard shrinks the frame on every touch screen. While the keyboard is up
 // the ladder keeps the height it had before, so a large tablet does not drop
@@ -555,6 +552,9 @@ check('_apply arranges the column even when the mode is unchanged',
 check('the keyboard keeps the arrangement',
     /_arrangeColumn: function[\s\S]*?keyboard-open[\s\S]*?LayoutPick\.columnMap\(/.test(SRC), true);
 
+// --- result ------------------------------------------------------------------
+
+console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
 if (failures > 0) {
     console.log(failures + ' FAILED');
     process.exit(1);
