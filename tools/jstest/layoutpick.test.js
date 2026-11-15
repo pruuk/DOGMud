@@ -78,4 +78,30 @@ if (mapW) {
     check('the Map height share matches the stylesheet', parseFloat(mapW[3]), LayoutPick.MAP_H_SHARE);
 }
 
+// The column layout's arrangements (plan 7c, owner 2026-11-15): Conditions
+// beside a larger Map with Health below (side), Health beside it with
+// Conditions below once Health passes a third of the column (swapped), or
+// today's stack where that gives the larger Map.
+function arr(w, h, v) { var r = LayoutPick.columnArrangement(w, h, v); return r.arrangement + ' ' + r.map; }
+check('a 1440 laptop puts Conditions beside the Map', arr(681, 568, 92), 'side 470');
+check('a 1280 laptop does too, width bound', arr(521, 568, 92), 'side 355');
+check('a narrow column stays stacked', arr(250, 568, 92), 'stacked 250');
+check('Health at a third stays the strip', arr(681, 600, 200), 'side 394');
+check('Health past a third swaps with Conditions', arr(681, 600, 201), 'swapped 498');
+check('a tall Health in a short column swaps', arr(681, 400, 300), 'swapped 298');
+check('a very tall column keeps the full-width stacked Map', arr(700, 2000, 92), 'stacked 700');
+check('columnMap gives the kept arrangement its size', LayoutPick.columnMap('side', 681, 400, 92), 302);
+check('columnMap for stacked is the stylesheet formula', LayoutPick.columnMap('stacked', 681, 300, 92), 120);
+
+// The floors and gap columnArrangement assumes are the stylesheet's.
+var colVitals = /#dashboard\[data-mode="column"\] #panel-vitals \{ grid-area: vitals; min-height: ([\d.]+)px; \}/.exec(css);
+var colStatus = /#dashboard\[data-mode="column"\] #panel-status \{ grid-area: status; min-height: ([\d.]+)px; \}/.exec(css);
+var colMapMin = /width: min\(100%, max\(([\d.]+)px, calc\(100vh - 300px - var\(--tabbar-h\)\)\)\);/.exec(css);
+var colStrip = /grid-template-rows: var\(--col-map\) ([\d.]+)px;/.exec(css);
+check('the Health floor matches the stylesheet', colVitals && parseFloat(colVitals[1]), LayoutPick.VITALS_FLOOR);
+check('the Conditions floor matches the stylesheet', colStatus && parseFloat(colStatus[1]), LayoutPick.STATUS_FLOOR);
+check('the stacked Map minimum matches the stylesheet', colMapMin && parseFloat(colMapMin[1]), LayoutPick.STACKED_MAP_MIN);
+check('the swapped Conditions strip is the Conditions floor', colStrip && parseFloat(colStrip[1]), LayoutPick.STATUS_FLOOR);
+check('the column gap matches the stylesheet', /gap: var\(--dash-gap, 6px\)/.test(css) && LayoutPick.COL_GAP, 6);
+
 process.exit(failures ? 1 : 0);

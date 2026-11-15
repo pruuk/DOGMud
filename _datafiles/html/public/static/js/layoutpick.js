@@ -7,6 +7,8 @@
 //           Map would be at least 300px (owner 2026-11-15); width alone needs
 //           518px of room for that, and a short frame needs more
 //   column  200px or more otherwise: Map, Health and Conditions; the other four on buttons
+//           Inside column, columnArrangement lays Map, Health and Conditions
+//           out stacked, side by side or swapped (plan 7c)
 //   slim    120 to 199:    Health over Conditions; the rest on the tab bar
 //   phone   under 120, a browser narrower than the game, or a phone: every
 //           panel on the tab bar under the game
@@ -35,6 +37,40 @@
     function wideMapSize(room, viewH) {
         return Math.min(MAP_SHARE * room, (viewH - MAP_H_TAKEN) * MAP_H_SHARE);
     }
+
+    // The column layout's arrangements (plan 7c, owner 2026-11-15). Column
+    // keeps Map, Health and Conditions open; it lays them out one of three
+    // ways, whichever gives the larger Map:
+    //   stacked : Map, Health, Conditions one above the other (dashboard.css)
+    //   side    : Conditions beside the Map, Health in a strip below
+    //   swapped : Health beside the Map, Conditions in a strip below, once
+    //             Health is taller than a third of the column
+    // The floors, the gap and the stacked Map's minimum are dashboard.css's
+    // (a jstest holds them together).
+    var COL_GAP = 6, VITALS_FLOOR = 120, STATUS_FLOOR = 96, STACKED_MAP_MIN = 120;
+    // The panel beside the Map is at least this wide.
+    var SIDE_MIN = 160;
+    // Health beside the Map once it is taller than this share of the column.
+    var SWAP_SHARE = 1 / 3;
+
+    // The Map's size in one arrangement. w, h: the panel area's content box
+    // (h is the height above the tab bar). vitalsH: Health's natural height.
+    function columnMap(arrangement, w, h, vitalsH) {
+        if (arrangement === 'stacked') {
+            return Math.floor(Math.min(w, Math.max(STACKED_MAP_MIN, h - 2 * COL_GAP - VITALS_FLOOR - STATUS_FLOOR)));
+        }
+        var under = arrangement === 'swapped' ? STATUS_FLOOR : vitalsH;
+        return Math.floor(Math.min(w - SIDE_MIN - COL_GAP, h - COL_GAP - under));
+    }
+
+    // Which arrangement, and its Map size: { arrangement, map }.
+    function columnArrangement(w, h, vitalsH) {
+        var beside = vitalsH > h * SWAP_SHARE ? 'swapped' : 'side';
+        var besideMap = columnMap(beside, w, h, vitalsH);
+        var stackedMap = columnMap('stacked', w, h, vitalsH);
+        if (besideMap > stackedMap) return { arrangement: beside, map: besideMap };
+        return { arrangement: 'stacked', map: stackedMap };
+    }
     // The game column before termfit has measured the letters: 80 columns
     // at 16px (768px), the scrollbar's room (up to 17px) and the border,
     // rounded up so the widest real case (a 125% display, 785px for 80
@@ -58,7 +94,10 @@
 
     return {
         pick: pick, wideMapSize: wideMapSize,
+        columnArrangement: columnArrangement, columnMap: columnMap,
         PAD: PAD, GAP: GAP, GAME_W_DEFAULT: GAME_W_DEFAULT,
-        MAP_FLOOR: MAP_FLOOR, MAP_SHARE: MAP_SHARE, MAP_H_TAKEN: MAP_H_TAKEN, MAP_H_SHARE: MAP_H_SHARE
+        MAP_FLOOR: MAP_FLOOR, MAP_SHARE: MAP_SHARE, MAP_H_TAKEN: MAP_H_TAKEN, MAP_H_SHARE: MAP_H_SHARE,
+        COL_GAP: COL_GAP, VITALS_FLOOR: VITALS_FLOOR, STATUS_FLOOR: STATUS_FLOOR,
+        STACKED_MAP_MIN: STACKED_MAP_MIN, SIDE_MIN: SIDE_MIN, SWAP_SHARE: SWAP_SHARE
     };
 }));
