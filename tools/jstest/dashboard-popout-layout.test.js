@@ -532,6 +532,13 @@ check('the page asks the dashboard which width to use for every later report',
 // --- result ------------------------------------------------------------------
 
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
+// The ladder's Map floor reads the frame's height (plan 7b), and the on-screen
+// keyboard shrinks the frame on every touch screen. While the keyboard is up
+// the ladder keeps the height it had before, so a large tablet does not drop
+// from wide to column, and dock its pop-outs, each time the player types.
+check('the ladder ignores the keyboard when it reads the frame height',
+    /_computeMode[\s\S]*?classList\.contains\("keyboard-open"\)[\s\S]*?this\._layoutH = window\.innerHeight[\s\S]*?LayoutPick\.pick\([^)]*this\._layoutH\)/.test(SRC), true);
+
 if (failures > 0) {
     console.log(failures + ' FAILED');
     process.exit(1);

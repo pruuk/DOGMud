@@ -1011,6 +1011,12 @@ html.layout-column.keyboard-open #dash-drawer {
     background: var(--ink-black);
     cursor: pointer;
   }
+  /* A folded Map shows no body, so its Legend button would open nothing. */
+  #panel-map.collapsed .map-legend-head { display: none; }
+  /* A popped-out window has no panel title bar (see .winbox.dash-winbox
+     .dash-panel-head below), so there the button row comes back with its
+     Legend link; the window can be made as large as the player likes. */
+  .winbox.dash-winbox #panel-map .map-controls { display: flex; }
 }
 /* - Phones only: the Map card may take 45% of the screen instead of 30%.
      That rule is in the one phone block below (search "45%"). */

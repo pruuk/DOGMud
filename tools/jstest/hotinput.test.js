@@ -463,6 +463,10 @@ check('the title bar Legend button shows on touch screens only',
     && /@media \(pointer: coarse\) \{[\s\S]*?#panel-map \.map-legend-head \{\s*display: inline-flex;/.test(css), true);
 check('on touch the key lies over the map',
     /@media \(pointer: coarse\) \{[\s\S]*?#panel-map \.map-legend \{\s*position: absolute;/.test(css), true);
+check('a folded Map hides its Legend button, which would open nothing',
+    /@media \(pointer: coarse\) \{[\s\S]*?#panel-map\.collapsed \.map-legend-head \{ display: none; \}/.test(css), true);
+check('a popped-out Map on touch keeps its button row, the only way to its key there',
+    /@media \(pointer: coarse\) \{[\s\S]*?\.winbox\.dash-winbox #panel-map \.map-controls \{ display: flex; \}/.test(css), true);
 check('an open phone tab is not a fixed 62% of the screen', /height:\s*62vh/.test(css), false);
 check('an open phone tab stops above the command box',
     /bottom: calc\(var\(--cmdbox-h\) \+ var\(--tabbar-h\) \+ var\(--tabname-h\)\)/.test(css), true);

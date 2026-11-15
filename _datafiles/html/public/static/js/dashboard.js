@@ -322,7 +322,14 @@
       var w = document.getElementById("dashboard").clientWidth;
       var phone = ViewportFit.isPhone(screen.width, screen.height) &&
                   matchMedia("(pointer: coarse)").matches;
-      return LayoutPick.pick(w, this.gameW || LayoutPick.GAME_W_DEFAULT, phone, window.innerHeight);
+      // The Map floor reads the frame's height (plan 7b). The on-screen
+      // keyboard shrinks the frame on every touch screen (webclient.html
+      // fitFrameHeight), so while it is up the height from before it opened
+      // is kept: a large tablet must not drop from wide to column, and dock
+      // its pop-outs, each time the player types.
+      var keyboard = document.documentElement.classList.contains("keyboard-open");
+      if (!keyboard || !this._layoutH) this._layoutH = window.innerHeight;
+      return LayoutPick.pick(w, this.gameW || LayoutPick.GAME_W_DEFAULT, phone, this._layoutH);
     },
 
     // The panel area's width, for the column mode's tab bar and drawer.
