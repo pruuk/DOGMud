@@ -42,6 +42,8 @@ Added 2026-11-02 (Malia's decision): the two letter golds of her logo join the p
 
 The two are ΔE 7.2 apart, so the bottom word stays a step deeper than the top. Both fail on the vellum cards (1.23 and 1.63): the logo belongs on dark surfaces and the teal bar. The crown and moons keep their own illustrated golds and browns (`#ae7919`, `#b98722`, `#925d0b` and others); they are artwork detail, not palette roles.
 
+**Addendum 2026-11-15 (#882, Malia's new logo).** The planet logo keeps logo gold `#d9ac46` for "GRANDEUR" and moves the top words to cream `#efd897` (already the site's light text cream): 12.35 on the dark panel, 13.9 on the page, 6.67 on the teal bar. Logo deep gold `#c3932d` is no longer in any logo file. The browns for light surfaces are `#473019` for the top words and `#6f5418` for "GRANDEUR": 10.66 and 6.14 on the cream page `#f6eedb`, 11.84 and 6.83 on the vellum cards `#fffaf0`. The table above records the 2026-11-02 logo and is left as it was.
+
 ### Warm meaning colours (Dalí)
 
 | Role | Ramp, dark to light | Use |

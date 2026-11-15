@@ -23,7 +23,9 @@ func (m *module) webData(r *http.Request) map[string]any
 
 Groups definitions into `webCategory` buckets for the dashboard, with per-user
 unlock state and progress folded in. Registered through the plugin's
-`WebConfig`.
+`WebConfig` at `/achievements`, with `addToNav` false: the page left the site
+menu on 2026-11-15 (#882) to make room for the wider logo, and is reached by
+its address.
 
 ## Gotchas
 
