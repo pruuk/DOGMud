@@ -75,6 +75,6 @@ Health and Conditions floors in column, the tab bar's height, and slim. Desktop 
 
 - jstest `layoutpick`: the nine existing cases gain a tall `viewH` (1000) and keep their results except room 360 to 517, which now gives column (stated in the test). New cases: a 1440px dashboard with a 741px game is column at a 667px frame and wide at 900; the floor's edge at 299 and 300; `wideMapSize` against the CSS formula at three sizes; the CSS constant guard.
 - jstest `viewportfit`: `isShortScreen` for 1440×900, 1512×982, 1536×864 (true), 1920×1080, 390×844 phone (false); the renamed defaults with a laptop and a saved `'0'`.
-- Headless Edge on a private-port server: 1440×790 loads in column with the header hidden; after `setFullScreen(false)` the header shows; a 1440×900 page with the header hidden is wide.
+- Headless Edge on a private-port server, screen 1440×900: a 1440×700 window loads with the header hidden and in column (frame 700, Map 264); after `setFullScreen(false)` the header shows and it stays column; a 1440×900 window is wide (Map 368). Screen 1920×1080 at 1920×950 keeps its header and is wide (Map 330). (Corrected while planning: the first draft had 1440×790 in column, forgetting that the hidden header gives that window a 790px frame and a 311px Map, which is wide.)
 - Real devices: Malia's two Macs, and the phones (unchanged).
 - Gates: build, lint, `go test ./...`, jstests, boot.
