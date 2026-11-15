@@ -539,6 +539,22 @@ console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
 check('the ladder ignores the keyboard when it reads the frame height',
     /_computeMode[\s\S]*?classList\.contains\("keyboard-open"\)[\s\S]*?this\._layoutH = window\.innerHeight[\s\S]*?LayoutPick\.pick\([^)]*this\._layoutH\)/.test(SRC), true);
 
+// The laptop column (plan 7c): dashboard.js lays column out through
+// LayoutPick.columnArrangement and clears it in every other mode.
+check('the column arrangement is set from LayoutPick',
+    /_arrangeColumn: function[\s\S]*?LayoutPick\.columnArrangement\(/.test(SRC)
+    && /_arrangeColumn: function[\s\S]*?dataset\.column = /.test(SRC)
+    && /_arrangeColumn: function[\s\S]*?setProperty\("--col-map"/.test(SRC), true);
+check('the column arrangement is cleared outside column',
+    /_arrangeColumn: function[\s\S]*?if \(this\.mode !== "column"\) \{[\s\S]*?delete dash\.dataset\.column;[\s\S]*?removeProperty\("--col-map"\)/.test(SRC), true);
+check('the arrangement follows Health and the panel area',
+    /new ResizeObserver\([\s\S]*?_arrangeColumn\(\)[\s\S]*?observe\(document\.getElementById\("vitals-bars"\)\)/.test(SRC)
+    && /observe\(document\.getElementById\("dash-panels"\)\)/.test(SRC), true);
+check('_apply arranges the column even when the mode is unchanged',
+    /if \(newMode === this\.mode\) \{ this\._arrangeColumn\(\); return; \}/.test(SRC), true);
+check('the keyboard keeps the arrangement',
+    /_arrangeColumn: function[\s\S]*?keyboard-open[\s\S]*?LayoutPick\.columnMap\(/.test(SRC), true);
+
 if (failures > 0) {
     console.log(failures + ' FAILED');
     process.exit(1);

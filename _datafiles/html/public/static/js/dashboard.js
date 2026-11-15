@@ -188,6 +188,14 @@
         self._apply();
         self._relayoutTabs();
       });
+      // The laptop column follows Health (a member joins or leaves) and the
+      // panel area (the tab name pill changes its padding) as well as the
+      // window (plan 7c).
+      if (window.ResizeObserver) {
+        var arrange = new ResizeObserver(function () { self._arrangeColumn(); });
+        if (document.getElementById("vitals-bars")) arrange.observe(document.getElementById("vitals-bars"));
+        if (document.getElementById("dash-panels")) arrange.observe(document.getElementById("dash-panels"));
+      }
       // The name pill is measured in pixels: measure again once the web font lands.
       if (document.fonts && document.fonts.ready) {
         document.fonts.ready.then(function () { self._relayoutTabs(); });
@@ -344,7 +352,8 @@
     _apply: function () {
       this._measurePanels();
       var newMode = this._computeMode();
-      if (newMode === this.mode) return; // guard: no-op when mode unchanged
+      // Unchanged mode: a resize within column still changes its room.
+      if (newMode === this.mode) { this._arrangeColumn(); return; }
 
       var prev = this.mode;
       this.mode = newMode;
@@ -369,6 +378,47 @@
       this._measurePanels();
 
       if (newMode === "wide") this._repopAfterNarrow();
+      this._arrangeColumn();
+    },
+
+    // The laptop column (plan 7c): Conditions beside a larger Map with
+    // Health below, Health and Conditions swapped once Health passes a third
+    // of the column, or the stack where that gives the larger Map
+    // (LayoutPick.columnArrangement). Sets data-column and --col-map on
+    // #dashboard; clears both in every other mode. While the on-screen
+    // keyboard is up the arrangement is kept (as the ladder keeps its
+    // height) and only the Map's size follows the smaller room.
+    _arrangeColumn: function () {
+      var dash = document.getElementById("dashboard");
+      if (!dash) return;
+      if (this.mode !== "column") {
+        delete dash.dataset.column;
+        dash.style.removeProperty("--col-map");
+        return;
+      }
+      var panels = document.getElementById("dash-panels");
+      var vitals = document.getElementById("panel-vitals");
+      var bars = document.getElementById("vitals-bars");
+      if (!panels || !vitals || !bars) return;
+      var cs = getComputedStyle(panels);
+      var w = panels.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      var h = panels.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      // Health's natural height: its frame and title bar plus its rows, not
+      // the cell it was given (the body scrolls when the cell is smaller).
+      var body = vitals.querySelector(".dash-panel-body");
+      var vitalsH = vitals.offsetHeight - (body ? body.clientHeight : 0) + bars.offsetHeight;
+      var keyboard = document.documentElement.classList.contains("keyboard-open");
+      var arrangement, map;
+      if (keyboard && dash.dataset.column) {
+        arrangement = dash.dataset.column;
+        map = LayoutPick.columnMap(arrangement, w, h, vitalsH);
+      } else {
+        var pick = LayoutPick.columnArrangement(w, h, vitalsH);
+        arrangement = pick.arrangement;
+        map = pick.map;
+      }
+      if (dash.dataset.column !== arrangement) dash.dataset.column = arrangement;
+      dash.style.setProperty("--col-map", Math.max(0, map) + "px");
     },
 
     // Panels docked only because the screen is narrow; popped out again in wide.

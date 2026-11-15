@@ -550,6 +550,46 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 #dashboard[data-mode="column"] #panel-map .map-controls { padding: 3px 6px; }
 #dashboard[data-mode="column"] #panel-vitals { grid-area: vitals; min-height: 120px; }
 #dashboard[data-mode="column"] #panel-status { grid-area: status; min-height: 96px; }
+/* The laptop column (plan 7c, owner 2026-11-15). dashboard.js picks one of
+   three arrangements (LayoutPick.columnArrangement) and sets data-column and
+   --col-map, the Map's size:
+   - stacked: the rules above.
+   - side: Conditions beside the Map at its height, Health in a strip below
+     across the full width, as tall as its rows.
+   - swapped: once Health is taller than a third of the column, Health beside
+     the Map (it scrolls if its rows do not fit) and Conditions in a strip
+     below, its lines in columns. */
+#dashboard[data-mode="column"]:is([data-column="side"], [data-column="swapped"]) #dash-panels {
+  grid-template-columns: var(--col-map) minmax(0, 1fr);
+  align-content: start;
+}
+#dashboard[data-mode="column"][data-column="side"] #dash-panels {
+  grid-template-rows: var(--col-map) auto;
+  grid-template-areas:
+    "map    status"
+    "vitals vitals";
+}
+#dashboard[data-mode="column"][data-column="swapped"] #dash-panels {
+  grid-template-rows: var(--col-map) 96px;
+  grid-template-areas:
+    "map    vitals"
+    "status status";
+}
+#dashboard[data-mode="column"]:is([data-column="side"], [data-column="swapped"]) #panel-map {
+  width: var(--col-map);
+  justify-self: start;
+}
+#dashboard[data-mode="column"]:is([data-column="side"], [data-column="swapped"]) #panel-vitals,
+#dashboard[data-mode="column"]:is([data-column="side"], [data-column="swapped"]) #panel-status { min-height: 0; }
+#dashboard[data-mode="column"][data-column="swapped"] #status-conditions {
+  display: block;
+  column-width: 14ch;
+  column-gap: 16px;
+}
+#dashboard[data-mode="column"][data-column="swapped"] #status-conditions > * {
+  break-inside: avoid;
+  margin-bottom: 6px;
+}
 /* The tab bar shows only the four closed panels, and it and the opened tab
    stay over the panel column (--panels-w, set by dashboard.js). */
 html.layout-column .gtab[data-panel="map"],
