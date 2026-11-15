@@ -6,7 +6,7 @@
 - Quests has three tabs: Active, Repeat (with how many are ready again) and Completed, a list of everything you have finished.
 - The Chat panel is now called Comms. Its Chat channel is unchanged.
 - Menus show the item, quest or automation name large at the top, with the actions below it. On a phone, press and hold an item, quest or automation to open its menu; tap an item to open its menu too.
-- On a laptop the web client opens full screen, so every panel fits beside the game. If you leave full screen on a small laptop, the Map, Health and Conditions stay beside the game and the other panels move to the round buttons, so the Map stays a useful size.
+- On a laptop the web client opens full screen, so every panel fits beside the game. If you leave full screen on a small laptop, the other panels move to the round buttons and the Map grows, with Conditions beside it and Health underneath; a large party puts Health beside the Map instead.
 - On a phone or tablet, the Legend button in the Map's title bar shows the map's key over the map.
 
 ## 2026-11-14: Playing on a phone
