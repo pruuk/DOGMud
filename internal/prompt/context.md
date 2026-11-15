@@ -41,6 +41,14 @@ type Question struct {
 }
 ```
 
+**Secret questions (#868).** `Question.Flags` carries `FlagMaskInput`. A
+question that asks for a secret (the `password` command's three questions)
+is marked with `Ask(...).MaskInput()`; `(*Question).Masked()` reads the flag
+and is false for a nil question. While the next question is masked, the echo
+shows `*`, the line stays out of input history, and a web client types it
+into a password field (see `users.UserRecord.InputMasked`). A question that
+is not a secret, such as `deletecharacter`'s confirmation, is left plain.
+
 ### Prompt Management
 ```go
 type Prompt struct {

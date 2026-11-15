@@ -1,5 +1,6 @@
 itemid: 39
 name: Tova's Lockbox Key
+proper_name: true
 not_salable: true
 namesimple: key
 keylockid: 4198-lockbox

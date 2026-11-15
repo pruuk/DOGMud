@@ -81,8 +81,17 @@ type UserRecord struct {
 	// choice (userrecord.menu.go choose); guarded by sessionMu.
 	menuSignalHold int
 	menuSignalBase bool
-	isZombie       bool // are they a zombie currently?
-	inputBlocked   bool // Whether input is currently intentionally turned off (for a certain category of commands)
+	// textMaskSent and textMaskConn record the TEXTMASK state last sent to
+	// the web client on connection textMaskConn (userrecord.textmask.go);
+	// guarded by sessionMu.
+	textMaskSent bool
+	textMaskConn uint64
+	// inputMasked is what InputMasked returns: the masked state SyncTextMask
+	// last computed on the world goroutine, so the connection goroutine reads
+	// one locked bool and never the prompt; guarded by sessionMu.
+	inputMasked  bool
+	isZombie     bool // are they a zombie currently?
+	inputBlocked bool // Whether input is currently intentionally turned off (for a certain category of commands)
 }
 
 // UserTick is a user-defined real-time-second timer that fires commands from
@@ -832,6 +841,9 @@ func (u *UserRecord) StartPrompt(command string, rest string) (*prompt.Prompt, b
 	u.signalMenuStateLocked(wasOpen)
 	u.sessionMu.Unlock()
 
+	// The prompt it replaced may have held a secret question (#868).
+	u.SyncTextMask()
+
 	if replaced != nil {
 		u.afterMenuClosed(replaced, menu.CloseReplaced, false)
 	}
@@ -848,10 +860,13 @@ func (u *UserRecord) GetPrompt() *prompt.Prompt {
 
 func (u *UserRecord) ClearPrompt() {
 	u.sessionMu.Lock()
-	defer u.sessionMu.Unlock()
 	wasOpen := u.menuOrPromptOpenLocked()
 	u.activePrompt = nil
 	u.signalMenuStateLocked(wasOpen)
+	u.sessionMu.Unlock()
+	// A masked question may just have gone away (#868); SyncTextMask takes
+	// sessionMu itself, so it runs after the unlock.
+	u.SyncTextMask()
 }
 
 func (u *UserRecord) GetOnlineInfo() OnlineInfo {

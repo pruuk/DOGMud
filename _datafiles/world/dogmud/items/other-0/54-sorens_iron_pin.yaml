@@ -1,5 +1,6 @@
 itemid: 54
 name: Soren's Iron Pin
+proper_name: true
 not_salable: true
 namesimple: pin
 description: >

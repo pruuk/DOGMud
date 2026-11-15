@@ -48,6 +48,33 @@ func ArticlePrefix(name string) string {
 	return `a `
 }
 
+// ArticleFor is ArticlePrefix for the item template itemId: "" when the
+// template is marked proper_name (its name opens with one person's
+// possessive, "Edvar's Map-Fragment"), otherwise ArticlePrefix(name). Every
+// line that puts an article before an item's name calls this one, with the
+// id of the item the name belongs to, so a flagged item reads the same in
+// every line (#799). An id with no template gets the plain rule.
+func ArticleFor(itemId int, name string) string {
+	if spec := GetItemSpec(itemId); spec != nil && spec.ProperName {
+		return ``
+	}
+	return ArticlePrefix(name)
+}
+
+// IsProperName reports whether name, as a line shows it, is the name of a
+// proper_name item ("Edvar's Map-Fragment"). It reads the snapshot built
+// whenever the item specs change, so the messaging normalizer can ask by
+// name alone, where it has no item id. Colour tags, a quest star and
+// trailing space are ignored, and case is not significant.
+func IsProperName(name string) bool {
+	snap := authored.Load()
+	if snap == nil {
+		return false
+	}
+	_, rest := nameLead(name)
+	return snap.proper[normalizeItemName(nameTag.ReplaceAllString(rest, ``))]
+}
+
 // MidSentenceName returns name as it reads after ArticlePrefix: a name that
 // opens with its own article ("A Sheaf of Gleaned Grain") has that article
 // lowercased, so the line reads "You find a Sheaf of Gleaned Grain." rather

@@ -1,5 +1,6 @@
 itemid: 10025
 name: Edrin's Gnarled Staff
+proper_name: true
 vendor_categories:
 - blacksmithing
 namesimple: staff

@@ -46,6 +46,32 @@ func TestFindInPotionsWhere_Ordinal(t *testing.T) {
 	}
 }
 
+// #865: without an N., the bandolier picks the best name match (whole word
+// beats word start beats mid-word) and only then the oldest. Before, the
+// oldest potion whose name merely contained the text won.
+func TestFindInPotionsWhere_WholeWordBeatsMidWord(t *testing.T) {
+	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
+		999981: {ItemId: 999981, Name: "small red potion", Type: items.Potion},
+		999982: {ItemId: 999982, Name: "rusty pot", Type: items.Potion},
+		999983: {ItemId: 999983, Name: "small red potion", Type: items.Potion},
+	})()
+
+	c := New()
+	potion, pot, newerPotion := items.New(999981), items.New(999982), items.New(999983)
+	potion.CraftedRound, pot.CraftedRound, newerPotion.CraftedRound = 1, 9, 5
+	c.PotionItems = []items.Item{potion, pot}
+
+	got, ok := c.FindInPotionsWhere("pot", nil)
+	if !ok || got.UUID != pot.UUID {
+		t.Errorf("pot: want the rusty pot though the potion is older, got %q (found %v)", got.Name(), ok)
+	}
+	c.PotionItems = []items.Item{potion, newerPotion}
+	got, ok = c.FindInPotionsWhere("pot", nil)
+	if !ok || got.UUID != potion.UUID {
+		t.Errorf("pot among potions only: want the oldest, got round %d (found %v)", got.CraftedRound, ok)
+	}
+}
+
 // TestStoreItem_AmbientBandolier_OnePerType proves an ambient bandolier (Vitalis)
 // accepts one of each potion type but routes a duplicate type to the backpack —
 // the anti-immortality cap. A distinct potion type still slots normally.

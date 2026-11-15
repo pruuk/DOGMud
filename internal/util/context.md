@@ -69,6 +69,10 @@ func StringWildcardMatch(stringToSearch, patternToSearch string) bool
 length of a MUD string bears no relation to how wide it prints. Every wrapping
 and alignment decision must use `VisibleWidth`, and `SplitString` already does.
 
+`SplitString` keeps trailing punctuation on the word before it, including
+punctuation that follows `</ansi>` tags (`hold.</ansi>"` stays one unit), so a
+closing quote is never left alone on a line (#603).
+
 `ConvertToAscii` (backed by the `unicodeToAscii` table) and
 `StripCharsForScreenReaders` serve the accessibility and
 limited-client paths — a client that has not converged on UTF-8 gets readable
@@ -127,6 +131,11 @@ func ConvertForFilename(input string) string
 that only read the first silently lose fuzzy matching — this is the routine
 behind most "why doesn't `get lake iron nodule` work" questions, and it matches
 whole multi-word phrases already.
+
+Matching order: exact, then starts-with, then a contains fallback. The fallback
+is ranked (#865): the text as whole word(s) ("pot" in "Rusty Pot"), then at the
+start of a word ("Potion"), then mid-word ("Spotted"); ties keep list order and
+`2.pot` takes the second candidate in that ranked order.
 
 `FindMatchIndexIn` is the same algorithm by position (`FindMatchIn` wraps it);
 use it when two entries can share a name and the caller must know which one

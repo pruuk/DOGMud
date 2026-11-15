@@ -84,6 +84,28 @@ func TestBuy_Shelf_SameNameRowsAreChosenByPosition(t *testing.T) {
 	assert.Equal(t, held.Bauble, si.AffixedStock[0].Item.Bauble)
 }
 
+// #865: `buy pot` at Trader Onna bought the Small Red Potion, listed first,
+// instead of the Rusty Pot. A whole word now beats a word that merely starts
+// with the text; the potion is still there to buy by its own word.
+func TestBuy_Shelf_WholeWordBeatsWordStart(t *testing.T) {
+	now := stolenTestNow
+	si := shelfBuyFixture(t, 12, now)
+	gear := func(name string) items.Item {
+		return items.Item{ItemId: sellTestItemId, Affixed: true, Spec: &items.ItemSpec{ItemId: sellTestItemId, Name: name, Type: items.Weapon, Value: 50}}
+	}
+	si.AffixedStock = []shops.AffixedStockEntry{
+		{Item: gear("Small Red Potion"), Price: 20, AddedAt: now.Add(-2 * time.Hour)},
+		{Item: gear("Rusty Pot"), Price: 30, AddedAt: now.Add(-time.Hour)},
+	}
+	buyer := shelfBuyer(t, 1, 100)
+
+	res := tryPurchaseFromInventory(buyer, "pot", nil, si)
+	require.True(t, res.Success, "res=%+v", res)
+	assert.Equal(t, 70, buyer.GetCharacter().Gold, "charged the Rusty Pot's price")
+	require.Len(t, si.AffixedStock, 1)
+	assert.Equal(t, "Small Red Potion", si.AffixedStock[0].Item.GetSpec().Name, "the potion stays on the shelf")
+}
+
 // Spec tests 1 and 2 (buy half): a held entry cannot be bought by its name;
 // once its hold ends (the shelf clock moves on) it can.
 func TestBuy_Shelf_AHeldEntryIsNotForSaleUntilItsHoldEnds(t *testing.T) {

@@ -1,10 +1,13 @@
 package usercommands
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
@@ -156,6 +159,13 @@ func TestAltSwapRecordsLightNoticeQuietly(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	useDogmudTemplates(t)
+	// useDogmudTemplates points DataFiles at the real world, and this test
+	// saves the user and its alts (#826). Send those writes to a temp dir.
+	cfg := configs.GetConfig()
+	dataDir := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(dataDir, "users"), 0o755))
+	cfg.FilePaths.DataFiles = configs.ConfigString(dataDir)
+	configs.SetConfigForTest(t, cfg)
 	require.NoError(t, lightnotice.LoadFrom("../../_datafiles/world/dogmud/narration/light-notices"))
 	t.Cleanup(lightnotice.ResetForTest)
 

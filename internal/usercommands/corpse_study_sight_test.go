@@ -3,6 +3,7 @@ package usercommands
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -51,6 +52,30 @@ func TestAssessAndSalvageCorpse_ShapesPlayerDoesNotReadTheName(t *testing.T) {
 	lines = craftPlainLines(1)
 	require.Equal(t, 1, craftCountContaining(lines, "You begin carefully working over the corpse of a figure..."), "got %v", lines)
 	require.Equal(t, 0, craftCountContaining(lines, "Beggar"), "salvage named the corpse: %v", lines)
+}
+
+// #851 review: components live in the component bag, and FindItem's name path
+// must not reach them, or `salvage corpse` resolves to a bagged "corpse fang"
+// and refuses it as not carried instead of working over the corpse.
+func TestSalvageCorpse_BaggedComponentSharingTheNameDoesNotShadowIt(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
+		84002: {ItemId: 84002, Name: "corpse fang", Type: items.Object, Value: 1},
+	})()
+	defer corpseStudyFixture(t)()
+	player := users.GetByUserId(1)
+	room := rooms.LoadRoom(1)
+	player.Character.ComponentItems = []items.Item{items.New(84002)}
+	defer func() { player.Character.ComponentItems = nil }()
+
+	craftPlainLines(1)
+	handled, err := Salvage("corpse", player, room, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+	lines := craftPlainLines(1)
+	require.Equal(t, 1, craftCountContaining(lines, "You begin carefully working over the City Beggar corpse..."), "got %v", lines)
+	require.Equal(t, 0, craftCountContaining(lines, "remove that"), "got %v", lines)
 }
 
 func TestAssessAndSalvageCorpse_ClearPlayerReadsTheName(t *testing.T) {

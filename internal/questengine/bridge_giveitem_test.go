@@ -89,6 +89,37 @@ func TestGameBridge_GiveItem_ArticleFollowsTheName(t *testing.T) {
 	}
 }
 
+// A name that opens with one person's possessive takes no article: "You
+// receive Edvar's Map-Fragment." A trade possessive keeps its article: "a
+// Foreman's Tally-Book" (#799).
+func TestGameBridge_GiveItem_ProperNameTakesNoArticle(t *testing.T) {
+	u, cleanup := seedGiveItemFixture(t)
+	defer cleanup()
+
+	const person, trade = gitItemId + 2, gitItemId + 3
+	cleanMore := items.SeedItemsForTest(map[int]*items.ItemSpec{
+		person: {ItemId: person, Name: "Edvar's Map-Fragment", ProperName: true, Type: items.Object, Subtype: items.Mundane, Weight: 0.1},
+		trade:  {ItemId: trade, Name: "Foreman's Tally-Book", Type: items.Object, Subtype: items.Mundane, Weight: 0.1},
+	})
+	defer cleanMore()
+
+	bridge := NewGameBridge(u, 1)
+
+	if err := bridge.GiveItem(person); err != nil {
+		t.Fatal(err)
+	}
+	if msgs := joined(events.DrainQueuedMessagesForTest(gitUserId)); !strings.Contains(msgs, `You receive <ansi fg="item">Edvar's Map-Fragment</ansi>.`) {
+		t.Errorf("a person's possessive took an article:\n%s", msgs)
+	}
+
+	if err := bridge.GiveItem(trade); err != nil {
+		t.Fatal(err)
+	}
+	if msgs := joined(events.DrainQueuedMessagesForTest(gitUserId)); !strings.Contains(msgs, `You receive a <ansi fg="item">Foreman's Tally-Book</ansi>.`) {
+		t.Errorf("a trade possessive lost its article:\n%s", msgs)
+	}
+}
+
 func TestGameBridge_GiveItem_OverloadedPlayer_NoPhantomDelivery(t *testing.T) {
 	u, cleanup := seedGiveItemFixture(t)
 	defer cleanup()

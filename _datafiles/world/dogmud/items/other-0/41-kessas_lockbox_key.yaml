@@ -1,5 +1,6 @@
 itemid: 41
 name: Kessa's Lockbox Key
+proper_name: true
 not_salable: true
 namesimple: key
 keylockid: 4197-lockbox

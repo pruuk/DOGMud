@@ -1,5 +1,6 @@
 itemid: 20067
 name: Soren's Ironbound Buckler
+proper_name: true
 vendor_categories:
 - blacksmithing
 namesimple: buckler

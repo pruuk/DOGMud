@@ -114,9 +114,13 @@ func TestWrapGolden_AcceptedDifferences(t *testing.T) {
 			[]string{`Kesh says, "I have kept the Bough nineteen years. It is the heart of the valley,`, `if I may say so."`},
 		},
 		{
-			"a closing quote is no longer stranded on a line of its own",
+			// No longer a difference: util.SplitString used to strand the quote
+			// behind the close tag of the spoken span (#603) and now keeps it
+			// with the last word, as the pipeline always did. Kept as a case
+			// so either wrapper regressing shows up.
+			"a closing quote stays with the last word in both wraps",
 			wrapGoldenSay(`A tin thimble, pressed a little out of shape. The dimples on its top`),
-			[]string{`Kesh says, "A tin thimble, pressed a little out of shape. The dimples on its top`, `"`},
+			[]string{`Kesh says, "A tin thimble, pressed a little out of shape. The dimples on its`, `top"`},
 			[]string{`Kesh says, "A tin thimble, pressed a little out of shape. The dimples on its`, `top"`},
 		},
 		{

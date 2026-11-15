@@ -7,9 +7,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
-// itemNameAfterWord matches "the", "this", "your" or "their" directly before an
+// itemNameAfterWord matches "the", "this", "your", "their", "his", "her" or
+// "its" directly before an
 // item's open tag, and the name text the tag opens, up to the next tag.
-var itemNameAfterWord = regexp.MustCompile(`\b([Tt]he|[Tt]his|[Yy]our|[Tt]heir) (<ansi fg="item(?:name)?(?:-[A-Za-z0-9_-]+)?">)([^<]+)`)
+var itemNameAfterWord = regexp.MustCompile(`\b([Tt]he|[Tt]his|[Yy]our|[Tt]heir|[Hh]is|[Hh]er|[Ii]ts) (<ansi fg="item(?:name)?(?:-[A-Za-z0-9_-]+)?">)([^<]+)`)
 
 // DropDoubledItemArticles fixes a line that puts its own word before an item's
 // name when the name cannot take it: "You show the A Folded Page" reads "You
@@ -27,8 +28,15 @@ func DropDoubledItemArticles(text string) string {
 		if bare := items.NameWithoutArticle(name); bare != name {
 			return word + ` ` + tag + bare
 		}
-		if first, _, ok := strings.Cut(name, ` `); ok && strings.ToLower(word) == `the` && strings.HasSuffix(first, `'s`) {
-			return tag + name
+		// A person's name takes neither "the" nor a possessive determiner:
+		// "the Soren's Iron Pin", "gives you their Soren's Iron Pin". A trade
+		// possessive ("the Warden's Lash") is not a proper name and keeps
+		// its word. The flag decides, not the apostrophe (#799).
+		switch strings.ToLower(word) {
+		case `the`, `your`, `their`, `his`, `her`, `its`:
+			if items.IsProperName(name) {
+				return tag + name
+			}
 		}
 		return match
 	})

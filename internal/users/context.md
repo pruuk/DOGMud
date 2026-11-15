@@ -719,6 +719,22 @@ command but `afk`.
 `(*prompt.Prompt).Ask(question, responseOptions, defaultOption ...)`,
 called on the prompt returned by `StartPrompt`/`GetPrompt`.
 
+**Masked answers (#868, `userrecord.textmask.go`).** A prompt question
+marked `MaskInput()` is a secret answer.
+- `SyncTextMask()` runs on the world goroutine. It computes from the prompt
+  whether the next line is a secret answer (false while a game menu is open),
+  stores that under `sessionMu` for every connection type, and sends a web
+  client `TEXTMASK:true` or `TEXTMASK:false` only when the state changed on
+  that connection (a new connection id starts unmasked). Callers, always
+  with `sessionMu` released: `processInput` (deferred, after each line),
+  `enterWorld` (every login and reconnect), `ClearPrompt`, `StartPrompt`,
+  `OpenMenu`, and the menu and prompt close paths.
+- `InputMasked()` returns only that stored flag. It is the one call the
+  connection goroutine (the echo and history handlers) may make; it never
+  reads the prompt.
+- Tests: `CaptureTextMaskForTest(websocket)` replaces the TEXTMASK send
+  seams and returns the frames sent plus a restore func.
+
 ### Event System Integration
 ```go
 // Users participate in game events
@@ -971,6 +987,7 @@ restores a captured baseline before re-deriving the spec. Copy that. Note
 |------|---------|
 | `users.go` | Registry, connect/disconnect, lookup, save file read/write (`LoadUser`, `loadUserFromPath`, `SaveUser`, `SaveAllUsers`). A validating load runs `Character.DiscardEndedStealthRecords()` before `Validate(true)`, so a stealth record the logout reveal expired is not told as "emerges from the shadows" after login (#451) |
 | `userrecord.go` | The `UserRecord` type. `(*UserRecord).AchievementsExcluded()` is the one predicate for "admin or AI-flagged, kept out of achievements"; the award poll (`hooks/Achievements_Poll.go`) and the `achievements` screen both call it (#612) |
+| `userrecord.textmask.go` | `InputMasked` (the stored flag, safe from the connection goroutine) and `SyncTextMask` (world goroutine: compute, store, send `TEXTMASK` to a web client on a change) for masked in-game answers such as `password` (#868) |
 | `userrecord.prompt.go` | Prompt rendering and tokens. `SetPromptSightCheck(fn func(*characters.Character) messaging.SightDecision)` registers the reader's room sight (`messaging.ReaderSight`), wired at boot in `main.go` because `users` cannot import `rooms`; nil (boot, tests) means full sight. The fight prompt reads it to name a combat target below full sight as combat lines do, "a figure" at shapes and "something" with none, and to hide its health and position (#455) |
 | `storage.go` / `storage_migrate.go` | Bank inventory (`Storage`, `StorageSlot`), its legacy `Items`-to-`Slots` shape migration, and the U10d ranged-weapon rescale over banked items |
 | `index.go` / `index_rebuild.go` / `character_index.go` | Name/character indexes |

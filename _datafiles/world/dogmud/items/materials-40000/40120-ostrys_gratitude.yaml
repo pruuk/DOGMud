@@ -1,5 +1,6 @@
 itemid: 40120
 name: Ostry's Gratitude
+proper_name: true
 vendor_categories:
 - blacksmithing
 namesimple: blade
