@@ -23,7 +23,9 @@ func init() {
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
 	}
-	m.plug.Web.WebPage(`Achievements`, `/achievements`, `achievements.html`, true, m.webData)
+	// Off the site menu since 2026-11-15 (#882): the wider logo needs the room
+	// on laptop screens. The page still serves at /achievements.
+	m.plug.Web.WebPage(`Achievements`, `/achievements`, `achievements.html`, false, m.webData)
 }
 
 type webAchievement struct {

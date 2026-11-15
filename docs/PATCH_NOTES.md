@@ -4,6 +4,7 @@
 
 - The website has Malia's new logo: a world with three moons on their orbits. It sits on the home page and in the bar at the top of every page, in gold on dark screens and in browns in Light mode.
 - The browser tab icon and the icon you get when you add DOGMud to your phone's home screen show the new world and moons too.
+- Achievements is no longer in the website menu. The page is still there at dogmud.org/achievements, and `achievements` in game shows your progress.
 
 ## 2026-11-14: Small fixes
 
