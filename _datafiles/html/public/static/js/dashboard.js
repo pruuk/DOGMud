@@ -192,7 +192,13 @@
       // panel area (the tab name pill changes its padding) as well as the
       // window (plan 7c).
       if (window.ResizeObserver) {
-        var arrange = new ResizeObserver(function () { self._arrangeColumn(); });
+        var arrange = new ResizeObserver(function () {
+          // Next frame: a swap resizes Health inside this callback, which
+          // the browser reports as a ResizeObserver loop (review 2026-11-15).
+          if (self._arrangeQueued) return;
+          self._arrangeQueued = true;
+          requestAnimationFrame(function () { self._arrangeQueued = false; self._arrangeColumn(); });
+        });
         if (document.getElementById("vitals-bars")) arrange.observe(document.getElementById("vitals-bars"));
         if (document.getElementById("dash-panels")) arrange.observe(document.getElementById("dash-panels"));
       }
@@ -405,13 +411,18 @@
       var h = panels.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
       // Health's natural height: its frame and title bar plus its rows, not
       // the cell it was given (the body scrolls when the cell is smaller).
-      var body = vitals.querySelector(".dash-panel-body");
-      var vitalsH = vitals.offsetHeight - (body ? body.clientHeight : 0) + bars.offsetHeight;
+      // Measured from its parts: a folded Health beside the Map stretches to
+      // the Map's row, so the panel's own height would keep it there (review
+      // 2026-11-15), and a scrollbar in its body would count as height.
+      var head = vitals.querySelector(".dash-panel-head");
+      var vitalsH = head.offsetHeight + (vitals.offsetHeight - vitals.clientHeight) +
+                    (vitals.classList.contains("collapsed") ? 0 : bars.offsetHeight);
       var keyboard = document.documentElement.classList.contains("keyboard-open");
       var arrangement, map;
       if (keyboard && dash.dataset.column) {
         arrangement = dash.dataset.column;
-        map = LayoutPick.columnMap(arrangement, w, h, vitalsH);
+        // The stacked floor, so a short frame never clips the Map's title bar.
+        map = Math.max(LayoutPick.STACKED_MAP_MIN, LayoutPick.columnMap(arrangement, w, h, vitalsH));
       } else {
         var pick = LayoutPick.columnArrangement(w, h, vitalsH);
         arrangement = pick.arrangement;

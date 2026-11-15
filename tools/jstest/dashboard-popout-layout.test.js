@@ -552,6 +552,18 @@ check('_apply arranges the column even when the mode is unchanged',
 check('the keyboard keeps the arrangement',
     /_arrangeColumn: function[\s\S]*?keyboard-open[\s\S]*?LayoutPick\.columnMap\(/.test(SRC), true);
 
+// Review fixes (plan 7c): Health is measured from its parts, so a folded Health
+// beside the Map (stretched to the Map's row) does not keep the swap; the
+// observer defers to the next frame, so a swap that resizes Health inside the
+// callback does not raise a ResizeObserver loop error; and the kept
+// arrangement under the keyboard keeps the Map's floor.
+check('Health is measured from its title bar, frame and rows, none when folded',
+    /_arrangeColumn: function[\s\S]*?var vitalsH = head\.offsetHeight \+ \(vitals\.offsetHeight - vitals\.clientHeight\) \+\s*\(vitals\.classList\.contains\("collapsed"\) \? 0 : bars\.offsetHeight\);/.test(SRC), true);
+check('the column observer waits for the next frame',
+    /new ResizeObserver\(function \(\) \{[^}]*?requestAnimationFrame\(function \(\) \{ self\._arrangeQueued = false; self\._arrangeColumn\(\); \}\);/.test(SRC), true);
+check('the kept arrangement under the keyboard keeps the Map floor',
+    /map = Math\.max\(LayoutPick\.STACKED_MAP_MIN, LayoutPick\.columnMap\(arrangement, w, h, vitalsH\)\);/.test(SRC), true);
+
 // --- result ------------------------------------------------------------------
 
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');
