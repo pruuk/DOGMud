@@ -54,7 +54,20 @@ func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			return true, nil
 		}
 
-		item, found := user.Character.FindInBackpack(rest)
+		// Everything carried, worn or held: backpack, worn and wielded
+		// items, bandolier and component bag (#851).
+		item, _, found := user.Character.FindItem(rest)
+		if !found {
+			// FindItem's name path leaves the component bag's contents out
+			// on purpose (salvage resolves names through it), so look there
+			// last (#851).
+			partial, full := items.FindMatchIn(rest, user.Character.ComponentItems...)
+			if full.ItemId != 0 {
+				item, found = full, true
+			} else if partial.ItemId != 0 {
+				item, found = partial, true
+			}
+		}
 		if !found {
 			refusal.NotCarrying(user, rest)
 			return true, nil

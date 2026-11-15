@@ -6,7 +6,35 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/term"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
+
+// Seams for tests (#868): whether the connection's next line answers a secret
+// question, and how the echo reaches the client.
+var (
+	inputMasked = func(id connections.ConnectionId) bool {
+		u := users.GetByConnectionId(id)
+		return u != nil && u.InputMasked()
+	}
+	echoSend = connections.SendTo
+)
+
+// maskEcho returns what to echo for data while the answer is a secret (#868):
+// one * per printable character (a multi-byte letter shows one), other bytes
+// unchanged, as the login handler does.
+func maskEcho(data []byte) []byte {
+	out := make([]byte, 0, len(data))
+	for _, b := range data {
+		switch {
+		case b >= 0x80 && b < 0xC0: // UTF-8 continuation byte
+		case b >= 32 && b != 127:
+			out = append(out, '*')
+		default:
+			out = append(out, b)
+		}
+	}
+	return out
+}
 
 func EchoInputHandler(clientInput *connections.ClientInput, sharedState map[string]any) (nextHandler bool) {
 
@@ -26,8 +54,12 @@ func EchoInputHandler(clientInput *connections.ClientInput, sharedState map[stri
 
 	// If no actual input, for now just do/change nothing
 	if len(clientInput.DataIn) > 0 {
-		// echo it back
-		connections.SendTo(clientInput.DataIn, clientInput.ConnectionId)
+		// echo it back; a secret answer (password prompt) shows as * (#868)
+		if inputMasked(clientInput.ConnectionId) {
+			echoSend(maskEcho(clientInput.DataIn), clientInput.ConnectionId)
+		} else {
+			echoSend(clientInput.DataIn, clientInput.ConnectionId)
+		}
 	}
 
 	// if they didn't hit enter, just keep buffering, go next.
@@ -36,7 +68,7 @@ func EchoInputHandler(clientInput *connections.ClientInput, sharedState map[stri
 	}
 
 	// Echo back their Enter press
-	connections.SendTo(term.CRLF, clientInput.ConnectionId)
+	echoSend(term.CRLF, clientInput.ConnectionId)
 
 	return true
 }

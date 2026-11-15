@@ -17,7 +17,7 @@ func Password(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	cmdPrompt, _ := user.StartPrompt(`password`, rest)
 
 	if !user.HasPlaintextPassword() {
-		question := cmdPrompt.Ask(`What is your current password?`, []string{})
+		question := cmdPrompt.Ask(`What is your current password?`, []string{}).MaskInput()
 		if !question.Done {
 			return true, nil
 		}
@@ -29,14 +29,14 @@ func Password(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		}
 	}
 
-	question := cmdPrompt.Ask(`What new password would you like?`, []string{})
+	question := cmdPrompt.Ask(`What new password would you like?`, []string{}).MaskInput()
 	if !question.Done {
 		return true, nil
 	}
 
 	newPW := question.Response
 
-	question = cmdPrompt.Ask(`Confirm the change by entered the new password one more time.`, []string{})
+	question = cmdPrompt.Ask(`Confirm the change by entered the new password one more time.`, []string{}).MaskInput()
 	if !question.Done {
 		return true, nil
 	}

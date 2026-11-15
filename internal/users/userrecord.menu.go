@@ -116,6 +116,7 @@ func (u *UserRecord) OpenMenu(m menu.Menu, s menu.Session) (menu.CloseReason, bo
 	u.activeMenu = &openMenu{m: m, s: s}
 	u.signalMenuStateLocked(wasOpen)
 	u.sessionMu.Unlock()
+	u.SyncTextMask() // a menu hides the prompt's masked question (#868)
 
 	if old != nil && old.s.OnClose != nil {
 		old.s.OnClose(menu.CloseReplaced)
@@ -255,6 +256,7 @@ func (u *UserRecord) CloseMenu(r menu.CloseReason) {
 // three follow lines (actions.BreakOffMenuToFollow).
 func (u *UserRecord) CloseMenuForFollow() (topic string, names []string, had bool) {
 	om, cleared := u.takeMenuAndNonModalPrompt(menu.CloseFollow)
+	u.SyncTextMask() // the prompt may be gone (#868)
 	u.sayPromptSetAside(cleared)
 	if om != nil {
 		u.afterMenuClosed(om, menu.CloseFollow, false)
@@ -285,6 +287,7 @@ func (u *UserRecord) CheckMenuInterrupts() {
 // answer would otherwise edit the new room).
 func (u *UserRecord) CloseMenusForRoomChange() {
 	if u.takeRoomBoundPrompt() {
+		u.SyncTextMask() // the prompt is gone (#868)
 		u.SendText(messaging.CategoryAdmin, "You left the room, so the edit is cancelled.")
 	}
 	u.closeForRule(menu.CloseRoomChange)
@@ -306,6 +309,7 @@ func (u *UserRecord) takeRoomBoundPrompt() bool {
 
 func (u *UserRecord) closeForRule(r menu.CloseReason) {
 	om, cleared := u.takeMenuAndNonModalPrompt(r)
+	u.SyncTextMask() // a non-modal prompt may be gone (#868)
 	if om != nil {
 		u.afterMenuClosed(om, r, true)
 	}

@@ -153,7 +153,7 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 	acquire.AcquireItemForChar(char, actor.GetUserId(), actor.GetMobInstanceId(), newItem, acquire.AcquireForage)
 	if actor.IsPlayer() {
 		actor.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`You find %s<ansi fg="itemname">%s</ansi>.`, items.ArticlePrefix(newItem.DisplayName()), items.MidSentenceName(newItem.DisplayName())))
+			fmt.Sprintf(`You find %s<ansi fg="itemname">%s</ansi>.`, items.ArticleFor(newItem.ItemId, newItem.DisplayName()), items.MidSentenceName(newItem.DisplayName())))
 	}
 
 	result.Found = true

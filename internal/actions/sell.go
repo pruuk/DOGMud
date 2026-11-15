@@ -48,6 +48,9 @@ type SellResult struct {
 	TotalGold    int
 	Reason       SellStopReason
 	LastItemName string
+	// LastItemId is the template id of the last item sold, so a line can
+	// ask items.ArticleFor whether its name takes an article.
+	LastItemId int
 	// Mixed is set when the items sold were not all the same thing, so the
 	// caller must not pluralise LastItemName. Every bauble has its own name:
 	// `sell all bauble` sells three different objects, not three "Tarnished
@@ -198,10 +201,12 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 		// always the probe: it differs for baubles, which share a keyword but
 		// each have their own name.
 		soldName := probe.GetSpec().Name
+		soldId := probe.ItemId
 		soldBauble := probe.IsBauble()
 		if next, ok := sellFindItemInChar(char, itemName); ok {
 			soldBauble = next.IsBauble()
 			soldName = next.GetSpec().Name
+			soldId = next.ItemId
 			// Each bauble goes to the best offer for it, which is not
 			// always the merchant who took the one before (a fence pays
 			// more for stolen goods only; a merchant runs out of gold).
@@ -234,6 +239,7 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 		out.Sold++
 		out.TotalGold += value
 		out.LastItemName = soldName
+		out.LastItemId = soldId
 		baubleSold = baubleSold || soldBauble
 	}
 	return out
@@ -263,6 +269,7 @@ func sellSweep(seller Actor, room *rooms.Room) SellResult {
 			out.Sold++
 			out.TotalGold += value
 			out.LastItemName = spec.Name
+			out.LastItemId = spec.ItemId
 		}
 	}
 	if !soldAny {

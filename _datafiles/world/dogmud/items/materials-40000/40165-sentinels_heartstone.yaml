@@ -1,5 +1,6 @@
 itemid: 40165
 name: Sentinel's Heartstone
+proper_name: true
 namesimple: heartstone
 vendor_categories:
 - jewelcrafting

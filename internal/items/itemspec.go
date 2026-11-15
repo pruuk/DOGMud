@@ -371,6 +371,13 @@ type ItemSpec struct {
 	NeverDrops       bool     `yaml:"never_drops,omitempty"`       // Mob-only gear: this item is skipped entirely by mob death-loot drops, worn or carried (a disarm puts a weapon in the pack), so it never reaches players. Other carried Character.Items still drop; use loot_pool / character.items for guaranteed loot on the same mob.
 	Restricted       bool     `yaml:"restricted,omitempty"`        // Contraband: bid on by the auction Official (The Crown Assessor, econ #2.5). Interest tag only — no other mechanics.
 
+	// ProperName marks an item whose name opens with one person's possessive
+	// ("Edvar's Map-Fragment"), so a line puts no article before it: "You
+	// receive Edvar's Map-Fragment", never "an Edvar's Map-Fragment" (#799).
+	// A trade or role possessive ("Foreman's Tally-Book", "Healer's Root")
+	// leaves it false and keeps its article. Read through ArticleFor.
+	ProperName bool `yaml:"proper_name,omitempty"`
+
 	// Behavior names the item's behaviour tree,
 	// behaviors/items/<name>.yaml (lighting 5e, item behaviour slice 1,
 	// Rule 1). Several items may share one tree. The tree belongs to the
@@ -557,6 +564,9 @@ func GetAllItemSpecsMap() map[int]*ItemSpec {
 type authoredSnapshot struct {
 	words map[string]bool
 	names map[string]bool
+	// proper holds the normalised names of the proper_name items, for
+	// IsProperName.
+	proper map[string]bool
 }
 
 var authored atomic.Pointer[authoredSnapshot]
@@ -565,8 +575,9 @@ var authored atomic.Pointer[authoredSnapshot]
 // the items map, where the change is made.
 func rebuildAuthoredKeywords() {
 	snap := &authoredSnapshot{
-		words: make(map[string]bool, len(items)*2),
-		names: make(map[string]bool, len(items)),
+		words:  make(map[string]bool, len(items)*2),
+		names:  make(map[string]bool, len(items)),
+		proper: make(map[string]bool),
 	}
 	for id, spec := range items {
 		if id == BaubleItemId || spec == nil {
@@ -585,6 +596,9 @@ func rebuildAuthoredKeywords() {
 		}
 		if n := normalizeItemName(spec.Name); n != `` {
 			snap.names[n] = true
+			if spec.ProperName {
+				snap.proper[n] = true
+			}
 		}
 	}
 	authored.Store(snap)

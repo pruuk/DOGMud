@@ -145,8 +145,8 @@
             color: var(--menu-text);
         }
 
-        /* Mute and the theme choices: the whole row is the tap target. */
-        #mute-container,
+        /* The Sound switch and the theme choices: the whole row is the tap target. */
+        #sound-container,
         .theme-choice {
             display: flex;
             align-items: center;
@@ -156,7 +156,7 @@
             color: var(--menu-text);
             cursor: pointer;
         }
-        #mute-container input,
+        #sound-container input,
         .theme-choice input {
             transform: scale(1.2);
             accent-color: var(--brass-mid);
@@ -268,9 +268,11 @@
           </div>
           <fieldset id="settings-sound">
             <legend>Sound</legend>
-            <label id="mute-container" for="mute-checkbox">
-              <input type="checkbox" id="mute-checkbox" onchange="toggleMuteAll()">
-              <span id="mute-icon" aria-hidden="true">🔊</span> Mute all sound
+            <!-- Off for every browser until the player turns it on (owner,
+                 2026-11-15). -->
+            <label id="sound-container" for="sound-on">
+              <input type="checkbox" id="sound-on" onchange="toggleSound()">
+              <span id="sound-icon" aria-hidden="true">🔇</span> Sound on
             </label>
             <div id="sliders-container">
               <!-- One slider per sound type gets built here -->
@@ -302,7 +304,7 @@
 
         <section class="dash-panel" id="panel-cmd" data-panel="cmd">
           <div class="dash-panel-body">
-            <input type="text" id="command-input" placeholder="Enter command..." style="flex:1">
+            <input type="text" id="command-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Enter command..." style="flex:1">
             <!-- Plan 6 (ruling 14): closes the on-screen keyboard; shown only
                  while it is open (dashboard.css). -->
             <button type="button" id="cmd-close-kbd" class="brass" aria-label="Close keyboard" title="Close keyboard"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M4 4l12 12M16 4L4 16"/></svg></button>
@@ -3057,7 +3059,7 @@
                                     baseMp3Url += "/";
                                 }
                             } else {
-                                MusicPlayer.stop();
+                                MusicPlayer.stopAll(); // stop(url) with no URL does nothing (#838)
                             }
                         } else {
                             let soundLevel = 1.0;
@@ -3165,12 +3167,14 @@
                     // Give up: restore the normal disconnected UI.
                     pendingReconnectToken = null;
                     reconnectAttempts = 0;
+                    MusicPlayer.stopAll(); // really disconnected (#838)
                     term.writeln("");
                     term.writeln("Could not reconnect — the server may still be restarting. Click Enter Game to try again.");
                     connectButton.disabled = false;
                     setSessionState('offline');
                     return;
                 }
+                MusicPlayer.stopAll(); // not reconnecting: the last track must not keep looping (#838)
                 if (leavingGame) {
                     term.writeln("You have left the game.");
                 } else if (event.wasClean) {
@@ -3383,7 +3387,10 @@
         //
         /////////////////////////////////////////////
 
-        // 1) Define default sliders (and new ones if needed!)
+        // 1) Define default sliders (and new ones if needed!). These are the
+        // levels once the player turns sound on; until then nothing plays
+        // (soundOn below). Music was 0 here while #838's default-off lived on
+        // this slider; the Sound switch does that job now, for every sound.
         const defaultSliders = {
             "music": 75,
             "combat sounds": 75,
@@ -3395,8 +3402,9 @@
         // 2) We'll store final slider values
         let sliderValues = { ...defaultSliders };
 
-        // 3) We'll also store unmuted slider values if user checks "Mute"
-        let unmutedSliderValues = null;
+        // 3) Sound on or off: off until the player turns it on (owner,
+        // 2026-11-15), saved per browser under "soundOn".
+        let soundOn = false;
 
         // Return speaker icon
         function getSpeakerIcon(value) {
@@ -3460,15 +3468,10 @@
                     // Update local storage
                     localStorage.setItem('sliderValues', JSON.stringify(sliderValues));
 
-                    // Update music volume
-                    MusicPlayer.setGlobalVolume(sliderValues["music"] / 100);
-
-                    // If user moves any slider up from 0, uncheck Mute
-                    const muteCheckbox = document.getElementById('mute-checkbox');
-                    if (muteCheckbox.checked && val > 0) {
-                        muteCheckbox.checked = false;
-                        localStorage.setItem('muteAllSound', JSON.stringify(false));
-                        document.getElementById('mute-icon').textContent = "🔊";
+                    // Update music volume. At 0 the track stops; raised
+                    // from 0 with sound on, the area's music starts again.
+                    if (key === "music") {
+                        MusicPlayer.setGlobalVolume(sliderValues["music"] / 100);
                     }
                 });
 
@@ -3479,46 +3482,20 @@
             });
         }
 
-        // Handle Mute
-        function toggleMuteAll() {
-            const muteCheckbox = document.getElementById('mute-checkbox');
-            const isChecked = muteCheckbox.checked;
-            const muteIcon = document.getElementById('mute-icon');
+        // The Sound switch in Settings. Off: nothing plays and nothing is
+        // started, so a player's own music elsewhere is left alone. On: the
+        // area's music starts at the Music level, and sound effects play.
+        function showSoundSwitch() {
+            document.getElementById('sound-on').checked = soundOn;
+            document.getElementById('sound-icon').textContent = soundOn ? "🔊" : "🔇";
+        }
 
-            if (isChecked) {
-                // Save the unmuted state
-                unmutedSliderValues = { ...sliderValues };
-                localStorage.setItem('unmutedSliderValues', JSON.stringify(unmutedSliderValues));
-
-                // Set all to 0
-                Object.keys(sliderValues).forEach(key => {
-                    sliderValues[key] = 0;
-                });
-                localStorage.setItem('sliderValues', JSON.stringify(sliderValues));
-
-                buildSliders();
-
-                muteIcon.textContent = "🔇";
-                MusicPlayer.setGlobalVolume(0);
-                localStorage.setItem('muteAllSound', JSON.stringify(true));
-            } else {
-                // Restore from unmuted
-                const savedUnmuted = localStorage.getItem('unmutedSliderValues');
-                if (savedUnmuted) {
-                    // Merge defaultSliders just in case new keys appear
-                    let loadedUnmuted = JSON.parse(savedUnmuted) || {};
-                    loadedUnmuted = { ...defaultSliders, ...loadedUnmuted };
-                    unmutedSliderValues = { ...loadedUnmuted };
-
-                    sliderValues = { ...unmutedSliderValues };
-                    localStorage.setItem('sliderValues', JSON.stringify(sliderValues));
-                }
-                buildSliders();
-
-                muteIcon.textContent = "🔊";
-                MusicPlayer.setGlobalVolume(sliderValues["music"] / 100);
-                localStorage.setItem('muteAllSound', JSON.stringify(false));
-            }
+        function toggleSound() {
+            soundOn = document.getElementById('sound-on').checked;
+            try { localStorage.setItem('soundOn', JSON.stringify(soundOn)); } catch (e) { /* storage blocked: this visit only */ }
+            showSoundSwitch();
+            MusicPlayer.setEnabled(soundOn, sliderValues["music"] / 100);
+            SoundPlayer.setEnabled(soundOn);
         }
 
         /////////////////////////////////////////////
@@ -3543,7 +3520,7 @@
             menu.style.top = (strip.offsetTop + strip.offsetHeight + 4) + 'px';
             menu.hidden = false;
             document.getElementById('btn-settings').setAttribute('aria-expanded', 'true');
-            document.getElementById('mute-checkbox').focus();
+            document.getElementById('sound-on').focus();
         }
 
         // returnFocus is true only when the player closed Settings from the
@@ -3656,65 +3633,40 @@
             }
             console.log("%cconsole commands:", "font-weight:bold;");
 
-            // 1) Load from localStorage, if available
-            const savedValues = localStorage.getItem('sliderValues');
-            if (savedValues) {
+            // 1) Sound settings, from this browser's storage. Sound is off
+            // until the player turns it on, for every browser, including
+            // ones that saved settings before 2026-11-15: soundOn is a new
+            // key, so an older browser has none and starts off. Slider levels
+            // are kept. A browser that used the old "Mute all" had its
+            // sliders zeroed, so it gets the levels it had before muting.
+            // Sound settings: load
+            try {
+                let saved = null;
+                try { saved = JSON.parse(localStorage.getItem('sliderValues') || 'null'); } catch (e) { saved = null; }
                 try {
-                    // Merge existing local storage with defaultSliders
-                    const loaded = JSON.parse(savedValues);
-                    sliderValues = { ...defaultSliders, ...loaded };
-                } catch (e) {
-                    console.warn("Could not parse saved sliderValues, using defaults.");
-                }
-            } else {
-                // If no localStorage, ensure we set the defaults
-                localStorage.setItem('sliderValues', JSON.stringify(sliderValues));
-            }
-
-            // 2) Check if we have a "muteAllSound" property
-            const savedMute = localStorage.getItem('muteAllSound');
-            if (savedMute) {
-                try {
-                    const isMuted = JSON.parse(savedMute);
-                    document.getElementById('mute-checkbox').checked = isMuted;
-                } catch (e) {
-                    console.warn("Could not parse muteAllSound, ignoring.");
-                }
-            }
-
-            // 3) Build the sliders
-            buildSliders();
-
-            // 4) If currently muted, re-apply zero volumes
-            const muteCheckbox = document.getElementById('mute-checkbox');
-            const muteIcon = document.getElementById('mute-icon');
-
-            if (muteCheckbox.checked) {
-                // Possibly retrieve unmuted values from storage
-                const savedUnmuted = localStorage.getItem('unmutedSliderValues');
-                if (savedUnmuted) {
-                    // Merge defaultSliders here, too
-                    try {
-                        let loadedUnmuted = JSON.parse(savedUnmuted) || {};
-                        unmutedSliderValues = { ...defaultSliders, ...loadedUnmuted };
-                    } catch(e) {
-                        console.warn("Could not parse unmutedSliderValues.");
+                    const oldUnmuted = JSON.parse(localStorage.getItem('unmutedSliderValues') || 'null');
+                    if (JSON.parse(localStorage.getItem('muteAllSound') || 'false') === true && oldUnmuted) {
+                        saved = oldUnmuted;
                     }
+                } catch (e) { /* an unreadable old mute: keep the saved levels */ }
+                if (saved && typeof saved === 'object') {
+                    sliderValues = { ...defaultSliders, ...saved };
                 }
-                // Force all current sliders to 0
-                Object.keys(sliderValues).forEach(key => {
-                    sliderValues[key] = 0;
-                });
+                localStorage.removeItem('muteAllSound');
+                localStorage.removeItem('unmutedSliderValues');
                 localStorage.setItem('sliderValues', JSON.stringify(sliderValues));
-                buildSliders();
-
-                muteIcon.textContent = "🔇";
-                MusicPlayer.setGlobalVolume(0);
-            } else {
-                // If not muted, set music volume from slider
-                MusicPlayer.setGlobalVolume(sliderValues["music"] / 100);
-                muteIcon.textContent = "🔊";
+                try { soundOn = JSON.parse(localStorage.getItem('soundOn') || 'false') === true; } catch (e) { soundOn = false; }
+            } catch (e) {
+                // Storage blocked: defaults, and sound stays off.
             }
+            // Sound settings: end load
+
+            // 2) Build the sliders and set the switch. Nothing plays yet: the
+            // players start disabled, and the server has asked for nothing.
+            buildSliders();
+            showSoundSwitch();
+            MusicPlayer.setEnabled(soundOn, sliderValues["music"] / 100);
+            SoundPlayer.setEnabled(soundOn);
 
             // 5) Fit the terminal to its new panel container
             resizeTerminal();

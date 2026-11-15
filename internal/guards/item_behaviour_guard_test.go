@@ -80,7 +80,7 @@ var itemSpecDataFields = []string{
 	"BagCapacity", "Aging", "BottleAgingMultiplier", "Toxicity", "Magnitude",
 	"IsBandolier", "BandolierCapacity", "SalvageReturns", "RarityTier",
 	"MaterialTier", "VendorCategories", "NotSalable", "Worthless", "NeverDrops",
-	"Restricted",
+	"Restricted", "ProperName",
 }
 
 // itemSpecBehaviourMethods maps an ItemSpec method to the behaviour field it
