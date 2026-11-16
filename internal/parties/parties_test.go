@@ -26,7 +26,26 @@ func newTestActor(userId, mobInstanceId int) *testActor {
 	return &testActor{fakeActor{userId: userId, mobInstanceId: mobInstanceId}}
 }
 
+// isolatePartiesForTest gives a test empty party registries and a fresh party
+// id counter, and puts the previous ones back when the test ends.
+//
+// Every party a test creates stays registered under its leader's actor key.
+// Without this, the second pass of `go test -count=2` found mob 100 (and the
+// other fixed leaders) still leading the first pass's party, so NewByActor
+// refused them and returned nil.
+func isolatePartiesForTest(t *testing.T) {
+	t.Helper()
+	savedPlayers, savedActors, savedNextId := partyMap, actorPartyMap, nextPartyId
+	partyMap = map[int]*Party{}
+	actorPartyMap = map[ActorKey]*Party{}
+	nextPartyId = 1
+	t.Cleanup(func() {
+		partyMap, actorPartyMap, nextPartyId = savedPlayers, savedActors, savedNextId
+	})
+}
+
 func TestNewByActor_CreatesParty(t *testing.T) {
+	isolatePartiesForTest(t)
 	leader := newTestActor(0, 100) // mob id 100
 	p := NewByActor(leader)
 	if p == nil {
@@ -41,6 +60,7 @@ func TestNewByActor_CreatesParty(t *testing.T) {
 }
 
 func TestNewByActor_ReturnsNilIfActorAlreadyInParty(t *testing.T) {
+	isolatePartiesForTest(t)
 	leader := newTestActor(0, 200)
 	first := NewByActor(leader)
 	if first == nil {
@@ -53,6 +73,7 @@ func TestNewByActor_ReturnsNilIfActorAlreadyInParty(t *testing.T) {
 }
 
 func TestGetByActor_ReturnsParty(t *testing.T) {
+	isolatePartiesForTest(t)
 	leader := newTestActor(0, 300)
 	p := NewByActor(leader)
 	got := GetByActor(leader)
@@ -62,6 +83,7 @@ func TestGetByActor_ReturnsParty(t *testing.T) {
 }
 
 func TestGetByActor_NilForUnknown(t *testing.T) {
+	isolatePartiesForTest(t)
 	a := newTestActor(0, 9999)
 	if GetByActor(a) != nil {
 		t.Error("GetByActor should return nil for actor not in any party")
@@ -69,6 +91,7 @@ func TestGetByActor_NilForUnknown(t *testing.T) {
 }
 
 func TestAddActor_AddsToMembers(t *testing.T) {
+	isolatePartiesForTest(t)
 	leader := newTestActor(0, 400)
 	p := NewByActor(leader)
 	member := newTestActor(0, 401)
@@ -84,6 +107,7 @@ func TestAddActor_AddsToMembers(t *testing.T) {
 }
 
 func TestAddActor_RejectsActorAlreadyInOtherParty(t *testing.T) {
+	isolatePartiesForTest(t)
 	leaderA := newTestActor(0, 410)
 	leaderB := newTestActor(0, 411)
 	a := NewByActor(leaderA)
@@ -98,6 +122,7 @@ func TestAddActor_RejectsActorAlreadyInOtherParty(t *testing.T) {
 }
 
 func TestRemoveActor_RemovesFromMembers(t *testing.T) {
+	isolatePartiesForTest(t)
 	leader := newTestActor(0, 420)
 	member := newTestActor(0, 421)
 	p := NewByActor(leader)
@@ -114,6 +139,7 @@ func TestRemoveActor_RemovesFromMembers(t *testing.T) {
 }
 
 func TestGetByMobInstanceId_FindsParty(t *testing.T) {
+	isolatePartiesForTest(t)
 	leader := newTestActor(0, 500)
 	p := NewByActor(leader)
 	if got := GetByMobInstanceId(500); got != p {
@@ -122,12 +148,14 @@ func TestGetByMobInstanceId_FindsParty(t *testing.T) {
 }
 
 func TestGetByMobInstanceId_NilForUnknown(t *testing.T) {
+	isolatePartiesForTest(t)
 	if GetByMobInstanceId(99999) != nil {
 		t.Error("expected nil for unknown mob instance")
 	}
 }
 
 func TestListAllParties_DeduplicatesByPointer(t *testing.T) {
+	isolatePartiesForTest(t)
 	leader := newTestActor(0, 600)
 	m1 := newTestActor(0, 601)
 	m2 := newTestActor(0, 602)
@@ -147,6 +175,7 @@ func TestListAllParties_DeduplicatesByPointer(t *testing.T) {
 }
 
 func TestRemoveActorByMobInstanceId_RemovesMember(t *testing.T) {
+	isolatePartiesForTest(t)
 	leader := newTestActor(0, 440)
 	member := newTestActor(0, 441)
 	p := NewByActor(leader)
@@ -163,6 +192,7 @@ func TestRemoveActorByMobInstanceId_RemovesMember(t *testing.T) {
 }
 
 func TestRemoveActorByMobInstanceId_ReturnsFalseForUnknown(t *testing.T) {
+	isolatePartiesForTest(t)
 	leader := newTestActor(0, 450)
 	p := NewByActor(leader)
 	if p.RemoveActorByMobInstanceId(99998) {
@@ -171,6 +201,7 @@ func TestRemoveActorByMobInstanceId_ReturnsFalseForUnknown(t *testing.T) {
 }
 
 func TestRemoveActorByMobInstanceId_RemovesLeader(t *testing.T) {
+	isolatePartiesForTest(t)
 	leader := newTestActor(0, 460)
 	member := newTestActor(0, 461)
 	p := NewByActor(leader)
@@ -187,6 +218,7 @@ func TestRemoveActorByMobInstanceId_RemovesLeader(t *testing.T) {
 }
 
 func TestDissolve_RemovesAllMembersFromRegistry(t *testing.T) {
+	isolatePartiesForTest(t)
 	leader := newTestActor(0, 430)
 	m1 := newTestActor(0, 431)
 	m2 := newTestActor(0, 432)
