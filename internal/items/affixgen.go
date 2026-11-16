@@ -115,10 +115,7 @@ func GenerateAffixedItem(baseItemId int, goldPaid int, scalar float64, goldPerPo
 		// No budget, return unmodified item.
 		return item
 	}
-	rolledBudget := int(math.Round(dice.RollStat(float64(rawBudget)).Value))
-	if rolledBudget < 1 {
-		rolledBudget = 1
-	}
+	rolledBudget := max(int(math.Round(dice.RollStat(float64(rawBudget)).Value)), 1)
 
 	// Determine item classification for bonus eligibility.
 	isWeapon := baseSpec.Type == Weapon
@@ -164,10 +161,7 @@ func GenerateAffixedItem(baseItemId int, goldPaid int, scalar float64, goldPerPo
 		totalWeight := 0
 		for _, b := range eligible {
 			if b.Cost <= budget {
-				w := weights[b.Name]
-				if w < 1 {
-					w = 1
-				}
+				w := max(weights[b.Name], 1)
 				candidates = append(candidates, weightedCandidate{b, w})
 				totalWeight += w
 			}

@@ -106,10 +106,7 @@ func HasMaterialsWithReservePct(recipe *crafting.RecipeSpec, shopInv *ShopInvent
 		if entry == nil {
 			return false
 		}
-		reserve := int(float64(entry.MaxStock) * reservePct)
-		if reserve < 1 {
-			reserve = 1
-		}
+		reserve := max(int(float64(entry.MaxStock)*reservePct), 1)
 		available := entry.Current - reserve
 		if available < ing.Quantity {
 			return false

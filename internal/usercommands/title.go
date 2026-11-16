@@ -108,10 +108,7 @@ func Title(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	// Generate bars for top 3
-	maxStat := statVals[0].Value
-	if maxStat < 1 {
-		maxStat = 1
-	}
+	maxStat := max(statVals[0].Value, 1)
 	for i := 0; i < 3 && i < len(statVals); i++ {
 		pct := float64(statVals[i].Value) / float64(maxStat)
 		barFull, barEmpty := util.ProgressBar(pct, 20)

@@ -292,10 +292,7 @@ func RoomMaintenance() []int {
 	unloadRoundThreshold := roundCount - uint64(c.RoomUnloadRounds)
 	unloadRooms := make([]*Room, 0)
 
-	allowedUnloadCt := len(roomManager.rooms) - int(c.RoomUnloadThreshold)
-	if allowedUnloadCt < 0 {
-		allowedUnloadCt = 0
-	}
+	allowedUnloadCt := max(len(roomManager.rooms)-int(c.RoomUnloadThreshold), 0)
 
 	for _, room := range roomManager.rooms {
 

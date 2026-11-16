@@ -132,10 +132,7 @@ func deposit(zone string, itemId int, qty int, isAccrual bool) bool {
 	if room <= 0 {
 		return false
 	}
-	add := qty
-	if add > room {
-		add = room
-	}
+	add := min(qty, room)
 	if idx < 0 {
 		w.Stock = append(w.Stock, Entry{ItemId: itemId, Current: add})
 	} else {

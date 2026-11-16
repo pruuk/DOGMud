@@ -94,10 +94,7 @@ func EvaluateBuyRules(
 	if entry != nil {
 		price = CalcBuyPrice(spec.Value, entry.Current, PricingBaseline(entry, cfg), cfg)
 	} else {
-		flat := int(math.Ceil(float64(spec.Value) * cfg.BuyRatio))
-		if flat < 1 {
-			flat = 1
-		}
+		flat := max(int(math.Ceil(float64(spec.Value)*cfg.BuyRatio)), 1)
 		price = flat
 	}
 

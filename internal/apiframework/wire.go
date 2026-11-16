@@ -235,10 +235,7 @@ func EstimateTokens(msgs []Message) int {
 // player's browser, which that player can write, is held between nothing
 // and the most one request could cost.
 func Charged(reported int, sent bool, status int, prompt int, maxTokens int, relayed bool) (tokens int, estimated bool) {
-	tokens = reported
-	if tokens < 0 {
-		tokens = 0
-	}
+	tokens = max(reported, 0)
 	if relayed && tokens > prompt+maxTokens {
 		tokens = prompt + maxTokens
 	}

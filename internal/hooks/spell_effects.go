@@ -390,16 +390,10 @@ func applySpellDot(c spellEffectCtx) int {
 		return 0
 	}
 	stat, skill := spellCasterStatAndSkill(c.spell, c.casterChar)
-	dotDuration := calcSpellDuration(c.spell.BaseFolds, skill, stat) / 3
-	if dotDuration < 3 {
-		dotDuration = 3
-	}
+	dotDuration := max(calcSpellDuration(c.spell.BaseFolds, skill, stat)/3, 3)
 	// The dot's record ticks every round, so dotDuration is the trigger count.
 	// The record's negative magnitude is the harm per tick, floored at one.
-	dotAmount := c.magnitude
-	if dotAmount < 1 {
-		dotAmount = 1
-	}
+	dotAmount := max(c.magnitude, 1)
 	dotId := spellDotConditionId(c.spell)
 	// Names are read BEFORE the condition lands: the add below can add the
 	// "poisoned" or "bleeding" adjective to the target's rendered name, and
@@ -551,10 +545,7 @@ func resolveHelpSpell(c spellEffectCtx) bool {
 // caster takes a quarter of the magnitude (at least one), is told if it is a
 // player, the room sees it, and it is recorded.
 func applySpellBackfire(c spellEffectCtx) {
-	backfireDmg := c.magnitude / 4
-	if backfireDmg < 1 {
-		backfireDmg = 1
-	}
+	backfireDmg := max(c.magnitude/4, 1)
 	if c.casterChar != nil {
 		c.casterChar.ApplyHarm(characters.PoolHealth, backfireDmg, c.casterRef())
 	}

@@ -6,10 +6,7 @@ package seasons
 // numMonths — so a season's month claims always agree with the 'time' command.
 func monthOfDay(dayOfYear, daysPerYear, monthsPerYear int) int {
 	hoursPerMonth := float64(daysPerYear) * 24.0 / float64(monthsPerYear)
-	m := 1 + int(float64(dayOfYear)*24.0/hoursPerMonth)
-	if m > monthsPerYear {
-		m = monthsPerYear
-	}
+	m := min(1+int(float64(dayOfYear)*24.0/hoursPerMonth), monthsPerYear)
 	return m
 }
 

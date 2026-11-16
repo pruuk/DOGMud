@@ -272,10 +272,7 @@ func (l *ledger) reserve(consumer string, tokens int, limit int, sharePct int, s
 // It is worked out without multiplying limit, which a huge DailyTokenBudget
 // would overflow.
 func shareOf(limit int, pct int) int {
-	share := limit/100*pct + limit%100*pct/100
-	if share < 1 {
-		share = 1
-	}
+	share := max(limit/100*pct+limit%100*pct/100, 1)
 	return share
 }
 

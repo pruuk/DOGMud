@@ -123,10 +123,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		if presolve := user.Character.StatMod(string(statmods.Picklock)); presolve > 0 {
 			// All locks bottom out at 3 pins
 			if presolve > lockStrength-3 {
-				presolve = lockStrength - 3
-				if presolve < 0 {
-					presolve = 0
-				}
+				presolve = max(lockStrength-3, 0)
 			}
 
 			if len(keyring_sequence) < presolve {

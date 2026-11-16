@@ -182,10 +182,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 				}
 
 				// Room multiplier applied last
-				healAmt := int(math.Floor(healthRegen * regenMultiplier))
-				if healAmt < 1 {
-					healAmt = 1
-				}
+				healAmt := max(int(math.Floor(healthRegen*regenMultiplier)), 1)
 				user.Character.ApplyRestore(characters.PoolHealth, healAmt)
 
 				// Emit tick feedback while a heal-spell Regenerating record is active
@@ -199,10 +196,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			} else {
 				// In combat: no base regen, but a Regenerating record (heal spell) still applies
 				if user.Character.Conditions.HasEffect(conditions.EffectRegenMult) {
-					healAmt := int(math.Floor(user.Character.CombatHealthRegenPerRound() * toxRegenMult * regenMultiplier))
-					if healAmt < 1 {
-						healAmt = 1
-					}
+					healAmt := max(int(math.Floor(user.Character.CombatHealthRegenPerRound()*toxRegenMult*regenMultiplier)), 1)
 					user.Character.ApplyRestore(characters.PoolHealth, healAmt)
 					user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
 						`<ansi fg="green">Your wounds knit closed. (%s)</ansi>`,
@@ -215,10 +209,9 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		var staminaRegen int
 		if inCombat {
 			// Combat: 1/4 normal regen rate (much slower)
-			staminaRegen = user.Character.StaminaPerRound() / 4
-			if staminaRegen < 1 {
-				staminaRegen = 1 // Minimum 1 stamina per 3 rounds even in combat
-			}
+			staminaRegen = max(user.Character.StaminaPerRound()/4,
+				// Minimum 1 stamina per 3 rounds even in combat
+				1)
 		} else {
 			// Out of combat: full regen
 			staminaRegen = user.Character.StaminaPerRound()
@@ -295,18 +288,12 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 				hpRegen *= regenMult
 			}
 			hpRegen *= mobRegenMult
-			hpAmt := int(math.Floor(hpRegen))
-			if hpAmt < 1 {
-				hpAmt = 1
-			}
+			hpAmt := max(int(math.Floor(hpRegen)), 1)
 			mob.Character.ApplyRestore(characters.PoolHealth, hpAmt)
 		} else {
 			// In combat: only the Regenerating record applies
 			if mob.Character.Conditions.HasEffect(conditions.EffectRegenMult) {
-				hpAmt := int(math.Floor(mob.Character.CombatHealthRegenPerRound() * mobRegenMult))
-				if hpAmt < 1 {
-					hpAmt = 1
-				}
+				hpAmt := max(int(math.Floor(mob.Character.CombatHealthRegenPerRound()*mobRegenMult)), 1)
 				mob.Character.ApplyRestore(characters.PoolHealth, hpAmt)
 			}
 		}
@@ -317,17 +304,11 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			spRegen = spRegen / 4
 		}
 		spRegen *= mobRegenMult
-		spAmt := int(math.Floor(spRegen))
-		if spAmt < 1 {
-			spAmt = 1
-		}
+		spAmt := max(int(math.Floor(spRegen)), 1)
 		mob.Character.ApplyRestore(characters.PoolStamina, spAmt)
 
 		// Conviction regen
-		cpAmt := int(math.Floor(float64(mob.Character.ConvictionPerRound()) * mobRegenMult))
-		if cpAmt < 1 {
-			cpAmt = 1
-		}
+		cpAmt := max(int(math.Floor(float64(mob.Character.ConvictionPerRound())*mobRegenMult)), 1)
 		mob.Character.ApplyRestore(characters.PoolConviction, cpAmt)
 
 		// Regen-based stat progression for mobs (gated inside OnRegenTick,

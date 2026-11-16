@@ -25,10 +25,7 @@ func Withdraw(zone string, itemId int, qty int) int {
 		if w.Stock[i].ItemId != itemId {
 			continue
 		}
-		take := qty
-		if take > w.Stock[i].Current {
-			take = w.Stock[i].Current
-		}
+		take := min(qty, w.Stock[i].Current)
 		if take <= 0 {
 			return 0
 		}
@@ -73,10 +70,7 @@ func ReleaseToVendorsInRoom(zone string, roomId int, maxPerItem int) int {
 			if gap <= 0 {
 				continue
 			}
-			want := gap
-			if want > maxPerItem {
-				want = maxPerItem
-			}
+			want := min(gap, maxPerItem)
 			got := Withdraw(zone, e.ItemId, want)
 			if got > 0 {
 				e.Current += got

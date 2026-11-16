@@ -118,10 +118,7 @@ func (c *Character) RecalculateStats() {
 
 	// Stage 12.1: health_multiplier mutation after HealthMax.Recalculate().
 	if hMult := mutations.GetHealthMultiplier(c.Mutations); hMult != 0 {
-		c.HealthMax.Value = int(float64(c.HealthMax.Value) * (1.0 + hMult))
-		if c.HealthMax.Value < 1 {
-			c.HealthMax.Value = 1
-		}
+		c.HealthMax.Value = max(int(float64(c.HealthMax.Value)*(1.0+hMult)), 1)
 	}
 
 	// An authored maximum replaces the derived one, mutations included.
@@ -310,10 +307,7 @@ func (c *Character) validateSkillMigrations() {
 	if _, hasTracking := c.Skills["tracking"]; hasTracking {
 		trackRank := c.Skills["tracking"]
 		forageRank := c.Skills["foraging"]
-		searchRank := max(trackRank, forageRank)
-		if searchRank < 1 {
-			searchRank = 1
-		}
+		searchRank := max(max(trackRank, forageRank), 1)
 		c.Skills["search"] = searchRank
 		if c.SkillUseCount == nil {
 			c.SkillUseCount = make(map[string]int)
@@ -571,10 +565,7 @@ func (c *Character) displaceSlotItem(itm items.Item, reason string) {
 func (c *Character) validateMutationSlots() {
 	// Derive ExtraArms from mutation level (capped at 4).
 	if lvl, ok := c.Mutations["extra-arms"]; ok && lvl > 0 {
-		c.ExtraArms = lvl
-		if c.ExtraArms > 4 {
-			c.ExtraArms = 4
-		}
+		c.ExtraArms = min(lvl, 4)
 	} else {
 		c.ExtraArms = 0
 	}

@@ -117,11 +117,9 @@ func CritOrMitigatedDamageScaled(rawDmg float64, skillRank int, isCrit bool, mit
 		mean = ApplyMitigation(rawDmg, mitigPct, curve)
 	}
 
-	dmg := int(math.Round(dice.RollStat(mean).Value))
-	if dmg < 1 {
+	dmg := max(int(math.Round(dice.RollStat(mean).Value)),
 		// A hit that lands must do something; 0 reads to the player as a bug.
-		dmg = 1
-	}
+		1)
 	return dmg
 }
 

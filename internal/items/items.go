@@ -423,10 +423,7 @@ func (i *Item) GetDistributionDamage() (attacks int, baseDamage float64, varianc
 		return 1, 2.0, 1.0, []int{} // Default unarmed
 	}
 	dmg := i.GetDamage()
-	attacks = dmg.Attacks
-	if attacks < 1 {
-		attacks = 1
-	}
+	attacks = max(dmg.Attacks, 1)
 	if dmg.BaseDamage > 0 {
 		return attacks, float64(dmg.BaseDamage), float64(dmg.Variance), dmg.CritConditionIds
 	}

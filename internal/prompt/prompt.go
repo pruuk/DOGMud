@@ -249,10 +249,7 @@ func (q *Question) Answer(answer string) {
 				break
 			}
 
-			longestPossible := len(optTest)
-			if len(testAnswer) < longestPossible {
-				longestPossible = len(testAnswer)
-			}
+			longestPossible := min(len(testAnswer), len(optTest))
 			for j := 0; j < longestPossible; j++ {
 				if optTest[j] != testAnswer[j] {
 					break

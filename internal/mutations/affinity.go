@@ -85,10 +85,7 @@ func GetGraphPool(owned map[string]int, aff map[string]float64, sp *species.Spec
 		if a < depthThreshold(spec.Rarity) {
 			continue
 		}
-		weight := 11 - spec.Rarity - rarityBonus
-		if weight < 1 {
-			weight = 1
-		}
+		weight := max(11-spec.Rarity-rarityBonus, 1)
 		if a != math.MaxFloat64 {
 			weight += int(a) // clustered mutations get louder as their cluster grows
 		}

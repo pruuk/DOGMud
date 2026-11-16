@@ -225,10 +225,7 @@ func (q *pathQueue) Pop() any          { old := *q; n := len(old); it := old[n-1
 func edgeCost(to *RoomRecord, er *ExitRecord) float64 {
 	c := 1.0
 	if to != nil {
-		d := to.Danger
-		if d > 6 {
-			d = 6
-		}
+		d := min(to.Danger, 6)
 		c += 0.5 * float64(d)
 	}
 	if er.Door {

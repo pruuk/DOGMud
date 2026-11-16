@@ -1111,10 +1111,7 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 			forceStatPool := 0
 
 			if spawnInfo.StatPool > 0 {
-				forceStatPool = spawnInfo.StatPool + spawnInfo.StatPoolMod
-				if forceStatPool < 1 {
-					forceStatPool = 1
-				}
+				forceStatPool = max(spawnInfo.StatPool+spawnInfo.StatPoolMod, 1)
 			}
 
 			if mob := mobs.NewMobById(mobs.MobId(spawnInfo.MobId), r.RoomId, forceStatPool); mob != nil {

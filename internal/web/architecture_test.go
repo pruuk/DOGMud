@@ -54,14 +54,8 @@ func TestDiagramArtifactsHaveNoTemplateDelimiters(t *testing.T) {
 		}
 
 		if idx := strings.Index(string(body), "{{"); idx >= 0 {
-			start := idx - 40
-			if start < 0 {
-				start = 0
-			}
-			end := idx + 2 + 40
-			if end > len(body) {
-				end = len(body)
-			}
+			start := max(idx-40, 0)
+			end := min(idx+2+40, len(body))
 			context := strings.ReplaceAll(string(body[start:end]), "\n", "\\n")
 			t.Errorf("%s contains a Go template delimiter at byte %d: serveTemplate "+
 				"would fail to parse it and return HTTP 500. Context: %q. This file is "+

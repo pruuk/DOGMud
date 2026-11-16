@@ -388,10 +388,7 @@ func (m *Mind) trimLines(talkMax int) {
 	if talkMax <= 0 {
 		return
 	}
-	eventMax := talkMax / 4
-	if eventMax < 4 {
-		eventMax = 4
-	}
+	eventMax := max(talkMax/4, 4)
 	talk, events := 0, 0
 	keep := make([]bool, len(m.RecentLines))
 	for i := len(m.RecentLines) - 1; i >= 0; i-- {

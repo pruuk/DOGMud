@@ -565,10 +565,7 @@ func TestSwingCountFormula_Math(t *testing.T) {
 		raw := 1.0 + (tt.dex-50.0)/100.0*tt.speed*1.0
 		assert.InDelta(t, tt.want, raw, 0.01,
 			"dex=%.0f, speed=%.1f", tt.dex, tt.speed)
-		rounded := int(math.Round(raw))
-		if rounded < 1 {
-			rounded = 1
-		}
+		rounded := max(int(math.Round(raw)), 1)
 		t.Logf("dex=%.0f speed=%.1f → raw=%.2f → swings=%d", tt.dex, tt.speed, raw, rounded)
 	}
 }

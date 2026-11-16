@@ -43,10 +43,7 @@ func SpellScaledTriggers(kind EffectKind, stat, skill float64) int {
 	if kind == EffectDarknessStrength {
 		base, statDiv, skillDiv = cfg.DarknessSpellDurationBase, cfg.DarknessSpellDurationStatDivisor, cfg.DarknessSpellDurationSkillDivisor
 	}
-	triggers := int(math.Round(base + stat/statDiv + skill/skillDiv))
-	if triggers < 1 {
-		triggers = 1
-	}
+	triggers := max(int(math.Round(base+stat/statDiv+skill/skillDiv)), 1)
 	return triggers
 }
 

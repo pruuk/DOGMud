@@ -53,10 +53,7 @@ func (c *Character) GetDefaultDistributionDamage() (attacks int, baseDamage floa
 		speciesInfo = &species.Species{}
 	}
 
-	attacks = speciesInfo.Damage.Attacks
-	if attacks < 1 {
-		attacks = 1
-	}
+	attacks = max(speciesInfo.Damage.Attacks, 1)
 	conditionOnCrit = speciesInfo.Damage.CritConditionIds
 
 	// Use skill-based unarmed damage calculation (Stage 7.3)

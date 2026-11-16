@@ -86,10 +86,7 @@ func motdBox(text string, lw int) string {
 	for _, line := range wrapped {
 		// Pad each line to padWidth visible chars inside the box.
 		// ANSI tag bytes don't count toward width.
-		padLen := padWidth - motdVisibleWidth(line)
-		if padLen < 0 {
-			padLen = 0
-		}
+		padLen := max(padWidth-motdVisibleWidth(line), 0)
 		output += ` ║ ` + line + strings.Repeat(" ", padLen) + `║` + "\n"
 	}
 	output += ` ╚` + horiz + `╝</ansi>` + "\n"

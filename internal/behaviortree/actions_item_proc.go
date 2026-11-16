@@ -291,10 +291,7 @@ func procLifesteal(attacker *characters.Character, damage int, params map[string
 	if ratio <= 0 || damage <= 0 {
 		return 0
 	}
-	amt := int(float64(damage) * ratio)
-	if amt < 1 {
-		amt = 1
-	}
+	amt := max(int(float64(damage)*ratio), 1)
 	return attacker.ApplyRestore(characters.PoolHealth, amt)
 }
 
@@ -313,10 +310,7 @@ func procStealPool(owner, other *characters.Character, params map[string]float64
 	}
 	switch int(params["pool"]) {
 	case 3: // conviction
-		amt := int(float64(other.ConvictionMax.Value) * pct)
-		if amt < 1 {
-			amt = 1
-		}
+		amt := max(int(float64(other.ConvictionMax.Value)*pct), 1)
 		if amt > other.Conviction {
 			amt = other.Conviction
 		}

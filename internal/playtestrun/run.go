@@ -301,10 +301,7 @@ func waitForDeadlineOrStop(ctx context.Context, clock Clock, deadline time.Time,
 			return "deadline", nil
 		}
 		remaining := deadline.Sub(now)
-		sleep := poll
-		if remaining < sleep {
-			sleep = remaining
-		}
+		sleep := min(remaining, poll)
 		if sleep <= 0 {
 			return "deadline", nil
 		}

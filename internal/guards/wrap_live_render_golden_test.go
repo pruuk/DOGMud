@@ -258,10 +258,7 @@ func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 	motdOutput += ` ║ ` + titleStyled + `║` + "\n"
 	motdOutput += ` ╠` + horiz + `╣` + "\n"
 	for _, line := range motdWrapped {
-		padLen := padWidth - motdVisibleWidthForTest(line)
-		if padLen < 0 {
-			padLen = 0
-		}
+		padLen := max(padWidth-motdVisibleWidthForTest(line), 0)
 		motdOutput += ` ║ ` + line + strings.Repeat(" ", padLen) + `║` + "\n"
 	}
 	motdOutput += ` ╚` + horiz + `╝</ansi>` + "\n"
@@ -328,10 +325,7 @@ func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 // full ~3.5KB rendered sheets into a test failure log is unreadable; this
 // narrows a failure to the one line that actually moved.
 func firstDiffContext(want, got string) (pos int, wantCtx, gotCtx string) {
-	n := len(want)
-	if len(got) < n {
-		n = len(got)
-	}
+	n := min(len(got), len(want))
 	for pos = 0; pos < n; pos++ {
 		if want[pos] != got[pos] {
 			break
@@ -339,14 +333,8 @@ func firstDiffContext(want, got string) (pos int, wantCtx, gotCtx string) {
 	}
 	const window = 60
 	ctx := func(s string, at int) string {
-		start := at - window
-		if start < 0 {
-			start = 0
-		}
-		end := at + window
-		if end > len(s) {
-			end = len(s)
-		}
+		start := max(at-window, 0)
+		end := min(at+window, len(s))
 		return s[start:end]
 	}
 	return pos, ctx(want, pos), ctx(got, pos)

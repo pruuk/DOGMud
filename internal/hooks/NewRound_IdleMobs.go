@@ -44,10 +44,7 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 
 	allMobInstances := mobs.GetAllMobInstanceIds()
 
-	allowedUnloadCt := len(allMobInstances) - int(mc.MobUnloadThreshold)
-	if allowedUnloadCt < 0 {
-		allowedUnloadCt = 0
-	}
+	allowedUnloadCt := max(len(allMobInstances)-int(mc.MobUnloadThreshold), 0)
 
 	// Handle idle mob behavior
 	tStart := time.Now()

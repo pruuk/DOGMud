@@ -195,10 +195,7 @@ func renderVitalBar(current, max, reserved int) string {
 	}
 	usableBlocks := 10 - reservedBlocks
 
-	filledBlocks := int(math.Floor(float64(current) / float64(effectiveMax) * float64(usableBlocks)))
-	if filledBlocks > usableBlocks {
-		filledBlocks = usableBlocks
-	}
+	filledBlocks := min(int(math.Floor(float64(current)/float64(effectiveMax)*float64(usableBlocks))), usableBlocks)
 	if filledBlocks < 0 {
 		filledBlocks = 0
 	}

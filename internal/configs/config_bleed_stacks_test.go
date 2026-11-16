@@ -160,10 +160,7 @@ func TestShippedBleedTuningMeetsTheSliceTargets(t *testing.T) {
 		if n := float64(r.rounds) / cooldown; n < 2 || n > 3 {
 			t.Errorf("%s: a stack lasts %d rounds = %.2f cooldowns of %v; want 2 to 3 so a lone attacker keeps 2 to 3 stacks", r.move, r.rounds, n, cooldown)
 		}
-		perRound := strength / int(r.divisor)
-		if perRound < int(r.floor) {
-			perRound = int(r.floor)
-		}
+		perRound := max(strength/int(r.divisor), int(r.floor))
 		if ratio := float64(int(r.rounds)*perRound) / float64(r.oldHit); ratio < 1.5 || ratio > 3 {
 			t.Errorf("%s: a stack totals %d at Strength 100 = %.2f times the old %d hit; want 1.5 to 3", r.move, int(r.rounds)*perRound, ratio, r.oldHit)
 		}

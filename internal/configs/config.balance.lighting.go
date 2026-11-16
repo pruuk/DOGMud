@@ -78,10 +78,7 @@ func (b *Balance) validateLighting() {
 	// blind above 65.
 	exitsInRange := b.LightExitsAbove >= -100 && b.LightExitsAbove <= 100 && b.LightExitsAbove != 0
 	if !exitsInRange || b.LightExitsAbove < b.LightBlindBelow {
-		exitsFallback := ConfigInt(65)
-		if exitsFallback < b.LightBlindBelow {
-			exitsFallback = b.LightBlindBelow
-		}
+		exitsFallback := max(ConfigInt(65), b.LightBlindBelow)
 		b.LightExitsAbove = exitsFallback
 	}
 

@@ -211,10 +211,7 @@ func buildParityAnchor(atkScore, defScore, dmgMean, critMean float64) parityAnch
 }
 
 func (a parityAnchor) deflected(mult float64) float64 {
-	i := int(math.Round(mult / a.gDefendStep))
-	if i < 0 {
-		i = 0
-	}
+	i := max(int(math.Round(mult/a.gDefendStep)), 0)
 	if i >= len(a.gDefend) {
 		i = len(a.gDefend) - 1
 	}

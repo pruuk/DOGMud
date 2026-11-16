@@ -263,10 +263,7 @@ func GetInstanceRegistry() *InstanceRegistry {
 // it afterwards and InstanceMobGold needs it at spawn time.
 func ScaleSpawnStatPools(spawns []SpawnInfo, goldPaid int, cap int) {
 	for i := range spawns {
-		mult := spawns[i].StatPool
-		if mult < 1 {
-			mult = 1
-		}
+		mult := max(spawns[i].StatPool, 1)
 		scaled := goldPaid * mult
 		if cap > 0 && scaled > cap {
 			scaled = cap

@@ -28,11 +28,7 @@ func ComputeTickAmount(maxPool int, percent float64, variance float64, minAmount
 
 	base := float64(maxPool) * effectivePercent
 	scaled := base * scalingMult
-	amount := int(math.Round(math.Abs(scaled)))
-
-	if amount < minAmount {
-		amount = minAmount
-	}
+	amount := max(int(math.Round(math.Abs(scaled))), minAmount)
 
 	if percent < 0 {
 		return -amount

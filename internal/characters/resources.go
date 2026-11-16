@@ -364,10 +364,7 @@ func (c *Character) HealthPerRound() int {
 	// RAW max on purpose, not EffectivePoolMax: reserve-aware regen would be a
 	// NERF to reserved characters, and the faster refill relative to the usable
 	// pool is what offsets the depletion penalty they already carry.
-	base := int(pct * float64(c.HealthMax.Value))
-	if base < 1 {
-		base = 1
-	}
+	base := max(int(pct*float64(c.HealthMax.Value)), 1)
 	return c.applyRestRegen(base)
 }
 
@@ -419,16 +416,10 @@ func (c *Character) StaminaPerRound() int {
 	}
 	pct += float64(c.StatMod(string(statmods.StaminaRecovery))) / 100.0
 	// RAW max on purpose, not EffectivePoolMax -- see HealthPerRound.
-	base := int(pct * float64(c.StaminaMax.Value))
-	if base < 1 {
-		base = 1
-	}
+	base := max(int(pct*float64(c.StaminaMax.Value)), 1)
 	// Apply stamina_regen_multiplier mutations
 	if mult := mutations.GetStaminaRegenMultiplier(c.Mutations); mult != 0 {
-		base = int(float64(base) * (1.0 + mult))
-		if base < 1 {
-			base = 1
-		}
+		base = max(int(float64(base)*(1.0+mult)), 1)
 	}
 	// Sleep or sit boost (composes on top of mutation modifier).
 	return c.applyRestRegen(base)
@@ -442,10 +433,7 @@ func (c *Character) ConvictionPerRound() int {
 	}
 	pct += float64(c.StatMod(string(statmods.ConvictionRecovery))) / 100.0
 	// RAW max on purpose, not EffectivePoolMax -- see HealthPerRound.
-	base := int(pct * float64(c.ConvictionMax.Value))
-	if base < 1 {
-		base = 1
-	}
+	base := max(int(pct*float64(c.ConvictionMax.Value)), 1)
 	return c.applyRestRegen(base)
 }
 

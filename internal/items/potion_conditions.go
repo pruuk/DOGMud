@@ -31,10 +31,7 @@ func PotionMagnitudeApplication(itemSpec *ItemSpec, spec *conditions.ConditionSp
 		durationMult = 1
 	}
 	magnitude = conditions.CapScaledMagnitude(kind, itemSpec.Magnitude*durationMult)
-	triggers = int(math.Round(float64(spec.TriggerCount) * durationMult))
-	if triggers < 1 {
-		triggers = 1
-	}
+	triggers = max(int(math.Round(float64(spec.TriggerCount)*durationMult)), 1)
 	return magnitude, triggers, true
 }
 

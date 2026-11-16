@@ -48,10 +48,7 @@ func TestIntegration_CombatLifecycle(t *testing.T) {
 
 		// Roll for variance
 		rolled := dice.RollStat(finalDmg)
-		dmg := int(rolled.Value)
-		if dmg < 1 {
-			dmg = 1
-		}
+		dmg := max(int(rolled.Value), 1)
 
 		defHP -= dmg
 

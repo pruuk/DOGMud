@@ -32,10 +32,7 @@ func SelectStockTransfers(shopInv *ShopInventory, pool map[int]int) map[int]int 
 	}
 	out := map[int]int{}
 	for _, g := range gaps {
-		take := g.gap
-		if take > remaining[g.itemId] {
-			take = remaining[g.itemId]
-		}
+		take := min(g.gap, remaining[g.itemId])
 		if take > 0 {
 			out[g.itemId] = take
 			remaining[g.itemId] -= take

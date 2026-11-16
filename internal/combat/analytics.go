@@ -120,10 +120,7 @@ func InitAnalytics() {
 		return // already initialized
 	}
 
-	maxEvents = int(cfg.MaxEvents)
-	if maxEvents < 100 {
-		maxEvents = 100
-	}
+	maxEvents = max(int(cfg.MaxEvents), 100)
 	if eventBuffer == nil {
 		eventBuffer = make([]CombatEvent, 0, 1024)
 	}

@@ -89,10 +89,7 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		// YAML-driven use effects (replaces JS onUse for simple items)
 		if itemSpec.OnUseTrainSkill != "" {
-			trainAmount := itemSpec.OnUseTrainAmount
-			if trainAmount < 1 {
-				trainAmount = 1
-			}
+			trainAmount := max(itemSpec.OnUseTrainAmount, 1)
 			user.Character.TrainSkill(itemSpec.OnUseTrainSkill, trainAmount)
 			if itemSpec.OnUseUserText != "" {
 				user.SendText(messaging.CategorySystem, itemSpec.OnUseUserText)

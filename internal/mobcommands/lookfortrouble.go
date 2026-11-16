@@ -85,10 +85,7 @@ func LookForTrouble(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) 
 			// Stage 12.1: Pheromone Glands — predatory mobs prefer this player
 			if aggroMagnet := mutations.GetAggroMagnet(user.Character.Mutations); aggroMagnet > 0 {
 				if slices.Contains(mob.Groups, "predatory") {
-					entries = int(math.Round(float64(entries) * aggroMagnet))
-					if entries < 1 {
-						entries = 1
-					}
+					entries = max(int(math.Round(float64(entries)*aggroMagnet)), 1)
 				}
 			}
 
@@ -221,10 +218,7 @@ func applyGrappledControlledTiebreak(pool []int) []int {
 	// Determine the tie band floor (top weight minus 10%).
 	// Use integer arithmetic: tieBandFloor = maxWeight - maxWeight/10.
 	// A candidate is "in the tie band" if their weight >= tieBandFloor.
-	tieBandFloor := maxWeight - maxWeight/10
-	if tieBandFloor < 1 {
-		tieBandFloor = 1
-	}
+	tieBandFloor := max(maxWeight-maxWeight/10, 1)
 
 	// Find any candidate in the tie band who is grappled+controlled.
 	// Only boost if at least one such candidate exists AND is not already

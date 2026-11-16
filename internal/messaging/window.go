@@ -111,9 +111,6 @@ func DarknessTrimTarget(strength, reach, blindBelow int) float64 {
 	if reach > 0 {
 		return float64(-reach + 1)
 	}
-	edge := blindBelow - clampShift(strength)
-	if edge < windowFloor {
-		edge = windowFloor
-	}
+	edge := max(blindBelow-clampShift(strength), windowFloor)
 	return float64(edge + 1)
 }

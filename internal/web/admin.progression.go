@@ -546,10 +546,7 @@ func percentile(sorted []int, pct int) int {
 	if len(sorted) == 0 {
 		return 0
 	}
-	idx := int(math.Ceil(float64(pct)/100*float64(len(sorted)))) - 1
-	if idx < 0 {
-		idx = 0
-	}
+	idx := max(int(math.Ceil(float64(pct)/100*float64(len(sorted))))-1, 0)
 	if idx >= len(sorted) {
 		idx = len(sorted) - 1
 	}

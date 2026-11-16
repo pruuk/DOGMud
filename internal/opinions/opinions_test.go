@@ -254,10 +254,7 @@ func TestParallelBumpsConverge(t *testing.T) {
 	wg.Wait()
 
 	// Every Bump adds 1; total expected is min(clamp, total).
-	want := goroutines * bumpsPer
-	if want > ScoreMax {
-		want = ScoreMax
-	}
+	want := min(goroutines*bumpsPer, ScoreMax)
 	if got := Get(41, 17); got != want {
 		t.Errorf("after %d parallel bumps: got %d, want %d", goroutines*bumpsPer, got, want)
 	}

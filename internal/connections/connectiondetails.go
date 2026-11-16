@@ -108,10 +108,7 @@ func (ih *InputHistory) Position() int {
 
 func (ih *InputHistory) ResetPosition() {
 	ih.inhistory = false
-	ih.position = len(ih.history) - 1
-	if ih.position < 0 {
-		ih.position = 0
-	}
+	ih.position = max(len(ih.history)-1, 0)
 }
 
 func (ih *InputHistory) InHistory() bool {

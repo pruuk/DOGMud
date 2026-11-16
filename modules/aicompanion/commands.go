@@ -385,10 +385,7 @@ func (m *AICompanionModule) describeMind(charName string) string {
 	}
 
 	b.WriteString("Latest memories:\n")
-	start := len(mind.Memories) - 6
-	if start < 0 {
-		start = 0
-	}
+	start := max(len(mind.Memories)-6, 0)
 	for _, mem := range mind.Memories[start:] {
 		fmt.Fprintf(&b, "  [%s, %d, %s ago] %s\n", mem.Kind, mem.Importance, humanizeElapsed(now-mem.Unix), mem.Text)
 	}
@@ -402,10 +399,7 @@ func (m *AICompanionModule) describeMind(charName string) string {
 		fmt.Fprintf(&b, "Promise [%d] by %s: %s\n", p.Id, p.By, p.Text)
 	}
 	b.WriteString("Recent opinion changes:\n")
-	start = len(mind.OpinionLog) - 5
-	if start < 0 {
-		start = 0
-	}
+	start = max(len(mind.OpinionLog)-5, 0)
 	for _, ch := range mind.OpinionLog[start:] {
 		fmt.Fprintf(&b, "  %s ago %s/%s %+d/%+d/%+d %s\n", humanizeElapsed(now-ch.Unix), ch.Trigger, ch.Source,
 			ch.Delta.Trust, ch.Delta.Respect, ch.Delta.Affection, ch.Reason)

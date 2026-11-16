@@ -340,10 +340,7 @@ func (bs *Conditions) addConditionScaled(conditionId int, durationMult float64) 
 		// A ward or a heal replaces its family's other record (family.go).
 		bs.discardFamilyRivals(conditionInfo)
 
-		triggers := int(float64(conditionInfo.TriggerCount) * durationMult)
-		if triggers < 1 {
-			triggers = 1
-		}
+		triggers := max(int(float64(conditionInfo.TriggerCount)*durationMult), 1)
 		newCondition := Condition{
 			ConditionId:  conditionInfo.ConditionId,
 			RoundCounter: 0,

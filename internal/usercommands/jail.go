@@ -24,10 +24,7 @@ func currentJailFine(user *users.UserRecord) (int, uint64, justice.JailRecord, b
 	if rec.UntilRound > now {
 		remaining = rec.UntilRound - now
 	}
-	fine := int(remaining) * rec.DecayPerRound
-	if fine < 0 {
-		fine = 0
-	}
+	fine := max(int(remaining)*rec.DecayPerRound, 0)
 	return fine, remaining, rec, true
 }
 

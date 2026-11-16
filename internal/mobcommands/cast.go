@@ -97,10 +97,7 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// up front. Reconciling the two is a U7 cost-model decision. This chunk
 	// moves the mob from "no floor at all" to "must hold at least one slice",
 	// which narrows the gap rather than widening it.
-	firstRoundCost := spellInfo.Cost / result.FoldsNeeded
-	if firstRoundCost < 1 {
-		firstRoundCost = 1
-	}
+	firstRoundCost := max(spellInfo.Cost/result.FoldsNeeded, 1)
 	if !mob.Character.ApplyCost(characters.PoolConviction, firstRoundCost) {
 		if !spellInfo.IgnoreMoveCooldown {
 			actions.ReleaseSpecialMove(&mob.Character)

@@ -214,10 +214,7 @@ func pickNeighbor(neighbors []Edge, avoid ZoneId, rng *RNG) ZoneId {
 	}
 	total := 0
 	for _, e := range candidates {
-		w := e.Weight
-		if w < 1 {
-			w = 1
-		}
+		w := max(e.Weight, 1)
 		total += w
 	}
 	if total <= 0 {
@@ -225,10 +222,7 @@ func pickNeighbor(neighbors []Edge, avoid ZoneId, rng *RNG) ZoneId {
 	}
 	r := rng.Intn(total)
 	for _, e := range candidates {
-		w := e.Weight
-		if w < 1 {
-			w = 1
-		}
+		w := max(e.Weight, 1)
 		if r < w {
 			return e.B
 		}

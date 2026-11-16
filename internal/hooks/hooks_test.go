@@ -1007,10 +1007,7 @@ func TestDotProducerRecordsNegativeHarm_MobTarget(t *testing.T) {
 	// recomputed here rather than only bounded.
 	casterSkill := u.Character.GetSkillLevel(skills.Spellcasting)
 	casterWil := dotSpell.CasterStatValue(u.Character.Stats)
-	wantDuration := calcSpellDuration(dotSpell.BaseFolds, casterSkill, casterWil) / 3
-	if wantDuration < 3 {
-		wantDuration = 3
-	}
+	wantDuration := max(calcSpellDuration(dotSpell.BaseFolds, casterSkill, casterWil)/3, 3)
 
 	dmg := applySpellEffect(newSpellEffectCtx(u.Character, actions.NewUserActorInRoom(u, room), actions.NewMobActorInRoom(mob, room), room, dotSpell, 10, spellContestAttackWin()))
 	assert.Equal(t, 0, dmg, "the dot effect deals no immediate damage")
@@ -1048,10 +1045,7 @@ func TestDotProducerRecordsNegativeHarm_PlayerTarget(t *testing.T) {
 	if spell.HasSchool(spells.SchoolManifestation) {
 		castSkill = skills.Manifestation
 	}
-	wantDuration := calcSpellDuration(spell.BaseFolds, caster.Character.GetSkillLevel(castSkill), spell.CasterStatValue(caster.Character.Stats)) / 3
-	if wantDuration < 3 {
-		wantDuration = 3
-	}
+	wantDuration := max(calcSpellDuration(spell.BaseFolds, caster.Character.GetSkillLevel(castSkill), spell.CasterStatValue(caster.Character.Stats))/3, 3)
 
 	recs := target.Character.GetConditions(conditions.ConditionIdPoisoned)
 	require.Len(t, recs, 1)

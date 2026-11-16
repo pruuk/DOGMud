@@ -1353,10 +1353,7 @@ func TestRenderVitalBar_NeverReadsFullBelowTheReachableCeiling(t *testing.T) {
 	// is that no usable block is lit that should not be.
 	t.Run("swept across reservations", func(t *testing.T) {
 		for _, reserved := range []int{0, 40, 100, 176, 260, 400, 440, 500} {
-			reachable := 440 - reserved
-			if reachable < 1 {
-				reachable = 1
-			}
+			reachable := max(440-reserved, 1)
 			for _, cur := range []int{1, reachable / 4, reachable / 2, reachable - 1} {
 				if cur < 1 || cur >= reachable {
 					continue

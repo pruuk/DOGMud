@@ -119,10 +119,7 @@ func merchantSay(room *rooms.Room, mob *mobs.Mob, line string) {
 // deliberately bypasses the scarcity curve and the legacy 25% cap — unique
 // affixed gear is priced on value, not commodity stock levels.
 func affixedSellPrice(item items.Item, cfg shops.PricingConfig) int {
-	price := int(math.Ceil(float64(item.GetSpec().Value) * cfg.BuyRatio))
-	if price < 1 {
-		price = 1
-	}
+	price := max(int(math.Ceil(float64(item.GetSpec().Value)*cfg.BuyRatio)), 1)
 	return price
 }
 

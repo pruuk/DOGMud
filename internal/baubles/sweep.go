@@ -305,10 +305,7 @@ func LastSweep() SweepStatus {
 
 // SweepInterval is the time between sweeps (Balance.BaubleSweepHours).
 func SweepInterval() time.Duration {
-	h := int(configs.GetBalanceConfig().BaubleSweepHours)
-	if h < 1 {
-		h = 1
-	}
+	h := max(int(configs.GetBalanceConfig().BaubleSweepHours), 1)
 	return time.Duration(h) * time.Hour
 }
 

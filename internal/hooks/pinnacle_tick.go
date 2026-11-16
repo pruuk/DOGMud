@@ -133,10 +133,7 @@ func tickHunger(c *characters.Character, user *users.UserRecord, now uint64) {
 	if escalation > 3.0 {
 		escalation = 3.0
 	}
-	drain := int(float64(c.HealthMax.Value) * spec.HungerDrainPct * escalation)
-	if drain < 1 {
-		drain = 1
-	}
+	drain := max(int(float64(c.HealthMax.Value)*spec.HungerDrainPct*escalation), 1)
 	if c.Health-drain < 1 {
 		drain = c.Health - 1
 	}

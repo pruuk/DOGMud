@@ -366,10 +366,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			// Apply effects to thrower
 			if hasDamage {
 				rawDmg := combat.CalcRawDamage(dexterity, skullduggery, spec.DamageMultiplier, combat.ChannelPhysical)
-				dmg := int(math.Round(rawDmg))
-				if dmg < 1 {
-					dmg = 1
-				}
+				dmg := max(int(math.Round(rawDmg)), 1)
 				user.Character.ApplyHarm(characters.PoolHealth, dmg,
 					state.ActorRef{UserId: user.UserId})
 				dmgDesc := combat.GetDamageDescription(dmg, user.Character.HealthMax.Value)

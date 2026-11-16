@@ -33,10 +33,7 @@ func releaseCompanionsOverCeiling(ch *characters.Character) []characters.Compani
 		return nil
 	}
 	increase := ch.MutationReservePoints(units) - ch.MutationReservePoints(held)
-	grandfathered := ch.ReservationOverages().Conviction - increase
-	if grandfathered < 0 {
-		grandfathered = 0
-	}
+	grandfathered := max(ch.ReservationOverages().Conviction-increase, 0)
 	var released []characters.CompanionInfo
 	for ch.ReservationOverages().Conviction > grandfathered {
 		idx := -1

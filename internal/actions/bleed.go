@@ -8,9 +8,6 @@ import "github.com/GoMudEngine/GoMud/internal/configs"
 // the division is safe. Every bleed move passes the result as the stack's
 // magnitude (negated) and <Move>BleedRounds as its rounds.
 func bleedPerRound(strength int, divisor, floor configs.ConfigInt) int {
-	amt := strength / int(divisor)
-	if amt < int(floor) {
-		amt = int(floor)
-	}
+	amt := max(strength/int(divisor), int(floor))
 	return amt
 }
