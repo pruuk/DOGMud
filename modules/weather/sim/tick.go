@@ -1,6 +1,9 @@
 package sim
 
-import "sort"
+import (
+	"slices"
+	"sort"
+)
 
 // Step advances the simulation one coarse tick. It is a pure function of its
 // inputs: all randomness comes from prev.RNGState. It returns the next State
@@ -276,7 +279,7 @@ func pickWeatherType(profile ClimateProfile, current WeatherType, keepBias float
 	for k := range profile.Weather {
 		keys = append(keys, k)
 	}
-	sort.Slice(keys, func(a, b int) bool { return keys[a] < keys[b] })
+	slices.Sort(keys)
 
 	total := 0.0
 	for _, k := range keys {

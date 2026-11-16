@@ -2,6 +2,7 @@ package keywords
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -147,9 +148,7 @@ func GetAllHelpTopics() []string {
 		helpTopics = append(helpTopics, helpCommand)
 	}
 
-	sort.Slice(helpTopics, func(i, j int) bool {
-		return helpTopics[i] < helpTopics[j]
-	})
+	slices.Sort(helpTopics)
 
 	return helpTopics
 }

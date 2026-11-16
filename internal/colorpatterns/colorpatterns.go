@@ -5,7 +5,7 @@ import (
 	"math"
 	"os"
 	"regexp"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -45,7 +45,7 @@ func GetColorPatternNames() []string {
 		ret = append(ret, name)
 	}
 
-	sort.Slice(ret, func(i, j int) bool { return ret[i] < ret[j] })
+	slices.Sort(ret)
 
 	return ret
 }
