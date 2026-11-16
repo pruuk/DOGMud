@@ -584,7 +584,7 @@ func (g *GMCPMudletModule) sendUICommand(rest string, user *users.UserRecord, ro
 	// Only proceed if client is Mudlet
 	connId := user.ConnectionId()
 	if gmcpData, ok := gmcpModule.cache.Get(connId); !ok || !gmcpData.Client.IsMudlet {
-		user.SendText(messaging.CategoryRefusal, "\n<ansi fg=\"red\">This command is only available for Mudlet clients.</ansi> You are currently using: "+gmcpData.Client.Name+"\n")
+		user.SendText(messaging.CategoryRefusal, mudletOnlyRefusal(gmcpData.Client.Name, ok))
 		return true, nil
 	}
 
@@ -689,12 +689,24 @@ func (g *GMCPMudletModule) checkClientCommand(rest string, user *users.UserRecor
 	return true, nil
 }
 
+// mudletOnlyRefusal answers a Mudlet-only command from another client. It
+// names the client only when the GMCP cache knew it: on a cache miss the
+// settings are the zero value, and the line used to end "You are currently
+// using: " with nothing after it (#555).
+func mudletOnlyRefusal(clientName string, known bool) string {
+	line := "\n<ansi fg=\"red\">This command is only available for Mudlet clients.</ansi>"
+	if known && clientName != "" {
+		line += " You are currently using: " + clientName
+	}
+	return line + "\n"
+}
+
 // discordCommand handles Discord-related settings
 func (g *GMCPMudletModule) discordCommand(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	// Only proceed if client is Mudlet
 	connId := user.ConnectionId()
 	if gmcpData, ok := gmcpModule.cache.Get(connId); !ok || !gmcpData.Client.IsMudlet {
-		user.SendText(messaging.CategoryRefusal, "\n<ansi fg=\"red\">This command is only available for Mudlet clients.</ansi> You are currently using: "+gmcpData.Client.Name+"\n")
+		user.SendText(messaging.CategoryRefusal, mudletOnlyRefusal(gmcpData.Client.Name, ok))
 		return true, nil
 	}
 
