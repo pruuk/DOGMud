@@ -21,7 +21,7 @@ func cleanBountiesFile() {
 // call because OpenForTarget already returns results.
 func TestSeedFromEntries_Idempotency(t *testing.T) {
 	cleanBountiesFile()
-	resetCache()
+	resetCache(t)
 	defer func() {
 		roundForTest = nil
 		goldMultiplierForTest = nil
@@ -81,7 +81,7 @@ func TestSeedFromEntries_Idempotency(t *testing.T) {
 // zero TargetMobId or empty IssuerFaction are silently skipped.
 func TestSeedFromEntries_SkipsInvalidEntries(t *testing.T) {
 	cleanBountiesFile()
-	resetCache()
+	resetCache(t)
 	defer func() {
 		roundForTest = nil
 		goldMultiplierForTest = nil
