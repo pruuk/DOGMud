@@ -454,6 +454,7 @@ var (
 			return prefix + " your " + statName
 		},
 		"mutationLevel":   mutations.LevelDescription,
+		"mutationName":    mutationName,
 		"skillRank":       skills.GetSkillRankDescription,
 		"durationQuality": DurationQuality,
 	}
@@ -462,6 +463,16 @@ var (
 // DurationQuality is how long rounds left lasts, in words and colour, as
 // the `cooldowns` and conditions screens show a timer: a player never sees
 // the raw round count (the player-copy rule). `skills extra` uses it too.
+// mutationName is a mutation's display name for templates ("Dense Muscles",
+// not "dense-muscles"), the name `mutations` shows (#687). An id with no
+// loaded spec falls back to itself.
+func mutationName(id string) string {
+	if spec := mutations.GetMutation(id); spec != nil && spec.Name != "" {
+		return spec.Name
+	}
+	return id
+}
+
 func DurationQuality(rounds int) string {
 	switch {
 	case rounds <= 0:

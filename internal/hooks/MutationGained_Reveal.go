@@ -15,14 +15,17 @@ import (
 )
 
 // deepenFlourishText is the rank-up announcement (no splash ceremony —
-// spec 2026-07-29: deepenings get the lighter reveal).
+// spec 2026-07-29: deepenings get the lighter reveal). The depth is a word
+// (mutations.LevelDescription, the word `mutations` shows), never a number,
+// and no verb follows the name, so plural names (Dense Muscles) and singular
+// ones ending in s (Homunculus) both read right (#687).
 func deepenFlourishText(name string, rank int, maxLevel int) string {
-	levelTag := fmt.Sprintf(`Level %d`, rank)
+	levelTag := `now ` + mutations.LevelDescription(rank)
 	if rank >= maxLevel {
 		levelTag = `fully matured`
 	}
 	return fmt.Sprintf(
-		`<ansi fg="magenta">The Chrysalis deepens its hold. Your <ansi fg="yellow">%s</ansi> grows stronger (%s).</ansi>`,
+		`<ansi fg="magenta">The Chrysalis deepens its hold on your <ansi fg="yellow">%s</ansi> (%s).</ansi>`,
 		name, levelTag)
 }
 

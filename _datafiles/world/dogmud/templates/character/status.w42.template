@@ -74,10 +74,11 @@ that gets the 30-column form. */ -}}
 {{- if $c.Mutations }}
  <ansi fg="black-bold">.:</ansi><ansi fg="20">Mutations</ansi><ansi fg="black-bold">:.</ansi>
 {{- range $id, $level := $c.Mutations }}
-{{- if and (le (len $id) 25) (le (add 29 (len (mutationLevel $level))) $w) }}
-   <ansi fg="yellow">{{ printf "%-25s" $id }}</ansi> <ansi fg="magenta">{{ mutationLevel $level }}</ansi>
+{{- $name := mutationName $id }}
+{{- if and (le (len $name) 25) (le (add 29 (len (mutationLevel $level))) $w) }}
+   <ansi fg="yellow">{{ printf "%-25s" $name }}</ansi> <ansi fg="magenta">{{ mutationLevel $level }}</ansi>
 {{- else }}
-   <ansi fg="yellow">{{ wraptext $id (sub $w 3) "   " }}</ansi>
+   <ansi fg="yellow">{{ wraptext $name (sub $w 3) "   " }}</ansi>
       <ansi fg="magenta">{{ mutationLevel $level }}</ansi>
 {{- end }}
 {{- end }}

@@ -39,7 +39,7 @@ beside it at 30 columns puts "the" on the title's line. */ -}}
 {{- if $c.Mutations }}
  <ansi fg="black-bold">.:</ansi><ansi fg="20">Mutations</ansi><ansi fg="black-bold">:.</ansi>
 {{- range $id, $level := $c.Mutations }}
- <ansi fg="yellow">{{ wraptext $id (sub $w 1) " " }}</ansi>
+ <ansi fg="yellow">{{ wraptext (mutationName $id) (sub $w 1) " " }}</ansi>
    <ansi fg="magenta">{{ mutationLevel $level }}</ansi>
 {{- end }}
 {{- end }}
