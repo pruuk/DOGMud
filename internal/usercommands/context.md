@@ -189,7 +189,10 @@ already known, so no presence leaks.
 
 #### **Social and Party Commands**
 - **Party system**: `party` - Group management and coordination
-- **Pets**: `pet`, `tame` - Animal companion system
+- **Pets**: `pet`, `tame` - Animal companion system. `pets` (`Pets`,
+  `companion.go`) answers for whatever follows the player: the companion
+  list (with its `dismiss` footer), else the familiar, else the
+  no-companion line (#755).
 - **Character management**: `character`, `set`, `alias` - Character customization.
   The `set` command supports a `set arrest <surrender|resist>` subcommand
   (`cmdSetArrest` in `set.go`) that stores `characters.ArrestPolicy` on the

@@ -16,6 +16,26 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// companionListFooter follows the companion list: how to send one away, and
+// where the rest is explained (#755).
+const companionListFooter = `Type <ansi fg="command">dismiss</ansi> <ansi fg="cyan"><name></ansi> to send a companion away. See <ansi fg="command">help companion</ansi>.`
+
+// Pets answers `pets`, which players type for whatever follows them (#755):
+// the companion list when they have companions, their familiar when they
+// have one, and the no-companion line otherwise.
+func Pets(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	if len(user.Character.Companions) > 0 {
+		return Companion("", user, room, flags)
+	}
+	if user.Character.Pet.Exists() {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			`Your pet %s follows you. See <ansi fg="command">help pets</ansi>.`, user.Character.Pet.DisplayName()))
+		return true, nil
+	}
+	refusal.NoCompanion(user)
+	return true, nil
+}
+
 // Companion handles the `companion` command in four forms:
 //
 //	companion                          — list all companions
@@ -37,6 +57,7 @@ func Companion(rest string, user *users.UserRecord,
 		for _, msg := range companionList(companions, user.WrapWidth()) {
 			user.SendText(messaging.CategorySystem, msg)
 		}
+		user.SendText(messaging.CategorySystem, companionListFooter)
 		return true, nil
 	}
 

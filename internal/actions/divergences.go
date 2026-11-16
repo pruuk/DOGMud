@@ -106,6 +106,7 @@ var userOnlyCommands = map[string]string{
 	"online":          "ui",
 	"password":        "ui",
 	"pet":             "ui",
+	"pets":            "ui",
 	"print":           "ui",
 	"printline":       "ui",
 	"pvp":             "ui",
