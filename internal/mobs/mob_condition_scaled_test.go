@@ -12,7 +12,6 @@ func TestMobAddConditionScaledQueuesTheMultiplier(t *testing.T) {
 	m.AddConditionScaled(55, 1.3, "drink")
 	var got *events.Condition
 	for _, e := range events.DrainQueuedMobConditionsForTest(88101) {
-		e := e
 		got = &e
 	}
 	if got == nil || got.ConditionId != 55 || got.DurationMult != 1.3 || got.Source != "drink" {

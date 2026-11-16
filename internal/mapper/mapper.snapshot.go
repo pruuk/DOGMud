@@ -153,7 +153,6 @@ func (w *WebMap) Snapshot(visited map[int]struct{}) []SnapshotRoom {
 		return nil
 	}
 	for _, m := range w.maps {
-		m := m
 		out = m.snapshotInto(out, visited, far, func(id int) bool { return drawnFrom[id] == m })
 	}
 	return out

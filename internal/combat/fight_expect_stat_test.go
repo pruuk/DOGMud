@@ -55,7 +55,6 @@ func TestMeleePredictionMatchesCombat(t *testing.T) {
 		{"armoured defender", 120, 30, 100, 20, 40},
 	}
 	for _, c := range cases {
-		c := c
 		t.Run(c.name, func(t *testing.T) {
 			attacker := statCombatant(t, "attacker", c.atkStat, c.atkRank)
 			attacker.SetAggro(0, 1, characters.DefaultAttack)

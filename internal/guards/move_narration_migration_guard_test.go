@@ -200,7 +200,6 @@ func refusalLiteralPositions(file *ast.File) map[token.Pos]bool {
 // migratedNarrationLiteralAllowlist for why that map must stay empty.
 func TestMigratedFilesHoldNoNarrationLiterals(t *testing.T) {
 	for _, path := range migratedNarrationLiteralFiles {
-		path := path
 		t.Run(path, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, path, nil, 0)

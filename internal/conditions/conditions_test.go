@@ -447,7 +447,6 @@ func TestGetDurations(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			gotRounds, gotTotal := GetDurations(tt.args.condition, tt.args.spec)
 			assert.Equal(t, tt.wantRounds, gotRounds)
@@ -555,7 +554,6 @@ func TestConditions_HasCondition(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bs := &Conditions{
 				List:         tt.fields.list,
@@ -636,7 +634,6 @@ func TestConditions_Started(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bs := &Conditions{
 				List:         tt.fields.list,
@@ -731,7 +728,6 @@ func TestConditions_TriggersLeft(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bs := &Conditions{
 				List:         tt.fields.list,
@@ -819,7 +815,6 @@ func TestConditions_RemoveCondition(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bs := &Conditions{
 				List:         tt.fields.list,
@@ -864,7 +859,6 @@ func TestCondition_Expired(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			b := &Condition{TriggersLeft: tt.triggersLeft}
 			assert.Equal(t, tt.want, b.Expired())

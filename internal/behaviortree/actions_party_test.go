@@ -765,7 +765,6 @@ func TestBanditBtreeYAMLLoads(t *testing.T) {
 		{286, "../../_datafiles/world/dogmud/behaviors/north_road/286-soren.yaml"},
 	}
 	for _, f := range files {
-		f := f
 		t.Run(f.path, func(t *testing.T) {
 			node, err := LoadTreeFromFile(f.path)
 			if err != nil {

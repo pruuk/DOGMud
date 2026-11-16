@@ -38,7 +38,6 @@ func TestNewCharm(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			got := NewCharm(tt.userId, tt.rounds, tt.expireCommand)
 			assert.Equal(t, tt.want, got)
@@ -69,7 +68,6 @@ func TestCharmInfo_Expire(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			tt.initial.Expire()
 			assert.Equal(t, tt.expected, tt.initial.RoundsRemaining)

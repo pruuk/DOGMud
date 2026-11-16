@@ -438,7 +438,6 @@ func TestPickpocketFindsArePocketSized(t *testing.T) {
 		`a big thing, heavy`:       {Name: `Heavy Iron Candlestick`, NameSimple: `candlestick`, Description: `A heavy iron candlestick, crusted with wax.`, WeightLbs: 1.9, Value: 3},
 		`a big thing called light`: {Name: `Small Bronze Urn`, NameSimple: `urn`, Description: `A small bronze urn with a chipped lip.`, WeightLbs: 0.4, Value: 3},
 	} {
-		r := r
 		installGenerator(t, func(ctx context.Context, req GenRequest) (GenResult, error) {
 			return GenResult{Reply: r, Model: `m`}, nil
 		})
@@ -484,7 +483,6 @@ func TestGenerateHoldsPlayerKeyTextToItsRules(t *testing.T) {
 		`finder-only on the server's key`:     {GenResult{Reply: goodReply(), FinderOnly: true}, 7},
 	}
 	for name, c := range refused {
-		c := c
 		installGenerator(t, func(ctx context.Context, req GenRequest) (GenResult, error) { return c.res, nil })
 		if got := Generate(context.Background(), GenRequest{Tier: TierAverage, FinderUserId: c.finder}, nil); got.Generator != GeneratorLocal {
 			t.Errorf("%v: a generic trinket, got %+v", name, got)
@@ -502,7 +500,6 @@ func TestGenerateHoldsPlayerKeyTextToItsRules(t *testing.T) {
 		`moderated and finder-only`: {GenResult{Reply: goodReply(), PlayerKey: true, Moderated: true, FinderOnly: true}, false},
 	}
 	for name, c := range kept {
-		c := c
 		installGenerator(t, func(ctx context.Context, req GenRequest) (GenResult, error) { return c.res, nil })
 		got := Generate(context.Background(), GenRequest{Tier: TierAverage, FinderUserId: 7}, nil)
 		if got.Generator != GeneratorOpenAI || !got.PlayerKey || got.FinderOnly != c.wantFinderOnly {

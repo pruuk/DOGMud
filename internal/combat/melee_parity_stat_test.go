@@ -351,7 +351,6 @@ func TestMeleeParityDamagePerSwing(t *testing.T) {
 	}
 
 	for _, cell := range cells {
-		cell := cell
 		t.Run(cell.name, func(t *testing.T) {
 			attacker := parityCombatant(t, "parity attacker")
 			attacker.SetAggro(0, 1, characters.DefaultAttack)
