@@ -353,7 +353,11 @@
       "free text, engine-parsed: e.g. \"10m\", \"1h\""));
     var deathPolicyOpts = [{ v: "", t: "" }].concat(enums.deathPolicies || []);
     instBlock.appendChild(selectField("Death policy", "deathPolicy", detail.deathPolicy, deathPolicyOpts));
-    instBlock.appendChild(ce("div", { "class": "flags" }, [checkField("Allow recall", "allowRecall", detail.allowRecall)]));
+    instBlock.appendChild(ce("div", { "class": "flags" }, [
+      checkField("Allow recall", "allowRecall", detail.allowRecall),
+      // #595: zone-config instance_gold, mobs carry gold scaled by the entry stake
+      checkField("Instance gold (mobs carry gold scaled by the entry)", "instanceGold", detail.instanceGold)
+    ]));
     insp.appendChild(instBlock);
 
     function toggleInstancedBlock() { instBlock.style.display = instInput.checked ? "" : "none"; }
@@ -400,6 +404,7 @@
       portalDuration: g("portalDuration", ""),
       entryRoom: g("entryRoom", 0),
       allowRecall: g("allowRecall", false),
+      instanceGold: g("instanceGold", false),
       nonCartesian: g("nonCartesian", false),
       defaultPlane: g("defaultPlane", 0)
     };

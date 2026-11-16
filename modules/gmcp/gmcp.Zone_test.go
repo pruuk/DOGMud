@@ -448,6 +448,36 @@ func TestBuildZoneUpdate_RoundTripsFields(t *testing.T) {
 	}
 }
 
+// #595: the editor had no field for instance_gold (set on Instance Arena and
+// Instance Planar Oasis), so a builder could not see or change it. The detail
+// carries it, and a save sets and clears it.
+func TestBuildZone_InstanceGoldRoundTrips(t *testing.T) {
+	w := newFakeZoneWorld()
+	w.cfgs["Testzone"] = &rooms.ZoneConfig{Name: "Testzone", RoomId: 100, DefaultBiome: "land",
+		Instanced: true, InstanceGold: true, DeathPolicy: "rejoin", DefaultPlane: 7}
+	d, ok := buildZoneGet(w.deps(), "Testzone")
+	if !ok || !d.InstanceGold {
+		t.Fatalf("detail must carry instance_gold: %+v", d)
+	}
+
+	req := baseZoneReq()
+	req.Instanced = true
+	req.InstanceGold = false
+	if res := buildZoneUpdate(w.deps(), req); !res.Ok {
+		t.Fatalf("update should succeed: %+v", res)
+	}
+	if w.saved[len(w.saved)-1].InstanceGold {
+		t.Error("clearing the box must clear instance_gold")
+	}
+	req.InstanceGold = true
+	if res := buildZoneUpdate(w.deps(), req); !res.Ok {
+		t.Fatalf("update should succeed: %+v", res)
+	}
+	if !w.saved[len(w.saved)-1].InstanceGold {
+		t.Error("ticking the box must set instance_gold")
+	}
+}
+
 func TestBuildZoneUpdate_RejectsEntryRoomOutsideZone(t *testing.T) {
 	w := newFakeZoneWorld() // roomIds returns only [100]
 	req := baseZoneReq()
