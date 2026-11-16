@@ -431,8 +431,10 @@ matches a flagless condition, and the spec lookup is nil-guarded before
 `.Flags`. Read `conditions.go` for the real thing.
 
 ```go
-// Check for specific behavioral flags
-func (bs *Conditions) HasFlag(action Flag, expire bool) bool {
+// Check for specific behavioral flags. HasFlag(action) and
+// ExpireConditionsWithFlag(action) both run this scan (#309: they were one
+// function, HasFlag(action, expire), whose true form expired what it found).
+func (bs *Conditions) scanFlag(action Flag, expire bool) bool {
     if action != All {
         if _, ok := bs.conditionFlags[action]; !ok {
             return false
@@ -579,7 +581,7 @@ Between ticks, read `Stacks` or `Magnitude` for the whole bleed, never
 
 **Every path that expires a held record goes through `Condition.expire()`**,
 which sets `TriggersLeft` to `TriggersLeftExpired` and clears `Stacks` in one
-step: `RemoveCondition`, the expire branch of `HasFlag`, and `tickStacks` when
+step: `RemoveCondition`, `ExpireConditionsWithFlag`, and `tickStacks` when
 a record has no stacks. `addStack` revives an expired, unpruned record through
 `addConditionScaled`, so one that kept its stacks would come back with them
 live; `expire()` is the primary guard, and `addStack` clearing the stacks of
@@ -700,7 +702,7 @@ rather than summing, so two sources of the same vision effect cannot stack
 into a window wider than the better one grants; everything else
 (`mitigation_flat`, `mitigation_magical`, `mitigation_conviction`,
 `pool_max_pct`) sums with identity `0`. It never calls
-`HasFlag` with `expire=true`, so reading it has no side effect.
+`ExpireConditionsWithFlag`, so reading it has no side effect.
 `Conditions.HasEffect(kind EffectKind) bool` reports whether any held,
 unexpired record declares the kind at all, without computing a value.
 
@@ -747,7 +749,7 @@ func (bs *Conditions) AddCondition(conditionId int, isPermanent bool) bool {
         if conditionInfo.IsStacking() {
             return false // only AddConditionMagnitude adds a stacking record
         }
-        if slices.Contains(conditionInfo.Flags, Poison) && bs.HasFlag(PoisonImmunity, false) {
+        if slices.Contains(conditionInfo.Flags, Poison) && bs.HasFlag(PoisonImmunity) {
             return false // poison immunity, silent
         }
 
@@ -1089,7 +1091,7 @@ func LoadDataFiles() {
 ```go
 // Conditions integrate with character stats and behavior
 - character.Conditions.StatMod("strength")          // Stat modifications
-- character.Conditions.HasFlag(conditions.NoCombat, false) // Behavioral restrictions
+- character.Conditions.HasFlag(conditions.NoCombat) // Behavioral restrictions
 - character.Conditions.Trigger()                    // Round-based processing
 - character.Conditions.Prune()                      // Cleanup expired conditions
 ```
@@ -1137,7 +1139,7 @@ held.AddCondition(poisonConditionId, false)
 held.AddCondition(strengthConditionId, true)
 
 // Check for specific behavior
-if held.HasFlag(conditions.NoCombat, false) {
+if held.HasFlag(conditions.NoCombat) {
     user.SendText("You cannot engage in combat right now.")
     return
 }
@@ -1163,15 +1165,14 @@ dexBonus := character.Conditions.StatMod("dexterity")
 ### Flag-Based Behavior Control
 ```go
 // Check movement restrictions
-if character.Conditions.HasFlag(conditions.NoMovement, false) {
+if character.Conditions.HasFlag(conditions.NoMovement) {
     user.SendText("You are unable to move.")
     return
 }
 
-// Check with expiration
-if character.Conditions.HasFlag(conditions.CancelOnAction, true) {
+// Expire what carries the flag, and learn whether anything did
+if character.Conditions.ExpireConditionsWithFlag(conditions.CancelOnAction) {
     user.SendText("Your concentration is broken!")
-    // Condition automatically expired by HasFlag call
 }
 ```
 

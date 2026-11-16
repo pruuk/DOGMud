@@ -141,26 +141,39 @@ func TestConditions_HasFlag(t *testing.T) {
 	bs.AddCondition(104, false) // DamageBonus, Haste, NoCombat
 
 	t.Run("single flag present", func(t *testing.T) {
-		assert.True(t, bs.HasFlag(Haste, false))
+		assert.True(t, bs.HasFlag(Haste))
 	})
 
 	t.Run("multi-flag condition", func(t *testing.T) {
-		assert.True(t, bs.HasFlag(DamageBonus, false))
-		assert.True(t, bs.HasFlag(NoCombat, false))
+		assert.True(t, bs.HasFlag(DamageBonus))
+		assert.True(t, bs.HasFlag(NoCombat))
 	})
 
 	t.Run("flag not present", func(t *testing.T) {
-		assert.False(t, bs.HasFlag(Poison, false))
+		assert.False(t, bs.HasFlag(Poison))
 	})
 
 	t.Run("All wildcard", func(t *testing.T) {
-		assert.True(t, bs.HasFlag(All, false))
+		assert.True(t, bs.HasFlag(All))
+	})
+
+	// #309: asking changes nothing. HasFlag(flag, true) used to expire what
+	// it found under a name that reads like a question.
+	t.Run("asking expires nothing", func(t *testing.T) {
+		bs2 := New()
+		bs2.AddCondition(105, false) // Slow
+		before := bs2.List[bs2.conditionIds[105]].TriggersLeft
+		for i := 0; i < 3; i++ {
+			assert.True(t, bs2.HasFlag(Slow))
+			assert.True(t, bs2.HasFlag(All))
+		}
+		assert.Equal(t, before, bs2.List[bs2.conditionIds[105]].TriggersLeft)
 	})
 
 	t.Run("expire mode removes condition", func(t *testing.T) {
 		bs2 := New()
 		bs2.AddCondition(105, false) // Slow
-		assert.True(t, bs2.HasFlag(Slow, true))
+		assert.True(t, bs2.ExpireConditionsWithFlag(Slow))
 		// After expire, the condition should be marked expired
 		idx := bs2.conditionIds[105]
 		assert.Equal(t, TriggersLeftExpired, bs2.List[idx].TriggersLeft)
@@ -181,16 +194,16 @@ func TestConditions_HasFlag_AllMatchesFlaglessCondition(t *testing.T) {
 	require.True(t, bs.AddCondition(108, false)) // Quick Heal — no Flags
 
 	// The All wildcard must see a flagless condition.
-	assert.True(t, bs.HasFlag(All, false),
+	assert.True(t, bs.HasFlag(All),
 		"All must match a condition that declares no flags")
 
 	// Expire mode must mark the flagless condition expired.
-	assert.True(t, bs.HasFlag(All, true),
+	assert.True(t, bs.ExpireConditionsWithFlag(All),
 		"All+expire must match the flagless condition")
 	idx, ok := bs.conditionIds[108]
 	require.True(t, ok)
 	assert.Equal(t, TriggersLeftExpired, bs.List[idx].TriggersLeft,
-		"flagless condition must be expired by HasFlag(All, true)")
+		"flagless condition must be expired by ExpireConditionsWithFlag(All)")
 }
 
 // ─── Conditions.GetConditionIdsWithFlag ───────────────────────────────────────────────

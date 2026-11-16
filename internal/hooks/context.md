@@ -1446,7 +1446,7 @@ Cross-machine cleanup that fires on two Life transitions:
   `position_life_dead` observer in `Position_Cascades.go` owns the
   Position FSM death cascade.)
 - Cancels EVERY active condition, permanent ones included:
-  `CancelConditionsWithFlag(conditions.All)` reaches `Conditions.HasFlag(All, true)`, which
+  `CancelConditionsWithFlag(conditions.All)` reaches `Conditions.ExpireConditionsWithFlag(All)`, which
   skips only records already `Expired()` and never consults `Permanent`. (The
   separate `c.Conditions = nil` clear that sat beside it was deleted with the
   combat condition enum on 2026-09-12; the former conditions are ordinary

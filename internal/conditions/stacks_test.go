@@ -136,7 +136,7 @@ func TestStackingAddOnAnExpiredRecordStartsFresh(t *testing.T) {
 	withSpecs(t, stackingSpec())
 	bs := New()
 	bs.AddConditionMagnitude(930, 3, -2)
-	bs.HasFlag(Bleeding, true)
+	bs.ExpireConditionsWithFlag(Bleeding)
 	bs.AddConditionMagnitude(930, 5, -3)
 	if want := []Stack{{RoundsLeft: 5, Amount: -3}}; !reflect.DeepEqual(bs.List[0].Stacks, want) {
 		t.Fatalf("Stacks = %+v, want %+v", bs.List[0].Stacks, want)
@@ -248,8 +248,8 @@ func TestHasFlagExpireClearsStacks(t *testing.T) {
 	withSpecs(t, stackingSpec())
 	bs := New()
 	bs.AddConditionMagnitude(930, 3, -2)
-	if !bs.HasFlag(Bleeding, true) {
-		t.Fatal("HasFlag(expire) must find the bleeding record")
+	if !bs.ExpireConditionsWithFlag(Bleeding) {
+		t.Fatal("ExpireConditionsWithFlag must find the bleeding record")
 	}
 	b := bs.List[0]
 	if len(b.Stacks) != 0 {

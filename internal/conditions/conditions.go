@@ -174,7 +174,25 @@ func (bs *Conditions) GetConditionIdsWithFlag(action Flag) []int {
 	return conditionIds
 }
 
-func (bs *Conditions) HasFlag(action Flag, expire bool) bool {
+// HasFlag reports whether a held, unexpired condition carries action (All
+// matches any condition). It only reads; ExpireConditionsWithFlag is the
+// mutator. The two were one function, HasFlag(flag, expire), whose true form
+// expired conditions under a name that reads like a question (#309).
+func (bs *Conditions) HasFlag(action Flag) bool {
+	return bs.scanFlag(action, false)
+}
+
+// ExpireConditionsWithFlag expires every held condition carrying action (All
+// expires every condition, flagless ones included) and reports whether any
+// matched. Expired conditions leave at the next prune, which tells their end
+// lines; condition id 0 is removed outright.
+func (bs *Conditions) ExpireConditionsWithFlag(action Flag) bool {
+	return bs.scanFlag(action, true)
+}
+
+// scanFlag is HasFlag and ExpireConditionsWithFlag: it finds the held
+// conditions carrying action, and with expire set, expires them all.
+func (bs *Conditions) scanFlag(action Flag, expire bool) bool {
 
 	if action != All {
 		if _, ok := bs.conditionFlags[action]; !ok {
@@ -315,7 +333,7 @@ func (bs *Conditions) addConditionScaled(conditionId int, durationMult float64) 
 		// while the holder is immune. Checked here so every application path,
 		// event or direct, honours it. Silent: the immunity's own start line
 		// already told the player.
-		if slices.Contains(conditionInfo.Flags, Poison) && bs.HasFlag(PoisonImmunity, false) {
+		if slices.Contains(conditionInfo.Flags, Poison) && bs.HasFlag(PoisonImmunity) {
 			return false
 		}
 
@@ -453,7 +471,7 @@ func (bs *Conditions) AddCondition(conditionId int, isPermanent bool) bool {
 		// while the holder is immune. Checked here so every application path,
 		// event or direct, honours it. Silent: the immunity's own start line
 		// already told the player.
-		if slices.Contains(conditionInfo.Flags, Poison) && bs.HasFlag(PoisonImmunity, false) {
+		if slices.Contains(conditionInfo.Flags, Poison) && bs.HasFlag(PoisonImmunity) {
 			return false
 		}
 

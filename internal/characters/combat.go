@@ -120,7 +120,7 @@ func (c *Character) CalculateUnarmedDamage() (baseDamage float64, variance float
 	//     baseDamage += 5.0  // Flat +5 damage bonus
 	// }
 	//
-	// if c.Conditions.HasFlag(someFlag, false) {
+	// if c.Conditions.HasFlag(someFlag) {
 	//     baseDamage *= 0.7  // a weakening flag: -30% damage
 	// }
 	//

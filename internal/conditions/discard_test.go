@@ -17,12 +17,12 @@ func TestConditions_DiscardLeavesNothingToPrune(t *testing.T) {
 	bs := New()
 	bs.AddCondition(100, false) // Haste
 	bs.AddCondition(102, false) // Shadow Cloak, Hidden
-	require.True(t, bs.HasFlag(Hidden, false))
+	require.True(t, bs.HasFlag(Hidden))
 
 	require.True(t, bs.Discard(102))
 	assert.False(t, bs.HasCondition(102), "a discarded record is gone, not expired")
-	assert.False(t, bs.HasFlag(Hidden, false), "the flag lookup was rebuilt")
-	assert.True(t, bs.HasFlag(Haste, false), "the other record keeps its flag")
+	assert.False(t, bs.HasFlag(Hidden), "the flag lookup was rebuilt")
+	assert.True(t, bs.HasFlag(Haste), "the other record keeps its flag")
 	assert.Empty(t, bs.Prune(), "nothing is left for the prune pass to narrate")
 	assert.False(t, bs.Discard(102), "a second discard finds nothing")
 
