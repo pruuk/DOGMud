@@ -27,6 +27,9 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	result := executeTauntAction(actor)
+	// A defy-crit retort answers the lines this command tells, so it goes
+	// last (#263). Nothing to send unless one fired.
+	defer result.Counter.Send()
 	if result.Cost.Status == characters.CostRefused {
 		refusal.Cost(user, result.Cost)
 		return true, nil

@@ -2,10 +2,12 @@ package hooks
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -130,6 +132,41 @@ func TestCritDispatch_RealRiposteTextHidesTheDefendersName(t *testing.T) {
 	assert.Equal(t, 1, countContaining(attackerLines, "RIPOSTE"))
 	assert.Equal(t, 0, countContaining(attackerLines, "Aliceia"),
 		"the attacker cannot see who riposted")
+}
+
+// #263: a riposte answers the parry the swing's lines describe, so it reads
+// below them. It printed above ("RIPOSTE!" before "Bandit Scout awkwardly
+// intercepts your Sling!"): the crit trio went out before the swing's own
+// lines.
+func TestCritDispatch_RiposteReadsAfterTheSwingItAnswers(t *testing.T) {
+	pinCounterTierKnobs(t, 0.5)
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	roundTallies = newCombatTallies()
+	room := rooms.LoadRoom(1)
+	room.Lamp = rooms.LampPtr(90)
+	drainPlain(1)
+
+	atk := actions.NewMobActorInRoom(mobs.GetInstance(100), room)
+	def := actions.NewUserActorInRoom(users.GetByUserId(1), room)
+	res := vbLandingResult()
+	res.ParryCritDetected = true
+	res.MessagesToTarget = []combat.TaggedMessage{{Category: messaging.CategoryDefault, Text: "SWINGMARK you parry the blow."}}
+	dispatchCritAndMessaging(atk, def, res)
+
+	lines := drainPlain(1)
+	swing, riposte := -1, -1
+	for i, l := range lines {
+		if strings.Contains(l, "SWINGMARK") && swing < 0 {
+			swing = i
+		}
+		if strings.Contains(l, "RIPOSTE") && riposte < 0 {
+			riposte = i
+		}
+	}
+	require.GreaterOrEqual(t, swing, 0, "precondition: the swing line reached the defender: %q", lines)
+	require.GreaterOrEqual(t, riposte, 0, "precondition: the riposte reached the defender: %q", lines)
+	assert.Less(t, swing, riposte, "the riposte must read after the swing it answers: %q", lines)
 }
 
 // #607: the riposted swinger's line says the counter-strike hits them. With
