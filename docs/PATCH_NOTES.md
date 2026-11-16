@@ -17,6 +17,11 @@
 - "You feel weakened by the brush with death." only appears when a death actually costs you something.
 - A thrown item stopped by a shield is called by its own name, not always "firebomb".
 - Room text fixes: the Back Yard behind the tavern, the Overflow Chamber and the Escape Shaft under Thornwall now describe the exits they have, and the Tailor's Cottage in Stillwater names Weaver Edda. `help go` lost a typo.
+- `help quest` opens the quests page, and every command's short name opens its help the same way (`help inv`, `help mutation`, `help wear`). `help quests` now shows `quests follow`.
+- A riposte or sweep now prints after the swing it answers, and a retort to your taunt prints after your taunt.
+- Spellcasting creatures vary their spells instead of always casting the same one; stronger spells still come up more often.
+- Breaking free of a grapple right after your opponent reversed you now reads as a quick scramble, not a second clean win.
+- The ghostly spirit's description lost a stray fragment, `help title` and `help cooking` read correctly, and Warden Esk no longer tells you to walk through an arch that carries you.
 
 ## 2026-11-15: A new logo
 
