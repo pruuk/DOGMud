@@ -97,8 +97,8 @@ condition|38|start_actor => Solidified conviction wraps around <ansi fg="usernam
 condition|38|start_actee => Solidified conviction wraps around your body like armor.
 condition|38|start_observer => <ansi fg="username">Aliceia</ansi> is encased in a shimmering layer of conviction.
 condition|38|end_actee => The conviction armor fades from your body.
-condition|39|start_actee => You feel venom seeping into your bloodstream!
-condition|39|start_observer => <ansi fg="username">Aliceia</ansi> winces as venom takes hold.
+condition|39|start_actee => You feel venom from something seeping into your bloodstream!
+condition|39|start_observer => <ansi fg="username">Aliceia</ansi> winces as venom from something takes hold.
 condition|39|trigger_actee => Poison burns through your veins.
 condition|39|trigger_observer => <ansi fg="username">Aliceia</ansi> shudders as venom courses through them.
 condition|39|end_actee => The venom finally subsides, leaving you weakened.
@@ -274,8 +274,8 @@ condition|109|end_actee => You recover your footing.
 condition|110|start_actee => Clinging residue smears across you, dragging at every move.
 condition|110|start_observer => Aliceia flounders, limbs fouled with clinging residue.
 condition|110|end_actee => The clinging residue finally flakes away.
-condition|111|start_actee => Barbed tendrils erupt and coil around your limbs, rooting you fast!
-condition|111|start_observer => Aliceia is snared by a mass of barbed, writhing tendrils.
+condition|111|start_actee => Barbed tendrils erupt from something and coil around your limbs, rooting you fast!
+condition|111|start_observer => Aliceia is snared by something's barbed, writhing tendrils.
 condition|111|end_actee => The tendrils wither and release their grip.
 condition|112|start_actee => Silk and dissonance drag at your limbs and your focus.
 condition|112|start_observer => Aliceia slows, snared and reeling in a smothering field of silk and dissonance.
@@ -286,8 +286,8 @@ condition|113|end_actee => The radiant presence dims, and you settle back into y
 condition|114|start_actee => something's cold, watching gaze settles on you. Your aim wavers and your guard sags.
 condition|114|start_observer => Aliceia falters under something's baleful gaze.
 condition|114|end_actee => The watching gaze lifts, and your focus returns.
-condition|115|start_actee => Ragged claw-wounds tear open across you, bleeding freely!
-condition|115|start_observer => Aliceia is raked open, blood welling from ragged claw-wounds.
+condition|115|start_actee => something's claws tear ragged wounds open across you, bleeding freely!
+condition|115|start_observer => Aliceia is raked open by something's claws, blood welling from ragged wounds.
 condition|115|trigger_actee => Your torn wounds keep bleeding.
 condition|115|end_actee => Your torn claw-wounds finally clot.
 condition|116|start_actee => A primal dread rolls over you and every instinct says run.
