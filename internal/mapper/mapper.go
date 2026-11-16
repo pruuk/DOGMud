@@ -26,16 +26,16 @@ var (
 	ErrRoomNotFound = errors.New(`room not found`)
 
 	compassDirections = map[string]struct{}{
-		"north":     struct{}{},
-		"south":     struct{}{},
-		"west":      struct{}{},
-		"east":      struct{}{},
-		"northwest": struct{}{},
-		"northeast": struct{}{},
-		"southwest": struct{}{},
-		"southeast": struct{}{},
-		"down":      struct{}{},
-		"up":        struct{}{},
+		"north":     {},
+		"south":     {},
+		"west":      {},
+		"east":      {},
+		"northwest": {},
+		"northeast": {},
+		"southwest": {},
+		"southeast": {},
+		"down":      {},
+		"up":        {},
 	}
 
 	// TODO: Refactor this and remove string identifier from room data.
@@ -194,7 +194,7 @@ func IsCompassDirection(exitName string) bool {
 
 func GetDirectionDeltaNames() []string {
 	ret := []string{}
-	for name, _ := range posDeltas {
+	for name := range posDeltas {
 		ret = append(ret, name)
 	}
 	return ret
@@ -1387,7 +1387,7 @@ func buildMapper(roomId int, cachedMap *mapper) *mapper {
 	// That way if something has changed, such as a room moving to a different map,
 	// It won't point to here.
 	if cachedMap != nil {
-		for crawledRoomId, _ := range cachedMap.crawledRooms {
+		for crawledRoomId := range cachedMap.crawledRooms {
 			delete(roomIdToMapperCache, crawledRoomId)
 		}
 		// Drop the replaced map by its key too: the new map's key names the

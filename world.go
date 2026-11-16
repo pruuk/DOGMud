@@ -410,7 +410,7 @@ func (w *World) GetAutoComplete(userId int, inputText string) []string {
 					}
 				}
 
-				for containerName, _ := range room.Containers {
+				for containerName := range room.Containers {
 					if strings.HasPrefix(strings.ToLower(containerName), targetName) {
 						suggestions = append(suggestions, containerName[targetNameLen:])
 					}
@@ -431,7 +431,7 @@ func (w *World) GetAutoComplete(userId int, inputText string) []string {
 					}
 				}
 
-				for containerName, _ := range room.Containers {
+				for containerName := range room.Containers {
 					if strings.HasPrefix(strings.ToLower(containerName), targetName) {
 						suggestions = append(suggestions, containerName[targetNameLen:])
 					}

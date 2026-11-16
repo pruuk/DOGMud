@@ -145,7 +145,7 @@ func (a *Aliases) Filepath() string {
 func GetAllHelpTopics() []string {
 	helpTopics := []string{}
 
-	for helpCommand, _ := range loadedKeywords.helpTopics {
+	for helpCommand := range loadedKeywords.helpTopics {
 		helpTopics = append(helpTopics, helpCommand)
 	}
 

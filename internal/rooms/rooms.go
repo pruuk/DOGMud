@@ -2055,7 +2055,7 @@ func (r *Room) GetDescriptionFormatted(lineSplit int, highlightNouns bool) strin
 	desc := util.SplitStringNL(r.GetDescription(), lineSplit)
 
 	if highlightNouns {
-		for noun, _ := range r.Nouns {
+		for noun := range r.Nouns {
 			desc = strings.ReplaceAll(desc, noun, fmt.Sprintf(`<ansi fg="noun">%s</ansi>`, noun))
 		}
 	}
@@ -2404,7 +2404,7 @@ func (r *Room) FindContainerByName(containerNameSearch string) string {
 	}
 
 	containerNames := []string{}
-	for containerName, _ := range r.Containers {
+	for containerName := range r.Containers {
 		containerNames = append(containerNames, containerName)
 	}
 
@@ -2700,11 +2700,11 @@ func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomI
 
 	// Build list of all exits for fuzzy matching
 	exitNames := []string{}
-	for exitName, _ := range r.Exits {
+	for exitName := range r.Exits {
 		exitNames = append(exitNames, exitName)
 	}
 
-	for exitName, _ := range r.ExitsTemp {
+	for exitName := range r.ExitsTemp {
 		exitNames = append(exitNames, exitName)
 	}
 
@@ -2815,7 +2815,7 @@ func (r *Room) PruneVisitors() int {
 
 	pruneCt := 0
 
-	for vType, _ := range r.visitors {
+	for vType := range r.visitors {
 
 		for id, expires := range r.visitors[vType] {
 			// Check whether expires is older than now

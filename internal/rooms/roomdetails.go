@@ -461,7 +461,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 				allNames := []string{}
 
-				for mobInstId, _ := range r.Visitors(VisitorMob) {
+				for mobInstId := range r.Visitors(VisitorMob) {
 					if mob := mobs.GetInstance(mobInstId); mob != nil {
 						allNames = append(allNames, mob.Character.Name)
 					}
@@ -535,7 +535,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 				allNames := []string{}
 
-				for userId, _ := range r.Visitors(VisitorUser) {
+				for userId := range r.Visitors(VisitorUser) {
 					if u := users.GetByUserId(userId); u != nil {
 						allNames = append(allNames, u.Character.Name)
 					}

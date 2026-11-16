@@ -213,7 +213,7 @@ func ApplyColors(input string, patternValues []int, method ...ColorizeStyle) str
 	finalString := newString.String()
 
 	for tmp, replacement := range preExistingTags {
-		finalString = strings.Replace(finalString, tmp, replacement, -1)
+		finalString = strings.ReplaceAll(finalString, tmp, replacement)
 	}
 
 	return finalString

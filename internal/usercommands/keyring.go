@@ -19,7 +19,7 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	headers := []string{`Type`, `Location`, `Where`, `Sequence`}
 	allFormatting := [][]string{}
 
-	for lockId, _ := range user.Character.KeyRing {
+	for lockId := range user.Character.KeyRing {
 		if !strings.HasPrefix(lockId, `key-`) {
 			break
 		}

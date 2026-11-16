@@ -330,7 +330,7 @@ func GetHelpSuggestions(text string, includeAdmin bool) []string {
 		}
 	}
 
-	for alias, _ := range keywords.GetAllHelpAliases() {
+	for alias := range keywords.GetAllHelpAliases() {
 		testCmd := strings.ToLower(alias)
 		if testCmd != text && strings.HasPrefix(testCmd, text) {
 			results = append(results, alias[len(text):])

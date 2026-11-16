@@ -57,15 +57,15 @@ type SystemCommandHelp struct {
 
 var (
 	systemCommandList = map[string]SystemCommandHelp{
-		"quit": SystemCommandHelp{
+		"quit": {
 			Description:  "Disconnect self from the server",
 			ExampleInput: "quit",
 		},
-		"reload": SystemCommandHelp{
+		"reload": {
 			Description:  "Reload datafiles for various packages (items, mobs, conditions, etc.)",
 			ExampleInput: "reload",
 		},
-		"shutdown": SystemCommandHelp{
+		"shutdown": {
 			Description:  "Shutdown the server",
 			ExampleInput: "shutdown [15/seconds]",
 		},
