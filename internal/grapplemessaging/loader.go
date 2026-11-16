@@ -61,7 +61,8 @@ type GradientTriad struct {
 //   - Degradations:  "<source>_to_<target>" (e.g. "mount_to_sidecontrol")
 //   - Reversals:     "<source>_reverse" for realism-exception sources;
 //     "generic_reverse" as fallback.
-//   - Escapes:       "generic_escape" (only key for now)
+//   - Escapes:       "generic_escape", and "escape_after_reversal" for an
+//     escape on the round right after a reversal (#350)
 //   - Holds:         "<context>_hold" (e.g. "clinch_hold",
 //     "ground_hold_generic")
 //   - StrikingApex:  Single-speaker (no triad); "mount_strike_flavor"
@@ -205,10 +206,11 @@ var RequiredReversalKeys = []string{
 	"generic_reverse",    // any other source: same position, role swap
 }
 
-// RequiredEscapeKeys: single generic key for the always-to-Standing
-// escape.
+// RequiredEscapeKeys: the generic always-to-Standing escape, and the escape
+// told on the round right after a reversal (#350).
 var RequiredEscapeKeys = []string{
 	"generic_escape",
+	"escape_after_reversal",
 }
 
 // RequiredHoldKeys: per-context hold flavor. Sparse — only fires

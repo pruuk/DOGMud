@@ -795,6 +795,21 @@ escapes:
       - "{actee} explodes free of {actor} and scrambles back to their feet."
       - "{actor}'s grip fails and {actee} scrambles up and out of reach."
       - "{actee} kicks {actor} off and the grapple breaks; both stand."
+  # An escape on the round right after a reversal (#350): the reversed fighter
+  # answers at once, so it reads as a scramble, not a second clean win.
+  escape_after_reversal:
+    actor:
+      - "You have barely taken the upper hand when {actee} twists loose and scrambles to their feet."
+      - "{actee} answers your reversal at once, slipping your grip before it can settle."
+      - "The swap costs you the hold: {actee} rolls with it and comes up standing."
+    actee:
+      - "{actor} has barely taken the upper hand when you twist loose and scramble to your feet."
+      - "You answer {actor}'s reversal at once, slipping the grip before it can settle."
+      - "You roll with {actor}'s reversal and come up standing, out of reach."
+    observer:
+      - "{actor} has barely taken the upper hand when {actee} twists loose and scrambles up."
+      - "{actee} answers {actor}'s reversal at once, slipping free before the grip can settle."
+      - "{actee} rolls with {actor}'s reversal and comes up standing; the grapple breaks."
 holds:
   clinch_hold:
     actor:

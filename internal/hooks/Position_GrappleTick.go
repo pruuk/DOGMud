@@ -383,6 +383,7 @@ func processGrapplePairWithContest(
 			position.TriggerPositionDegrade)
 	case position.OutcomeReversal:
 		applyReversal(controller, controlled, outcome.Target)
+		markGrappleReversal(controller, controlled, currentRound)
 	case position.OutcomeEscape:
 		applyAdvanceOrEscape(controller, controlled, position.Standing,
 			position.TriggerControlledEscape)
@@ -449,6 +450,35 @@ func applyReversal(formerController, formerControlled *characters.Character,
 	}
 }
 
+// grappleReversalRoundKey marks, in PerGrappleMessageCooldownsLastRound, the
+// round a reversal last swapped this pair's roles.
+const grappleReversalRoundKey = "reversal_round"
+
+// markGrappleReversal records the round of a reversal on both fighters.
+func markGrappleReversal(a, b *characters.Character, round uint64) {
+	for _, c := range []*characters.Character{a, b} {
+		if c.PerGrappleMessageCooldownsLastRound == nil {
+			c.PerGrappleMessageCooldownsLastRound = map[string]uint64{}
+		}
+		c.PerGrappleMessageCooldownsLastRound[grappleReversalRoundKey] = round
+	}
+}
+
+// escapeKey is the escape line to tell. An escape on the round right after a
+// reversal reads as the reversed fighter answering it at once
+// ("escape_after_reversal"), where the generic line read as a second clean
+// win straight after the first (#350, owner: a flavour-only line, no change
+// to the odds). controller is the reverser by then. A library without the
+// key falls back to "generic_escape".
+func escapeKey(controller *characters.Character, round uint64, lib *grapplemessaging.Library) string {
+	if last, ok := controller.PerGrappleMessageCooldownsLastRound[grappleReversalRoundKey]; ok && last+1 == round {
+		if _, has := lib.Escapes["escape_after_reversal"]; has {
+			return "escape_after_reversal"
+		}
+	}
+	return "generic_escape"
+}
+
 // emitOutcomeMessages picks a template triad for the outcome and
 // sends the appropriate speaker variant to each side + the room.
 // Cooldown map lives on Character.PerGrappleMessageCooldowns;
@@ -491,7 +521,7 @@ func emitOutcomeMessages(controller, controlled *characters.Character,
 			triad, found = lib.Reversals[key]
 		}
 	case position.OutcomeEscape:
-		key = "generic_escape"
+		key = escapeKey(controller, util.GetRoundCount(), lib)
 		triad, found = lib.Escapes[key]
 	case position.OutcomeHold:
 		emitHoldFlavor(controller, controlled, outcome)
