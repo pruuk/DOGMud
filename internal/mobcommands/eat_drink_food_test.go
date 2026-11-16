@@ -92,7 +92,7 @@ func TestMobDrinkLookupTakesTheEdibleMatch(t *testing.T) {
 			require.True(t, handled)
 			require.NoError(t, err)
 			assert.False(t, mfCarries(mob, mfHerbalId), "the tea is drunk")
-			assert.Contains(t, mfRoomRead(), "drinks some Herbal Tea.")
+			assert.Contains(t, mfRoomRead(), "drinks the Herbal Tea.")
 		})
 	}
 }
@@ -153,10 +153,10 @@ func TestMobFoodRoomLineFollowsTheItem(t *testing.T) {
 		typed string
 		want  string
 	}{
-		{"drink a cooked drink", Drink, mfHerbalId, "herbal tea", "drinks some Herbal Tea."},
-		{"eat a cooked drink", Eat, mfHerbalId, "herbal tea", "drinks some Herbal Tea."},
-		{"drink food", Drink, mfBreadId, "bread", "eats some Test Bread."},
-		{"eat food", Eat, mfBreadId, "bread", "eats some Test Bread."},
+		{"drink a cooked drink", Drink, mfHerbalId, "herbal tea", "drinks the Herbal Tea."},
+		{"eat a cooked drink", Eat, mfHerbalId, "herbal tea", "drinks the Herbal Tea."},
+		{"drink food", Drink, mfBreadId, "bread", "eats the Test Bread."},
+		{"eat food", Eat, mfBreadId, "bread", "eats the Test Bread."},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			mob, room := mfScene(t)
