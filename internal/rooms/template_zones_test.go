@@ -26,6 +26,11 @@ func TestTemplateZoneIndex_FollowsMoveToZone(t *testing.T) {
 		restoreZone("preparezone", prevOld)
 		restoreZone("movezone", prevNew)
 		deleteTemplateZone(roomId)
+		// MoveToZone saves the template, and SaveRoomTemplate puts the room
+		// in memory. Left there, SaveAllRooms in a later test (or the next
+		// pass of -count=2) tried to save a room whose template folder was
+		// gone with this test's temp dir.
+		delete(roomManager.rooms, roomId)
 	})
 	setTemplateZone(roomId, "preparezone")
 

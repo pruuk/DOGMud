@@ -748,7 +748,7 @@ When writing hidden noun descriptions:
 | `instances.go` / `ephemeral.go` | Instanced and ephemeral rooms |
 | `cubegen.go` | Generated cube/maze room structures |
 | `memory.go` | Memory reporting for the admin report |
-| `test_helpers.go` | Test fixtures (`SeedRoomsForTest`, `SeedBiomesForTest`, `UnloadRoomForTest` for a cold room without the unload save) |
+| `test_helpers.go` | Test fixtures (`SeedRoomsForTest`, `SeedBiomesForTest`, `UnloadRoomForTest` for a cold room without the unload save, `ForgetRoomsLoadedDuringTest(t)` so a test that looks up an unindexed room such as -1 does not grow `GetAllRoomIds` for later tests) |
 
 ### An indoor biome must be classified for weather prose
 

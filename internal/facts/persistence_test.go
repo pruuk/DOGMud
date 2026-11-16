@@ -9,7 +9,7 @@ import (
 )
 
 func TestRegistry_SaveAndLoadRoundTrip(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 
 	r := &Registry{
 		Facts: []*Fact{
@@ -40,7 +40,7 @@ func TestRegistry_SaveAndLoadRoundTrip(t *testing.T) {
 }
 
 func TestRegistry_LoadMissingFileReturnsNil(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	// Ensure the registry file doesn't exist
 	_ = os.Remove(registryFilePath())
 	if loadRegistryFromDisk() != nil {
@@ -49,7 +49,7 @@ func TestRegistry_LoadMissingFileReturnsNil(t *testing.T) {
 }
 
 func TestAwareness_SaveAndLoadRoundTrip(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 
 	a := &Awareness{
 		ObserverMobId:    114,
@@ -79,7 +79,7 @@ func TestAwareness_SaveAndLoadRoundTrip(t *testing.T) {
 }
 
 func TestAwareness_LoadOrLazyInitConcurrent(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	const N = 50
 	var wg sync.WaitGroup
 	var seen [N]*Awareness

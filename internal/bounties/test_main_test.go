@@ -38,9 +38,21 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// resetCache wipes the in-memory cache between tests so each test starts clean.
-func resetCache() {
-	registryMu.Lock()
-	registry = nil
-	registryMu.Unlock()
+// resetCache gives a test an empty bounty registry: it wipes the in-memory
+// cache and deletes the saved registry file, now and again when the test ends.
+//
+// Declare saves the registry to disk, and the data folder TestMain makes is
+// shared by every pass of the binary. Clearing only the cache let the file the
+// last test of one pass saved come back as the first test's registry on the
+// next pass, so `go test -count=2` saw bounty id 2 where it expected 1.
+func resetCache(t testing.TB) {
+	t.Helper()
+	wipeRegistry := func() {
+		registryMu.Lock()
+		registry = nil
+		registryMu.Unlock()
+		_ = os.Remove(registryFilePath())
+	}
+	wipeRegistry()
+	t.Cleanup(wipeRegistry)
 }

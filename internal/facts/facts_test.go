@@ -7,7 +7,7 @@ import (
 )
 
 func TestDeclare_HappyPath(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 
@@ -33,7 +33,7 @@ func TestDeclare_HappyPath(t *testing.T) {
 }
 
 func TestDeclare_CollisionRejected(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 
@@ -46,7 +46,7 @@ func TestDeclare_CollisionRejected(t *testing.T) {
 }
 
 func TestWithdraw(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 
@@ -63,7 +63,7 @@ func TestWithdraw(t *testing.T) {
 }
 
 func TestPruneExpired(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 
@@ -88,7 +88,7 @@ func TestPruneExpired(t *testing.T) {
 }
 
 func TestWithdrawAllBoundTo(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 
@@ -109,7 +109,7 @@ func TestWithdrawAllBoundTo(t *testing.T) {
 }
 
 func TestRegistryReads(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 
@@ -136,7 +136,7 @@ func TestRegistryReads(t *testing.T) {
 }
 
 func TestRecordHeardEvent_BoundedFIFO(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil; heardEventsMaxForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 	heardEventsMaxForTest = func() int { return 4 }
@@ -157,7 +157,7 @@ func TestRecordHeardEvent_BoundedFIFO(t *testing.T) {
 }
 
 func TestHeardEvent(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 
@@ -171,7 +171,7 @@ func TestHeardEvent(t *testing.T) {
 }
 
 func TestRecordHeardEvent_DedupSameId(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 
@@ -184,7 +184,7 @@ func TestRecordHeardEvent_DedupSameId(t *testing.T) {
 }
 
 func TestRecordKnowsFact(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 
@@ -204,7 +204,7 @@ func TestRecordKnowsFact(t *testing.T) {
 }
 
 func TestKnownFactsOf_LazyFilter(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 
@@ -230,7 +230,7 @@ func TestKnownFactsOf_LazyFilter(t *testing.T) {
 }
 
 func TestForgetFact(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 
@@ -249,7 +249,7 @@ func TestForgetFact(t *testing.T) {
 }
 
 func TestForgetAll(t *testing.T) {
-	resetCaches()
+	resetCaches(t)
 	defer func() { roundForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 

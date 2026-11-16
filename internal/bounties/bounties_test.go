@@ -50,7 +50,7 @@ func TestComputeDefaultRep(t *testing.T) {
 }
 
 func TestDeclare_DefaultRewards(t *testing.T) {
-	resetCache()
+	resetCache(t)
 	defer func() {
 		roundForTest = nil
 		goldMultiplierForTest = nil
@@ -96,7 +96,7 @@ func TestDeclare_DefaultRewards(t *testing.T) {
 }
 
 func TestDeclare_Overrides(t *testing.T) {
-	resetCache()
+	resetCache(t)
 	defer func() { roundForTest = nil; statpoolForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 	statpoolForTest = func(_ knowledge.Subject) int { return 600 }
@@ -125,7 +125,7 @@ func TestDeclare_Overrides(t *testing.T) {
 }
 
 func TestWithdraw(t *testing.T) {
-	resetCache()
+	resetCache(t)
 	defer func() { roundForTest = nil; statpoolForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 	statpoolForTest = func(_ knowledge.Subject) int { return 600 }
@@ -148,7 +148,7 @@ func TestWithdraw(t *testing.T) {
 }
 
 func TestPruneExpired(t *testing.T) {
-	resetCache()
+	resetCache(t)
 	defer func() { roundForTest = nil; statpoolForTest = nil }()
 	statpoolForTest = func(_ knowledge.Subject) int { return 600 }
 
@@ -177,7 +177,7 @@ func TestPruneExpired(t *testing.T) {
 }
 
 func TestTryClaim_HappyPath(t *testing.T) {
-	resetCache()
+	resetCache(t)
 	defer func() { roundForTest = nil; statpoolForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 	statpoolForTest = func(_ knowledge.Subject) int { return 600 }
@@ -202,7 +202,7 @@ func TestTryClaim_HappyPath(t *testing.T) {
 }
 
 func TestTryClaim_AlreadyClaimedReturnsFalse(t *testing.T) {
-	resetCache()
+	resetCache(t)
 	defer func() { roundForTest = nil; statpoolForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 	statpoolForTest = func(_ knowledge.Subject) int { return 600 }
@@ -223,7 +223,7 @@ func TestTryClaim_AlreadyClaimedReturnsFalse(t *testing.T) {
 func TestAllRows_IncludesNonOpen(t *testing.T) {
 	bounitiesPath := filepath.Join(string(configs.GetFilePathsConfig().DataFiles), "bounties.yaml")
 	os.Remove(bounitiesPath)
-	resetCache()
+	resetCache(t)
 	defer func() { roundForTest = nil; statpoolForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 	statpoolForTest = func(_ knowledge.Subject) int { return 600 }
@@ -257,7 +257,7 @@ func TestReadAPI(t *testing.T) {
 	bounitiesPath := filepath.Join(string(configs.GetFilePathsConfig().DataFiles), "bounties.yaml")
 	os.Remove(bounitiesPath)
 
-	resetCache()
+	resetCache(t)
 	defer func() { roundForTest = nil; statpoolForTest = nil }()
 	roundForTest = func() uint64 { return 100 }
 	statpoolForTest = func(_ knowledge.Subject) int { return 600 }
