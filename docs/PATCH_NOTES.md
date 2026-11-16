@@ -1,5 +1,14 @@
 # DOGMud Patch Notes
 
+## 2026-11-16: Small fixes
+
+- The list of who is here no longer shows a health percent after each name. Use `consider` to size up a creature before a fight.
+- When someone you are shadowing or tracking logs off, you now read that they have retired to their home and can no longer be tracked, instead of being told your focus broke.
+- A quest you already have no longer announces itself a second time when something offers it again, and a finished quest no longer pays out twice.
+- The Golden Bough and the General Store in Amber Valley are lit inside, so you can talk to Hesper Vane and Goss Harrow at any hour.
+- When a foe ripostes your attack, the line now says the counter-strike is against you.
+- Venom, Ensnared and Rending Bleed now say who laid them on you. A trap's venom still reaches you from "something".
+
 ## 2026-11-15: A new logo
 
 - The website has Malia's new logo: a world with three moons on their orbits. It sits on the home page and in the bar at the top of every page, in gold on dark screens and in browns in Light mode.
