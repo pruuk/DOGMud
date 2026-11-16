@@ -2,6 +2,12 @@ name: Playtest Environment Integration
 
 on:
   workflow_dispatch:
+  # #886: the path filter below let master go four days unchecked while
+  # changes elsewhere in the login path (the MOTD) broke this test. A nightly
+  # run against master catches that within a day. 09:00 UTC is overnight
+  # Pacific.
+  schedule:
+    - cron: "0 9 * * *"
   pull_request:
     paths:
       - "cmd/playtestenv/**"
