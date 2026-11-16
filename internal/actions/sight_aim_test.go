@@ -113,7 +113,7 @@ func TestAimBySight_NoSightResolvesNothing(t *testing.T) {
 func TestAimShapesHint_FitsEightyColumns(t *testing.T) {
 	for _, verb := range []string{"kick", "give iron longsword", "cast empathic-shroud", strings.Repeat("x", 40), ""} {
 		hint := AimShapesHint(verb)
-		for _, line := range strings.Split(hint, "\n") {
+		for line := range strings.SplitSeq(hint, "\n") {
 			plain := aimTestTag.ReplaceAllString(line, "")
 			assert.LessOrEqual(t, len([]rune(plain)), 80, "verb %q: %q", verb, plain)
 		}

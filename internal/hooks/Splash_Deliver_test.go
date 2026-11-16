@@ -43,7 +43,7 @@ func TestSplashArtOnlyWhereItFits(t *testing.T) {
 	long := "A shimmer passes over your skin as the change settles in. You feel the mutation take hold."
 	got, ok := splashFor(art, 76, true, false, 30, long)
 	assert.True(t, ok)
-	for _, line := range strings.Split(got, "\n") {
+	for line := range strings.SplitSeq(got, "\n") {
 		assert.LessOrEqual(t, templates.WidestLine(line), 30, "the caption is wrapped to the screen: %q", line)
 	}
 	got, _ = splashFor(art, 76, true, true, 30, long)

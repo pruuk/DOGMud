@@ -121,7 +121,7 @@ func motdRuled(text string, formWidth int) string {
 	out := `<ansi fg="yellow">` + rule + "\n" +
 		`  <ansi fg="cyan-bold">` + title + `</ansi>` + "\n" +
 		rule + "\n"
-	for _, line := range strings.Split(messaging.WrapAnsi(text, formWidth-indent), "\n") {
+	for line := range strings.SplitSeq(messaging.WrapAnsi(text, formWidth-indent), "\n") {
 		if motdVisibleWidth(line) <= formWidth-indent {
 			line = strings.Repeat(" ", indent) + line
 		}
@@ -133,7 +133,7 @@ func motdRuled(text string, formWidth int) string {
 // motdLongestWord is the display width of the longest word in text.
 func motdLongestWord(text string) int {
 	longest := 0
-	for _, word := range strings.Fields(motdAnsiTagRE.ReplaceAllString(text, "")) {
+	for word := range strings.FieldsSeq(motdAnsiTagRE.ReplaceAllString(text, "")) {
 		longest = max(longest, motdVisibleWidth(word))
 	}
 	return longest

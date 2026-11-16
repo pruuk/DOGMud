@@ -780,7 +780,7 @@ func centerLines(s string, width int) string {
 	text, wrapAt := s, span
 	if util.VisibleWidth(s) > span {
 		text, wrapAt = respace(s, true), width-2
-		for _, line := range strings.Split(text, "\n") {
+		for line := range strings.SplitSeq(text, "\n") {
 			if util.VisibleWidth(line) > width-2 {
 				text, wrapAt = respace(s, false), span
 				break
@@ -788,7 +788,7 @@ func centerLines(s string, width int) string {
 		}
 	}
 	lines := []string{}
-	for _, line := range strings.Split(messaging.WrapAnsi(text, wrapAt), "\n") {
+	for line := range strings.SplitSeq(messaging.WrapAnsi(text, wrapAt), "\n") {
 		w := util.VisibleWidth(line)
 		if w == 0 {
 			continue

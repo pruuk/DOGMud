@@ -47,7 +47,7 @@ func subjectVerbAfterItemName(line string) string {
 		if rest == `` || !isLetter(rest[0]) {
 			continue // punctuation or end of line: the weapon is an object
 		}
-		for _, word := range strings.Fields(rest) {
+		for word := range strings.FieldsSeq(rest) {
 			w := strings.TrimRight(word, `.,!?'";:`)
 			lower := strings.ToLower(w)
 			if strings.HasSuffix(lower, "ly") && len(lower) > 3 {

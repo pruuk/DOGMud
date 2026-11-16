@@ -59,7 +59,7 @@ func TestU10DoneWhen_DeadPathsStayDead(t *testing.T) {
 	if err != nil && len(out) == 0 {
 		t.Fatalf("git grep: %v", err)
 	}
-	for _, f := range strings.Fields(string(out)) {
+	for f := range strings.FieldsSeq(string(out)) {
 		if !strings.HasSuffix(f, ".go") {
 			continue // docs may name the knob; only code is scanned
 		}

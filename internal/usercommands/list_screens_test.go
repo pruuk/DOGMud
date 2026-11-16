@@ -358,7 +358,7 @@ objects inside:
 // fills a 42 line at its indent.
 func TestContainerRecipeFitsEveryWidth(t *testing.T) {
 	for _, width := range []int{30, 35, 42, 60, 80} {
-		for _, line := range strings.Split(containerRecipeScreen(t, width, 97005), "\n") {
+		for line := range strings.SplitSeq(containerRecipeScreen(t, width, 97005), "\n") {
 			require.LessOrEqual(t, templates.WidestLine(line), width, "at %d: %q", width, line)
 		}
 	}

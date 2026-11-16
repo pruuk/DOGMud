@@ -41,7 +41,7 @@ func TestMutationMagnitudesInBounds(t *testing.T) {
 	for _, f := range files {
 		body, _ := os.ReadFile(f)
 		var curType string
-		for _, ln := range strings.Split(string(body), "\n") {
+		for ln := range strings.SplitSeq(string(body), "\n") {
 			if m := typeRe.FindStringSubmatch(ln); m != nil {
 				curType = m[1]
 				continue

@@ -32,7 +32,7 @@ func TestRelayPageServedOnlyOnTheRelayHost(t *testing.T) {
 	}
 	// Only the game origin may frame the relay: exactly one source.
 	var ancestors []string
-	for _, d := range strings.Split(csp, `;`) {
+	for d := range strings.SplitSeq(csp, `;`) {
 		if f := strings.Fields(d); len(f) > 0 && f[0] == `frame-ancestors` {
 			ancestors = f[1:]
 		}

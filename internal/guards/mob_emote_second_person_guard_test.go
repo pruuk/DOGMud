@@ -96,7 +96,7 @@ func TestMobFightEmotesDoNotAddressEveryoneAsYou(t *testing.T) {
 // returns those that address the reader as you.
 func secondPersonEmotes(commands []string) (checked int, bad []string) {
 	for _, c := range commands {
-		for _, part := range strings.Split(c, `;`) {
+		for part := range strings.SplitSeq(c, `;`) {
 			part = strings.TrimSpace(part)
 			if part != `emote` && !strings.HasPrefix(part, `emote `) {
 				continue
@@ -187,7 +187,7 @@ func behaviorRoomLines(n behaviortree.NodeDef) []string {
 				}
 			}
 		case string:
-			for _, s := range strings.Split(v, `,`) {
+			for s := range strings.SplitSeq(v, `,`) {
 				out = append(out, strings.TrimSpace(s))
 			}
 		}

@@ -455,7 +455,7 @@ func getConfigOptions(input string) ([]templates.NameDescription, bool) {
 		pathLookup[lowerName] = name
 
 		builtPath := ""
-		for _, namePart := range strings.Split(name, ".") {
+		for namePart := range strings.SplitSeq(name, ".") {
 			builtPath += namePart
 			if _, ok := pathLookup[builtPath]; !ok {
 				pathLookup[strings.ToLower(builtPath)] = builtPath

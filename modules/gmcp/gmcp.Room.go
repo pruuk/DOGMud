@@ -237,7 +237,7 @@ func (g *GMCPRoomModule) buildAndSendGMCPPayload(e events.Event) events.Listener
 
 	if len(evt.Identifier) >= 4 {
 
-		for _, identifier := range strings.Split(evt.Identifier, `,`) {
+		for identifier := range strings.SplitSeq(evt.Identifier, `,`) {
 
 			identifier = strings.TrimSpace(identifier)
 

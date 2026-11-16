@@ -2533,7 +2533,7 @@ func findNounIn(nouns map[string]string, noun string) (foundNoun string, nounDes
 	for originalNoun, originalDesc := range nouns {
 		roomNouns[originalNoun] = originalDesc
 		if strings.Contains(originalNoun, " ") {
-			for _, part := range strings.Split(originalNoun, " ") {
+			for part := range strings.SplitSeq(originalNoun, " ") {
 				if _, exists := nouns[part]; exists {
 					continue
 				}
@@ -2549,7 +2549,7 @@ func findNounIn(nouns map[string]string, noun string) (foundNoun string, nounDes
 	testNouns := util.SplitButRespectQuotes(noun)
 	for i := 0; i < len(testNouns); i++ {
 		if strings.Contains(testNouns[i], " ") {
-			for _, part := range strings.Split(testNouns[i], " ") {
+			for part := range strings.SplitSeq(testNouns[i], " ") {
 				testNouns = append(testNouns, strings.ToLower(strings.TrimSpace(part)))
 			}
 		}
@@ -2653,11 +2653,11 @@ func (r *Room) NounNamedBy(phrase string) string {
 		if name != key && desc != ":"+key {
 			continue
 		}
-		for _, w := range strings.Fields(util.NounHyphenFold(strings.ToLower(name))) {
+		for w := range strings.FieldsSeq(util.NounHyphenFold(strings.ToLower(name))) {
 			words[w] = true
 		}
 	}
-	for _, w := range strings.Fields(phrase) {
+	for w := range strings.FieldsSeq(phrase) {
 		if words[w] {
 			continue
 		}

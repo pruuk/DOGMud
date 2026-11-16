@@ -58,7 +58,7 @@ func TestRender_DimEntryIsGreyAndOthersAreNot(t *testing.T) {
 
 func TestRender_DetailWrapsAtLabelIndentWithin80(t *testing.T) {
 	m := Menu{Entries: []Entry{{Id: "a", Label: "A", Detail: strings.Repeat("word ", 30)}}}
-	for _, line := range strings.Split(plain(renderAt80(m)), "\n") {
+	for line := range strings.SplitSeq(plain(renderAt80(m)), "\n") {
 		if len(line) > 80 {
 			t.Fatalf("line over 80 columns (%d): %q", len(line), line)
 		}
@@ -99,7 +99,7 @@ var col2Re = regexp.MustCompile(`^\s*\d+\. `)
 // column 2+39, with a separating space before it, and no row exceeds 80.
 func assertCol2(t *testing.T, m Menu) {
 	t.Helper()
-	for _, line := range strings.Split(plain(renderAt80(m)), "\n") {
+	for line := range strings.SplitSeq(plain(renderAt80(m)), "\n") {
 		r := []rune(line)
 		if len(r) > 80 {
 			t.Fatalf("line over 80 columns: %q", line)
@@ -209,7 +209,7 @@ func TestRender_BodyWrapsBetweenHeadingAndEntries(t *testing.T) {
 	if got != want {
 		t.Fatalf("render mismatch\n got:\n%s\nwant:\n%s", got, want)
 	}
-	for _, line := range strings.Split(got, "\n") {
+	for line := range strings.SplitSeq(got, "\n") {
 		if n := utf8.RuneCountInString(line); n > menuTestWidth {
 			t.Fatalf("line over %d columns (%d): %q", menuTestWidth, n, line)
 		}
@@ -226,7 +226,7 @@ func TestRender_ProseWrapsToTheReadersWidth(t *testing.T) {
 		Entries: []Entry{{Id: "a", Label: "Accept", Detail: long}},
 	}
 	for _, width := range []int{30, 42, 80} {
-		for _, line := range strings.Split(plain(Render(m, width)), "\n") {
+		for line := range strings.SplitSeq(plain(Render(m, width)), "\n") {
 			if n := utf8.RuneCountInString(line); n > width {
 				t.Errorf("width %d: line over the width (%d): %q", width, n, line)
 			}
@@ -254,7 +254,7 @@ func TestRender_FooterWrapsToTheReadersWidth(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, width := range []int{30, 37, 80} {
-				for _, line := range strings.Split(plain(Render(tc.m, width)), "\n") {
+				for line := range strings.SplitSeq(plain(Render(tc.m, width)), "\n") {
 					if n := utf8.RuneCountInString(line); n > width {
 						t.Errorf("width %d: line over the width (%d): %q", width, n, line)
 					}

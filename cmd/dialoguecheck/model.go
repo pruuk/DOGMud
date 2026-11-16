@@ -140,7 +140,7 @@ var (
 // branch rewrites.
 func parseReport(data string) (*convPlan, error) {
 	p := &convPlan{DeleteTriggers: map[int]map[int]bool{}, Branches: map[string]map[int]branchPlan{}}
-	for _, line := range strings.Split(strings.ReplaceAll(data, "\r\n", "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.ReplaceAll(data, "\r\n", "\n"), "\n") {
 		if m := reportDeleteLine.FindStringSubmatch(line); m != nil {
 			d := leadingDigits.FindStringSubmatch(m[1])
 			if d == nil {

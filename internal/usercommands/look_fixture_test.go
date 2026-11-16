@@ -26,7 +26,7 @@ func TestLookShowsAFixtureAsPartOfTheRoom(t *testing.T) {
 	out := sentTo(user)
 	assert.Contains(t, out, `The <ansi fg="item">Arch Lantern</ansi> is unlit.`)
 	ground := ""
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		if strings.Contains(line, "On the Ground") {
 			ground = line
 		}

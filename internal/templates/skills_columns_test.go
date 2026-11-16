@@ -27,7 +27,7 @@ func TestSkillsRankColumnLinesUp(t *testing.T) {
 	require.NoError(t, err)
 	col := -1
 	rows := 0
-	for _, l := range strings.Split(out, "\n") {
+	for l := range strings.SplitSeq(out, "\n") {
 		l = tableFrameTagRE.ReplaceAllString(l, "")
 		for _, name := range []string{"search", "blacksmithing", "unarmed-combat"} {
 			if strings.HasPrefix(strings.TrimLeft(l, " "), name+" ") {

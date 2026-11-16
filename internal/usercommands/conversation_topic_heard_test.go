@@ -116,7 +116,7 @@ topics:
 // menuLine is the line of out that shows label.
 func menuLine(t *testing.T, out, label string) string {
 	t.Helper()
-	for _, l := range strings.Split(out, "\n") {
+	for l := range strings.SplitSeq(out, "\n") {
 		if strings.Contains(l, label) {
 			return l
 		}

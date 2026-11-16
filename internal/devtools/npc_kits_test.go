@@ -35,10 +35,10 @@ func mutationClusters(t *testing.T, root, id string) ([]string, bool) {
 	if err != nil {
 		return nil, false // mutation does not exist
 	}
-	for _, ln := range strings.Split(string(body), "\n") {
+	for ln := range strings.SplitSeq(string(body), "\n") {
 		if m := clustersLineRe.FindStringSubmatch(strings.TrimSpace(ln)); m != nil {
 			var out []string
-			for _, c := range strings.Split(m[1], ",") {
+			for c := range strings.SplitSeq(m[1], ",") {
 				if c = strings.TrimSpace(c); c != "" {
 					out = append(out, c)
 				}
@@ -58,7 +58,7 @@ func speciesIntrinsicIDs(t *testing.T, path string) []string {
 	}
 	var ids []string
 	in := false
-	for _, ln := range strings.Split(string(body), "\n") {
+	for ln := range strings.SplitSeq(string(body), "\n") {
 		if strings.HasPrefix(ln, "intrinsic_mutations:") {
 			in = true
 			continue

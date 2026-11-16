@@ -130,7 +130,7 @@ func TestScanFitsEveryWidth(t *testing.T) {
 	for _, width := range []int{30, 42, 60, 80, 120} {
 		out := scanPlain(scanWideOut(t, width, title, names...))
 		formWidth := users.RedrawnFormWidth(width)
-		for _, line := range strings.Split(out, "\n") {
+		for line := range strings.SplitSeq(out, "\n") {
 			if line == "You scan the surrounding area..." {
 				continue // CategorySystem: the pipeline wraps it
 			}

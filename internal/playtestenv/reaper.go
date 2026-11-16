@@ -536,7 +536,7 @@ func parseListLabels(raw any) map[string]string {
 		if v == "" {
 			return out
 		}
-		for _, part := range strings.Split(v, ",") {
+		for part := range strings.SplitSeq(v, ",") {
 			part = strings.TrimSpace(part)
 			if part == "" {
 				continue

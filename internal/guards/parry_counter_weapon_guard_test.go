@@ -15,7 +15,7 @@ var bladeOnlyWord = regexp.MustCompile(`(?i)\b(cut|cuts|point|points|thrust|thru
 
 func bladeWordsIn(text string) []string {
 	var hits []string
-	for _, line := range strings.Split(text, "\n") {
+	for line := range strings.SplitSeq(text, "\n") {
 		if strings.HasPrefix(strings.TrimSpace(line), "#") {
 			continue
 		}

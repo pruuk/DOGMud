@@ -148,7 +148,7 @@ func trySystemCommand(cmd string, connectionId connections.ConnectionId) bool {
 				if r := recover(); r != nil {
 					mudlog.Error("PANIC", "error", r)
 					s := string(debug.Stack())
-					for _, str := range strings.Split(s, "\n") {
+					for str := range strings.SplitSeq(s, "\n") {
 						mudlog.Error("PANIC", "stack", str)
 					}
 				}

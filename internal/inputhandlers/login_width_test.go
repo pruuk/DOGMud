@@ -138,7 +138,7 @@ func TestLoginTextIsLaidOutForTheConnection(t *testing.T) {
 		}
 		for id, width := range map[connections.ConnectionId]int{phone: 43, bareWeb: 80} {
 			got := loginTextFor(id, text)
-			for _, line := range strings.Split(got, "\n") {
+			for line := range strings.SplitSeq(got, "\n") {
 				if w := util.VisibleWidth(strings.TrimSuffix(line, "\r")); w > width {
 					t.Errorf("at %d %q has a line %d wide: %q", width, text, w, line)
 				}

@@ -90,7 +90,7 @@ func TestFormatIsTheDrawing(t *testing.T) {
 func TestFormatFitsEveryWidth(t *testing.T) {
 	for _, width := range []int{30, 42, 60, 64, 80} {
 		ruleWidth := min(width, 64)
-		for _, b := range strings.Split(strings.TrimSuffix(goldenBanners(width), "\n"), "\n") {
+		for b := range strings.SplitSeq(strings.TrimSuffix(goldenBanners(width), "\n"), "\n") {
 			w := utf8.RuneCountInString(b)
 			if strings.HasPrefix(b, "━") {
 				if w != ruleWidth {

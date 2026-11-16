@@ -120,7 +120,7 @@ func asStringList(v any) []string {
 			}
 		}
 	case string:
-		for _, s := range strings.Split(t, `,`) {
+		for s := range strings.SplitSeq(t, `,`) {
 			if s = strings.TrimSpace(s); s != `` {
 				out = append(out, s)
 			}

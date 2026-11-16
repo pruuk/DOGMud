@@ -588,7 +588,7 @@ func rebuildAuthoredKeywords() {
 		// Every word of the name, not only its head noun: a bauble keyed
 		// "silver" would fully match `get silver` and take it over a real
 		// "Silver Dagger", which that word only partly matches.
-		for _, f := range strings.Fields(spec.Name) {
+		for f := range strings.FieldsSeq(spec.Name) {
 			if w := headNoun(f); w != `` {
 				snap.words[w] = true
 			}

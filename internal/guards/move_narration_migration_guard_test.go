@@ -130,7 +130,7 @@ func isProseLiteral(lit string) bool {
 		return true
 	}
 	words := 0
-	for _, tok := range strings.Fields(lit) {
+	for tok := range strings.FieldsSeq(lit) {
 		if pureWordToken.MatchString(tok) {
 			words++
 			if words >= 2 {

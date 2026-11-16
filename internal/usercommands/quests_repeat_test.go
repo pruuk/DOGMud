@@ -136,7 +136,7 @@ func TestQuestsCommand_AllPlusShowsAFinishedRepeatablesStatus(t *testing.T) {
 	assert.Contains(t, told, "Not offered again yet.")
 	assert.NotContains(t, told, "Cull the wolves.", "no placeholder description row")
 	rows := 0
-	for _, line := range strings.Split(told, "\n") {
+	for line := range strings.SplitSeq(told, "\n") {
 		if strings.Contains(line, "Wolf Bounty") {
 			rows++
 			assert.Contains(t, line, "100%", line)
@@ -188,7 +188,7 @@ func TestQuestsCommand_TagsRepeatable(t *testing.T) {
 	told = aimTold(1)
 	t.Log("\n" + told)
 	barCol := -1
-	for _, line := range strings.Split(told, "\n") {
+	for line := range strings.SplitSeq(told, "\n") {
 		if !strings.Contains(line, "%") {
 			continue
 		}

@@ -567,7 +567,7 @@ func runCharmExpiredCommand(mob *mobs.Mob, cmd string) {
 	if cmd == `` {
 		return
 	}
-	for _, c := range strings.Split(cmd, `;`) {
+	for c := range strings.SplitSeq(cmd, `;`) {
 		if c = strings.TrimSpace(c); len(c) > 0 {
 			mob.Command(c)
 		}

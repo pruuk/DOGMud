@@ -1058,7 +1058,7 @@ func TestExecuteArrest_ArrestFlavorFitsTheLineWidth(t *testing.T) {
 			continue
 		}
 		found = true
-		for _, line := range strings.Split(strings.TrimRight(tags.ReplaceAllString(msg, ""), "\n"), "\n") {
+		for line := range strings.SplitSeq(strings.TrimRight(tags.ReplaceAllString(msg, ""), "\n"), "\n") {
 			if n := len([]rune(line)); n > 80 {
 				t.Errorf("arrest line runs %d columns, want <= 80: %q", n, line)
 			}

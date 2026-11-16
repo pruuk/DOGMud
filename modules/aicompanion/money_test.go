@@ -464,7 +464,7 @@ func TestCompanionAIStrangersDefaultWording(t *testing.T) {
 		if len(sent) != 1 {
 			t.Fatalf("%q: one reply, got %q", arg, sent)
 		}
-		for _, line := range strings.Split(strings.TrimRight(sent[0], "\n"), "\n") {
+		for line := range strings.SplitSeq(strings.TrimRight(sent[0], "\n"), "\n") {
 			if n := len([]rune(ansiTag.ReplaceAllString(line, ``))); n > 80 {
 				t.Fatalf("%q: a line of %d columns: %q", arg, n, line)
 			}

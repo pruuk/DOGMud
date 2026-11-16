@@ -177,7 +177,7 @@ func voiceRecordSections(t *testing.T) map[string][]string {
 	}
 	out := map[string][]string{}
 	name := ``
-	for _, line := range strings.Split(strings.TrimRight(string(data), "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.TrimRight(string(data), "\n"), "\n") {
 		if strings.HasPrefix(line, "## ") {
 			name = strings.Fields(line)[1]
 			continue

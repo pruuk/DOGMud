@@ -90,7 +90,7 @@ func widthFuncs(width int) template.FuncMap {
 // not counted.
 func WidestLine(s string) int {
 	widest := 0
-	for _, line := range strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.ReplaceAll(s, "\r\n", "\n"), "\n") {
 		widest = max(widest, util.VisibleWidth(line))
 	}
 	return widest

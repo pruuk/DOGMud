@@ -49,7 +49,7 @@ func TestPartyInvite_InvitationFitsIn80Columns(t *testing.T) {
 			continue
 		}
 		seen = true
-		for _, line := range strings.Split(strings.ReplaceAll(plain, "\r\n", "\n"), "\n") {
+		for line := range strings.SplitSeq(strings.ReplaceAll(plain, "\r\n", "\n"), "\n") {
 			require.LessOrEqual(t, util.VisibleWidth(line), 80, "invitation line wider than 80: %q", line)
 		}
 		require.Contains(t, plain, "party accept")

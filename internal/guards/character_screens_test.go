@@ -215,7 +215,7 @@ func TestStatusWithTheLongestNameRunsPastOnlyOnItsName(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Logf("at %d the widest line is %d:\n%s", width, templates.WidestLine(out), out)
-		for _, line := range strings.Split(strings.ReplaceAll(out, "\r\n", "\n"), "\n") {
+		for line := range strings.SplitSeq(strings.ReplaceAll(out, "\r\n", "\n"), "\n") {
 			got := templates.WidestLine(line)
 			if got <= width {
 				continue

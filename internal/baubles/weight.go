@@ -60,7 +60,7 @@ func TooBigFor(r Reply, s Source) bool {
 	if r.WeightLbs > MaxWeightFor(s) {
 		return true
 	}
-	for _, w := range strings.Fields(strings.ToLower(r.Name)) {
+	for w := range strings.FieldsSeq(strings.ToLower(r.Name)) {
 		w = strings.TrimSuffix(strings.TrimSuffix(strings.Trim(w, `.,;:!?"()`), `'s`), `'`)
 		if notPocketSized[w] {
 			return true

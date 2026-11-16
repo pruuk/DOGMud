@@ -119,7 +119,7 @@ func TestRoomIdle_WrapsForEachReader(t *testing.T) {
 	require.Len(t, narrow, 1)
 	require.Len(t, wide, 1)
 	require.Contains(t, narrow[0], `fg="`+messaging.CategoryRoomIdle.String()+`"`)
-	for _, line := range strings.Split(strings.TrimRight(plainText(narrow[0]), "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.TrimRight(plainText(narrow[0]), "\n"), "\n") {
 		require.LessOrEqual(t, len([]rune(line)), 40, "%q", line)
 	}
 	require.Equal(t, 1, strings.Count(strings.TrimRight(plainText(wide[0]), "\n"), "\n"), "two lines at 80: %q", wide[0])

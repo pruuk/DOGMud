@@ -83,7 +83,7 @@ func TestScreenRowsEndWithoutAStop(t *testing.T) {
 		for _, m := range msgs {
 			plain := screenRowEscRE.ReplaceAllString(screenRowTagRE.ReplaceAllString(m, ""), "")
 			plain = strings.NewReplacer("\r", "", "&lt;", "<", "&gt;", ">").Replace(plain)
-			for _, l := range strings.Split(plain, "\n") {
+			for l := range strings.SplitSeq(plain, "\n") {
 				lines = append(lines, strings.TrimRight(l, " "))
 			}
 		}

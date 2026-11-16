@@ -1047,7 +1047,7 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 			if macro, ok := user.Macros[inputText]; ok {
 				handled = true
 				readyTurn := util.GetTurnCount()
-				for _, newCmd := range strings.Split(macro, `;`) {
+				for newCmd := range strings.SplitSeq(macro, `;`) {
 					if newCmd == `` {
 						continue
 					}

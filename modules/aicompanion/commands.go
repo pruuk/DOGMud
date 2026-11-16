@@ -588,7 +588,7 @@ func (a *askAuthority) valid(mobInstanceId int, text string, nowUnix int64) bool
 func topicPresent(topic string, text string) bool {
 	text = strings.ToLower(text)
 	hits, words := 0, 0
-	for _, w := range strings.Fields(strings.ToLower(topic)) {
+	for w := range strings.FieldsSeq(strings.ToLower(topic)) {
 		if len(w) < 3 {
 			continue
 		}

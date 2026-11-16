@@ -360,7 +360,7 @@ func (w *walker) buildTriggers() {
 		if r.ItemId > 0 {
 			rs.gives = append(rs.gives, r.ItemId)
 		}
-		for _, part := range strings.Split(r.ItemInfo, ",") {
+		for part := range strings.SplitSeq(r.ItemInfo, ",") {
 			if n, err := strconv.Atoi(strings.TrimSpace(strings.SplitN(part, ":", 2)[0])); err == nil && n > 0 {
 				rs.gives = append(rs.gives, n)
 			}

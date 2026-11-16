@@ -134,7 +134,7 @@ func TestLayoutHelpSpanTrailingSpaceStaysABreak(t *testing.T) {
 
 func TestWrapSpansSpanTrailingSpaceStaysABreak(t *testing.T) {
 	out := wrapSpans(helpTitleFixture, 30)
-	for _, l := range strings.Split(out, "\n") {
+	for l := range strings.SplitSeq(out, "\n") {
 		assert.LessOrEqual(t, util.VisibleWidth(l), 30, l)
 	}
 }
@@ -202,7 +202,7 @@ func TestLayoutHelpReReviewFixes(t *testing.T) {
 func TestLayoutHelpGluedSpansStartNoLineWithASpace(t *testing.T) {
 	in := `<ansi fg="a">aaa bbb</ansi><ansi fg="b">ccc ddd</ansi> eee`
 	out := LayoutHelp(in, 10)
-	for _, l := range strings.Split(out, "\n") {
+	for l := range strings.SplitSeq(out, "\n") {
 		assert.False(t, strings.HasPrefix(ansiTag.ReplaceAllString(l, ""), " "), l)
 		assert.LessOrEqual(t, util.VisibleWidth(l), 10, l)
 	}
@@ -212,7 +212,7 @@ func TestLayoutHelpGluedSpansStartNoLineWithASpace(t *testing.T) {
 
 func TestLayoutHelpClampsAnIndentToHalfTheWidth(t *testing.T) {
 	out := LayoutHelp("          aaa bbb ccc ddd", 8)
-	for _, l := range strings.Split(out, "\n") {
+	for l := range strings.SplitSeq(out, "\n") {
 		assert.LessOrEqual(t, util.VisibleWidth(l), 8, l)
 	}
 	assert.Equal(t, "aaa bbb ccc ddd", strings.Join(strings.Fields(out), " "))

@@ -32,7 +32,7 @@ func shippedConfigSource(t *testing.T) []byte {
 // bytesContainsKey looks for a YAML key at the start of a line, ignoring
 // indentation, so a mention inside a comment does not count as naming it.
 func bytesContainsKey(src []byte, key string) bool {
-	for _, line := range bytes.Split(src, []byte("\n")) {
+	for line := range bytes.SplitSeq(src, []byte("\n")) {
 		if bytes.HasPrefix(bytes.TrimSpace(line), []byte(key)) {
 			return true
 		}

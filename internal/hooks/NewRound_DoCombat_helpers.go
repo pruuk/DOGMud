@@ -1311,7 +1311,7 @@ func handleMobAIDecision(mob *mobs.Mob, c configs.Config) bool {
 			if len(allCmds) >= c.Timing.TurnsPerRound() {
 				mob.Command(`say I have a CombatAction that is too long. Please notify an admin.`)
 			} else {
-				for _, action := range strings.Split(combatAction, `;`) {
+				for action := range strings.SplitSeq(combatAction, `;`) {
 					mob.Command(action, waitTime)
 					waitTime += 0.1
 				}
