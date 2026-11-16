@@ -120,7 +120,8 @@ func TestHandleQuestUpdate_ResumeGivesNothingOfValue(t *testing.T) {
 }
 
 // A behaviour tree grants by calling GiveQuestToken and then queueing the
-// event: the resume already happened, so the hook only says so.
+// event marked PreGranted: the resume already happened, so the hook only says
+// so.
 func TestHandleQuestUpdate_ResumeAfterSynchronousGrant(t *testing.T) {
 	setupResumeQuest(t)
 
@@ -129,7 +130,7 @@ func TestHandleQuestUpdate_ResumeAfterSynchronousGrant(t *testing.T) {
 	require.True(t, u.Character.ShelveQuest(999050))
 	require.True(t, u.Character.GiveQuestToken("999050-start"))
 
-	require.Equal(t, events.Continue, HandleQuestUpdate(events.Quest{UserId: 9507, QuestToken: "999050-start"}))
+	require.Equal(t, events.Continue, HandleQuestUpdate(events.Quest{UserId: 9507, QuestToken: "999050-start", PreGranted: true}))
 	require.Equal(t, "shoot", u.Character.GetQuestProgress()[999050])
 	log := questLogText(u)
 	require.Contains(t, log, "Took up a quest again")

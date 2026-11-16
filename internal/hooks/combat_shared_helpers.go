@@ -321,7 +321,7 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 		result.DefenderMsg = fmt.Sprintf(
 			`<ansi fg="cyan-bold">⚔ RIPOSTE!</ansi> You turn the parry into a swift counter-strike! (<ansi fg="damage">%s</ansi>)`, dmgDesc)
 		result.AttackerMsg = fmt.Sprintf(
-			`<ansi fg="cyan-bold">⚔ RIPOSTE!</ansi> %s turns the parry into a lightning counter-strike! (<ansi fg="damage">%s</ansi>)`, defender.Name, dmgDesc)
+			`<ansi fg="cyan-bold">⚔ RIPOSTE!</ansi> %s turns the parry into a lightning counter-strike against you! (<ansi fg="damage">%s</ansi>)`, defender.Name, dmgDesc)
 		result.RoomMsg = fmt.Sprintf(
 			`<ansi fg="cyan-bold">⚔ RIPOSTE!</ansi> %s turns a deft parry into a counter-strike against %s!`, defender.Name, attacker.Name)
 	}

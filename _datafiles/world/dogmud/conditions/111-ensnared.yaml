@@ -5,6 +5,6 @@ triggerrate: 1 round
 triggercount: 3
 statmods:
   dexterity: -20
-start_actee: Barbed tendrils erupt and coil around your limbs, rooting you fast!
-start_observer: "{actee_plain} is snared by a mass of barbed, writhing tendrils."
+start_actee: "Barbed tendrils erupt from {actor} and coil around your limbs, rooting you fast!"
+start_observer: "{actee_plain} is snared by {actor}'s barbed, writhing tendrils."
 end_actee: The tendrils wither and release their grip.

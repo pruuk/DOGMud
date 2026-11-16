@@ -227,6 +227,19 @@ func ClearShadow(c *characters.Character) {
 	c.RemoveCondition(ShadowingConditionId)
 }
 
+// DropShadow is ClearShadow without the Shadowing end line ("Your focus on
+// the quarry breaks."): the condition is discarded, not expired, for a caller
+// that tells the shadower why instead (#275, a quarry logging off). Reports
+// whether c was shadowing at all.
+func DropShadow(c *characters.Character) bool {
+	if c == nil {
+		return false
+	}
+	c.SetMiscData(shadowTargetUserKey, nil)
+	c.SetMiscData(shadowTargetMobKey, nil)
+	return c.DiscardCondition(ShadowingConditionId)
+}
+
 // EndShadow ends actor's shadow: ClearShadow, then the shadow cooldown
 // (Balance.ShadowCooldown rounds), then reason to the actor when it is not
 // empty (a mob reads nothing).

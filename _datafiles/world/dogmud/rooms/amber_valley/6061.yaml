@@ -20,6 +20,10 @@ description: >
   <ansi fg="itemname">the long table</ansi> dominates the room, and over
   <ansi fg="itemname">the hearth</ansi> hangs a carved bough.
 biome: land
+# #708: an indoor room with an outdoor biome, lit at the interior biome's
+# values like the merchants-slice shop rooms (internal/rooms/context.md).
+skylight: 0.15
+lamp: 50
 coord: {x: -6, y: -30, z: 0}
 exits:
   west: {roomid: 6058}

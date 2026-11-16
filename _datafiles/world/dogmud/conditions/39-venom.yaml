@@ -3,8 +3,9 @@ name: Venom
 description: Venom courses through your veins, burning from within.
 triggerrate: 1 round
 triggercount: 5
-start_actee: You feel venom seeping into your bloodstream!
-start_observer: "{actee} winces as venom takes hold."
+# {actor} is the biter, or "something" for a trap's needle (#596).
+start_actee: "You feel venom from {actor} seeping into your bloodstream!"
+start_observer: "{actee} winces as venom from {actor} takes hold."
 end_actee: The venom finally subsides, leaving you weakened.
 trigger_actee: Poison burns through your veins.
 trigger_observer: "{actee} shudders as venom courses through them."

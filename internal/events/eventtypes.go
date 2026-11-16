@@ -115,6 +115,12 @@ type Quest struct {
 	// GrantQuest, so HandleQuestUpdate skips it (avoiding a double banner) while
 	// the GMCP quest-progress handler still refreshes the marker.
 	MarkerOnly bool
+	// PreGranted says the producer already set this token on the player (a
+	// behaviour tree's grant_quest, the quest engine's end step), so
+	// HandleQuestUpdate runs the banner and rewards although the token is
+	// held. Without it a held token is a repeat grant and changes nothing
+	// (#660: the new-quest banner printed twice).
+	PreGranted bool
 }
 
 func (q Quest) Type() string { return `Quest` }

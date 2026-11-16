@@ -17,6 +17,10 @@ description: >
   <ansi fg="itemname">the shelves</ansi> climb every wall, and at the back stands
   <ansi fg="itemname">the counter</ansi> with its scale and ledger.
 biome: land
+# #708: an indoor room with an outdoor biome, lit at the interior biome's
+# values like the merchants-slice shop rooms (internal/rooms/context.md).
+skylight: 0.15
+lamp: 50
 coord: {x: -10, y: -30, z: 0}
 exits:
   east: {roomid: 6059}

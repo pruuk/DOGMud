@@ -29,10 +29,10 @@ func TestRenderRoster_WrapsToTheLineWidth(t *testing.T) {
 
 	details := rooms.RoomTemplateDetails{
 		VisibleMobs: []string{
-			"Tavern Keeper Marek (100%)",
-			"Blacksmith Kerra (100%|shop|Lit)",
-			"Temple Priest Olen (100%)",
-			"Barmaid Dal (100%)",
+			"Tavern Keeper Marek",
+			"Blacksmith Kerra (shop|Lit)",
+			"Temple Priest Olen",
+			"Barmaid Dal",
 		},
 	}
 	out := RenderRoster(details, 0)

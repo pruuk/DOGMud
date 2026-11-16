@@ -101,8 +101,7 @@ func (c *Character) ResetForMobInstance() {
 type NameRenderFlag uint8
 
 const (
-	RenderHealth NameRenderFlag = iota
-	RenderAggro
+	RenderAggro NameRenderFlag = iota
 	RenderShortAdjectives
 )
 

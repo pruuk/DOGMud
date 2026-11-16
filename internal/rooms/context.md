@@ -381,15 +381,17 @@ YAML keys are `skylight` and `lamp`:
   this override in most of the cases that once seemed to need it: a brick
   sewer vault, a wrecked ship's interior and a web-choked lair each got
   their own biome (`sewer`, `interior`, `spiderweb`) rather than a
-  room-level number. **The `lamp` override ships on forty-one rooms**
-  (grep `^lamp:` under `_datafiles/world/dogmud/rooms`): the eleven shop
-  rooms of the merchants slice described below, the fourteen "rooms that
-  promise light" of lighting plan 6 (below), and sixteen older ones.
+  room-level number. **The `lamp` override ships on fifty-two rooms**
+  (grep `^lamp:` under `_datafiles/world/dogmud/rooms`): the thirteen
+  indoor rooms of the merchants slice and #708 described below, the
+  fourteen "rooms that promise light" of lighting plan 6 (below), the
+  nine of the 2026-10 fixes below, and sixteen older ones.
   The sixteen older rooms are the three-room Planar
-  Oasis (`instance_planar_oasis/500{3,4,5}.yaml`), which sets `lamp: 38`
-  against `ether`'s biome lamp of `60` because its room text reads "Shapes
-  move in the heat haze, some are mirages, some are not," so a fully lit
-  oasis would contradict its own description; ten rooms from plan 3c-1
+  Oasis (`instance_planar_oasis/500{3,4,5}.yaml`), which first set
+  `lamp: 38` against `ether`'s biome lamp of `60` because its room text
+  reads "Shapes move in the heat haze, some are mirages, some are not," so
+  a fully lit oasis would contradict its own description, and since
+  2026-10-09 sets `lamp: 52`, dim twilight (owner); ten rooms from plan 3c-1
   carrying the same `lamp: 38` against a biome that otherwise ships none:
   seven `dungeon` rooms in New Plymouth's buried Old Quarter
   (`new_plymouth_old_quarter/60{21,26,27,30,31,33,35}.yaml`), one `sewer`
@@ -422,9 +424,19 @@ YAML keys are `skylight` and `lamp`:
   4127 0.25, 3102 0.20, 6407 0.15, 6404 0.10). The test
   `lighting_promised_light_rooms_test.go` (internal/guards) pins every value.
 
-  **The `skylight` override ships on twenty-two rooms** (grep `^skylight:`
-  under `_datafiles/world/dogmud/rooms`): the nine of plan 6 above and the
-  thirteen before it. The first two, new in plan 3c-2,
+  **The 2026-10 fixes.** The three holding cells (`thornwall_city/5105`,
+  `stillwater/5106`, `instance_jail_cell/5107`) carry `lamp: 35` so a
+  prisoner can see (#298). Six Pothole Coulee rooms the newbie quests send a
+  player to practise in carry `lamp: 50` so the practice works at night:
+  5289 Thornbrake, 5291 Carrion Flat, 5305 Star Chamber, 5354 Echoing
+  Narrows, 5356 The Sounding Floor, and 5351 The Long Terrace, which also
+  sets `skylight: 0.7`.
+
+  **The `skylight` override ships on twenty-five rooms** (grep `^skylight:`
+  under `_datafiles/world/dogmud/rooms`): the nine of plan 6 above, the Long
+  Terrace, the two Amber Valley rooms of #708, and thirteen more: two
+  holding cells and the eleven merchants-slice shop rooms below. The cells,
+  new in plan 3c-2,
   are the holding cells beneath Thornwall's guard barracks
   (`thornwall_city/5105.yaml`) and Stillwater's constabulary
   (`stillwater/5106.yaml`), both `dungeon` biome (`skylight: 0.0` by
@@ -445,7 +457,11 @@ YAML keys are `skylight` and `lamp`:
   6280 (`greenford`). Street and stall keepers carry an Oil Lantern
   instead, which is mob content, not a room override. The guard
   `shop_night_trade_guard_test.go` (internal/guards) asserts every shop keeper can trade at
-  night while awake, so a new dark shop fails the build.
+  night while awake, so a new dark shop fails the build. #708 (2026-11-16)
+  gave Amber Valley's two indoor rooms the same pair, since neither keeper
+  runs a shop the guard would catch: 6061 The Golden Bough (Hesper Vane,
+  quest 72's giver, was too dark to talk to at dawn) and 6062 The General
+  Store (Goss Harrow).
 
   `fort`'s old granularity gap, sharing one sky fraction between
   an open yard and a buried vault, is gone: plan 3c-1 moved fort's open

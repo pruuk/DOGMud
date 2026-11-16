@@ -2,9 +2,7 @@ package characters
 
 import (
 	"fmt"
-	"math"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/casing"
@@ -188,20 +186,10 @@ func (c *Character) getFormattedName(viewingUserId int, uType string, renderFlag
 		Adjectives: make([]string, 0, len(c.Adjectives)),
 	}
 
-	includeHealth := false
 	for _, flag := range renderFlags {
-		if flag == RenderHealth {
-			includeHealth = true
-		} else if flag == RenderShortAdjectives {
+		if flag == RenderShortAdjectives {
 			f.UseShortAdjectives = true
 		}
-	}
-
-	// If including health, only do so if alive; a dead (Health<=0) actor shows
-	// the "dead" adjective instead while it awaits the respawn sweep.
-	if includeHealth && c.Health > 0 {
-		pctHealth := int(math.Ceil(float64(c.Health) / float64(c.HealthMax.Value) * 100))
-		f.Adjectives = append(f.Adjectives, strconv.Itoa(pctHealth)+`%`)
 	}
 
 	f.Adjectives = append(f.Adjectives, c.GetAdjectives()...)

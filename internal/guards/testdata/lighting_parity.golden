@@ -4484,14 +4484,14 @@ room 6060 biome=land
   infrared     sight=shapes clear=false shapes=true
   blinded      sight=none   clear=false shapes=false
 room 6061 biome=land
-  plain        sight=shapes clear=false shapes=true
+  plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
-  infrared     sight=shapes clear=false shapes=true
+  infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 6062 biome=land
-  plain        sight=shapes clear=false shapes=true
+  plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
-  infrared     sight=shapes clear=false shapes=true
+  infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 6063 biome=land
   plain        sight=shapes clear=false shapes=true

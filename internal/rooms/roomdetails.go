@@ -203,9 +203,8 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		}
 	}
 
+	// #283: no health percent in the roster; health is hidden from players.
 	nameFlags := []characters.NameRenderFlag{}
-	// Health display now available to all players (Peep skill removed)
-	nameFlags = append(nameFlags, characters.RenderHealth)
 
 	if useShortAdjectives := user.GetConfigOption(`shortadjectives`); useShortAdjectives != nil && useShortAdjectives.(bool) {
 		nameFlags = append(nameFlags, characters.RenderShortAdjectives)

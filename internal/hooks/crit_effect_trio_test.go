@@ -131,3 +131,21 @@ func TestCritDispatch_RealRiposteTextHidesTheDefendersName(t *testing.T) {
 	assert.Equal(t, 0, countContaining(attackerLines, "Aliceia"),
 		"the attacker cannot see who riposted")
 }
+
+// #607: the riposted swinger's line says the counter-strike hits them. With
+// companions beside them, "turns the parry into a counter-strike" left them
+// to guess whom it struck; the room line already names its target.
+func TestApplyCritEffects_RiposteLineSaysItHitsTheSwinger(t *testing.T) {
+	pinCounterTierKnobs(t, 0.5)
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	room := rooms.LoadRoom(1)
+	defender := users.GetByUserId(1)
+	attacker := users.GetByUserId(2)
+
+	crit := applyCritEffects(attacker.Character, defender.Character,
+		combat.AttackResult{ParryCritDetected: true}, room)
+	require.True(t, crit.Riposte, "precondition: a parry crit ripostes")
+	assert.Contains(t, crit.AttackerMsg, "against you")
+	assert.Contains(t, crit.RoomMsg, "against "+attacker.Character.Name)
+}
