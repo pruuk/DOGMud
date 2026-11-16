@@ -28,6 +28,25 @@ func seedMinimalConfig(t *testing.T) {
 	_ = configs.GetGamePlayConfig()
 }
 
+// #599: "You feel weakened by the brush with death." printed on every player
+// death. The announcement and the penalties now read one rule: no penalty
+// (and no line) at or under the newcomer protection, or on a submission
+// outcome; penalty (and line) past it.
+func TestDeathPenaltiesApply_ProtectionAndSubmission(t *testing.T) {
+	protection := int(configs.GetGamePlayConfig().Death.ProtectionSkillRanks)
+	u := users.NewTestUser(503, "testplayer3", "Testplayer3", 5003)
+
+	u.Character.Skills = map[string]int{}
+	if protection >= 0 {
+		assert.False(t, deathPenaltiesApply(u, life.DeadData{}), "no skill ranks: protected")
+	}
+
+	u.Character.Skills = map[string]int{"weapon-combat": protection + 1}
+	require.Greater(t, u.Character.GetTotalSkillRanks(), protection, "precondition: past the protection")
+	assert.True(t, deathPenaltiesApply(u, life.DeadData{}))
+	assert.False(t, deathPenaltiesApply(u, life.DeadData{NoDeprogression: true}), "a submission outcome costs nothing")
+}
+
 // TestDeathCleanup_NoDeprogressionSkipsStatDecay verifies that when
 // DeadData.NoDeprogression is true, the player stat-decay step is
 // skipped entirely. Uses a real UserRecord + seeded user registry so

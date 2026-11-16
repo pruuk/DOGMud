@@ -132,8 +132,12 @@ func wirePlayerDeathAnnouncement(c *characters.Character) {
 				})
 			}
 
-			// 6. "You feel weakened" text to the dying player.
-			u.SendText(messaging.CategoryDeath, `<ansi fg="yellow">You feel weakened by the brush with death.</ansi>`)
+			// 6. "You feel weakened" text to the dying player, only when the
+			//    death costs them (#599: it printed under the newcomer
+			//    protection too, when nothing was taken).
+			if deathPenaltiesApply(u, d) {
+				u.SendText(messaging.CategoryDeath, `<ansi fg="yellow">You feel weakened by the brush with death.</ansi>`)
+			}
 
 			// 7. Instance ejection — if dead in an ephemeral zone with
 			//    "ejected" death policy, revoke access before teleport.
