@@ -67,17 +67,17 @@ func TestPurgeAffliction_NamedMobTargetIsPurgedNotTheCaster(t *testing.T) {
 	resolveSpell(caster, activity.CastingData{SpellId: "purge-affliction", TargetMobInstanceIds: []int{100}}, spell, room)
 
 	// HasCondition is NOT the probe: a purge marks the condition expired
-	// (Conditions.HasFlag(flag, true) sets TriggersLeftExpired) and leaves it in the
+	// (Conditions.ExpireConditionsWithFlag sets TriggersLeftExpired) and leaves it in the
 	// list for the round sweep to collect, so HasCondition stays true for a purged
-	// condition. HasFlag(_, false) skips expired conditions, which is what "no longer
+	// condition. HasFlag skips expired conditions, which is what "no longer
 	// poisoned" means.
-	assert.False(t, mob.Character.Conditions.HasFlag(conditions.Poison, false), "the named mob is purged")
+	assert.False(t, mob.Character.Conditions.HasFlag(conditions.Poison), "the named mob is purged")
 	// HasCondition is NOT the probe here either, for the same reason as above: a
 	// cancelled record is marked expired in place and left in the list for
 	// the round sweep, so HasCondition would stay true. GetConditions filters expired
 	// entries, so an empty result is the real "no longer holds it" check.
 	assert.Empty(t, mob.Character.GetConditions(conditions.ConditionIdPoisoned), "the poisoned record is purged")
-	assert.True(t, caster.Character.Conditions.HasFlag(conditions.Poison, false), "the caster keeps their own poison")
+	assert.True(t, caster.Character.Conditions.HasFlag(conditions.Poison), "the caster keeps their own poison")
 	casterLines := drainPlain(1)
 	// The mob name is rendered by mobDisplayName, which appends the adjectives
 	// the mob carries at the moment of the cast, so the line reads
@@ -140,7 +140,7 @@ func TestPurgeAffliction_MobTargetThatLeftTheRoomIsNeitherPurgedNorNarrated(t *t
 
 	casterLines, bystanderLines := castPurgeAtMob(t, room)
 
-	assert.True(t, mob.Character.Conditions.HasFlag(conditions.Poison, false), "an absent mob is not purged")
+	assert.True(t, mob.Character.Conditions.HasFlag(conditions.Poison), "an absent mob is not purged")
 	assert.Equal(t, 0, countContaining(casterLines, "purging energy"), "no purge line for an absent target")
 	assert.Equal(t, 0, countContaining(bystanderLines, "purging energy"))
 	assert.Equal(t, 0, countContaining(casterLines, "from your body"), "and no fallback to self-cast")
@@ -161,7 +161,7 @@ func TestPurgeAffliction_DeadMobTargetIsNeitherPurgedNorNarrated(t *testing.T) {
 
 	casterLines, bystanderLines := castPurgeAtMob(t, room)
 
-	assert.True(t, mob.Character.Conditions.HasFlag(conditions.Poison, false), "a dead mob is not purged")
+	assert.True(t, mob.Character.Conditions.HasFlag(conditions.Poison), "a dead mob is not purged")
 	assert.Equal(t, 0, countContaining(casterLines, "purging energy"), "no purge line for a dead target")
 	assert.Equal(t, 0, countContaining(bystanderLines, "purging energy"))
 	assert.Equal(t, 0, countContaining(casterLines, "from your body"), "and no fallback to self-cast")
@@ -187,7 +187,7 @@ func TestPurgeAffliction_PlayerTargetThatLeftTheRoomIsNeitherPurgedNorNarrated(t
 	spell := &spells.SpellData{SpellId: "purge-affliction", Name: "Purge Affliction", AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSingle}
 	resolveSpell(caster, activity.CastingData{SpellId: "purge-affliction", TargetUserIds: []int{2}}, spell, room)
 
-	assert.True(t, target.Character.Conditions.HasFlag(conditions.Poison, false), "an absent player is not purged")
+	assert.True(t, target.Character.Conditions.HasFlag(conditions.Poison), "an absent player is not purged")
 	targetLines := drainPlain(2)
 	assert.Equal(t, 0, countContaining(targetLines, "purges the afflictions from your body"))
 	casterLines := drainPlain(1)
@@ -215,7 +215,7 @@ func TestPurgeAffliction_DownedPlayerTargetStillPresentIsPurged(t *testing.T) {
 	spell := &spells.SpellData{SpellId: "purge-affliction", Name: "Purge Affliction", AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSingle}
 	resolveSpell(caster, activity.CastingData{SpellId: "purge-affliction", TargetUserIds: []int{2}}, spell, room)
 
-	assert.False(t, target.Character.Conditions.HasFlag(conditions.Poison, false), "a downed ally in the room is still purged")
+	assert.False(t, target.Character.Conditions.HasFlag(conditions.Poison), "a downed ally in the room is still purged")
 	assert.Equal(t, 1, countContaining(drainPlain(2), "purges the afflictions from your body"))
 	assert.Equal(t, 1, countContaining(drainPlain(1), "purging energy"))
 }

@@ -81,6 +81,6 @@ func TestHasFlagSurvivesAHeldConditionWithNoSpec(t *testing.T) {
 	}
 	require.True(t, bs.AddCondition(immunityTestStoneStomachId, false))
 
-	assert.True(t, bs.HasFlag(PoisonImmunity, false), "the flag is found past the dead id")
+	assert.True(t, bs.HasFlag(PoisonImmunity), "the flag is found past the dead id")
 	assert.False(t, bs.AddCondition(immunityTestVenomId, false), "and the immunity still refuses poison")
 }

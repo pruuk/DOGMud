@@ -18,14 +18,14 @@ func (c *Character) IsDisabled() bool {
 }
 
 func (c *Character) HasConditionFlag(conditionFlag conditions.Flag) bool {
-	return c.Conditions.HasFlag(conditionFlag, false)
+	return c.Conditions.HasFlag(conditionFlag)
 }
 
 // HasFlagFromAnySource returns true if the character has the given flag from
 // either active conditions OR permanent mutation effects. Use this instead of
 // HasConditionFlag when the check should also honor mutation-granted flags.
 func (c *Character) HasFlagFromAnySource(conditionFlag conditions.Flag) bool {
-	if c.Conditions.HasFlag(conditionFlag, false) {
+	if c.Conditions.HasFlag(conditionFlag) {
 		return true
 	}
 	return mutations.HasMutationFlag(c.Mutations, string(conditionFlag))
@@ -33,7 +33,7 @@ func (c *Character) HasFlagFromAnySource(conditionFlag conditions.Flag) bool {
 
 func (c *Character) CancelConditionsWithFlag(conditionFlag conditions.Flag) bool {
 	heldStealth := c.holdsLiveStealthRecord()
-	if c.Conditions.HasFlag(conditionFlag, true) {
+	if c.Conditions.ExpireConditionsWithFlag(conditionFlag) {
 		// A cancel that just ended the stealth record spends a spawn-time
 		// hide (conditionids: [9]) for good, and it must do so BEFORE the
 		// Validate(true) below: reapplyPermanentConditions would otherwise
@@ -73,7 +73,7 @@ func (c *Character) CancelConditionsWithFlag(conditionFlag conditions.Flag) bool
 		//
 		// Asking the FSM directly is correct for every caller and cannot
 		// drift again: if stealth is still on after a cancel, end it.
-		if c.Awareness != nil && !c.Conditions.HasFlag(conditions.Hidden, false) &&
+		if c.Awareness != nil && !c.Conditions.HasFlag(conditions.Hidden) &&
 			c.Awareness.State() == awareness.Hidden {
 			_ = c.Awareness.TransitionToRevealing(
 				state.TransitionReason{Trigger: awareness.TriggerObserverSearch})

@@ -687,8 +687,8 @@ func (c *Character) applyVitalChange(pool Pool, delta int) int {
 //	ApplyHealthChange, on crossing below zero
 //	  -> CancelCombatConditions
 //	  -> CancelConditionsWithFlag(CancelIfCombat)
-//	  -> Conditions.HasFlag(flag, true)   // the `true` EXPIRES the matching conditions;
-//	                                 // despite its name this is a mutator
+//	  -> Conditions.ExpireConditionsWithFlag(flag)   // expires the matching conditions
+//	                                                 // (it was HasFlag(flag, true) until #309)
 //	  -> Validate(true)
 //
 // The recalculation is NOT a death behaviour. Conditions carry stat modifiers, so once
