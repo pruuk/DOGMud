@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -205,12 +206,12 @@ func planStorageForfeiture(slots []users.StorageSlot, shortfall, feePerSlot, min
 
 // joinNames renders a comma-separated list of item names for a bank notice.
 func joinNames(names []string) string {
-	out := ""
+	var out strings.Builder
 	for i, n := range names {
 		if i > 0 {
-			out += ", "
+			out.WriteString(", ")
 		}
-		out += n
+		out.WriteString(n)
 	}
-	return out
+	return out.String()
 }

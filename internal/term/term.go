@@ -1,6 +1,9 @@
 package term
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type TerminalCommandPayloadParser func(b []byte) []byte
 
@@ -270,25 +273,26 @@ func (c *TerminalCommand) DebugString() string {
 }
 
 func TelnetCommandToString(cmdBytes []byte) string {
-	var retStr string = ""
+	var retStr strings.Builder
 	for _, b := range cmdBytes {
-		retStr += fmt.Sprintf("[%v %s]", b, iacByteString(b))
+		retStr.WriteString(fmt.Sprintf("[%v %s]", b, iacByteString(b)))
 	}
-	return retStr
+	return retStr.String()
 }
 
 func AnsiCommandToString(cmdBytes []byte) string {
-	var retStr string = ""
+	var retStr strings.Builder
 	for _, b := range cmdBytes {
-		retStr += fmt.Sprintf("[%v %s]", b, string(b))
+		retStr.WriteString(fmt.Sprintf("[%v %s]", b, string(b)))
 	}
-	return retStr
+	return retStr.String()
 }
 
 func BytesString(cmdBytes []byte) string {
-	var retStr string = "[]byte{ "
+	var retStr strings.Builder
+	retStr.WriteString("[]byte{ ")
 	for _, b := range cmdBytes {
-		retStr += fmt.Sprintf("%v, ", b)
+		retStr.WriteString(fmt.Sprintf("%v, ", b))
 	}
-	return retStr + " }"
+	return retStr.String() + " }"
 }

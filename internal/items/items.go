@@ -526,20 +526,20 @@ func (i *Item) displayNameFrom(spec ItemSpec) string {
 		prefix = `<ansi fg="questflag">★</ansi>`
 	}
 
-	suffix := ``
+	var suffix strings.Builder
 	if adjLen := len(i.Adjectives); adjLen > 0 {
-		suffix += ` <ansi fg="black-bold">(`
+		suffix.WriteString(` <ansi fg="black-bold">(`)
 		for i, adj := range i.Adjectives {
 			if newAdj, ok := adjectiveSwaps[adj]; ok {
-				suffix += newAdj
+				suffix.WriteString(newAdj)
 			} else {
-				suffix += adj
+				suffix.WriteString(adj)
 			}
 			if i < adjLen-1 {
-				suffix += `|`
+				suffix.WriteString(`|`)
 			}
 		}
-		suffix += `)</ansi>`
+		suffix.WriteString(`)</ansi>`)
 	}
 
 	// Normalize the bare template name to canonical smart Title case. This is a
@@ -551,12 +551,12 @@ func (i *Item) displayNameFrom(spec ItemSpec) string {
 	// rendered verbatim.
 	if spec.DisplayName != `` {
 		if spec.DisplayName[0:1] == `:` {
-			return prefix + colorpatterns.ApplyColorPattern(casing.Title(spec.Name), spec.DisplayName[1:]) + suffix
+			return prefix + colorpatterns.ApplyColorPattern(casing.Title(spec.Name), spec.DisplayName[1:]) + suffix.String()
 		} else {
-			return prefix + spec.DisplayName + suffix
+			return prefix + spec.DisplayName + suffix.String()
 		}
 	}
-	return prefix + casing.Title(spec.Name) + suffix
+	return prefix + casing.Title(spec.Name) + suffix.String()
 }
 
 func (i *Item) Name() string {

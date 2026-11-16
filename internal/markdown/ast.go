@@ -2,6 +2,7 @@ package markdown
 
 import (
 	"fmt"
+	"strings"
 )
 
 // NodeType identifies the kind of AST node.
@@ -47,40 +48,40 @@ type baseNode struct {
 func (n *baseNode) Type() NodeType   { return n.nodeType }
 func (n *baseNode) Children() []Node { return n.nodeChildren }
 func (n *baseNode) String(depth int) string {
-	ret := ``
+	var ret strings.Builder
 	for _, c := range n.Children() {
 		if n.Type() == ListNode {
-			ret += c.String(depth - 1)
+			ret.WriteString(c.String(depth - 1))
 		} else {
-			ret += c.String(depth + 1)
+			ret.WriteString(c.String(depth + 1))
 		}
 
 	}
 
 	switch n.Type() {
 	case DocumentNode:
-		return activeFormatter.Document(ret, depth)
+		return activeFormatter.Document(ret.String(), depth)
 	case HeadingNode:
-		return activeFormatter.Heading(ret, n.level)
+		return activeFormatter.Heading(ret.String(), n.level)
 	case ParagraphNode:
-		return activeFormatter.Paragraph(ret, depth)
+		return activeFormatter.Paragraph(ret.String(), depth)
 	case HorizontalLineNode:
 		return activeFormatter.HorizontalLine(n.content, depth)
 	case HardBreakNode:
-		return activeFormatter.HardBreak(ret, depth)
+		return activeFormatter.HardBreak(ret.String(), depth)
 	case ListNode:
-		return activeFormatter.List(ret, depth)
+		return activeFormatter.List(ret.String(), depth)
 	case ListItemNode:
-		return activeFormatter.ListItem(ret, depth)
+		return activeFormatter.ListItem(ret.String(), depth)
 	case TextNode:
-		return activeFormatter.Text(n.content+ret, depth)
+		return activeFormatter.Text(n.content+ret.String(), depth)
 	case StrongNode:
-		return activeFormatter.Strong(ret, depth)
+		return activeFormatter.Strong(ret.String(), depth)
 	case EmphasisNode:
-		return activeFormatter.Emphasis(ret, depth)
+		return activeFormatter.Emphasis(ret.String(), depth)
 	case SpecialNode:
-		return activeFormatter.Special(ret, n.level)
+		return activeFormatter.Special(ret.String(), n.level)
 	default:
-		return fmt.Sprintf(`[INVALID Node: type=%s depth=%d text=%s]`, n.Type(), depth, n.content+"/"+ret)
+		return fmt.Sprintf(`[INVALID Node: type=%s depth=%d text=%s]`, n.Type(), depth, n.content+"/"+ret.String())
 	}
 }

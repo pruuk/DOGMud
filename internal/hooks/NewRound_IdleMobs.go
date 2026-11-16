@@ -4,6 +4,7 @@ package hooks
 import (
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -203,11 +204,12 @@ func advanceMobPath(mob *mobs.Mob) bool {
 	if currentStep != nil && currentStep.RoomId() != mob.Character.RoomId {
 		reDoWaypoints := mob.Path.Waypoints()
 		if len(reDoWaypoints) > 0 {
-			newCommand := `pathto`
+			var newCommand strings.Builder
+			newCommand.WriteString(`pathto`)
 			for _, wpInt := range reDoWaypoints {
-				newCommand += ` ` + strconv.Itoa(wpInt)
+				newCommand.WriteString(` ` + strconv.Itoa(wpInt))
 			}
-			mob.Command(newCommand)
+			mob.Command(newCommand.String())
 			return true
 		}
 		// if we were unable to come up with a new path, send them home.

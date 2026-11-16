@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -37,7 +38,7 @@ func QuestToken(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 			rows = append(rows, []string{"None", "None"})
 		} else {
 			for qid, qt := range allTokens {
-				qTokenStr := ``
+				var qTokenStr strings.Builder
 				qToken := fmt.Sprintf(`%d-%s`, qid, qt)
 				qInfo := quests.GetQuest(qToken)
 				if qInfo == nil {
@@ -47,12 +48,12 @@ func QuestToken(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 				}
 				for _, step := range qInfo.Steps {
 					if step.Id == qt {
-						qTokenStr += fmt.Sprintf(`[%d-%s] `, qid, step.Id)
+						qTokenStr.WriteString(fmt.Sprintf(`[%d-%s] `, qid, step.Id))
 					} else {
-						qTokenStr += fmt.Sprintf(`%d-%s `, qid, step.Id)
+						qTokenStr.WriteString(fmt.Sprintf(`%d-%s `, qid, step.Id))
 					}
 				}
-				rows = append(rows, []string{qInfo.Name, qTokenStr})
+				rows = append(rows, []string{qInfo.Name, qTokenStr.String()})
 			}
 		}
 
@@ -70,11 +71,11 @@ func QuestToken(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 			rows = append(rows, []string{"None", "None"})
 		} else {
 			for _, qInfo := range allQuests {
-				qTokenStr := ``
+				var qTokenStr strings.Builder
 				for _, step := range qInfo.Steps {
-					qTokenStr += fmt.Sprintf(`%d-%s `, qInfo.QuestId, step.Id)
+					qTokenStr.WriteString(fmt.Sprintf(`%d-%s `, qInfo.QuestId, step.Id))
 				}
-				rows = append(rows, []string{qInfo.Name, qTokenStr})
+				rows = append(rows, []string{qInfo.Name, qTokenStr.String()})
 			}
 		}
 

@@ -138,19 +138,20 @@ func questLines(owner *users.UserRecord, max int) []string {
 		if q == nil || q.Secret {
 			continue
 		}
-		line := q.Name
+		var line strings.Builder
+		line.WriteString(q.Name)
 		for _, s := range q.Steps {
 			if s.Id != step {
 				continue
 			}
 			if s.Description != `` {
-				line += `: ` + strings.TrimSpace(s.Description)
+				line.WriteString(`: ` + strings.TrimSpace(s.Description))
 			} else if s.Hint != `` {
-				line += `: ` + strings.TrimSpace(s.Hint)
+				line.WriteString(`: ` + strings.TrimSpace(s.Hint))
 			}
 			break
 		}
-		out = append(out, line)
+		out = append(out, line.String())
 		if len(out) >= max {
 			break
 		}

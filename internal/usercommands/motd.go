@@ -79,19 +79,19 @@ func motdBox(text string, lw int) string {
 	// Re-insert the ansi styling around the visible title only.
 	titleStyled := strings.Replace(titlePadded, title, `<ansi fg="cyan-bold">`+title+`</ansi>`, 1)
 
-	var output string
-	output += `<ansi fg="yellow"> ╔` + horiz + `╗` + "\n"
-	output += ` ║ ` + titleStyled + `║` + "\n"
-	output += ` ╠` + horiz + `╣` + "\n"
+	var output strings.Builder
+	output.WriteString(`<ansi fg="yellow"> ╔` + horiz + `╗` + "\n")
+	output.WriteString(` ║ ` + titleStyled + `║` + "\n")
+	output.WriteString(` ╠` + horiz + `╣` + "\n")
 	for _, line := range wrapped {
 		// Pad each line to padWidth visible chars inside the box.
 		// ANSI tag bytes don't count toward width.
 		padLen := max(padWidth-motdVisibleWidth(line), 0)
-		output += ` ║ ` + line + strings.Repeat(" ", padLen) + `║` + "\n"
+		output.WriteString(` ║ ` + line + strings.Repeat(" ", padLen) + `║` + "\n")
 	}
-	output += ` ╚` + horiz + `╝</ansi>` + "\n"
+	output.WriteString(` ╚` + horiz + `╝</ansi>` + "\n")
 
-	return output
+	return output.String()
 }
 
 // motdSpacedTitle is the title the box and the wider ruled forms show;
@@ -118,16 +118,17 @@ func motdRuled(text string, formWidth int) string {
 		indent = 1
 	}
 	rule := strings.Repeat("═", formWidth)
-	out := `<ansi fg="yellow">` + rule + "\n" +
+	var out strings.Builder
+	out.WriteString(`<ansi fg="yellow">` + rule + "\n" +
 		`  <ansi fg="cyan-bold">` + title + `</ansi>` + "\n" +
-		rule + "\n"
+		rule + "\n")
 	for line := range strings.SplitSeq(messaging.WrapAnsi(text, formWidth-indent), "\n") {
 		if motdVisibleWidth(line) <= formWidth-indent {
 			line = strings.Repeat(" ", indent) + line
 		}
-		out += line + "\n"
+		out.WriteString(line + "\n")
 	}
-	return out + rule + `</ansi>` + "\n"
+	return out.String() + rule + `</ansi>` + "\n"
 }
 
 // motdLongestWord is the display width of the longest word in text.

@@ -39,12 +39,13 @@ func resolveEnchantSlot(equipment *characters.Worn, targetType string, specifier
 			return c.SlotLabel, ptr, ""
 		}
 		// Multiple candidates — tell the player to specify
-		lines := "Which slot? You have multiple options:\n"
+		var lines strings.Builder
+		lines.WriteString("Which slot? You have multiple options:\n")
 		for i, c := range candidates {
-			lines += fmt.Sprintf("  %s#%d: %s\n",
-				slotSpecName(targetType), i+1, c.Item.DisplayName())
+			lines.WriteString(fmt.Sprintf("  %s#%d: %s\n",
+				slotSpecName(targetType), i+1, c.Item.DisplayName()))
 		}
-		return "", nil, lines
+		return "", nil, lines.String()
 	}
 
 	// Parse the specifier for #N suffix or N. prefix

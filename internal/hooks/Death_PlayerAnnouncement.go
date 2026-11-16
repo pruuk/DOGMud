@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -73,18 +74,18 @@ func wirePlayerDeathAnnouncement(c *characters.Character) {
 			// 2. Build killedBy string and collect killer user IDs.
 			dmgCt := len(d.DamageMap)
 			killedByUserIds := make([]int, 0, dmgCt)
-			killedBy := ``
+			var killedBy strings.Builder
 			i := 0
 			for uid := range d.DamageMap {
 				if killer := users.GetByUserId(uid); killer != nil {
 					if i > 0 {
 						if i < dmgCt-1 {
-							killedBy += `, `
+							killedBy.WriteString(`, `)
 						} else {
-							killedBy += ` and `
+							killedBy.WriteString(` and `)
 						}
 					}
-					killedBy += `<ansi fg="username">` + killer.Character.Name + `</ansi>`
+					killedBy.WriteString(`<ansi fg="username">` + killer.Character.Name + `</ansi>`)
 					i++
 				}
 				killedByUserIds = append(killedByUserIds, uid)
@@ -95,10 +96,10 @@ func wirePlayerDeathAnnouncement(c *characters.Character) {
 				`<ansi fg="magenta-bold">***</ansi> <ansi fg="username">%s</ansi> has <ansi fg="red-bold">DIED!</ansi> <ansi fg="magenta-bold">***</ansi>%s`,
 				c.Name, term.CRLFStr,
 			)
-			if killedBy != `` {
+			if killedBy.String() != `` {
 				msg = fmt.Sprintf(
 					`<ansi fg="magenta-bold">***</ansi> <ansi fg="username">%s</ansi> has <ansi fg="red-bold">DIED!</ansi> (killed by %s) <ansi fg="magenta-bold">***</ansi>%s`,
-					c.Name, killedBy, term.CRLFStr,
+					c.Name, killedBy.String(), term.CRLFStr,
 				)
 			}
 			events.AddToQueue(events.Broadcast{Text: msg})
