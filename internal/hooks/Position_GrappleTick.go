@@ -941,12 +941,8 @@ func shiftControl(c *characters.Character, steps int) {
 		})
 	}
 	currentRank := controlRank(c.Control.State())
-	newRank := max(
-		// toward Controlling means lower rank
-		currentRank-steps, 0)
-	if newRank > 2 {
-		newRank = 2
-	}
+	// toward Controlling means lower rank
+	newRank := min(max(currentRank-steps, 0), 2)
 	if newRank == currentRank {
 		return
 	}

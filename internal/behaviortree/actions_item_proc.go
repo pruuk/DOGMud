@@ -310,10 +310,7 @@ func procStealPool(owner, other *characters.Character, params map[string]float64
 	}
 	switch int(params["pool"]) {
 	case 3: // conviction
-		amt := max(int(float64(other.ConvictionMax.Value)*pct), 1)
-		if amt > other.Conviction {
-			amt = other.Conviction
-		}
+		amt := min(max(int(float64(other.ConvictionMax.Value)*pct), 1), other.Conviction)
 		if amt <= 0 {
 			return false
 		}

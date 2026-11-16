@@ -191,10 +191,7 @@ func VisitVendorsInRoomOpts(
 				if entry.Current <= entry.RestockQty {
 					continue // keep at least one restock batch for local
 				}
-				qty := max(entry.Current/10, 1)
-				if qty > entry.Current {
-					qty = entry.Current
-				}
+				qty := min(max(entry.Current/10, 1), entry.Current)
 				for j := 0; j < qty; j++ {
 					newItem := items.New(entry.ItemId)
 					if !newItem.IsValid() {
