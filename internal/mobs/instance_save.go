@@ -80,6 +80,9 @@ func instancePath(mobId MobId, zone string, mobName string, homeRoomId int) stri
 // that leaks across player-summon cycles. See
 // docs/superpowers/specs/completed/2026-04-21-summons-dont-persist-design.md.
 func SaveMobInstance(mob *Mob) error {
+	if instanceSavesOff.Load() {
+		return nil // DisableInstanceSavesForTest (#890)
+	}
 	// Companions live on CompanionInfo, not in mobs.instances/.
 	//
 	// EverCharmed, not just IsCharmed: once a bond expires the ex-companion is
@@ -207,6 +210,9 @@ func SaveMobInstance(mob *Mob) error {
 // inspection AND frees the path so the fresh save succeeds (review finding 5;
 // contract in internal/util/livingstate.go).
 func LoadMobInstance(mobId MobId, zone string, mobName string, homeRoomId int) *MobInstanceData {
+	if instanceSavesOff.Load() {
+		return nil // DisableInstanceSavesForTest (#890): a fresh spawn
+	}
 	savePath := instancePath(mobId, zone, mobName, homeRoomId)
 
 	raw, err := util.ReadLivingState(savePath)

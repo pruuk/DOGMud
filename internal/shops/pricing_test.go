@@ -168,7 +168,7 @@ func TestPricingConfigFromBalance_ShippedBand(t *testing.T) {
 	t.Chdir(filepath.Join(filepath.Dir(thisFile), "..", ".."))
 
 	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 

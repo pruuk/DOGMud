@@ -231,6 +231,20 @@ func TestLoadRoomInstance_AppliesNonSkipFields(t *testing.T) {
 	assert.Equal(t, "Control Title", loaded.Title)
 	assert.Equal(t, "Control room.", loaded.Description)
 
+	// #890: with instance saves off, the same room loads as its template;
+	// the overlay's gold (99) is not applied, and a save writes nothing.
+	restore := DisableInstanceSavesForTest()
+	off := LoadRoomInstance(101)
+	assert.NotNil(t, off)
+	assert.Equal(t, 0, off.Gold, "instance saves off: the template's gold, not the overlay's")
+	before, _ := os.ReadFile(instancePath)
+	off.Gold = 7
+	assert.NoError(t, SaveRoomInstance(*off))
+	after, _ := os.ReadFile(instancePath)
+	assert.Equal(t, string(before), string(after), "instance saves off: nothing is written")
+	restore()
+	assert.Equal(t, 99, LoadRoomInstance(101).Gold, "restored: the overlay applies again")
+
 	// Cleanup
 	delete(roomManager.roomIdToFileCache, 101)
 }

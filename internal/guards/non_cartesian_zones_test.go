@@ -32,7 +32,7 @@ func loadWorldRooms(t *testing.T) []string {
 	t.Helper()
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
 	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 	rooms.LoadBiomeDataFiles()

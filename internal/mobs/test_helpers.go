@@ -1,6 +1,24 @@
 package mobs
 
-import "github.com/GoMudEngine/GoMud/internal/state/combatphase"
+import (
+	"sync/atomic"
+
+	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
+)
+
+// instanceSavesOff, when set, makes LoadMobInstance ignore mobs.instances and
+// SaveMobInstance write nothing. See DisableInstanceSavesForTest.
+var instanceSavesOff atomic.Bool
+
+// DisableInstanceSavesForTest turns mob instance saves off for the rest of
+// the test binary and returns a restore func: the mobs twin of
+// rooms.DisableInstanceSavesForTest (#890). A test package that loads the
+// shipped world from the real tree calls both once in TestMain, so a local
+// server's saves neither overlay the templates nor gain test writes.
+func DisableInstanceSavesForTest() func() {
+	prev := instanceSavesOff.Swap(true)
+	return func() { instanceSavesOff.Store(prev) }
+}
 
 // SeedMobsForTest replaces all global mob registries with the supplied test
 // data and returns a cleanup function that restores the originals.

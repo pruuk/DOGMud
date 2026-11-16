@@ -85,7 +85,7 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 	// binary would otherwise walk the `default` fixture world and use Go
 	// default lighting edges.
 	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 	// Timing pinned as the day-cycle golden pins it. TRAP: the Go default

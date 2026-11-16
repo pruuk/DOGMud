@@ -7,6 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
 // repoRootPath is the repository root (the directory holding go.mod). TestMain
@@ -93,6 +96,13 @@ func TestMain(m *testing.M) {
 	}
 	// os.Setenv, not t.Setenv: this must hold for every test in the package.
 	os.Setenv(`CONFIG_PATH`, scratch+`/config-overrides.yaml`)
+
+	// The guards read the shipped world from the real tree, whose
+	// rooms.instances and mobs.instances hold a local server's saves: a saved
+	// Rift Stone in room 5000 failed TestLightingFixtureDayCycle here and
+	// nowhere else (#890). Templates only, and nothing written there.
+	rooms.DisableInstanceSavesForTest()
+	mobs.DisableInstanceSavesForTest()
 
 	code := m.Run()
 

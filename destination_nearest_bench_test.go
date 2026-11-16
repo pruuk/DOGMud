@@ -33,10 +33,7 @@ import (
 
 const destBenchPairs = 200
 
-var (
-	destBenchOnce sync.Once
-	destBenchErr  error
-)
+var destBenchOnce sync.Once
 
 // loadShippedWorldTB is loadShippedQuestWorld for a benchmark: it loads the
 // shipped data once, skipping unless DOGMUD_BOOT_SMOKE is set.
@@ -45,21 +42,20 @@ func loadShippedWorldTB(tb testing.TB) {
 	if os.Getenv(bootSmokeEnvVar) == `` {
 		tb.Skipf("set %s=1 to run the shipped-data benchmarks", bootSmokeEnvVar)
 	}
+	// The config loads per call, restored at cleanup (#720): a load inside
+	// the Once would be restored at the first caller's cleanup and leave the
+	// later ones without it. The world data stays loaded once.
+	if err := configs.ReloadConfigForTest(tb); err != nil {
+		tb.Fatalf("ReloadConfig failed: %v", err)
+	}
 	destBenchOnce.Do(func() {
 		mudlog.SetupLogger(nil, `LOW`, ``, false)
-		if err := configs.ReloadConfig(); err != nil {
-			destBenchErr = err
-			return
-		}
 		func() {
 			defer func() { _ = recover() }() // boot failures are the boot test's job
 			loadAllDataFiles(false)
 			mapper.PreCacheMaps()
 		}()
 	})
-	if destBenchErr != nil {
-		tb.Fatalf("ReloadConfig failed: %v", destBenchErr)
-	}
 	if len(rooms.GetAllRoomIds()) < 500 {
 		tb.Fatalf("only %d rooms loaded", len(rooms.GetAllRoomIds()))
 	}

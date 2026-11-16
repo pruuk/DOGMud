@@ -95,7 +95,7 @@ func mobDataRoot(t *testing.T) string {
 	t.Cleanup(func() { _ = os.Chdir(cwd) })
 
 	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("reload config: %v", err)
 	}
 

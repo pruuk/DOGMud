@@ -4,12 +4,12 @@ package characters
 // Called by the consume hook when a character drinks Bloom.
 
 import (
-	"math/rand"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // BloomAdvanceMutation accelerates the character's mutation progression
@@ -29,9 +29,9 @@ import (
 // Returns the mutationId advanced/granted and its new level, or ("", 0) if
 // nothing could change (all owned are at cap and no new candidate exists).
 //
-// rng is injectable for deterministic testing; pass nil to use the default
-// global math/rand source.
-func (c *Character) BloomAdvanceMutation(rng *rand.Rand) (string, int) {
+// The draw goes through the shared seedable source (util.Rand), so a test
+// replays it with util.SetRandForTest (#594).
+func (c *Character) BloomAdvanceMutation() (string, int) {
 	// ── Has owned mutations: advance the strongest one below the cap ──────────
 	if len(c.Mutations) > 0 {
 		type ownedEntry struct {
@@ -59,7 +59,7 @@ func (c *Character) BloomAdvanceMutation(rng *rand.Rand) (string, int) {
 		// All owned mutations are at cap — fall through to seed a new one.
 	}
 
-	return c.BloomSeedNewMutation(rng)
+	return c.BloomSeedNewMutation()
 }
 
 // BloomSeedNewMutation grants the character a brand-new mutation drawn from a
@@ -68,8 +68,9 @@ func (c *Character) BloomAdvanceMutation(rng *rand.Rand) (string, int) {
 // fall-through (no owned / all-capped) AND directly by the dose hook's separate
 // BloomNewMutationChance roll (the "Bloom occasionally pushes a whole new change"
 // path). Returns (id, 1) or ("", 0) if no candidate exists, or if the character
-// already holds Balance.MutationMaxCount mutations. rng nil → global rand.
-func (c *Character) BloomSeedNewMutation(rng *rand.Rand) (string, int) {
+// already holds Balance.MutationMaxCount mutations. The pick draws through
+// util.Rand (#594).
+func (c *Character) BloomSeedNewMutation() (string, int) {
 	// The combat path (actions.EarnMutation) and the round ticks
 	// (NewRound_UserRoundTick, NewRound_MobRoundTick) read this count, and a wafer
 	// stops at it too (owner, 2026-11-04). Rite and Phial of Second Birth grants do
@@ -127,12 +128,7 @@ func (c *Character) BloomSeedNewMutation(rng *rand.Rand) (string, int) {
 		totalWeight += cand.weight
 	}
 
-	var pick int
-	if rng != nil {
-		pick = rng.Intn(totalWeight)
-	} else {
-		pick = rand.Intn(totalWeight)
-	}
+	pick := util.Rand(totalWeight)
 
 	for _, cand := range candidates {
 		pick -= cand.weight

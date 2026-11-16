@@ -294,7 +294,7 @@ func chdirRepoRootForTest(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 }

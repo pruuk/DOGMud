@@ -38,7 +38,7 @@ func withRepoRoot(t *testing.T) {
 	// the duration of this test only.
 	configs.SetConfigForTest(t, configs.GetConfig())
 
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("reload config: %v", err)
 	}
 }

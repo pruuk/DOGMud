@@ -65,7 +65,7 @@ func TestSmoke_ServerBootsCleanWithRealData(t *testing.T) {
 	// colour-palette Info logging the loaders emit.
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
 
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig failed — cannot boot without config: %v", err)
 	}
 
@@ -211,7 +211,7 @@ func TestSmoke_ShippedDialoguePassesTheValidators(t *testing.T) {
 	}
 
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig failed: %v", err)
 	}
 
@@ -314,7 +314,7 @@ func TestSmoke_NoNewSilentlyIgnoredYAMLKeys(t *testing.T) {
 	}
 
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig failed: %v", err)
 	}
 
@@ -370,7 +370,7 @@ func TestSmoke_KaelGreetingFollowsQuest11Branch(t *testing.T) {
 	}
 
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig failed: %v", err)
 	}
 	func() {

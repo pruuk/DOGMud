@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
 // realOverridesPath is the live world's engine-written overrides file. In a
@@ -27,6 +30,12 @@ func TestMain(m *testing.M) {
 	}
 	// os.Setenv, not t.Setenv: this must hold for every test in the package.
 	os.Setenv(`CONFIG_PATH`, scratch+`/config-overrides.yaml`)
+
+	// The boot and quest smoke tests load the shipped world from the real
+	// tree, whose rooms.instances and mobs.instances hold a local server's
+	// saves. Templates only, and nothing written there (#890).
+	rooms.DisableInstanceSavesForTest()
+	mobs.DisableInstanceSavesForTest()
 
 	code := m.Run()
 

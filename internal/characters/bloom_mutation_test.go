@@ -1,10 +1,10 @@
 package characters
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // seedBloomTestMutations registers two minimal MutationSpec entries for the
@@ -36,8 +36,8 @@ func TestBloomAdvance_StrongestUnderCap(t *testing.T) {
 			"mut-b": 2,
 		},
 	}
-	rng := rand.New(rand.NewSource(42))
-	id, newLevel := c.BloomAdvanceMutation(rng)
+	defer util.SetRandForTest(42)()
+	id, newLevel := c.BloomAdvanceMutation()
 
 	if id != "mut-b" {
 		t.Errorf("expected strongest mutation %q to be advanced, got %q", "mut-b", id)
@@ -61,8 +61,8 @@ func TestBloomSeed_WhenNoMutations(t *testing.T) {
 	defer seedBloomTestMutations()()
 
 	c := &Character{} // Mutations is nil
-	rng := rand.New(rand.NewSource(99))
-	id, newLevel := c.BloomAdvanceMutation(rng)
+	defer util.SetRandForTest(99)()
+	id, newLevel := c.BloomAdvanceMutation()
 
 	if id == "" {
 		t.Fatal("expected a mutation to be seeded, got empty id")
@@ -97,8 +97,8 @@ func TestBloomAdvance_RespectsCap(t *testing.T) {
 			"mut-a": capLevel,
 		},
 	}
-	rng := rand.New(rand.NewSource(1))
-	id, newLevel := c.BloomAdvanceMutation(rng)
+	defer util.SetRandForTest(1)()
+	id, newLevel := c.BloomAdvanceMutation()
 
 	if id != "" || newLevel != 0 {
 		t.Errorf(

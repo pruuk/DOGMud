@@ -135,6 +135,12 @@ func LoadRoomInstance(roomId int) *Room {
 		return nil
 	}
 
+	// A test binary that loads the shipped world reads templates only
+	// (DisableInstanceSavesForTest, #890).
+	if instanceSavesOff.Load() {
+		return room
+	}
+
 	// Look for specially saved instance data
 	filepath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/rooms.instances/`, filename)
 
@@ -433,6 +439,10 @@ func DeleteRoomTemplate(roomId int) error {
 // older snapshot by definition, so letting it commit afterwards would clobber
 // the newer state this call just wrote (guard G2).
 func SaveRoomInstance(r Room) error {
+
+	if instanceSavesOff.Load() {
+		return nil // DisableInstanceSavesForTest (#890)
+	}
 
 	p, err := PrepareInstanceWrite(r)
 	if err != nil {

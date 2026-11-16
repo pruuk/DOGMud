@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func getMutationSpecForTest(id string) *mutations.MutationSpec { return mutations.GetMutation(id) }
@@ -62,7 +63,7 @@ func TestBloomSeedNewMutation_RerollBonusFavorsRareAndConsumesCharge(t *testing.
 	c.SpeciesId = 1
 	c.Mutations = map[string]int{}
 	c.MutationRerollBonus = 2
-	id, lvl := c.BloomSeedNewMutation(nil)
+	id, lvl := c.BloomSeedNewMutation()
 	if id == "" || lvl == 0 {
 		t.Fatalf("expected a mutation to be seeded")
 	}
@@ -73,13 +74,14 @@ func TestBloomSeedNewMutation_RerollBonusFavorsRareAndConsumesCharge(t *testing.
 
 func TestRerollBonus_ShiftsDistributionTowardRare(t *testing.T) {
 	defer seedScourTestMutations()()
+	defer util.SetRandForTest(594)() // the draws are seedable since #594, so the counts are fixed
 	rareCountWith, rareCountWithout := 0, 0
 	for i := 0; i < 600; i++ {
 		c := New()
 		c.SpeciesId = 1
 		c.Mutations = map[string]int{}
 		c.MutationRerollBonus = 1
-		if id, _ := c.BloomSeedNewMutation(nil); id != "" {
+		if id, _ := c.BloomSeedNewMutation(); id != "" {
 			if spec := getMutationSpecForTest(id); spec != nil && spec.Rarity >= 6 {
 				rareCountWith++
 			}
@@ -87,7 +89,7 @@ func TestRerollBonus_ShiftsDistributionTowardRare(t *testing.T) {
 		c2 := New()
 		c2.SpeciesId = 1
 		c2.Mutations = map[string]int{}
-		if id, _ := c2.BloomSeedNewMutation(nil); id != "" {
+		if id, _ := c2.BloomSeedNewMutation(); id != "" {
 			if spec := getMutationSpecForTest(id); spec != nil && spec.Rarity >= 6 {
 				rareCountWithout++
 			}

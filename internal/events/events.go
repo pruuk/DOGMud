@@ -3,7 +3,6 @@ package events
 import (
 	"container/heap"
 	"fmt"
-	"math/rand"
 	"sort"
 	"sync"
 	"time"
@@ -179,7 +178,7 @@ func ProcessEvents() {
 	// Since this is intended to run frequently and quickly
 	// Only sample the runtime 1 in 100 times
 	eventCounter := 0
-	if eventDebugging || rand.Intn(100) == 0 {
+	if eventDebugging || util.Rand(100) == 0 { // seedable (#594)
 		start := time.Now()
 		defer func() {
 			util.TrackTime(`events.ProcessEvents()`, time.Since(start).Seconds())

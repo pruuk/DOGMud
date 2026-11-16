@@ -37,7 +37,7 @@ func TestDumpMobStats(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(cwd) })
 
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("reload config: %v", err)
 	}
 	species.LoadDataFiles()

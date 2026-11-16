@@ -93,7 +93,7 @@ func loadShippedCrashSiteBosses(t *testing.T) {
 	// binary fails if those leak. It also points CONFIG_PATH at a scratch
 	// file, so a developer's local config-overrides.yaml cannot move the pin.
 	configs.SetConfigWithLookupsForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 

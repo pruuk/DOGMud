@@ -36,7 +36,7 @@ func TestQuest100_RankOneWalksPastTheBruteOftenEnough(t *testing.T) {
 	t.Chdir(repo)
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
 	configs.SetConfigForTest(t, configs.GetConfig())
-	require.NoError(t, configs.ReloadConfig())
+	require.NoError(t, configs.ReloadConfigForTest(t))
 	cfg := configs.GetConfig()
 	cfg.FilePaths.DataFiles = configs.ConfigString(filepath.Join(repo, "_datafiles", "world", "dogmud"))
 	configs.SetConfigForTest(t, cfg)

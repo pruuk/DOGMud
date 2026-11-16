@@ -93,7 +93,7 @@ func TestLightingBalanceSpread(t *testing.T) {
 	// The real shipped config, as the day-cycle golden reads it. A bare test
 	// binary would otherwise walk the `default` fixture world.
 	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 

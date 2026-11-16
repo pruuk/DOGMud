@@ -136,6 +136,9 @@ func PrepareInstanceWrite(r Room) (savequeue.PendingWrite, error) {
 // Must be called under the world lock, as part of the SAME lock hold that
 // prepares users. See hooks.PrepareAutosaveSet for why that is not merely tidy.
 func PrepareAllInstanceWrites() ([]savequeue.PendingWrite, error) {
+	if instanceSavesOff.Load() {
+		return nil, nil // DisableInstanceSavesForTest (#890)
+	}
 	writes := make([]savequeue.PendingWrite, 0, len(roomManager.rooms))
 	var firstErr error
 
