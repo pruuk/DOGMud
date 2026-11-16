@@ -2,6 +2,7 @@ package migration
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 
@@ -95,9 +96,7 @@ func reclassifyUsersInDir(usersDir string, dryRun bool) error {
 				newMuts[id] = rank
 			}
 		}
-		for id, rank := range seed {
-			newMuts[id] = rank
-		}
+		maps.Copy(newMuts, seed)
 
 		mudlog.Info("Migration 0.14.0", "file", filepath.Base(path), "class", cluster, "mutations", len(newMuts))
 		if dryRun {

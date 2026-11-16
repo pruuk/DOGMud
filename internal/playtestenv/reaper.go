@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"sort"
@@ -529,9 +530,7 @@ func parseListLabels(raw any) map[string]string {
 			out[k] = fmt.Sprint(val)
 		}
 	case map[string]string:
-		for k, val := range v {
-			out[k] = val
-		}
+		maps.Copy(out, v)
 	case string:
 		if v == "" {
 			return out

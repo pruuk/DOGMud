@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"maps"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -160,9 +161,7 @@ func TestLandingLinesNameTheMarkOnScreen(t *testing.T) {
 			set := func() {
 				*said = (*said)[:0]
 				u.Character.QuestProgress = map[int]string{}
-				for k, v := range c.progress {
-					u.Character.QuestProgress[k] = v
-				}
+				maps.Copy(u.Character.QuestProgress, c.progress)
 			}
 			check := func(when string) {
 				t.Helper()

@@ -1,6 +1,7 @@
 package gmcp
 
 import (
+	"maps"
 	"math"
 	"sort"
 	"strconv"
@@ -921,9 +922,7 @@ func buildConditionsPayload(ch *characters.Character) map[string]GMCPCondition {
 		}
 
 		cond.Mods = make(map[string]int)
-		for name, value := range conditionSpec.StatMods {
-			cond.Mods[name] = value
-		}
+		maps.Copy(cond.Mods, conditionSpec.StatMods)
 
 		key := conditionSpec.Name
 		if _, ok := held[key]; ok {

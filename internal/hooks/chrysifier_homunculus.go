@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"maps"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -149,9 +151,7 @@ func spawnHomunculus(user *users.UserRecord, room *rooms.Room) *mobs.Mob {
 	if mob.Character.Skills == nil {
 		mob.Character.Skills = make(map[string]int)
 	}
-	for sk, lvl := range inheritedHomunculusSkills(ch) {
-		mob.Character.Skills[sk] = lvl
-	}
+	maps.Copy(mob.Character.Skills, inheritedHomunculusSkills(ch))
 	// A preset physical-cluster (Colossus) loadout — the bruiser the crafter
 	// themselves is not. First-pass set; tune in playtest.
 	mob.Character.Mutations = map[string]int{"titan-growth": 2}

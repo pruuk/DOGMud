@@ -1,6 +1,8 @@
 package usercommands
 
 import (
+	"maps"
+
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/movenarration"
@@ -84,9 +86,7 @@ func renderMoveEvent(verb string, event movenarration.EventKey, ids moveIdentiti
 		narration.TokenActee:      ids.Actee,
 		narration.TokenActeePlain: ids.ActeePlain,
 	}
-	for k, val := range extra {
-		tokens[k] = val
-	}
+	maps.Copy(tokens, extra)
 	roles := narration.Render(v, tokens, narration.DefaultPicker)
 	// "from beyond the {exitname}" reads "from somewhere above" for up (#430).
 	if name := tokens[movenarration.TokenExitName]; name != "" {

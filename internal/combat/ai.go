@@ -1,6 +1,8 @@
 package combat
 
 import (
+	"maps"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -232,14 +234,10 @@ func GetAIProfile(profileName string, customPreferences map[string]int) map[stri
 
 	// Make a copy to avoid modifying the original
 	result := make(map[string]int)
-	for k, v := range profile {
-		result[k] = v
-	}
+	maps.Copy(result, profile)
 
 	// Override with custom preferences
-	for k, v := range customPreferences {
-		result[k] = v
-	}
+	maps.Copy(result, customPreferences)
 
 	return result
 }

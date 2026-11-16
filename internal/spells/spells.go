@@ -2,6 +2,7 @@ package spells
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strings"
@@ -221,9 +222,7 @@ func ResolveSpellGreedy(rest string) (spellInfo *SpellData, extra string) {
 
 func GetAllSpells() map[string]*SpellData {
 	retSpellBook := make(map[string]*SpellData)
-	for k, v := range allSpells {
-		retSpellBook[k] = v
-	}
+	maps.Copy(retSpellBook, allSpells)
 	return retSpellBook
 }
 

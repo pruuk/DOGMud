@@ -1,6 +1,7 @@
 package items
 
 import (
+	"maps"
 	"math"
 	"slices"
 
@@ -101,9 +102,7 @@ func GenerateAffixedItem(baseItemId int, goldPaid int, scalar float64, goldPerPo
 	// Ensure the StatMods map is freshly allocated so we don't mutate shared data.
 	if specCopy.StatMods != nil {
 		newMods := make(map[string]int, len(specCopy.StatMods))
-		for k, v := range specCopy.StatMods {
-			newMods[k] = v
-		}
+		maps.Copy(newMods, specCopy.StatMods)
 		specCopy.StatMods = newMods
 	} else {
 		specCopy.StatMods = make(map[string]int)

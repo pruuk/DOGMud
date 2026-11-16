@@ -3,6 +3,7 @@ package rooms
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -135,9 +136,7 @@ func (r *RoomManager) cachedFilePathStats() (map[int]string, int) {
 	r.fileCacheMu.RLock()
 	defer r.fileCacheMu.RUnlock()
 	snapshot := make(map[int]string, len(r.roomIdToFileCache))
-	for k, v := range r.roomIdToFileCache {
-		snapshot[k] = v
-	}
+	maps.Copy(snapshot, r.roomIdToFileCache)
 	return snapshot, len(snapshot)
 }
 

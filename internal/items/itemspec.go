@@ -2,6 +2,7 @@ package items
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"runtime/debug"
 	"strconv"
@@ -546,9 +547,7 @@ func GetAllItemSpecs() []ItemSpec {
 // The returned pointers reference cached specs — callers must not mutate.
 func GetAllItemSpecsMap() map[int]*ItemSpec {
 	out := make(map[int]*ItemSpec, len(items))
-	for id, s := range items {
-		out[id] = s
-	}
+	maps.Copy(out, items)
 	return out
 }
 

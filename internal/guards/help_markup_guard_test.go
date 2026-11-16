@@ -2,6 +2,7 @@ package guards
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -141,12 +142,8 @@ func TestHelpFilesStateTheirLayout(t *testing.T) {
 	pages, forms := helpFolderFiles(t)
 	pageForms := helpPageForms(forms)
 	all := map[string]string{}
-	for name, path := range pages {
-		all[name] = path
-	}
-	for name, path := range forms {
-		all[name] = path
-	}
+	maps.Copy(all, pages)
+	maps.Copy(all, forms)
 	for name, path := range all {
 		raw, err := os.ReadFile(path)
 		if err != nil {

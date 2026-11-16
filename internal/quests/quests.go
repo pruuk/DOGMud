@@ -2,6 +2,7 @@ package quests
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -514,9 +515,7 @@ func ValidateFlag(key, value string) error {
 
 func GetFlagRegistry() map[string][]string {
 	out := make(map[string][]string, len(flagRegistry))
-	for k, v := range flagRegistry {
-		out[k] = v
-	}
+	maps.Copy(out, flagRegistry)
 	return out
 }
 

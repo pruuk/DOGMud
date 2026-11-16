@@ -1,6 +1,7 @@
 package mutations
 
 import (
+	"maps"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -24,9 +25,7 @@ func DecayAffinity(aff map[string]float64, rate float64) {
 // gravity of their currently-owned mutations. Returns a fresh map.
 func EffectiveAffinity(owned map[string]int, actionAff map[string]float64) map[string]float64 {
 	eff := make(map[string]float64, len(actionAff)+4)
-	for k, v := range actionAff {
-		eff[k] = v
-	}
+	maps.Copy(eff, actionAff)
 	for k, v := range OwnedGravity(owned) {
 		eff[k] += v
 	}

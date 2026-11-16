@@ -6,6 +6,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"sort"
@@ -321,9 +322,7 @@ func findUnpenalisedRollSites(fset *token.FileSet, files []sightFile, exempt map
 				}
 				// Package-wide aliases plus any this function makes itself.
 				local := map[string]string{}
-				for k, v := range pkgAliases {
-					local[k] = v
-				}
+				maps.Copy(local, pkgAliases)
 				aliasesDeclaredIn(d.Body, pkg, false, local)
 				check(d.Name.Name, d.Body, callsSightHelper(d.Body), local)
 			case *ast.GenDecl:

@@ -2,6 +2,7 @@ package characters
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -89,9 +90,7 @@ func (c *Character) GetQuestProgress() map[int]string {
 	}
 
 	retMap := make(map[int]string)
-	for questId, stepName := range c.QuestProgress {
-		retMap[questId] = stepName
-	}
+	maps.Copy(retMap, c.QuestProgress)
 	return retMap
 }
 

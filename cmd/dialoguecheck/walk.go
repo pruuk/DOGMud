@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -928,9 +929,7 @@ func (w *walker) fire(si int) bool {
 			}
 			for _, n := range starts {
 				f := map[int]node{}
-				for k, v := range ctx {
-					f[k] = v
-				}
+				maps.Copy(f, ctx)
 				f[id] = n
 				if ok, _ := w.eval(s, f); !ok {
 					continue

@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 
@@ -359,9 +360,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		details.VisibleMobs = []string{}
 	}
 
-	for exitStr, exitInfo := range r.ExitsTemp {
-		details.TemporaryExits[exitStr] = exitInfo
-	}
+	maps.Copy(details.TemporaryExits, r.ExitsTemp)
 
 	// Do this twice to ensure secrets are last
 
@@ -435,9 +434,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	// assign mutator exits last so that they can overwrite normal exits
 	for mut := range r.ActiveMutators {
 		spec := mut.GetSpec()
-		for exitName, exitInfo := range spec.Exits {
-			details.VisibleExits[exitName] = exitInfo
-		}
+		maps.Copy(details.VisibleExits, spec.Exits)
 	}
 
 	if searchMobName := user.Character.GetMiscData(`tracking-mob`); searchMobName != nil {

@@ -1,6 +1,8 @@
 package combat
 
 import (
+	"maps"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -303,9 +305,7 @@ func snapshotVictimDamage(victim *characters.Character) map[int]int {
 		return nil
 	}
 	dst := make(map[int]int, len(victim.PlayerDamage))
-	for k, v := range victim.PlayerDamage {
-		dst[k] = v
-	}
+	maps.Copy(dst, victim.PlayerDamage)
 	return dst
 }
 

@@ -2,6 +2,7 @@ package health
 
 import (
 	"fmt"
+	"maps"
 	"strconv"
 	"sync"
 	"time"
@@ -103,9 +104,7 @@ func captureShops() []ShopSnapshot {
 		}
 		if len(inv.CurrentDepletion) > 0 {
 			ss.CurrentDepletion = make(map[int]uint64, len(inv.CurrentDepletion))
-			for k, v := range inv.CurrentDepletion {
-				ss.CurrentDepletion[k] = v
-			}
+			maps.Copy(ss.CurrentDepletion, inv.CurrentDepletion)
 		}
 
 		// Phase-4: compute per-tier median TtR and currently-depleted count.
@@ -237,9 +236,7 @@ func captureCaravans() []CaravanSnapshot {
 			cs.LbsDelivered = tp.LbsDelivered
 			if tp.DeliveriesByTier != nil {
 				cs.DeliveriesByTier = map[int]int{}
-				for tier, count := range tp.DeliveriesByTier {
-					cs.DeliveriesByTier[tier] = count
-				}
+				maps.Copy(cs.DeliveriesByTier, tp.DeliveriesByTier)
 			}
 		}
 
@@ -290,9 +287,7 @@ func captureFerryFactors() []CaravanSnapshot {
 			cs.LbsDelivered = tp.LbsDelivered
 			if tp.DeliveriesByTier != nil {
 				cs.DeliveriesByTier = map[int]int{}
-				for tier, count := range tp.DeliveriesByTier {
-					cs.DeliveriesByTier[tier] = count
-				}
+				maps.Copy(cs.DeliveriesByTier, tp.DeliveriesByTier)
 			}
 		}
 		out = append(out, cs)
@@ -476,9 +471,7 @@ func captureForagers() []ForagerSnapshot {
 			fs.LbsDelivered = tp.LbsDelivered
 			if tp.DeliveriesByTier != nil {
 				fs.DeliveriesByTier = map[int]int{}
-				for tier, count := range tp.DeliveriesByTier {
-					fs.DeliveriesByTier[tier] = count
-				}
+				maps.Copy(fs.DeliveriesByTier, tp.DeliveriesByTier)
 			}
 		}
 		out = append(out, fs)

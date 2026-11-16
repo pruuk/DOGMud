@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
 	"sort"
 	"strings"
@@ -155,9 +156,7 @@ func collectProseFolds(roomTpl Room, skip map[string]bool) (Room, map[string]str
 
 	if len(roomTpl.Nouns) > 0 {
 		nouns := make(map[string]string, len(roomTpl.Nouns))
-		for k, v := range roomTpl.Nouns {
-			nouns[k] = v
-		}
+		maps.Copy(nouns, roomTpl.Nouns)
 		for _, k := range sortedProseKeys(roomTpl.Nouns) {
 			if sentinel, ok := claim(roomTpl.Nouns[k]); ok {
 				nouns[k] = sentinel
@@ -168,9 +167,7 @@ func collectProseFolds(roomTpl Room, skip map[string]bool) (Room, map[string]str
 
 	if len(roomTpl.HiddenNouns) > 0 {
 		hidden := make(map[string]HiddenNoun, len(roomTpl.HiddenNouns))
-		for k, v := range roomTpl.HiddenNouns {
-			hidden[k] = v
-		}
+		maps.Copy(hidden, roomTpl.HiddenNouns)
 		for _, k := range sortedProseKeys(roomTpl.HiddenNouns) {
 			entry := hidden[k]
 			if sentinel, ok := claim(roomTpl.HiddenNouns[k].Description); ok {

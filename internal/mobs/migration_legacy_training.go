@@ -1,6 +1,7 @@
 package mobs
 
 import (
+	"maps"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -124,8 +125,6 @@ func LegacyTrainingToGains(mobId MobId, saved map[string]int) map[string]int {
 
 func copyStatMap(in map[string]int) map[string]int {
 	out := make(map[string]int, len(in))
-	for k, v := range in {
-		out[k] = v
-	}
+	maps.Copy(out, in)
 	return out
 }

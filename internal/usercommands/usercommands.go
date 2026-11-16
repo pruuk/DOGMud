@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -713,9 +714,7 @@ func IsAdminCommand(cmd string) bool {
 // Callers should filter AdminOnly entries as appropriate.
 func GetCommandRegistry() map[string]CommandAccess {
 	snapshot := make(map[string]CommandAccess, len(userCommands))
-	for k, v := range userCommands {
-		snapshot[k] = v
-	}
+	maps.Copy(snapshot, userCommands)
 	return snapshot
 }
 
