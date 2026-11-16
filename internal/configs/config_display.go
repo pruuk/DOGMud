@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -62,12 +63,7 @@ func isSecretConfigValue(name string, value any) bool {
 // leaf) matches secretNameRule, so Modules.x.password.db is caught by the
 // mid-path "password" segment even though its leaf ("db") is innocent.
 func pathHasSecretSegment(path string) bool {
-	for _, segment := range strings.Split(path, `.`) {
-		if secretNameRule.MatchString(segment) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(strings.Split(path, `.`), secretNameRule.MatchString)
 }
 
 // maxContainsSecretDepth caps how far containsSecret descends into a value.

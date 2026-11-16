@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -2687,12 +2688,7 @@ func reflexFleeMob(t *testing.T, instanceId int) *mobs.Mob {
 }
 
 func reflexQueuedFlee(instanceId int) bool {
-	for _, cmd := range events.DrainQueuedInputsForTest(instanceId) {
-		if cmd == `flee` {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(events.DrainQueuedInputsForTest(instanceId), `flee`)
 }
 
 // The run reflex must only fire when a flee can begin. A knocked-down

@@ -175,13 +175,7 @@ func (s Species) GetEnabledSlots() []string {
 	}
 
 	for _, slotName := range slots {
-		add := true
-		for _, slot := range s.DisabledSlots {
-			if slotName == slot {
-				add = false
-				break
-			}
-		}
+		add := !slices.Contains(s.DisabledSlots, slotName)
 		if add {
 			ret = append(ret, slotName)
 		}
@@ -242,10 +236,8 @@ func validateGoreHasHorns(s *Species) error {
 	if s.NaturalAttack != items.Gore {
 		return nil
 	}
-	for _, part := range s.BodyParts {
-		if part == "horns" {
-			return nil
-		}
+	if slices.Contains(s.BodyParts, "horns") {
+		return nil
 	}
 	return fmt.Errorf("species %d (%s): natural_attack gore requires \"horns\" in body_parts", s.SpeciesId, s.Name)
 }
@@ -376,12 +368,7 @@ var CanonicalBodyParts = []string{
 // IsCanonicalBodyPart reports whether the given tag is in the
 // canonical set.
 func IsCanonicalBodyPart(tag string) bool {
-	for _, t := range CanonicalBodyParts {
-		if t == tag {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(CanonicalBodyParts, tag)
 }
 
 // HasBodyPart returns true if this species declares the given
@@ -395,12 +382,7 @@ func (s *Species) HasBodyPart(part string) bool {
 	if s.BodyParts == nil {
 		return true // un-migrated species fail-open
 	}
-	for _, p := range s.BodyParts {
-		if p == part {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.BodyParts, part)
 }
 
 // HasAllBodyParts returns true if this species has every part in

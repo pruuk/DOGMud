@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -33,12 +34,7 @@ func renderedSetLines(t *testing.T, u *users.UserRecord, show func()) []string {
 }
 
 func containsLine(lines []string, want string) bool {
-	for _, line := range lines {
-		if line == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(lines, want)
 }
 
 // CategoryScreen never wraps, so the fprompt screen lays out its own lines to

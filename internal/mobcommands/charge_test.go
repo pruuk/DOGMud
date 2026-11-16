@@ -1,6 +1,7 @@
 package mobcommands
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -89,13 +90,7 @@ func TestCharge_VanishedTarget(t *testing.T) {
 // the mob command registry.
 func TestCharge_IsRegistered(t *testing.T) {
 	cmds := GetAllMobCommands()
-	found := false
-	for _, c := range cmds {
-		if c == "charge" {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(cmds, "charge")
 	assert.True(t, found, `"charge" must be registered as a mob command`)
 }
 

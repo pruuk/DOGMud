@@ -1,6 +1,8 @@
 package knowledge
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crimes"
 	"github.com/GoMudEngine/GoMud/internal/factions"
@@ -165,11 +167,9 @@ func RecordCrimeWitnessed(observerMobId int, subject Subject, crimeId int) {
 		}
 		fc.Records = append(fc.Records, r)
 	}
-	for _, existing := range r.CrimesWitnessed {
-		if existing == crimeId {
-			knowledgeCacheMu.Unlock()
-			return
-		}
+	if slices.Contains(r.CrimesWitnessed, crimeId) {
+		knowledgeCacheMu.Unlock()
+		return
 	}
 	r.CrimesWitnessed = append(r.CrimesWitnessed, crimeId)
 	r.LastUpdatedRound = now

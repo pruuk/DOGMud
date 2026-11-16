@@ -2,6 +2,7 @@ package items
 
 import (
 	"math"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -304,12 +305,7 @@ func isSkillMod(name string) bool {
 		"weapon-combat", "unarmed-combat", "skullduggery",
 		"spellcasting", "rhetoric", "manifestation",
 	}
-	for _, s := range skills {
-		if s == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(skills, name)
 }
 
 // getAffixPrefix returns a descriptive prefix based on what type of

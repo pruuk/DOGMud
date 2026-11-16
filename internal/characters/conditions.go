@@ -101,13 +101,7 @@ func (c *Character) CancelCombatConditions() {
 			filtered = append(filtered, id)
 			continue
 		}
-		keep := true
-		for _, f := range spec.Flags {
-			if f == conditions.CancelIfCombat {
-				keep = false
-				break
-			}
-		}
+		keep := !slices.Contains(spec.Flags, conditions.CancelIfCombat)
 		if keep {
 			filtered = append(filtered, id)
 		}

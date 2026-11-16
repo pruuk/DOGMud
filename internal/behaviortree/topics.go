@@ -16,10 +16,8 @@ func condTopicIs(params map[string]any, ctx *EvalContext) Result {
 	if ctx.Event.EventType != "player_topic" {
 		return Failure
 	}
-	for _, key := range TopicIsKeys(params) {
-		if key == ctx.Event.Text {
-			return Success
-		}
+	if slices.Contains(TopicIsKeys(params), ctx.Event.Text) {
+		return Success
 	}
 	return Failure
 }

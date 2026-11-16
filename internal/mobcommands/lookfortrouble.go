@@ -3,6 +3,7 @@ package mobcommands
 import (
 	"fmt"
 	"math"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/factions"
@@ -83,13 +84,10 @@ func LookForTrouble(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) 
 
 			// Stage 12.1: Pheromone Glands — predatory mobs prefer this player
 			if aggroMagnet := mutations.GetAggroMagnet(user.Character.Mutations); aggroMagnet > 0 {
-				for _, g := range mob.Groups {
-					if g == "predatory" {
-						entries = int(math.Round(float64(entries) * aggroMagnet))
-						if entries < 1 {
-							entries = 1
-						}
-						break
+				if slices.Contains(mob.Groups, "predatory") {
+					entries = int(math.Round(float64(entries) * aggroMagnet))
+					if entries < 1 {
+						entries = 1
 					}
 				}
 			}

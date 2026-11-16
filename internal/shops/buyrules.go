@@ -2,6 +2,7 @@ package shops
 
 import (
 	"math"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -120,12 +121,7 @@ func vendorAcceptsAny(craftSupport string, itemTags []string) bool {
 	if craftSupport == CraftSupportGeneral {
 		return true
 	}
-	for _, t := range itemTags {
-		if t == craftSupport {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(itemTags, craftSupport)
 }
 
 // pickReason returns the legacy Reason string for back-compat with

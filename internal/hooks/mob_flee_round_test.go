@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -41,12 +42,7 @@ func fleeingMob(t *testing.T) (*mobs.Mob, *rooms.Room) {
 }
 
 func mobInRoom(room *rooms.Room, instId int) bool {
-	for _, id := range room.GetMobs(rooms.FindAll) {
-		if id == instId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(room.GetMobs(rooms.FindAll), instId)
 }
 
 func TestMobFlee_EscapesOnTheNextRoundNotInTheCommand(t *testing.T) {

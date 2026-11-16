@@ -1,5 +1,7 @@
 package mutations
 
+import "slices"
+
 import "testing"
 
 func TestDecayAffinity(t *testing.T) {
@@ -73,10 +75,5 @@ func TestGetGraphPool_GatesByAffinityAndPrereqs(t *testing.T) {
 }
 
 func contains(s []string, want string) bool {
-	for _, v := range s {
-		if v == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s, want)
 }

@@ -3,6 +3,7 @@ package hooks
 import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -439,12 +440,7 @@ func sendVisualRoomText(room *rooms.Room, cat messaging.Category, visualMsg stri
 
 // isExcludedUser checks if a userId is in the exclusion list.
 func isExcludedUser(uid int, excludeIds []int) bool {
-	for _, id := range excludeIds {
-		if uid == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(excludeIds, uid)
 }
 
 // sendUnsightedCombatSound sends "You hear fighting close by." (once per

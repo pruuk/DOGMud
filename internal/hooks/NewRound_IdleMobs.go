@@ -2,6 +2,7 @@
 package hooks
 
 import (
+	"slices"
 	"strconv"
 	"time"
 
@@ -226,11 +227,8 @@ func advanceMobPath(mob *mobs.Mob) bool {
 			// default mob walking. The noop pushes lastCommandTurn forward
 			// so the next path step waits ~1.5s. ~1 step per 5.5s real
 			// instead of per 4s, visible in flavor without being painful.
-			for _, g := range mob.Groups {
-				if g == "caravan" {
-					mob.Command("noop", 1.5)
-					break
-				}
+			if slices.Contains(mob.Groups, "caravan") {
+				mob.Command("noop", 1.5)
 			}
 			return true
 		}

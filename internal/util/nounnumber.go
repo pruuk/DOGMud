@@ -1,5 +1,7 @@
 package util
 
+import "slices"
+
 import "strings"
 
 // NounNumberVariants lists the other singular/plural spellings of a typed
@@ -50,15 +52,8 @@ func NounsDifferOnlyByNumber(a, b string) bool {
 	if a == "" || b == "" || a == b {
 		return false
 	}
-	for _, v := range NounNumberVariants(a) {
-		if v == b {
-			return true
-		}
+	if slices.Contains(NounNumberVariants(a), b) {
+		return true
 	}
-	for _, v := range NounNumberVariants(b) {
-		if v == a {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(NounNumberVariants(b), a)
 }

@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/baubles"
@@ -37,13 +38,7 @@ func (r *Room) removeUntakenBaubles(now time.Time) int {
 		age, untaken := itm.BaubleUntakenFor(now)
 		return untaken && age >= limit
 	}
-	anyExpired := false
-	for _, itm := range r.Items {
-		if expired(itm) {
-			anyExpired = true
-			break
-		}
-	}
+	anyExpired := slices.ContainsFunc(r.Items, expired)
 	if !anyExpired {
 		return 0
 	}

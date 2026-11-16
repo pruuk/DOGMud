@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -56,10 +57,5 @@ func validateManifest(m *Manifest) error {
 
 // IsKnownTemplateID reports whether id is one of the seven tracked templates.
 func IsKnownTemplateID(id string) bool {
-	for _, known := range KnownTemplateIDs {
-		if id == known {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(KnownTemplateIDs, id)
 }

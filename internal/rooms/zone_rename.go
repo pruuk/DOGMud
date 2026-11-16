@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -65,10 +66,8 @@ func ValidateZoneRename(oldName, newName string, existing []string) error {
 	if newName == oldName {
 		return errors.New("new name is the same as the current name")
 	}
-	for _, z := range existing {
-		if z == newName {
-			return fmt.Errorf("zone %q already exists", newName)
-		}
+	if slices.Contains(existing, newName) {
+		return fmt.Errorf("zone %q already exists", newName)
 	}
 	// Exclude the zone being renamed: its own folder is the one moving, so
 	// re-casing a name (Stillwater -> StillWater) is legal.

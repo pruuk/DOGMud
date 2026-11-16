@@ -2,6 +2,7 @@ package items
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -23,12 +24,7 @@ var (
 )
 
 func isOneOf(s string, set []string) bool {
-	for _, x := range set {
-		if x == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(set, s)
 }
 
 // decodeTieredRecords reads one split in the record layout and returns its

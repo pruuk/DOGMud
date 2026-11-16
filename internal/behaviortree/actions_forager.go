@@ -619,12 +619,7 @@ func getIntFromState(s *BehaviorState, key string) int {
 
 // containsInt reports whether needle appears in haystack.
 func containsInt(haystack []int, needle int) bool {
-	for _, h := range haystack {
-		if h == needle {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(haystack, needle)
 }
 
 // chestFillRatio returns the fill fraction (0..1) of the forager's storage

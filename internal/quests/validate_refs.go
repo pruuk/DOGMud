@@ -9,6 +9,7 @@ package quests
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -95,10 +96,8 @@ func (c *refsCtx) checkFlag(where, key, value string) {
 		if value == "" {
 			return
 		}
-		for _, v := range allowed {
-			if v == value {
-				return
-			}
+		if slices.Contains(allowed, value) {
+			return
 		}
 		c.errf("%s: flag %q has invalid value %q (allowed: %v)", where, key, value, allowed)
 		return

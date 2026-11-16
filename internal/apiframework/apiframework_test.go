@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -499,12 +500,7 @@ func TestEndpointAllowed(t *testing.T) {
 func TestServerReadsAnOldConfigAsTheCompanionDid(t *testing.T) {
 	none := configs.APIFramework{}
 	has := func(s ServerSettings, want string) bool {
-		for _, l := range s.Legacy {
-			if l == want {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(s.Legacy, want)
 	}
 
 	// Nothing set anywhere: the companion always read OPENAI_API_KEY.

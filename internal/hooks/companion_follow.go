@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/companionai"
@@ -133,19 +134,13 @@ func clearAggroIfTargetAbsent(mob *mobs.Mob, destRoom *rooms.Room) {
 	}
 	targetStillPresent := false
 	if target.UserId != 0 {
-		for _, pId := range destRoom.GetPlayers() {
-			if pId == target.UserId {
-				targetStillPresent = true
-				break
-			}
+		if slices.Contains(destRoom.GetPlayers(), target.UserId) {
+			targetStillPresent = true
 		}
 	}
 	if !targetStillPresent && target.MobInstanceId != 0 {
-		for _, mId := range destRoom.GetMobs() {
-			if mId == target.MobInstanceId {
-				targetStillPresent = true
-				break
-			}
+		if slices.Contains(destRoom.GetMobs(), target.MobInstanceId) {
+			targetStillPresent = true
 		}
 	}
 	if !targetStillPresent {

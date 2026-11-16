@@ -1,16 +1,12 @@
 package mobcommands
 
+import "slices"
+
 import "testing"
 
 func TestBuyRegistered(t *testing.T) {
 	all := GetAllMobCommands()
-	found := false
-	for _, cmd := range all {
-		if cmd == "buy" {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(all, "buy")
 	if !found {
 		t.Errorf("expected 'buy' to be registered in mobCommands")
 	}

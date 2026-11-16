@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -37,12 +38,7 @@ func TestRelocateMob_MovesTheMobBetweenRooms(t *testing.T) {
 	RelocateMob(m, fromRoom, "north", toRoom, false)
 
 	if contains := func(ids []int) bool {
-		for _, id := range ids {
-			if id == instId {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(ids, instId)
 	}; contains(fromRoom.GetMobs(rooms.FindAll)) || !contains(toRoom.GetMobs(rooms.FindAll)) {
 		t.Fatalf("mob not moved: from=%v to=%v", fromRoom.GetMobs(rooms.FindAll), toRoom.GetMobs(rooms.FindAll))
 	}

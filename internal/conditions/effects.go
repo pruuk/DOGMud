@@ -168,13 +168,7 @@ func (b *ConditionSpec) validateEffects() error {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		known := false
-		for _, ak := range AllEffectKinds {
-			if EffectKind(k) == ak {
-				known = true
-				break
-			}
-		}
+		known := slices.Contains(AllEffectKinds, EffectKind(k))
 		if !known {
 			return fmt.Errorf("conditionId %d (%s) declares unknown effect %q; see conditions.AllEffectKinds", b.ConditionId, b.Name, k)
 		}

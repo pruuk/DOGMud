@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -72,12 +73,7 @@ func queuedCmds(instanceId int) []string {
 }
 
 func contains(cmds []string, want string) bool {
-	for _, c := range cmds {
-		if c == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(cmds, want)
 }
 
 // ─── registration ────────────────────────────────────────────────────────────

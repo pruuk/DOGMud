@@ -1,6 +1,7 @@
 package skills
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/stats"
@@ -29,13 +30,7 @@ func TestRangedCombat_Registered(t *testing.T) {
 		t.Errorf("ranged-combat must be registered in allSkillNames")
 	}
 
-	found := false
-	for _, sk := range GetAllSkillNames() {
-		if sk == RangedCombat {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(GetAllSkillNames(), RangedCombat)
 	if !found {
 		t.Errorf("ranged-combat must appear in GetAllSkillNames()")
 	}

@@ -228,12 +228,7 @@ func collectCategoryCandidates(
 }
 
 func spellHasCategory(sd *spells.SpellData, category string) bool {
-	for _, c := range sd.Categories {
-		if c == category {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(sd.Categories, category)
 }
 
 // spellEffectAlreadyActive returns true when the effect this spell would
@@ -255,10 +250,5 @@ func spellEffectAlreadyActive(char *characters.Character, sd *spells.SpellData) 
 	case "heal":
 		return char.Conditions.HasFamily(conditions.FamilyHeal)
 	}
-	for _, bid := range sd.ConditionIds {
-		if char.HasCondition(bid) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(sd.ConditionIds, char.HasCondition)
 }

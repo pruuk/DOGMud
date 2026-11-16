@@ -8,6 +8,7 @@ package mutations
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"time"
 
@@ -226,10 +227,8 @@ func HasConflict(owned map[string]int, candidateId string) bool {
 		if ownedSpec == nil {
 			continue
 		}
-		for _, conflictId := range ownedSpec.Conflicts {
-			if conflictId == candidateId {
-				return true
-			}
+		if slices.Contains(ownedSpec.Conflicts, candidateId) {
+			return true
 		}
 	}
 

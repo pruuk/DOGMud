@@ -5,6 +5,7 @@
 package combatphase
 
 import (
+	"slices"
 	"sync/atomic"
 
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -607,10 +608,8 @@ func (m *Machine) RecordInboundAttacker(a state.ActorRef) {
 	if a.IsZero() {
 		return
 	}
-	for _, existing := range m.attackers {
-		if existing == a {
-			return
-		}
+	if slices.Contains(m.attackers, a) {
+		return
 	}
 	m.attackers = append(m.attackers, a)
 	m.notifyAttackersChange()

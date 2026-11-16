@@ -446,12 +446,7 @@ var significanceKey = map[worldevents.Significance]string{
 }
 
 func mobHasGroup(mob *mobs.Mob, groupName string) bool {
-	for _, g := range mob.Groups {
-		if g == groupName {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(mob.Groups, groupName)
 }
 
 // dueGossipHint returns a line for one of the mob's hint facts when its

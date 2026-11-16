@@ -3,6 +3,7 @@ package rooms
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -631,12 +632,7 @@ func (r *Room) SendTextVisualToUser(u *users.UserRecord, cat messaging.Category,
 
 // excluded is a tiny helper for the shared exclusion check.
 func excluded(uid int, excludeIds []int) bool {
-	for _, eid := range excludeIds {
-		if uid == eid {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(excludeIds, uid)
 }
 
 func (r *Room) PlaySound(soundId string, category string, excludeUserIds ...int) {
@@ -655,11 +651,8 @@ func (r *Room) PlaySound(soundId string, category string, excludeUserIds ...int)
 
 		exLen := len(excludeUserIds)
 		if exLen > 0 {
-			for _, excludeId := range excludeUserIds {
-				if excludeId == userId {
-					skip = true
-					break
-				}
+			if slices.Contains(excludeUserIds, userId) {
+				skip = true
 			}
 		}
 
@@ -1011,10 +1004,8 @@ func listMobInRoom(target *Room, mobInstanceId int) {
 	if target == nil {
 		return
 	}
-	for _, id := range target.mobs {
-		if id == mobInstanceId {
-			return
-		}
+	if slices.Contains(target.mobs, mobInstanceId) {
+		return
 	}
 	target.mobs = append(target.mobs, mobInstanceId)
 	roomManager.roomsWithMobs[target.RoomId] = len(target.mobs)
@@ -1109,13 +1100,7 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 				// reflects that. If she's away (scheduled and en-route),
 				// her current room already lists her — don't dual-list.
 				if existing.Character.RoomId == r.RoomId {
-					alreadyListed := false
-					for _, id := range r.mobs {
-						if id == existing.InstanceId {
-							alreadyListed = true
-							break
-						}
-					}
+					alreadyListed := slices.Contains(r.mobs, existing.InstanceId)
 					if !alreadyListed {
 						r.mobs = append(r.mobs, existing.InstanceId)
 					}
@@ -1509,10 +1494,8 @@ func (r *Room) MarkExitTrapDefused(exitName string) {
 	exitInfo.Lock.TrapConditionIds = nil
 	r.Exits[exitName] = exitInfo
 
-	for _, existing := range r.DefusedExits {
-		if existing == exitName {
-			return
-		}
+	if slices.Contains(r.DefusedExits, exitName) {
+		return
 	}
 	r.DefusedExits = append(r.DefusedExits, exitName)
 }
@@ -3027,10 +3010,8 @@ func (r *Room) RoundTick() {
 
 func (r *Room) AddPlayer(userId int) int {
 
-	for _, v := range r.players {
-		if v == userId {
-			return len(r.players)
-		}
+	if slices.Contains(r.players, userId) {
+		return len(r.players)
 	}
 
 	r.players = append(r.players, userId)

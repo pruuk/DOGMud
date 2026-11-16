@@ -1,6 +1,8 @@
 package catalog
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	goals "github.com/GoMudEngine/GoMud/internal/goals"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -72,10 +74,8 @@ func factionMemberInCombatInZone(mob *mobs.Mob, factionId string) bool {
 		if !inst.Character.IsInCombat() {
 			continue
 		}
-		for _, fid := range factions.FactionsForMob(inst) {
-			if fid == factionId {
-				return true
-			}
+		if slices.Contains(factions.FactionsForMob(inst), factionId) {
+			return true
 		}
 	}
 	return false

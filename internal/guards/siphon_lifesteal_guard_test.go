@@ -3,6 +3,7 @@ package guards
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -34,10 +35,8 @@ func treeHasLifestealNode(v any) bool {
 			}
 		}
 	case []any:
-		for _, child := range n {
-			if treeHasLifestealNode(child) {
-				return true
-			}
+		if slices.ContainsFunc(n, treeHasLifestealNode) {
+			return true
 		}
 	}
 	return false

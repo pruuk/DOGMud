@@ -3,6 +3,7 @@ package dialogue
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 
@@ -296,12 +297,7 @@ func gateRefProblems(w World, mobId int, where string, g Gates, e Effects) []Pro
 		out = append(out, Problem{MobId: mobId, Where: where, Msg: fmt.Sprintf(format, a...)})
 	}
 	excluded := func(tok string) bool {
-		for _, x := range g.QuestExcluded {
-			if x == tok {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(g.QuestExcluded, tok)
 	}
 	quest := func(tok string) (QuestInfo, bool) {
 		if w.QuestOfToken == nil {

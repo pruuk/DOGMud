@@ -1,6 +1,7 @@
 package characters
 
 import (
+	"slices"
 	"strings"
 	"time"
 
@@ -676,12 +677,7 @@ func (c *Character) HasDiscovery(roomId int, key string) bool {
 	if c.Discoveries == nil {
 		return false
 	}
-	for _, k := range c.Discoveries[roomId] {
-		if k == key {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.Discoveries[roomId], key)
 }
 
 func (c *Character) AddDiscovery(roomId int, key string) {
@@ -699,22 +695,15 @@ func (c *Character) MarkRoomVisited(zone string, roomId int) {
 	if c.VisitedRooms == nil {
 		c.VisitedRooms = map[string][]int{}
 	}
-	for _, id := range c.VisitedRooms[zone] {
-		if id == roomId {
-			return
-		}
+	if slices.Contains(c.VisitedRooms[zone], roomId) {
+		return
 	}
 	c.VisitedRooms[zone] = append(c.VisitedRooms[zone], roomId)
 }
 
 // HasVisitedRoom reports whether roomId in zone has been seen.
 func (c *Character) HasVisitedRoom(zone string, roomId int) bool {
-	for _, id := range c.VisitedRooms[zone] {
-		if id == roomId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.VisitedRooms[zone], roomId)
 }
 
 // GetVisitedRooms returns the visited roomIds for a zone (nil if none).

@@ -2,6 +2,7 @@ package items
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -132,13 +133,7 @@ func (i *Item) HasAdjective(adj string) bool {
 		return false
 	}
 
-	for _, a := range i.Adjectives {
-		if a == adj {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(i.Adjectives, adj)
 }
 
 func (i *Item) SetAdjective(adj string, addToList bool) {

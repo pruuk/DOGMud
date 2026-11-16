@@ -1,5 +1,7 @@
 package questengine
 
+import "slices"
+
 // PlayerState is the interface the quest engine uses to check player state.
 // This avoids importing the characters package directly.
 type PlayerState interface {
@@ -19,10 +21,8 @@ func EvalConditions(c Conditions, p PlayerState) bool {
 			return false
 		}
 	}
-	for _, token := range c.Missing {
-		if p.HasQuest(token) {
-			return false
-		}
+	if slices.ContainsFunc(c.Missing, p.HasQuest) {
+		return false
 	}
 	if c.InRoom > 0 && p.GetRoomId() != c.InRoom {
 		return false
@@ -33,10 +33,8 @@ func EvalConditions(c Conditions, p PlayerState) bool {
 	if c.MissingItem > 0 && p.HasItem(c.MissingItem) {
 		return false
 	}
-	for _, id := range c.MissingItems {
-		if p.HasItem(id) {
-			return false
-		}
+	if slices.ContainsFunc(c.MissingItems, p.HasItem) {
+		return false
 	}
 	for key, val := range c.HasFlag {
 		if p.GetQuestFlag(key) != val {

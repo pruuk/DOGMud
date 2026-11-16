@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -76,12 +77,7 @@ type Corpse struct {
 
 // WasAssessedBy reports whether userId has already assessed this corpse.
 func (c *Corpse) WasAssessedBy(userId int) bool {
-	for _, id := range c.AssessedBy {
-		if id == userId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.AssessedBy, userId)
 }
 
 // MarkAssessedBy records that userId has assessed this corpse.
@@ -109,12 +105,7 @@ func (c *Corpse) LootAllowed(userId int, now uint64) bool {
 	if now >= c.RoundOwnedUntil || len(c.OwnerUserIds) == 0 {
 		return true
 	}
-	for _, id := range c.OwnerUserIds {
-		if id == userId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.OwnerUserIds, userId)
 }
 
 // HasLoot reports whether the corpse still holds any items or gold.

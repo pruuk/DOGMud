@@ -1,18 +1,15 @@
 package playtest
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // containsTag reports whether tags includes tag.
 func containsTag(tags []string, tag string) bool {
-	for _, t := range tags {
-		if t == tag {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(tags, tag)
 }
 
 // shouldSnapBack decides whether a moved tester must be returned to the sandbox.

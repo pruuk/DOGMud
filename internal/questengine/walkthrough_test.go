@@ -1,6 +1,7 @@
 package questengine
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -215,12 +216,7 @@ func handInNeedsKillItem() questloop.World {
 
 func outside(ids ...int) questloop.Sources {
 	return questloop.Sources{ItemAvailable: func(id, questId int, _ func(string) bool) bool {
-		for _, x := range ids {
-			if x == id {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(ids, id)
 	}}
 }
 

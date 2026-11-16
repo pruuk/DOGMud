@@ -3,6 +3,7 @@ package rooms
 import (
 	"fmt"
 	"math"
+	"slices"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -31,12 +32,7 @@ type ZoneInstance struct {
 
 // IsAuthorized checks if a user is on the access list.
 func (zi *ZoneInstance) IsAuthorized(userId int) bool {
-	for _, uid := range zi.AuthorizedUsers {
-		if uid == userId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(zi.AuthorizedUsers, userId)
 }
 
 // RevokeAccess removes a user from the authorized list.

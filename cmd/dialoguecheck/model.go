@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -229,10 +230,8 @@ func readTrees(data string) ([]treeFile, error) {
 func readWorldItems(data string) (map[int][]string, error) {
 	out := map[int][]string{}
 	add := func(id int, src string) {
-		for _, s := range out[id] {
-			if s == src {
-				return
-			}
+		if slices.Contains(out[id], src) {
+			return
 		}
 		out[id] = append(out[id], src)
 	}

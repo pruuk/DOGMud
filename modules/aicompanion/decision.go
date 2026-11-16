@@ -3,6 +3,7 @@ package aicompanion
 import (
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -149,12 +150,7 @@ var feelings = []string{`none`, `like`, `dislike`, `wary`, `trust`, `distrust`, 
 var lootRules = []string{`unchanged`, lootAskFirst, lootTakeFreely, lootLeaveIt}
 
 func inSet(set []string, s string) bool {
-	for _, v := range set {
-		if v == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(set, s)
 }
 
 func isMood(s string) bool { return inSet(moods, s) }

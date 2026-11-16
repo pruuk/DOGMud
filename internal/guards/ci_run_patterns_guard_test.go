@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -126,13 +127,7 @@ func unmatchedRunAlternatives(t *testing.T, pattern string, names []string) []st
 		if err != nil {
 			t.Fatalf("-run alternative %q does not compile: %v", alt, err)
 		}
-		found := false
-		for _, n := range names {
-			if re.MatchString(n) {
-				found = true
-				break
-			}
-		}
+		found := slices.ContainsFunc(names, re.MatchString)
 		if !found {
 			missing = append(missing, alt)
 		}

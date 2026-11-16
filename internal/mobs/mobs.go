@@ -227,12 +227,7 @@ func (m *Mob) EquippedDropChance() int {
 // group tag, NOT a guard faction id and NOT the combat-stance
 // Character.IsGuard() predicate.
 func IsGuardMob(groups []string) bool {
-	for _, g := range groups {
-		if g == "guard" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(groups, "guard")
 }
 
 // GetZone returns the mob's zone name.

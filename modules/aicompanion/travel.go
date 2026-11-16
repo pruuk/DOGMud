@@ -2,6 +2,7 @@ package aicompanion
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -92,14 +93,12 @@ func (m *AICompanionModule) startExplore(c *controller, mob *mobs.Mob, exitName 
 			return `the way ` + exitName + ` is closed to you`
 		}
 	}
-	for _, name := range unexploredExits(rec) {
-		if name == exitName {
-			c.travel = &travelPlan{
-				Dest: 0, DestName: `whatever lies ` + exitName, Purpose: `explore`,
-				Steps: []step{{Exit: exitName, To: 0}}, FromRoom: mob.Character.RoomId, Authorized: authorized,
-			}
-			return ``
+	if slices.Contains(unexploredExits(rec), exitName) {
+		c.travel = &travelPlan{
+			Dest: 0, DestName: `whatever lies ` + exitName, Purpose: `explore`,
+			Steps: []step{{Exit: exitName, To: 0}}, FromRoom: mob.Character.RoomId, Authorized: authorized,
 		}
+		return ``
 	}
 	return `no unexplored way called ` + exitName + ` here`
 }

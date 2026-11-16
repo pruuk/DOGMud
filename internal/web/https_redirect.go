@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -40,10 +41,8 @@ func redirectTargetHost(requestHost string) (string, bool) {
 	allowed := allowedWSOriginHosts()
 
 	if h := hostOnly(requestHost); h != `` {
-		for _, a := range allowed {
-			if h == a {
-				return h, true
-			}
+		if slices.Contains(allowed, h) {
+			return h, true
 		}
 	}
 

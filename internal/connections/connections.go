@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"os"
+	"slices"
 	"sync"
 	"time"
 
@@ -220,13 +221,7 @@ func Broadcast(colorizedText []byte, skipConnectionIds ...ConnectionId) []Connec
 		}
 
 		if len(skipConnectionIds) > 0 {
-			skip := false
-			for _, cId := range skipConnectionIds {
-				if cId == id {
-					skip = true
-					break
-				}
-			}
+			skip := slices.Contains(skipConnectionIds, id)
 			if skip {
 				continue
 			}

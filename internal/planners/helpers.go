@@ -1,6 +1,7 @@
 package planners
 
 import (
+	"slices"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/crafting"
@@ -96,10 +97,8 @@ func findFactionMemberInZone(mob *mobs.Mob, factionId string, mustBeInCombat boo
 		if mustBeInCombat && !inst.Character.IsInCombat() {
 			continue
 		}
-		for _, fid := range factions.FactionsForMob(inst) {
-			if fid == factionId {
-				return inst, true
-			}
+		if slices.Contains(factions.FactionsForMob(inst), factionId) {
+			return inst, true
 		}
 	}
 	return nil, false

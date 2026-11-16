@@ -1,6 +1,7 @@
 package mobcommands
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -296,13 +297,7 @@ func TestSalvage_LootBearingCorpse_Refused(t *testing.T) {
 
 func TestSalvageCommandRegistered(t *testing.T) {
 	cmds := GetAllMobCommands()
-	found := false
-	for _, c := range cmds {
-		if c == "salvage" {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(cmds, "salvage")
 	assert.True(t, found, "salvage must be registered in the mob command map")
 }
 
@@ -310,12 +305,6 @@ func TestSalvageCommandRegistered(t *testing.T) {
 
 func TestForageCommandRegistered(t *testing.T) {
 	cmds := GetAllMobCommands()
-	found := false
-	for _, c := range cmds {
-		if c == "forage" {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(cmds, "forage")
 	assert.True(t, found, "forage must be registered in the mob command map")
 }

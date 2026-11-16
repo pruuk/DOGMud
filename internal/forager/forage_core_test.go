@@ -1,5 +1,7 @@
 package forager
 
+import "slices"
+
 import "testing"
 
 func TestForageCore_UnknownBiomeReturnsEmpty(t *testing.T) {
@@ -42,12 +44,7 @@ func TestForageCore_LowScoreMisses(t *testing.T) {
 func TestForageYields_ForestHasCookingFlora(t *testing.T) {
 	forest := ForageYields["forest"]
 	has := func(id int) bool {
-		for _, x := range forest {
-			if x == id {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(forest, id)
 	}
 	if !has(40063) {
 		t.Error("forest forage should include shadowcap (40063)")
@@ -60,12 +57,7 @@ func TestForageYields_ForestHasCookingFlora(t *testing.T) {
 func TestForageYields_WaterHasRiverForageables(t *testing.T) {
 	water := ForageYields["water"]
 	has := func(id int) bool {
-		for _, x := range water {
-			if x == id {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(water, id)
 	}
 	if !has(40123) {
 		t.Error("water forage should include watercress (40123)")
@@ -77,12 +69,7 @@ func TestForageYields_WaterHasRiverForageables(t *testing.T) {
 
 func TestForageYields_FarmlandHasWheatCountryForageables(t *testing.T) {
 	has := func(list []int, id int) bool {
-		for _, x := range list {
-			if x == id {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(list, id)
 	}
 	farmland := ForageYields["farmland"]
 	if !has(farmland, 40150) {
