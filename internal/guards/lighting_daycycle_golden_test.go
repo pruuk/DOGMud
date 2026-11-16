@@ -78,7 +78,7 @@ func TestLightingDayCycleAcrossSampleRounds(t *testing.T) {
 	// the wrong world entirely (confirmed live: it panics on a non-canonical
 	// room title that only exists in the `default` fixture world).
 	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 

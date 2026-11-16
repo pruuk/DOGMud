@@ -77,7 +77,7 @@ func TestLightingParityAcrossEveryShippedRoom(t *testing.T) {
 	// never reads config.yaml, so that knob would otherwise come back as
 	// the Go default 0 and conditions.LoadDataFiles would panic.
 	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 

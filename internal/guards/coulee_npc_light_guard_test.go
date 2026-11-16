@@ -65,7 +65,7 @@ func TestCouleeNPCsCarryALightAndAreSeenByFace(t *testing.T) {
 	// The real shipped config and the day-cycle golden's pinned timing, as in
 	// TestEveryShopkeeperCanTradeAtNightWhileAwake.
 	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 	cfg := configs.GetConfig()

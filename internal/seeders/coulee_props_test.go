@@ -33,7 +33,7 @@ func loadCouleeProp(t *testing.T, mobId int) *mobs.Mob {
 
 	t.Chdir(repo)
 	configs.SetConfigForTest(t, configs.GetConfig())
-	require.NoError(t, configs.ReloadConfig())
+	require.NoError(t, configs.ReloadConfigForTest(t))
 	cfg := configs.GetConfig()
 	cfg.FilePaths.DataFiles = configs.ConfigString(world)
 	configs.SetConfigForTest(t, cfg)

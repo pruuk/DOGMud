@@ -43,6 +43,33 @@ func SetConfigForTest(t *testing.T, c Config) {
 	})
 }
 
+// ReloadConfigForTest loads the shipped _datafiles/config.yaml (ReloadConfig)
+// for the calling test and puts back, at cleanup, everything the reload
+// replaced: the config, the key and type lookups, the overrides union and the
+// module overlay ledger. A bare ReloadConfig in a test leaked the shipped
+// values (AmbientListenerBudgetRounds 5, for one) into every later test in the
+// same binary, which then passed or failed by test order (#720). Tests call
+// this, never ReloadConfig; the guard
+// TestTestsReloadTheShippedConfigOnlyThroughTheRestoringHelper holds that. It
+// reads _datafiles/config.yaml relative to the working directory, as
+// ReloadConfig does.
+func ReloadConfigForTest(t testing.TB) error {
+	t.Helper()
+	configDataLock.Lock()
+	prevConfig := configData
+	prevKeys, prevTypes := keyLookups, typeLookups
+	prevOverrides, prevOwned := overrides, moduleOverlayKeys
+	configDataLock.Unlock()
+	t.Cleanup(func() {
+		configDataLock.Lock()
+		defer configDataLock.Unlock()
+		configData = prevConfig
+		keyLookups, typeLookups = prevKeys, prevTypes
+		overrides, moduleOverlayKeys = prevOverrides, prevOwned
+	})
+	return ReloadConfig()
+}
+
 // SetConfigWithLookupsForTest installs c as SetConfigForTest does and also
 // builds the key and type lookups FindFullPath reads from c, so SetVal
 // resolves keys in a test binary that never ran ReloadConfig. It snapshots and

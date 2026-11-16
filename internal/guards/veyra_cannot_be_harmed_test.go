@@ -17,7 +17,7 @@ import (
 func TestVeyraCannotBeHarmed(t *testing.T) {
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
 	configs.SetConfigForTest(t, configs.GetConfig())
-	require.NoError(t, configs.ReloadConfig())
+	require.NoError(t, configs.ReloadConfigForTest(t))
 
 	dataPath := configs.GetFilePathsConfig().DataFiles.String() + `/mobs`
 	templates, err := fileloader.LoadAllFlatFiles[int, *mobs.Mob](dataPath)

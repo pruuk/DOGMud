@@ -83,7 +83,7 @@ func checkHiddenNounOn(roomId int, r *rooms.Room) []string {
 func TestHiddenNounsNameWhereTheyAreTucked(t *testing.T) {
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
 	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 	rooms.LoadBiomeDataFiles()

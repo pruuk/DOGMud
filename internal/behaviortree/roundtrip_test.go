@@ -41,7 +41,7 @@ func chdirRepoRootForTest(t *testing.T) {
 	// Snapshot first so the cleanup restores the config this test found,
 	// not the shipped file ReloadConfig loads (it carries live balance knobs).
 	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 }

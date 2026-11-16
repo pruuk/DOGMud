@@ -18,7 +18,7 @@ import (
 func TestEveryRoomWithoutAnEntranceIsReachedByDesign(t *testing.T) {
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
 	configs.SetConfigForTest(t, configs.GetConfig())
-	require.NoError(t, configs.ReloadConfig())
+	require.NoError(t, configs.ReloadConfigForTest(t))
 	rooms.LoadBiomeDataFiles()
 	rooms.LoadDataFiles()
 	require.Empty(t, rooms.RoomsWithoutEntrance(),

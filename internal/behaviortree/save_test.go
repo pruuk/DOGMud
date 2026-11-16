@@ -36,7 +36,7 @@ func overrideBTDataFilesDir(t *testing.T) string {
 	// Snapshot first: its cleanup restores the config this test found, where
 	// reloading the shipped file would leave live balance knobs loaded.
 	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig with override: %v", err)
 	}
 	t.Cleanup(func() {

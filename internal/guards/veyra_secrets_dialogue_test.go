@@ -76,7 +76,7 @@ func loadShippedRecipes(t *testing.T) map[string]*crafting.RecipeSpec {
 	t.Helper()
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
 	configs.SetConfigForTest(t, configs.GetConfig())
-	require.NoError(t, configs.ReloadConfig())
+	require.NoError(t, configs.ReloadConfigForTest(t))
 	recipes, err := fileloader.LoadAllFlatFiles[string, *crafting.RecipeSpec](configs.GetFilePathsConfig().DataFiles.String() + `/recipes`)
 	require.NoError(t, err)
 	return recipes
@@ -242,7 +242,7 @@ func TestVeyraQuestsAreRetired(t *testing.T) {
 	// The manifest is read through the configured data folder, which a test
 	// binary only points at the shipped world after a reload.
 	configs.SetConfigForTest(t, configs.GetConfig())
-	require.NoError(t, configs.ReloadConfig())
+	require.NoError(t, configs.ReloadConfigForTest(t))
 	retired := quests.RetiredQuests()
 	for _, s := range veyraSecrets {
 		require.True(t, retired[s.retiredQst], "the quest that sold %s (%d) must be retired", s.key, s.retiredQst)

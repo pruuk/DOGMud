@@ -46,7 +46,7 @@ func TestThePhantomsLairIsBlack(t *testing.T) {
 	// Network.LogoutRounds as 0 and conditions.LoadDataFiles would panic on
 	// condition 0. SetConfigForTest restores the pre-test config afterwards.
 	configs.SetConfigForTest(t, configs.GetConfig())
-	require.NoError(t, configs.ReloadConfig())
+	require.NoError(t, configs.ReloadConfigForTest(t))
 
 	// Each loader replaces its registry with no restore of its own; seeding a
 	// throwaway first captures the pre-test registry for a real restore.

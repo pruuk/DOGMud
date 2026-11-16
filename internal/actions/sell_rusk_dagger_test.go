@@ -59,7 +59,7 @@ func TestSell_RuskBuysTheCraftedDaggerOnAFreshWorld(t *testing.T) {
 	t.Chdir(repo)
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
 	configs.SetConfigForTest(t, configs.GetConfig())
-	require.NoError(t, configs.ReloadConfig())
+	require.NoError(t, configs.ReloadConfigForTest(t))
 	cfg := configs.GetConfig()
 	require.Equal(t, 0.50, float64(cfg.Balance.ShopBuyRatio), "shipped ShopBuyRatio")
 	require.Equal(t, 0.50, float64(cfg.Balance.ShopGoldReserveRatio), "shipped ShopGoldReserveRatio")

@@ -103,7 +103,6 @@ func setupAuthTestUsers(t *testing.T, password string, roles map[string]string) 
 	// Restore real config after the test (registered before t.Setenv so it
 	// runs after the env var is restored, i.e. without the override path set).
 	t.Cleanup(func() {
-		_ = configs.ReloadConfig()
 		resetAuthStateForTest()
 	})
 
@@ -123,7 +122,7 @@ func setupAuthTestUsers(t *testing.T, password string, roles map[string]string) 
 	}
 
 	t.Setenv("CONFIG_PATH", filepath.ToSlash(overridePath))
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 

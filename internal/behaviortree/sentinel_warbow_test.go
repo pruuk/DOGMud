@@ -42,7 +42,7 @@ func TestTheSentinelFiresItsWarbow(t *testing.T) {
 	t.Cleanup(func() { _ = os.Chdir(origWD) })
 
 	configs.SetConfigForTest(t, configs.GetConfig())
-	require.NoError(t, configs.ReloadConfig())
+	require.NoError(t, configs.ReloadConfigForTest(t))
 
 	t.Cleanup(conditions.SeedConditionsForTest(nil))
 	t.Cleanup(species.SeedSpeciesForTest(nil))

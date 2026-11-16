@@ -22,7 +22,7 @@ func loadShippedQuestWorld(t *testing.T) {
 		t.Skipf("set %s=1 to run the quest loop sweep", bootSmokeEnvVar)
 	}
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
-	if err := configs.ReloadConfig(); err != nil {
+	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("ReloadConfig failed: %v", err)
 	}
 	func() {

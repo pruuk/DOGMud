@@ -91,6 +91,34 @@ func TestReloadConfig_NoDataFilesKeyReadsDefaultWorld(t *testing.T) {
 	}
 }
 
+// #720: ReloadConfigForTest loads the shipped config for one test and puts
+// the previous config, lookups and overrides back at cleanup, so the shipped
+// values do not leak into later tests.
+func TestReloadConfigForTest_RestoresWhatItReplaced(t *testing.T) {
+	isolateReloadGlobals(t)
+	t.Setenv("CONFIG_PATH", "")
+	dir := t.TempDir()
+	writeWorld(t, dir)
+	t.Chdir(dir)
+
+	before := GetConfig()
+	before.Server.NextRoomId = 1234
+	SetConfigForTest(t, before)
+
+	t.Run("reload", func(t *testing.T) {
+		if err := ReloadConfigForTest(t); err != nil {
+			t.Fatalf("ReloadConfigForTest: %v", err)
+		}
+		if got := GetConfig().Server.NextRoomId; got != 424242 {
+			t.Fatalf("inside the test NextRoomId = %d, want the loaded 424242", got)
+		}
+	})
+
+	if got := GetConfig().Server.NextRoomId; got != 1234 {
+		t.Fatalf("after the test NextRoomId = %d, want 1234 back: the reload leaked", got)
+	}
+}
+
 // CONFIG_PATH still wins over the DataFiles-derived path.
 func TestReloadConfig_ConfigPathEnvWins(t *testing.T) {
 	isolateReloadGlobals(t)
