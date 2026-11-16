@@ -8,6 +8,15 @@
 - The Golden Bough and the General Store in Amber Valley are lit inside, so you can talk to Hesper Vane and Goss Harrow at any hour.
 - When a foe ripostes your attack, the line now says the counter-strike is against you.
 - Venom, Ensnared and Rending Bleed now say who laid them on you. A trap's venom still reaches you from "something".
+- When a mutation deepens, the line says how far in words ("now moderate"), and names like Dense Muscles read correctly.
+- `status` lists your mutations by name, and `mutations` no longer prints a stray full stop under some of them.
+- `quests follow <quest>` now works the same as `quests focus <quest>`, and a word `quests` does not know tells you which words it takes.
+- `pets` shows your companions, or your pet. The companions list now ends with how to send one away.
+- `cooldowns` and `skills extra` name every timer in words, never a raw code like "skullduggery:steal".
+- Eating or drinking the last of something says "You drink the Herbal Tea." instead of "some of".
+- "You feel weakened by the brush with death." only appears when a death actually costs you something.
+- A thrown item stopped by a shield is called by its own name, not always "firebomb".
+- Room text fixes: the Back Yard behind the tavern, the Overflow Chamber and the Escape Shaft under Thornwall now describe the exits they have, and the Tailor's Cottage in Stillwater names Weaver Edda. `help go` lost a typo.
 
 ## 2026-11-15: A new logo
 
