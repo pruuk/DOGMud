@@ -30,7 +30,7 @@ func TestNoLegacyZeroClusterMutations(t *testing.T) {
 			t.Fatalf("cannot read mutation %s: %v", id, err)
 		}
 		hasClusters := false
-		for _, line := range strings.Split(string(body), "\n") {
+		for line := range strings.SplitSeq(string(body), "\n") {
 			if strings.HasPrefix(strings.TrimSpace(line), "clusters:") {
 				hasClusters = true
 				break

@@ -76,10 +76,7 @@ func IsFence(mob *mobs.Mob) bool {
 // BaubleFenceBuyPct percent of it, rounded up, at least 1.
 func FencePrice(value int) int {
 	pct := float64(configs.GetBalanceConfig().BaubleFenceBuyPct)
-	price := int(math.Ceil(float64(value) * pct / 100))
-	if price < 1 {
-		price = 1
-	}
+	price := max(int(math.Ceil(float64(value)*pct/100)), 1)
 	return price
 }
 
@@ -96,10 +93,7 @@ type BaubleOffer struct {
 // catalog value times the shop buy ratio, rounded up, at least 1. Same
 // spread as affixed loot, and like it, no scarcity curve and no barter bonus.
 func BaublePrice(value int) int {
-	price := int(math.Ceil(float64(value) * shops.PricingConfigFromBalance().BuyRatio))
-	if price < 1 {
-		price = 1
-	}
+	price := max(int(math.Ceil(float64(value)*shops.PricingConfigFromBalance().BuyRatio)), 1)
 	return price
 }
 

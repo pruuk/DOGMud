@@ -410,7 +410,7 @@ func (w *World) GetAutoComplete(userId int, inputText string) []string {
 					}
 				}
 
-				for containerName, _ := range room.Containers {
+				for containerName := range room.Containers {
 					if strings.HasPrefix(strings.ToLower(containerName), targetName) {
 						suggestions = append(suggestions, containerName[targetNameLen:])
 					}
@@ -431,7 +431,7 @@ func (w *World) GetAutoComplete(userId int, inputText string) []string {
 					}
 				}
 
-				for containerName, _ := range room.Containers {
+				for containerName := range room.Containers {
 					if strings.HasPrefix(strings.ToLower(containerName), targetName) {
 						suggestions = append(suggestions, containerName[targetNameLen:])
 					}
@@ -677,13 +677,13 @@ func (w *World) GetAutoComplete(userId int, inputText string) []string {
 				if typeSearchCt > 0 || subtypeSearchCt > 0 {
 					skip = true
 
-					for i := 0; i < typeSearchCt; i++ {
+					for i := range typeSearchCt {
 						if iSpec.Type == itemTypeSearch[i] {
 							skip = false
 						}
 					}
 
-					for i := 0; i < subtypeSearchCt; i++ {
+					for i := range subtypeSearchCt {
 						if iSpec.Subtype == itemSubtypeSearch[i] {
 							skip = false
 						}
@@ -1047,7 +1047,7 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 			if macro, ok := user.Macros[inputText]; ok {
 				handled = true
 				readyTurn := util.GetTurnCount()
-				for _, newCmd := range strings.Split(macro, `;`) {
+				for newCmd := range strings.SplitSeq(macro, `;`) {
 					if newCmd == `` {
 						continue
 					}
@@ -1126,8 +1126,8 @@ func (w *World) processMobInput(mobInstanceId int, inputText string) {
 
 	if len(inputText) > 0 {
 
-		if index := strings.Index(inputText, " "); index != -1 {
-			command, remains = strings.ToLower(inputText[0:index]), inputText[index+1:]
+		if before, after, ok := strings.Cut(inputText, " "); ok {
+			command, remains = strings.ToLower(before), after
 		} else {
 			command = inputText
 		}

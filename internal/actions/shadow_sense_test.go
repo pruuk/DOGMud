@@ -42,7 +42,7 @@ func TestShadowSenseRoll_PlayerTargetReadsTheLineAndBothOutcomesAward(t *testing
 	events.DrainQueuedMessagesForTest(targetId)
 
 	detected := 0
-	for i := 0; i < shadowSenseTrials; i++ {
+	for range shadowSenseTrials {
 		if ShadowSenseRoll(shadower, targetActor, room) {
 			detected++
 		}
@@ -90,7 +90,7 @@ func TestShadowSenseRoll_MobTargetShowsNothingAndBothOutcomesAward(t *testing.T)
 	events.DrainQueuedMessagesForTest(observerId)
 
 	detected := 0
-	for i := 0; i < shadowSenseTrials; i++ {
+	for range shadowSenseTrials {
 		if ShadowSenseRoll(shadower, NewMobActorInRoom(m, room), room) {
 			detected++
 		}
@@ -120,7 +120,7 @@ func TestShadow_MobTargetRollsTheSenseContest(t *testing.T) {
 	actor := newShadowMobActor(100, 0, true)
 
 	detected := 0
-	for i := 0; i < shadowSenseTrials; i++ {
+	for i := range shadowSenseTrials {
 		delete(actor.char.Cooldowns, skills.Skullduggery.String("shadow"))
 		resetHiddenCondition(actor)
 		result := Shadow(actor, ShadowOptions{TargetMobInstanceId: instId})

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -139,7 +140,7 @@ var (
 // branch rewrites.
 func parseReport(data string) (*convPlan, error) {
 	p := &convPlan{DeleteTriggers: map[int]map[int]bool{}, Branches: map[string]map[int]branchPlan{}}
-	for _, line := range strings.Split(strings.ReplaceAll(data, "\r\n", "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.ReplaceAll(data, "\r\n", "\n"), "\n") {
 		if m := reportDeleteLine.FindStringSubmatch(line); m != nil {
 			d := leadingDigits.FindStringSubmatch(m[1])
 			if d == nil {
@@ -229,10 +230,8 @@ func readTrees(data string) ([]treeFile, error) {
 func readWorldItems(data string) (map[int][]string, error) {
 	out := map[int][]string{}
 	add := func(id int, src string) {
-		for _, s := range out[id] {
-			if s == src {
-				return
-			}
+		if slices.Contains(out[id], src) {
+			return
 		}
 		out[id] = append(out[id], src)
 	}

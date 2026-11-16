@@ -17,6 +17,8 @@ package behaviortree
 // standard corpse-drop run unmodified).
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
@@ -62,8 +64,7 @@ func actDistributeCargoToHostiles(params map[string]any, ctx *EvalContext) Resul
 	// Round-robin distribution. Walk wagon items in reverse so
 	// RemoveItem is index-safe.
 	h := 0
-	for i := len(wagon.Character.Items) - 1; i >= 0; i-- {
-		item := wagon.Character.Items[i]
+	for _, item := range slices.Backward(wagon.Character.Items) {
 		placed := false
 		// Try every hostile before giving up on this item.
 		for tries := 0; tries < len(hostiles); tries++ {

@@ -153,13 +153,13 @@ func factShow(args []string, user *users.UserRecord) (bool, error) {
 
 func factDeclare(rest string, user *users.UserRecord) (bool, error) {
 	// Custom parser: split on ` -- ` first to extract description.
-	idx := strings.Index(rest, " -- ")
-	if idx < 0 {
+	before, after, ok := strings.Cut(rest, " -- ")
+	if !ok {
 		user.SendText(messaging.CategoryUsage, "Missing -- separator before description.\r\nUsage: fact declare <factId> [opts] -- <description>\r\n")
 		return true, nil
 	}
-	beforeDash := strings.TrimSpace(rest[:idx])
-	description := strings.TrimSpace(rest[idx+4:])
+	beforeDash := strings.TrimSpace(before)
+	description := strings.TrimSpace(after)
 
 	args := strings.Fields(beforeDash)
 	if len(args) < 2 || strings.ToLower(args[0]) != "declare" {

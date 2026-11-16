@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/bounties"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -61,10 +62,8 @@ func attributeBountyKill(
 ) bountyKill {
 	// Guard-mob kill: killer is a mob that belongs to the issuing faction.
 	if killer.IsMob() && killer.MobInstanceId > 0 && killerFactions != nil && issuerFaction != "" {
-		for _, f := range killerFactions(killer.MobInstanceId) {
-			if f == issuerFaction {
-				return bountyKill{kind: killGuard, mobInstanceId: killer.MobInstanceId}
-			}
+		if slices.Contains(killerFactions(killer.MobInstanceId), issuerFaction) {
+			return bountyKill{kind: killGuard, mobInstanceId: killer.MobInstanceId}
 		}
 	}
 

@@ -90,7 +90,7 @@ func TestLeavingTheCouleeAsksOnlyToBeOpened(t *testing.T) {
 	for _, rel := range []string{"pothole_coulee/9107-warden_esk.yaml", "rooms/pothole_coulee/5215.yaml"} {
 		data, err := os.ReadFile("../../_datafiles/world/dogmud/behaviors/" + rel)
 		require.NoError(t, err)
-		var doc interface{}
+		var doc any
 		require.NoError(t, yaml.Unmarshal(data, &doc))
 		gates := crossingGates(doc)
 		require.NotEmpty(t, gates, "%s: no crossing found, so this test proves nothing", rel)
@@ -102,15 +102,15 @@ func TestLeavingTheCouleeAsksOnlyToBeOpened(t *testing.T) {
 
 // crossingGates returns, for each sequence in a tree that runs move_player, the
 // quest tokens its conditions name.
-func crossingGates(v interface{}) [][]string {
+func crossingGates(v any) [][]string {
 	var out [][]string
 	switch n := v.(type) {
-	case map[interface{}]interface{}:
-		kids, _ := n["children"].([]interface{})
+	case map[any]any:
+		kids, _ := n["children"].([]any)
 		moves := false
 		gate := []string{}
 		for _, c := range kids {
-			m, ok := c.(map[interface{}]interface{})
+			m, ok := c.(map[any]any)
 			if !ok {
 				continue
 			}
@@ -127,7 +127,7 @@ func crossingGates(v interface{}) [][]string {
 		for _, c := range n {
 			out = append(out, crossingGates(c)...)
 		}
-	case []interface{}:
+	case []any:
 		for _, c := range n {
 			out = append(out, crossingGates(c)...)
 		}

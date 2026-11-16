@@ -1,6 +1,8 @@
 package characters
 
 import (
+	"maps"
+
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
 )
@@ -89,8 +91,6 @@ func snapshotDamageMap(src map[int]int) map[int]int {
 		return nil
 	}
 	dst := make(map[int]int, len(src))
-	for k, v := range src {
-		dst[k] = v
-	}
+	maps.Copy(dst, src)
 	return dst
 }

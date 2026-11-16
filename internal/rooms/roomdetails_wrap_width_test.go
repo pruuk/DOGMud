@@ -41,7 +41,7 @@ func TestGetDetails_MinimapSitsAtTheViewersRightEdge(t *testing.T) {
 func TestGetDescriptionFormatted_UsesTheWidthItIsGiven(t *testing.T) {
 	r := &Room{Description: strings.Repeat("a quiet stone hall ", 12)}
 	for _, width := range []int{40, 72} {
-		for _, line := range strings.Split(strings.ReplaceAll(r.GetDescriptionFormatted(width, false), "\r", ""), "\n") {
+		for line := range strings.SplitSeq(strings.ReplaceAll(r.GetDescriptionFormatted(width, false), "\r", ""), "\n") {
 			if w := util.VisibleWidth(line); w > width {
 				t.Errorf("width %d: line is %d columns: %q", width, w, line)
 			}

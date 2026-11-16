@@ -1,5 +1,7 @@
 package util
 
+import "slices"
+
 import "strings"
 
 // NounNumberVariants lists the other singular/plural spellings of a typed
@@ -15,23 +17,23 @@ import "strings"
 // quest trigger can see.
 func NounNumberVariants(word string) []string {
 	var out []string
-	if strings.HasSuffix(word, "es") {
-		out = append(out, strings.TrimSuffix(word, "es"))
+	if before, ok := strings.CutSuffix(word, "es"); ok {
+		out = append(out, before)
 	} else {
 		out = append(out, word+"es")
 	}
-	if strings.HasSuffix(word, "ies") {
-		out = append(out, strings.TrimSuffix(word, "ies")+"y")
+	if before, ok := strings.CutSuffix(word, "ies"); ok {
+		out = append(out, before+"y")
 	}
-	if strings.HasSuffix(word, "s") {
+	if before, ok := strings.CutSuffix(word, "s"); ok {
 		if !strings.HasSuffix(word, "ss") {
-			out = append(out, strings.TrimSuffix(word, "s"))
+			out = append(out, before)
 		}
 	} else {
 		out = append(out, word+"s")
 	}
-	if strings.HasSuffix(word, "y") {
-		out = append(out, strings.TrimSuffix(word, "y")+"ies")
+	if before, ok := strings.CutSuffix(word, "y"); ok {
+		out = append(out, before+"ies")
 	}
 	return out
 }
@@ -50,15 +52,8 @@ func NounsDifferOnlyByNumber(a, b string) bool {
 	if a == "" || b == "" || a == b {
 		return false
 	}
-	for _, v := range NounNumberVariants(a) {
-		if v == b {
-			return true
-		}
+	if slices.Contains(NounNumberVariants(a), b) {
+		return true
 	}
-	for _, v := range NounNumberVariants(b) {
-		if v == a {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(NounNumberVariants(b), a)
 }

@@ -2,6 +2,7 @@ package migration
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 
@@ -70,12 +71,12 @@ func reclassifyUsersInDir(usersDir string, dryRun bool) error {
 		if err != nil {
 			return fmt.Errorf("failed to read %s: %w", path, err)
 		}
-		var userMap map[string]interface{}
+		var userMap map[string]any
 		if err := yaml.Unmarshal(raw, &userMap); err != nil {
 			mudlog.Warn("Migration 0.14.0", "file", filepath.Base(path), "error", err)
 			continue
 		}
-		charData, ok := userMap["character"].(map[interface{}]interface{})
+		charData, ok := userMap["character"].(map[any]any)
 		if !ok {
 			continue
 		}
@@ -95,9 +96,7 @@ func reclassifyUsersInDir(usersDir string, dryRun bool) error {
 				newMuts[id] = rank
 			}
 		}
-		for id, rank := range seed {
-			newMuts[id] = rank
-		}
+		maps.Copy(newMuts, seed)
 
 		mudlog.Info("Migration 0.14.0", "file", filepath.Base(path), "class", cluster, "mutations", len(newMuts))
 		if dryRun {
@@ -121,12 +120,12 @@ func reclassifyUsersInDir(usersDir string, dryRun bool) error {
 
 // extractSignals reads classification inputs. role is a TOP-LEVEL UserRecord
 // field; the rest live under character.
-func extractSignals(userMap map[string]interface{}) PlayerSignals {
+func extractSignals(userMap map[string]any) PlayerSignals {
 	s := PlayerSignals{}
 	if r, ok := userMap["role"].(string); ok {
 		s.Role = r
 	}
-	charData, ok := userMap["character"].(map[interface{}]interface{})
+	charData, ok := userMap["character"].(map[any]any)
 	if !ok {
 		return s
 	}
@@ -141,11 +140,11 @@ func extractSignals(userMap map[string]interface{}) PlayerSignals {
 		s.CraftSum += skills[cs]
 	}
 	s.SpellbookDepth = len(yamlIntMap(charData["spellbook"]))
-	if comps, ok := charData["companions"].([]interface{}); ok {
+	if comps, ok := charData["companions"].([]any); ok {
 		s.Companions = len(comps)
 	}
-	if stats, ok := charData["stats"].(map[interface{}]interface{}); ok {
-		if wil, ok := stats["willpower"].(map[interface{}]interface{}); ok {
+	if stats, ok := charData["stats"].(map[any]any); ok {
+		if wil, ok := stats["willpower"].(map[any]any); ok {
 			if t, ok := wil["training"].(int); ok {
 				s.WillpowerTrain = t
 			}
@@ -155,9 +154,9 @@ func extractSignals(userMap map[string]interface{}) PlayerSignals {
 }
 
 // yamlIntMap coerces a yaml.v2 map[interface{}]interface{} of {string: int}.
-func yamlIntMap(v interface{}) map[string]int {
+func yamlIntMap(v any) map[string]int {
 	out := map[string]int{}
-	m, ok := v.(map[interface{}]interface{})
+	m, ok := v.(map[any]any)
 	if !ok {
 		return out
 	}

@@ -1,5 +1,7 @@
 package shops
 
+import "maps"
+
 import "sync"
 
 // enchantReserve is the global pool of enchanting mats produced by alchemy-
@@ -26,9 +28,7 @@ func ReservePool() map[int]int {
 	enchantReserveMu.Lock()
 	defer enchantReserveMu.Unlock()
 	out := make(map[int]int, len(enchantReserve))
-	for id, n := range enchantReserve {
-		out[id] = n
-	}
+	maps.Copy(out, enchantReserve)
 	return out
 }
 

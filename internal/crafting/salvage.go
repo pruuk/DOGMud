@@ -10,13 +10,7 @@ func CalcSalvageRounds(totalGoldValue int, goldPerRound int, maxRounds int) int 
 	if goldPerRound < 1 {
 		goldPerRound = 10
 	}
-	rounds := totalGoldValue / goldPerRound
-	if rounds < 1 {
-		rounds = 1
-	}
-	if rounds > maxRounds {
-		rounds = maxRounds
-	}
+	rounds := min(max(totalGoldValue/goldPerRound, 1), maxRounds)
 	return rounds
 }
 

@@ -19,7 +19,7 @@ func TestGlobalKnockdownDamper_IsLinear(t *testing.T) {
 
 	for _, chance := range []float64{0.25, 0.5, 0.75} {
 		kept := 0
-		for i := 0; i < trials; i++ {
+		for range trials {
 			if rollKnockdownDamper(chance) {
 				kept++
 			}
@@ -33,7 +33,7 @@ func TestGlobalKnockdownDamper_IsLinear(t *testing.T) {
 // 1.0 and above must be a true pass-through, not a 99.99% approximation: the
 // default must never silently drop a knockdown the contest won.
 func TestGlobalKnockdownDamper_DefaultKeepsEverything(t *testing.T) {
-	for i := 0; i < 10000; i++ {
+	for range 10000 {
 		require.True(t, rollKnockdownDamper(1.0),
 			"a chance of 1.0 must keep every knockdown")
 	}

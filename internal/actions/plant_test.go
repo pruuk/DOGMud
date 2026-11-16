@@ -147,7 +147,7 @@ func TestPlant_MobTarget_Success(t *testing.T) {
 
 	succeeded := 0
 	const trials = 20
-	for i := 0; i < trials; i++ {
+	for range trials {
 		// Re-seed the item and reset cooldown each trial.
 		actor.char.Items = nil
 		seedPlantItem(actor)
@@ -272,7 +272,7 @@ func TestPlant_MobOnPlayer_DetectionWin(t *testing.T) {
 	detectionCount := 0
 	successCount := 0
 
-	for i := 0; i < trials; i++ {
+	for range trials {
 		// Re-seed item and reset cooldown each trial.
 		actor.char.Items = nil
 		seedPlantItem(actor)

@@ -1,5 +1,7 @@
 package characters
 
+import "maps"
+
 type MobMasteries struct {
 	Tame map[int]int `json:"tame,omitempty"` // mobId to proficiency
 }
@@ -16,9 +18,7 @@ func (m *MobMasteries) GetAllTame() map[int]int {
 		return retMap
 	}
 
-	for k, v := range m.Tame {
-		retMap[k] = v
-	}
+	maps.Copy(retMap, m.Tame)
 
 	return retMap
 }

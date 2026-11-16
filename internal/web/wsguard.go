@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -82,13 +83,7 @@ func wsOriginAllowed(r *http.Request) bool {
 		return true
 	}
 
-	for _, allowed := range allowedWSOriginHosts() {
-		if originHost == allowed {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(allowedWSOriginHosts(), originHost)
 }
 
 // allowedWSOriginHosts is the operator-configured allow-list, normalised to

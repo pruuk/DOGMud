@@ -2,6 +2,7 @@ package shops
 
 import (
 	"math"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -93,10 +94,7 @@ func EvaluateBuyRules(
 	if entry != nil {
 		price = CalcBuyPrice(spec.Value, entry.Current, PricingBaseline(entry, cfg), cfg)
 	} else {
-		flat := int(math.Ceil(float64(spec.Value) * cfg.BuyRatio))
-		if flat < 1 {
-			flat = 1
-		}
+		flat := max(int(math.Ceil(float64(spec.Value)*cfg.BuyRatio)), 1)
 		price = flat
 	}
 
@@ -120,12 +118,7 @@ func vendorAcceptsAny(craftSupport string, itemTags []string) bool {
 	if craftSupport == CraftSupportGeneral {
 		return true
 	}
-	for _, t := range itemTags {
-		if t == craftSupport {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(itemTags, craftSupport)
 }
 
 // pickReason returns the legacy Reason string for back-compat with

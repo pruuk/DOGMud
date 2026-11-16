@@ -2,6 +2,7 @@ package items
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"runtime/debug"
 	"strconv"
@@ -546,9 +547,7 @@ func GetAllItemSpecs() []ItemSpec {
 // The returned pointers reference cached specs — callers must not mutate.
 func GetAllItemSpecsMap() map[int]*ItemSpec {
 	out := make(map[int]*ItemSpec, len(items))
-	for id, s := range items {
-		out[id] = s
-	}
+	maps.Copy(out, items)
 	return out
 }
 
@@ -588,7 +587,7 @@ func rebuildAuthoredKeywords() {
 		// Every word of the name, not only its head noun: a bauble keyed
 		// "silver" would fully match `get silver` and take it over a real
 		// "Silver Dagger", which that word only partly matches.
-		for _, f := range strings.Fields(spec.Name) {
+		for f := range strings.FieldsSeq(spec.Name) {
 			if w := headNoun(f); w != `` {
 				snap.words[w] = true
 			}

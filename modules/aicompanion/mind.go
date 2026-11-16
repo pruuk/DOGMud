@@ -3,6 +3,7 @@ package aicompanion
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -274,7 +275,7 @@ func saveMindBackup(plug *plugins.Plugin, m *Mind) error {
 // loadNewestBackup returns the readable backup with the most sessions.
 func loadNewestBackup(plug *plugins.Plugin, ownerUserId int, p *Profile) *Mind {
 	var best *Mind
-	for slot := 0; slot < mindBackups; slot++ {
+	for slot := range mindBackups {
 		b := &Mind{}
 		if err := plug.ReadIntoStruct(backupIdentifier(ownerUserId, p.MobId, slot), b); err != nil {
 			continue
@@ -388,10 +389,7 @@ func (m *Mind) trimLines(talkMax int) {
 	if talkMax <= 0 {
 		return
 	}
-	eventMax := talkMax / 4
-	if eventMax < 4 {
-		eventMax = 4
-	}
+	eventMax := max(talkMax/4, 4)
 	talk, events := 0, 0
 	keep := make([]bool, len(m.RecentLines))
 	for i := len(m.RecentLines) - 1; i >= 0; i-- {
@@ -508,8 +506,8 @@ func (m *Mind) addPromise(by string, text string) int {
 	})
 	// Keep every open promise; keep only the 20 most recent resolved ones.
 	resolved := 0
-	for i := len(m.Promises) - 1; i >= 0; i-- {
-		if m.Promises[i].Status == `open` {
+	for i, v := range slices.Backward(m.Promises) {
+		if v.Status == `open` {
 			continue
 		}
 		resolved++
@@ -596,8 +594,7 @@ func (m *Mind) lastInteraction(key string) (lastUnix int64, recentFails int) {
 	if m == nil {
 		return 0, 0
 	}
-	for i := len(m.Interactions) - 1; i >= 0; i-- {
-		in := m.Interactions[i]
+	for _, in := range slices.Backward(m.Interactions) {
 		if in.Key != key {
 			continue
 		}

@@ -75,7 +75,7 @@ func TestValidate_RefusesSubjectlessRoomTextInASequence(t *testing.T) {
 // first version stopped two levels down, found by review.
 func TestValidate_RefusesSubjectlessRoomTextThreeSequencesDeep(t *testing.T) {
 	deep := ActionDef{RoomText: "unlocks the strongbox."}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		deep = ActionDef{Sequence: &SequenceDef{OnComplete: []ActionDef{deep}}}
 	}
 	q := &Quest{QuestId: 90001, Name: "Room Text Test", Steps: []QuestStep{{Id: "start"}},

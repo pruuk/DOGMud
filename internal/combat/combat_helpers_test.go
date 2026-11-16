@@ -146,7 +146,7 @@ func TestApplyPetDamage_RespectsPhysicalMitigation(t *testing.T) {
 		owner := newOwner()
 		target := newTarget(mitigationPct)
 		total := 0
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			res := &AttackResult{}
 			applyPetDamage(res, owner, target, Mob)
 			total += res.DamageToTarget

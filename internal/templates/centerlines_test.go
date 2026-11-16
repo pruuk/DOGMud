@@ -30,7 +30,7 @@ func TestCenterLines(t *testing.T) {
 			if strings.Join(plain, "|") != strings.Join(tc.want, "|") {
 				t.Errorf("got\n%q\nwant\n%q", plain, tc.want)
 			}
-			for _, line := range strings.Split(out, "\n") {
+			for line := range strings.SplitSeq(out, "\n") {
 				if w := util.VisibleWidth(line); w > tc.width-2 {
 					t.Errorf("line %q is %d wide, past the 1-column margin of %d", line, w, tc.width)
 				}

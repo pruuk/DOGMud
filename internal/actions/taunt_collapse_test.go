@@ -209,7 +209,7 @@ func TestTauntHitRate_SingleContestClosedForm(t *testing.T) {
 
 	const iterations = 400
 	fullEffect, fumbles, other := 0, 0, 0
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		attacker, _ := newTauntCollapsePair(t, tauntCollapseHitRateTargetId, 100, 0, 100, 0)
 		res := ExecuteTaunt(&MobActor{Mob: attacker})
 		require.True(t, res.Executed, "iteration %d did not execute (cost %+v)", i, res.Cost)
@@ -293,7 +293,7 @@ func TestTauntDamage_RankInputIsRawRhetoricRank(t *testing.T) {
 		t.Cleanup(restore)
 
 		sum := 0
-		for i := 0; i < samples; i++ {
+		for range samples {
 			sum += tauntDamageSample(t, false)
 		}
 		mean := float64(sum) / float64(samples)
@@ -318,7 +318,7 @@ func TestTauntDamage_RankInputIsRawRhetoricRank(t *testing.T) {
 		t.Cleanup(restore)
 
 		sum := 0
-		for i := 0; i < samples; i++ {
+		for range samples {
 			sum += tauntDamageSample(t, true)
 		}
 		mean := float64(sum) / float64(samples)

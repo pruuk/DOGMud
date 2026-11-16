@@ -466,7 +466,7 @@ func TestDrain_DeletesDoNotConsumeTheWriteBudget(t *testing.T) {
 	// created. If those counted against the budget, an IDLE server would take
 	// ~23 seconds to drain a cycle in which nothing was written.
 	writes := make([]PendingWrite, 0, 51)
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		writes = append(writes, del(t, dir, "clean"+itoa(i)+".yaml"))
 	}
 	writes = append(writes, write(t, dir, "dirty.yaml", []byte("payload")))
@@ -492,7 +492,7 @@ func TestDrain_WriteBudgetIsStillEnforced(t *testing.T) {
 	q := New()
 
 	writes := make([]PendingWrite, 0, 10)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		writes = append(writes, write(t, dir, "w"+itoa(i)+".yaml", []byte("payload")))
 	}
 	q.Supersede(writes)

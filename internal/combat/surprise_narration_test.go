@@ -357,7 +357,7 @@ func TestSurpriseRound_ExactlyOneSwingIsMarkedAsTheOpener(t *testing.T) {
 
 	sawMultiSwingRound := false
 	sawBanner := false
-	for i := 0; i < rounds; i++ {
+	for i := range rounds {
 		attacker.Stamina = attacker.StaminaMax.Value
 		attacker.Health = attacker.HealthMax.Value
 		defender.Stamina = defender.StaminaMax.Value
@@ -418,7 +418,7 @@ func TestPlainRound_NoSwingIsMarkedAsTheOpener(t *testing.T) {
 	defender := openingStrikeCombatant(t, "Mark")
 	ctx := combatContext{sourceSight: messaging.SightFull, targetSight: messaging.SightFull}
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		attacker.Stamina = attacker.StaminaMax.Value
 		defender.Stamina = defender.StaminaMax.Value
 		if !attacker.Position.IsStanding() {

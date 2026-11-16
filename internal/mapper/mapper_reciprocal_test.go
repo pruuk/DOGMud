@@ -20,7 +20,7 @@ func TestGetReciprocalExit_IsDeterministic(t *testing.T) {
 		{"northwest", "southeast"}, {"southeast", "northwest"},
 		{"up", "down"}, {"down", "up"},
 	} {
-		for i := 0; i < 200; i++ {
+		for i := range 200 {
 			if got := GetReciprocalExit(tc.dir); got != tc.want {
 				t.Fatalf("GetReciprocalExit(%q) = %q, want %q (iteration %d)", tc.dir, got, tc.want, i)
 			}
@@ -34,7 +34,7 @@ func TestGetReciprocalExit_PreservesVariantSuffix(t *testing.T) {
 		{"north-gap", "south-gap"}, {"east-gap2", "west-gap2"},
 		{"southwest-gap3", "northeast-gap3"},
 	} {
-		for i := 0; i < 50; i++ {
+		for range 50 {
 			if got := GetReciprocalExit(tc.dir); got != tc.want {
 				t.Fatalf("GetReciprocalExit(%q) = %q, want %q", tc.dir, got, tc.want)
 			}

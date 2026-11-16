@@ -1,6 +1,7 @@
 package rooms
 
 import (
+	"maps"
 	"math"
 	"testing"
 
@@ -70,9 +71,7 @@ func (d *darkUsers) add(id int, conds ...int) *users.UserRecord {
 	}
 	d.all[id] = u
 	seed := make(map[int]*users.UserRecord, len(d.all))
-	for k, v := range d.all {
-		seed[k] = v
-	}
+	maps.Copy(seed, d.all)
 	d.t.Cleanup(users.SeedUsersForTest(seed))
 	return u
 }

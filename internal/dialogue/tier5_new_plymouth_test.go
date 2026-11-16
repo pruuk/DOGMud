@@ -11,12 +11,7 @@ import (
 
 func carrying(ps *PlayerState, ids ...int) *PlayerState {
 	has := func(id int) bool {
-		for _, i := range ids {
-			if i == id {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(ids, id)
 	}
 	ps.HasItem, ps.CarriesItem = has, has
 	return ps

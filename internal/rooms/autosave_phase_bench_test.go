@@ -35,11 +35,11 @@ import (
 
 // benchInstancePayload is a representative instance overlay: what a room with
 // dropped gold and a couple of items actually persists.
-func benchInstancePayload() map[string]interface{} {
-	return map[string]interface{}{
+func benchInstancePayload() map[string]any {
+	return map[string]any{
 		"roomid": 900001,
 		"gold":   250,
-		"items": []map[string]interface{}{
+		"items": []map[string]any{
 			{"itemid": 20008, "uses": 3},
 			{"itemid": 20012},
 		},

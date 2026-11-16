@@ -84,7 +84,7 @@ func seedThrowSeamFixture(t *testing.T, mobCount int, mitigation int, rank int) 
 
 	targets := make([]*mobs.Mob, 0, mobCount)
 	instances := map[int]*mobs.Mob{}
-	for i := 0; i < mobCount; i++ {
+	for i := range mobCount {
 		targetChar := characters.New()
 		targetChar.Name = "Target"
 		targetChar.RoomId = 1

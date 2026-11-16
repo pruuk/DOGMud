@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -155,13 +156,7 @@ func TestTrack_CancelTracking(t *testing.T) {
 		t.Error("ConditionApplied should be false on cancel path")
 	}
 	// Player actor should receive the stop message.
-	found := false
-	for _, msg := range actor.sent {
-		if msg == "You stop tracking." {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(actor.sent, "You stop tracking.")
 	if !found {
 		t.Errorf("expected 'You stop tracking.' in sent messages, got: %v", actor.sent)
 	}

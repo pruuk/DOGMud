@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -68,11 +70,8 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 
 			exLen := len(message.ExcludeUserIds)
 			if exLen > 0 {
-				for _, excludeId := range message.ExcludeUserIds {
-					if excludeId == userId {
-						skip = true
-						break
-					}
+				if slices.Contains(message.ExcludeUserIds, userId) {
+					skip = true
 				}
 			}
 

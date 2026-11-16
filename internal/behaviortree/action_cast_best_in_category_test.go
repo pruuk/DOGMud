@@ -300,7 +300,7 @@ func TestCastBestInCategory_RankingSelectsHighestScore(t *testing.T) {
 	// (review of #369).
 	restore := util.SetRandForTest(369)
 	defer restore()
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		if got := chooseCategoryCandidate("self_defense", candidates).SpellId; got != "hi" {
 			t.Fatalf("self_defense draw %d picked %s, want the top score 'hi' every time", i, got)
 		}
@@ -311,7 +311,7 @@ func TestCastBestInCategory_RankingSelectsHighestScore(t *testing.T) {
 	// candidate is cast, and the order of frequency follows the score.
 	for _, category := range harmCategories {
 		counts := map[string]int{}
-		for i := 0; i < 3400; i++ {
+		for range 3400 {
 			counts[chooseCategoryCandidate(category, candidates).SpellId]++
 		}
 		if counts["lo"] == 0 || counts["mid"] == 0 || counts["hi"] == 0 {

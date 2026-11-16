@@ -10,7 +10,7 @@ func TestCategoryDefaultIsZero(t *testing.T) {
 
 func TestCategoryStringRoundTrip(t *testing.T) {
 	seen := map[string]Category{}
-	for c := CategoryDefault; c < categoryMax; c++ {
+	for c := range categoryMax {
 		s := c.String()
 		if s == "" || s == "Unknown" {
 			t.Errorf("category %d returned %q (every enum value must have a real String())", c, s)

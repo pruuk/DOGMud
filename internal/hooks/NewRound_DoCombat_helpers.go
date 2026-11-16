@@ -3,6 +3,7 @@ package hooks
 import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -439,12 +440,7 @@ func sendVisualRoomText(room *rooms.Room, cat messaging.Category, visualMsg stri
 
 // isExcludedUser checks if a userId is in the exclusion list.
 func isExcludedUser(uid int, excludeIds []int) bool {
-	for _, id := range excludeIds {
-		if uid == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(excludeIds, uid)
 }
 
 // sendUnsightedCombatSound sends "You hear fighting close by." (once per
@@ -1315,7 +1311,7 @@ func handleMobAIDecision(mob *mobs.Mob, c configs.Config) bool {
 			if len(allCmds) >= c.Timing.TurnsPerRound() {
 				mob.Command(`say I have a CombatAction that is too long. Please notify an admin.`)
 			} else {
-				for _, action := range strings.Split(combatAction, `;`) {
+				for action := range strings.SplitSeq(combatAction, `;`) {
 					mob.Command(action, waitTime)
 					waitTime += 0.1
 				}

@@ -224,10 +224,7 @@ func (c *Character) CommitCost(q CostQuote, policy CostPolicy) CostCommitResult 
 
 	charged := s.wholeDue
 	if policy == CostPartial && charged > s.poolSnapshot {
-		charged = s.poolSnapshot
-		if charged < 0 {
-			charged = 0
-		}
+		charged = max(s.poolSnapshot, 0)
 	}
 	c.setPool(s.pool, s.poolSnapshot-charged)
 	result.Charged = charged
@@ -478,10 +475,7 @@ func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult {
 	if current <= 0 {
 		return CostResult{Charged: 0, Short: true}
 	}
-	charged := amount
-	if charged > current {
-		charged = current
-	}
+	charged := min(amount, current)
 	c.setPool(pool, current-charged)
 	return CostResult{Charged: charged, Short: charged < amount}
 }

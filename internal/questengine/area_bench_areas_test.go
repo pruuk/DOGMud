@@ -19,7 +19,7 @@ func init() {
 		}
 		restore := areas.InstallForTest([]areas.Area{{Key: "bench_area", Name: "the bench area", Rooms: ids}}, zones)
 		q := &QuestDef{QuestId: 990000, Name: "Bench", Steps: []QuestStep{{Id: "start"}, {Id: "end"}}}
-		for i := 0; i < 50; i++ {
+		for i := range 50 {
 			step := fmt.Sprintf("s%d", i)
 			q.Triggers = append(q.Triggers, TriggerDef{
 				Event: "room_enter", Area: "bench_area",

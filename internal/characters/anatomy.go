@@ -1,5 +1,7 @@
 package characters
 
+import "slices"
+
 import "github.com/GoMudEngine/GoMud/internal/species"
 
 // HasBodyPart reports whether this character's species declares the given
@@ -11,10 +13,5 @@ func (c *Character) HasBodyPart(part string) bool {
 	if sp == nil {
 		return false
 	}
-	for _, p := range sp.BodyParts {
-		if p == part {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(sp.BodyParts, part)
 }

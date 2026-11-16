@@ -38,7 +38,7 @@ func TestBloomSeedHonoursPrerequisites(t *testing.T) {
 	}
 
 	sawColossus := false
-	for i := int64(0); i < 50; i++ {
+	for i := range int64(50) {
 		restore := util.SetRandForTest(i)
 		id, _ := withDense(1).BloomSeedNewMutation()
 		restore()

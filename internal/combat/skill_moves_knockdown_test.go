@@ -30,7 +30,7 @@ func TestKnockdownFactor_ParityCalibration(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			wins := 0
-			for i := 0; i < n; i++ {
+			for range n {
 				if RunContest(100*tc.factor, []contest.Entry{{Score: 100}}).Success {
 					wins++
 				}
@@ -77,7 +77,7 @@ func TestExecuteSkillMove_KnockdownResistProgression(t *testing.T) {
 	usesBefore := def.GetSkillUseCount("unarmed-combat")
 	resists := 0
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		// Refresh the pools and position every iteration. 200 landed hits in
 		// a row would otherwise run the defender out of stamina (the seam
 		// charges the winning defence on every contest) or leave it Prone

@@ -331,7 +331,7 @@ func adminRoom_Set(args []string, user *users.UserRecord, room *rooms.Room) (boo
 		rooms.SaveRoomTemplate(*room)
 	} else if propertyName == "idlemessages" {
 		room.IdleMessages = []string{}
-		for _, idleMsg := range strings.Split(propertyValue, ";") {
+		for idleMsg := range strings.SplitSeq(propertyValue, ";") {
 			idleMsg = strings.TrimSpace(idleMsg)
 			if len(idleMsg) < 1 {
 				continue

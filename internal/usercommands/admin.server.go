@@ -449,13 +449,13 @@ func getConfigOptions(input string) ([]templates.NameDescription, bool) {
 
 	allConfigData := configs.GetConfig().DisplayConfigData()
 	pathLookup := map[string]string{}
-	for name, _ := range allConfigData {
+	for name := range allConfigData {
 
 		lowerName := strings.ToLower(name)
 		pathLookup[lowerName] = name
 
 		builtPath := ""
-		for _, namePart := range strings.Split(name, ".") {
+		for namePart := range strings.SplitSeq(name, ".") {
 			builtPath += namePart
 			if _, ok := pathLookup[builtPath]; !ok {
 				pathLookup[strings.ToLower(builtPath)] = builtPath

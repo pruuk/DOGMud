@@ -30,7 +30,7 @@ import (
 // that in bulk and be useless as a gate. This test only walks the outermost
 // map.
 func TestMobYAML_NoUnknownTopLevelKeys(t *testing.T) {
-	validKeys := validTopLevelYAMLKeys(t, reflect.TypeOf(Mob{}))
+	validKeys := validTopLevelYAMLKeys(t, reflect.TypeFor[Mob]())
 
 	root := repoRootForTest(t)
 	mobsDir := filepath.Join(root, "_datafiles", "world", "dogmud", "mobs")
@@ -107,7 +107,7 @@ func validTopLevelYAMLKeys(t *testing.T, mobType reflect.Type) map[string]bool {
 			continue
 		}
 
-		name := strings.SplitN(tag, ",", 2)[0]
+		name, _, _ := strings.Cut(tag, ",")
 		if name == "-" {
 			// Explicitly excluded from YAML (e.g. runtime-only fields).
 			continue

@@ -16,7 +16,7 @@ func TestRunAccrual_SeedsAndCaps(t *testing.T) {
 	if w.StockOf(40123) != 1 || w.AccruedCount < 1 {
 		t.Fatalf("accrual didn't seed: %+v", w)
 	}
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		runAccrual()
 	}
 	if got := w.StockOf(40123); got != 400 {

@@ -435,7 +435,7 @@ func TestRecentlyDiedPruning(t *testing.T) {
 	defer cleanup()
 
 	// Fill with > 30 entries to trigger pruning
-	for i := 0; i < 35; i++ {
+	for i := range 35 {
 		recentlyDied[i] = 0 // round 0 (very old)
 	}
 
@@ -950,7 +950,7 @@ func TestNewMobById(t *testing.T) {
 		totalPhys := 0
 		totalMental := 0
 		runs := 50
-		for i := 0; i < runs; i++ {
+		for range runs {
 			mob := NewMobById(1, 100, 100) // fighting archetype, 100 stat pool
 			if mob == nil {
 				continue
@@ -969,7 +969,7 @@ func TestNewMobById(t *testing.T) {
 		totalPhys := 0
 		totalMental := 0
 		runs := 50
-		for i := 0; i < runs; i++ {
+		for range runs {
 			mob := NewMobById(3, 100, 100) // casting archetype, 100 stat pool
 			if mob == nil {
 				continue
@@ -1018,7 +1018,7 @@ func TestGetSellPriceTooManyVarieties(t *testing.T) {
 	// Create merchant with 20 different items in shop
 	merchant := GetInstance(101)
 	bigShop := characters.Shop{}
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		bigShop = append(bigShop, characters.ShopItem{ItemId: 100 + i, Price: 10, Quantity: 1})
 	}
 	merchant.Character.Shop = bigShop
@@ -1683,7 +1683,7 @@ func TestMobSpawn_CanineNeverGetsExtraArms(t *testing.T) {
 	}
 	current := map[string]int{}
 	seen := map[string]int{}
-	for i := 0; i < 500; i++ {
+	for range 500 {
 		pool := mutations.GetWeightedPool(current, sp)
 		if len(pool) == 0 {
 			continue

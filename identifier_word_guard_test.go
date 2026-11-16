@@ -393,7 +393,7 @@ func TestNoStringOrDataSaysBuff(t *testing.T) {
 
 	seen := map[string]bool{}
 	scannedGo, scannedData := 0, 0
-	for _, rel := range strings.Split(string(out), "\x00") {
+	for rel := range strings.SplitSeq(string(out), "\x00") {
 		if rel == "" {
 			continue
 		}

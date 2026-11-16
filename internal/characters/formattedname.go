@@ -2,7 +2,7 @@ package characters
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/casing"
@@ -123,7 +123,7 @@ func GetFormattedAdjectives(excludeShort bool) []string {
 		ret = append(ret, name)
 	}
 
-	sort.Slice(ret, func(i, j int) bool { return ret[i] < ret[j] })
+	slices.Sort(ret)
 
 	return ret
 }

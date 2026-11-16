@@ -1,6 +1,8 @@
 package crafting
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
@@ -45,10 +47,8 @@ var corpseSalvageTable = []corpseSalvageEntry{
 // slice is passed in; iteration order is the table's declaration order.
 func LookupCorpseSalvage(groups []string) []items.SalvageReturn {
 	for _, entry := range corpseSalvageTable {
-		for _, g := range groups {
-			if g == entry.Group {
-				return entry.Returns
-			}
+		if slices.Contains(groups, entry.Group) {
+			return entry.Returns
 		}
 	}
 	return nil

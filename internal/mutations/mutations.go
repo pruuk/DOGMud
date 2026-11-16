@@ -8,6 +8,7 @@ package mutations
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"time"
 
@@ -226,10 +227,8 @@ func HasConflict(owned map[string]int, candidateId string) bool {
 		if ownedSpec == nil {
 			continue
 		}
-		for _, conflictId := range ownedSpec.Conflicts {
-			if conflictId == candidateId {
-				return true
-			}
+		if slices.Contains(ownedSpec.Conflicts, candidateId) {
+			return true
 		}
 	}
 
@@ -253,10 +252,7 @@ func calcRarityBonus(owned map[string]int) int {
 		totalLevels += level
 	}
 	avgLevel := totalLevels / len(owned) // integer division = floor
-	bonus := avgLevel - 1
-	if bonus < 0 {
-		bonus = 0
-	}
+	bonus := max(avgLevel-1, 0)
 	return bonus
 }
 
@@ -288,11 +284,8 @@ func GetWeightedPoolWithFloor(owned map[string]int, sp *species.Species, minRari
 		if !CanGain(owned, id, 1, sp) {
 			continue
 		}
-		weight := 11 - spec.Rarity - rarityBonus
-		if weight < 1 {
-			weight = 1
-		}
-		for i := 0; i < weight; i++ {
+		weight := max(11-spec.Rarity-rarityBonus, 1)
+		for range weight {
 			pool = append(pool, id)
 		}
 	}

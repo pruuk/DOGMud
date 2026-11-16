@@ -57,15 +57,15 @@ type SystemCommandHelp struct {
 
 var (
 	systemCommandList = map[string]SystemCommandHelp{
-		"quit": SystemCommandHelp{
+		"quit": {
 			Description:  "Disconnect self from the server",
 			ExampleInput: "quit",
 		},
-		"reload": SystemCommandHelp{
+		"reload": {
 			Description:  "Reload datafiles for various packages (items, mobs, conditions, etc.)",
 			ExampleInput: "reload",
 		},
-		"shutdown": SystemCommandHelp{
+		"shutdown": {
 			Description:  "Shutdown the server",
 			ExampleInput: "shutdown [15/seconds]",
 		},
@@ -148,7 +148,7 @@ func trySystemCommand(cmd string, connectionId connections.ConnectionId) bool {
 				if r := recover(); r != nil {
 					mudlog.Error("PANIC", "error", r)
 					s := string(debug.Stack())
-					for _, str := range strings.Split(s, "\n") {
+					for str := range strings.SplitSeq(s, "\n") {
 						mudlog.Error("PANIC", "stack", str)
 					}
 				}

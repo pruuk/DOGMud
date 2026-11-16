@@ -346,10 +346,7 @@ func applyCombatDamageBonuses(atk, def actions.Actor, res *combat.AttackResult) 
 
 	// Conviction Surge: +15% damage on hit when DamageBonus condition flag set.
 	if atkChar.HasConditionFlag(conditions.DamageBonus) {
-		bonusDmg := int(math.Round(float64(res.DamageToTarget) * 0.15))
-		if bonusDmg < 1 {
-			bonusDmg = 1
-		}
+		bonusDmg := max(int(math.Round(float64(res.DamageToTarget)*0.15)), 1)
 		// res.DamageToTarget feeds TrackPlayerDamage, aggro and analytics, so it
 		// must track what the pool ACTUALLY took, not what was requested.
 		res.DamageToTarget += defChar.ApplyHarm(characters.PoolHealth, bonusDmg, charActorRef(atkChar))

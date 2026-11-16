@@ -59,7 +59,7 @@ func TestShapesSpectator_DodgedKickKeepsTheMoveName(t *testing.T) {
 	sawKick := false
 	for _, band := range testDefenceBands {
 		out := ChannelDefenceResult{Defended: true, Defence: combatvocab.DefenceDodge, DefensiveCrit: band.crit, NormalizedDefenceMargin: band.margin}
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			triad := RenderChannelDefenceMessages(out, ChannelDefenceIdentities{
 				Attacker: `<ansi fg="mobname">Kesh</ansi>`,
 				Defender: `<ansi fg="username">Sil</ansi>`,
@@ -88,7 +88,7 @@ func TestShapesAttacker_DodgedUnarmedStrikeKeepsTheMoveName(t *testing.T) {
 
 	sawStrike := false
 	for _, band := range testDefenceBands {
-		for trial := 0; trial < 60; trial++ {
+		for range 60 {
 			res := &AttackResult{}
 			sendDefenseMessages(res, best, atk, def, false, false, band)
 			hideIdentitiesInPersonalLines(res, atk, def, combatContext{sourceSight: messaging.SightShapes, targetSight: messaging.SightShapes})
@@ -148,7 +148,7 @@ func TestShapes_DodgedArmedSwingHidesTheWeaponName(t *testing.T) {
 
 	sawWeapon, sawOwn := false, false
 	for _, band := range testDefenceBands {
-		for trial := 0; trial < 60; trial++ {
+		for range 60 {
 			res := &AttackResult{}
 			sendDefenseMessages(res, best, atk, def, false, false, band)
 			hideIdentitiesInPersonalLines(res, atk, def, combatContext{sourceSight: messaging.SightShapes, targetSight: messaging.SightShapes})

@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -150,9 +151,7 @@ func TestMacrosAreTheDrawing(t *testing.T) {
 // Every macro line fits the form at every width, a command word whole.
 func TestMacrosFitEveryWidth(t *testing.T) {
 	macros := map[string]string{}
-	for k, v := range macrosCaptured {
-		macros[k] = v
-	}
+	maps.Copy(macros, macrosCaptured)
 	// A 13- and a 12-column word side by side at indent 5 end at 31, one
 	// past a 30 line, so a packer that overfills by one is caught.
 	macros["=5"] = "say abcdefghijkl nopqrstuvwxyz abcdefghijkl"
@@ -358,7 +357,7 @@ objects inside:
 // fills a 42 line at its indent.
 func TestContainerRecipeFitsEveryWidth(t *testing.T) {
 	for _, width := range []int{30, 35, 42, 60, 80} {
-		for _, line := range strings.Split(containerRecipeScreen(t, width, 97005), "\n") {
+		for line := range strings.SplitSeq(containerRecipeScreen(t, width, 97005), "\n") {
 			require.LessOrEqual(t, templates.WidestLine(line), width, "at %d: %q", width, line)
 		}
 	}

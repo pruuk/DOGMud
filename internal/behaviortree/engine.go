@@ -2,6 +2,7 @@ package behaviortree
 
 import (
 	"fmt"
+	"maps"
 	"sync"
 	"time"
 
@@ -296,9 +297,7 @@ func (e *Engine) GetArchetypeGoalWeights(name string) map[string]float64 {
 		return map[string]float64{}
 	}
 	out := make(map[string]float64, len(raw))
-	for k, v := range raw {
-		out[k] = v
-	}
+	maps.Copy(out, raw)
 	return out
 }
 

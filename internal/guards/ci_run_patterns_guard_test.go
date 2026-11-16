@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -50,7 +51,7 @@ func parseCIRunCommands(name, src string) []ciRunCommand {
 			continue
 		}
 		pkg := "."
-		for _, tok := range strings.Fields(m[2]) {
+		for tok := range strings.FieldsSeq(m[2]) {
 			if strings.HasPrefix(tok, ".") {
 				pkg = tok
 			}
@@ -117,7 +118,7 @@ func unmatchedRunAlternatives(t *testing.T, pattern string, names []string) []st
 		top, anchored = top[2:len(top)-2], true
 	}
 	var missing []string
-	for _, alt := range strings.Split(top, "|") {
+	for alt := range strings.SplitSeq(top, "|") {
 		expr := alt
 		if anchored {
 			expr = "^(?:" + alt + ")$"
@@ -126,13 +127,7 @@ func unmatchedRunAlternatives(t *testing.T, pattern string, names []string) []st
 		if err != nil {
 			t.Fatalf("-run alternative %q does not compile: %v", alt, err)
 		}
-		found := false
-		for _, n := range names {
-			if re.MatchString(n) {
-				found = true
-				break
-			}
-		}
+		found := slices.ContainsFunc(names, re.MatchString)
 		if !found {
 			missing = append(missing, alt)
 		}

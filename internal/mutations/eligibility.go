@@ -1,6 +1,8 @@
 package mutations
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -68,10 +70,8 @@ func sharesCluster(a, b string) bool {
 		return false
 	}
 	for _, ca := range sa.Clusters {
-		for _, cb := range sb.Clusters {
-			if ca == cb {
-				return true
-			}
+		if slices.Contains(sb.Clusters, ca) {
+			return true
 		}
 	}
 	return false

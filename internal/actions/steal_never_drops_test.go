@@ -18,7 +18,7 @@ func TestTakeFromMob_NeverStealsANeverDropsItem(t *testing.T) {
 	})
 	defer cleanup()
 
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		m := newStealTestMob(testMobInstId, 0, 1)
 		m.Character.Items = []items.Item{{ItemId: 1}, {ItemId: 3}}
 		thief := newStealPlayerActor(150, 5)

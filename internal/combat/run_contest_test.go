@@ -34,7 +34,7 @@ func pinContestFloorOff(t *testing.T) {
 func TestRunContest_AppliesTheConfiguredFloor(t *testing.T) {
 	const iterations = 20000
 	wins := 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		if RunContest(10, []contest.Entry{{Score: 10000}}).Success {
 			wins++
 		}

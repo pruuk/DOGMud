@@ -30,7 +30,7 @@ func TestPickWanderExit_UsesFilteredCandidates(t *testing.T) {
 
 	// Run repeatedly: pre-fix this picked uniformly from all four exits, so
 	// a single lucky iteration would not prove anything.
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		name, roomId := pickWanderExit(options, room)
 		if name != "north" {
 			t.Fatalf("iteration %d: picked %q, want the only filtered candidate %q", i, name, "north")
@@ -46,7 +46,7 @@ func TestPickWanderExit_StaysWithinCandidateSet(t *testing.T) {
 	options := []string{"north", "south"}
 	allowed := map[string]int{"north": 100, "south": 200}
 
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		name, roomId := pickWanderExit(options, room)
 		wantRoom, ok := allowed[name]
 		if !ok {

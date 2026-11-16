@@ -201,7 +201,7 @@ func TestACallInAFightStillBringsAMaxWanderZeroMob(t *testing.T) {
 func TestTorvanAloneNeverLeavesOnHisOwnIdle(t *testing.T) {
 	s := tunnelWorld(t)
 	round := util.GetRoundCount()
-	for i := 0; i < 500; i++ {
+	for i := range 500 {
 		util.SetRoundCount(round + uint64(i) + 1)
 		hooks.HandleIdleMobs(events.MobIdle{MobInstanceId: s.torvan.InstanceId})
 		if got := moveCommands(events.DrainQueuedInputsForTest(s.torvan.InstanceId)); len(got) != 0 {

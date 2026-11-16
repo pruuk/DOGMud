@@ -2,6 +2,7 @@ package mobcommands
 
 import (
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -1039,13 +1040,7 @@ func TestRegisterCommand(t *testing.T) {
 	}, false)
 
 	cmds := GetAllMobCommands()
-	found := false
-	for _, c := range cmds {
-		if c == "testcmd" {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(cmds, "testcmd")
 	assert.True(t, found, "testcmd should be registered")
 }
 

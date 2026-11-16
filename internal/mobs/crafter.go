@@ -56,10 +56,7 @@ func RegisterMobShop(mob *Mob) {
 	// content edit accidentally drops it to zero. Per spec section 3
 	// (per-vendor audit), specialists set 1000g and generals set 5000g
 	// in their YAMLs — this is what flows through to StartingGold.
-	startingGold := mob.Character.Gold
-	if startingGold < 500 {
-		startingGold = 500
-	}
+	startingGold := max(mob.Character.Gold, 500)
 
 	template := shops.ShopInventory{
 		Gold:         startingGold,
@@ -496,7 +493,7 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 		}
 		removed := shopInv.RemoveStockAtRound(spec.ItemId, ing.Quantity, round)
 		shopInv.ConsumedByCrafterCount += removed
-		for i := 0; i < removed; i++ {
+		for range removed {
 			consumed = append(consumed, items.Item{ItemId: spec.ItemId, Spec: spec})
 		}
 	}

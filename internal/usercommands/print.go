@@ -37,7 +37,7 @@ func PrintLine(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 		finalOutput := ``
 
-		for i := 0; i < sections; i++ {
+		for i := range sections {
 			sectionStr := ``
 
 			sectionStr += strings.Repeat(`=`, sectionSize)

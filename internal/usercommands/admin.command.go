@@ -50,7 +50,7 @@ func Command(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	// Use the index for how many turns to defer the extra commands
 	readyTurn := util.GetTurnCount()
-	for _, oneCmd := range strings.Split(cmd, `;`) {
+	for oneCmd := range strings.SplitSeq(cmd, `;`) {
 		if mobId > 0 {
 
 			events.AddToQueue(events.Input{

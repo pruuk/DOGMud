@@ -469,13 +469,7 @@ func TestNoLegacySkillWeightLiteralSurvives(t *testing.T) {
 
 // snippetAround returns a short context window for a match report.
 func snippetAround(text string, at int) string {
-	start := at - 20
-	if start < 0 {
-		start = 0
-	}
-	end := at + 20
-	if end > len(text) {
-		end = len(text)
-	}
+	start := max(at-20, 0)
+	end := min(at+20, len(text))
 	return text[start:end]
 }

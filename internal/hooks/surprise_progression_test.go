@@ -73,7 +73,7 @@ func forceSkullduggeryToWinBestOf(t *testing.T, c *characters.Character) {
 
 func surpriseWeaponHits(n int, clean bool) []combat.WeaponHitInfo {
 	hits := make([]combat.WeaponHitInfo, 0, n)
-	for i := 0; i < n; i++ {
+	for range n {
 		hits = append(hits, combat.WeaponHitInfo{
 			SkillTag: string(skills.WeaponCombat),
 			Hit:      true,

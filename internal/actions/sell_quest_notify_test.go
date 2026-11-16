@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/questengine"
@@ -42,8 +43,8 @@ func sellProbeSetup(t *testing.T, merchantGold int, trig quests.TriggerDef) (*us
 		Triggers: []quests.TriggerDef{trig},
 	})
 	return u, seller, func() {
-		for i := len(undo) - 1; i >= 0; i-- {
-			undo[i]()
+		for _, fn := range slices.Backward(undo) {
+			fn()
 		}
 	}
 }

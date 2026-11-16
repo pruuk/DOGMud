@@ -221,7 +221,7 @@ func helpWordsKept(raw, laid []string, width int) bool {
 
 func helpWords(s string) []string {
 	keep := []string{}
-	for _, l := range strings.Split(strings.ReplaceAll(s, "\r", ""), "\n") {
+	for l := range strings.SplitSeq(strings.ReplaceAll(s, "\r", ""), "\n") {
 		switch l {
 		case "::rows", "::list", "::keep", "::":
 			continue
@@ -230,7 +230,7 @@ func helpWords(s string) []string {
 	}
 	// Rule marks are not words: a heading too wide drops them (decision 7).
 	words := []string{}
-	for _, w := range strings.Fields(helpTag.ReplaceAllString(strings.Join(keep, "\n"), "")) {
+	for w := range strings.FieldsSeq(helpTag.ReplaceAllString(strings.Join(keep, "\n"), "")) {
 		if strings.Trim(w, "━─") != "" {
 			words = append(words, w)
 		}
@@ -247,7 +247,7 @@ func helpKeptBlocks(t *testing.T, path string) [][]string {
 	}
 	blocks := [][]string{}
 	var cur []string
-	for _, line := range strings.Split(strings.ReplaceAll(string(raw), "\r\n", "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.ReplaceAll(string(raw), "\r\n", "\n"), "\n") {
 		switch {
 		case line == "::keep":
 			cur = []string{}

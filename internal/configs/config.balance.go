@@ -1,5 +1,7 @@
 package configs
 
+import "slices"
+
 // Balance holds every numeric gameplay-balance constant that was previously
 // hardcoded in Go source.  All fields have defaults equal to the prior
 // hardcoded values, so behaviour is unchanged unless a field is overridden
@@ -1487,32 +1489,17 @@ func (b *Balance) GetSkillProgressionMultiplier(skillName string) (float64, bool
 // CaravanServedZones list. Case-sensitive — match the zone display
 // name exactly.
 func (b Balance) IsCaravanServedZone(zone string) bool {
-	for _, z := range b.CaravanServedZones {
-		if z == zone {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(b.CaravanServedZones, zone)
 }
 
 // IsBossInterruptItem reports whether the given item id is a configured
 // boss-interrupt disruptor (see BossInterruptItemIds).
 func (b Balance) IsBossInterruptItem(itemId int) bool {
-	for _, id := range b.BossInterruptItemIds {
-		if id == itemId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(b.BossInterruptItemIds, itemId)
 }
 
 // IsBossInterruptSpell reports whether the given spell id is a configured
 // boss-interrupt disruption spell (see BossInterruptSpellIds).
 func (b Balance) IsBossInterruptSpell(spellId string) bool {
-	for _, id := range b.BossInterruptSpellIds {
-		if id == spellId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(b.BossInterruptSpellIds, spellId)
 }

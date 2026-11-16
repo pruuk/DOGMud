@@ -2,6 +2,7 @@ package facts
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -212,11 +213,8 @@ func AllFactsByTag(tag string) []*Fact {
 		if f.Status != StatusActive {
 			continue
 		}
-		for _, t := range f.Tags {
-			if t == tag {
-				out = append(out, f)
-				break
-			}
+		if slices.Contains(f.Tags, tag) {
+			out = append(out, f)
 		}
 	}
 	return out
@@ -251,11 +249,9 @@ func RecordHeardEvent(observerMobId int, eventId uint64) {
 	maxLog := effectiveHeardEventsMax()
 
 	awarenessCacheMu.Lock()
-	for _, e := range a.HeardEvents {
-		if e == eventId {
-			awarenessCacheMu.Unlock()
-			return
-		}
+	if slices.Contains(a.HeardEvents, eventId) {
+		awarenessCacheMu.Unlock()
+		return
 	}
 	a.HeardEvents = append(a.HeardEvents, eventId)
 	if maxLog > 0 && len(a.HeardEvents) > maxLog {
@@ -274,12 +270,7 @@ func HeardEvent(observerMobId int, eventId uint64) bool {
 	a := loadOrLazyInitAwareness(observerMobId, observerNameFor(observerMobId))
 	awarenessCacheMu.RLock()
 	defer awarenessCacheMu.RUnlock()
-	for _, e := range a.HeardEvents {
-		if e == eventId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(a.HeardEvents, eventId)
 }
 
 // observerNameFor looks up the mob template name for filename

@@ -33,7 +33,7 @@ func TestFindSpecByComponentTagIsDeterministic(t *testing.T) {
 	if first == nil {
 		t.Fatal("no spec resolved for a tag four items carry")
 	}
-	for i := 0; i < 500; i++ {
+	for range 500 {
 		got := FindSpecByComponentTag("bottle")
 		if got == nil || got.ItemId != first.ItemId {
 			t.Fatalf("resolution flipped between identical calls: %d then %v", first.ItemId, got)

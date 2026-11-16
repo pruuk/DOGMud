@@ -340,10 +340,7 @@ func (bs *Conditions) addConditionScaled(conditionId int, durationMult float64) 
 		// A ward or a heal replaces its family's other record (family.go).
 		bs.discardFamilyRivals(conditionInfo)
 
-		triggers := int(float64(conditionInfo.TriggerCount) * durationMult)
-		if triggers < 1 {
-			triggers = 1
-		}
+		triggers := max(int(float64(conditionInfo.TriggerCount)*durationMult), 1)
 		newCondition := Condition{
 			ConditionId:  conditionInfo.ConditionId,
 			RoundCounter: 0,
@@ -628,11 +625,11 @@ func (bs *Conditions) Prune() (prunedConditions []*Condition) {
 
 	var prune bool
 	var didPrune bool = false
-	for i := len(bs.List) - 1; i >= 0; i-- {
+	for i, v := range slices.Backward(bs.List) {
 
 		prune = false
 
-		b := bs.List[i] // Get a ptr to the data within the slice
+		b := v // Get a ptr to the data within the slice
 
 		conditionInfo := GetConditionSpec(b.ConditionId)
 

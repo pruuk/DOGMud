@@ -79,7 +79,7 @@ func PickIndex(n int, cooldowns map[string]bool, keyPrefix string, picker ...nar
 	}
 
 	available := make([]int, 0, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		if !cooldowns[cooldownKey(keyPrefix, i)] {
 			available = append(available, i)
 		}
@@ -88,11 +88,11 @@ func PickIndex(n int, cooldowns map[string]bool, keyPrefix string, picker ...nar
 	// Every variant used: clear and start over, exactly as PickTemplate did.
 	// Falling silent here would drop the event entirely.
 	if len(available) == 0 {
-		for i := 0; i < n; i++ {
+		for i := range n {
 			delete(cooldowns, cooldownKey(keyPrefix, i))
 		}
 		available = available[:0]
-		for i := 0; i < n; i++ {
+		for i := range n {
 			available = append(available, i)
 		}
 	}

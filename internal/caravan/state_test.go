@@ -5,7 +5,7 @@ import "testing"
 func TestCaravanState_Name(t *testing.T) {
 	// Every state must have a unique non-empty name.
 	seen := map[string]bool{}
-	for s := StateThornwallDwell; s < 8; s++ {
+	for s := range CaravanState(8) {
 		name := s.Name()
 		if name == "" {
 			t.Errorf("state %d has empty name", s)

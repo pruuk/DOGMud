@@ -81,10 +81,7 @@ func powerScoreParts(char characters.Character) powerScoreTerms {
 	p.mutations = float64(totalMutLevels) * 20.0
 
 	// ── KD RATIO ─────────────────────────────────────────────────────────
-	deaths := char.KD.TotalDeaths
-	if deaths < 1 {
-		deaths = 1
-	}
+	deaths := max(char.KD.TotalDeaths, 1)
 	p.kd = math.Min(float64(char.KD.TotalKills)/float64(deaths)*10.0, 50.0)
 
 	return p

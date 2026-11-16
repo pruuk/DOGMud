@@ -32,7 +32,7 @@ func TestStatusTemplate_MeasuresVitalsAgainstTheReachablePool(t *testing.T) {
 	require.NoError(t, err, "the status sheet must be readable from the templates package")
 
 	var vitalsLine string
-	for _, line := range strings.Split(string(raw), "\n") {
+	for line := range strings.SplitSeq(string(raw), "\n") {
 		if strings.Contains(line, "vitalQuality") {
 			vitalsLine = line
 			break

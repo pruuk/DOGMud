@@ -96,7 +96,7 @@ func shootUntilItLands(t *testing.T, user *users.UserRecord, room *rooms.Room, c
 	t.Helper()
 	const attempts = 12
 	start := healthOf()
-	for i := 0; i < attempts; i++ {
+	for i := range attempts {
 		equipBow(user.Character, true) // firing unloads the bow; reload each try
 		delete(user.Character.Cooldowns, "special-move")
 		handled, err := Fire(cmd, user, room, 0)

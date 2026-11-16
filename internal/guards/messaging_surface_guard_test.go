@@ -356,7 +356,7 @@ func messagingSurfaceCandidateKeysInFile(path string) (map[string]bool, error) {
 	found := map[string]bool{}
 	inBlock := false
 	blockIndent := 0
-	for _, raw := range strings.Split(string(data), "\n") {
+	for raw := range strings.SplitSeq(string(data), "\n") {
 		line := strings.TrimRight(raw, "\r")
 		if inBlock {
 			trimmed := strings.TrimSpace(line)
@@ -473,7 +473,7 @@ func messagingSurfaceGoYAMLTagKeys() (map[string]bool, error) {
 				// test's -- skip it rather than fail the whole walk on it.
 				return nil
 			}
-			for _, line := range strings.Split(string(data), "\n") {
+			for line := range strings.SplitSeq(string(data), "\n") {
 				for _, m := range messagingSurfaceYAMLTagRE.FindAllStringSubmatch(line, -1) {
 					keys[strings.ToLower(m[1])] = true
 				}

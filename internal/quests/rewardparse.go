@@ -30,7 +30,7 @@ func ParseSkillGrants(skillInfo string) []SkillGrant {
 		return nil
 	}
 	var grants []SkillGrant
-	for _, entry := range strings.Split(skillInfo, `,`) {
+	for entry := range strings.SplitSeq(skillInfo, `,`) {
 		details := strings.Split(strings.TrimSpace(entry), `:`)
 		if len(details) <= 1 {
 			continue
@@ -52,7 +52,7 @@ func ParseStatGrants(statInfo string) []StatGrant {
 		return nil
 	}
 	var grants []StatGrant
-	for _, entry := range strings.Split(statInfo, `,`) {
+	for entry := range strings.SplitSeq(statInfo, `,`) {
 		details := strings.Split(strings.TrimSpace(entry), `:`)
 		if len(details) <= 1 {
 			continue
@@ -74,7 +74,7 @@ func ParseRecipeGrants(recipeInfo string) []string {
 		return nil
 	}
 	var ids []string
-	for _, entry := range strings.Split(recipeInfo, `,`) {
+	for entry := range strings.SplitSeq(recipeInfo, `,`) {
 		if id := strings.TrimSpace(entry); id != `` {
 			ids = append(ids, id)
 		}
@@ -89,7 +89,7 @@ func ParseItemGrants(itemInfo string) []ItemGrant {
 		return nil
 	}
 	var grants []ItemGrant
-	for _, entry := range strings.Split(itemInfo, `,`) {
+	for entry := range strings.SplitSeq(itemInfo, `,`) {
 		entry = strings.TrimSpace(entry)
 		if entry == `` {
 			continue

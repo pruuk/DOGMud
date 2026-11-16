@@ -29,7 +29,7 @@ func TestNoCredentialIsNotAFailedAttempt(t *testing.T) {
 	})
 
 	// Ten unauthenticated requests: the normal handshake, ten times over.
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		req := httptest.NewRequest(http.MethodGet, "/admin/", nil)
 		req.RemoteAddr = "203.0.113.7:5000"
 		rec := httptest.NewRecorder()
@@ -60,7 +60,7 @@ func TestThrottledResponseStillCarriesTheChallenge(t *testing.T) {
 
 	// Present a WRONG credential enough times to lock the source out. These are
 	// genuine failures and must count.
-	for i := 0; i < authMaxFailures+1; i++ {
+	for range authMaxFailures + 1 {
 		req := httptest.NewRequest(http.MethodGet, "/admin/", nil)
 		req.RemoteAddr = ip + ":5000"
 		req.SetBasicAuth("nosuchuser", "wrongpassword")

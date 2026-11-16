@@ -136,7 +136,7 @@ func TestHandleQuestUpdate_RewardObserverLineWrapsAt80(t *testing.T) {
 			continue
 		}
 		seen = true
-		for _, line := range strings.Split(strings.ReplaceAll(plain, "\r\n", "\n"), "\n") {
+		for line := range strings.SplitSeq(strings.ReplaceAll(plain, "\r\n", "\n"), "\n") {
 			require.LessOrEqual(t, util.VisibleWidth(line), 80, "observer reward line wider than 80: %q", line)
 		}
 	}

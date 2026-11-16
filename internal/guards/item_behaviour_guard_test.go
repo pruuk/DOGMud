@@ -115,7 +115,7 @@ func TestEveryItemSpecFieldIsClassifiedExactlyOnce(t *testing.T) {
 		data[f] = true
 	}
 	fields := map[string]bool{}
-	st := reflect.TypeOf(items.ItemSpec{})
+	st := reflect.TypeFor[items.ItemSpec]()
 	for i := 0; i < st.NumField(); i++ {
 		f := st.Field(i)
 		if !f.IsExported() {
@@ -452,7 +452,7 @@ func TestPulsingFixturesStayInsideOneBand(t *testing.T) {
 			}
 			for _, mm := range pulses[id] {
 				for _, d := range nightTradeSampleDays {
-					for hour := 0; hour < 24; hour++ {
+					for hour := range 24 {
 						util.SetRoundCount(uint64(d.Doy-1)*900 + uint64(math.Ceil(float64(hour)*37.5)))
 						itemlight.Set(roomId, probe, kind, mm[0])
 						atMin := messaging.LightBand(observer, r)

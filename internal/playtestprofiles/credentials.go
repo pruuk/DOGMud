@@ -24,7 +24,7 @@ func GenerateCredentials(u *users.UserRecord, profileID string) (username, passw
 	// (^[a-zA-Z0-9_]+$). Spec's pt-<profile>-<suffix> shape is preserved
 	// with underscores substituted for the separators.
 	base := "pt_" + sanitizeProfileToken(profileID)
-	for attempt := 0; attempt < usernameMaxAttempts; attempt++ {
+	for range usernameMaxAttempts {
 		suffix, genErr := randomHex(3)
 		if genErr != nil {
 			return "", "", genErr

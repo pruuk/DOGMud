@@ -26,11 +26,11 @@ func TestConfigData_ConcurrentGetterValidation(t *testing.T) {
 	configDataLock.Unlock()
 
 	var wg sync.WaitGroup
-	for g := 0; g < goroutines; g++ {
+	for g := range goroutines {
 		wg.Add(1)
 		go func(g int) {
 			defer wg.Done()
-			for i := 0; i < iters; i++ {
+			for i := range iters {
 				_ = GetServerConfig()
 				_ = GetGamePlayConfig()
 				_ = GetFilePathsConfig()

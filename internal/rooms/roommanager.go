@@ -3,9 +3,11 @@ package rooms
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -134,9 +136,7 @@ func (r *RoomManager) cachedFilePathStats() (map[int]string, int) {
 	r.fileCacheMu.RLock()
 	defer r.fileCacheMu.RUnlock()
 	snapshot := make(map[int]string, len(r.roomIdToFileCache))
-	for k, v := range r.roomIdToFileCache {
-		snapshot[k] = v
-	}
+	maps.Copy(snapshot, r.roomIdToFileCache)
 	return snapshot, len(snapshot)
 }
 
@@ -292,10 +292,7 @@ func RoomMaintenance() []int {
 	unloadRoundThreshold := roundCount - uint64(c.RoomUnloadRounds)
 	unloadRooms := make([]*Room, 0)
 
-	allowedUnloadCt := len(roomManager.rooms) - int(c.RoomUnloadThreshold)
-	if allowedUnloadCt < 0 {
-		allowedUnloadCt = 0
-	}
+	allowedUnloadCt := max(len(roomManager.rooms)-int(c.RoomUnloadThreshold), 0)
 
 	for _, room := range roomManager.rooms {
 
@@ -360,7 +357,7 @@ func GetAllZoneNames() []string {
 
 	var zoneNames []string = make([]string, len(roomManager.zones))
 	i := 0
-	for zoneName, _ := range roomManager.zones {
+	for zoneName := range roomManager.zones {
 		zoneNames[i] = zoneName
 		i++
 	}
@@ -373,7 +370,7 @@ func GetAllZoneRoomsIds(zoneName string) []int {
 	if zoneInfo, ok := roomManager.zones[zoneName]; ok {
 		result := make([]int, len(zoneInfo.RoomIds))
 		idx := 0
-		for roomId, _ := range zoneInfo.RoomIds {
+		for roomId := range zoneInfo.RoomIds {
 			result[idx] = roomId
 			idx++
 		}
@@ -591,12 +588,11 @@ func GetRoomsWithPlayers() []int {
 	deleteKeys := []int{}
 	roomsWithPlayers := []int{}
 
-	for roomId, _ := range roomManager.roomsWithUsers {
+	for roomId := range roomManager.roomsWithUsers {
 		roomsWithPlayers = append(roomsWithPlayers, roomId)
 	}
 
-	for i := len(roomsWithPlayers) - 1; i >= 0; i-- {
-		roomId := roomsWithPlayers[i]
+	for i, roomId := range slices.Backward(roomsWithPlayers) {
 		if r := LoadRoom(roomId); r != nil {
 			if len(r.players) < 1 {
 				roomsWithPlayers = append(roomsWithPlayers[:i], roomsWithPlayers[i+1:]...)
@@ -621,7 +617,7 @@ func GetRoomsWithMobs() []int {
 
 	var roomsWithMobs []int = make([]int, len(roomManager.roomsWithMobs))
 	i := 0
-	for roomId, _ := range roomManager.roomsWithMobs {
+	for roomId := range roomManager.roomsWithMobs {
 		roomsWithMobs[i] = roomId
 		i++
 	}
@@ -830,7 +826,7 @@ func FindZoneName(zone string) string {
 		return zone
 	}
 
-	for zoneName, _ := range roomManager.zones {
+	for zoneName := range roomManager.zones {
 		if strings.Contains(strings.ToLower(zoneName), strings.ToLower(zone)) {
 			return zoneName
 		}

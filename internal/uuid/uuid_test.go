@@ -37,7 +37,7 @@ func TestFromStringInvalidFormat(t *testing.T) {
 func TestUniqueness(t *testing.T) {
 	gen := newUUIDGenerator()
 	seen := make(map[string]struct{})
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		u := gen.NewUUID(1)
 		s := u.String()
 		if _, exists := seen[s]; exists {

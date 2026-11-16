@@ -22,7 +22,7 @@ func TestExecuteSkillMove_DamageEndsTheDefendersCraft(t *testing.T) {
 
 	const iterations = 500
 	damaged := 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		attacker := characters.New()
 		defender := characters.New()
 		defender.HealthMax.Value = 100000

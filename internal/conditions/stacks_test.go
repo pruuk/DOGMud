@@ -206,7 +206,7 @@ func TestStackEquilibriumAtTheShippedCooldown(t *testing.T) {
 	for _, c := range cases {
 		withSpecs(t, stackingSpec())
 		bs := New()
-		for r := 0; r < 40; r++ {
+		for r := range 40 {
 			stacksBefore := 0
 			if len(bs.List) > 0 {
 				stacksBefore = len(bs.List[0].Stacks)

@@ -1,5 +1,7 @@
 package state
 
+import "slices"
+
 import "errors"
 
 // ActorRef is a discriminated reference to either a user or mob.
@@ -54,12 +56,7 @@ type TransitionTable[S comparable] map[S][]S
 
 // IsAllowed returns true if from→to is in the table.
 func (t TransitionTable[S]) IsAllowed(from, to S) bool {
-	for _, allowed := range t[from] {
-		if allowed == to {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(t[from], to)
 }
 
 // Framework error types.

@@ -227,12 +227,7 @@ func (m *Mob) EquippedDropChance() int {
 // group tag, NOT a guard faction id and NOT the combat-stance
 // Character.IsGuard() predicate.
 func IsGuardMob(groups []string) bool {
-	for _, g := range groups {
-		if g == "guard" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(groups, "guard")
 }
 
 // GetZone returns the mob's zone name.
@@ -411,7 +406,7 @@ func distributeStatPoolFromConfig(mob *Mob, statPool int) {
 // primary/secondary distribution.
 func distributeStatPool(mob *Mob, statPool int, primaryShare float64) {
 	primaryPermille := int(primaryShare * 3 * 1000)
-	for i := 0; i < statPool; i++ {
+	for range statPool {
 		var statIdx int
 		switch mob.Archetype {
 		case "fighting":

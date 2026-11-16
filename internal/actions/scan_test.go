@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -135,13 +136,7 @@ func TestScan_PlayerActorEmitsText(t *testing.T) {
 	if len(actor.sent) == 0 {
 		t.Fatal("player actor should receive SendText messages from Scan")
 	}
-	found := false
-	for _, line := range actor.sent {
-		if line == "You scan the surrounding area..." {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(actor.sent, "You scan the surrounding area...")
 	if !found {
 		t.Errorf("expected header line in sent messages, got: %v", actor.sent)
 	}

@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -33,12 +34,7 @@ func seedBondedDismisser(t *testing.T) (*characters.Character, func() bool, func
 func drives(t *testing.T, mobIds ...int) {
 	t.Helper()
 	companionai.SetDrivesCheck(func(mobId int) bool {
-		for _, id := range mobIds {
-			if id == mobId {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(mobIds, mobId)
 	})
 	t.Cleanup(func() { companionai.SetDrivesCheck(nil) })
 }

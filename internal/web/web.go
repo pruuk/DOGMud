@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"os"
 	"path"
@@ -516,7 +517,7 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string, s
 							if r := recover(); r != nil {
 								mudlog.Error("PANIC", "error", r)
 								s := string(debug.Stack())
-								for _, str := range strings.Split(s, "\n") {
+								for str := range strings.SplitSeq(s, "\n") {
 									mudlog.Error("PANIC", "stack", str)
 								}
 							}
@@ -571,7 +572,7 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string, s
 				if r := recover(); r != nil {
 					mudlog.Error("PANIC", "error", r)
 					s := string(debug.Stack())
-					for _, str := range strings.Split(s, "\n") {
+					for str := range strings.SplitSeq(s, "\n") {
 						mudlog.Error("PANIC", "stack", str)
 					}
 				}
@@ -613,9 +614,7 @@ func (b *bufferedResponse) Write(p []byte) (int, error) {
 // flushTo replays the buffered response onto the real ResponseWriter.
 func (b *bufferedResponse) flushTo(w http.ResponseWriter) {
 	dst := w.Header()
-	for k, v := range b.header {
-		dst[k] = v
-	}
+	maps.Copy(dst, b.header)
 	if b.code == 0 {
 		b.code = http.StatusOK
 	}

@@ -3,6 +3,7 @@ package copyover
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"maps"
 	"sync"
 	"time"
 )
@@ -82,9 +83,7 @@ func (t *tokenContributor) CopyoverSave(enc *Encoder) error {
 	pruneExpiredTokens()
 
 	state := tokenState{Tokens: make(map[string]tokenEntry, len(tokenStore))}
-	for k, v := range tokenStore {
-		state.Tokens[k] = v
-	}
+	maps.Copy(state.Tokens, tokenStore)
 
 	return enc.WriteSection(t.CopyoverName(), state)
 }

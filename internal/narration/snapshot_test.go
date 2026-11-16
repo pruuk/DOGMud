@@ -506,7 +506,7 @@ func buildDefenseMessagesGolden(t *testing.T) string {
 			name = "generic"
 		}
 		first := ""
-		for i := 0; i < 64; i++ {
+		for i := range 64 {
 			actor, actee, ok := items.RenderDeflectedSwing(d, deflectedStandins, i)
 			if !ok {
 				fmt.Fprintf(&b, "deflected|%s => (no pool)\n", name)
@@ -1168,7 +1168,7 @@ func buildCraftingMessagesGolden(t *testing.T) string {
 	for _, skill := range skills {
 		for _, ph := range phases {
 			pick := narration.SequencePicker()
-			for i := 0; i < 3; i++ {
+			for i := range 3 {
 				full, vague := crafting.CraftRoomLines(skill, ph.p, ctx, "Iron Dagger", pick)
 				fmt.Fprintf(&b, "craft|%s|%s|%d|full => %s\n", skill, ph.name, i, full)
 				fmt.Fprintf(&b, "craft|%s|%s|%d|vague => %s\n", skill, ph.name, i, vague)
@@ -1179,7 +1179,7 @@ func buildCraftingMessagesGolden(t *testing.T) string {
 			p    crafting.Phase
 		}{{"start_heard", crafting.PhaseStart}, {"finish_heard", crafting.PhaseSuccess}} {
 			pick := narration.SequencePicker()
-			for i := 0; i < 3; i++ {
+			for i := range 3 {
 				fmt.Fprintf(&b, "craft|%s|%s|%d => %s\n", skill, ph.name, i, crafting.CraftHeardLine(skill, ph.p, pick))
 			}
 		}
@@ -1249,7 +1249,7 @@ func buildTipsGolden(t *testing.T) string {
 	if n == 0 {
 		t.Fatal("no tips loaded; setupRealStores must call tips.Load()")
 	}
-	for i := 0; i < n; i++ {
+	for i := range n {
 		fmt.Fprintf(&b, "tip|%d => %s\n", i, tips.Next())
 	}
 

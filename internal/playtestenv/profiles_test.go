@@ -82,7 +82,7 @@ func TestDockerfileDockerignoreKeepsPlaytestProfiles(t *testing.T) {
 	dockerignore := filepath.Join(root, "provisioning", "Dockerfile.dockerignore")
 	body, err := os.ReadFile(dockerignore)
 	require.NoError(t, err)
-	for _, line := range strings.Split(string(body), "\n") {
+	for line := range strings.SplitSeq(string(body), "\n") {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
 			continue

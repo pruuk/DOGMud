@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -318,8 +319,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 
 		auctionHistory := mod.auctionMgr.GetAuctionHistory(0)
 
-		for i := len(auctionHistory) - 1; i >= 0; i-- {
-			aItem := auctionHistory[i]
+		for _, aItem := range slices.Backward(auctionHistory) {
 
 			buyerName := aItem.BuyerName
 			sellerName := aItem.SellerName
@@ -511,10 +511,7 @@ func (mod *AuctionsModule) storageSeizedHandler(e events.Event) events.ListenerR
 	if !ok {
 		return events.Continue
 	}
-	count := evt.Count
-	if count < 1 {
-		count = 1
-	}
+	count := max(evt.Count, 1)
 	mod.auctionMgr.SeizedQueue = append(mod.auctionMgr.SeizedQueue, SeizedLot{
 		Item:          evt.Item,
 		Count:         count,
@@ -850,10 +847,7 @@ func auctionRefusesStolen(item items.Item, zone string) bool {
 
 // reserveFrom derives the reserve / minimum bid from a buyout price. Floors at 1.
 func reserveFrom(buyout int, pct float64) int {
-	r := int(float64(buyout) * pct)
-	if r < 1 {
-		r = 1
-	}
+	r := max(int(float64(buyout)*pct), 1)
 	return r
 }
 
@@ -882,14 +876,8 @@ func (mod *AuctionsModule) drainSeizedQueue(durationSeconds int) {
 	lot := mod.auctionMgr.SeizedQueue[0]
 	mod.auctionMgr.SeizedQueue = mod.auctionMgr.SeizedQueue[1:]
 
-	count := lot.Count
-	if count < 1 {
-		count = 1
-	}
-	buyout := lot.Item.GetSpec().Value * count
-	if buyout < 1 {
-		buyout = 1
-	}
+	count := max(lot.Count, 1)
+	buyout := max(lot.Item.GetSpec().Value*count, 1)
 
 	// Ex-owner name only for records; Anonymous hides it on the block anyway.
 	sellerName := ``
@@ -945,10 +933,7 @@ func (mod *AuctionsModule) resolveSeizedLot(a *AuctionItem) {
 		return
 	}
 
-	count := a.SeizedCount
-	if count < 1 {
-		count = 1
-	}
+	count := max(a.SeizedCount, 1)
 
 	// Deliver Count units to a player winner (NPC winner: item sinks/relists below).
 	if a.HighestBidUserId > 0 {
@@ -957,7 +942,7 @@ func (mod *AuctionsModule) resolveSeizedLot(a *AuctionItem) {
 			// What fits goes to the backpack; anything over carry capacity is
 			// mailed instead (StoreItem returns false when over ~2x capacity).
 			mailed := 0
-			for i := 0; i < count; i++ {
+			for range count {
 				if acquire.AcquireItem(winner, a.ItemData, acquire.AcquireAuction) {
 					continue
 				}
@@ -975,7 +960,7 @@ func (mod *AuctionsModule) resolveSeizedLot(a *AuctionItem) {
 		} else {
 			users.SearchOfflineUsers(func(u *users.UserRecord) bool {
 				if u.UserId == a.HighestBidUserId {
-					for i := 0; i < count; i++ {
+					for range count {
 						itemCopy := a.ItemData
 						u.Inbox.Add(users.Message{
 							FromName: `Auction System`,
@@ -993,10 +978,7 @@ func (mod *AuctionsModule) resolveSeizedLot(a *AuctionItem) {
 
 	// Lien settlement: surplus after commission + lien returns to the ex-owner.
 	afterCommission := a.HighestBid - commissionFor(a.HighestBid, auctionCommissionPct)
-	lien := a.OwedLien
-	if lien > afterCommission {
-		lien = afterCommission
-	}
+	lien := min(a.OwedLien, afterCommission)
 	surplus := afterCommission - lien
 	if surplus > 0 {
 		if seller := getUser(a.SellerUserId); seller != nil {

@@ -109,7 +109,7 @@ var (
 func GetAllMobCommands() []string {
 	result := []string{}
 
-	for cmd, _ := range mobCommands {
+	for cmd := range mobCommands {
 		result = append(result, cmd)
 	}
 

@@ -1,6 +1,7 @@
 package weather
 
 import (
+	"maps"
 	"os"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -150,9 +151,7 @@ func (m *weatherModule) tick(round uint64) {
 	// Snapshot the pre-step weather so we can detect severe-weather onsets
 	// (a zone transitioning INTO storm/blizzard/dust) after the step.
 	prev := make(map[sim.ZoneId]sim.WeatherType, len(m.state.Weather))
-	for z, w := range m.state.Weather {
-		prev[z] = w
-	}
+	maps.Copy(prev, m.state.Weather)
 	next, diff := sim.Step(m.state, m.graph, climate, m.simCfg, sim.Clock{Round: round})
 	m.state = next
 	_ = diff // per-zone changes are implied by the reconcile below

@@ -122,15 +122,15 @@ func movePlayerDestinations(t *testing.T, path string) []int {
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)
 	}
-	var doc interface{}
+	var doc any
 	if err := yaml.Unmarshal(data, &doc); err != nil {
 		t.Fatalf("parse %s: %v", path, err)
 	}
 	var out []int
-	var walk func(v interface{})
-	walk = func(v interface{}) {
+	var walk func(v any)
+	walk = func(v any) {
 		switch n := v.(type) {
-		case map[interface{}]interface{}:
+		case map[any]any:
 			if n["do"] == "move_player" {
 				if id, ok := n["room_id"].(int); ok {
 					out = append(out, id)
@@ -139,7 +139,7 @@ func movePlayerDestinations(t *testing.T, path string) []int {
 			for _, c := range n {
 				walk(c)
 			}
-		case []interface{}:
+		case []any:
 			for _, c := range n {
 				walk(c)
 			}

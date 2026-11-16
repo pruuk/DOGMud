@@ -421,7 +421,7 @@ func TestCheckConcentrationBreak_NoDamageInterrupt_NeverBreaks(t *testing.T) {
 	// should short-circuit before the roll is ever made.
 	ch.Stats.Willpower.ValueAdj = 1
 
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		broke := checkConcentrationBreak(ch, ch.HealthMax.Value*10)
 		assert.False(t, broke, "NoDamageInterrupt spell must never break from damage, even at massive damage%% and low willpower")
 	}
@@ -440,7 +440,7 @@ func TestCheckConcentrationBreak_NormalSpell_StillBreaks(t *testing.T) {
 	ch.Stats.Willpower.ValueAdj = 1
 
 	brokeAtLeastOnce := false
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		if checkConcentrationBreak(ch, ch.HealthMax.Value*10) {
 			brokeAtLeastOnce = true
 			break
@@ -457,7 +457,7 @@ func TestCheckConcentrationBreak_BelowThresholdNeverRolls(t *testing.T) {
 	ch := newCastingChar("mind-spike")
 	ch.HealthMax.Value = 1000
 	before := ch.GetSkillUseCount(string(skills.Spellcasting))
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		if checkConcentrationBreak(ch, 50) { // 5% of pool
 			t.Fatal("sub-threshold damage must never break concentration")
 		}
@@ -504,7 +504,7 @@ func TestCheckConcentrationBreak_ProgressionFiresOnEveryResolvedContest(t *testi
 	before := ch.GetSkillUseCount(string(skills.Spellcasting))
 	const contests = 2000
 	holds := 0
-	for i := 0; i < contests; i++ {
+	for range contests {
 		if !checkConcentrationBreak(ch, 30) { // 30% hit, difficulty 300
 			holds++
 		}
@@ -542,7 +542,7 @@ func TestProcessFoldRound_NoDamageInterrupt_SkipsPositionBreak(t *testing.T) {
 	})
 	defer cleanup()
 
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		ch := newProneCastingChar("core-discharge")
 		result := processFoldRound(ch)
 		assert.False(t, result.ProneBroke, "NoDamageInterrupt cast must not break from position disruption while Prone")
@@ -556,7 +556,7 @@ func TestProcessFoldRound_NormalSpell_PositionCanBreak(t *testing.T) {
 	defer cleanup()
 
 	brokeAtLeastOnce := false
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		ch := newProneCastingChar("sparks")
 		result := processFoldRound(ch)
 		if result.ProneBroke {
@@ -1007,10 +1007,7 @@ func TestDotProducerRecordsNegativeHarm_MobTarget(t *testing.T) {
 	// recomputed here rather than only bounded.
 	casterSkill := u.Character.GetSkillLevel(skills.Spellcasting)
 	casterWil := dotSpell.CasterStatValue(u.Character.Stats)
-	wantDuration := calcSpellDuration(dotSpell.BaseFolds, casterSkill, casterWil) / 3
-	if wantDuration < 3 {
-		wantDuration = 3
-	}
+	wantDuration := max(calcSpellDuration(dotSpell.BaseFolds, casterSkill, casterWil)/3, 3)
 
 	dmg := applySpellEffect(newSpellEffectCtx(u.Character, actions.NewUserActorInRoom(u, room), actions.NewMobActorInRoom(mob, room), room, dotSpell, 10, spellContestAttackWin()))
 	assert.Equal(t, 0, dmg, "the dot effect deals no immediate damage")
@@ -1048,10 +1045,7 @@ func TestDotProducerRecordsNegativeHarm_PlayerTarget(t *testing.T) {
 	if spell.HasSchool(spells.SchoolManifestation) {
 		castSkill = skills.Manifestation
 	}
-	wantDuration := calcSpellDuration(spell.BaseFolds, caster.Character.GetSkillLevel(castSkill), spell.CasterStatValue(caster.Character.Stats)) / 3
-	if wantDuration < 3 {
-		wantDuration = 3
-	}
+	wantDuration := max(calcSpellDuration(spell.BaseFolds, caster.Character.GetSkillLevel(castSkill), spell.CasterStatValue(caster.Character.Stats))/3, 3)
 
 	recs := target.Character.GetConditions(conditions.ConditionIdPoisoned)
 	require.Len(t, recs, 1)
@@ -3079,7 +3073,7 @@ func TestProcessFoldRound_PositionBreakStillAwards(t *testing.T) {
 
 	const rounds = 50
 	breaks := 0
-	for i := 0; i < rounds; i++ {
+	for range rounds {
 		if ch.Activity == nil || !ch.Activity.IsCasting() {
 			_ = ch.Activity.TransitionToCasting(
 				activity.CastingData{SpellId: "mind-spike"},

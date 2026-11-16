@@ -21,8 +21,7 @@ func TransferCargoToRunner(wagon, runner *mobs.Mob, outboundBuckets []string) in
 	}
 	moved := 0
 	// Iterate in reverse so RemoveItem is index-safe.
-	for i := len(wagon.Character.Items) - 1; i >= 0; i-- {
-		item := wagon.Character.Items[i]
+	for _, item := range slices.Backward(wagon.Character.Items) {
 		bucket := economy.BucketFor(item.ItemId)
 		if bucket == "" || !slices.Contains(outboundBuckets, bucket) {
 			continue
@@ -45,8 +44,7 @@ func TransferAllCargoBack(runner, wagon *mobs.Mob) int {
 		return 0
 	}
 	moved := 0
-	for i := len(runner.Character.Items) - 1; i >= 0; i-- {
-		item := runner.Character.Items[i]
+	for _, item := range slices.Backward(runner.Character.Items) {
 		if !wagon.Character.StoreItem(item) {
 			break // wagon at carry cap; stop transferring
 		}

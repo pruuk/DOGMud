@@ -7,6 +7,7 @@ package behaviortree
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -217,9 +218,9 @@ func findHeldItem(c *characters.Character, itemId int, itemUUID uuid.UUID) (item
 
 	if !itemUUID.IsNil() {
 		for _, list := range lists {
-			for j := len(list) - 1; j >= 0; j-- {
-				if list[j].UUID == itemUUID {
-					return list[j], true
+			for _, l := range slices.Backward(list) {
+				if l.UUID == itemUUID {
+					return l, true
 				}
 			}
 		}
@@ -227,9 +228,9 @@ func findHeldItem(c *characters.Character, itemId int, itemUUID uuid.UUID) (item
 	}
 
 	for _, list := range lists {
-		for j := len(list) - 1; j >= 0; j-- {
-			if list[j].ItemId == itemId {
-				return list[j], true
+		for _, l := range slices.Backward(list) {
+			if l.ItemId == itemId {
+				return l, true
 			}
 		}
 	}

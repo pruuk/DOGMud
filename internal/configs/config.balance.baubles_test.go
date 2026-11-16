@@ -155,7 +155,6 @@ func TestBaubleBrokenLadderResetsWhole(t *testing.T) {
 		"zero minimum":      {BaubleCheapMinValue: 0, BaubleCheapMaxValue: 6, BaubleAverageMinValue: 10, BaubleAverageMaxValue: 15, BaubleRareMinValue: 40, BaubleRareMaxValue: 200},
 	}
 	for name, b := range cases {
-		b := b
 		b.validateBaubles()
 		if b.BaubleCheapMaxValue != 6 || b.BaubleAverageMinValue != 10 || b.BaubleRareMaxValue != 200 {
 			t.Fatalf("%s: ladder not reset: %d-%d %d-%d %d-%d", name,

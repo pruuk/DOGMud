@@ -36,7 +36,7 @@ func renderMobEmoteLine(text string, width int) string {
 // takes: the count a reader should see when the line is wrapped once.
 func greedyLineCount(plain string, width int) int {
 	lines, col := 1, 0
-	for _, w := range strings.Fields(plain) {
+	for w := range strings.FieldsSeq(plain) {
 		n := len([]rune(w))
 		switch {
 		case col == 0:

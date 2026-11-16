@@ -200,10 +200,7 @@ func TestShadowsLine_FleeWarningsSayItCanBeBlocked(t *testing.T) {
 		if i < 0 {
 			t.Fatalf("%s: lost %q", c.file, c.near)
 		}
-		end := i + 400
-		if end > len(text) {
-			end = len(text)
-		}
+		end := min(i+400, len(text))
 		if !strings.Contains(strings.Join(strings.Fields(text[i:end]), " "), "block") {
 			t.Errorf("%s: the warning near %q must say a flee can be blocked", c.file, c.near)
 		}

@@ -32,8 +32,8 @@ func checkHiddenNounOn(roomId int, r *rooms.Room) []string {
 	parent := func(on string) (string, bool, string) {
 		for name, desc := range r.Nouns {
 			if strings.EqualFold(name, on) {
-				if strings.HasPrefix(desc, ":") {
-					return "", false, fmt.Sprintf("names the alias %q; use the noun it points at, %q", name, strings.TrimPrefix(desc, ":"))
+				if after, ok := strings.CutPrefix(desc, ":"); ok {
+					return "", false, fmt.Sprintf("names the alias %q; use the noun it points at, %q", name, after)
 				}
 				return "", true, ""
 			}

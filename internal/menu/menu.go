@@ -194,7 +194,7 @@ func wrap(text string, width int) []string {
 	var lines []string
 	var cur strings.Builder
 	curLen := 0 // runes in cur
-	for _, word := range strings.Fields(text) {
+	for word := range strings.FieldsSeq(text) {
 		wl := utf8.RuneCountInString(word)
 		if curLen > 0 && curLen+1+wl > width {
 			lines = append(lines, cur.String())

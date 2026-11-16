@@ -1,5 +1,7 @@
 package forager
 
+import "slices"
+
 import "testing"
 
 func TestForageCore_UnknownBiomeReturnsEmpty(t *testing.T) {
@@ -31,7 +33,7 @@ func TestForageCore_HighScoreFinds(t *testing.T) {
 
 func TestForageCore_LowScoreMisses(t *testing.T) {
 	// Score 1 vs any biome difficulty (110+) — should always miss.
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		r := ForageCore(ForageAttempt{Biome: "forest", SearchScore: 1})
 		if r.Found {
 			t.Errorf("expected miss at SearchScore=1, got Found=true ItemId=%d", r.ItemId)
@@ -42,12 +44,7 @@ func TestForageCore_LowScoreMisses(t *testing.T) {
 func TestForageYields_ForestHasCookingFlora(t *testing.T) {
 	forest := ForageYields["forest"]
 	has := func(id int) bool {
-		for _, x := range forest {
-			if x == id {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(forest, id)
 	}
 	if !has(40063) {
 		t.Error("forest forage should include shadowcap (40063)")
@@ -60,12 +57,7 @@ func TestForageYields_ForestHasCookingFlora(t *testing.T) {
 func TestForageYields_WaterHasRiverForageables(t *testing.T) {
 	water := ForageYields["water"]
 	has := func(id int) bool {
-		for _, x := range water {
-			if x == id {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(water, id)
 	}
 	if !has(40123) {
 		t.Error("water forage should include watercress (40123)")
@@ -77,12 +69,7 @@ func TestForageYields_WaterHasRiverForageables(t *testing.T) {
 
 func TestForageYields_FarmlandHasWheatCountryForageables(t *testing.T) {
 	has := func(list []int, id int) bool {
-		for _, x := range list {
-			if x == id {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(list, id)
 	}
 	farmland := ForageYields["farmland"]
 	if !has(farmland, 40150) {
@@ -102,7 +89,7 @@ func TestForageCore_NightYieldsAppendedForForestAtNight(t *testing.T) {
 	// We can't deterministically force a moonpetal, but we can confirm
 	// no out-of-table items appear and many runs eventually hit moonpetal.
 	moonpetalSeen := false
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		r := ForageCore(ForageAttempt{Biome: "forest", SearchScore: 1000, AtNight: true})
 		if !r.Found {
 			continue

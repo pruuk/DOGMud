@@ -21,8 +21,8 @@ var menuGuardPatterns = []*regexp.Regexp{
 func stripLineComments(src string) string {
 	lines := strings.Split(src, "\n")
 	for i, l := range lines {
-		if idx := strings.Index(l, "//"); idx >= 0 {
-			lines[i] = l[:idx]
+		if before, _, ok := strings.Cut(l, "//"); ok {
+			lines[i] = before
 		}
 	}
 	return strings.Join(lines, "\n")

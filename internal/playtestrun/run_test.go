@@ -210,8 +210,7 @@ func TestRun_ReadyPathLeaseAndJSON(t *testing.T) {
 	var stdout bytes.Buffer
 	dirty := true
 	done := make(chan error, 1)
-	pumpCtx, pumpCancel := context.WithCancel(context.Background())
-	defer pumpCancel()
+	pumpCtx := t.Context()
 	go func() {
 		done <- Run(context.Background(), RunParams{
 			Checkout:         checkout,
@@ -277,8 +276,7 @@ func TestRun_WallClockOverridePrecedence(t *testing.T) {
 	}}
 	dirty := false
 	done := make(chan error, 1)
-	pumpCtx, pumpCancel := context.WithCancel(context.Background())
-	defer pumpCancel()
+	pumpCtx := t.Context()
 	go func() {
 		done <- Run(context.Background(), RunParams{
 			Checkout:          checkout,
@@ -341,8 +339,7 @@ ephemeral:
 
 	// Jump past the 1m wall-clock; pump remaining After waiters.
 	clock.Advance(2 * time.Minute)
-	pumpCtx, pumpCancel := context.WithCancel(context.Background())
-	defer pumpCancel()
+	pumpCtx := t.Context()
 	pumpClock(t, pumpCtx, clock)
 	err := <-done
 	require.Error(t, err)
@@ -394,8 +391,7 @@ func TestRun_CancelInterruptedNonZero(t *testing.T) {
 	dirty := false
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
-	pumpCtx, pumpCancel := context.WithCancel(context.Background())
-	defer pumpCancel()
+	pumpCtx := t.Context()
 	go func() {
 		done <- Run(ctx, RunParams{
 			Checkout:         checkout,
@@ -446,8 +442,7 @@ func TestDriverContract_ReadyJSONFields(t *testing.T) {
 	var stdout bytes.Buffer
 	dirty := false
 	done := make(chan error, 1)
-	pumpCtx, pumpCancel := context.WithCancel(context.Background())
-	defer pumpCancel()
+	pumpCtx := t.Context()
 	go func() {
 		done <- Run(context.Background(), RunParams{
 			Checkout:         checkout,

@@ -532,7 +532,7 @@ func TestWearSlotChoice_GoldenRingsAndWrists(t *testing.T) {
 				layouts = append(layouts, string(w1)+string(w2))
 			}
 		}
-		for n := 0; n < extra; n++ {
+		for range extra {
 			var next []string
 			for _, l := range layouts {
 				next = append(next, l+"e", l+"w")

@@ -5,7 +5,7 @@ import (
 	"math"
 	"os"
 	"regexp"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -45,7 +45,7 @@ func GetColorPatternNames() []string {
 		ret = append(ret, name)
 	}
 
-	sort.Slice(ret, func(i, j int) bool { return ret[i] < ret[j] })
+	slices.Sort(ret)
 
 	return ret
 }
@@ -179,10 +179,7 @@ func ApplyColors(input string, patternValues []int, method ...ColorizeStyle) str
 	} else if method[0] == Stretch {
 		// Spread the whole pattern to fit the string
 		subCounter := 0
-		stretchAmount := int(math.Floor(float64(runewidth.StringWidth(input)) / float64(len(patternValues))))
-		if stretchAmount < 1 {
-			stretchAmount = 1
-		}
+		stretchAmount := max(int(math.Floor(float64(runewidth.StringWidth(input))/float64(len(patternValues)))), 1)
 		newString.WriteString(`<ansi>`)
 		for _, runeChar := range input {
 
@@ -216,7 +213,7 @@ func ApplyColors(input string, patternValues []int, method ...ColorizeStyle) str
 	finalString := newString.String()
 
 	for tmp, replacement := range preExistingTags {
-		finalString = strings.Replace(finalString, tmp, replacement, -1)
+		finalString = strings.ReplaceAll(finalString, tmp, replacement)
 	}
 
 	return finalString

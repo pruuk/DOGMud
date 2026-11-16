@@ -311,7 +311,7 @@ func TestFallbackMergesBiomeAndGroupThenTier(t *testing.T) {
 	withCorpus(t, testSeed, testSpoolOverlay)
 
 	seen := map[string]bool{}
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		drewFrom := 0
 		res := Fallback(Place{Biome: `interior`}, TierCheap, SourceSearch, nil, func(n int) int { drewFrom = n; return i % n })
 		if drewFrom != 3 {
@@ -356,7 +356,7 @@ func TestFallbackClampsTheValueIntoTheTier(t *testing.T) {
 // pocket (TooBigFor). Nothing that fits: a generic trinket.
 func TestFallbackPocketFindsFitAPocket(t *testing.T) {
 	withCorpus(t, testSeed, ``)
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		res := Fallback(Place{Biome: `interior`}, TierCheap, SourcePickpocket, nil, func(n int) int { return i % n })
 		if res.Reply.Name != `Brass Snuff Spoon` || res.Model != `corpus:pocket-cheap` {
 			t.Fatalf("the tankard is too heavy for a pocket; only the spoon: %+v", res)
@@ -375,7 +375,7 @@ func TestFallbackPocketFindsFitAPocket(t *testing.T) {
 // found lately, the least recent is taken; recency never widens the key.
 func TestFallbackAvoidsRecentNamesWithoutFallingThrough(t *testing.T) {
 	withCorpus(t, testSeed, ``)
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		res := Fallback(Place{Biome: `interior`}, TierCheap, SourceSearch, []string{`Bent Tin Thimble`}, func(n int) int { return i % n })
 		if res.Reply.Name != `Chipped Clay Marble` {
 			t.Fatalf("the only entry not found lately, got %q", res.Reply.Name)
@@ -550,7 +550,7 @@ entries:
 `
 	withCorpus(t, seed, overlay)
 	descs := map[string]string{}
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		drewFrom := 0
 		res := Fallback(Place{Biome: `interior`}, TierCheap, SourceSearch, nil, func(n int) int { drewFrom = n; return i % n })
 		if drewFrom != 2 {
@@ -584,7 +584,7 @@ entries:
 	}
 	drawn := map[string]bool{}
 	draw := func(biome string, source Source) {
-		for i := 0; i < 8; i++ {
+		for i := range 8 {
 			res := Fallback(Place{Biome: biome}, TierCheap, source, nil, func(n int) int { return i % n })
 			drawn[strings.TrimPrefix(res.Model, `corpus:`)] = true
 		}

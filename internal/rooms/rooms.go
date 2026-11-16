@@ -3,6 +3,7 @@ package rooms
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -225,8 +226,8 @@ func (r *Room) UpdateCorpses(roundNow uint64) {
 		r.Corpses[idx] = corpse
 	}
 
-	for i := len(removeIdx) - 1; i >= 0; i-- {
-		r.Corpses = append(r.Corpses[:removeIdx[i]], r.Corpses[removeIdx[i]+1:]...)
+	for _, r0 := range slices.Backward(removeIdx) {
+		r.Corpses = append(r.Corpses[:r0], r.Corpses[r0+1:]...)
 	}
 }
 
@@ -631,12 +632,7 @@ func (r *Room) SendTextVisualToUser(u *users.UserRecord, cat messaging.Category,
 
 // excluded is a tiny helper for the shared exclusion check.
 func excluded(uid int, excludeIds []int) bool {
-	for _, eid := range excludeIds {
-		if uid == eid {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(excludeIds, uid)
 }
 
 func (r *Room) PlaySound(soundId string, category string, excludeUserIds ...int) {
@@ -655,11 +651,8 @@ func (r *Room) PlaySound(soundId string, category string, excludeUserIds ...int)
 
 		exLen := len(excludeUserIds)
 		if exLen > 0 {
-			for _, excludeId := range excludeUserIds {
-				if excludeId == userId {
-					skip = true
-					break
-				}
+			if slices.Contains(excludeUserIds, userId) {
+				skip = true
 			}
 		}
 
@@ -1011,10 +1004,8 @@ func listMobInRoom(target *Room, mobInstanceId int) {
 	if target == nil {
 		return
 	}
-	for _, id := range target.mobs {
-		if id == mobInstanceId {
-			return
-		}
+	if slices.Contains(target.mobs, mobInstanceId) {
+		return
 	}
 	target.mobs = append(target.mobs, mobInstanceId)
 	roomManager.roomsWithMobs[target.RoomId] = len(target.mobs)
@@ -1109,13 +1100,7 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 				// reflects that. If she's away (scheduled and en-route),
 				// her current room already lists her — don't dual-list.
 				if existing.Character.RoomId == r.RoomId {
-					alreadyListed := false
-					for _, id := range r.mobs {
-						if id == existing.InstanceId {
-							alreadyListed = true
-							break
-						}
-					}
+					alreadyListed := slices.Contains(r.mobs, existing.InstanceId)
 					if !alreadyListed {
 						r.mobs = append(r.mobs, existing.InstanceId)
 					}
@@ -1126,10 +1111,7 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 			forceStatPool := 0
 
 			if spawnInfo.StatPool > 0 {
-				forceStatPool = spawnInfo.StatPool + spawnInfo.StatPoolMod
-				if forceStatPool < 1 {
-					forceStatPool = 1
-				}
+				forceStatPool = max(spawnInfo.StatPool+spawnInfo.StatPoolMod, 1)
 			}
 
 			if mob := mobs.NewMobById(mobs.MobId(spawnInfo.MobId), r.RoomId, forceStatPool); mob != nil {
@@ -1412,7 +1394,7 @@ func (r *Room) RemoveMob(mobInstanceId int) {
 	r.MarkVisited(mobInstanceId, VisitorMob, 1)
 
 	mobLen := len(r.mobs)
-	for i := 0; i < mobLen; i++ {
+	for i := range mobLen {
 		if r.mobs[i] == mobInstanceId {
 			r.mobs = append(r.mobs[:i], r.mobs[i+1:]...)
 			break
@@ -1509,10 +1491,8 @@ func (r *Room) MarkExitTrapDefused(exitName string) {
 	exitInfo.Lock.TrapConditionIds = nil
 	r.Exits[exitName] = exitInfo
 
-	for _, existing := range r.DefusedExits {
-		if existing == exitName {
-			return
-		}
+	if slices.Contains(r.DefusedExits, exitName) {
+		return
 	}
 	r.DefusedExits = append(r.DefusedExits, exitName)
 }
@@ -1672,8 +1652,8 @@ func (r *Room) FindCorpseIndex(searchName string, viewer *characters.Character) 
 	if viewer != nil && messaging.ParticipantSight(viewer, r) != messaging.SightFull {
 		candidates := []string{}
 		indexes := []int{}
-		for idx := len(r.Corpses) - 1; idx >= 0; idx-- {
-			if r.Corpses[idx].Prunable {
+		for idx, v := range slices.Backward(r.Corpses) {
+			if v.Prunable {
 				continue
 			}
 			candidates = append(candidates, `corpse`)
@@ -1698,8 +1678,7 @@ func (r *Room) FindCorpseIndex(searchName string, viewer *characters.Character) 
 	// Iterate newest-first (corpses are appended on death) so a same-name
 	// lookup keeps the most recent corpse and the generic-match candidate list
 	// is newest-first — `look/loot corpse` inspects the last thing that died.
-	for idx := len(r.Corpses) - 1; idx >= 0; idx-- {
-		c := r.Corpses[idx]
+	for idx, c := range slices.Backward(r.Corpses) {
 
 		if c.Prunable {
 			continue
@@ -2076,7 +2055,7 @@ func (r *Room) GetDescriptionFormatted(lineSplit int, highlightNouns bool) strin
 	desc := util.SplitStringNL(r.GetDescription(), lineSplit)
 
 	if highlightNouns {
-		for noun, _ := range r.Nouns {
+		for noun := range r.Nouns {
 			desc = strings.ReplaceAll(desc, noun, fmt.Sprintf(`<ansi fg="noun">%s</ansi>`, noun))
 		}
 	}
@@ -2425,7 +2404,7 @@ func (r *Room) FindContainerByName(containerNameSearch string) string {
 	}
 
 	containerNames := []string{}
-	for containerName, _ := range r.Containers {
+	for containerName := range r.Containers {
 		containerNames = append(containerNames, containerName)
 	}
 
@@ -2553,7 +2532,7 @@ func findNounIn(nouns map[string]string, noun string) (foundNoun string, nounDes
 	for originalNoun, originalDesc := range nouns {
 		roomNouns[originalNoun] = originalDesc
 		if strings.Contains(originalNoun, " ") {
-			for _, part := range strings.Split(originalNoun, " ") {
+			for part := range strings.SplitSeq(originalNoun, " ") {
 				if _, exists := nouns[part]; exists {
 					continue
 				}
@@ -2569,7 +2548,7 @@ func findNounIn(nouns map[string]string, noun string) (foundNoun string, nounDes
 	testNouns := util.SplitButRespectQuotes(noun)
 	for i := 0; i < len(testNouns); i++ {
 		if strings.Contains(testNouns[i], " ") {
-			for _, part := range strings.Split(testNouns[i], " ") {
+			for part := range strings.SplitSeq(testNouns[i], " ") {
 				testNouns = append(testNouns, strings.ToLower(strings.TrimSpace(part)))
 			}
 		}
@@ -2673,11 +2652,11 @@ func (r *Room) NounNamedBy(phrase string) string {
 		if name != key && desc != ":"+key {
 			continue
 		}
-		for _, w := range strings.Fields(util.NounHyphenFold(strings.ToLower(name))) {
+		for w := range strings.FieldsSeq(util.NounHyphenFold(strings.ToLower(name))) {
 			words[w] = true
 		}
 	}
-	for _, w := range strings.Fields(phrase) {
+	for w := range strings.FieldsSeq(phrase) {
 		if words[w] {
 			continue
 		}
@@ -2721,11 +2700,11 @@ func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomI
 
 	// Build list of all exits for fuzzy matching
 	exitNames := []string{}
-	for exitName, _ := range r.Exits {
+	for exitName := range r.Exits {
 		exitNames = append(exitNames, exitName)
 	}
 
-	for exitName, _ := range r.ExitsTemp {
+	for exitName := range r.ExitsTemp {
 		exitNames = append(exitNames, exitName)
 	}
 
@@ -2836,7 +2815,7 @@ func (r *Room) PruneVisitors() int {
 
 	pruneCt := 0
 
-	for vType, _ := range r.visitors {
+	for vType := range r.visitors {
 
 		for id, expires := range r.visitors[vType] {
 			// Check whether expires is older than now
@@ -3027,10 +3006,8 @@ func (r *Room) RoundTick() {
 
 func (r *Room) AddPlayer(userId int) int {
 
-	for _, v := range r.players {
-		if v == userId {
-			return len(r.players)
-		}
+	if slices.Contains(r.players, userId) {
+		return len(r.players)
 	}
 
 	r.players = append(r.players, userId)

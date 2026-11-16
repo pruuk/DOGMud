@@ -31,13 +31,13 @@ func resetRegistryForTest(t *testing.T) {
 
 func TestRegister_DispatchInvokesRuleForMatchingType(t *testing.T) {
 	resetRegistryForTest(t)
-	var called int32
+	var called atomic.Int32
 	Register("test-rule", func(events.Event) {
-		atomic.AddInt32(&called, 1)
+		called.Add(1)
 	}, "test-type-A")
 
 	Dispatch(fakeEvent{typeName: "test-type-A"})
-	if atomic.LoadInt32(&called) != 1 {
+	if called.Load() != 1 {
 		t.Errorf("rule not invoked on matching event")
 	}
 }
@@ -80,17 +80,17 @@ func TestDispatch_MultipleRulesForSameType_AllFire(t *testing.T) {
 
 func TestDispatch_PanicInOneRule_OthersStillFire(t *testing.T) {
 	resetRegistryForTest(t)
-	var calledAfter int32
+	var calledAfter atomic.Int32
 	Register("rule-panic", func(events.Event) {
 		panic("boom")
 	}, "shared-type")
 	Register("rule-after", func(events.Event) {
-		atomic.AddInt32(&calledAfter, 1)
+		calledAfter.Add(1)
 	}, "shared-type")
 
 	// Must not panic.
 	Dispatch(fakeEvent{typeName: "shared-type"})
-	if atomic.LoadInt32(&calledAfter) != 1 {
+	if calledAfter.Load() != 1 {
 		t.Errorf("rule-after should have fired despite rule-panic")
 	}
 }

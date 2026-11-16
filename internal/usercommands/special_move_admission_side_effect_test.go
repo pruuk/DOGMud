@@ -81,7 +81,7 @@ func stagedBaseActor(t *testing.T, staged actions.Actor) actions.Actor {
 	require.Equal(t, reflect.Pointer, value.Kind())
 	field := value.Elem().FieldByName("Actor")
 	require.True(t, field.IsValid())
-	base, ok := field.Interface().(actions.Actor)
+	base, ok := reflect.TypeAssert[actions.Actor](field)
 	require.True(t, ok)
 	return base
 }

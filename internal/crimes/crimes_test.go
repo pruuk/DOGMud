@@ -56,7 +56,7 @@ func TestRecordMonotonicIds(t *testing.T) {
 	setupTestCrimes(t)
 
 	victim := &mobs.Mob{MobId: 100}
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpPlayer, Id: 17},
 			victim, 250, 467, "z", false)
 	}
@@ -556,16 +556,14 @@ func TestParallelRecordsConverge(t *testing.T) {
 	const recordsPer = 50
 
 	var wg sync.WaitGroup
-	for i := 0; i < goroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < recordsPer; j++ {
+	for range goroutines {
+		wg.Go(func() {
+			for range recordsPer {
 				Record([]string{"f"}, KindAssault,
 					Perpetrator{Type: PerpPlayer, Id: 17},
 					victim, 250, 467, "z", false)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 

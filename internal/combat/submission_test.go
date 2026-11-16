@@ -113,7 +113,7 @@ func TestRollSubmissionAttempt_StunCritTracksTheMatchup(t *testing.T) {
 
 	t.Run("dominant attempter stun-crits far above the legacy ~2%", func(t *testing.T) {
 		crits := 0
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			atk := newCharFor(t, 1000, 100, 50)
 			def := newCharFor(t, 10, 10, 1)
 			if combat.RollSubmissionAttempt(atk, def, position.SubArmbar, nil).Tier == combat.SubTierCrit {
@@ -126,7 +126,7 @@ func TestRollSubmissionAttempt_StunCritTracksTheMatchup(t *testing.T) {
 
 	t.Run("hopeless attempter essentially never stun-crits", func(t *testing.T) {
 		crits := 0
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			atk := newCharFor(t, 10, 10, 1)
 			def := newCharFor(t, 1000, 100, 50)
 			if combat.RollSubmissionAttempt(atk, def, position.SubArmbar, nil).Tier == combat.SubTierCrit {

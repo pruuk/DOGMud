@@ -15,13 +15,13 @@ func TestCraftMaterialsSaved_Bounds(t *testing.T) {
 	defer cleanup()
 
 	c := New()
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		if c.CraftMaterialsSaved() {
 			t.Fatal("no mutation should never save materials")
 		}
 	}
 	c.Mutations = map[string]int{"thrifty-full": 1}
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		if !c.CraftMaterialsSaved() {
 			t.Fatal("100% discount should always save materials")
 		}

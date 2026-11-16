@@ -309,7 +309,7 @@ func TestBattleLinesRespectMute(t *testing.T) {
 	pool := []string{`"For the road!"`, `bares her teeth.`}
 	spoke := func() int {
 		n := 0
-		for i := 0; i < 60; i++ {
+		for i := range 60 {
 			if m.combatLine(c, her, uint64(i*10), pool) {
 				n++
 			}

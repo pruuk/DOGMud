@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 
@@ -146,10 +147,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 				description = append(description, strings.Repeat(` `, desclineWidth))
 			}
 
-			padWidth := desclineWidth - util.VisibleWidth(description[i])
-			if padWidth < 0 {
-				padWidth = 0
-			}
+			padWidth := max(desclineWidth-util.VisibleWidth(description[i]), 0)
 			description[i] += strings.Repeat(` `, padWidth) + tinymap[0][i]
 		}
 
@@ -362,9 +360,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		details.VisibleMobs = []string{}
 	}
 
-	for exitStr, exitInfo := range r.ExitsTemp {
-		details.TemporaryExits[exitStr] = exitInfo
-	}
+	maps.Copy(details.TemporaryExits, r.ExitsTemp)
 
 	// Do this twice to ensure secrets are last
 
@@ -438,9 +434,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	// assign mutator exits last so that they can overwrite normal exits
 	for mut := range r.ActiveMutators {
 		spec := mut.GetSpec()
-		for exitName, exitInfo := range spec.Exits {
-			details.VisibleExits[exitName] = exitInfo
-		}
+		maps.Copy(details.VisibleExits, spec.Exits)
 	}
 
 	if searchMobName := user.Character.GetMiscData(`tracking-mob`); searchMobName != nil {
@@ -467,7 +461,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 				allNames := []string{}
 
-				for mobInstId, _ := range r.Visitors(VisitorMob) {
+				for mobInstId := range r.Visitors(VisitorMob) {
 					if mob := mobs.GetInstance(mobInstId); mob != nil {
 						allNames = append(allNames, mob.Character.Name)
 					}
@@ -541,7 +535,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 				allNames := []string{}
 
-				for userId, _ := range r.Visitors(VisitorUser) {
+				for userId := range r.Visitors(VisitorUser) {
 					if u := users.GetByUserId(userId); u != nil {
 						allNames = append(allNames, u.Character.Name)
 					}

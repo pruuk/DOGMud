@@ -1,6 +1,8 @@
 package itemvalue
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/species"
 )
@@ -26,10 +28,8 @@ func CanEquipFromGive(character *characters.Character, behaviorArchetype string)
 
 	// Animal-species gate: species with Weapon slot disabled.
 	if speciesInfo := species.GetSpecies(character.SpeciesId); speciesInfo != nil {
-		for _, slot := range speciesInfo.DisabledSlots {
-			if slot == "Weapon" {
-				return false
-			}
+		if slices.Contains(speciesInfo.DisabledSlots, "Weapon") {
+			return false
 		}
 	}
 

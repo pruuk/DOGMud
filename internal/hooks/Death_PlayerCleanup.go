@@ -206,10 +206,7 @@ func applyPlayerSkillRust(u *users.UserRecord, config configs.GamePlay) {
 
 	for _, skillName := range eligible[:rustCount] {
 		oldRank := u.Character.Skills[skillName]
-		newRank := oldRank - rustAmount
-		if newRank < floor {
-			newRank = floor
-		}
+		newRank := max(oldRank-rustAmount, floor)
 		if newRank == oldRank {
 			continue
 		}

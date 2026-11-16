@@ -453,7 +453,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			renderNouns := true
 
 			if renderNouns && len(room.Nouns) > 0 {
-				for noun, _ := range room.Nouns {
+				for noun := range room.Nouns {
 					foundDesc = strings.Replace(foundDesc, noun, `<ansi fg="noun">`+noun+`</ansi>`, 1)
 				}
 			}

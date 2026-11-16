@@ -107,7 +107,7 @@ func couleeDashFiles(t *testing.T, world string) (quests, dialogue, pairs []stri
 		t.Fatal(err)
 	}
 	for _, p := range ps {
-		for _, part := range strings.Split(strings.TrimSuffix(filepath.Base(p), ".yaml"), "_") {
+		for part := range strings.SplitSeq(strings.TrimSuffix(filepath.Base(p), ".yaml"), "_") {
 			if id, err := strconv.Atoi(part); err == nil && couleeDashNPC(id) {
 				pairs = append(pairs, p)
 				break

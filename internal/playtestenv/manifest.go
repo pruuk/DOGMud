@@ -173,7 +173,7 @@ func reserveRunWithDeps(
 
 	const maxAttempts = 100
 	var lastErr error
-	for attempt := 0; attempt < maxAttempts; attempt++ {
+	for range maxAttempts {
 		id, err := genID()
 		if err != nil {
 			return nil, fmt.Errorf("playtestenv: generate run id: %w", err)

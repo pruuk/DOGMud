@@ -47,7 +47,7 @@ func TestAutoSaveDrain_ReportsNoOutcomeUntilTheLastWriteLands(t *testing.T) {
 	// cycle. The shipped budget is 3; ten guarantees several partial drains
 	// regardless of how that default is retuned later.
 	pending := make([]savequeue.PendingWrite, 0, 10)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		pending = append(pending, savequeue.PendingWrite{
 			Kind:    "room",
 			Id:      i,

@@ -66,7 +66,7 @@ func TestNearestIn_MatchesFindPathDistance(t *testing.T) {
 func TestNearestIn_TiesResolveTheSameWay(t *testing.T) {
 	m := buildGridMapper()
 	// 2 and 4 are both one step from 1; exits are taken in name order, east before south.
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if pin, _, exit, _ := m.nearestIn(1, inSet(2, 4), nil); pin != 2 || exit != "east" {
 			t.Fatalf("tie went to %d via %q", pin, exit)
 		}
@@ -185,7 +185,7 @@ func TestNearestIn_CostDoesNotGrowOutsideTheZone(t *testing.T) {
 	handBuilt := func(outside int) int {
 		m := zonedGrid()
 		prev := 3
-		for i := 0; i < outside; i++ {
+		for i := range outside {
 			id := 100 + i
 			m.crawledRooms[id] = &mapNode{RoomId: id, Zone: "zb", Exits: map[string]nodeExit{
 				"west": {RoomId: prev, ToZone: "za"}}}
@@ -205,7 +205,7 @@ func TestNearestIn_CostDoesNotGrowOutsideTheZone(t *testing.T) {
 			{id: 9701, x: 0, zone: "zd_a", exits: map[string]int{"east": 9702}},
 			{id: 9702, x: 1, zone: "zd_a", exits: map[string]int{"west": 9701, "east": 9710}},
 		}
-		for i := 0; i < outside; i++ {
+		for i := range outside {
 			id := 9710 + i
 			exits := map[string]int{"west": id - 1}
 			if i == 0 {
@@ -237,7 +237,7 @@ func borderPairWorld(t *testing.T) {
 	t.Helper()
 	isolateMapperCaches(t)
 	var rs []fixtureRoom
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		for _, row := range []struct {
 			base, y int
 			zone    string

@@ -154,10 +154,7 @@ func ExecuteDrain(actor Actor) DrainResult {
 	// the target for partial damage still feeds the attacker.
 	healed := 0
 	if result.Damage > 0 {
-		healAmt := int(float64(result.Damage) * float64(cfg.DrainHealRatio))
-		if healAmt < 1 {
-			healAmt = 1
-		}
+		healAmt := max(int(float64(result.Damage)*float64(cfg.DrainHealRatio)), 1)
 		healed = char.ApplyRestore(characters.PoolHealth, healAmt)
 	}
 
@@ -318,10 +315,7 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 		// rule, so a defended drain that still clips a player still feeds the
 		// aggregate heal.
 		if moveResult.Damage > 0 {
-			healAmt := int(float64(moveResult.Damage) * float64(cfg.DrainHealRatio))
-			if healAmt < 1 {
-				healAmt = 1
-			}
+			healAmt := max(int(float64(moveResult.Damage)*float64(cfg.DrainHealRatio)), 1)
 			totalHeal += healAmt
 			result.TotalDamage += moveResult.Damage
 		}

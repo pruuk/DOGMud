@@ -56,7 +56,7 @@ func TestPocketDummyMocksACaughtPlant(t *testing.T) {
 			loadCouleeTree(t, 9127, "9127-pocket_dummy.yaml")
 			DrainAllDelayedActionsForTest(t)
 			state := NewBehaviorState()
-			for i := 0; i < 60; i++ {
+			for range 60 {
 				GetEngine().EvaluateEvent(9127, 9127, EventContext{EventType: "caught_planting", UserId: 8603}, state)
 			}
 			DrainAllDelayedActionsForTest(t)
@@ -87,7 +87,7 @@ func TestMineCreaturesMockAFoiledAmbush(t *testing.T) {
 			loadCouleeTree(t, tc.mobId, tc.file)
 			DrainAllDelayedActionsForTest(t)
 			state := NewBehaviorState()
-			for i := 0; i < 60; i++ {
+			for range 60 {
 				GetEngine().EvaluateEvent(tc.mobId, tc.mobId, EventContext{EventType: "ambush_foiled", UserId: 8604}, state)
 			}
 			DrainAllDelayedActionsForTest(t)

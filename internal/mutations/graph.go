@@ -91,10 +91,7 @@ func OwnedGravity(owned map[string]int) map[string]float64 {
 // PrereqsMet reports whether owned satisfies every prerequisite of spec.
 func PrereqsMet(owned map[string]int, spec *MutationSpec) bool {
 	for _, p := range spec.Prerequisites {
-		min := p.MinLevel
-		if min < 1 {
-			min = 1
-		}
+		min := max(p.MinLevel, 1)
 		if owned[p.Id] < min {
 			return false
 		}

@@ -2,7 +2,9 @@ package spells
 
 import (
 	"fmt"
+	"maps"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -220,9 +222,7 @@ func ResolveSpellGreedy(rest string) (spellInfo *SpellData, extra string) {
 
 func GetAllSpells() map[string]*SpellData {
 	retSpellBook := make(map[string]*SpellData)
-	for k, v := range allSpells {
-		retSpellBook[k] = v
-	}
+	maps.Copy(retSpellBook, allSpells)
 	return retSpellBook
 }
 
@@ -337,12 +337,7 @@ func (s *SpellData) GetDifficulty() int {
 
 // HasSchool returns true if the spell belongs to the given school.
 func (s *SpellData) HasSchool(school string) bool {
-	for _, sc := range s.Schools {
-		if sc == school {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.Schools, school)
 }
 
 // GetSchoolsString returns a comma-separated string of spell schools
@@ -453,13 +448,7 @@ func eligibleSpells(spellBook map[string]int, skillLevel int, allowMobOnly bool,
 		}
 		// School filtering.
 		if len(schools) > 0 {
-			matched := false
-			for _, school := range schools {
-				if sp.HasSchool(school) {
-					matched = true
-					break
-				}
-			}
+			matched := slices.ContainsFunc(schools, sp.HasSchool)
 			if !matched {
 				continue
 			}

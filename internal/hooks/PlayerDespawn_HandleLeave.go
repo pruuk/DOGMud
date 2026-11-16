@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"maps"
 	"strconv"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -92,9 +93,7 @@ func copyIntMap(src map[string]int) map[string]int {
 		return nil
 	}
 	dst := make(map[string]int, len(src))
-	for k, v := range src {
-		dst[k] = v
-	}
+	maps.Copy(dst, src)
 	return dst
 }
 

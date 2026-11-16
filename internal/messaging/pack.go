@@ -86,7 +86,7 @@ func pack(units []string, first, rest, width int, pullLeft bool, isName func(str
 		if !empty {
 			newLine()
 		}
-		for _, part := range strings.Split(WrapAnsi(unit, width-rest), "\n") {
+		for part := range strings.SplitSeq(WrapAnsi(unit, width-rest), "\n") {
 			pw := util.VisibleWidth(part)
 			switch {
 			case pw <= width-rest:

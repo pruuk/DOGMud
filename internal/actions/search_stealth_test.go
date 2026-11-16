@@ -44,7 +44,7 @@ func hiddenMobRoom(t *testing.T, roomId, instId, sneakRank int) *rooms.Room {
 func spotRate(t *testing.T, perception, sneakRank, trials int) float64 {
 	t.Helper()
 	found := 0
-	for i := 0; i < trials; i++ {
+	for i := range trials {
 		room := hiddenMobRoom(t, 9500+i, 8500+i, sneakRank)
 		actor := newSearchFakeActor("StealthSearcher", room, false, 0)
 		actor.char.Stats.Perception.ValueAdj = perception

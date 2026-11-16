@@ -92,10 +92,7 @@ func rollSpellDamage(spellData *spells.SpellData, caster *characters.Character, 
 	// Legacy fallback: magnitude-based damage (no mitigation, no stat scaling)
 	mudlog.Warn("calcSpellDamageForCharacter", "spell", spellData.SpellId, "msg", "using legacy magnitude path — add damage_multiplier to spell YAML")
 	dmgRoll := dice.RollStat(float64(magnitude))
-	dmg := int(math.Round(dmgRoll.Value))
-	if dmg < 1 {
-		dmg = 1
-	}
+	dmg := max(int(math.Round(dmgRoll.Value)), 1)
 	if isCrit {
 		dmg += magnitude
 	}
@@ -304,10 +301,7 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 		dmgMean := combat.ApplyMitigation(raw, attacker.GetPhysicalMitigation(),
 			combat.MitigationCurveFor(combat.ChannelPhysical))
 		roll := dice.RollStat(dmgMean)
-		dmg := int(roll.Value)
-		if dmg < 1 {
-			dmg = 1
-		}
+		dmg := max(int(roll.Value), 1)
 
 		// Reassigned from the APPLIED return so result.RiposteDamage and the
 		// damage description below cannot drift from what the pool actually
@@ -497,10 +491,7 @@ func calcFoldConvictionCost(cs activity.CastingData, foldDelta int) int {
 	if cs.TotalConvictionCost <= 0 || cs.FoldsNeeded <= 0 || foldDelta <= 0 {
 		return 0
 	}
-	roundCost := (cs.TotalConvictionCost * foldDelta) / cs.FoldsNeeded
-	if roundCost < 1 {
-		roundCost = 1
-	}
+	roundCost := max((cs.TotalConvictionCost*foldDelta)/cs.FoldsNeeded, 1)
 	return roundCost
 }
 

@@ -224,16 +224,10 @@ func applySpellShield(c spellEffectCtx) int {
 	}
 	stat, skill := spellCasterStatAndSkill(c.spell, c.casterChar)
 	weightedSkill := int(math.Round(configs.WeightedSkill(float64(skill))))
-	shieldBonus := (stat + weightedSkill) / 3
-	if shieldBonus < 1 {
-		shieldBonus = 1
-	}
+	shieldBonus := max((stat+weightedSkill)/3, 1)
 	// Scale shield strength by spell magnitude (100 = 1.0x baseline).
 	if c.magnitude > 0 {
-		shieldBonus = int(math.Round(float64(shieldBonus) * float64(c.magnitude) / 100.0))
-		if shieldBonus < 1 {
-			shieldBonus = 1
-		}
+		shieldBonus = max(int(math.Round(float64(shieldBonus)*float64(c.magnitude)/100.0)), 1)
 	}
 	duration := calcSpellDuration(c.spell.BaseFolds, skill, stat)
 	casterName, targetName := c.casterName(), c.targetName()

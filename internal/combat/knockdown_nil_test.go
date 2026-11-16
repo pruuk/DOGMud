@@ -47,7 +47,7 @@ func TestExecuteSkillMove_NilDefenderPosition(t *testing.T) {
 	// trigger is a nil FSM, however the character got that way.
 	pinContestFloorOff(t)
 	require.NotPanics(t, func() {
-		for i := 0; i < 200; i++ {
+		for range 200 {
 			def := characters.New()
 			def.Name = "Def"
 			def.Position = nil // intentionally nil — the guard under test

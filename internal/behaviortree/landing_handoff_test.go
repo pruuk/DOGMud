@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"maps"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -160,9 +161,7 @@ func TestLandingLinesNameTheMarkOnScreen(t *testing.T) {
 			set := func() {
 				*said = (*said)[:0]
 				u.Character.QuestProgress = map[int]string{}
-				for k, v := range c.progress {
-					u.Character.QuestProgress[k] = v
-				}
+				maps.Copy(u.Character.QuestProgress, c.progress)
 			}
 			check := func(when string) {
 				t.Helper()
@@ -184,7 +183,7 @@ func TestLandingLinesNameTheMarkOnScreen(t *testing.T) {
 
 			// room_idle has no player. The counter speaks on the seventh round.
 			set()
-			for i := 0; i < 8; i++ {
+			for range 8 {
 				TryRoomBehavior(room.RoomId, EventContext{EventType: "room_idle", RoomId: room.RoomId})
 			}
 			check("re-prompting")

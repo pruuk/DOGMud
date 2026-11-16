@@ -29,7 +29,7 @@ func TestShouldDrop_ZeroDefaultMeansNever(t *testing.T) {
 	for _, c := range cases {
 		it := Item{ItemId: 1, DropChance: c.own}
 		drops := 0
-		for i := 0; i < rolls; i++ {
+		for range rolls {
 			if it.ShouldDrop(c.dflt) {
 				drops++
 			}

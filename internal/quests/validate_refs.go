@@ -9,6 +9,7 @@ package quests
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -95,10 +96,8 @@ func (c *refsCtx) checkFlag(where, key, value string) {
 		if value == "" {
 			return
 		}
-		for _, v := range allowed {
-			if v == value {
-				return
-			}
+		if slices.Contains(allowed, value) {
+			return
 		}
 		c.errf("%s: flag %q has invalid value %q (allowed: %v)", where, key, value, allowed)
 		return
@@ -163,7 +162,7 @@ func (c *refsCtx) checkPairList(where, list, kind string, exists func(string) bo
 	if list == "" {
 		return
 	}
-	for _, part := range strings.Split(list, ",") {
+	for part := range strings.SplitSeq(list, ",") {
 		name := strings.TrimSpace(strings.SplitN(part, ":", 2)[0])
 		if name != "" && !exists(name) {
 			c.errf("%s: %s %q does not exist", where, kind, name)
@@ -397,12 +396,12 @@ func ValidateQuestRefs(q Quest, v QuestValidators) (errs []string, warns []strin
 	}
 	c.checkPairList("rewards skillinfo", q.Rewards.SkillInfo, "skill", c.v.SkillExists)
 	c.checkPairList("rewards stat_info", q.Rewards.StatInfo, "stat", c.v.StatExists)
-	for _, part := range strings.Split(q.Rewards.RecipeInfo, ",") {
+	for part := range strings.SplitSeq(q.Rewards.RecipeInfo, ",") {
 		if r := strings.TrimSpace(part); r != "" && !c.v.RecipeExists(r) {
 			c.errf("rewards recipe_info: recipe %q does not exist", r)
 		}
 	}
-	for _, part := range strings.Split(q.Rewards.ItemInfo, ",") {
+	for part := range strings.SplitSeq(q.Rewards.ItemInfo, ",") {
 		p := strings.TrimSpace(strings.SplitN(part, ":", 2)[0])
 		if p == "" {
 			continue

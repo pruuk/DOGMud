@@ -64,7 +64,7 @@ func TestAwardResolved_FiresOnceForTheBestOfWinner(t *testing.T) {
 
 	// 1. A win advances the skill. Exact: every one of them, or the path is dead.
 	winAdvanced := 0
-	for i := 0; i < trials; i++ {
+	for range trials {
 		c := newProgressionTestCharacter(t)
 		before := c.Skills[winner]
 		c.AwardResolved(0, true, progression.Candidate{Skill: winner, Roll: 100, Level: before})
@@ -79,7 +79,7 @@ func TestAwardResolved_FiresOnceForTheBestOfWinner(t *testing.T) {
 	// 2. A loss advances STRICTLY LESS. The non-zero guard above is what stops
 	// an implementation that advances nothing at all from passing this half.
 	lossAdvanced := 0
-	for i := 0; i < trials; i++ {
+	for range trials {
 		c := newProgressionTestCharacter(t)
 		before := c.Skills[winner]
 		c.AwardResolved(0, false, progression.Candidate{Skill: winner, Roll: 100, Level: before})
@@ -278,7 +278,7 @@ func TestAwardResolvedScaled_BonusAppliesOnAWinNotJustALoss(t *testing.T) {
 	// reaching the losing side, this would advance regardless.
 	zero := newProgressionTestCharacter(t)
 	beforeZero := zero.Skills[skill]
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		zero.AwardResolvedScaled(0, true, 0.0, zero.CandidateFor(skill))
 	}
 	if got := zero.Skills[skill] - beforeZero; got != 0 {
@@ -305,7 +305,7 @@ func TestAwardResolved_DelegatesToScaledAtBonusOne(t *testing.T) {
 	pinCertainStatProgressionForTest(t)
 
 	const skill = "weapon-combat"
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		plain := newProgressionTestCharacter(t)
 		scaled := newProgressionTestCharacter(t)
 

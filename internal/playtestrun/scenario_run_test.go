@@ -120,8 +120,7 @@ func TestRunScenario_ReadyJSONActorsAndBlackboard(t *testing.T) {
 	var stdout bytes.Buffer
 	dirty := true
 	done := make(chan error, 1)
-	pumpCtx, pumpCancel := context.WithCancel(context.Background())
-	defer pumpCancel()
+	pumpCtx := t.Context()
 	go func() {
 		done <- RunScenario(context.Background(), ScenarioParams{
 			Checkout:         checkout,
@@ -192,8 +191,7 @@ func TestRunScenario_CLIWallClockOverride(t *testing.T) {
 	}}
 	dirty := false
 	done := make(chan error, 1)
-	pumpCtx, pumpCancel := context.WithCancel(context.Background())
-	defer pumpCancel()
+	pumpCtx := t.Context()
 	go func() {
 		done <- RunScenario(context.Background(), ScenarioParams{
 			Checkout:          checkout,
@@ -270,8 +268,7 @@ func TestRunScenario_Interrupt(t *testing.T) {
 	dirty := false
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
-	pumpCtx, pumpCancel := context.WithCancel(context.Background())
-	defer pumpCancel()
+	pumpCtx := t.Context()
 	go func() {
 		done <- RunScenario(ctx, ScenarioParams{
 			Checkout:         checkout,

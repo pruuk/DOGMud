@@ -267,7 +267,7 @@ func TestRomanceWaitsForConsent(t *testing.T) {
 	if w.c.mind.Romance.Stage != `` && w.c.mind.Romance.Stage != romanceNone {
 		t.Fatalf("and nothing moves: %q", w.c.mind.Romance.Stage)
 	}
-	for _, line := range strings.Split(messaging.WrapAnsi(msg, 80), "\n") {
+	for line := range strings.SplitSeq(messaging.WrapAnsi(msg, 80), "\n") {
 		if n := len([]rune(line)); n > 80 {
 			t.Fatalf("wrapped at 80 columns: %d in %q", n, line)
 		}

@@ -66,7 +66,7 @@ func TestBuildAttackMessages_CritBannerCloseStaysWithTheLastWord(t *testing.T) {
 		}
 		// Wrapped at every width from 20 to 80, no line is the banner alone.
 		for width := 20; width <= 80; width++ {
-			for _, line := range strings.Split(messaging.WrapAnsi(m.Text, width), "\n") {
+			for line := range strings.SplitSeq(messaging.WrapAnsi(m.Text, width), "\n") {
 				if strings.TrimSpace(critBannerWrapTag.ReplaceAllString(line, "")) == "***" {
 					t.Errorf("at width %d the closing *** wrapped onto a line of its own: %q", width, m.Text)
 				}

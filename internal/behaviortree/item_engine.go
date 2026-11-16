@@ -184,10 +184,8 @@ func TreeWritesLight(def NodeDef) bool {
 	if def.Do == `set_light` || def.Do == `pulse_light` {
 		return true
 	}
-	for _, ch := range def.Children {
-		if TreeWritesLight(ch) {
-			return true
-		}
+	if slices.ContainsFunc(def.Children, TreeWritesLight) {
+		return true
 	}
 	return def.Child != nil && TreeWritesLight(*def.Child)
 }

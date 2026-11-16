@@ -98,7 +98,7 @@ func TestBumpRep_StartsFromDefaultWhenNoRow(t *testing.T) {
 
 func TestBumpRep_AccumulatesAndClamps(t *testing.T) {
 	setupTestFaction(t, "warren", 0)
-	for i := 0; i < 12; i++ {
+	for range 12 {
 		BumpRep("warren", 17, 10)
 	}
 	// 12 * 10 = 120, clamped to 100
@@ -203,21 +203,16 @@ func TestParallelBumpsConverge(t *testing.T) {
 	const delta = 1
 
 	var wg sync.WaitGroup
-	for i := 0; i < goroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < bumpsPer; j++ {
+	for range goroutines {
+		wg.Go(func() {
+			for range bumpsPer {
 				BumpRep("warren", 17, delta)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 
-	want := goroutines * bumpsPer
-	if want > RepMax {
-		want = RepMax
-	}
+	want := min(goroutines*bumpsPer, RepMax)
 	if got := GetRep("warren", 17); got != want {
 		t.Errorf("after %d parallel bumps: got %d, want %d", goroutines*bumpsPer, got, want)
 	}

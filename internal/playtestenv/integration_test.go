@@ -128,7 +128,7 @@ func TestDockerIntegration(t *testing.T) {
 			got  []Result
 		)
 		wg.Add(2)
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			go func() {
 				defer wg.Done()
 				start := time.Now()
@@ -763,7 +763,7 @@ func listManagedIDs(t *testing.T) []string {
 		if out == "" {
 			continue
 		}
-		for _, line := range strings.Split(out, "\n") {
+		for line := range strings.SplitSeq(out, "\n") {
 			line = strings.TrimSpace(line)
 			if line != "" {
 				ids = append(ids, line)
@@ -851,7 +851,7 @@ func clearDockerOverridesForCleanup(t *testing.T) {
 
 func worktreeListHas(list, path string) bool {
 	norm := strings.ToLower(filepath.ToSlash(path))
-	for _, line := range strings.Split(list, "\n") {
+	for line := range strings.SplitSeq(list, "\n") {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, "worktree ") {
 			continue

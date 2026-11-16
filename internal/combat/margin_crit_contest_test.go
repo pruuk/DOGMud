@@ -79,7 +79,7 @@ func TestContestCrit_FallsBackWhenStdDevUnusable(t *testing.T) {
 // of `def`, driving the real dice path the spell and taunt sites use.
 func critRateAt(atk, def float64, samples int) float64 {
 	crits := 0
-	for i := 0; i < samples; i++ {
+	for range samples {
 		_, margin, atkRoll, _ := dice.OpposedRollStatRaw(atk, def)
 		if ContestCrit(margin, atkRoll) {
 			crits++
@@ -128,7 +128,7 @@ func TestContestCrit_ReproducesLegacyRateAtParity(t *testing.T) {
 	)
 
 	crits := 0
-	for i := 0; i < samples; i++ {
+	for range samples {
 		_, margin, atkRoll, _ := dice.OpposedRollStatRaw(stat, stat)
 		if ContestCrit(margin, atkRoll) {
 			crits++

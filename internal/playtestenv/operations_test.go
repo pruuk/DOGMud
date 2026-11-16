@@ -611,7 +611,6 @@ func TestStopCapturesLogsUsesGraceThenForceAndRemovesExactResources(t *testing.T
 
 func TestStopRecoversAbandonedPreterminalRun(t *testing.T) {
 	for _, state := range []State{StateBuilding, StateStopping} {
-		state := state
 		t.Run(string(state), func(t *testing.T) {
 			seed := seedRun(t, "run-abandon-"+string(state), state, true)
 			// Prior cleanup timeout leftovers for the stopping case.

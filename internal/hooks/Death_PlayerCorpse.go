@@ -76,10 +76,7 @@ func transferPartialGold(victim *characters.Character, killerRef state.ActorRef,
 	if fraction <= 0 || fraction > 1.0 || victim.Gold <= 0 {
 		return
 	}
-	loss := int(float64(victim.Gold) * fraction)
-	if loss < 1 {
-		loss = 1
-	}
+	loss := max(int(float64(victim.Gold)*fraction), 1)
 	victim.Gold -= loss
 	switch {
 	case killerRef.UserId > 0:

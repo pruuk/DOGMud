@@ -99,7 +99,7 @@ func Title(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	// Sort descending by value
-	for i := 0; i < len(statVals); i++ {
+	for i := range statVals {
 		for j := i + 1; j < len(statVals); j++ {
 			if statVals[j].Value > statVals[i].Value {
 				statVals[i], statVals[j] = statVals[j], statVals[i]
@@ -108,10 +108,7 @@ func Title(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	// Generate bars for top 3
-	maxStat := statVals[0].Value
-	if maxStat < 1 {
-		maxStat = 1
-	}
+	maxStat := max(statVals[0].Value, 1)
 	for i := 0; i < 3 && i < len(statVals); i++ {
 		pct := float64(statVals[i].Value) / float64(maxStat)
 		barFull, barEmpty := util.ProgressBar(pct, 20)

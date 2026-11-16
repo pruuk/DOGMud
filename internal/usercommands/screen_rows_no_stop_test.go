@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -82,7 +83,7 @@ func TestScreenRowsEndWithoutAStop(t *testing.T) {
 		for _, m := range msgs {
 			plain := screenRowEscRE.ReplaceAllString(screenRowTagRE.ReplaceAllString(m, ""), "")
 			plain = strings.NewReplacer("\r", "", "&lt;", "<", "&gt;", ">").Replace(plain)
-			for _, l := range strings.Split(plain, "\n") {
+			for l := range strings.SplitSeq(plain, "\n") {
 				lines = append(lines, strings.TrimRight(l, " "))
 			}
 		}
@@ -102,13 +103,7 @@ func TestScreenRowsEndWithoutAStop(t *testing.T) {
 			t.Errorf("%s: last line = %q, want %q", c.name, last, c.last)
 		}
 		for _, w := range c.want {
-			found := false
-			for _, l := range lines {
-				if l == w {
-					found = true
-					break
-				}
-			}
+			found := slices.Contains(lines, w)
 			if !found {
 				t.Errorf("%s: row %q missing (a stop or a recased letter?); got %q", c.name, w, lines)
 			}

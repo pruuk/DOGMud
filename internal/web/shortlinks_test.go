@@ -45,7 +45,7 @@ func TestMotdUsesTheShortLinks(t *testing.T) {
 			t.Errorf("the MOTD does not use the short link dogmud.org%s", path)
 		}
 	}
-	for _, word := range strings.Fields(motd) {
+	for word := range strings.FieldsSeq(motd) {
 		if len([]rune(word)) > 30 {
 			t.Errorf("the MOTD holds a word wider than a 30-column screen: %q", word)
 		}

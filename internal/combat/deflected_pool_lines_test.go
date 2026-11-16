@@ -39,7 +39,7 @@ func TestDeflectedSwingLines_ReadsPerDefencePool(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.tag, func(t *testing.T) {
-			for i := 0; i < 30; i++ {
+			for range 30 {
 				atk, def := deflectedSwingLines(tc.defense, "Rurik", "Selka", "light wounds")
 				a, d := string(atk), string(def)
 				if !strings.HasPrefix(a, tc.tag+"-A") || !strings.HasPrefix(d, tc.tag+"-D") {

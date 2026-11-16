@@ -100,7 +100,7 @@ func newSpineWalk(t *testing.T) *spineWalk {
 // delayed tree action at once, until both have had time to feed each other.
 func (w *spineWalk) pump() {
 	w.t.Helper()
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		events.ProcessEvents()
 		behaviortree.DrainAllDelayedActionsForTest(w.t)
 	}

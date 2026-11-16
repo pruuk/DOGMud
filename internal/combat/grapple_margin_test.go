@@ -119,7 +119,7 @@ func TestAttemptGrapple_CritDerivesFromMarginNotSelfZScore(t *testing.T) {
 
 	t.Run("dominant attacker crits far above the legacy 2.3%", func(t *testing.T) {
 		crits := 0
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			atk := newGrappleMarginChar(1000, 50)
 			def := newGrappleMarginChar(10, 1)
 			if AttemptGrapple(atk, def, nil).Crit {
@@ -132,7 +132,7 @@ func TestAttemptGrapple_CritDerivesFromMarginNotSelfZScore(t *testing.T) {
 
 	t.Run("hopeless attacker essentially never crits", func(t *testing.T) {
 		crits := 0
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			atk := newGrappleMarginChar(10, 1)
 			def := newGrappleMarginChar(1000, 50)
 			if AttemptGrapple(atk, def, nil).Crit {
@@ -152,7 +152,7 @@ func TestExecuteGrappleMove_WeakBandReadsTheMargin(t *testing.T) {
 	pinContestFloorOff(t)
 
 	failures, penalties := 0, 0
-	for i := 0; i < 400; i++ {
+	for range 400 {
 		atk := newGrappleMarginChar(10, 1)
 		def := newGrappleMarginChar(1000, 50)
 		res := ExecuteGrappleMove(atk, def, 1, nil)

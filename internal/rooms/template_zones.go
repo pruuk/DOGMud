@@ -1,5 +1,7 @@
 package rooms
 
+import "maps"
+
 import "sync"
 
 // The template room to zone index (#375 phase 3b slice 4). Rooms load
@@ -58,8 +60,6 @@ func TemplateRoomZones() map[int]string {
 	templateZoneMu.RLock()
 	defer templateZoneMu.RUnlock()
 	out := make(map[int]string, len(templateZone))
-	for id, z := range templateZone {
-		out[id] = z
-	}
+	maps.Copy(out, templateZone)
 	return out
 }

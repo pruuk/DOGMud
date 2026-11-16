@@ -160,7 +160,7 @@ func TestHandIn_SeveralNextOffersReshowTheMenu(t *testing.T) {
 	require.True(t, user.HasOpenMenu())
 	for _, label := range []string{"The Missing Ledger", "The Broken Seal"} {
 		var line string
-		for _, l := range strings.Split(got[menuAt], "\n") {
+		for l := range strings.SplitSeq(got[menuAt], "\n") {
 			if strings.Contains(l, label) {
 				line = l
 			}

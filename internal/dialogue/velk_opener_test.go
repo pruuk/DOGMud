@@ -2,6 +2,7 @@ package dialogue
 
 import (
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -44,12 +45,7 @@ func velkState(progress map[string]string, carrying ...int) *PlayerState {
 		return ti >= 0 && ci >= ti
 	}
 	carries := func(id int) bool {
-		for _, c := range carrying {
-			if c == id {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(carrying, id)
 	}
 	return &PlayerState{
 		QuestOpen:    func(int) bool { return true },

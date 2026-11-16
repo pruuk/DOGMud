@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -360,7 +361,7 @@ func (w *walker) buildTriggers() {
 		if r.ItemId > 0 {
 			rs.gives = append(rs.gives, r.ItemId)
 		}
-		for _, part := range strings.Split(r.ItemInfo, ",") {
+		for part := range strings.SplitSeq(r.ItemInfo, ",") {
 			if n, err := strconv.Atoi(strings.TrimSpace(strings.SplitN(part, ":", 2)[0])); err == nil && n > 0 {
 				rs.gives = append(rs.gives, n)
 			}
@@ -928,9 +929,7 @@ func (w *walker) fire(si int) bool {
 			}
 			for _, n := range starts {
 				f := map[int]node{}
-				for k, v := range ctx {
-					f[k] = v
-				}
+				maps.Copy(f, ctx)
 				f[id] = n
 				if ok, _ := w.eval(s, f); !ok {
 					continue

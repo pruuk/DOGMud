@@ -2,6 +2,7 @@ package aicompanion
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 	"time"
@@ -307,12 +308,8 @@ func (m *AICompanionModule) combatTick(c *controller, u *users.UserRecord, round
 			f.FleeAt = `about_to_die`
 		}
 		c.fight = f
-		for id, name := range enemies {
-			f.Enemies[id] = name
-		}
-		for id, name := range enemyUsers {
-			f.EnemyUsers[id] = name
-		}
+		maps.Copy(f.Enemies, enemies)
+		maps.Copy(f.EnemyUsers, enemyUsers)
 		c.travel = nil
 		c.bumpWorld()
 		f.AmmoAtStart, f.AmmoItemId = ammoOnHand(mob)

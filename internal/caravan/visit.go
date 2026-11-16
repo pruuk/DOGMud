@@ -114,8 +114,7 @@ func VisitVendorsInRoomOpts(
 		// DELIVER pass: wagon → vendor.
 		// Walk wagon items in reverse so RemoveItem is index-safe.
 		if len(deliveryBuckets) > 0 {
-			for i := len(wagon.Character.Items) - 1; i >= 0; i-- {
-				item := wagon.Character.Items[i]
+			for _, item := range slices.Backward(wagon.Character.Items) {
 				bucket := economy.BucketFor(item.ItemId)
 				if bucket == "" || !slices.Contains(deliveryBuckets, bucket) {
 					continue
@@ -192,14 +191,8 @@ func VisitVendorsInRoomOpts(
 				if entry.Current <= entry.RestockQty {
 					continue // keep at least one restock batch for local
 				}
-				qty := entry.Current / 10
-				if qty < 1 {
-					qty = 1
-				}
-				if qty > entry.Current {
-					qty = entry.Current
-				}
-				for j := 0; j < qty; j++ {
+				qty := min(max(entry.Current/10, 1), entry.Current)
+				for range qty {
 					newItem := items.New(entry.ItemId)
 					if !newItem.IsValid() {
 						break

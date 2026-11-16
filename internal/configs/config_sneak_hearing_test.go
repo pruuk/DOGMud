@@ -50,7 +50,7 @@ func TestSneakHearingMult_InRangeIsKept(t *testing.T) {
 // this in config.yaml, so it must be there to tune.
 func TestSneakHearingMult_ShippedConfigShips075(t *testing.T) {
 	src := shippedConfigSource(t)
-	for _, line := range bytes.Split(src, []byte("\n")) {
+	for line := range bytes.SplitSeq(src, []byte("\n")) {
 		trimmed := strings.TrimSpace(string(line))
 		if !strings.HasPrefix(trimmed, "SneakHearingMult:") {
 			continue

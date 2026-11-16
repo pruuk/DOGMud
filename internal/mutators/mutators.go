@@ -3,6 +3,7 @@ package mutators
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -170,8 +171,8 @@ func (ml *MutatorList) Update(roundNow uint64) {
 		}
 	}
 
-	for i := len(removeIdx) - 1; i >= 0; i-- {
-		(*ml) = append((*ml)[:removeIdx[i]], (*ml)[removeIdx[i]+1:]...)
+	for _, r := range slices.Backward(removeIdx) {
+		(*ml) = append((*ml)[:r], (*ml)[r+1:]...)
 	}
 }
 

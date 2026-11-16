@@ -69,12 +69,12 @@ func (pq priorityQueue) Swap(i, j int) {
 	pq[i].index = i
 	pq[j].index = j
 }
-func (pq *priorityQueue) Push(x interface{}) {
+func (pq *priorityQueue) Push(x any) {
 	n := x.(*nodeRecord)
 	n.index = len(*pq)
 	*pq = append(*pq, n)
 }
-func (pq *priorityQueue) Pop() interface{} {
+func (pq *priorityQueue) Pop() any {
 	old := *pq
 	n := old[len(old)-1]
 	old[len(old)-1] = nil // avoid mem leak

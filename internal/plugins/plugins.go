@@ -10,6 +10,7 @@ import (
 	"path"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -522,9 +523,7 @@ func Load(dataFilesPath string) {
 	registrationOpen = false
 
 	pluginCt := 0
-	for idx := len(registry) - 1; idx >= 0; idx-- {
-
-		p := registry[idx]
+	for idx, p := range slices.Backward(registry) {
 
 		skipPlugin := false
 

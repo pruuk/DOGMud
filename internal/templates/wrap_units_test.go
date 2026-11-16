@@ -39,7 +39,7 @@ func TestWrapSpansKeepsFittingNameWhole(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			got := wrapSpans(tc.in, tc.width)
 			assert.Equal(t, tc.want, plainLines(got), got)
-			for _, line := range strings.Split(got, "\n") {
+			for line := range strings.SplitSeq(got, "\n") {
 				assert.Equal(t, strings.Count(line, "<ansi"), strings.Count(line, "</ansi>"), "unbalanced: %q", line)
 			}
 		})
@@ -65,7 +65,7 @@ func TestWrapSpansKeepsNestedNameWhole(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			got := wrapSpans(tc.in, tc.width)
 			assert.Equal(t, tc.want, plainLines(got), got)
-			for _, line := range strings.Split(got, "\n") {
+			for line := range strings.SplitSeq(got, "\n") {
 				assert.Equal(t, strings.Count(line, "<ansi"), strings.Count(line, "</ansi>"), "unbalanced: %q", line)
 			}
 		})

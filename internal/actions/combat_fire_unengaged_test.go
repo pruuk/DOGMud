@@ -215,7 +215,7 @@ func sampleShotsFromOneShooter(t *testing.T, char *characters.Character, rest st
 
 	total := 0
 	var last FireResult
-	for i := 0; i < n; i++ {
+	for i := range n {
 		target.Character.Health = surpriseMobHealth
 		char.Stamina = char.StaminaMax.Value
 		char.Equipment.Weapon.Loaded = true
@@ -239,7 +239,7 @@ func sampleFreshShooterDamage(t *testing.T, hidden bool, n int) float64 {
 	require.NotNil(t, target)
 
 	total := 0
-	for i := 0; i < n; i++ {
+	for i := range n {
 		target.Character.Health = surpriseMobHealth
 		char := newUnengagedShooter(hidden)
 		res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")
@@ -443,7 +443,7 @@ func TestFireUnengaged_DoesNotTouchMelee(t *testing.T) {
 
 	sample := func(n int) float64 {
 		total := 0
-		for i := 0; i < n; i++ {
+		for i := range n {
 			char.Cooldowns = characters.Cooldowns{}
 			char.Stamina = char.StaminaMax.Value
 			target.Health = target.HealthMax.Value

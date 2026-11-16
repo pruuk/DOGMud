@@ -1,6 +1,7 @@
 package mutations
 
 import (
+	"maps"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -24,9 +25,7 @@ func DecayAffinity(aff map[string]float64, rate float64) {
 // gravity of their currently-owned mutations. Returns a fresh map.
 func EffectiveAffinity(owned map[string]int, actionAff map[string]float64) map[string]float64 {
 	eff := make(map[string]float64, len(actionAff)+4)
-	for k, v := range actionAff {
-		eff[k] = v
-	}
+	maps.Copy(eff, actionAff)
 	for k, v := range OwnedGravity(owned) {
 		eff[k] += v
 	}
@@ -85,10 +84,7 @@ func GetGraphPool(owned map[string]int, aff map[string]float64, sp *species.Spec
 		if a < depthThreshold(spec.Rarity) {
 			continue
 		}
-		weight := 11 - spec.Rarity - rarityBonus
-		if weight < 1 {
-			weight = 1
-		}
+		weight := max(11-spec.Rarity-rarityBonus, 1)
 		if a != math.MaxFloat64 {
 			weight += int(a) // clustered mutations get louder as their cluster grows
 		}

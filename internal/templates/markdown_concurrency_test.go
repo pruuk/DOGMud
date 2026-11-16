@@ -17,14 +17,12 @@ func TestProcessMarkdown_ConcurrentRender(t *testing.T) {
 	const md = "# Heading\n\nSome **bold** and *italic* text.\n\n- one\n- two\n"
 
 	var wg sync.WaitGroup
-	for g := 0; g < goroutines; g++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for i := 0; i < iters; i++ {
+	for range goroutines {
+		wg.Go(func() {
+			for range iters {
 				_ = processMarkdown(md)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }

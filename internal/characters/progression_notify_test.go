@@ -64,7 +64,7 @@ func TestProgressionNotice_SkillBanner(t *testing.T) {
 		text  string
 		width int
 	}{{n.text, 64}, {n.narrow, 30}} {
-		if first := strings.SplitN(tc.text, "\n", 2)[0]; first != strings.Repeat("━", tc.width) {
+		if first, _, _ := strings.Cut(tc.text, "\n"); first != strings.Repeat("━", tc.width) {
 			t.Errorf("banner rule is %q, want %d glyphs", first, tc.width)
 		}
 	}

@@ -181,7 +181,7 @@ func runProcRounds(t *testing.T, round func(i int), state func() string) string 
 	defer restoreRand()
 	defer util.ResetRoundCountForTest()
 	var b strings.Builder
-	for i := 0; i < procParityRounds; i++ {
+	for i := range procParityRounds {
 		util.SetRoundCountForTest(uint64(procParityFirst + i))
 		round(i)
 		fmt.Fprintf(&b, "%d: %s probe=%d\n", i, state(), util.Rand(1000))

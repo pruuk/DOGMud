@@ -134,7 +134,7 @@ func TestSteal_MobTarget_GoldSuccess(t *testing.T) {
 	// Run many trials to confirm success is not just luck.
 	succeeded := 0
 	const trials = 20
-	for i := 0; i < trials; i++ {
+	for range trials {
 		// Reset mob gold and actor gold each trial.
 		target.Character.Gold = mobGold
 		goldBefore := actor.char.Gold
@@ -296,7 +296,7 @@ func TestSteal_MobOnPlayer_DetectionWin(t *testing.T) {
 	detectionCount := 0
 	successCount := 0
 
-	for i := 0; i < trials; i++ {
+	for range trials {
 		// Reset gold and cooldown each trial.
 		targetUser.Character.Gold = playerGold
 		delete(actor.char.Cooldowns, skills.Skullduggery.String("steal"))
@@ -367,7 +367,7 @@ func TestSteal_AwardsFollowTheContestOutcome(t *testing.T) {
 
 	const trials = 12
 	sawLoss := false
-	for i := 0; i < trials; i++ {
+	for i := range trials {
 		delete(actor.char.Cooldowns, skills.Skullduggery.String("steal"))
 		target.Character.Gold = 50
 		mobs.SetInstanceForTest(testMobInstId, target)

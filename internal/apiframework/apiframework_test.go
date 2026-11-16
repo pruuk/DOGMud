@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -341,7 +342,7 @@ func TestBreakerOpensForItsCooldownOnly(t *testing.T) {
 func TestABaubleOnlyFailureNeverBlocksTheCompanion(t *testing.T) {
 	k := NewBooksForTest()
 	now := time.Unix(1000, 0)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		tk, ok := k.Allow(ConsumerBaubles, now)
 		if !ok {
 			break
@@ -397,7 +398,7 @@ func TestHalfOpenLetsOneProbeThrough(t *testing.T) {
 		t.Fatal("a new probe after the second cooldown")
 	}
 	k.Record(ConsumerCompanion, probe, nil, again)
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		if tk, ok := k.Allow(ConsumerCompanion, again); !ok || tk.Probing() {
 			t.Fatal("a successful probe closes it: everyone through, no probes")
 		}
@@ -499,12 +500,7 @@ func TestEndpointAllowed(t *testing.T) {
 func TestServerReadsAnOldConfigAsTheCompanionDid(t *testing.T) {
 	none := configs.APIFramework{}
 	has := func(s ServerSettings, want string) bool {
-		for _, l := range s.Legacy {
-			if l == want {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(s.Legacy, want)
 	}
 
 	// Nothing set anywhere: the companion always read OPENAI_API_KEY.

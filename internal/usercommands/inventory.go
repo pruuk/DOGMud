@@ -47,10 +47,7 @@ func checkSpoiledGrenades(user *users.UserRecord, room *rooms.Room) {
 					spec.DamageMultiplier,
 					combat.ChannelPhysical,
 				)
-				dmg := int(rawDmg)
-				if dmg < 1 {
-					dmg = 1
-				}
+				dmg := max(int(rawDmg), 1)
 				user.Character.ApplyHarm(characters.PoolHealth, dmg,
 					state.ActorRef{UserId: user.UserId})
 				user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(

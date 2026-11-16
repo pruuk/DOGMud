@@ -92,7 +92,7 @@ func (w *spineWalk) calm() {
 func (w *spineWalk) stealLands() {
 	w.t.Helper()
 	before := w.pursesHeld()
-	for try := 0; try < 60; try++ {
+	for range 60 {
 		w.calm()
 		m := w.dummy()
 		if _, has := m.Character.FindInBackpack("purse"); !has {
@@ -190,7 +190,7 @@ func TestSmoke_Quest101_CountsThefts(t *testing.T) {
 	w.user.Character.GiveQuestToken("101-start")
 	w.givePurse()
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		w.dropAndGet()
 	}
 	w.step(101, "start", "three drops and gets")

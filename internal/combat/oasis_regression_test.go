@@ -25,7 +25,7 @@ func TestOasisCritRatesAfterCompression(t *testing.T) {
 	critRate := func(def, k float64) float64 {
 		setContestGapSaturationForTest(t, k)
 		crits := 0
-		for i := 0; i < trials; i++ {
+		for range trials {
 			res := RunContest(meirokAttack, []contest.Entry{{Score: def}})
 			if !res.Floored && AttackContestCritAt(res.Margin, res.AttackRoll, 1.5) {
 				crits++

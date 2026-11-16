@@ -283,7 +283,7 @@ func TestKeyShapedReplyIsNotABreakerFailure(t *testing.T) {
 	var told []string
 	m.tell = func(_ int, text string) { told = append(told, text) }
 	now := time.Now()
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		m.routeResult(route{kind: routeRelay, model: `m`}, 5, apiframework.Ticket{}, errRelayKeyShaped, now)
 	}
 	if m.route(5).kind != routeRelay {

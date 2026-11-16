@@ -40,7 +40,7 @@ func TestMutations_DescriptionWrapsToTheReadersWidth(t *testing.T) {
 	var prose []string
 	for _, msg := range events.DrainQueuedMessagesForTest(user.UserId) {
 		plain := mutationsWrapAnsiTag.ReplaceAllString(msg, "")
-		for _, line := range strings.Split(strings.ReplaceAll(plain, "\r\n", "\n"), "\n") {
+		for line := range strings.SplitSeq(strings.ReplaceAll(plain, "\r\n", "\n"), "\n") {
 			require.LessOrEqual(t, util.VisibleWidth(line), user.GetLineWidth(),
 				"mutations line wider than the reader's width: %q", line)
 			if strings.HasPrefix(line, "    ") && !strings.HasPrefix(line, "      ") {
@@ -80,7 +80,7 @@ func TestMutations_BlockScalarDescriptionHasNoStrayLines(t *testing.T) {
 	var words []string
 	for _, msg := range events.DrainQueuedMessagesForTest(user.UserId) {
 		plain := mutationsWrapAnsiTag.ReplaceAllString(msg, "")
-		for _, line := range strings.Split(strings.ReplaceAll(plain, "\r\n", "\n"), "\n") {
+		for line := range strings.SplitSeq(strings.ReplaceAll(plain, "\r\n", "\n"), "\n") {
 			trimmed := strings.TrimSpace(line)
 			require.NotEqual(t, ".", trimmed, "a line holding only a full stop")
 			if strings.HasPrefix(line, "    ") && !strings.HasPrefix(line, "      ") {

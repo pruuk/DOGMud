@@ -28,7 +28,7 @@ func TestTableFramesJoinAtTheColumnBorders(t *testing.T) {
 		out, err := Process(tpl, table)
 		require.NoError(t, err)
 		var lines []string
-		for _, l := range strings.Split(strings.ReplaceAll(out, "\r\n", "\n"), "\n") {
+		for l := range strings.SplitSeq(strings.ReplaceAll(out, "\r\n", "\n"), "\n") {
 			l = strings.TrimRight(tableFrameTagRE.ReplaceAllString(l, ""), " ")
 			if l != "" {
 				lines = append(lines, l)

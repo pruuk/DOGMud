@@ -153,11 +153,11 @@ func LowerLeadingArticle(s string) string {
 // tokenFollowsLeadIn reports whether token sits mid-sentence in line: some
 // text comes before it, and that text does not end a sentence.
 func tokenFollowsLeadIn(line, token string) bool {
-	idx := strings.Index(line, token)
-	if idx < 0 {
+	before0, _, ok := strings.Cut(line, token)
+	if !ok {
 		return false
 	}
-	before := strings.TrimRight(line[:idx], " ")
+	before := strings.TrimRight(before0, " ")
 	if before == "" {
 		return false
 	}

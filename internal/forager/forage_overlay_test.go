@@ -1,5 +1,7 @@
 package forager
 
+import "slices"
+
 import "testing"
 
 func TestZoneAndStormForageOverlays(t *testing.T) {
@@ -66,10 +68,5 @@ func TestPinnacleForageReagentsPlaced(t *testing.T) {
 }
 
 func poolContains(p []int, id int) bool {
-	for _, x := range p {
-		if x == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(p, id)
 }

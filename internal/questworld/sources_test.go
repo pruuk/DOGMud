@@ -1,6 +1,7 @@
 package questworld
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
@@ -11,12 +12,7 @@ import (
 // holds is a progress check that holds exactly the given tokens.
 func holds(toks ...string) func(string) bool {
 	return func(tok string) bool {
-		for _, x := range toks {
-			if x == tok {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(toks, tok)
 	}
 }
 

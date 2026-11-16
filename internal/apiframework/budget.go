@@ -2,6 +2,7 @@ package apiframework
 
 import (
 	"errors"
+	"maps"
 	"os"
 	"path/filepath"
 	"sort"
@@ -272,10 +273,7 @@ func (l *ledger) reserve(consumer string, tokens int, limit int, sharePct int, s
 // It is worked out without multiplying limit, which a huge DailyTokenBudget
 // would overflow.
 func shareOf(limit int, pct int) int {
-	share := limit/100*pct + limit%100*pct/100
-	if share < 1 {
-		share = 1
-	}
+	share := max(limit/100*pct+limit%100*pct/100, 1)
 	return share
 }
 
@@ -538,21 +536,13 @@ func SaveBudget() {
 	}
 	st := budget.st
 	byC := make(map[string]int, len(st.ByConsumer))
-	for k, v := range st.ByConsumer {
-		byC[k] = v
-	}
+	maps.Copy(byC, st.ByConsumer)
 	callsBy := make(map[string]int, len(st.CallsBy))
-	for k, v := range st.CallsBy {
-		callsBy[k] = v
-	}
+	maps.Copy(callsBy, st.CallsBy)
 	byUser := make(map[string]int, len(st.ByUser))
-	for k, v := range st.ByUser {
-		byUser[k] = v
-	}
+	maps.Copy(byUser, st.ByUser)
 	seeded := make(map[string]bool, len(st.Seeded))
-	for k, v := range st.Seeded {
-		seeded[k] = v
-	}
+	maps.Copy(seeded, st.Seeded)
 	st.ByConsumer, st.CallsBy, st.ByUser, st.Seeded = byC, callsBy, byUser, seeded
 	path := budget.path()
 	budget.dirty = false

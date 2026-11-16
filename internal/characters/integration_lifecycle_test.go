@@ -55,7 +55,7 @@ func TestIntegration_StatProgressionSimulated(t *testing.T) {
 
 	// At rank 0, chance is 30%. Over 50 simulated "progression events", expect ~15 gains.
 	gains := 0
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		chance := CalculateProgressionChance(c.Stats.Strength.Training, StatSoftCap)
 		// Simulate the probabilistic roll: use the chance as a threshold
 		// Deterministic simulation: apply gain if chance > 0.20 (most low-rank calls should pass)
@@ -75,7 +75,7 @@ func TestIntegration_SkillProgressionSimulated(t *testing.T) {
 	initialRank := c.Skills["unarmed-combat"]
 
 	gains := 0
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		chance := CalculateProgressionChance(c.Skills["unarmed-combat"], SkillSoftCap)
 		if chance > 0.20 {
 			c.IncreaseSkill("unarmed-combat")

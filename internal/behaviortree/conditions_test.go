@@ -165,7 +165,7 @@ func TestCondRandomChance_AlwaysSucceeds(t *testing.T) {
 	params := map[string]any{
 		"percent": 100,
 	}
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		if result := fn(params, ctx); result != Success {
 			t.Fatalf("100%% chance failed on iteration %d", i)
 		}
@@ -179,7 +179,7 @@ func TestCondRandomChance_AlwaysFails(t *testing.T) {
 	params := map[string]any{
 		"percent": 0,
 	}
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		if result := fn(params, ctx); result != Failure {
 			t.Fatalf("0%% chance succeeded on iteration %d", i)
 		}

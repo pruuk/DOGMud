@@ -146,7 +146,7 @@ func TestRelayFailuresTripOnlyThatOwnersBreaker(t *testing.T) {
 	m := relayModule(t)
 	m.relays.ready(6, `m`, false)
 	now := time.Now()
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		m.routeResult(route{kind: routeRelay, model: `m`}, 5, apiframework.Ticket{}, errors.New(`provider said no`), now)
 	}
 	if m.route(5).kind != routeNone {
@@ -161,7 +161,7 @@ func TestRelayFailuresTripOnlyThatOwnersBreaker(t *testing.T) {
 
 	// A refusal at the door never left the server, and a success resets.
 	m.relays.ready(7, `m`, false)
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		m.routeResult(route{kind: routeRelay}, 7, apiframework.Ticket{}, errNoConsent, now)
 	}
 	m.routeResult(route{kind: routeRelay}, 7, apiframework.Ticket{}, errors.New(`x`), now)
@@ -173,7 +173,7 @@ func TestRelayFailuresTripOnlyThatOwnersBreaker(t *testing.T) {
 	}
 
 	// The server's key still trips the global breaker.
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		m.routeResult(route{kind: routeServer}, 6, apiframework.Ticket{}, errors.New(`x`), now)
 	}
 	if !m.breakerOpen(now) {
@@ -281,7 +281,7 @@ func TestStrangerRelayReservationsCannotSlipPastTheCapTogether(t *testing.T) {
 	relay := route{kind: routeRelay, model: `player-model`}
 	admitted := 0
 	done := make(chan bool)
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		go func() {
 			util.LockMud()
 			ok := tryRoute(m, relay, 5, 2, 400)
@@ -289,7 +289,7 @@ func TestStrangerRelayReservationsCannotSlipPastTheCapTogether(t *testing.T) {
 			done <- ok
 		}()
 	}
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if <-done {
 			admitted++
 		}
@@ -371,7 +371,7 @@ func TestRelayReflectionAndCoreMemorySpendNothingOfTheServers(t *testing.T) {
 
 	now := time.Now().Unix()
 	util.LockMud()
-	for i := 0; i < 6; i++ {
+	for range 6 {
 		c.mind.addLine(Line{Speaker: `Corvin`, Kind: `said`, Text: `hello`, Unix: now}, 50)
 	}
 	m.startReflection(c.mind, c.profile, `Corvin`, 0)
@@ -481,7 +481,7 @@ func deferredModule(t *testing.T) (*AICompanionModule, *controller, *fakeRelay) 
 	m.relaySend = f.send
 	m.minds = map[string]*Mind{mindIdentifier(c.mind.OwnerUserId, c.mind.MobId): c.mind}
 	now := time.Now().Unix()
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		c.mind.addLine(Line{Speaker: `Corvin`, Kind: `said`, Text: `hello`, Unix: now}, 50)
 	}
 	return m, c, f
@@ -768,7 +768,7 @@ func TestCompanionAIStrangersCommand(t *testing.T) {
 		if len(sent) != 1 {
 			t.Fatalf("%q: one reply, got %q", arg, sent)
 		}
-		for _, line := range strings.Split(strings.TrimRight(sent[0], "\n"), "\n") {
+		for line := range strings.SplitSeq(strings.TrimRight(sent[0], "\n"), "\n") {
 			if n := len([]rune(ansiTag.ReplaceAllString(line, ``))); n > 80 {
 				t.Fatalf("%q: a line of %d columns: %q", arg, n, line)
 			}

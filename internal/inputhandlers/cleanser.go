@@ -79,10 +79,7 @@ func CleanserInputHandler(clientInput *connections.ClientInput, sharedState map[
 // because the echo handler prints DataIn, and the player should see what the
 // line really holds.
 func trimToLineRoom(data []byte, bufferLen int) []byte {
-	room := connections.MaxInputLineBytes - bufferLen
-	if room < 0 {
-		room = 0
-	}
+	room := max(connections.MaxInputLineBytes-bufferLen, 0)
 	if len(data) <= room {
 		return data
 	}

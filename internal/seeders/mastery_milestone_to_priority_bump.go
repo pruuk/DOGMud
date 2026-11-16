@@ -93,10 +93,7 @@ func masteryMilestoneSeed(event events.Event) {
 		return
 	}
 
-	nextMilestone := newRank + masteryMilestoneInterval
-	if nextMilestone > masterySoftCap {
-		nextMilestone = masterySoftCap
-	}
+	nextMilestone := min(newRank+masteryMilestoneInterval, masterySoftCap)
 
 	g := &goals.Goal{
 		Type:     "mastery-skill",

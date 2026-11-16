@@ -19,7 +19,7 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	headers := []string{`Type`, `Location`, `Where`, `Sequence`}
 	allFormatting := [][]string{}
 
-	for lockId, _ := range user.Character.KeyRing {
+	for lockId := range user.Character.KeyRing {
 		if !strings.HasPrefix(lockId, `key-`) {
 			break
 		}
@@ -81,7 +81,7 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 		row = append(row, keyType)
 
-		roomIdStr := strings.Split(lockId, `-`)[0]
+		roomIdStr, _, _ := strings.Cut(lockId, `-`)
 		lockId = lockId[len(roomIdStr)+1:]
 
 		roomId, _ := strconv.Atoi(roomIdStr)
@@ -99,7 +99,7 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			diff := len(actualSequence) - len(sequence)/2
 			if diff > 0 {
 				complete = false
-				for i := 0; i < diff; i++ {
+				for range diff {
 					sequence += `? `
 				}
 			}

@@ -7,14 +7,14 @@ import (
 
 func mkSwings(hits, misses int, worstDamage int) []swingStat {
 	out := []swingStat{}
-	for i := 0; i < hits; i++ {
+	for i := range hits {
 		d := 1
 		if i == 0 {
 			d = worstDamage
 		}
 		out = append(out, swingStat{Hit: true, Damage: d})
 	}
-	for i := 0; i < misses; i++ {
+	for range misses {
 		out = append(out, swingStat{Hit: false})
 	}
 	return out

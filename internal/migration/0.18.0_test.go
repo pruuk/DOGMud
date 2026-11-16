@@ -43,11 +43,11 @@ func TestRenameTipsConfigOption_MovesTheFlag(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var doc map[string]interface{}
+	var doc map[string]any
 	if err := yaml.Unmarshal(readBytes(t, path), &doc); err != nil {
 		t.Fatal(err)
 	}
-	opts := doc["configoptions"].(map[interface{}]interface{})
+	opts := doc["configoptions"].(map[any]any)
 	if v, ok := opts["tips"]; !ok || v != false {
 		t.Errorf("configoptions.tips = %v (present %v), want false", v, ok)
 	}
@@ -57,10 +57,10 @@ func TestRenameTipsConfigOption_MovesTheFlag(t *testing.T) {
 	if opts["tinymap"] != true || doc["username"] != "alice" || doc["userid"] != 1 {
 		t.Errorf("other fields changed: %v", doc)
 	}
-	if doc["character"].(map[interface{}]interface{})["name"] != "Aliceia" {
+	if doc["character"].(map[any]any)["name"] != "Aliceia" {
 		t.Error("character data changed")
 	}
-	if doc["tipscomplete"].(map[interface{}]interface{})["list"] != true {
+	if doc["tipscomplete"].(map[any]any)["list"] != true {
 		t.Error("tipscomplete, a different key, changed")
 	}
 }

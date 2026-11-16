@@ -101,7 +101,7 @@ func TestGetDetails_DescriptionModifierIsWrapped(t *testing.T) {
 	if !strings.Contains(desc, "A peace older than the stones") || !strings.Contains(desc, "comes more deeply.") {
 		t.Fatalf("the modifier text is missing from the description: %q", desc)
 	}
-	for _, line := range strings.Split(desc, "\n") {
+	for line := range strings.SplitSeq(desc, "\n") {
 		if w := util.VisibleWidth(strings.TrimRight(line, "\r")); w > 80 {
 			t.Errorf("description line is %d columns, want <= 80: %q", w, line)
 		}
@@ -118,7 +118,7 @@ func TestGetDetails_DescriptionModifierWrapsBesideTheMinimap(t *testing.T) {
 	if !strings.Contains(desc, "A peace older than the stones") {
 		t.Fatalf("the modifier text is missing from the description: %q", desc)
 	}
-	for _, line := range strings.Split(desc, "\n") {
+	for line := range strings.SplitSeq(desc, "\n") {
 		if w := util.VisibleWidth(strings.TrimRight(line, "\r")); w > 80 {
 			t.Errorf("description line is %d columns, want <= 80: %q", w, line)
 		}

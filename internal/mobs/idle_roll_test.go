@@ -118,7 +118,7 @@ func TestRollIdle_UnitScalesMatchTodayOverManyRounds(t *testing.T) {
 		t.Run(pc.name, func(t *testing.T) {
 			restore := util.SetRandForTest(317)
 			var todayC, todayM int
-			for i := 0; i < rounds; i++ {
+			for range rounds {
 				cmd := todayIdlePick(pc.al, pc.entries, util.Rand)
 				if cmd == "" {
 					continue
@@ -134,7 +134,7 @@ func TestRollIdle_UnitScalesMatchTodayOverManyRounds(t *testing.T) {
 			m := &Mob{ActivityLevel: pc.al, IdleCommands: pc.entries}
 			restore = util.SetRandForTest(318)
 			var newC, newM int
-			for i := 0; i < rounds; i++ {
+			for range rounds {
 				c, mv := m.RollIdle(unitScales, util.Rand)
 				if c != "" {
 					newC++
@@ -160,7 +160,7 @@ func TestRollIdle_ClassOnlyPools(t *testing.T) {
 	big := IdleRollInput{ChatterScale: 4, MovementScale: 4, ZoneAmbient: 1, ZoneWander: 1, MobWander: 1}
 	talker := &Mob{ActivityLevel: 100, IdleCommands: []string{"emote hums.", "say Hello."}}
 	walker := &Mob{ActivityLevel: 100, IdleCommands: []string{"wander", "sneak"}}
-	for i := 0; i < 10000; i++ {
+	for range 10000 {
 		if _, mv := talker.RollIdle(big, util.Rand); mv != "" {
 			t.Fatalf("a mob with only chatter entries moved: %q", mv)
 		}
@@ -204,7 +204,7 @@ func TestIdleChances_Multipliers(t *testing.T) {
 
 func TestRollIdle_LeavesActivityLevelAlone(t *testing.T) {
 	m := &Mob{ActivityLevel: 37, IdleCommands: []string{"emote hums.", "wander", ""}}
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		m.RollIdle(unitScales, util.Rand)
 	}
 	if m.ActivityLevel != 37 {

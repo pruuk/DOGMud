@@ -349,7 +349,7 @@ func TestRoomChangeShadowFollow_ArrivalHiddenRollsTheSense(t *testing.T) {
 				s.shadowTarget(c, quarry, false, true, true)
 				before := c.GetSkillUseCount(string(skills.Skullduggery))
 
-				for i := 0; i < arrivals; i++ {
+				for range arrivals {
 					RoomChangeShadowFollow(moveEvent(shadower, false, shadowRoomA, shadowRoomB))
 				}
 

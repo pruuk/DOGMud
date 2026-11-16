@@ -327,7 +327,7 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 	// quests carry one or two.
 	rest := map[int]*walkStates{cur: newWalkStates(p)}
 	reach := cur // the furthest step any state has reached
-	for c := 0; c < last; c++ {
+	for c := range last {
 		states := rest[c].list()
 		if len(states) == 0 {
 			continue // passed through by a chain, never rested on

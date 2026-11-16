@@ -107,10 +107,7 @@ func roundSeconds() int {
 }
 
 func reportWindowRounds() uint64 {
-	w := int(configs.GetBalanceConfig().AmbientTelemetryReportMinutes) * 60 / roundSeconds()
-	if w < 1 {
-		w = 1
-	}
+	w := max(int(configs.GetBalanceConfig().AmbientTelemetryReportMinutes)*60/roundSeconds(), 1)
 	return uint64(w)
 }
 

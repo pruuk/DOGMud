@@ -3,6 +3,7 @@ package guards
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -22,9 +23,9 @@ type siphonItemDoc struct {
 
 // treeHasLifestealNode reports whether any node under v (a decoded YAML value)
 // carries `effect: lifesteal`.
-func treeHasLifestealNode(v interface{}) bool {
+func treeHasLifestealNode(v any) bool {
 	switch n := v.(type) {
-	case map[interface{}]interface{}:
+	case map[any]any:
 		if e, ok := n["effect"].(string); ok && e == "lifesteal" {
 			return true
 		}
@@ -33,11 +34,9 @@ func treeHasLifestealNode(v interface{}) bool {
 				return true
 			}
 		}
-	case []interface{}:
-		for _, child := range n {
-			if treeHasLifestealNode(child) {
-				return true
-			}
+	case []any:
+		if slices.ContainsFunc(n, treeHasLifestealNode) {
+			return true
 		}
 	}
 	return false
@@ -57,7 +56,7 @@ func siphonItemCarriesLifeSteal(item siphonItemDoc, behaviorYAML func(name strin
 	if raw == nil {
 		return false
 	}
-	var tree interface{}
+	var tree any
 	if err := yaml.Unmarshal(raw, &tree); err != nil {
 		return false
 	}

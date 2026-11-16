@@ -129,9 +129,7 @@ func (c *Character) standFromRecovery() (bool, bool) {
 
 func (c *Character) GetSkills() map[string]int {
 	skillResults := make(map[string]int)
-	for skillName, skillLevel := range c.Skills {
-		skillResults[skillName] = skillLevel
-	}
+	maps.Copy(skillResults, c.Skills)
 	return skillResults
 }
 

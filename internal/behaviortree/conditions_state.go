@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -51,10 +52,8 @@ func condKeywordMatch(params map[string]any, ctx *EvalContext) Result {
 			continue
 		}
 		kwLower := strings.ToLower(kwStr)
-		for _, w := range words {
-			if w == kwLower {
-				return Success
-			}
+		if slices.Contains(words, kwLower) {
+			return Success
 		}
 	}
 	return Failure

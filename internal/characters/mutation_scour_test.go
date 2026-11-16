@@ -76,7 +76,7 @@ func TestRerollBonus_ShiftsDistributionTowardRare(t *testing.T) {
 	defer seedScourTestMutations()()
 	defer util.SetRandForTest(594)() // the draws are seedable since #594, so the counts are fixed
 	rareCountWith, rareCountWithout := 0, 0
-	for i := 0; i < 600; i++ {
+	for range 600 {
 		c := New()
 		c.SpeciesId = 1
 		c.Mutations = map[string]int{}

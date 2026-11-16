@@ -57,7 +57,7 @@ func TestAddCompanion_AtCap(t *testing.T) {
 	c := New()
 	// Soft backstop is 5 (the real limit is the Conviction budget, tested
 	// separately). Filling to the backstop and rejecting the next verifies it.
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		ok := c.AddCompanion(CompanionInfo{MobId: 1000 + i, InstanceId: i + 1, Name: "Wolf"})
 		assert.True(t, ok, "add under the soft cap should succeed")
 	}
@@ -253,7 +253,7 @@ func TestCanAffordCompanionIsGone(t *testing.T) {
 	// absence directly rather than leaving a skip that proves nothing. A
 	// skip-only test also trips the repo's own TestNoSkipOnlyPlaceholderTests
 	// guard, which exists for exactly this reason.
-	if _, found := reflect.TypeOf(&Character{}).MethodByName("CanAffordCompanion"); found {
+	if _, found := reflect.TypeFor[*Character]().MethodByName("CanAffordCompanion"); found {
 		t.Fatal("CanAffordCompanion is back. D5 removed it: two ceilings on one " +
 			"pool means the weaker never fires. Companion affordability is now " +
 			"WouldBreachReservationCap(PoolConviction, reserve) plus the " +

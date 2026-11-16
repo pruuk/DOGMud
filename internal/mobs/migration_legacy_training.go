@@ -1,6 +1,7 @@
 package mobs
 
 import (
+	"maps"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -73,15 +74,12 @@ func LegacyTrainingToGains(mobId MobId, saved map[string]int) map[string]int {
 	}
 
 	ts, ss := &tmpl.Character.Stats, &sp.Stats
-	authored := (ts.Strength.Base - ss.Strength.Base) +
-		(ts.Dexterity.Base - ss.Dexterity.Base) +
-		(ts.Perception.Base - ss.Perception.Base) +
-		(ts.Vitality.Base - ss.Vitality.Base) +
-		(ts.Willpower.Base - ss.Willpower.Base) +
-		(ts.Charisma.Base - ss.Charisma.Base)
-	if authored < 0 {
-		authored = 0
-	}
+	authored := max((ts.Strength.Base-ss.Strength.Base)+
+		(ts.Dexterity.Base-ss.Dexterity.Base)+
+		(ts.Perception.Base-ss.Perception.Base)+
+		(ts.Vitality.Base-ss.Vitality.Base)+
+		(ts.Willpower.Base-ss.Willpower.Base)+
+		(ts.Charisma.Base-ss.Charisma.Base), 0)
 
 	gainsTotal := savedTotal - authored - tmpl.StatPool
 	if gainsTotal <= 0 {
@@ -99,10 +97,7 @@ func LegacyTrainingToGains(mobId MobId, saved map[string]int) map[string]int {
 	scale := float64(gainsTotal) / float64(savedTotal)
 	assigned := 0
 	for _, s := range StatNames {
-		v := int(math.Round(float64(saved[s]) * scale))
-		if v < 0 {
-			v = 0
-		}
+		v := max(int(math.Round(float64(saved[s])*scale)), 0)
 		out[s] = v
 		assigned += v
 	}
@@ -130,8 +125,6 @@ func LegacyTrainingToGains(mobId MobId, saved map[string]int) map[string]int {
 
 func copyStatMap(in map[string]int) map[string]int {
 	out := make(map[string]int, len(in))
-	for k, v := range in {
-		out[k] = v
-	}
+	maps.Copy(out, in)
 	return out
 }

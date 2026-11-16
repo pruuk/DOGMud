@@ -51,7 +51,7 @@ func TestSteal_AttackerScoreIsLinearRankTimesSkillWeight(t *testing.T) {
 	actor := newStealPlayerActor(5, 100) // 5 + 100x5 = 505
 
 	succeeded := 0
-	for i := 0; i < trials; i++ {
+	for range trials {
 		target.Character.Gold = 50
 		mobs.SetInstanceForTest(instId, target)
 		delete(actor.char.Cooldowns, skills.Skullduggery.String("steal"))
@@ -83,7 +83,7 @@ func TestSteal_DefenderSkullduggeryIsTheCounterCraft(t *testing.T) {
 	actor := newStealPlayerActor(110, 2)
 
 	detected := 0
-	for i := 0; i < trials; i++ {
+	for range trials {
 		target.Character.Gold = 50
 		mobs.SetInstanceForTest(instId, target)
 		delete(actor.char.Cooldowns, skills.Skullduggery.String("steal"))
@@ -122,7 +122,7 @@ func TestSteal_ContainerObserverPassScoresLinear(t *testing.T) {
 	defer room.RemoveMob(instId)
 
 	detected := 0
-	for i := 0; i < trials; i++ {
+	for range trials {
 		room.Containers["chest"] = rooms.Container{Gold: 100}
 		delete(actor.char.Cooldowns, skills.Skullduggery.String("steal"))
 		if Steal(actor, StealOptions{ContainerNoun: "chest"}).Detected {
@@ -150,7 +150,7 @@ func TestPlant_AttackerScoreIsLinearRankTimesSkillWeight(t *testing.T) {
 	actor := newPlantPlayerActor(5, 100) // 505 linear; ~80 under the dead regime
 
 	planted := 0
-	for i := 0; i < trials; i++ {
+	for range trials {
 		actor.char.Items = nil
 		seedPlantItem(actor)
 		delete(actor.char.Cooldowns, skills.Skullduggery.String("steal"))
@@ -179,7 +179,7 @@ func TestPlant_DefenderSkullduggeryIsTheCounterCraft(t *testing.T) {
 	actor := newPlantPlayerActor(110, 2)
 
 	detected := 0
-	for i := 0; i < trials; i++ {
+	for range trials {
 		actor.char.Items = nil
 		seedPlantItem(actor)
 		delete(actor.char.Cooldowns, skills.Skullduggery.String("steal"))

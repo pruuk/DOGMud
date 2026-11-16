@@ -195,7 +195,7 @@ func buildParityAnchor(atkScore, defScore, dmgMean, critMean float64) parityAnch
 	// deflection multiplies and rounds again, and a landing hit floors at 1.
 	steps := int(0.5/a.gDefendStep) + 2
 	a.gDefend = make([]float64, steps)
-	for i := 0; i < steps; i++ {
+	for i := range steps {
 		mult := float64(i) * a.gDefendStep
 		e := 0.0
 		for k := 1; k < len(cleanPMF); k++ {
@@ -211,10 +211,7 @@ func buildParityAnchor(atkScore, defScore, dmgMean, critMean float64) parityAnch
 }
 
 func (a parityAnchor) deflected(mult float64) float64 {
-	i := int(math.Round(mult / a.gDefendStep))
-	if i < 0 {
-		i = 0
-	}
+	i := max(int(math.Round(mult/a.gDefendStep)), 0)
 	if i >= len(a.gDefend) {
 		i = len(a.gDefend) - 1
 	}
@@ -351,7 +348,6 @@ func TestMeleeParityDamagePerSwing(t *testing.T) {
 	}
 
 	for _, cell := range cells {
-		cell := cell
 		t.Run(cell.name, func(t *testing.T) {
 			attacker := parityCombatant(t, "parity attacker")
 			attacker.SetAggro(0, 1, characters.DefaultAttack)

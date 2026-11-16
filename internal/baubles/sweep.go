@@ -3,6 +3,7 @@ package baubles
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"sort"
 	"sync"
 	"time"
@@ -176,9 +177,7 @@ func SnapshotSourcesForTest() (sources map[string]LiveWalk, expected []string) {
 	liveMu.Lock()
 	defer liveMu.Unlock()
 	sources = make(map[string]LiveWalk, len(liveSources))
-	for name, walk := range liveSources {
-		sources[name] = walk
-	}
+	maps.Copy(sources, liveSources)
 	expected = append([]string{}, expectedSources...)
 	return sources, expected
 }
@@ -305,10 +304,7 @@ func LastSweep() SweepStatus {
 
 // SweepInterval is the time between sweeps (Balance.BaubleSweepHours).
 func SweepInterval() time.Duration {
-	h := int(configs.GetBalanceConfig().BaubleSweepHours)
-	if h < 1 {
-		h = 1
-	}
+	h := max(int(configs.GetBalanceConfig().BaubleSweepHours), 1)
 	return time.Duration(h) * time.Hour
 }
 

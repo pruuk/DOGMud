@@ -1,5 +1,7 @@
 package items
 
+import "maps"
+
 // SpecBaseline captures the numeric parts of an item's spec as they were BEFORE
 // any enchantment was applied.
 //
@@ -43,9 +45,7 @@ func CaptureSpecBaseline(spec ItemSpec) *SpecBaseline {
 	}
 	if len(spec.StatMods) > 0 {
 		b.StatMods = make(map[string]int, len(spec.StatMods))
-		for k, v := range spec.StatMods {
-			b.StatMods[k] = v
-		}
+		maps.Copy(b.StatMods, spec.StatMods)
 	}
 	return b
 }
@@ -63,8 +63,6 @@ func (b *SpecBaseline) RestoreInto(spec *ItemSpec) {
 	spec.ConvictionMitigation = b.ConvictionMitigation
 
 	mods := make(map[string]int, len(b.StatMods))
-	for k, v := range b.StatMods {
-		mods[k] = v
-	}
+	maps.Copy(mods, b.StatMods)
 	spec.StatMods = mods
 }

@@ -40,7 +40,7 @@ func TestQuestOpen_NoLimitNeverCaps(t *testing.T) {
 	util.SetRoundCountForTest(1000)
 	q := &quests.Quest{QuestId: 54, Repeatable: true, CooldownRounds: 1}
 	c := &Character{}
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		c.RecordCompletion(q)
 	}
 	util.SetRoundCountForTest(2000)

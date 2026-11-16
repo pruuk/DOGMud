@@ -41,7 +41,7 @@ func TestCalculateCombatDoesNotDiscardDefenderCharges(t *testing.T) {
 	def.Stamina = 500
 
 	before := def.Stamina
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		plan := buildAttackPlan(atk, def)
 		_ = calculateCombat(atk, def, User, Mob, plan, combatContext{
 			sourceSight: messaging.SightFull, targetSight: messaging.SightFull,

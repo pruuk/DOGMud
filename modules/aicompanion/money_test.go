@@ -69,7 +69,7 @@ func TestStoredTextIsCapped(t *testing.T) {
 // first few only.
 func TestToolCallsPerReplyAreCapped(t *testing.T) {
 	var calls []string
-	for i := 0; i < 12; i++ {
+	for i := range 12 {
 		calls = append(calls, fmt.Sprintf(`{"id":"c%d","type":"function","function":{"name":"recall","arguments":"{}"}}`, i))
 	}
 	raw := `{"choices":[{"finish_reason":"tool_calls","message":{"tool_calls":[` + strings.Join(calls, `,`) + `]}}],"usage":{"total_tokens":10}}`
@@ -117,7 +117,7 @@ func TestRelayErrorReplyCarriesNoBody(t *testing.T) {
 // most in it, not whoever spoke last.
 func TestConversationPayerIsWhoSaidTheMost(t *testing.T) {
 	m, c := senderModule(`https://api.example.invalid`, true)
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		m.noteConversation(c, 7, `Bram`, 2, Line{Speaker: `Bram`, Kind: `said`, Text: fmt.Sprintf(`line %d`, i)})
 	}
 	m.noteConversation(c, 7, `Ilse`, 3, Line{Speaker: `Ilse`, Kind: `said`, Text: `bye`})
@@ -125,7 +125,7 @@ func TestConversationPayerIsWhoSaidTheMost(t *testing.T) {
 		t.Fatalf("the one who said the most pays, got user %d", p)
 	}
 	m.noteConversation(c, 7, `Ilse`, 3, Line{Speaker: `Ilse`, Kind: `said`, Text: `a`})
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		m.noteConversation(c, 7, `Ilse`, 3, Line{Speaker: `Ilse`, Kind: `said`, Text: `b`})
 	}
 	if p := c.convo.payer(); p != 3 {
@@ -355,7 +355,7 @@ func TestPanickedBackgroundCallsSettle(t *testing.T) {
 		m.fw().SetConsumerBreakerForTest(apiframework.ConsumerCompanion, 0, time.Now().Add(-time.Second))
 		now := time.Now().Unix()
 		util.LockMud()
-		for i := 0; i < 6; i++ {
+		for i := range 6 {
 			c.mind.addLine(Line{Speaker: `Corvin`, Kind: `said`, Text: fmt.Sprintf(`line %d`, i), Unix: now}, 50)
 		}
 		start(m, c)
@@ -464,7 +464,7 @@ func TestCompanionAIStrangersDefaultWording(t *testing.T) {
 		if len(sent) != 1 {
 			t.Fatalf("%q: one reply, got %q", arg, sent)
 		}
-		for _, line := range strings.Split(strings.TrimRight(sent[0], "\n"), "\n") {
+		for line := range strings.SplitSeq(strings.TrimRight(sent[0], "\n"), "\n") {
 			if n := len([]rune(ansiTag.ReplaceAllString(line, ``))); n > 80 {
 				t.Fatalf("%q: a line of %d columns: %q", arg, n, line)
 			}
@@ -533,7 +533,7 @@ func TestFirstBootSeedsTheOldAllowancesOnce(t *testing.T) {
 	old := budgetState{Day: day, Tokens: 900, Calls: 4,
 		Owners: map[int]int{5: 1200}, Strangers: map[int]int{2: 300}, StrangersFor: map[int]int{5: 300},
 		Notices: map[int]int{5: 2}}
-	for boot := 0; boot < 2; boot++ { // a second boot reading the same old file seeds nothing more
+	for boot := range 2 { // a second boot reading the same old file seeds nothing more
 		m.restoreBudget(old)
 		if ownerSpent(m, 5) != 1200 || strangerSpent(m, 2) != 300 || strangersForSpent(m, 5) != 300 || serverSpent(m) != 900 {
 			t.Fatalf("boot %d: owner=%d stranger=%d perOwner=%d server=%d",
@@ -824,7 +824,7 @@ func TestBackgroundHoldsIncludeTheSchema(t *testing.T) {
 	m, c := senderModule(srv.URL, true)
 	m.minds = map[string]*Mind{mindIdentifier(c.mind.OwnerUserId, c.mind.MobId): c.mind}
 	now := time.Now().Unix()
-	for i := 0; i < 6; i++ {
+	for i := range 6 {
 		c.mind.addLine(Line{Speaker: `Corvin`, Kind: `said`, Text: fmt.Sprintf(`line %d`, i), Unix: now}, 50)
 	}
 	start := map[string]func(){
@@ -870,7 +870,7 @@ func TestWorstCaseHoldsFullToolAnswers(t *testing.T) {
 		t.Fatalf("one round of questions: %d, want %d", oneRound, want)
 	}
 	long := make([]chatMessage, 0, maxToolCallsPerReply)
-	for i := 0; i < maxToolCallsPerReply; i++ {
+	for range maxToolCallsPerReply {
 		long = append(long, chatMessage{Role: `tool`, Content: strings.Repeat(`𝄞`, maxToolAnswerRunes)})
 	}
 	if got := estimateTokens(long); got > answers {

@@ -2,7 +2,9 @@
 package hooks
 
 import (
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -43,10 +45,7 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 
 	allMobInstances := mobs.GetAllMobInstanceIds()
 
-	allowedUnloadCt := len(allMobInstances) - int(mc.MobUnloadThreshold)
-	if allowedUnloadCt < 0 {
-		allowedUnloadCt = 0
-	}
+	allowedUnloadCt := max(len(allMobInstances)-int(mc.MobUnloadThreshold), 0)
 
 	// Handle idle mob behavior
 	tStart := time.Now()
@@ -205,11 +204,12 @@ func advanceMobPath(mob *mobs.Mob) bool {
 	if currentStep != nil && currentStep.RoomId() != mob.Character.RoomId {
 		reDoWaypoints := mob.Path.Waypoints()
 		if len(reDoWaypoints) > 0 {
-			newCommand := `pathto`
+			var newCommand strings.Builder
+			newCommand.WriteString(`pathto`)
 			for _, wpInt := range reDoWaypoints {
-				newCommand += ` ` + strconv.Itoa(wpInt)
+				newCommand.WriteString(` ` + strconv.Itoa(wpInt))
 			}
-			mob.Command(newCommand)
+			mob.Command(newCommand.String())
 			return true
 		}
 		// if we were unable to come up with a new path, send them home.
@@ -226,11 +226,8 @@ func advanceMobPath(mob *mobs.Mob) bool {
 			// default mob walking. The noop pushes lastCommandTurn forward
 			// so the next path step waits ~1.5s. ~1 step per 5.5s real
 			// instead of per 4s, visible in flavor without being painful.
-			for _, g := range mob.Groups {
-				if g == "caravan" {
-					mob.Command("noop", 1.5)
-					break
-				}
+			if slices.Contains(mob.Groups, "caravan") {
+				mob.Command("noop", 1.5)
 			}
 			return true
 		}

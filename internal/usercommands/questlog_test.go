@@ -232,7 +232,7 @@ func TestHelpQuestsNamesFocusAndAbandon(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, txt, "quests focus <name>")
 	require.Contains(t, txt, "quests abandon <name>")
-	for _, ln := range strings.Split(txt, "\n") {
+	for ln := range strings.SplitSeq(txt, "\n") {
 		require.LessOrEqual(t, len([]rune(stripAnsiTags(ln))), 80, ln)
 	}
 }
@@ -253,7 +253,7 @@ func TestSendQuestLogLine_WrapsToTheReader(t *testing.T) {
 	SendQuestLogLine(u, true, line)
 	msgs := events.DrainQueuedMessagesForTest(u.UserId)
 	require.Len(t, msgs, 1)
-	for _, ln := range strings.Split(strings.TrimRight(msgs[0], "\r\n"), "\n") {
+	for ln := range strings.SplitSeq(strings.TrimRight(msgs[0], "\r\n"), "\n") {
 		require.LessOrEqual(t, len([]rune(stripAnsiTags(strings.TrimRight(ln, "\r")))), 80, ln)
 	}
 }

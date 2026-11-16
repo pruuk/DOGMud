@@ -480,7 +480,7 @@ func TestStolenRecognitionRollPitsEyesAgainstHands(t *testing.T) {
 
 	rate := func(owner, carrier *characters.Character) int {
 		won := 0
-		for i := 0; i < 400; i++ {
+		for range 400 {
 			if stolenRecognitionRoll(owner, carrier, room) {
 				won++
 			}
@@ -499,7 +499,7 @@ func TestReturnShare_ThreeReturnsEqualOneCatch(t *testing.T) {
 	for catch := 1; catch <= 40; catch++ {
 		for prior := 0; prior < 12; prior += 3 {
 			sum := 0
-			for i := 0; i < 3; i++ {
+			for i := range 3 {
 				share := returnShare(prior+i, catch, 3)
 				assert.Less(t, share, catch+1)
 				if catch >= 3 {
@@ -559,7 +559,7 @@ func TestStolenBauble_ReturnsEarnBackACatch(t *testing.T) {
 		rec, _ := baubles.Get(it.Bauble)
 		assert.False(t, rec.Hot(stolenTestNow), "given back, it cools")
 	}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		give()
 	}
 	assert.Equal(t, []int{1, 2, 2}, h.bumps)
@@ -648,7 +648,7 @@ func TestStolenBauble_AReturnWorthNothingStillCounts(t *testing.T) {
 	configs.SetConfigForTest(t, cfg)
 	pinStolenClock(t, stolenTestNow)
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		it := stolenBauble(t, "Glass Marble", "marble", 4, 2, 1, stolenTestNow.Add(-time.Hour))
 		StolenBaubleGiven(h.giver, merchantInstance(), it)
 	}
@@ -906,15 +906,15 @@ func TestEveryTownHasAFenceNearby(t *testing.T) {
 		require.NoError(t, err)
 		// Decoded loosely: mob files carry fields of many shapes, and only
 		// three matter here.
-		var mob map[string]interface{}
+		var mob map[string]any
 		require.NoError(t, yaml.Unmarshal(data, &mob), f)
-		groups, _ := mob[`groups`].([]interface{})
+		groups, _ := mob[`groups`].([]any)
 		for _, g := range groups {
 			if g != `fence` {
 				continue
 			}
 			name := f
-			if c, ok := mob[`character`].(map[interface{}]interface{}); ok {
+			if c, ok := mob[`character`].(map[any]any); ok {
 				if n, ok := c[`name`].(string); ok {
 					name = n
 				}
@@ -932,7 +932,7 @@ func TestEveryTownHasAFenceNearby(t *testing.T) {
 			} else {
 				assert.NotEmpty(t, craft, "%s: a fence that was already a trader keeps its craft_support", name)
 			}
-			shop, _ := mob[`character`].(map[interface{}]interface{})[`shop`].([]interface{})
+			shop, _ := mob[`character`].(map[any]any)[`shop`].([]any)
 			assert.NotEmpty(t, shop, "%s: a fence keeps a shop", name)
 			zone := filepath.Base(filepath.Dir(f))
 			fencesIn[zone] = append(fencesIn[zone], name)

@@ -454,8 +454,8 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						} else {
 							// Determine salvage type from ItemUuid prefix.
 							const corpsePrefix = "corpse:"
-							if strings.HasPrefix(sd.ItemUuid, corpsePrefix) {
-								mobIdStr := strings.TrimPrefix(sd.ItemUuid, corpsePrefix)
+							if after, ok := strings.CutPrefix(sd.ItemUuid, corpsePrefix); ok {
+								mobIdStr := after
 								_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
 									Trigger: activity.TriggerSalvageComplete,
 									Actor:   user.Character.Activity.Self(),

@@ -15,7 +15,7 @@ import (
 // pays.
 func benchTable() TemplateTable {
 	rows := make([][]string, 0, 20)
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		rows = append(rows, []string{"spell" + strconv.Itoa(i), "Aurora of the Slumbering Deep", "group", "12"})
 	}
 	return GetTable("Spells", []string{"SpellId", "Name", "Target", "Cost"}, rows)

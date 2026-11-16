@@ -291,9 +291,7 @@ func TestCharacter_SetMiscData(t *testing.T) {
 			c := New()
 			if tt.initialData != nil {
 				c.MiscData = make(map[string]any)
-				for k, v := range tt.initialData {
-					c.MiscData[k] = v
-				}
+				maps.Copy(c.MiscData, tt.initialData)
 			}
 			c.SetMiscData(tt.key, tt.value)
 			val, ok := c.MiscData[tt.key]
@@ -358,9 +356,7 @@ func TestCharacter_GetMiscData(t *testing.T) {
 			c := New()
 			if tt.initialData != nil {
 				c.MiscData = make(map[string]any)
-				for k, v := range tt.initialData {
-					c.MiscData[k] = v
-				}
+				maps.Copy(c.MiscData, tt.initialData)
 			} else {
 				c.MiscData = nil
 			}
@@ -552,9 +548,7 @@ func TestCharacter_SetKey(t *testing.T) {
 			c := New()
 			if tt.initialKeys != nil {
 				c.KeyRing = make(map[string]string)
-				for k, v := range tt.initialKeys {
-					c.KeyRing[k] = v
-				}
+				maps.Copy(c.KeyRing, tt.initialKeys)
 			} else {
 				c.KeyRing = nil
 			}
@@ -604,9 +598,7 @@ func TestCharacter_GetSpells(t *testing.T) {
 			c := New()
 			if tt.spellBook != nil {
 				c.SpellBook = make(map[string]int)
-				for k, v := range tt.spellBook {
-					c.SpellBook[k] = v
-				}
+				maps.Copy(c.SpellBook, tt.spellBook)
 			} else {
 				c.SpellBook = nil
 			}
@@ -689,9 +681,7 @@ func TestCharacter_HasSpell(t *testing.T) {
 			c := New()
 			if tt.spellBook != nil {
 				c.SpellBook = make(map[string]int)
-				for k, v := range tt.spellBook {
-					c.SpellBook[k] = v
-				}
+				maps.Copy(c.SpellBook, tt.spellBook)
 			} else {
 				c.SpellBook = nil
 			}
@@ -764,9 +754,7 @@ func TestCharacter_DisableSpell(t *testing.T) {
 			c := New()
 			if tt.initialBook != nil {
 				c.SpellBook = make(map[string]int)
-				for k, v := range tt.initialBook {
-					c.SpellBook[k] = v
-				}
+				maps.Copy(c.SpellBook, tt.initialBook)
 			} else {
 				c.SpellBook = nil
 			}
@@ -843,9 +831,7 @@ func TestCharacter_EnableSpell(t *testing.T) {
 			c := New()
 			if tt.initialBook != nil {
 				c.SpellBook = make(map[string]int)
-				for k, v := range tt.initialBook {
-					c.SpellBook[k] = v
-				}
+				maps.Copy(c.SpellBook, tt.initialBook)
 			} else {
 				c.SpellBook = nil
 			}
@@ -922,9 +908,7 @@ func TestCharacter_TrackSpellCast(t *testing.T) {
 			c := New()
 			if tt.initialBook != nil {
 				c.SpellBook = make(map[string]int)
-				for k, v := range tt.initialBook {
-					c.SpellBook[k] = v
-				}
+				maps.Copy(c.SpellBook, tt.initialBook)
 			} else {
 				c.SpellBook = nil
 			}
@@ -991,9 +975,7 @@ func TestCharacter_LearnSpell(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := New()
-			for k, v := range tt.initialBook {
-				c.SpellBook[k] = v
-			}
+			maps.Copy(c.SpellBook, tt.initialBook)
 			got := c.LearnSpell(tt.spellName)
 			assert.Equal(t, tt.wantChanged, got)
 			val, exists := c.SpellBook[tt.spellName]
@@ -1362,9 +1344,7 @@ func TestCharacter_GetAllSkillRanks(t *testing.T) {
 			c := New()
 			if tt.skills != nil {
 				c.Skills = make(map[string]int)
-				for k, v := range tt.skills {
-					c.Skills[k] = v
-				}
+				maps.Copy(c.Skills, tt.skills)
 			} else {
 				c.Skills = nil
 			}
@@ -1605,9 +1585,7 @@ func TestCharacter_PruneCooldowns(t *testing.T) {
 			c := New()
 			if tt.initial != nil {
 				c.Cooldowns = make(Cooldowns)
-				for k, v := range tt.initial {
-					c.Cooldowns[k] = v
-				}
+				maps.Copy(c.Cooldowns, tt.initial)
 			} else {
 				c.Cooldowns = nil
 			}
@@ -1676,9 +1654,7 @@ func TestCharacter_GetCooldown(t *testing.T) {
 			c := New()
 			if tt.cooldowns != nil {
 				c.Cooldowns = make(Cooldowns)
-				for k, v := range tt.cooldowns {
-					c.Cooldowns[k] = v
-				}
+				maps.Copy(c.Cooldowns, tt.cooldowns)
 			} else {
 				c.Cooldowns = nil
 			}
@@ -1731,9 +1707,7 @@ func TestCharacter_GetAllCooldowns(t *testing.T) {
 			c := New()
 			if tt.cooldowns != nil {
 				c.Cooldowns = make(Cooldowns)
-				for k, v := range tt.cooldowns {
-					c.Cooldowns[k] = v
-				}
+				maps.Copy(c.Cooldowns, tt.cooldowns)
 			} else {
 				c.Cooldowns = nil
 			}
@@ -1812,9 +1786,7 @@ func TestCharacter_SetSetting(t *testing.T) {
 			c := New()
 			if tt.initial != nil {
 				c.Settings = make(map[string]string)
-				for k, v := range tt.initial {
-					c.Settings[k] = v
-				}
+				maps.Copy(c.Settings, tt.initial)
 			} else {
 				c.Settings = nil
 			}
@@ -1873,9 +1845,7 @@ func TestCharacter_GetSetting(t *testing.T) {
 			c := New()
 			if tt.initial != nil {
 				c.Settings = make(map[string]string)
-				for k, v := range tt.initial {
-					c.Settings[k] = v
-				}
+				maps.Copy(c.Settings, tt.initial)
 			} else {
 				c.Settings = nil
 			}

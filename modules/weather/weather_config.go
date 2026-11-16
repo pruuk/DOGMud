@@ -91,10 +91,9 @@ func stringOr(v any, def string) string {
 // buildConfig resolves config from a getter, applying defaults and sanity
 // clamps so a partial or hand-mangled overlay still yields a usable module.
 func buildConfig(get getter) Config {
-	seed := intOr(get("Seed"), 0)
-	if seed < 0 {
-		seed = 0 // negative would wrap via uint64(); treat as "derive from world"
-	}
+	seed := max(intOr(get("Seed"), 0),
+		// negative would wrap via uint64(); treat as "derive from world"
+		0)
 
 	c := Config{
 		Enabled:            asBool(get("Enabled")),

@@ -129,7 +129,7 @@ func TestRollChance(t *testing.T) {
 
 	hits := 0
 	const n = 20000
-	for i := 0; i < n; i++ {
+	for range n {
 		if rollChance(3, util.Rand) {
 			hits++
 		}
@@ -264,7 +264,7 @@ func TestFeatureSearchedOncePerWindow(t *testing.T) {
 	hit := always(0)
 
 	// Spend the room's two rolls.
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if _, found := RollFind(FindOpts{Place: room, Randn: hit, Now: t0}); !found {
 			t.Fatalf("room roll %d", i)
 		}

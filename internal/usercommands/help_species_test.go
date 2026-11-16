@@ -35,7 +35,7 @@ func TestGetHelpContents_SpeciesRendersSpeciesDetail(t *testing.T) {
 	// The unarmed attack shows its name only: the empty "()" that followed it
 	// (the damage dice, empty for every species) is gone (plan 4, decision 5).
 	unarmed := ""
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		if strings.Contains(line, "Unarmed:") {
 			unarmed = line
 		}

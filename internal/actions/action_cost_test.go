@@ -132,7 +132,6 @@ func TestAdmitFullCost_PlayerAndMobCommitOneFractionalCharge(t *testing.T) {
 	}
 	results := make([]characters.CostCommitResult, len(tests))
 	for i, tc := range tests {
-		i, tc := i, tc
 		t.Run(tc.name, func(t *testing.T) {
 			result := admitFullCost(tc.actor, costs.ActionTaunt, characters.PoolConviction, 1.5)
 			results[i] = result

@@ -1,5 +1,7 @@
 package ambient
 
+import "maps"
+
 // ResetForTest empties the budget, the visits, the repeat memory and the telemetry and returns
 // a restore func. For tests in any package.
 func ResetForTest() func() {
@@ -48,9 +50,7 @@ func MovesForTest(roomId int) map[MoveKind]int {
 	defer telMu.Unlock()
 	out := map[MoveKind]int{}
 	if rc := telRooms[roomId]; rc != nil {
-		for k, v := range rc.moves {
-			out[k] = v
-		}
+		maps.Copy(out, rc.moves)
 	}
 	return out
 }

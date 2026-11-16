@@ -52,7 +52,7 @@ func TestCalcSpellDamage_DampenedSuppressed(t *testing.T) {
 	const iters = 200
 
 	var normalSum int
-	for i := 0; i < iters; i++ {
+	for range iters {
 		normalSum += calcSpellDamageForCharacter(spellData, newCaster(), newTarget(), 10, false)
 	}
 
@@ -66,7 +66,7 @@ func TestCalcSpellDamage_DampenedSuppressed(t *testing.T) {
 	}
 
 	var dampSum int
-	for i := 0; i < iters; i++ {
+	for range iters {
 		dampSum += calcSpellDamageForCharacter(spellData, damp, newTarget(), 10, false)
 	}
 

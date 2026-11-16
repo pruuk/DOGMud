@@ -2,6 +2,8 @@ package keywords
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"sort"
 	"strings"
 
@@ -143,13 +145,11 @@ func (a *Aliases) Filepath() string {
 func GetAllHelpTopics() []string {
 	helpTopics := []string{}
 
-	for helpCommand, _ := range loadedKeywords.helpTopics {
+	for helpCommand := range loadedKeywords.helpTopics {
 		helpTopics = append(helpTopics, helpCommand)
 	}
 
-	sort.Slice(helpTopics, func(i, j int) bool {
-		return helpTopics[i] < helpTopics[j]
-	})
+	slices.Sort(helpTopics)
 
 	return helpTopics
 }
@@ -170,9 +170,7 @@ func GetAllHelpTopicInfo() []HelpTopic {
 func GetAllCommandAliases() map[string]string {
 
 	ret := map[string]string{}
-	for alias, command := range loadedKeywords.commandAliases {
-		ret[alias] = command
-	}
+	maps.Copy(ret, loadedKeywords.commandAliases)
 
 	return ret
 }
@@ -180,9 +178,7 @@ func GetAllCommandAliases() map[string]string {
 func GetAllHelpAliases() map[string]string {
 
 	ret := map[string]string{}
-	for alias, command := range loadedKeywords.helpAliases {
-		ret[alias] = command
-	}
+	maps.Copy(ret, loadedKeywords.helpAliases)
 
 	return ret
 }
@@ -191,14 +187,10 @@ func GetAllLegendAliases(area ...string) map[rune]string {
 
 	ret := map[rune]string{}
 
-	for symbol, name := range loadedKeywords.mapLegendOverrides[`*`] {
-		ret[symbol] = name
-	}
+	maps.Copy(ret, loadedKeywords.mapLegendOverrides[`*`])
 
 	if len(area) > 0 {
-		for symbol, name := range loadedKeywords.mapLegendOverrides[strings.ToLower(area[0])] {
-			ret[symbol] = name
-		}
+		maps.Copy(ret, loadedKeywords.mapLegendOverrides[strings.ToLower(area[0])])
 	}
 
 	return ret

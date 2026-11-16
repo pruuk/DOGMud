@@ -26,10 +26,7 @@ func (c *Character) ApplyIntrinsicMutations(sp *species.Species) {
 		c.Mutations = make(map[string]int)
 	}
 	for id, intrinsicRank := range sp.IntrinsicMutations {
-		combined := c.Mutations[id] + intrinsicRank
-		if combined > MutationMaxRank {
-			combined = MutationMaxRank
-		}
+		combined := min(c.Mutations[id]+intrinsicRank, MutationMaxRank)
 		c.Mutations[id] = combined
 	}
 }

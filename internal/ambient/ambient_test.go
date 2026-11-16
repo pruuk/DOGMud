@@ -56,7 +56,7 @@ func sorted(ids []int) []int {
 
 func TestPlan_BudgetOffDeliversToEveryone(t *testing.T) {
 	room := seedAmbientRoom(t, 0, nil, listenA, listenB)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		r := Plan(Line{Room: room, Source: SourceRoomIdle})
 		if len(r.Exclude) != 0 || !slices.Equal(sorted(r.Delivered), []int{listenA, listenB}) {
 			t.Fatalf("budget 0, line %d: exclude %v delivered %v, want everyone", i, r.Exclude, r.Delivered)
@@ -293,7 +293,7 @@ func TestPlan_RepeatOffSwitches(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			room := seedAmbientRoom(t, 0, nil, listenA)
 			pinRepeat(t, tc.limit, tc.window)
-			for i := 0; i < 3; i++ {
+			for i := range 3 {
 				if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: tc.key}); !slices.Equal(r.Delivered, []int{listenA}) {
 					t.Fatalf("send %d: delivered %v, want the listener every time", i, r.Delivered)
 				}

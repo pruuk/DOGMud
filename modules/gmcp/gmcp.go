@@ -270,7 +270,7 @@ func (g *GMCPModule) HandleIAC(connectionId uint64, iacCmd []byte) bool {
 		//mudlog.Debug("Received", "type", "GMCP", "size", len(iacCmd), "data", string(requestBody))
 
 		spaceAt := 0
-		for i := 0; i < len(requestBody); i++ {
+		for i := range requestBody {
 			if requestBody[i] == 32 {
 				spaceAt = i
 				break

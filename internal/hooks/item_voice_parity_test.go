@@ -148,7 +148,7 @@ func runVoiceParity(t *testing.T, room *rooms.Room, itemId int, slot string) str
 	_ = events.DrainQueuedMessagesForTest(u.UserId)
 
 	var b strings.Builder
-	for i := 0; i < voiceParityRounds; i++ {
+	for i := range voiceParityRounds {
 		util.SetRoundCountForTest(uint64(voiceParityFirst + i))
 		switch i {
 		case voiceParityFightAt:
@@ -177,7 +177,7 @@ func voiceRecordSections(t *testing.T) map[string][]string {
 	}
 	out := map[string][]string{}
 	name := ``
-	for _, line := range strings.Split(strings.TrimRight(string(data), "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.TrimRight(string(data), "\n"), "\n") {
 		if strings.HasPrefix(line, "## ") {
 			name = strings.Fields(line)[1]
 			continue

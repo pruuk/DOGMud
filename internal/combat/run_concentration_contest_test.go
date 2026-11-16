@@ -15,7 +15,7 @@ func TestRunConcentrationContest_FloorFlipsBothTails(t *testing.T) {
 
 	const n = 20000
 	holdsHopeless, holdsMaster := 0, 0
-	for i := 0; i < n; i++ {
+	for range n {
 		if RunConcentrationContest(50, 700).Success {
 			holdsHopeless++
 		}

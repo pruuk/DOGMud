@@ -2,6 +2,7 @@ package parties
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -243,10 +244,8 @@ func (p *Party) New(userId int) *Party {
 func (p *Party) SetAutoAttack(userId int, on bool) bool {
 
 	if on {
-		for _, id := range p.AutoAttackers {
-			if id == userId {
-				return true
-			}
+		if slices.Contains(p.AutoAttackers, userId) {
+			return true
 		}
 		p.AutoAttackers = append(p.AutoAttackers, userId)
 		return false
@@ -293,21 +292,11 @@ func (p *Party) Leave(userId int) bool {
 }
 
 func (p *Party) IsMember(userId int) bool {
-	for _, id := range p.UserIds {
-		if id == userId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(p.UserIds, userId)
 }
 
 func (p *Party) Invited(userId int) bool {
-	for _, id := range p.InviteUserIds {
-		if id == userId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(p.InviteUserIds, userId)
 }
 
 func (p *Party) InvitePlayer(userId int) bool {

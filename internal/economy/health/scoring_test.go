@@ -209,7 +209,7 @@ func TestScore_OverallWeightsShopsHeaviest(t *testing.T) {
 	hist := make([]*health.Snapshot, 0, 24)
 	caravanThornwall := &health.Snapshot{Caravans: []health.CaravanSnapshot{{InstId: 1, State: "thornwall_dwell"}}, Foragers: []health.ForagerSnapshot{{InstId: 7, State: "resting"}}}
 	caravanTransit := &health.Snapshot{Caravans: []health.CaravanSnapshot{{InstId: 1, State: "outbound_transit"}}, Foragers: []health.ForagerSnapshot{{InstId: 7, State: "foraging"}}}
-	for i := 0; i < 24; i++ {
+	for i := range 24 {
 		if i%2 == 0 {
 			hist = append(hist, caravanThornwall)
 		} else {

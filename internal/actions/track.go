@@ -3,6 +3,7 @@ package actions
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -407,13 +408,7 @@ func readRoomTrail(room *rooms.Room, detail trailDetail, excludeUserId int, excl
 		if mId == excludeMobInstId {
 			continue
 		}
-		skip := false
-		for _, curId := range currentMobs {
-			if mId == curId {
-				skip = true
-				break
-			}
-		}
+		skip := slices.Contains(currentMobs, mId)
 		if skip {
 			continue
 		}
@@ -446,13 +441,7 @@ func readRoomTrail(room *rooms.Room, detail trailDetail, excludeUserId int, excl
 		if uId == excludeUserId {
 			continue
 		}
-		skip := false
-		for _, curId := range currentUsers {
-			if uId == curId {
-				skip = true
-				break
-			}
-		}
+		skip := slices.Contains(currentUsers, uId)
 		if skip {
 			continue
 		}
@@ -581,7 +570,7 @@ func findPresentTargetByNoun(viewer *characters.Character, room *rooms.Room, nou
 // target ids. Exit direction is found by scanning adjacent rooms for the
 // strongest trail.
 func lookupAdjacentTrail(room *rooms.Room, targetNoun string, excludeUserId int) (
-	applied bool, miscKey string, miscVal interface{}, dirExit string, targetUserId int, targetMobId int, targetName string,
+	applied bool, miscKey string, miscVal any, dirExit string, targetUserId int, targetMobId int, targetName string,
 ) {
 	// First try users in current room's visitor log.
 	allUserNames := []string{}

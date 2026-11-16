@@ -128,13 +128,13 @@ func loadShippedCrashSiteBosses(t *testing.T) {
 func meanCoreDischargeHit(t *testing.T, sd *spells.SpellData, mobId int, statPool int, target *characters.Character) (mean float64, willpower float64) {
 	t.Helper()
 	total, wil := 0.0, 0.0
-	for s := 0; s < coreDischargeSpawns; s++ {
+	for range coreDischargeSpawns {
 		mob := mobs.NewMobByIdFresh(mobs.MobId(mobId), 0, statPool)
 		if mob == nil {
 			t.Fatalf("NewMobByIdFresh(%d) returned nil", mobId)
 		}
 		wil += float64(sd.CasterStatValue(mob.Character.Stats))
-		for r := 0; r < coreDischargeRollsPerMob; r++ {
+		for range coreDischargeRollsPerMob {
 			total += float64(calcSpellDamageForCharacter(sd, &mob.Character, target, sd.EffectMagnitude, false))
 		}
 	}

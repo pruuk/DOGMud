@@ -1,5 +1,7 @@
 package quests
 
+import "maps"
+
 // SeedQuestsForTest adds qs to the quest registry, replacing any quest with
 // the same id, and returns a function that restores the registry as it was.
 // Test binaries load no quest data, so a test whose subject reads step order
@@ -8,9 +10,7 @@ package quests
 // FOR TEST USE ONLY.
 func SeedQuestsForTest(qs ...*Quest) func() {
 	saved := make(map[int]*Quest, len(quests))
-	for id, q := range quests {
-		saved[id] = q
-	}
+	maps.Copy(saved, quests)
 	for _, q := range qs {
 		quests[q.QuestId] = q
 	}

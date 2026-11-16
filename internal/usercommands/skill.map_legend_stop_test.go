@@ -39,7 +39,7 @@ func TestMapLegendEndsWithoutAStop(t *testing.T) {
 			text = util.ConvertToAscii(text)
 		}
 		var last string
-		for _, l := range strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n") {
+		for l := range strings.SplitSeq(strings.ReplaceAll(text, "\r\n", "\n"), "\n") {
 			if strings.TrimSpace(l) != "" {
 				last = strings.TrimRight(l, " ")
 			}

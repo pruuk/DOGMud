@@ -96,7 +96,7 @@ func TestStealPaysTheThiefsEyes(t *testing.T) {
 		defer mobs.SetInstanceForTest(testMobInstId, nil)
 
 		won := 0
-		for i := 0; i < sightRampTrials; i++ {
+		for range sightRampTrials {
 			// Rank 2 keeps this thief's score fixed; Dex tops it up to 150.
 			actor := newStealPlayerActor(150-int(2*sw), 2)
 			actor.room.Lamp = rooms.LampPtr(lamp)
@@ -117,7 +117,7 @@ func TestStealPaysTheThiefsEyes(t *testing.T) {
 func TestDefusePaysTheDefusersEyes(t *testing.T) {
 	rate := func(lamp int) float64 {
 		won := 0
-		for i := 0; i < sightRampTrials; i++ {
+		for range sightRampTrials {
 			// Perception 45 + rank 3 x 25 = 120 against lock difficulty 12 x 10:
 			// parity when comfortable.
 			actor := newDefuseActor(45, 3)

@@ -12,6 +12,7 @@ package crafting
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -323,11 +324,8 @@ func TestPinnacleAssemblies_IngredientTags(t *testing.T) {
 			}
 			matched := false
 			for _, s := range candidates {
-				for _, vc := range s.VendorCategories {
-					if vc == r.Skill {
-						matched = true
-						break
-					}
+				if slices.Contains(s.VendorCategories, r.Skill) {
+					matched = true
 				}
 				if matched {
 					break

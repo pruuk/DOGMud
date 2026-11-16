@@ -122,7 +122,7 @@ func TestResolveMobSpell_DrainArea_DispatchesToDrainArea(t *testing.T) {
 
 	var bossHealthAfter int
 	allHit := false
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		boss := mobs.GetInstance(9562)
 		require.NotNil(t, boss)
 		boss.Character.Health = 500 // well below max so the heal is observable

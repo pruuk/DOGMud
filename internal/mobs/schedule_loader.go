@@ -218,7 +218,7 @@ func validateScheduleStandalone(s *Schedule) error {
 	// exactly one segment.
 	hourOwner := [24]int{} // value = 1-based segment index that claims this hour; 0 = unclaimed
 	for i, seg := range s.Segments {
-		for h := 0; h < 24; h++ {
+		for h := range 24 {
 			if !segContainsHour(&seg, h) {
 				continue
 			}
@@ -274,7 +274,7 @@ func validateScheduleAgainstWorld(s *Schedule, roomExists func(int) bool, hasPat
 	})
 
 	n := len(sorted)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		fromRoom := sorted[i].TargetRoom
 		toRoom := sorted[(i+1)%n].TargetRoom
 		if fromRoom == 0 || toRoom == 0 {

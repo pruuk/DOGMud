@@ -69,8 +69,8 @@ func buildGrid(zoneName string, width, height, firstId int) []rooms.Room {
 		return firstId + row*width + col
 	}
 
-	for row := 0; row < height; row++ {
-		for col := 0; col < width; col++ {
+	for row := range height {
+		for col := range width {
 			id := cellId(col, row)
 			r := rooms.Room{
 				RoomId:      id,

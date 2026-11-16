@@ -1,6 +1,8 @@
 package health
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -493,9 +495,9 @@ func InputRateScore(zone string, cur *Snapshot, history []*Snapshot, cfg Scoring
 	}
 	cutoff := cur.Round - roundsPerDay
 	var prev *Snapshot
-	for i := len(history) - 1; i >= 0; i-- {
-		if history[i].Round <= cutoff {
-			prev = history[i]
+	for _, h := range slices.Backward(history) {
+		if h.Round <= cutoff {
+			prev = h
 			break
 		}
 	}
@@ -516,10 +518,7 @@ func InputRateScore(zone string, cur *Snapshot, history []*Snapshot, cfg Scoring
 				break
 			}
 		}
-		delta := s.RestockCount - prevRestock
-		if delta < 0 {
-			delta = 0
-		}
+		delta := max(s.RestockCount-prevRestock, 0)
 		mt := meanRarityTier(s.Stock)
 		inputWeighted += float64(delta) * float64(mt)
 	}
@@ -536,10 +535,7 @@ func InputRateScore(zone string, cur *Snapshot, history []*Snapshot, cfg Scoring
 			}
 		}
 		for tier, n := range f.DeliveriesByTier {
-			d := n - prevDeliv[tier]
-			if d < 0 {
-				d = 0
-			}
+			d := max(n-prevDeliv[tier], 0)
 			inputWeighted += float64(d) * float64(tier)
 		}
 	}
@@ -575,9 +571,9 @@ func buildInputRateRow(zone string, score float64, cur *Snapshot, history []*Sna
 	}
 	cutoff := cur.Round - roundsPerDay
 	var prev *Snapshot
-	for i := len(history) - 1; i >= 0; i-- {
-		if history[i].Round <= cutoff {
-			prev = history[i]
+	for _, h := range slices.Backward(history) {
+		if h.Round <= cutoff {
+			prev = h
 			break
 		}
 	}
@@ -598,10 +594,7 @@ func buildInputRateRow(zone string, score float64, cur *Snapshot, history []*Sna
 				break
 			}
 		}
-		delta := s.RestockCount - prevRestock
-		if delta < 0 {
-			delta = 0
-		}
+		delta := max(s.RestockCount-prevRestock, 0)
 		mt := meanRarityTier(s.Stock)
 		restockWeighted += float64(delta) * float64(mt)
 		row.ItemsPerDay += float64(delta)
@@ -630,10 +623,7 @@ func buildInputRateRow(zone string, score float64, cur *Snapshot, history []*Sna
 			}
 		}
 		for tier, n := range f.DeliveriesByTier {
-			d := n - prevDeliv[tier]
-			if d < 0 {
-				d = 0
-			}
+			d := max(n-prevDeliv[tier], 0)
 			foragerWeighted += float64(d) * float64(tier)
 			row.ItemsPerDay += float64(d)
 			row.TierMix[tier] += float64(d)
@@ -875,10 +865,7 @@ func ScoreWithConfig(cur *Snapshot, history []*Snapshot, cfg ScoringConfig) Scor
 	var caravanCount int
 	for _, c := range cur.Caravans {
 		cycles := CountCaravanCycles(c.InstId, history)
-		expected := len(history) / 24
-		if expected < 1 {
-			expected = 1
-		}
+		expected := max(len(history)/24, 1)
 
 		// LbsDelivered delta over the window (guard uint64 underflow).
 		var deliveredInWindow uint64
@@ -935,10 +922,7 @@ func ScoreWithConfig(cur *Snapshot, history []*Snapshot, cfg ScoringConfig) Scor
 			continue
 		}
 		cycles := CountForagerCycles(f.InstId, history)
-		expected := len(history) / 8
-		if expected < 1 {
-			expected = 1
-		}
+		expected := max(len(history)/8, 1)
 
 		var deliveredInWindow uint64
 		if len(history) > 0 {

@@ -1,6 +1,8 @@
 package gmcp
 
 import (
+	"strings"
+
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -40,7 +42,8 @@ func (g *GMCPGameModule) onJoinLeave(e events.Event) events.ListenerReturn {
 
 	tFormat := string(c.TextFormats.Time)
 
-	whoPayload := `"Who": { "Players": [`
+	var whoPayload strings.Builder
+	whoPayload.WriteString(`"Who": { "Players": [`)
 
 	infoPayloads := map[int]string{}
 
@@ -50,19 +53,19 @@ func (g *GMCPGameModule) onJoinLeave(e events.Event) events.ListenerReturn {
 		infoPayloads[user.UserId] = `"Info": { "logintime": "` + user.GetConnectTime().Format(tFormat) + `", "name": "` + string(c.Server.MudName) + `" }`
 
 		if pCt > 0 {
-			whoPayload += `, `
+			whoPayload.WriteString(`, `)
 		}
 		pCt++
 
-		whoPayload += `{ "name": "` + user.Character.Name + `", "title": "` + user.Role + `"}`
+		whoPayload.WriteString(`{ "name": "` + user.Character.Name + `", "title": "` + user.Role + `"}`)
 	}
-	whoPayload += `] }`
+	whoPayload.WriteString(`] }`)
 
 	for userId, infoStr := range infoPayloads {
 		events.AddToQueue(GMCPOut{
 			UserId:  userId,
 			Module:  `Game`,
-			Payload: `{ ` + infoStr + `, ` + whoPayload + ` }`,
+			Payload: `{ ` + infoStr + `, ` + whoPayload.String() + ` }`,
 		})
 	}
 

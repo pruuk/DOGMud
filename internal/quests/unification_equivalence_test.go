@@ -284,7 +284,7 @@ func chdirRepoRootForTest(t *testing.T) {
 		t.Fatal(err)
 	}
 	root := wd
-	for i := 0; i < 6; i++ {
+	for range 6 {
 		if _, err := os.Stat(filepath.Join(root, "go.mod")); err == nil {
 			break
 		}

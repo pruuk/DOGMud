@@ -124,7 +124,7 @@ func TestWrapAnsiEmbeddedNewlineIsAHardBreak(t *testing.T) {
 // normalizer's duplicate-word stage has nothing to collapse.
 func numberedWords(start, count int) []string {
 	words := make([]string, 0, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		words = append(words, fmt.Sprintf("w%02d", start+i))
 	}
 	return words

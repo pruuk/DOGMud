@@ -78,20 +78,20 @@ func migrate_RollCharacterStats() error {
 		}
 
 		// Parse as generic map to preserve all fields
-		var userMap map[string]interface{}
+		var userMap map[string]any
 		if err := yaml.Unmarshal(data, &userMap); err != nil {
 			return fmt.Errorf("failed to parse %s: %w", userFilePath, err)
 		}
 
 		// Check if character exists
-		charData, hasChar := userMap["character"].(map[interface{}]interface{})
+		charData, hasChar := userMap["character"].(map[any]any)
 		if !hasChar {
 			mudlog.Info("Migration 0.11.0", "file", userFilePath, "message", "no character data, skipping")
 			continue
 		}
 
 		// Check if stats exist
-		statsData, hasStats := charData["stats"].(map[interface{}]interface{})
+		statsData, hasStats := charData["stats"].(map[any]any)
 		if !hasStats {
 			mudlog.Info("Migration 0.11.0", "file", userFilePath, "message", "no stats data, skipping")
 			continue
@@ -105,7 +105,7 @@ func migrate_RollCharacterStats() error {
 		statNames := []string{"strength", "dexterity", "perception", "vitality", "willpower", "charisma"}
 
 		for _, statName := range statNames {
-			if statInfo, exists := statsData[statName].(map[interface{}]interface{}); exists {
+			if statInfo, exists := statsData[statName].(map[any]any); exists {
 				if baseVal, hasBase := statInfo["base"]; hasBase {
 					if base, ok := baseVal.(int); ok && base >= 10 {
 						needsRolling = false
@@ -136,7 +136,7 @@ func migrate_RollCharacterStats() error {
 		}
 
 		for statName, rolledValue := range statNamesWithRolls {
-			if statInfo, exists := statsData[statName].(map[interface{}]interface{}); exists {
+			if statInfo, exists := statsData[statName].(map[any]any); exists {
 				oldBase := 1
 				if baseVal, hasBase := statInfo["base"]; hasBase {
 					if base, ok := baseVal.(int); ok {
@@ -149,7 +149,7 @@ func migrate_RollCharacterStats() error {
 				changed = true
 			} else {
 				// Stat doesn't exist, create it
-				statsData[statName] = map[interface{}]interface{}{
+				statsData[statName] = map[any]any{
 					"base": rolledValue,
 				}
 				mudlog.Info("Migration 0.11.0", "file", userFilePath, "stat", statName,

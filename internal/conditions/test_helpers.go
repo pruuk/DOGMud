@@ -1,5 +1,7 @@
 package conditions
 
+import "maps"
+
 // SeedConditionsForTest replaces the global conditions map with the supplied test data
 // and returns a cleanup function that restores the original.
 // Intended for cross-package integration tests (hooks, commands).
@@ -44,8 +46,6 @@ func SeedConditionRecordsForTest() func() {
 		for _, r := range records {
 			delete(conditions, r.ConditionId)
 		}
-		for id, old := range replaced {
-			conditions[id] = old
-		}
+		maps.Copy(conditions, replaced)
 	}
 }

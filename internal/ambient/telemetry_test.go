@@ -56,7 +56,7 @@ func TestTelemetry_OnCountsAndWritesOneLinePerRoom(t *testing.T) {
 
 	ChargeForTest(listenA, ambNow+5)
 	Plan(Line{Room: room, Source: SourceMobChatter}) // A suppressed, B delivered
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		CountMove(ambRoom, MoveIdle)
 	}
 	CountMove(ambRoom, MovePath)

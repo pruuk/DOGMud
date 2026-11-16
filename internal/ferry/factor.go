@@ -2,6 +2,7 @@ package ferry
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/caravan"
@@ -436,8 +437,7 @@ func bankLeftoverCargo(factor *mobs.Mob, dockRoomId int) {
 		return
 	}
 	banked := 0
-	for i := len(factor.Character.Items) - 1; i >= 0; i-- {
-		it := factor.Character.Items[i]
+	for _, it := range slices.Backward(factor.Character.Items) {
 		if warehouse.Deposit(dock.Zone, it.ItemId, 1) {
 			factor.Character.RemoveItem(it)
 			banked++

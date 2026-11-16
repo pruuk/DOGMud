@@ -52,7 +52,7 @@ type fakeOpenAI struct {
 	modStatus      int          // when set, the moderation endpoint answers this status
 	flagWord       string       // when set, any moderation input containing it is flagged
 	lastModeration atomic.Value // the last moderation inputs, newline-joined
-	moderations    int32        // moderation calls made, status answered or not
+	moderations    atomic.Int32 // moderation calls made, status answered or not
 	hang           bool         // chat calls answer only after a second
 	chats          int32
 	lastBody       atomic.Value
@@ -81,7 +81,7 @@ func newFakeOpenAI(t *testing.T) *fakeOpenAI {
 			}
 			_ = json.NewEncoder(w).Encode(resp)
 		case strings.HasSuffix(r.URL.Path, `/moderations`):
-			atomic.AddInt32(&f.moderations, 1)
+			f.moderations.Add(1)
 			if f.modStatus != 0 {
 				w.WriteHeader(f.modStatus)
 				return
@@ -321,7 +321,7 @@ func TestARefusedBaubleModelNeverPausesTheCompanion(t *testing.T) {
 	f := newFakeOpenAI(t)
 	f.status = 404
 	m := testModule(t, f, nil) // breaker at 3
-	for i := 0; i < 6; i++ {
+	for range 6 {
 		_, _ = m.generate(context.Background(), request())
 	}
 	if n := atomic.LoadInt32(&f.chats); n != 3 {
@@ -415,7 +415,7 @@ func TestATimeoutCountsACancelDoesNot(t *testing.T) {
 	f := newFakeOpenAI(t)
 	f.hang = true
 	m := testModule(t, f, nil) // breaker at 3
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 		_, _ = m.generate(ctx, request())
 		cancel()
@@ -440,7 +440,7 @@ func TestUnusableRepliesPauseBaublesOnly(t *testing.T) {
 	f := newFakeOpenAI(t)
 	f.content = `{"name":"x"}` // parses as JSON, is no bauble
 	m := testModule(t, f, nil)
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		_, _ = m.generate(context.Background(), request())
 	}
 	if n := atomic.LoadInt32(&f.chats); n != 3 {
@@ -835,10 +835,10 @@ func TestFailedChecksOpenTheModerationBreakerAlone(t *testing.T) {
 	}
 
 	f.modStatus = 0
-	checks := atomic.LoadInt32(&f.moderations)
+	checks := f.moderations.Load()
 	relay.allowed[7] = true
 	res, err := m.generate(context.Background(), request())
-	if err != nil || !res.FinderOnly || res.Moderated || atomic.LoadInt32(&f.moderations) != checks {
+	if err != nil || !res.FinderOnly || res.Moderated || f.moderations.Load() != checks {
 		t.Fatalf("with the breaker open, the finder's text is kept to them, unchecked: %+v %v", res, err)
 	}
 	relay.allowed[7] = false
@@ -1006,7 +1006,7 @@ func TestAFinderOverTheirAllowanceGetsNoName(t *testing.T) {
 	relay := &fakeRelay{allowed: map[int]bool{7: true}, model: `player-model`, provider: newFakeOpenAI(t)}
 	apiframework.SetRelay(relay)
 	apiframework.Shared().SetAllowanceForTest(apiframework.DimBaublesFinder, 7, m.snapshot().DailyTokensPerUser)
-	for i := 0; i < 4; i++ { // more refusals in a row than testModule's BreakerErrors (3)
+	for range 4 { // more refusals in a row than testModule's BreakerErrors (3)
 		_, err := m.generate(context.Background(), request())
 		if !errors.Is(err, apiframework.ErrOverAllowance) || apiframework.RefusedBy(err) != apiframework.DimBaublesFinder {
 			t.Fatalf("over the allowance, and it says whose: %v", err)

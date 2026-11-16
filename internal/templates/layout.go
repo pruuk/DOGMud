@@ -15,34 +15,34 @@ func DynamicList(itmNames []NameDescription, colWidth, sw, numWidth, longestName
 		return `<ansi fg="202">No items to display.</ansi>`
 	}
 
-	strOut := ``
+	var strOut strings.Builder
 	totalLen := 0
 	for idx, itm := range itmNames {
 
 		if totalLen+colWidth > sw {
-			strOut += term.CRLFStr
+			strOut.WriteString(term.CRLFStr)
 			totalLen = 0
 		}
 
 		numStr := strconv.Itoa(idx + 1)
 
-		strOut += ` `
+		strOut.WriteString(` `)
 
 		if itm.Marked {
-			strOut += `<ansi fg="white-bold" bg="059">`
+			strOut.WriteString(`<ansi fg="white-bold" bg="059">`)
 		}
 
-		strOut += strings.Repeat(` `, numWidth-len(numStr)) + fmt.Sprintf(`<ansi fg="red-bold">%s</ansi>`, strconv.Itoa(idx+1)) + `. ` +
-			fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi>`, itm.Name) + strings.Repeat(` `, longestName-len(itm.Name))
+		strOut.WriteString(strings.Repeat(` `, numWidth-len(numStr)) + fmt.Sprintf(`<ansi fg="red-bold">%s</ansi>`, strconv.Itoa(idx+1)) + `. ` +
+			fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi>`, itm.Name) + strings.Repeat(` `, longestName-len(itm.Name)))
 
 		if itm.Marked {
-			strOut += `</ansi>`
+			strOut.WriteString(`</ansi>`)
 		}
 
-		strOut += ` `
+		strOut.WriteString(` `)
 
 		totalLen += colWidth
 
 	}
-	return strOut
+	return strOut.String()
 }

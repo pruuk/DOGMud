@@ -55,7 +55,7 @@ func TestBestOf_FullTieIsDeterministicAcrossRepeatedCalls(t *testing.T) {
 	if first.Skill != "weapon-combat" {
 		t.Errorf("winner = %q, want weapon-combat -- a full tie resolves on slice order", first.Skill)
 	}
-	for i := 0; i < 2000; i++ {
+	for i := range 2000 {
 		got, ok := progression.BestOf(cands)
 		if !ok || got != first {
 			t.Fatalf("call %d returned (%+v, %v), want the stable (%+v, true)", i, got, ok, first)

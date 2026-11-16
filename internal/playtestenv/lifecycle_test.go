@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -145,12 +146,7 @@ func (r *lifecycleRunner) classify(joined string, spec CommandSpec) {
 }
 
 func containsEvent(events []string, want string) bool {
-	for _, e := range events {
-		if e == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(events, want)
 }
 
 func writeStdout(spec CommandSpec, s string) {

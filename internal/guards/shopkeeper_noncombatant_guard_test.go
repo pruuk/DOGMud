@@ -17,8 +17,8 @@ type keeperMobFields struct {
 	NonCombatant bool     `yaml:"non_combatant"`
 	Groups       []string `yaml:"groups"`
 	Character    struct {
-		Name string        `yaml:"name"`
-		Shop []interface{} `yaml:"shop"`
+		Name string `yaml:"name"`
+		Shop []any  `yaml:"shop"`
 	} `yaml:"character"`
 }
 

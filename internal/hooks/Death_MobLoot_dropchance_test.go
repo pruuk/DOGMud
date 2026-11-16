@@ -66,7 +66,7 @@ func TestDropMobLoot_ItemDropChanceZeroNeverDrops(t *testing.T) {
 		"100":        dropChancePtr(100),
 	} {
 		var sum [4]int
-		for i := 0; i < kills; i++ {
+		for range kills {
 			h, b, tr, g := kill(chance)
 			sum[0] += h
 			sum[1] += b

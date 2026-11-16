@@ -291,10 +291,7 @@ func calcSwingCount(sourceChar *characters.Character, weapon items.Item, weaponS
 	swings *= sourceChar.GetPositionSpeedMultiplier()
 
 	// Round to nearest int, minimum 1
-	result := int(math.Round(swings))
-	if result < 1 {
-		result = 1
-	}
+	result := max(int(math.Round(swings)), 1)
 
 	// Recovering record: caps swings (1 today; the record's literal). Zero
 	// means no cap is held.
@@ -436,10 +433,7 @@ func calcDualWieldPenalty(sourceChar *characters.Character, weapIdx, wieldedWeap
 	dualWieldLevel := sourceChar.GetSkillLevel(skills.WeaponCombat)
 
 	penaltyReduction := float64(dualWieldLevel) / float64(bal.DualWieldPenaltyRankDivisor)
-	penalty := int(float64(bal.DualWieldPenaltyBase) - (penaltyReduction * float64(bal.DualWieldPenaltyReduction)))
-	if penalty < int(bal.DualWieldPenaltyFloor) {
-		penalty = int(bal.DualWieldPenaltyFloor)
-	}
+	penalty := max(int(float64(bal.DualWieldPenaltyBase)-(penaltyReduction*float64(bal.DualWieldPenaltyReduction))), int(bal.DualWieldPenaltyFloor))
 	// Escalating penalty per swing slot beyond the offhand.
 	if weapIdx >= 2 {
 		penalty += (weapIdx - 1) * int(bal.DualWieldPenaltyPerExtraArm)
@@ -2134,10 +2128,7 @@ func applyPetDamage(result *AttackResult, sourceChar *characters.Character, targ
 	var petAttacks int
 	var petBaseDmg, petVar float64
 	if petDmg.BaseDamage > 0 {
-		petAttacks = petDmg.Attacks
-		if petAttacks < 1 {
-			petAttacks = 1
-		}
+		petAttacks = max(petDmg.Attacks, 1)
 		petBaseDmg = float64(petDmg.BaseDamage)
 		petVar = float64(petDmg.Variance)
 	} else {

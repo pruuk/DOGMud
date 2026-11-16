@@ -180,7 +180,7 @@ func TestExecuteTaunt_CriticalStillReachable(t *testing.T) {
 	t.Cleanup(func() { mobs.SetInstanceForTest(tauntTargetInstanceId, nil) })
 
 	crits, hitsNoCrit, misses, fumbles, notExecuted := 0, 0, 0, 0, 0
-	for i := 0; i < tauntIterations; i++ {
+	for i := range tauntIterations {
 		// Fresh pair every iteration. ExecuteTaunt fires OnSkillUse after the
 		// roll, which can reach IncreaseStat -> RecalculateStats and drift the
 		// scores the arithmetic above is computed from. Rebuilding removes the

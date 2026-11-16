@@ -35,7 +35,7 @@ func TestColorizeLegendLine_DeepWaterTagHasNoSpace(t *testing.T) {
 // letter's pass after the other symbol's.
 func TestColorizeLegendLine_NeverRewritesInsideATag(t *testing.T) {
 	legend := map[rune]string{'≈': "Deep Water", 'm': "Mine"}
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		got := ColorizeLegendLine("≈m", legend)
 		assert.Equal(t,
 			`<ansi fg="map-room"><ansi fg="map-deep-water" bg="mapbg-deep-water">≈</ansi></ansi>`+

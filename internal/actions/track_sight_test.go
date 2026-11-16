@@ -54,7 +54,7 @@ func TestTrack_PresentCreatureIsNamedOnlyWithFullSight(t *testing.T) {
 			// leak: the in-room lines are the ones under test and neither
 			// may fire. Fresh, because each track spends a cooldown.
 			sent := ""
-			for i := 0; i < 20; i++ {
+			for range 20 {
 				a := newTrackFakeActor("Tracker", room, true, actor.userId)
 				Track(a, TrackOptions{TargetNoun: "scout"})
 				sent += trackSightSent(a) + "\n"

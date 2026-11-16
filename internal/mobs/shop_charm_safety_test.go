@@ -55,7 +55,7 @@ func TestShopMobsCannotBeCharmed(t *testing.T) {
 		// YAML parse would drag the whole MobSpec schema (and its validation)
 		// into a test that only asks one question about three keys.
 		var covered, charmImmune, nonCombatant bool
-		for _, line := range strings.Split(string(raw), "\n") {
+		for line := range strings.SplitSeq(string(raw), "\n") {
 			// The shop block is INDENTED under a parent key, so match the
 			// trimmed line rather than a prefix. A prefix match silently found
 			// zero shop mobs, and the empty-set guard below is what caught it.

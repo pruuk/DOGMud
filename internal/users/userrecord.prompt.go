@@ -195,10 +195,7 @@ func renderVitalBar(current, max, reserved int) string {
 	}
 	usableBlocks := 10 - reservedBlocks
 
-	filledBlocks := int(math.Floor(float64(current) / float64(effectiveMax) * float64(usableBlocks)))
-	if filledBlocks > usableBlocks {
-		filledBlocks = usableBlocks
-	}
+	filledBlocks := min(int(math.Floor(float64(current)/float64(effectiveMax)*float64(usableBlocks))), usableBlocks)
 	if filledBlocks < 0 {
 		filledBlocks = 0
 	}
@@ -451,7 +448,7 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 	promptLen := len(promptStr)
 	tagStartPos := -1
 
-	for i := 0; i < promptLen; i++ {
+	for i := range promptLen {
 		if promptStr[i] == '{' {
 			tagStartPos = i
 			continue

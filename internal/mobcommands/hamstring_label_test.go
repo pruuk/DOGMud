@@ -23,7 +23,7 @@ func TestHamstringDefenceLabelUsesTheStoresOwnWords(t *testing.T) {
 		t.Fatalf("read %s: %v", f, err)
 	}
 	store := strings.ToLower(string(raw))
-	for _, word := range strings.Fields(hamstringAttack) {
+	for word := range strings.FieldsSeq(hamstringAttack) {
 		if !strings.Contains(store, word) {
 			t.Errorf("hamstringAttack %q: the word %q appears in no hamstring line in %s", hamstringAttack, word, f)
 		}

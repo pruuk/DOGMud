@@ -239,10 +239,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	// taunt aborts even a winning roll, which is the pre-U6b behaviour made
 	// explicit.
 	if out.AttackerFumble {
-		selfDmg := char.Stats.Charisma.ValueAdj / 10
-		if selfDmg < 1 {
-			selfDmg = 1
-		}
+		selfDmg := max(char.Stats.Charisma.ValueAdj/10, 1)
 		char.ApplyHarm(characters.PoolConviction, selfDmg,
 			state.ActorRef{UserId: char.GetUserId(), MobInstanceId: char.MobInstanceId})
 

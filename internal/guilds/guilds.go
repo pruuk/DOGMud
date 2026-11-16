@@ -2,6 +2,7 @@ package guilds
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 	"unicode"
@@ -147,10 +148,5 @@ func (g *Guild) CanWithdraw(userId int) bool {
 }
 
 func (g *Guild) HasInvite(userId int) bool {
-	for _, id := range g.PendingInvites {
-		if id == userId {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(g.PendingInvites, userId)
 }

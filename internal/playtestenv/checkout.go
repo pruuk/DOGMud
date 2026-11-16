@@ -200,7 +200,7 @@ func requireFile(path string, missingErr error) error {
 // canonical equals "_archive", case-insensitively. It never matches a
 // component that merely contains "_archive" as a substring.
 func hasArchivePathComponent(canonical string) bool {
-	for _, part := range strings.Split(filepath.ToSlash(canonical), "/") {
+	for part := range strings.SplitSeq(filepath.ToSlash(canonical), "/") {
 		if strings.EqualFold(part, "_archive") {
 			return true
 		}

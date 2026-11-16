@@ -58,7 +58,7 @@ func TestExecuteSkillMove_DefendedAttemptDealsPartialDamageWithoutStatus(t *test
 
 	foundPartial := false
 
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		attacker := characters.New()
 		defender := characters.New()
 		// The defender's contest side is now their REAL dodge (seam), so the

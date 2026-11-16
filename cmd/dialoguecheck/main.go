@@ -277,7 +277,7 @@ func run(out io.Writer, o options) (int, error) {
 // parseRetired reads the -retired list of quest ids.
 func parseRetired(list string) (map[int]bool, error) {
 	out := map[int]bool{}
-	for _, f := range strings.Split(list, ",") {
+	for f := range strings.SplitSeq(list, ",") {
 		if f = strings.TrimSpace(f); f == "" {
 			continue
 		}
@@ -304,7 +304,7 @@ func uniq(s []string) []string {
 // then a count per class, and returns the exit status.
 func report(out io.Writer, findings []Finding, zoneList string) int {
 	filter := map[string]bool{}
-	for _, z := range strings.Split(zoneList, ",") {
+	for z := range strings.SplitSeq(zoneList, ",") {
 		if z = strings.TrimSpace(z); z != "" {
 			filter[z] = true
 		}

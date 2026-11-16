@@ -98,10 +98,7 @@ func (c *Character) BloomSeedNewMutation() (string, int) {
 		// Weight = Rarity (1=common … 10=very rare). Bloom biases toward
 		// impactful mutations so higher-rarity specs receive proportionally
 		// more weight (inverse of the natural-discovery pool).
-		w := spec.Rarity
-		if w < 1 {
-			w = 1
-		}
+		w := max(spec.Rarity, 1)
 		if c.MutationRerollBonus > 0 {
 			w = w * w // post-scour: square the Rarity weight, biasing hard toward rare
 		}

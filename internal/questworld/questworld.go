@@ -76,12 +76,7 @@ func Validators() quests.QuestValidators {
 // zoneExists reports whether some template room is in the zone (zone names
 // as rooms store them: "Pothole Coulee").
 func zoneExists(zone string) bool {
-	for _, z := range rooms.GetAllZoneNames() {
-		if z == zone {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(rooms.GetAllZoneNames(), zone)
 }
 
 // gatedRooms is built on the first AreaGatedRoom call of a Validators()

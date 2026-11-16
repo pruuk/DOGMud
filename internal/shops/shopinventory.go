@@ -242,10 +242,7 @@ func (si *ShopInventory) RemoveStockAtRound(itemId int, qty int, round uint64) i
 	if entry == nil || entry.Current <= 0 {
 		return 0
 	}
-	removed := qty
-	if removed > entry.Current {
-		removed = entry.Current
-	}
+	removed := min(qty, entry.Current)
 	entry.Current -= removed
 	if entry.Current == 0 && round > 0 {
 		if si.CurrentDepletion == nil {
@@ -272,10 +269,7 @@ func (si *ShopInventory) Restock() bool {
 		if room <= 0 {
 			continue
 		}
-		add := e.RestockQty
-		if add > room {
-			add = room
-		}
+		add := min(e.RestockQty, room)
 		e.Current += add
 		e.LastGrewRound = now
 		si.RestockCount += add
@@ -312,10 +306,7 @@ func (si *ShopInventory) RestockBuckets(buckets []string) bool {
 		if room <= 0 {
 			continue
 		}
-		add := e.RestockQty
-		if add > room {
-			add = room
-		}
+		add := min(e.RestockQty, room)
 		e.Current += add
 		e.LastGrewRound = now
 		si.RestockCount += add
@@ -358,10 +349,7 @@ func (si *ShopInventory) RestockBaselineTiers() bool {
 		if room <= 0 {
 			continue
 		}
-		add := e.RestockQty
-		if add > room {
-			add = room
-		}
+		add := min(e.RestockQty, room)
 		e.Current += add
 		e.LastGrewRound = now
 		si.RestockCount += add
@@ -405,10 +393,7 @@ func (si *ShopInventory) RestockTier(rarityTier int) bool {
 		if room <= 0 {
 			continue
 		}
-		add := e.RestockQty
-		if add > room {
-			add = room
-		}
+		add := min(e.RestockQty, room)
 		e.Current += add
 		e.LastGrewRound = now
 		si.RestockCount += add

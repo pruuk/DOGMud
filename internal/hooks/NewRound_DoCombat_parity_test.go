@@ -130,7 +130,7 @@ func TestMvM_DefenderReceivesOnCritReceived(t *testing.T) {
 	defMob.Character.Stats.Vitality.ValueAdj = 100
 
 	// 50 trials at p≈0.25 → P(0 successes) ≈ 5.6e-7, vanishingly flaky.
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		defMob.Character.OnCritReceived("physical", 0)
 	}
 

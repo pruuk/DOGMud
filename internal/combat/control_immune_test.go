@@ -51,7 +51,7 @@ func TestExecuteSkillMove_ControlImmuneNeverKnockedDown(t *testing.T) {
 	immune.HealthMax.Value = 100000
 	immune.Health = 100000
 	immune.Mutations = map[string]int{"immovable": 1}
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		if ExecuteSkillMove(params(immune)).KnockedDown {
 			t.Fatal("control-immune defender was knocked down")
 		}

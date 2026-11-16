@@ -247,9 +247,9 @@ func SplitString(input string, lineWidth int) []string {
 	var currentLine string
 	currentLen := 0
 
-	parts := strings.Split(input, "\n")
+	parts := strings.SplitSeq(input, "\n")
 
-	for _, textLine := range parts {
+	for textLine := range parts {
 		words := wordRegex.FindAllString(textLine, -1)
 
 		l := len(words)
@@ -732,8 +732,8 @@ func ParseDiceRoll(dRoll string) (attacks int, dCount int, dSides int, bonus int
 		parts := strings.Split(dRoll, `#`)
 		dRoll = parts[0]
 
-		conditionIds := strings.Split(parts[1], `,`)
-		for _, conditionId := range conditionIds {
+		conditionIds := strings.SplitSeq(parts[1], `,`)
+		for conditionId := range conditionIds {
 			conditionId = strings.TrimSpace(conditionId)
 			conditionIdInt, _ := strconv.Atoi(conditionId)
 			if conditionIdInt != 0 {

@@ -135,7 +135,7 @@ func sampleSurpriseShotDamage(t *testing.T, hidden bool, n int) float64 {
 	require.NotNil(t, target)
 
 	total := 0
-	for i := 0; i < n; i++ {
+	for i := range n {
 		target.Character.Health = surpriseMobHealth
 		char := newSurpriseShooter(hidden)
 		res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")

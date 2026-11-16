@@ -53,7 +53,7 @@ func migrate_SeedWarrenRepFromQuestToken() error {
 			return fmt.Errorf("failed to read %s: %w", userFilePath, err)
 		}
 
-		var userMap map[string]interface{}
+		var userMap map[string]any
 		if err := yaml.Unmarshal(data, &userMap); err != nil {
 			return fmt.Errorf("failed to parse %s: %w", userFilePath, err)
 		}
@@ -73,13 +73,13 @@ func migrate_SeedWarrenRepFromQuestToken() error {
 			continue
 		}
 
-		charData, hasChar := userMap["character"].(map[interface{}]interface{})
+		charData, hasChar := userMap["character"].(map[any]any)
 		if !hasChar {
 			mudlog.Info("Migration 0.13.0", "file", userFilePath, "message", "no character data, skipping")
 			continue
 		}
 
-		questProgressRaw, hasQP := charData["questprogress"].(map[interface{}]interface{})
+		questProgressRaw, hasQP := charData["questprogress"].(map[any]any)
 		if !hasQP {
 			mudlog.Info("Migration 0.13.0", "file", userFilePath, "message", "no questprogress, skipping")
 			continue

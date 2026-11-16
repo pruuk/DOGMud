@@ -1,6 +1,8 @@
 package achievements
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -153,15 +155,8 @@ func ownsPinnacleItem(c *characters.Character, minRarity int) bool {
 		spec := it.GetSpec()
 		return pinnacleEquipTypes[spec.Type] && spec.RarityTier >= minRarity
 	}
-	for _, it := range c.Items {
-		if qualifies(it) {
-			return true
-		}
+	if slices.ContainsFunc(c.Items, qualifies) {
+		return true
 	}
-	for _, it := range c.Equipment.GetAllItems() {
-		if qualifies(it) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(c.Equipment.GetAllItems(), qualifies)
 }

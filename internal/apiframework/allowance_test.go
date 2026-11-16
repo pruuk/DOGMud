@@ -311,7 +311,7 @@ func TestSaveBudgetCopiesEveryMapUnderTheLock(t *testing.T) {
 	stop := make(chan struct{})
 	var progress, round atomic.Int64
 	var wg sync.WaitGroup
-	for g := 0; g < 4; g++ {
+	for g := range 4 {
 		wg.Add(1)
 		go func(g int) {
 			defer wg.Done()
@@ -548,17 +548,15 @@ func TestConcurrentReservationsNeverPassAnAllowanceTogether(t *testing.T) {
 	start := make(chan struct{})
 	var held atomic.Int64
 	var wg sync.WaitGroup
-	for i := 0; i < callers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range callers {
+		wg.Go(func() {
 			<-start
 			if _, err := k.Reserve(ConsumerCompanion, tokens, true, owner); err == nil {
 				held.Add(tokens)
 			} else if RefusedBy(err) != DimCompanionOwner {
 				t.Errorf("refused by the owner's allowance, not %v", err)
 			}
-		}()
+		})
 	}
 	close(start)
 	wg.Wait()

@@ -93,7 +93,7 @@ func TestCollector_WritesSnapshotSurvivesLaterMutation(t *testing.T) {
 	other := &Plugin{name: "other", version: "1.0"}
 
 	// Several entries, so the backing array is not a 1-element special case.
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		c.add(p, savequeue.PendingWrite{Path: fmt.Sprintf("/tmp/p%d.dat", i), Data: []byte("p")})
 	}
 
@@ -116,7 +116,7 @@ func TestCollector_WritesSnapshotSurvivesLaterMutation(t *testing.T) {
 	if len(first) != 8 {
 		t.Fatalf("first snapshot length changed to %d", len(first))
 	}
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		want := fmt.Sprintf("/tmp/p%d.dat", i)
 		if first[i].Path != want {
 			t.Errorf("first snapshot entry %d = %q, want %q", i, first[i].Path, want)

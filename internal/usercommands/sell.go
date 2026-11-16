@@ -43,8 +43,8 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	lower := strings.ToLower(strings.TrimSpace(rest))
 
 	// Detect "all.name" prefix (diku-style).
-	if strings.HasPrefix(lower, "all.") {
-		suffix := strings.TrimPrefix(lower, "all.")
+	if after, ok := strings.CutPrefix(lower, "all."); ok {
+		suffix := after
 		if strings.TrimSpace(suffix) == "" {
 			refusal.Prompt(user, "sell", refusal.What, "sell <item>")
 			return true, nil

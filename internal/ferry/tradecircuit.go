@@ -34,7 +34,7 @@ func (c TradeCircuit) Validate() error {
 	if c.HomePortIdx < 0 || c.HomePortIdx > 1 {
 		return fmt.Errorf(`trade circuit %s HomePortIdx must be 0 or 1`, c.RouteId)
 	}
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if len(c.PortExports[i]) == 0 {
 			return fmt.Errorf(`trade circuit %s port %d has no exports`, c.RouteId, i)
 		}
@@ -155,7 +155,7 @@ func validateTradeCircuits() {
 		if mobs.GetMobSpec(mobs.MobId(c.FactorMobId)) == nil {
 			panic(fmt.Sprintf(`ferry trade circuit %s: factor mob %d does not exist`, id, c.FactorMobId))
 		}
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			for _, itemId := range c.PortExports[i] {
 				if economy.BucketFor(itemId) == `` {
 					panic(fmt.Sprintf(`ferry trade circuit %s: export item %d is unbucketed — delivery would silently skip it`, id, itemId))

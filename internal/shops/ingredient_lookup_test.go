@@ -36,7 +36,7 @@ func TestFindStockedIngredientIsDeterministic(t *testing.T) {
 	if first == nil {
 		t.Fatal("no bottle resolved from a shop stocking three of them")
 	}
-	for i := 0; i < 300; i++ {
+	for range 300 {
 		got := FindStockedIngredient(inv, "bottle")
 		if got == nil || got.ItemId != first.ItemId {
 			t.Fatalf("resolution flipped between identical calls: %d then %v. "+

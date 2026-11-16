@@ -24,7 +24,7 @@ func TestRegression_CritRateNotInflated(t *testing.T) {
 
 	// High skill gap: attacker 200 vs defender 100
 	// Even with large advantage, crit rate should stay ~2.3%
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		_, _, atkRoll, _ := dice.OpposedRollStatRaw(200.0, 100.0)
 		isCrit, _ := dice.CriticalCheck(atkRoll, 2.0, -2.0)
 		if isCrit {
@@ -60,7 +60,7 @@ func TestRegression_FumbleRateSymmetric(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fumbles := 0
-			for i := 0; i < iterations; i++ {
+			for range iterations {
 				_, _, atkRoll, _ := dice.OpposedRollStatRaw(tc.atkStat, tc.defStat)
 				_, isFumble := dice.CriticalCheck(atkRoll, 2.0, -2.0)
 				if isFumble {

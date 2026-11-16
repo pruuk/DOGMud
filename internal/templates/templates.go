@@ -493,7 +493,7 @@ func GetTable(title string, headers []string, rows [][]string, formatting ...[]s
 	}
 
 	// Get the longest element
-	for r := 0; r < rowCt; r++ {
+	for r := range rowCt {
 		rowColCt := len(rows[r])
 		table.TrueCellSize[r] = make([]int, rowColCt)
 

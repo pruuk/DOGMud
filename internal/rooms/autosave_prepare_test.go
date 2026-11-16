@@ -224,7 +224,7 @@ func TestSaveRoomInstance_CancelsAPendingWriteForTheSameRoom(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	overlay := map[string]interface{}{}
+	overlay := map[string]any{}
 	if err := yaml.Unmarshal(raw, &overlay); err != nil {
 		t.Fatal(err)
 	}

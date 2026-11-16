@@ -88,7 +88,7 @@ func EchoInputHandler(clientInput *connections.ClientInput, sharedState map[stri
 // For telnet clients DataIn is a single keystroke (per-character echo), so it
 // is never 35+ chars and never matches — telnet echo is unaffected by design.
 func lineTargetsItemHandle(line string) bool {
-	for _, tok := range strings.Fields(line) {
+	for tok := range strings.FieldsSeq(line) {
 		if !strings.HasPrefix(tok, characters.ItemHandleSigil) {
 			continue
 		}

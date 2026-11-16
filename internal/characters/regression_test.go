@@ -51,7 +51,7 @@ func TestRegression_IsDisabledOnlyChecksHealth(t *testing.T) {
 // where alignment dead code could be reintroduced. The Character struct
 // must not contain an Alignment field.
 func TestRegression_AlignmentFullyRemoved(t *testing.T) {
-	charType := reflect.TypeOf(Character{})
+	charType := reflect.TypeFor[Character]()
 
 	// Verify no field named "Alignment" exists on the Character struct
 	for i := 0; i < charType.NumField(); i++ {
@@ -112,7 +112,7 @@ func TestRegression_StatProgressionTriggersOnUse(t *testing.T) {
 				"%s use count should increment to 1", statName)
 
 			// Multiple uses accumulate
-			for i := 0; i < 10; i++ {
+			for range 10 {
 				c.TrackStatUse(statName)
 			}
 			assert.Equal(t, 11, c.GetStatUseCount(statName),

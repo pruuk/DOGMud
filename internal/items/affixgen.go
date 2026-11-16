@@ -1,7 +1,9 @@
 package items
 
 import (
+	"maps"
 	"math"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -100,9 +102,7 @@ func GenerateAffixedItem(baseItemId int, goldPaid int, scalar float64, goldPerPo
 	// Ensure the StatMods map is freshly allocated so we don't mutate shared data.
 	if specCopy.StatMods != nil {
 		newMods := make(map[string]int, len(specCopy.StatMods))
-		for k, v := range specCopy.StatMods {
-			newMods[k] = v
-		}
+		maps.Copy(newMods, specCopy.StatMods)
 		specCopy.StatMods = newMods
 	} else {
 		specCopy.StatMods = make(map[string]int)
@@ -114,10 +114,7 @@ func GenerateAffixedItem(baseItemId int, goldPaid int, scalar float64, goldPerPo
 		// No budget, return unmodified item.
 		return item
 	}
-	rolledBudget := int(math.Round(dice.RollStat(float64(rawBudget)).Value))
-	if rolledBudget < 1 {
-		rolledBudget = 1
-	}
+	rolledBudget := max(int(math.Round(dice.RollStat(float64(rawBudget)).Value)), 1)
 
 	// Determine item classification for bonus eligibility.
 	isWeapon := baseSpec.Type == Weapon
@@ -163,10 +160,7 @@ func GenerateAffixedItem(baseItemId int, goldPaid int, scalar float64, goldPerPo
 		totalWeight := 0
 		for _, b := range eligible {
 			if b.Cost <= budget {
-				w := weights[b.Name]
-				if w < 1 {
-					w = 1
-				}
+				w := max(weights[b.Name], 1)
 				candidates = append(candidates, weightedCandidate{b, w})
 				totalWeight += w
 			}
@@ -304,12 +298,7 @@ func isSkillMod(name string) bool {
 		"weapon-combat", "unarmed-combat", "skullduggery",
 		"spellcasting", "rhetoric", "manifestation",
 	}
-	for _, s := range skills {
-		if s == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(skills, name)
 }
 
 // getAffixPrefix returns a descriptive prefix based on what type of

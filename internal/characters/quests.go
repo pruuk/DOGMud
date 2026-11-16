@@ -2,6 +2,7 @@ package characters
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -27,19 +28,13 @@ func IsSecretQuest(questId int) bool {
 
 func (c *Character) GetMemoryCapacity() int {
 	// Map is now a free command; memory capacity based on Perception
-	memCap := (c.Stats.Perception.ValueAdj >> 1)
-	if memCap < 0 {
-		memCap = 0
-	}
+	memCap := max((c.Stats.Perception.ValueAdj >> 1), 0)
 	return memCap + 5
 }
 
 func (c *Character) GetMapSprawlCapacity() int {
 	// Map is now a free command; sprawl capacity based on Perception
-	sprawlCap := (c.Stats.Perception.ValueAdj >> 2)
-	if sprawlCap < 0 {
-		sprawlCap = 0
-	}
+	sprawlCap := max((c.Stats.Perception.ValueAdj >> 2), 0)
 	return sprawlCap
 }
 
@@ -95,9 +90,7 @@ func (c *Character) GetQuestProgress() map[int]string {
 	}
 
 	retMap := make(map[int]string)
-	for questId, stepName := range c.QuestProgress {
-		retMap[questId] = stepName
-	}
+	maps.Copy(retMap, c.QuestProgress)
 	return retMap
 }
 

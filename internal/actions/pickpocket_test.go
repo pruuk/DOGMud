@@ -515,7 +515,6 @@ func TestPickpocketFailedRollIsCaughtHoweverThePauseEnds(t *testing.T) {
 		`mark gone`:  {func(h *pocketHarness, p *pocketAttempt) { mobs.SetInstanceForTest(h.mark.InstanceId, nil) }, false, 0, "lose your chance"},
 	}
 	for name, c := range cases {
-		c := c
 		h := setupPocket(t, 9617, 7617)
 		seedPocketRooms(t, h.room, newSearchTestRoom(9695))
 		crimes := stubPocketCrime(t)

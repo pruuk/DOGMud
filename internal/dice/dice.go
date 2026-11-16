@@ -185,7 +185,7 @@ func OpposedSuccessChance(attackerStat, defenderStat, stdDev float64) float64 {
 // min, max: bounds for stat values
 func RollStatArray(count int, mean, stdDev, min, max float64) []int {
 	stats := make([]int, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		stats[i] = RollIntClamped(mean, stdDev, min, max)
 	}
 	return stats

@@ -72,14 +72,14 @@ func TestSmotherActeeLinesAreJudgedAtTheSightBeforeTheSmoke(t *testing.T) {
 	}
 
 	// Several draws, so every variant that names the actor is exercised.
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		hit := readHit(before)
 		require.NotEmpty(t, hit, "the actee must be sent the hit line")
 		require.Contains(t, hit, mobName, "a target who saw the strike reads who struck: %q", hit)
 		require.NotContains(t, hit, "Something", "%q", hit)
 	}
 	sawNamed := false
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		line := readInterrupt(before)
 		require.NotEmpty(t, line, "the actee must be sent the cast_interrupt line")
 		require.NotContains(t, line, "Something", "%q", line)
@@ -91,7 +91,7 @@ func TestSmotherActeeLinesAreJudgedAtTheSightBeforeTheSmoke(t *testing.T) {
 	// This is the defect the before-sight fixes, and it shows the check above
 	// can fail.
 	sawHidden := false
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		hit := readHit(now)
 		require.NotContains(t, hit, mobName, "judged blind, the hit line must hide the actor: %q", hit)
 		sawHidden = sawHidden || strings.Contains(hit, "Something")

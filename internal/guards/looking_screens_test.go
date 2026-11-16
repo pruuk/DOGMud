@@ -440,7 +440,7 @@ func TestLookingWithTheLongestNameRunsPastOnlyOnItsName(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			for _, line := range strings.Split(tags.ReplaceAllString(strings.ReplaceAll(out, "\r\n", "\n"), ""), "\n") {
+			for line := range strings.SplitSeq(tags.ReplaceAllString(strings.ReplaceAll(out, "\r\n", "\n"), ""), "\n") {
 				got := templates.WidestLine(line)
 				if got <= width {
 					continue
@@ -542,7 +542,7 @@ func TestRoomViewUnitsStayWhole(t *testing.T) {
 				t.Fatal(err)
 			}
 			plain := tags.ReplaceAllString(strings.ReplaceAll(out, "\r\n", "\n"), "")
-			for _, line := range strings.Split(plain, "\n") {
+			for line := range strings.SplitSeq(plain, "\n") {
 				if w := templates.WidestLine(line); w > width && !(width == 30 && lone.MatchString(line)) {
 					t.Errorf("%s at %d has a line %d wide: %q\n%s", tc.name, width, w, line, plain)
 				}

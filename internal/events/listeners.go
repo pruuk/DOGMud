@@ -2,6 +2,7 @@ package events
 
 import (
 	"runtime/debug"
+	"slices"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -127,9 +128,9 @@ func RegisterListener(emptyEvent any, cbFunc Listener, qFlag ...QueueFlag) Liste
 
 		insertPosition := 0
 
-		for idx := len(eventListeners[eType]) - 1; idx >= 0; idx-- {
+		for idx, v := range slices.Backward(eventListeners[eType]) {
 			// If we're looking at a "final" listener, we can't go any farther down the list
-			if !eventListeners[eType][idx].isFinal {
+			if !v.isFinal {
 				insertPosition = idx + 1
 				break
 			}

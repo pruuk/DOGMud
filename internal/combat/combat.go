@@ -413,7 +413,7 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 
 		critThreshold := calcCritThreshold(sourceChar, targetChar, ws.weapon)
 
-		for j := 0; j < swingCount; j++ {
+		for j := range swingCount {
 
 			mudlog.Debug(`calculateCombat`, `Swing`, fmt.Sprintf(`%d/%d`, j+1, swingCount), `Weapon`, ws.weaponName, `Source`, fmt.Sprintf(`%s (%s)`, sourceChar.Name, sourceType), `Target`, fmt.Sprintf(`%s (%s)`, targetChar.Name, targetType))
 

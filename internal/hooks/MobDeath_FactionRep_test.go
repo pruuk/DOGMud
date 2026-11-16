@@ -703,7 +703,7 @@ func TestMobDeathFactionRep_UnknownAssaultTwoKillers(t *testing.T) {
 			name = "witnessed kill"
 		}
 		t.Run(name, func(t *testing.T) {
-			for run := 0; run < 20; run++ {
+			for run := range 20 {
 				setupFactionsForHookTest(t)
 				const roomId = 467
 				room, cleanupRoom := seedHookRoom(t, roomId)

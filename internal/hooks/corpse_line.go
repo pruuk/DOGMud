@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -53,10 +55,5 @@ func announceCorpse(room *rooms.Room, identity string, excludeUserIds ...int) {
 const corpseLineAnonymous = "Some " + rooms.RemainsWord + " lie where they fell."
 
 func corpseLineExcluded(uid int, excluded []int) bool {
-	for _, e := range excluded {
-		if e == uid {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(excluded, uid)
 }

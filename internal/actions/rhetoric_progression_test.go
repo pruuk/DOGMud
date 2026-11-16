@@ -287,7 +287,7 @@ func TestTauntAffordableDefendedPaysOnceAndConsumesNoisyAction(t *testing.T) {
 	// rand.Seed has been a no-op since Go 1.20 unless GODEBUG=randseednop=0 is
 	// set, which this file does not set, so each iteration is an independent
 	// draw -- which is what makes retrying until a non-fumble work.
-	for attempt := 0; attempt < 20; attempt++ {
+	for range 20 {
 		actor, char, target := newRhetoricActor(t, false, 10, 0)
 		hideRhetoricActor(t, char)
 		startTargetConviction := target.Conviction

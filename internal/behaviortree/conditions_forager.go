@@ -6,6 +6,8 @@ package behaviortree
 // ForagerProfile lookup pattern as actions_forager.go.
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/forager"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -43,13 +45,7 @@ func condMobCanSafelyEngage(
 		return Failure
 	}
 	// Prey whitelist check.
-	prey := false
-	for _, id := range profile.PreyWhitelist {
-		if int(target.MobId) == id {
-			prey = true
-			break
-		}
-	}
+	prey := slices.Contains(profile.PreyWhitelist, int(target.MobId))
 	if !prey {
 		return Failure
 	}

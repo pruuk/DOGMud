@@ -52,13 +52,13 @@ func renameTipsConfigOptionInDir(usersDir string, dryRun bool) error {
 			return fmt.Errorf("failed to read %s: %w", path, err)
 		}
 
-		var userMap map[string]interface{}
+		var userMap map[string]any
 		if err := yaml.Unmarshal(raw, &userMap); err != nil {
 			mudlog.Warn("Migration 0.18.0", "file", filepath.Base(path), "error", err)
 			continue
 		}
 
-		opts, ok := userMap["configoptions"].(map[interface{}]interface{})
+		opts, ok := userMap["configoptions"].(map[any]any)
 		if !ok {
 			continue
 		}

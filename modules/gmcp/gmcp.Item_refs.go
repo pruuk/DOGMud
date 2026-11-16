@@ -7,6 +7,7 @@ package gmcp
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -60,12 +61,7 @@ func scanItemReferencesWith(itemId int, it refIterators) []itemRef {
 }
 
 func containsInt(s []int, v int) bool {
-	for _, x := range s {
-		if x == v {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s, v)
 }
 
 // scanItemReferences wires the real world iterators. Recipe INGREDIENTS reference

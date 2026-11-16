@@ -16,7 +16,7 @@ import (
 func roundForHour(hour int) int {
 	c := configs.GetTimingConfig()
 	rpd := int(c.RoundsPerDay)
-	for r := 0; r < rpd; r++ {
+	for r := range rpd {
 		hourFloat, _ := math.Modf(float64(r) / float64(rpd) * 24)
 		if int(hourFloat) == hour {
 			return r + rpd // offset by rpd so we never send round 0
@@ -142,7 +142,6 @@ func TestCondTimeOfDay_Range_AfterWindow(t *testing.T) {
 func TestCondTimeOfDay_Range_WrapAroundMidnight_Success(t *testing.T) {
 	// range "21-6": covers 21,22,0,1,2,3,4 — all representable.
 	for _, hour := range []int{21, 22, 0, 1, 4} {
-		hour := hour
 		t.Run("", func(t *testing.T) {
 			defer mustHour(t, hour)()
 
@@ -157,7 +156,6 @@ func TestCondTimeOfDay_Range_WrapAroundMidnight_Success(t *testing.T) {
 func TestCondTimeOfDay_Range_WrapAroundMidnight_Failure(t *testing.T) {
 	// range "21-6": hours 6,7,8,...,20 are outside — use 6,7,8,13,19.
 	for _, hour := range []int{6, 7, 8, 13, 19} {
-		hour := hour
 		t.Run("", func(t *testing.T) {
 			defer mustHour(t, hour)()
 

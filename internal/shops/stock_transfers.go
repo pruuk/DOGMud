@@ -1,5 +1,7 @@
 package shops
 
+import "maps"
+
 import "sort"
 
 // SelectStockTransfers decides how many of each item to pull from `pool` into
@@ -27,15 +29,10 @@ func SelectStockTransfers(shopInv *ShopInventory, pool map[int]int) map[int]int 
 		return gaps[a].itemId < gaps[b].itemId
 	})
 	remaining := map[int]int{}
-	for id, n := range pool {
-		remaining[id] = n
-	}
+	maps.Copy(remaining, pool)
 	out := map[int]int{}
 	for _, g := range gaps {
-		take := g.gap
-		if take > remaining[g.itemId] {
-			take = remaining[g.itemId]
-		}
+		take := min(g.gap, remaining[g.itemId])
 		if take > 0 {
 			out[g.itemId] = take
 			remaining[g.itemId] -= take

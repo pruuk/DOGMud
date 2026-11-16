@@ -11,8 +11,6 @@ const (
 	CharmExpiredRevert  = `emote reverts to its old ways`
 )
 
-var ()
-
 type CharmInfo struct {
 	UserId          int    // Charmed or serving a player?
 	RoundsRemaining int    // If -1, never expires

@@ -1,6 +1,8 @@
 package catalog
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	goals "github.com/GoMudEngine/GoMud/internal/goals"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -98,11 +100,8 @@ func factionMembersInZone(mob *mobs.Mob, factionId string) int {
 		if inst.InstanceId == mob.InstanceId {
 			continue // don't count self
 		}
-		for _, fid := range factions.FactionsForMob(inst) {
-			if fid == factionId {
-				count++
-				break
-			}
+		if slices.Contains(factions.FactionsForMob(inst), factionId) {
+			count++
 		}
 	}
 	return count

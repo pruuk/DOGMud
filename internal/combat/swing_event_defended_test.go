@@ -20,7 +20,7 @@ func TestSwingEvent_DefendedIsPerSwingThroughCalculateCombat(t *testing.T) {
 	atk, def := swingDefencePopulationCombatants()
 
 	const maxRounds = 5000
-	for i := 0; i < maxRounds; i++ {
+	for i := range maxRounds {
 		atk.Stamina, def.Stamina, def.Health = 1000, 500, 5000
 		plan := buildAttackPlan(atk, def)
 		res := calculateCombat(atk, def, User, Mob, plan, combatContext{

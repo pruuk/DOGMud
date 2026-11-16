@@ -20,7 +20,7 @@ func helpParagraphs(t *testing.T, name string) []string {
 	data, err := os.ReadFile(filepath.Join("..", "..", "_datafiles", "world", "dogmud", "templates", "help", name+".template"))
 	require.NoError(t, err)
 	var out []string
-	for _, p := range strings.Split(strings.ReplaceAll(string(data), "\r\n", "\n"), "\n\n") {
+	for p := range strings.SplitSeq(strings.ReplaceAll(string(data), "\r\n", "\n"), "\n\n") {
 		out = append(out, strings.Join(strings.Fields(helpTagRe.ReplaceAllString(p, "")), " "))
 	}
 	return out

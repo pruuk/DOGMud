@@ -138,7 +138,7 @@ var conditionApplyPathAllowlist = map[string]string{
 
 	// ── mob holders: no client, so no line could reach anyone ───────────────
 	"internal/usercommands/character.go|437":         "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
-	"internal/behaviortree/actions_item_proc.go|419": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
+	"internal/behaviortree/actions_item_proc.go|410": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
 	"internal/hooks/manifester_companions.go|40":     "the holder is a MOB (a summoned companion), not a player",
 
 	// ── secret conditions: silence is the authored intent ───────────────────
@@ -150,7 +150,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/hooks/Awareness_Cascades.go|76": "condition 9 must be applied PERMANENT so the awareness state machine owns its lifecycle; the event path has no permanent form, and the transition callback holds only a Character",
 
 	// ── routing would narrate the wrong thing, or narrate it repeatedly ─────
-	"internal/hooks/pinnacle_tick.go|360": "holdAmbient holds a slotted potion's condition as a permanent record while the bandolier is worn, as worn items' conditions are; the pinnacle announces attunement once itself, so the potion's own start line is not wanted",
+	"internal/hooks/pinnacle_tick.go|357": "holdAmbient holds a slotted potion's condition as a permanent record while the bandolier is worn, as worn items' conditions are; the pinnacle announces attunement once itself, so the potion's own start line is not wanted",
 	"internal/justice/arrest.go|643":      "RestoreJailOnLogin re-applies an already-running sentence after the RemoveCondition above, so the hook would read it as a fresh application and clang the cell door shut on every login",
 
 	// ── the condition must be in place before the function returns ─────────
@@ -222,7 +222,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// loose issues sweep 3 when the dot began to read its record from
 	// condition_ids, #249; re-keyed messaging M6 slice 4 when
 	// commitHarmfulSpellAggro began to reveal a hidden caster and target, R6) ──────
-	"internal/hooks/spell_effects.go|420": "spell dot: applies synchronously so an immune target's refusal is known before anything is narrated; the spell then tells the record's own start lines (narrateConditionStart, Blood Boil's 143) or, for a silent-start record (121), its own trio",
+	"internal/hooks/spell_effects.go|414": "spell dot: applies synchronously so an immune target's refusal is known before anything is narrated; the spell then tells the record's own start lines (narrateConditionStart, Blood Boil's 143) or, for a silent-start record (121), its own trio",
 
 	// ── magnitude potions (lighting plan 5c): the player's and the mob's drink
 	// each carried this call (usercommands/drink.go and mobcommands/drink.go)
@@ -250,12 +250,12 @@ var conditionApplyPathAllowlist = map[string]string{
 	// re-keyed slice 1b; re-keyed again counters slice Task 3 when the
 	// drain-area counter field and its exit call were deleted) ───────────
 	"internal/actions/combat_drain.go|147":           "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/actions/combat_drain.go|314":           "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_drain.go|311":           "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_hamstring.go|136":       "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_maul.go|132":            "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_rake.go|132":            "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_throttle.go|142":        "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/behaviortree/actions_item_proc.go|359": "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
+	"internal/behaviortree/actions_item_proc.go|350": "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
 }
 
 // primitivePackages define Character.AddCondition / Conditions.AddCondition

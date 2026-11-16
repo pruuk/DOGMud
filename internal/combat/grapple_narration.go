@@ -1,6 +1,8 @@
 package combat
 
 import (
+	"maps"
+
 	"github.com/GoMudEngine/GoMud/internal/movenarration"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/narration"
@@ -39,8 +41,6 @@ func renderGrappleEvent(event movenarration.EventKey, ids grappleMoveIdentities,
 		narration.TokenActorPlain: ids.ActorPlain,
 		narration.TokenActeePlain: ids.ActeePlain,
 	}
-	for k, val := range extra {
-		tokens[k] = val
-	}
+	maps.Copy(tokens, extra)
 	return narration.Render(v, tokens, narration.DefaultPicker), true
 }

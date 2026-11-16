@@ -227,7 +227,7 @@ func TestExecuteCounter_KnobPricesTheSwingAndZeroDisables(t *testing.T) {
 		pinCounterConfig(t, pct)
 		counterer, countered := counterTestPair()
 		total := 0
-		for i := 0; i < samples; i++ {
+		for range samples {
 			countered.Health = 100000
 			countered.Stamina = 200
 			res := ExecuteCounter(counterer, countered, combatvocab.Ranged(combatvocab.TargetSingle), combatvocab.DefenceDodge, true)

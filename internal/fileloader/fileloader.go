@@ -297,7 +297,7 @@ func SaveAllFlatFiles[K comparable, T Loadable[K]](basePath string, data map[K]T
 	}
 
 	// Spin up workers
-	for i := 0; i < workerCt; i++ {
+	for range workerCt {
 
 		wg.Add(1)
 

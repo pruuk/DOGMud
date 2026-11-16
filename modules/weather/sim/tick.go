@@ -1,6 +1,9 @@
 package sim
 
-import "sort"
+import (
+	"slices"
+	"sort"
+)
 
 // Step advances the simulation one coarse tick. It is a pure function of its
 // inputs: all randomness comes from prev.RNGState. It returns the next State
@@ -121,7 +124,7 @@ func resolveWeather(g *Graph, fronts []Front, cfg Config) map[ZoneId]WeatherType
 func zonesWithin(g *Graph, center ZoneId, maxRadius int) map[ZoneId]int {
 	dist := map[ZoneId]int{center: 0}
 	frontier := []ZoneId{center}
-	for d := 0; d < maxRadius; d++ {
+	for d := range maxRadius {
 		var next []ZoneId
 		for _, z := range frontier {
 			for _, e := range g.Neighbors(z) {
@@ -140,7 +143,7 @@ func zonesWithin(g *Graph, center ZoneId, maxRadius int) map[ZoneId]int {
 // importing math).
 func pow(base float64, exp int) float64 {
 	r := 1.0
-	for i := 0; i < exp; i++ {
+	for range exp {
 		r *= base
 	}
 	return r
@@ -211,10 +214,7 @@ func pickNeighbor(neighbors []Edge, avoid ZoneId, rng *RNG) ZoneId {
 	}
 	total := 0
 	for _, e := range candidates {
-		w := e.Weight
-		if w < 1 {
-			w = 1
-		}
+		w := max(e.Weight, 1)
 		total += w
 	}
 	if total <= 0 {
@@ -222,10 +222,7 @@ func pickNeighbor(neighbors []Edge, avoid ZoneId, rng *RNG) ZoneId {
 	}
 	r := rng.Intn(total)
 	for _, e := range candidates {
-		w := e.Weight
-		if w < 1 {
-			w = 1
-		}
+		w := max(e.Weight, 1)
 		if r < w {
 			return e.B
 		}
@@ -276,7 +273,7 @@ func pickWeatherType(profile ClimateProfile, current WeatherType, keepBias float
 	for k := range profile.Weather {
 		keys = append(keys, k)
 	}
-	sort.Slice(keys, func(a, b int) bool { return keys[a] < keys[b] })
+	slices.Sort(keys)
 
 	total := 0.0
 	for _, k := range keys {

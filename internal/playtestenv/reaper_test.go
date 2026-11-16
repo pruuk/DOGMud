@@ -378,7 +378,6 @@ func TestReapRemovesExpiredMatchingRun(t *testing.T) {
 
 func TestReapCleansExpiredAbandonedBuildingAndStopping(t *testing.T) {
 	for _, state := range []State{StateBuilding, StateStopping} {
-		state := state
 		t.Run(string(state), func(t *testing.T) {
 			seed := seedRun(t, "run-reap-abandon-"+string(state), state, true)
 			seedExpired(t, &seed)

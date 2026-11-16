@@ -80,7 +80,7 @@ func TestSetValRefusesLockedKeys(t *testing.T) {
 		// resolved may list alternatives separated by "|": a suffix shared by
 		// two keys resolves to either (buildKeyLookups, map order).
 		named := false
-		for _, want := range strings.Split(tc.resolved, `|`) {
+		for want := range strings.SplitSeq(tc.resolved, `|`) {
 			if strings.Contains(err.Error(), want) {
 				named = true
 			}

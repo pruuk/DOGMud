@@ -32,7 +32,7 @@ func TestRollDistribution(t *testing.T) {
 	sum := 0.0
 	sumSquares := 0.0
 
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		result := Roll(mean, stdDev)
 		sum += result.Value
 		sumSquares += result.Value * result.Value
@@ -82,7 +82,7 @@ func TestOpposedRollStatistics(t *testing.T) {
 	iterations := 10000
 
 	wins := 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		success, _, _, _ := OpposedRoll(attackerStat, defenderStat, stdDev)
 		if success {
 			wins++
@@ -139,7 +139,7 @@ func TestSuccessChance(t *testing.T) {
 	// Verify empirically
 	iterations := 10000
 	successes := 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		result := DifficultyCheck(stat, difficulty, stdDev)
 		if result.Success {
 			successes++
@@ -213,7 +213,7 @@ func TestCriticalCheck(t *testing.T) {
 	critCount := 0
 	fumbleCount := 0
 
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		result := Roll(50.0, 10.0)
 		isCrit, isFumble := CriticalCheck(result, critThreshold, fumbleThreshold)
 		if isCrit {
@@ -253,7 +253,7 @@ func TestCriticalCheckDynamicThreshold(t *testing.T) {
 	critCount := 0
 	fumbleCount := 0
 
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		result := Roll(50.0, 10.0)
 		isCrit, isFumble := CriticalCheck(result, critThreshold, fumbleThreshold)
 		if isCrit {
@@ -287,7 +287,7 @@ func TestPercentile(t *testing.T) {
 	iterations := 10000
 
 	successes := 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		success, _ := Percentile(chance)
 		if success {
 			successes++
@@ -309,7 +309,7 @@ func TestRollTable(t *testing.T) {
 	iterations := 10000
 
 	counts := make([]int, len(weights))
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		index := RollTable(weights)
 		counts[index]++
 	}
@@ -360,7 +360,7 @@ func TestRollClamped(t *testing.T) {
 	belowMin := 0
 	aboveMax := 0
 
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		result := RollClamped(mean, stdDev, min, max)
 
 		if result.Value < min {
@@ -450,7 +450,7 @@ func TestDiceToDistributionDamageOutput(t *testing.T) {
 	iterations := 10000
 
 	sum := 0.0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		result := Roll(mean, stdDev)
 		val := math.Max(0, result.Value)
 		sum += val
@@ -614,7 +614,7 @@ func TestRollStat(t *testing.T) {
 	expectedStdDev := StdDevFor(mean)
 
 	sum := 0.0
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		result := RollStat(mean)
 		sum += result.Value
 		// Verify structural fields
@@ -642,7 +642,7 @@ func TestOpposedRollStatRaw(t *testing.T) {
 	atkHigh := 120.0
 	defLow := 80.0
 	wins := 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		success, _, _, _ := OpposedRollStatRaw(atkHigh, defLow)
 		if success {
 			wins++
@@ -655,7 +655,7 @@ func TestOpposedRollStatRaw(t *testing.T) {
 
 	// Equal stats should be ~50/50
 	wins = 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		success, _, _, _ := OpposedRollStatRaw(100.0, 100.0)
 		if success {
 			wins++
@@ -668,7 +668,7 @@ func TestOpposedRollStatRaw(t *testing.T) {
 
 	// Lower attacker should win less often
 	wins = 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		success, _, _, _ := OpposedRollStatRaw(80.0, 120.0)
 		if success {
 			wins++

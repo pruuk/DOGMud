@@ -128,7 +128,7 @@ func TestMoveFronts_HighResistanceZoneLingers(t *testing.T) {
 
 	movesFrom := func(zone ZoneId, seed uint64) int {
 		moved := 0
-		for i := 0; i < 200; i++ {
+		for i := range 200 {
 			rng := NewRNG(seed + uint64(i))
 			f := []Front{{Id: 1, Type: "storm", Zone: zone, Intensity: 0.8, Moisture: 0.5, MaxAge: 24}}
 			out := moveFronts(f, g, climate, cfg, rng)
@@ -159,7 +159,7 @@ func TestMoveFronts_RecordsHistoryOnMove(t *testing.T) {
 	cfg := DefaultConfig()
 
 	movedSomewhere := false
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		rng := NewRNG(uint64(i) + 1)
 		f := []Front{{Id: 1, Type: "storm", Zone: "B", Intensity: 0.8, MaxAge: 24}}
 		out := moveFronts(f, g, climate, cfg, rng)
@@ -183,7 +183,7 @@ func TestEvolveTypes_AdaptsToNewBiome(t *testing.T) {
 	}}
 	climate := DefaultClimate()
 	becameSnowy := 0
-	for i := 0; i < 300; i++ {
+	for i := range 300 {
 		rng := NewRNG(uint64(i) + 1)
 		// Type "storm" entering tundra (storm is not in tundra's profile).
 		f := []Front{{Id: 1, Type: "storm", Zone: "T", Intensity: 0.8, History: []ZoneId{"P"}}}
@@ -201,7 +201,7 @@ func TestEvolveTypes_StationaryFrontKeepsType(t *testing.T) {
 	// A front whose current zone == last history entry did NOT move this tick;
 	// it should keep its type (no re-roll).
 	g := &Graph{Nodes: map[string]ZoneNode{"T": {Zone: "T", Biome: "tundra"}}}
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		rng := NewRNG(uint64(i) + 1)
 		f := []Front{{Id: 1, Type: "storm", Zone: "T", Intensity: 0.8, History: []ZoneId{"T"}}}
 		out := evolveTypes(f, g, DefaultClimate(), rng)
@@ -224,7 +224,7 @@ func TestEvolveTypes_LingeringFrontKeepsType(t *testing.T) {
 		"default": {Weather: map[WeatherType]float64{"clear": 1}},
 	}
 	cfg := DefaultConfig()
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		rng := NewRNG(uint64(i) + 1)
 		f := []Front{{Id: 1, Type: "storm", Zone: "S", Intensity: 0.8, MaxAge: 24}}
 		f = moveFronts(f, g, climate, cfg, rng)
@@ -250,7 +250,7 @@ func TestMoveFronts_NoBacktrackToLastZone(t *testing.T) {
 		"default": {Weather: map[WeatherType]float64{"clear": 1}},
 	}
 	cfg := DefaultConfig()
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		rng := NewRNG(uint64(i) + 1)
 		f := []Front{{Id: 1, Type: "storm", Zone: "B", Intensity: 0.8, MaxAge: 24, History: []ZoneId{"A"}}}
 		f = moveFronts(f, g, climate, cfg, rng)
@@ -269,7 +269,7 @@ func TestSpawnFronts_RespectsBudget(t *testing.T) {
 
 	st := State{RNGState: 1, NextID: 1, Weather: map[ZoneId]WeatherType{}}
 	// Run many ticks; fronts accumulate but never exceed the budget.
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		var diff StateDiff
 		st, diff = Step(st, g, climate, cfg, Clock{Round: uint64(i + 1)})
 		_ = diff
@@ -304,7 +304,7 @@ func runTicks(seed uint64, n int) State {
 	climate := DefaultClimate()
 	cfg := DefaultConfig()
 	st := State{RNGState: seed, NextID: 1, Weather: map[ZoneId]WeatherType{}}
-	for i := 0; i < n; i++ {
+	for i := range n {
 		st, _ = Step(st, g, climate, cfg, Clock{Round: uint64(i + 1)})
 	}
 	return st
@@ -327,7 +327,7 @@ func TestStep_StormDiesCrossingMountains(t *testing.T) {
 	var edges []Edge
 	const N = 6
 	prev := ""
-	for i := 0; i < N; i++ {
+	for i := range N {
 		z := string(rune('A' + i))
 		nodes[z] = ZoneNode{Zone: z, Biome: "mountain", HasOutdoor: true}
 		if prev != "" {
@@ -348,7 +348,7 @@ func TestStep_StormDiesCrossingMountains(t *testing.T) {
 	start := st.Fronts[0].Intensity
 	died := false
 	minSeen := start
-	for i := 0; i < 40; i++ {
+	for i := range 40 {
 		st, _ = Step(st, g, climate, cfg, Clock{Round: uint64(i + 1)})
 		if len(st.Fronts) == 0 {
 			died = true

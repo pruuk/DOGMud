@@ -21,11 +21,11 @@ func TestSetAnsiFlag_ConcurrentWithAnsiParse(t *testing.T) {
 	flags := []AnsiFlag{AnsiTagsParse, AnsiTagsStrip, AnsiTagsMono, AnsiTagsDefault}
 
 	var wg sync.WaitGroup
-	for g := 0; g < goroutines; g++ {
+	for g := range goroutines {
 		wg.Add(1)
 		go func(g int) {
 			defer wg.Done()
-			for i := 0; i < iters; i++ {
+			for i := range iters {
 				if g%4 == 0 {
 					// Writer: flip the forced ansi flag (admin `server ansi`).
 					SetAnsiFlag(flags[i%len(flags)])

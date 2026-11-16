@@ -2,6 +2,7 @@ package items
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -23,18 +24,13 @@ var (
 )
 
 func isOneOf(s string, set []string) bool {
-	for _, x := range set {
-		if x == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(set, s)
 }
 
 // decodeTieredRecords reads one split in the record layout and returns its
 // pools keyed by role. The retired role -> tier -> list layout is rejected.
-func decodeTieredRecords(unmarshal func(interface{}) error, roles []string) (pools map[string]SkillTieredMessages, err error) {
-	var probe map[string]interface{}
+func decodeTieredRecords(unmarshal func(any) error, roles []string) (pools map[string]SkillTieredMessages, err error) {
+	var probe map[string]any
 	if err := unmarshal(&probe); err != nil {
 		return nil, err
 	}
@@ -119,7 +115,7 @@ func decodeTieredRecords(unmarshal func(interface{}) error, roles []string) (poo
 }
 
 // UnmarshalYAML accepts only the record layout.
-func (m *TogetherMessages) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (m *TogetherMessages) UnmarshalYAML(unmarshal func(any) error) error {
 	pools, err := decodeTieredRecords(unmarshal, togetherRoles)
 	if err != nil {
 		return fmt.Errorf("together: %w", err)
@@ -133,8 +129,8 @@ func (m *TogetherMessages) UnmarshalYAML(unmarshal func(interface{}) error) erro
 // releases a target in another room before the wait round or the swing
 // (hooks.resolveCombatTarget), so it is rejected at load rather than shipped
 // as dead copy (owner ruling C, spec 2026-10-16 #541 section 3).
-func (a *AttackOptions) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var probe map[string]interface{}
+func (a *AttackOptions) UnmarshalYAML(unmarshal func(any) error) error {
+	var probe map[string]any
 	if err := unmarshal(&probe); err != nil {
 		return err
 	}
@@ -163,17 +159,17 @@ func (a *AttackOptions) UnmarshalYAML(unmarshal func(interface{}) error) error {
 // keeps strict decoding, exact scalar text and true line numbers, none of which
 // survive a marshal and re-parse round trip.
 type attackOptionsCapture struct {
-	unmarshal func(interface{}) error
+	unmarshal func(any) error
 }
 
-func (c *attackOptionsCapture) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *attackOptionsCapture) UnmarshalYAML(unmarshal func(any) error) error {
 	c.unmarshal = unmarshal
 	return nil
 }
 
 // UnmarshalYAML decodes each intensity on its own so a record error names the
 // intensity it came from; the file loader adds the path.
-func (a *AttackTypes) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (a *AttackTypes) UnmarshalYAML(unmarshal func(any) error) error {
 	var raw map[Intensity]*attackOptionsCapture
 	if err := unmarshal(&raw); err != nil {
 		return err

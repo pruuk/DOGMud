@@ -1,7 +1,7 @@
 package combat
 
 import (
-	"sort"
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -50,8 +50,8 @@ func assertSameSet(t *testing.T, got, want []combatvocab.Defence) {
 	t.Helper()
 	g := append([]combatvocab.Defence{}, got...)
 	w := append([]combatvocab.Defence{}, want...)
-	sort.Slice(g, func(i, j int) bool { return g[i] < g[j] })
-	sort.Slice(w, func(i, j int) bool { return w[i] < w[j] })
+	slices.Sort(g)
+	slices.Sort(w)
 	if len(g) != len(w) {
 		t.Fatalf("defence set = %v, want %v", got, want)
 	}

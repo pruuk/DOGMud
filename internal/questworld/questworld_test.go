@@ -2,6 +2,7 @@ package questworld
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
@@ -36,12 +37,7 @@ func liveRefs(loaded []*quests.Quest) *quests.QuestValidators {
 			if value == "" {
 				return true
 			}
-			for _, v := range vals {
-				if v == value {
-					return true
-				}
-			}
-			return false
+			return slices.Contains(vals, value)
 		},
 		MobExists: yesI, ItemExists: yesI, RoomExists: yesI, ConditionExists: yesI,
 		SpellExists: yesS, EffectExists: yesS, SkillExists: yesS, StatExists: yesS, RecipeExists: yesS,

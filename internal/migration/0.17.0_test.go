@@ -241,13 +241,13 @@ func genericPath(t *testing.T, raw []byte, path ...any) any {
 	for _, seg := range path {
 		switch s := seg.(type) {
 		case string:
-			m, ok := node.(map[interface{}]interface{})
+			m, ok := node.(map[any]any)
 			require.True(t, ok, "expected a mapping at %q", s)
 			v, ok := m[s]
 			require.True(t, ok, "missing key %q", s)
 			node = v
 		case int:
-			l, ok := node.([]interface{})
+			l, ok := node.([]any)
 			require.True(t, ok, "expected a list at %d", s)
 			require.Greater(t, len(l), s)
 			node = l[s]
@@ -281,9 +281,9 @@ func TestConditionKeys_AuctionPluginData(t *testing.T) {
 	require.NoError(t, migrateConditionKeysIn(dir, false))
 
 	raw := readMigrated(t, p)
-	assert.Equal(t, []interface{}{98}, genericPath(t, raw, "SeizedQueue", 0, "Item", "overrides", "wornconditionids"))
-	assert.Equal(t, []interface{}{98}, genericPath(t, raw, "ActiveAuction", "itemdata", "overrides", "wornconditionids"))
-	assert.Equal(t, []interface{}{33}, genericPath(t, raw, "ActiveAuction", "itemdata", "enchantbaseline", "damage", "critconditionids"))
+	assert.Equal(t, []any{98}, genericPath(t, raw, "SeizedQueue", 0, "Item", "overrides", "wornconditionids"))
+	assert.Equal(t, []any{98}, genericPath(t, raw, "ActiveAuction", "itemdata", "overrides", "wornconditionids"))
+	assert.Equal(t, []any{33}, genericPath(t, raw, "ActiveAuction", "itemdata", "enchantbaseline", "damage", "critconditionids"))
 }
 
 func TestConditionKeys_ConfigOverrides(t *testing.T) {

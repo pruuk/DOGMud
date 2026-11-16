@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -468,10 +469,5 @@ func packFleeFixture(t *testing.T) (*mobs.Mob, func()) {
 }
 
 func packFleeQueued(mob *mobs.Mob) bool {
-	for _, cmd := range events.DrainQueuedInputsForTest(mob.InstanceId) {
-		if cmd == "flee" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(events.DrainQueuedInputsForTest(mob.InstanceId), "flee")
 }

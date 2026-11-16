@@ -211,7 +211,7 @@ func renameConditionKeysInBytes(path string, raw []byte, dryRun bool) (bool, err
 	if !changed {
 		return false, nil
 	}
-	if _, mixed := doc.([]interface{}); mixed {
+	if _, mixed := doc.([]any); mixed {
 		// Its nested mappings decoded unordered; rewriting would reorder a
 		// file of a shape no store saves. Refuse rather than guess.
 		return false, fmt.Errorf("migration 0.17.0: %s: a list with non-mapping elements carries an old key", path)
@@ -324,16 +324,16 @@ func decodeOrdered(raw []byte) (any, error) {
 		return nil, err
 	}
 	switch p := probe.(type) {
-	case map[interface{}]interface{}:
+	case map[any]any:
 		var doc yaml.MapSlice
 		if err := yaml.Unmarshal(raw, &doc); err != nil {
 			return nil, err
 		}
 		return doc, nil
-	case []interface{}:
+	case []any:
 		allMaps := true
 		for _, el := range p {
-			if _, ok := el.(map[interface{}]interface{}); !ok {
+			if _, ok := el.(map[any]any); !ok {
 				allMaps = false
 				break
 			}
@@ -385,7 +385,7 @@ func renameKeys(node any) (bool, error) {
 			}
 			changed = changed || c
 		}
-	case []interface{}:
+	case []any:
 		for _, el := range n {
 			c, err := renameKeys(el)
 			if err != nil {
@@ -393,7 +393,7 @@ func renameKeys(node any) (bool, error) {
 			}
 			changed = changed || c
 		}
-	case map[interface{}]interface{}:
+	case map[any]any:
 		for k, v := range n {
 			c, err := renameKeys(v)
 			if err != nil {
@@ -434,7 +434,7 @@ func isConditionsRecord(value any) bool {
 				return true
 			}
 		}
-	case map[interface{}]interface{}:
+	case map[any]any:
 		_, ok := v["list"]
 		return ok
 	}

@@ -163,7 +163,7 @@ func TestConditions_HasFlag(t *testing.T) {
 		bs2 := New()
 		bs2.AddCondition(105, false) // Slow
 		before := bs2.List[bs2.conditionIds[105]].TriggersLeft
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			assert.True(t, bs2.HasFlag(Slow))
 			assert.True(t, bs2.HasFlag(All))
 		}
@@ -447,7 +447,6 @@ func TestGetDurations(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			gotRounds, gotTotal := GetDurations(tt.args.condition, tt.args.spec)
 			assert.Equal(t, tt.wantRounds, gotRounds)
@@ -555,7 +554,6 @@ func TestConditions_HasCondition(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bs := &Conditions{
 				List:         tt.fields.list,
@@ -636,7 +634,6 @@ func TestConditions_Started(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bs := &Conditions{
 				List:         tt.fields.list,
@@ -731,7 +728,6 @@ func TestConditions_TriggersLeft(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bs := &Conditions{
 				List:         tt.fields.list,
@@ -819,7 +815,6 @@ func TestConditions_RemoveCondition(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			bs := &Conditions{
 				List:         tt.fields.list,
@@ -864,7 +859,6 @@ func TestCondition_Expired(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			b := &Condition{TriggersLeft: tt.triggersLeft}
 			assert.Equal(t, tt.want, b.Expired())
@@ -931,7 +925,7 @@ func TestPB_332_BrokenLimbCondition_ExpiresNaturally(t *testing.T) {
 		"PB-332: broken-limb condition must not be expired on application")
 
 	// Tick 3 rounds — each trigger should decrement TriggersLeft.
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		bs.Trigger()
 	}
 
