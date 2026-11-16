@@ -161,7 +161,7 @@ func TestHelpFileCompleteness_ModuleCommands(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		module := strings.SplitN(filepath.ToSlash(rel), "/", 2)[0]
+		module, _, _ := strings.Cut(filepath.ToSlash(rel), "/")
 		src, err := os.ReadFile(path)
 		if err != nil {
 			return err

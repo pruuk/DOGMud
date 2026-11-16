@@ -388,11 +388,11 @@ func envKey(kv string) string {
 // splitEnvEntry splits a "KEY=VALUE" environment entry into its key and
 // value. ok is false if kv contains no "=".
 func splitEnvEntry(kv string) (key, value string, ok bool) {
-	idx := strings.IndexByte(kv, '=')
-	if idx < 0 {
+	before, after, ok := strings.Cut(kv, "=")
+	if !ok {
 		return "", "", false
 	}
-	return kv[:idx], kv[idx+1:], true
+	return before, after, true
 }
 
 // lookupEnvVar looks up key in a "KEY=VALUE" slice such as os.Environ(),

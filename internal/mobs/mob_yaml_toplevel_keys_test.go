@@ -107,7 +107,7 @@ func validTopLevelYAMLKeys(t *testing.T, mobType reflect.Type) map[string]bool {
 			continue
 		}
 
-		name := strings.SplitN(tag, ",", 2)[0]
+		name, _, _ := strings.Cut(tag, ",")
 		if name == "-" {
 			// Explicitly excluded from YAML (e.g. runtime-only fields).
 			continue

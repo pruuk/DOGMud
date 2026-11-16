@@ -1530,17 +1530,17 @@ func AdjustExitName(exitName string) (newExitName, newExitDirection string, err 
 	newExitDirection = ""
 
 	// 1) "exitName:exitDirection" syntax
-	if i := strings.Index(exitName, ":"); i >= 0 {
+	if before, after, ok := strings.Cut(exitName, ":"); ok {
 
-		if strings.Contains(exitName[:i], `-`) {
+		if strings.Contains(before, `-`) {
 			return exitName, "", fmt.Errorf("mixed `-` syntax with `:` in exit name: %s. `-` should only be in direction modifier or stand alone exit name.", exitName)
 		}
 
-		newExitName = exitName[:i]
+		newExitName = before
 
 		// pure compass directions
-		if IsValidExitDirection(exitName[i+1:]) {
-			newExitDirection = exitName[i+1:]
+		if IsValidExitDirection(after) {
+			newExitDirection = after
 		}
 
 	} else if IsValidExitDirection(exitName) {

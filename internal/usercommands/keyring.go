@@ -81,7 +81,7 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 		row = append(row, keyType)
 
-		roomIdStr := strings.Split(lockId, `-`)[0]
+		roomIdStr, _, _ := strings.Cut(lockId, `-`)
 		lockId = lockId[len(roomIdStr)+1:]
 
 		roomId, _ := strconv.Atoi(roomIdStr)

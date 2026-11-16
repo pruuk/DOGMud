@@ -1126,8 +1126,8 @@ func (w *World) processMobInput(mobInstanceId int, inputText string) {
 
 	if len(inputText) > 0 {
 
-		if index := strings.Index(inputText, " "); index != -1 {
-			command, remains = strings.ToLower(inputText[0:index]), inputText[index+1:]
+		if before, after, ok := strings.Cut(inputText, " "); ok {
+			command, remains = strings.ToLower(before), after
 		} else {
 			command = inputText
 		}

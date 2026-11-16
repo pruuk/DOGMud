@@ -189,7 +189,7 @@ func (c *Config) buildDotPaths(v reflect.Value, prefix string, result map[string
 			// Determine the key name using the YAML tag if available.
 			key := field.Name
 			if yamlTag, ok := field.Tag.Lookup("yaml"); ok {
-				if tagName := strings.Split(yamlTag, ",")[0]; tagName != "" {
+				if tagName, _, _ := strings.Cut(yamlTag, ","); tagName != "" {
 					key = tagName
 				}
 			}
