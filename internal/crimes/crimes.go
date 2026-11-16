@@ -1,6 +1,8 @@
 package crimes
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -299,8 +301,7 @@ func FindRecentAssault(factionId string, userId int, victimMobId int, victimInst
 
 	crimeCacheMu.RLock()
 	defer crimeCacheMu.RUnlock()
-	for i := len(fc.Crimes) - 1; i >= 0; i-- {
-		c := fc.Crimes[i]
+	for _, c := range slices.Backward(fc.Crimes) {
 		if c.Kind != KindAssault {
 			continue
 		}
@@ -348,8 +349,7 @@ func FindRecentUnknownAssault(factionId string, victimMobId int, victimInstanceI
 
 	crimeCacheMu.RLock()
 	defer crimeCacheMu.RUnlock()
-	for i := len(fc.Crimes) - 1; i >= 0; i-- {
-		c := fc.Crimes[i]
+	for _, c := range slices.Backward(fc.Crimes) {
 		if c.Round < cutoff {
 			break // log is append-order, anything older is older
 		}

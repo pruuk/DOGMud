@@ -117,8 +117,7 @@ func (s *Shop) Restock() bool {
 	}
 
 	if len(pruneItems) > 0 {
-		for pos := len(pruneItems) - 1; pos >= 0; pos-- {
-			i := pruneItems[pos]
+		for _, i := range slices.Backward(pruneItems) {
 			(*s) = append((*s)[:i], (*s)[i+1:]...)
 		}
 	}

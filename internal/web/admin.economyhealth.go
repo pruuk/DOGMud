@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"text/template"
 	"time"
 
@@ -57,8 +58,8 @@ func economyAPI(w http.ResponseWriter, r *http.Request) {
 		historyMetas = historyMetas[:168]
 	}
 	history := make([]*health.Snapshot, 0, len(historyMetas))
-	for i := len(historyMetas) - 1; i >= 0; i-- { // oldest first
-		s, err := health.LoadSnapshot(historyMetas[i].UnixTs)
+	for _, historyMeta := range slices.Backward(historyMetas) { // oldest first
+		s, err := health.LoadSnapshot(historyMeta.UnixTs)
 		if err != nil || s == nil {
 			continue
 		}

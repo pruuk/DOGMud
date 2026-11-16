@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -154,8 +155,8 @@ func CleanReply(r Reply) (Reply, error) {
 	// "trinket". Players can still use any word of the name.
 	if !usableKeyword(r.NameSimple) {
 		r.NameSimple = genericNameSimple
-		for i := len(words) - 1; i >= 0; i-- {
-			w := strings.ToLower(strings.TrimSuffix(strings.TrimSuffix(words[i], `'s`), `'`))
+		for i, word := range slices.Backward(words) {
+			w := strings.ToLower(strings.TrimSuffix(strings.TrimSuffix(word, `'s`), `'`))
 			if (i == len(words)-1 || len(w) >= 4) && usableKeyword(w) {
 				r.NameSimple = w
 				break

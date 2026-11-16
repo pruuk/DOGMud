@@ -1,6 +1,8 @@
 package caravan
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -46,8 +48,7 @@ func handleImportArrival(c ImportCircuit, arrival events.PatrolWaypointArrival) 
 		if bool(configs.GetGamePlayConfig().WarehousesEnabled) {
 			if room := rooms.LoadRoom(arrival.RoomId); room != nil {
 				if _, ok := warehouse.CityFor(room.Zone); ok {
-					for i := len(runner.Character.Items) - 1; i >= 0; i-- {
-						it := runner.Character.Items[i]
+					for _, it := range slices.Backward(runner.Character.Items) {
 						if warehouse.Deposit(room.Zone, it.ItemId, 1) {
 							runner.Character.RemoveItem(it)
 						}

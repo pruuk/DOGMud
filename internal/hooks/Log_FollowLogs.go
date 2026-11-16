@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -68,9 +69,7 @@ func removeFromSendLists(connId connections.ConnectionId) {
 
 	for i := range 4 {
 
-		for idx := len(sendLists[i]) - 1; idx >= 0; idx-- {
-
-			testConnId := sendLists[i][idx]
+		for idx, testConnId := range slices.Backward(sendLists[i]) {
 
 			if testConnId == connId {
 				sendLists[i] = append(sendLists[i][:idx], sendLists[i][idx+1:]...)

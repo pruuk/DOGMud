@@ -625,11 +625,11 @@ func (bs *Conditions) Prune() (prunedConditions []*Condition) {
 
 	var prune bool
 	var didPrune bool = false
-	for i := len(bs.List) - 1; i >= 0; i-- {
+	for i, v := range slices.Backward(bs.List) {
 
 		prune = false
 
-		b := bs.List[i] // Get a ptr to the data within the slice
+		b := v // Get a ptr to the data within the slice
 
 		conditionInfo := GetConditionSpec(b.ConditionId)
 

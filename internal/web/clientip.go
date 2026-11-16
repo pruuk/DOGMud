@@ -3,6 +3,7 @@ package web
 import (
 	"net"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
@@ -174,8 +175,8 @@ func ResolveClientIP(r *http.Request) string {
 	}
 
 	hops := forwardedHops(r.Header)
-	for i := len(hops) - 1; i >= 0; i-- {
-		ip := parseHopIP(hops[i])
+	for _, hop := range slices.Backward(hops) {
+		ip := parseHopIP(hop)
 		if ip == nil {
 			// A hop we cannot parse means we cannot attribute the request.
 			// Fall back to the one address we actually observed rather than

@@ -3,6 +3,7 @@ package aicompanion
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"time"
 )
@@ -160,8 +161,7 @@ func boundDelta(proposed Opinion, env envelope, sens Sensitivity, positiveWordsR
 // positiveWordChangesSince counts recent opinion gains that came from words.
 func (m *Mind) positiveWordChangesSince(unix int64) int {
 	n := 0
-	for i := len(m.OpinionLog) - 1; i >= 0; i-- {
-		c := m.OpinionLog[i]
+	for _, c := range slices.Backward(m.OpinionLog) {
 		if c.Unix < unix {
 			break
 		}
@@ -254,8 +254,7 @@ func opinionWords(o Opinion, name string) []string {
 // ruleChangesSince counts rule-sourced changes with a trigger since a time.
 func (m *Mind) ruleChangesSince(trigger string, unix int64) int {
 	n := 0
-	for i := len(m.OpinionLog) - 1; i >= 0; i-- {
-		c := m.OpinionLog[i]
+	for _, c := range slices.Backward(m.OpinionLog) {
 		if c.Unix < unix {
 			break
 		}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -318,8 +319,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 
 		auctionHistory := mod.auctionMgr.GetAuctionHistory(0)
 
-		for i := len(auctionHistory) - 1; i >= 0; i-- {
-			aItem := auctionHistory[i]
+		for _, aItem := range slices.Backward(auctionHistory) {
 
 			buyerName := aItem.BuyerName
 			sellerName := aItem.SellerName

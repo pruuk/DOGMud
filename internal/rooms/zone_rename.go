@@ -165,9 +165,9 @@ func applyZoneMoves(mv []zoneMove) (done []zoneMove, err error) {
 // could NOT undo — a half-renamed zone must be loud, never silent.
 func reverseZoneMoves(done []zoneMove) []string {
 	stuck := []string{}
-	for i := len(done) - 1; i >= 0; i-- {
-		if err := os.Rename(done[i].To, done[i].From); err != nil {
-			stuck = append(stuck, done[i].To)
+	for _, d := range slices.Backward(done) {
+		if err := os.Rename(d.To, d.From); err != nil {
+			stuck = append(stuck, d.To)
 		}
 	}
 	return stuck

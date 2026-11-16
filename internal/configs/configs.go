@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 
@@ -105,7 +106,7 @@ func AddOverlayOverrides(dotMap map[string]any) error {
 
 			parts := strings.Split(k, `.`)
 
-			for i := len(parts) - 1; i >= 0; i-- {
+			for i := range slices.Backward(parts) {
 				tmpKey := strings.Join(parts[i:], `.`)
 				keyLookups[strings.ToLower(tmpKey)] = k
 
@@ -617,7 +618,7 @@ func buildKeyLookups(c Config) (keys map[string]string, types map[string]string)
 	for k, v := range c.AllConfigData() {
 		if strings.Contains(k, `.`) {
 			parts := strings.Split(k, `.`)
-			for i := len(parts) - 1; i >= 0; i-- {
+			for i := range slices.Backward(parts) {
 				keys[strings.ToLower(strings.Join(parts[i:], `.`))] = k
 				keys[strings.ToLower(strings.Join(parts[i:], ``))] = k
 			}

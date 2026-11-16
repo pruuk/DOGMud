@@ -1,6 +1,8 @@
 package health
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -493,9 +495,9 @@ func InputRateScore(zone string, cur *Snapshot, history []*Snapshot, cfg Scoring
 	}
 	cutoff := cur.Round - roundsPerDay
 	var prev *Snapshot
-	for i := len(history) - 1; i >= 0; i-- {
-		if history[i].Round <= cutoff {
-			prev = history[i]
+	for _, h := range slices.Backward(history) {
+		if h.Round <= cutoff {
+			prev = h
 			break
 		}
 	}
@@ -569,9 +571,9 @@ func buildInputRateRow(zone string, score float64, cur *Snapshot, history []*Sna
 	}
 	cutoff := cur.Round - roundsPerDay
 	var prev *Snapshot
-	for i := len(history) - 1; i >= 0; i-- {
-		if history[i].Round <= cutoff {
-			prev = history[i]
+	for _, h := range slices.Backward(history) {
+		if h.Round <= cutoff {
+			prev = h
 			break
 		}
 	}

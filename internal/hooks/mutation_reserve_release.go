@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -37,8 +38,8 @@ func releaseCompanionsOverCeiling(ch *characters.Character) []characters.Compani
 	var released []characters.CompanionInfo
 	for ch.ReservationOverages().Conviction > grandfathered {
 		idx := -1
-		for i := len(ch.Companions) - 1; i >= 0; i-- {
-			if ch.Companions[i].ConvictionReserve > 0 {
+		for i, v := range slices.Backward(ch.Companions) {
+			if v.ConvictionReserve > 0 {
 				idx = i
 				break
 			}

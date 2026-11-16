@@ -451,8 +451,7 @@ func dumpFernwayLoadIntoCrate(
 	}
 	crate := room.SealedCrate
 	dumped := 0
-	for i := len(mob.Character.Items) - 1; i >= 0; i-- {
-		item := mob.Character.Items[i]
+	for _, item := range slices.Backward(mob.Character.Items) {
 		bucket := economy.BucketFor(item.ItemId)
 		if !slices.Contains(p.Buckets, bucket) {
 			continue
@@ -560,12 +559,12 @@ func dumpSatchelToLockbox(mob *mobs.Mob, ctx *EvalContext) bool {
 	dumped := false
 	stalledFull := false
 	// Walk satchel in reverse so index shifts from RemoveItem stay valid.
-	for i := len(mob.Character.Items) - 1; i >= 0; i-- {
+	for _, v := range slices.Backward(mob.Character.Items) {
 		if len(box.Items) >= int(cap) {
 			stalledFull = true
 			break
 		}
-		item := mob.Character.Items[i]
+		item := v
 		mob.Character.RemoveItem(item)
 		box.AddItem(item)
 		dumped = true

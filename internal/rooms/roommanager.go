@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -592,8 +593,7 @@ func GetRoomsWithPlayers() []int {
 		roomsWithPlayers = append(roomsWithPlayers, roomId)
 	}
 
-	for i := len(roomsWithPlayers) - 1; i >= 0; i-- {
-		roomId := roomsWithPlayers[i]
+	for i, roomId := range slices.Backward(roomsWithPlayers) {
 		if r := LoadRoom(roomId); r != nil {
 			if len(r.players) < 1 {
 				roomsWithPlayers = append(roomsWithPlayers[:i], roomsWithPlayers[i+1:]...)

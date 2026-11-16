@@ -226,8 +226,8 @@ func (r *Room) UpdateCorpses(roundNow uint64) {
 		r.Corpses[idx] = corpse
 	}
 
-	for i := len(removeIdx) - 1; i >= 0; i-- {
-		r.Corpses = append(r.Corpses[:removeIdx[i]], r.Corpses[removeIdx[i]+1:]...)
+	for _, r0 := range slices.Backward(removeIdx) {
+		r.Corpses = append(r.Corpses[:r0], r.Corpses[r0+1:]...)
 	}
 }
 
@@ -1652,8 +1652,8 @@ func (r *Room) FindCorpseIndex(searchName string, viewer *characters.Character) 
 	if viewer != nil && messaging.ParticipantSight(viewer, r) != messaging.SightFull {
 		candidates := []string{}
 		indexes := []int{}
-		for idx := len(r.Corpses) - 1; idx >= 0; idx-- {
-			if r.Corpses[idx].Prunable {
+		for idx, v := range slices.Backward(r.Corpses) {
+			if v.Prunable {
 				continue
 			}
 			candidates = append(candidates, `corpse`)
@@ -1678,8 +1678,7 @@ func (r *Room) FindCorpseIndex(searchName string, viewer *characters.Character) 
 	// Iterate newest-first (corpses are appended on death) so a same-name
 	// lookup keeps the most recent corpse and the generic-match candidate list
 	// is newest-first — `look/loot corpse` inspects the last thing that died.
-	for idx := len(r.Corpses) - 1; idx >= 0; idx-- {
-		c := r.Corpses[idx]
+	for idx, c := range slices.Backward(r.Corpses) {
 
 		if c.Prunable {
 			continue

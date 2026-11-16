@@ -2,6 +2,7 @@ package aicompanion
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -102,8 +103,8 @@ func (m *Mind) addGoal(g Goal, nowUnix int64) int {
 // pruneGoals keeps every active goal and the 20 most recent finished ones.
 func (m *Mind) pruneGoals() {
 	finished := 0
-	for i := len(m.Goals) - 1; i >= 0; i-- {
-		if m.Goals[i].Status == `active` || m.Goals[i].Status == `paused` {
+	for i, v := range slices.Backward(m.Goals) {
+		if v.Status == `active` || v.Status == `paused` {
 			continue
 		}
 		finished++

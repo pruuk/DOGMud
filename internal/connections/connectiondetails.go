@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -278,8 +279,8 @@ func (cd *ConnectionDetails) RemoveInputHandler(name string) {
 	cd.handlerMutex.Lock()
 	defer cd.handlerMutex.Unlock()
 
-	for i := len(cd.inputHandlerNames) - 1; i >= 0; i-- {
-		if cd.inputHandlerNames[i] == name {
+	for i, v := range slices.Backward(cd.inputHandlerNames) {
+		if v == name {
 			cd.inputHandlerNames = append(cd.inputHandlerNames[:i], cd.inputHandlerNames[i+1:]...)
 			cd.inputHandlers = append(cd.inputHandlers[:i], cd.inputHandlers[i+1:]...)
 		}

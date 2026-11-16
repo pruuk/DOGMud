@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"time"
 
@@ -111,7 +112,7 @@ func ChargeStorageFee(u *users.UserRecord, currentMonth int) {
 	}
 
 	// Remove selected slots in reverse index order to preserve indices.
-	for i := len(slots) - 1; i >= 0; i-- {
+	for i := range slices.Backward(slots) {
 		if removeIdxs[i] {
 			u.ItemStorage.RemoveSlot(i)
 		}
