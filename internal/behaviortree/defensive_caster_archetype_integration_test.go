@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 const defensiveCasterYAML = "../../_datafiles/world/dogmud/behaviors/archetypes/defensive_caster.yaml"
@@ -189,6 +190,9 @@ func TestDefensiveCaster_BanditCaster285Shape_NoSelfDefense_CastsHarmSingle(t *t
 	})
 	defer cleanup()
 	defer events.DrainQueuedInputsForTest(mob.InstanceId)
+	// harm_single picks at random, weighted by score, since #369; seed it so
+	// the run is fixed.
+	defer util.SetRandForTest(285)()
 
 	ok := TryMobBehavior(mob.InstanceId, EventContext{EventType: "mob_combat_round"})
 	if !ok {
@@ -196,9 +200,12 @@ func TestDefensiveCaster_BanditCaster285Shape_NoSelfDefense_CastsHarmSingle(t *t
 	}
 	DrainAllDelayedActionsForTest(t)
 
+	// With no self_defense spell the caster attacks: one of its harm_single
+	// spells, not mend-wounds. (It used to be the top score, nerve-disruption,
+	// every time; #369 made the attack pick vary.)
 	cmd := events.InspectQueuedInputForTest(mob.InstanceId, "cast ")
-	if !strings.HasPrefix(cmd, "cast nerve-disruption") {
-		t.Fatalf("285-shape caster with no self_defense spell should cast nerve-disruption (top harm_single), got %q", cmd)
+	if !strings.HasPrefix(cmd, "cast nerve-disruption") && !strings.HasPrefix(cmd, "cast mind-spike") {
+		t.Fatalf("285-shape caster with no self_defense spell should cast a harm_single spell, got %q", cmd)
 	}
 }
 
