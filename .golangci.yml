@@ -20,8 +20,14 @@ linters:
     - errcheck     # unchecked errors — this codebase's error handling is uneven
     - ineffassign  # dead assignments; cheap, catches copy/paste bugs
     - unconvert    # unnecessary type conversions
+    - modernize    # keeps new code on current Go idioms (#348)
 
   settings:
+    modernize:
+      disable:
+        # omitzero changes JSON output (omitempty fields start being omitted
+        # or emitted differently), so it is a behavior change, not a rewrite.
+        - omitzero
     staticcheck:
       # SA* is staticcheck's bug/correctness category. ST* (style), S*
       # (simplify) and QF* (quickfix) are intentionally excluded — they are
