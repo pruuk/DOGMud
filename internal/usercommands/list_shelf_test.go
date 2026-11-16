@@ -43,8 +43,7 @@ func shelfListFixture(t *testing.T, limit int) (*users.UserRecord, *rooms.Room, 
 	orig := shops.ShelfNow
 	shops.ShelfNow = func() time.Time { return shelfListNow }
 	t.Cleanup(func() { shops.ShelfNow = orig })
-	shops.ClearCache()
-	t.Cleanup(shops.ClearCache)
+	shops.IsolateForTest(t)
 	si := shops.RegisterShop("TestZone", 841, 8410, shops.ShopInventory{Gold: 100, StartingGold: 100, CraftSupport: shops.CraftSupportGeneral})
 	return user, room, si
 }

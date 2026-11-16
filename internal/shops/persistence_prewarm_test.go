@@ -27,8 +27,7 @@ func writeZoneShopFile(t *testing.T, baseDir, zone string, mobId, roomId int, in
 }
 
 func TestPrewarmFromPersistedFilesIn_LoadsAllZoneFiles(t *testing.T) {
-	ClearCache()
-	t.Cleanup(ClearCache)
+	IsolateForTest(t)
 
 	baseDir := t.TempDir()
 
@@ -88,8 +87,7 @@ func TestPrewarmFromPersistedFilesIn_LoadsAllZoneFiles(t *testing.T) {
 }
 
 func TestPrewarmFromPersistedFilesIn_SkipsUnknownMobs(t *testing.T) {
-	ClearCache()
-	t.Cleanup(ClearCache)
+	IsolateForTest(t)
 
 	baseDir := t.TempDir()
 	inv := ShopInventory{Gold: 123, StartingGold: 500, Stock: []StockEntry{}}
@@ -108,8 +106,7 @@ func TestPrewarmFromPersistedFilesIn_SkipsUnknownMobs(t *testing.T) {
 }
 
 func TestPrewarmFromPersistedFilesIn_EmptyDir(t *testing.T) {
-	ClearCache()
-	t.Cleanup(ClearCache)
+	IsolateForTest(t)
 
 	baseDir := t.TempDir()
 	n, err := PrewarmFromPersistedFilesIn(baseDir, func(mobId int) (string, bool) {
@@ -124,8 +121,7 @@ func TestPrewarmFromPersistedFilesIn_EmptyDir(t *testing.T) {
 }
 
 func TestPrewarmFromPersistedFilesIn_NonexistentDir(t *testing.T) {
-	ClearCache()
-	t.Cleanup(ClearCache)
+	IsolateForTest(t)
 
 	n, err := PrewarmFromPersistedFilesIn("/nonexistent/path/to/shops", func(mobId int) (string, bool) {
 		return "", false
@@ -139,8 +135,7 @@ func TestPrewarmFromPersistedFilesIn_NonexistentDir(t *testing.T) {
 }
 
 func TestPrewarmFromPersistedFilesIn_DoesNotOverwriteExistingCache(t *testing.T) {
-	ClearCache()
-	t.Cleanup(ClearCache)
+	IsolateForTest(t)
 
 	baseDir := t.TempDir()
 	diskInv := ShopInventory{Gold: 50, StartingGold: 500, Stock: []StockEntry{}}

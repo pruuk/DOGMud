@@ -43,8 +43,7 @@ func TestBrowseShopsShowsTheShelfInTheModelsView(t *testing.T) {
 	t.Cleanup(func() { mobs.SetInstanceForTest(9602, nil) })
 	room.AddMob(9602)
 
-	shops.ClearCache()
-	t.Cleanup(shops.ClearCache)
+	shops.IsolateForTest(t)
 	si := shops.RegisterShop(`TestZone`, 961, 9601, shops.ShopInventory{Gold: 100, CraftSupport: shops.CraftSupportGeneral,
 		Stock: []shops.StockEntry{{ItemId: 96001, RestockQty: 1, MaxStock: 2, Current: 1}}})
 

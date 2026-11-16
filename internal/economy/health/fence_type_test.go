@@ -19,8 +19,7 @@ func TestCaptureSnapshot_FenceShopIsTypedFence(t *testing.T) {
 	cfg := configs.GetConfig()
 	cfg.Balance.BaubleFenceGroups = configs.ConfigSliceString{"fence"}
 	configs.SetConfigForTest(t, cfg)
-	shops.ClearCache()
-	t.Cleanup(shops.ClearCache)
+	shops.IsolateForTest(t)
 	t.Cleanup(mobs.SeedMobsForTest(map[int]*mobs.Mob{
 		104: {MobId: 104, Groups: []string{"fence"}, Character: characters.Character{Name: "Fence Dealer Siv"}},
 		108: {MobId: 108, Character: characters.Character{Name: "Jeweler Tess"}},

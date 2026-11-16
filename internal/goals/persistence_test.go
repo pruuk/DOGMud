@@ -18,7 +18,7 @@ func resetCache() {
 }
 
 func TestSaveAndLoad_RoundTrip(t *testing.T) {
-	resetCache()
+	IsolateForTest(t)
 	mg := &MobGoals{
 		MobId:      371,
 		NextGoalId: 2,
@@ -45,14 +45,14 @@ func TestSaveAndLoad_RoundTrip(t *testing.T) {
 }
 
 func TestLoadFromDisk_MissingFile(t *testing.T) {
-	resetCache()
+	IsolateForTest(t)
 	if got := loadFromDisk(99999, "nobody"); got != nil {
 		t.Errorf("expected nil for missing file, got %+v", got)
 	}
 }
 
 func TestLoadFromDisk_CorruptYAML(t *testing.T) {
-	resetCache()
+	IsolateForTest(t)
 	path := goalPath(99998, "broken")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
@@ -66,7 +66,7 @@ func TestLoadFromDisk_CorruptYAML(t *testing.T) {
 }
 
 func TestSaveToDisk_AtomicRename(t *testing.T) {
-	resetCache()
+	IsolateForTest(t)
 	mg := &MobGoals{MobId: 200, NextGoalId: 1, Goals: nil}
 	cacheStoreForTest("phantom", mg)
 	if err := saveToDisk(200, "phantom"); err != nil {
@@ -83,6 +83,7 @@ func TestSaveToDisk_AtomicRename(t *testing.T) {
 }
 
 func TestGoalPath_UsesOverride(t *testing.T) {
+	IsolateForTest(t)
 	override := os.Getenv("DOGMUD_GOALS_DIR_OVERRIDE")
 	if override == "" {
 		t.Skip("DOGMUD_GOALS_DIR_OVERRIDE unset; TestMain misconfigured?")
@@ -94,6 +95,7 @@ func TestGoalPath_UsesOverride(t *testing.T) {
 }
 
 func TestMobGoals_NewSelectionFields_RoundTrip(t *testing.T) {
+	IsolateForTest(t)
 	mg := &MobGoals{
 		MobId:             371,
 		NextGoalId:        4,
@@ -128,6 +130,7 @@ func TestMobGoals_NewSelectionFields_RoundTrip(t *testing.T) {
 }
 
 func TestMobGoals_SeededFromArchetype_RoundTrip(t *testing.T) {
+	IsolateForTest(t)
 	mg := &MobGoals{
 		MobId:               371,
 		NextGoalId:          2,
@@ -151,6 +154,7 @@ func TestMobGoals_SeededFromArchetype_RoundTrip(t *testing.T) {
 }
 
 func TestMobGoals_LegacyFile_LoadsWithSentinelFalse(t *testing.T) {
+	IsolateForTest(t)
 	legacy := `mob_id: 371
 next_goal_id: 2
 goals:
@@ -169,6 +173,7 @@ goals:
 }
 
 func TestMobGoals_LegacyFile_LoadsWithZeroSelectionFields(t *testing.T) {
+	IsolateForTest(t)
 	// A 4.1-era file with no selection fields.
 	legacy := `mob_id: 371
 next_goal_id: 2

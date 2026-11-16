@@ -13,9 +13,7 @@ import (
 // re-archetypes an eligible mob. End-to-end over the extracted
 // deterministic path (no RNG).
 func TestApplyAcquiredMutationTriggersShift(t *testing.T) {
-	cleanupDir := setGoalsTempDir(t)
-	defer cleanupDir()
-	goals.ClearCache()
+	goals.IsolateForTest(t)
 
 	cleanup := mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
 		"brawn": {MutationId: "brawn", Rarity: 9, Clusters: []string{"colossus"}, Name: "Brawn", Visual: "muscles ripple"},

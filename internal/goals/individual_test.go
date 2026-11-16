@@ -28,7 +28,7 @@ func individualMob(mobId, instanceId int) *mobs.Mob {
 }
 
 func TestAddIndividual_IsThatMobsAloneAndTouchesNoFile(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	t.Cleanup(ClearCache)
 	const typ = "individual-test-own"
 	registerIndividualTestType(t, typ, GoalTypeMeta{})
@@ -53,6 +53,7 @@ func TestAddIndividual_IsThatMobsAloneAndTouchesNoFile(t *testing.T) {
 }
 
 func TestAddIndividual_DedupsByTheTypesKey(t *testing.T) {
+	IsolateForTest(t)
 	const typ = "individual-test-dedup"
 	registerIndividualTestType(t, typ, GoalTypeMeta{
 		AllowMultiple: true,
@@ -76,6 +77,7 @@ func TestAddIndividual_DedupsByTheTypesKey(t *testing.T) {
 }
 
 func TestAddIndividual_ValidatesParams(t *testing.T) {
+	IsolateForTest(t)
 	const typ = "individual-test-params"
 	registerIndividualTestType(t, typ, GoalTypeMeta{
 		Params: []ParamSchema{{Key: "need", Required: true, GoType: "int"}},
@@ -90,6 +92,7 @@ func TestAddIndividual_ValidatesParams(t *testing.T) {
 }
 
 func TestIndividualGoalsOf_DropsSatisfiedForGood(t *testing.T) {
+	IsolateForTest(t)
 	const typ = "individual-test-satisfied"
 	done := false
 	registerIndividualTestType(t, typ, GoalTypeMeta{
@@ -110,7 +113,7 @@ func TestIndividualGoalsOf_DropsSatisfiedForGood(t *testing.T) {
 }
 
 func TestCurrentGoalFor_ScoresAgainstTheTypesGoal(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	t.Cleanup(ClearCache)
 	const shared, own, silent = "individual-test-shared", "individual-test-mine", "individual-test-silent"
 	registerIndividualTestType(t, shared, GoalTypeMeta{})
@@ -145,7 +148,7 @@ func TestCurrentGoalFor_ScoresAgainstTheTypesGoal(t *testing.T) {
 }
 
 func TestDropStaleGoals_RunsTheCheckOnLoadOnly(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	t.Cleanup(ClearCache)
 	t.Cleanup(func() { SetStaleGoalCheck(nil) })
 	const typ = "individual-test-stale"
@@ -175,7 +178,7 @@ func TestDropStaleGoals_RunsTheCheckOnLoadOnly(t *testing.T) {
 }
 
 func TestDropStaleGoals_APanickingCheckKeepsEveryGoal(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	t.Cleanup(ClearCache)
 	t.Cleanup(func() { SetStaleGoalCheck(nil) })
 	const typ = "individual-test-panic"

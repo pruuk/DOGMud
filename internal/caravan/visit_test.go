@@ -14,7 +14,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func TestMain(m *testing.M) {
@@ -391,8 +390,7 @@ func setupCreateSlotTestFixtures(
 
 	cleanupItems := items.SeedItemsForTest(specs)
 
-	shops.ClearCache()
-	wipeCreateSlotTestShopFile(t)
+	shops.IsolateForTest(t)
 
 	tmpl := shops.ShopInventory{
 		Gold:         500,
@@ -418,23 +416,8 @@ func setupCreateSlotTestFixtures(
 
 	return func() {
 		cleanupRoom()
-		shops.ClearCache()
-		wipeCreateSlotTestShopFile(t)
 		cleanupItems()
 	}
-}
-
-// wipeCreateSlotTestShopFile removes the on-disk shop YAML for the
-// create-slot test zone. See wipePickupTestShopFile for why the zone
-// directory must be sanitized with util.ConvertForFilename.
-func wipeCreateSlotTestShopFile(t *testing.T) {
-	t.Helper()
-	zoneDir := filepath.Join(
-		configs.GetFilePathsConfig().DataFiles.String(),
-		"shops",
-		util.ConvertForFilename(createSlotTestZone),
-	)
-	_ = os.RemoveAll(zoneDir)
 }
 
 // buildCreateSlotTestCarrier builds a carrier mob with enough carry
@@ -571,10 +554,9 @@ const (
 // loop. Returns a single cleanup function that tears down all of it.
 //
 // Note on shop-cache isolation: shops.SaveShop writes the shop state to
-// disk (configs.DataFiles, redirected to a temp dir in TestMain).
-// shops.RegisterShop will load that file back on subsequent calls,
-// which would leak the previous test's stock into the next one. We
-// scrub the on-disk shop file in both setup and cleanup so each test
+// disk and shops.RegisterShop loads that file back on later calls, which
+// would leak the previous test's stock into the next one.
+// shops.IsolateForTest gives each test its own shops folder, so each test
 // starts with a clean slate.
 func setupPickupTestFixtures(
 	t *testing.T,
@@ -585,8 +567,7 @@ func setupPickupTestFixtures(
 
 	cleanupItems := items.SeedItemsForTest(specs)
 
-	shops.ClearCache()
-	wipePickupTestShopFile(t)
+	shops.IsolateForTest(t)
 
 	tmpl := shops.ShopInventory{
 		Gold:         500,
@@ -617,31 +598,8 @@ func setupPickupTestFixtures(
 
 	return func() {
 		cleanupRoom()
-		shops.ClearCache()
-		wipePickupTestShopFile(t)
 		cleanupItems()
 	}
-}
-
-// wipePickupTestShopFile removes the on-disk shop YAML produced by
-// shops.SaveShop during the pickup test. Used by setup AND cleanup so
-// no test leaks shop state into the next.
-//
-// The zone directory MUST be sanitized with util.ConvertForFilename, exactly
-// as shops.shopPath does when SaveShop writes the file — "PickupTestZone"
-// lands in a lowercase "pickuptestzone/" directory. Deleting the raw mixed-case
-// name only works on a case-insensitive filesystem (Windows); on Linux CI the
-// mismatch leaves the file behind, so a prior pickup test's saved stock leaks
-// into the next via RegisterShop -> loadFromDisk and the bucket assertion picks
-// up 0. Mirror the save-path sanitization here.
-func wipePickupTestShopFile(t *testing.T) {
-	t.Helper()
-	zoneDir := filepath.Join(
-		configs.GetFilePathsConfig().DataFiles.String(),
-		"shops",
-		util.ConvertForFilename(pickupTestZone),
-	)
-	_ = os.RemoveAll(zoneDir)
 }
 
 // buildPickupTestWagon builds a wagon mob with enough carry capacity to

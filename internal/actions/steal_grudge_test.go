@@ -1,8 +1,6 @@
 package actions
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/goals"
@@ -20,17 +18,7 @@ const grudgeMobId = 97400
 
 func setupStealGrudge(t *testing.T, thiefUserId int) *mobs.Mob {
 	t.Helper()
-	prev, had := os.LookupEnv("DOGMUD_GOALS_DIR_OVERRIDE")
-	os.Setenv("DOGMUD_GOALS_DIR_OVERRIDE", filepath.Join(t.TempDir(), "goals"))
-	t.Cleanup(func() {
-		if had {
-			os.Setenv("DOGMUD_GOALS_DIR_OVERRIDE", prev)
-		} else {
-			os.Unsetenv("DOGMUD_GOALS_DIR_OVERRIDE")
-		}
-	})
-	goals.ClearCache()
-	t.Cleanup(goals.ClearCache)
+	goals.IsolateForTest(t)
 
 	u := users.NewTestUser(thiefUserId, "thief", "Nimble", 0)
 	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{thiefUserId: u}))

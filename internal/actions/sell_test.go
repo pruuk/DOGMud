@@ -419,10 +419,7 @@ func TestSell_AffixedItem_StocksForResale(t *testing.T) {
 	defer seedSellMerchant(t, 100000)()
 
 	// Hermetic: no cached/persisted shop from a prior run.
-	shops.ClearCache()
-	_ = shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 
 	si := shops.RegisterShop("TestZone", 2, 1, shops.ShopInventory{Gold: 100000})
 
