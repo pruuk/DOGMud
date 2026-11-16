@@ -1,7 +1,6 @@
 package behaviortree
 
 import (
-	"sort"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -11,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -295,25 +295,20 @@ func TestCastBestInCategory_RankingSelectsHighestScore(t *testing.T) {
 		t.Fatalf("want 3 candidates, got %d: %v", len(candidates), spellIds(candidates))
 	}
 
-	// Apply the same sort as the action.
-	sort.SliceStable(candidates, func(i, j int) bool {
-		si, sj := candidates[i], candidates[j]
-		scoreI := si.BaseFolds * si.Cost
-		scoreJ := sj.BaseFolds * sj.Cost
-		if scoreI != scoreJ {
-			return scoreI > scoreJ
-		}
-		return si.SpellId < sj.SpellId
-	})
-
-	if candidates[0].SpellId != "hi" {
-		t.Errorf("expected highest-scoring spell 'hi' first, got %s", candidates[0].SpellId)
+	// #369: the pick is weighted by score, not always the top one (casters
+	// only ever cast Mind Fog). Over many seeded draws every candidate is
+	// cast, and the order of frequency follows the score.
+	restore := util.SetRandForTest(369)
+	defer restore()
+	counts := map[string]int{}
+	for i := 0; i < 3400; i++ {
+		counts[chooseCategoryCandidate(candidates).SpellId]++
 	}
-	if candidates[1].SpellId != "mid" {
-		t.Errorf("expected 'mid' second, got %s", candidates[1].SpellId)
+	if counts["lo"] == 0 || counts["mid"] == 0 || counts["hi"] == 0 {
+		t.Fatalf("every candidate must sometimes be cast: %v", counts)
 	}
-	if candidates[2].SpellId != "lo" {
-		t.Errorf("expected 'lo' last, got %s", candidates[2].SpellId)
+	if !(counts["hi"] > counts["mid"] && counts["mid"] > counts["lo"]) {
+		t.Errorf("frequency must follow the score (hi 120 > mid 40 > lo 10): %v", counts)
 	}
 }
 
@@ -331,18 +326,18 @@ func TestCastBestInCategory_TieBreaksBySpellIdAsc(t *testing.T) {
 		t.Fatalf("want 2, got %d", len(candidates))
 	}
 
-	sort.SliceStable(candidates, func(i, j int) bool {
-		si, sj := candidates[i], candidates[j]
-		scoreI := si.BaseFolds * si.Cost
-		scoreJ := sj.BaseFolds * sj.Cost
-		if scoreI != scoreJ {
-			return scoreI > scoreJ
+	// Equal scores are equally likely, and the draw does not depend on the
+	// spellbook map's order: the same seed picks the same spell every run.
+	restore := util.SetRandForTest(7)
+	first := chooseCategoryCandidate(candidates).SpellId
+	restore()
+	for i := 0; i < 5; i++ {
+		reversed := []*spells.SpellData{candidates[1], candidates[0]}
+		restore = util.SetRandForTest(7)
+		if got := chooseCategoryCandidate(reversed).SpellId; got != first {
+			t.Errorf("the same seed picked %s for one order and %s for the other", first, got)
 		}
-		return si.SpellId < sj.SpellId
-	})
-
-	if candidates[0].SpellId != "aaa" {
-		t.Errorf("tie-break: expected 'aaa' first (asc), got %s", candidates[0].SpellId)
+		restore()
 	}
 }
 

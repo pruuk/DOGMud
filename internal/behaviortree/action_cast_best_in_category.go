@@ -10,11 +10,12 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// actCastBestInCategory is a smart-cast action that picks the best spell from
-// the mob's spellbook matching the given category, ranked by base_folds × cost,
-// and initiates it on the specified target.
+// actCastBestInCategory is a smart-cast action that picks a spell from the
+// mob's spellbook matching the given category, weighted by base_folds × cost
+// (chooseCategoryCandidate), and initiates it on the specified target.
 //
 // Params:
 //
@@ -89,18 +90,7 @@ func actCastBestInCategory(params map[string]any, ctx *EvalContext) Result {
 		return Failure
 	}
 
-	// Rank: (base_folds × cost) desc, spellid asc for ties.
-	sort.SliceStable(candidates, func(i, j int) bool {
-		si, sj := candidates[i], candidates[j]
-		scoreI := si.BaseFolds * si.Cost
-		scoreJ := sj.BaseFolds * sj.Cost
-		if scoreI != scoreJ {
-			return scoreI > scoreJ
-		}
-		return si.SpellId < sj.SpellId
-	})
-
-	chosen := candidates[0]
+	chosen := chooseCategoryCandidate(candidates)
 
 	// Packmate targets are addressed via `cast <spell> #<instanceId>`.
 	// target=self issues the cast without a target suffix; HelpSingle-type
@@ -111,6 +101,31 @@ func actCastBestInCategory(params map[string]any, ctx *EvalContext) Result {
 		mob.Command("cast " + chosen.SpellId)
 	}
 	return Success
+}
+
+// chooseCategoryCandidate picks the spell to cast, weighted by its score
+// (base_folds × cost, at least 1): a stronger spell is cast more often, and
+// every candidate is cast sometimes. It always took the top score, so casters
+// only ever cast Mind Fog (300) and never Nerve Disruption (200) or Mind
+// Spike (40) (#369). Candidates are sorted by spell id first, so a seeded draw
+// (util.SetRandForTest) does not depend on the spellbook map's order.
+// candidates must not be empty.
+func chooseCategoryCandidate(candidates []*spells.SpellData) *spells.SpellData {
+	sorted := append([]*spells.SpellData(nil), candidates...)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].SpellId < sorted[j].SpellId })
+	weight := func(sd *spells.SpellData) int { return max(1, sd.BaseFolds*sd.Cost) }
+	total := 0
+	for _, sd := range sorted {
+		total += weight(sd)
+	}
+	roll := util.Rand(total)
+	for _, sd := range sorted {
+		if roll < weight(sd) {
+			return sd
+		}
+		roll -= weight(sd)
+	}
+	return sorted[len(sorted)-1]
 }
 
 // findMostWoundedPackmate returns the same-room packmate with the lowest
