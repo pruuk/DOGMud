@@ -17,7 +17,7 @@ import (
 // rate runs the contest many times and returns the observed success rate.
 func rate(atk, def float64, n int) float64 {
 	wins := 0
-	for i := 0; i < n; i++ {
+	for range n {
 		if ok, _, _, _ := OpposedRollStat(atk, def); ok {
 			wins++
 		}
@@ -69,7 +69,7 @@ func TestOpposedRollStat_FlippedOutcomeHasMinimalMargin(t *testing.T) {
 	// success here IS a floor save (the fixed 0.05 literal). n=400 keeps the
 	// expected flip count comfortably above zero without flaking.
 	flips := 0
-	for i := 0; i < 400; i++ {
+	for range 400 {
 		success, margin, atkRoll, defRoll := OpposedRollStat(100, 300)
 		if !success {
 			continue
@@ -99,7 +99,7 @@ func TestOpposedRollStatWithFloors_UsesTheSuppliedFloors(t *testing.T) {
 	// package state.
 	const n = 40000
 	wins := 0
-	for i := 0; i < n; i++ {
+	for range n {
 		if ok, _, _, _ := OpposedRollStatWithFloors(100, 150, 0, 0); ok {
 			wins++
 		}
@@ -115,7 +115,7 @@ func TestOpposedRollStatWithFloors_ClampsPerCall(t *testing.T) {
 	// ~0, so the observed rate is the effective floor.
 	const n = 40000
 	wins := 0
-	for i := 0; i < n; i++ {
+	for range n {
 		if ok, _, _, _ := OpposedRollStatWithFloors(100, 300, 99, 0); ok {
 			wins++
 		}
@@ -140,7 +140,7 @@ func TestContestFloor_EffectiveRatesAtEachTier(t *testing.T) {
 	const n = 40000
 	measure := func(atk, def, fh, fr float64) float64 {
 		wins := 0
-		for i := 0; i < n; i++ {
+		for range n {
 			if ok, _, _, _ := OpposedRollStatWithFloors(atk, def, fh, fr); ok {
 				wins++
 			}

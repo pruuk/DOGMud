@@ -10,7 +10,7 @@ func TestWorldTimeLabelAgreesWithIsNight(t *testing.T) {
 	if got := timeOfDayLabel(true, true, 16); got != "Night" {
 		t.Errorf("midwinter 4PM night reads %q, want Night", got)
 	}
-	for hour := 0; hour < 24; hour++ {
+	for hour := range 24 {
 		for _, night := range []bool{false, true} {
 			for _, lamps := range []bool{false, true} {
 				if night && !lamps {

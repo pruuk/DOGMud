@@ -52,7 +52,7 @@ func TestTogetherRenderCoordinatesOneIndexAcrossRoles(t *testing.T) {
 		ToDefender: SkillTieredMessages{Beginner: MessageOptions{"d0", "d1", "d2"}},
 		ToRoom:     SkillTieredMessages{Beginner: MessageOptions{"r0", "r1", "r2"}},
 	}
-	for idx := 0; idx < 3; idx++ {
+	for idx := range 3 {
 		pick := func(n int) int { return idx }
 		roles := m.Render(10, nil, pick)
 		wantA := fmt.Sprintf("a%d", idx)

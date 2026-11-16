@@ -200,7 +200,7 @@ func TestDefuse_Success(t *testing.T) {
 
 	succeeded := 0
 	const trials = 20
-	for i := 0; i < trials; i++ {
+	for i := range trials {
 		// Re-seed kit and reset room trap each trial.
 		actor.char.Items = nil
 		seedDisarmKit(actor, 9910+i, 0)
@@ -261,7 +261,7 @@ func TestDefuse_FailureTriggers(t *testing.T) {
 
 	failedTrials := 0
 	const trials = 20
-	for i := 0; i < trials; i++ {
+	for i := range trials {
 		// Re-seed kit and reset room trap each trial.
 		tracker.char.Items = nil
 		tracker.char.Items = append(tracker.char.Items, newDisarmKit(9920+i, 0))
@@ -354,7 +354,7 @@ func TestDefuse_SkillProgressionFires(t *testing.T) {
 	actor := newDefuseActor(50, 3)
 
 	const trials = 30
-	for i := 0; i < trials; i++ {
+	for i := range trials {
 		actor.char.Items = nil
 		seedDisarmKit(actor, 9950+i, 0)
 		actor.room.Containers = map[string]rooms.Container{

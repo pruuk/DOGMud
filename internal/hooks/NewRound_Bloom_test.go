@@ -92,7 +92,7 @@ func saveAndLoad(t *testing.T, c *characters.Character) *characters.Character {
 // tick runs n rounds, moving the world clock too, and returns the conditions they
 // queued and what the player read.
 func tick(n int) (map[int]bool, string) {
-	for i := 0; i < n; i++ {
+	for range n {
 		round := util.GetRoundCount() + 1
 		util.SetRoundCountForTest(round)
 		BloomTick(events.NewRound{RoundNumber: round})

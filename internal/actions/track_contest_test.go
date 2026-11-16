@@ -22,7 +22,7 @@ func trackDetectRate(t *testing.T, perception int, trials int) float64 {
 func trackDetectRateAt(t *testing.T, perception, lamp int, trials int) float64 {
 	t.Helper()
 	detected := 0
-	for i := 0; i < trials; i++ {
+	for i := range trials {
 		room := newTrackTestRoom(9400 + i)
 		room.Lamp = rooms.LampPtr(lamp)
 		actor := newTrackFakeActor("ContestTracker", room, false, 0)
@@ -94,7 +94,7 @@ func TestTrailDetectionPaysTheTrackersEyes(t *testing.T) {
 func TestTrailDetailBandsAreNested(t *testing.T) {
 	for _, score := range []float64{60, 100, 125, 150, 175, 260} {
 		sawAll, sawExits, sawAny := 0, 0, 0
-		for i := 0; i < 4000; i++ {
+		for range 4000 {
 			d := resolveTrailDetail(score)
 			if d.SeesAnything {
 				sawAny++
@@ -126,7 +126,7 @@ func TestTrailDetailBandsAreNested(t *testing.T) {
 // outcomes protects nothing.
 func TestTrailDetailIsReachableAtBothEnds(t *testing.T) {
 	lowAny := 0
-	for i := 0; i < 3000; i++ {
+	for range 3000 {
 		if resolveTrailDetail(60).SeesAnything {
 			lowAny++
 		}
@@ -136,7 +136,7 @@ func TestTrailDetailIsReachableAtBothEnds(t *testing.T) {
 	}
 
 	highExits := 0
-	for i := 0; i < 3000; i++ {
+	for range 3000 {
 		if resolveTrailDetail(300).SeesExits {
 			highExits++
 		}

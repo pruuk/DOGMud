@@ -112,7 +112,7 @@ func TestRegression_StatProgressionTriggersOnUse(t *testing.T) {
 				"%s use count should increment to 1", statName)
 
 			// Multiple uses accumulate
-			for i := 0; i < 10; i++ {
+			for range 10 {
 				c.TrackStatUse(statName)
 			}
 			assert.Equal(t, 11, c.GetStatUseCount(statName),

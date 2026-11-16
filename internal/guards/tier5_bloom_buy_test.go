@@ -184,7 +184,7 @@ func TestBloomWafer_TheShippedDealerStopsAtTheLimit(t *testing.T) {
 	// Past the shelf cap, to show the limit stops this and the shelf does not. He
 	// restocks, and a player standing inside buys each refill: a limit on the door
 	// alone would not hold.
-	for i := 0; i < limit; i++ {
+	for i := range limit {
 		if res := actions.Buy(actor, actions.BuyOptions{Request: "wafer"}); !res.Success {
 			t.Fatalf("buy %d of %d: %+v (told %q, he said %q, stock %+v)", i+1, limit, res,
 				events.DrainQueuedMessagesForTest(u.UserId), events.DrainQueuedInputsForTest(sefton.InstanceId), waferEntry(t))

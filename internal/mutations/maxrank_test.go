@@ -17,7 +17,7 @@ func TestEffectiveMaxAndDeepen(t *testing.T) {
 		t.Error("apex at 1 (MaxRank 1) must NOT be deepenable")
 	}
 	// RollDeepening never returns an at-cap mutation.
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if RollDeepening(map[string]int{"apex": 1}) != "" {
 			t.Fatal("RollDeepening returned a capped apex")
 		}

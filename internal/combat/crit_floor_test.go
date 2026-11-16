@@ -32,7 +32,7 @@ func TestApplyCritFloor_AlreadyCritIsUntouched(t *testing.T) {
 func TestApplyCritFloor_ZeroFloorNeverPromotes(t *testing.T) {
 	// Setting the knob to 0 must switch the mechanic off completely, which is
 	// the escape hatch if it plays badly.
-	for i := 0; i < 5000; i++ {
+	for range 5000 {
 		if ApplyCritFloor(false, 0.0) {
 			t.Fatal("a zero floor must never promote a non-crit")
 		}
@@ -40,7 +40,7 @@ func TestApplyCritFloor_ZeroFloorNeverPromotes(t *testing.T) {
 }
 
 func TestApplyCritFloor_CertainFloorAlwaysPromotes(t *testing.T) {
-	for i := 0; i < 5000; i++ {
+	for range 5000 {
 		if !ApplyCritFloor(false, 1.0) {
 			t.Fatal("a floor of 1.0 must always promote")
 		}
@@ -50,7 +50,7 @@ func TestApplyCritFloor_CertainFloorAlwaysPromotes(t *testing.T) {
 func TestApplyCritFloor_RateMatchesTheFloor(t *testing.T) {
 	const samples = 200000
 	promoted := 0
-	for i := 0; i < samples; i++ {
+	for range samples {
 		if ApplyCritFloor(false, 0.01) {
 			promoted++
 		}
@@ -109,7 +109,7 @@ func dodgeBestWon(margin float64) bestDefenseResult {
 // landed damage — which the old res.hit split would have handed to the
 // attacker's floor.
 func TestApplyCritFloors_NeverPromotesAContestLoss(t *testing.T) {
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		res := hitResolution{hit: true}
 		applyCritFloors(&res, &AttackResult{}, dodgeBestWon(defenceWinMargin), 1.0, 0.0)
 
@@ -210,7 +210,7 @@ func TestApplyCritFloors_NoDefenseAttemptedIsNotADefensiveCrit(t *testing.T) {
 // declare. The guard belongs on the defence branch only.
 func TestApplyCritFloors_UncontestedSwingTakesTheAttackFloor(t *testing.T) {
 	promoted := 0
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		result := &AttackResult{}
 		res := hitResolution{hit: true}
 		applyCritFloors(&res, result, bestDefenseResult{margin: math.Inf(-1)}, 1.0, 1.0)
@@ -245,7 +245,7 @@ func TestApplyCritFloors_UncontestedSwingTakesTheAttackFloor(t *testing.T) {
 func TestApplyCritFloors_AttackFloorAppliesOnlyToContestWins(t *testing.T) {
 	// Certain attack floor, dead defence floor. Every swing the ATTACK won must
 	// be promoted, and nothing may leak to the defensive side.
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		result := &AttackResult{}
 		res := hitResolution{hit: true}
 		applyCritFloors(&res, result, dodgeBestWon(attackWinMargin), 1.0, 0.0)
@@ -266,7 +266,7 @@ func TestApplyCritFloors_DefenceFloorAppliesOnlyToDefenceWins(t *testing.T) {
 	// res.hit is deliberately TRUE here. That is the Task 10 shape: a defended
 	// swing that still deals partial damage. Under the old res.hit split this
 	// case went down the ATTACKER's branch and the defender's floor never ran.
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		result := &AttackResult{}
 		res := hitResolution{hit: true}
 		applyCritFloors(&res, result, dodgeBestWon(defenceWinMargin), 0.0, 1.0)
@@ -309,7 +309,7 @@ func TestApplyCritFloors_DefenceFloorAppliesOnlyToDefenceWins(t *testing.T) {
 // nothing must still leave a partially deflected swing landing, or the mere act
 // of consulting a dead floor would erase the damage Task 10 exists to deal.
 func TestApplyCritFloors_NonPromotingDefenceFloorLeavesDeflectedDamage(t *testing.T) {
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		res := hitResolution{hit: true, damageMult: 0.5}
 		applyCritFloors(&res, &AttackResult{}, dodgeBestWon(defenceWinMargin), 0.0, 0.0)
 
@@ -337,7 +337,7 @@ func TestApplyCritFloors_FlooredOutcomeIsNeverPromoted(t *testing.T) {
 		{"floored defence win, zero damage", defenceWinMargin, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			for i := 0; i < 200; i++ {
+			for range 200 {
 				result := &AttackResult{}
 				best := dodgeBestWon(tc.margin)
 				best.floored = true

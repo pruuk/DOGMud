@@ -74,7 +74,7 @@ func TestBuyLimit_RefusesPastTheLimitAndChangesNothing(t *testing.T) {
 	seller, inv := limitSeller()
 	events.DrainQueuedInputsForTest(limitSellerId)
 
-	for i := 0; i < limitPerDay; i++ {
+	for i := range limitPerDay {
 		require.True(t, buyOnce(buyer, seller, inv, "bloom wafer").Success, "unit %d", i+1)
 	}
 	require.Empty(t, events.DrainQueuedInputsForTest(limitSellerId), "he says nothing while he is selling")
@@ -102,7 +102,7 @@ func TestBuyLimit_IsPerCharacter(t *testing.T) {
 	pinBuyLimit(t)
 	first, second := limitBuyer(100000), limitBuyer(100000)
 	seller, inv := limitSeller()
-	for i := 0; i < limitPerDay; i++ {
+	for range limitPerDay {
 		require.True(t, buyOnce(first, seller, inv, "bloom wafer").Success)
 	}
 	assert.Equal(t, BuyReasonLimit, buyOnce(first, seller, inv, "bloom wafer").Reason)
@@ -159,7 +159,7 @@ func TestBuyLimit_SurvivesASaveAndLoad(t *testing.T) {
 	pinBuyLimit(t)
 	buyer := limitBuyer(100000)
 	seller, inv := limitSeller()
-	for i := 0; i < limitPerDay; i++ {
+	for range limitPerDay {
 		require.True(t, buyOnce(buyer, seller, inv, "bloom wafer").Success)
 	}
 
@@ -179,7 +179,7 @@ func TestBuyLimit_SurvivesASaveAndLoad(t *testing.T) {
 func TestBuyLimit_HoldsOnTheLegacyPath(t *testing.T) {
 	pinBuyLimit(t)
 	buyer := limitBuyer(100000)
-	for i := 0; i < limitPerDay; i++ {
+	for range limitPerDay {
 		recordLimitedBuy(&buyer.Mob.Character, bloomWaferItemId)
 	}
 	shop := characters.Shop{{ItemId: bloomWaferItemId, Price: 150, Quantity: 2, QuantityMax: 2}}
@@ -207,7 +207,7 @@ func TestBuyLimitNote_NamesTheItemAtTheLimitOnly(t *testing.T) {
 	stock := characters.Shop{{ItemId: sellTestItemId, Quantity: 1}, {ItemId: bloomWaferItemId, Quantity: 5}}
 
 	assert.Empty(t, BuyLimitNote(c, stock, "Sefton"))
-	for i := 0; i < limitPerDay; i++ {
+	for range limitPerDay {
 		recordLimitedBuy(c, bloomWaferItemId)
 	}
 	note := BuyLimitNote(c, stock, "Sefton")

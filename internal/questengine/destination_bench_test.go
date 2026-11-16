@@ -67,7 +67,7 @@ func benchCopy(b *testing.B, roomId int, hidden bool) liveCopy {
 func BenchmarkResolveDestinationMob30(b *testing.B) {
 	const mobId = 900
 	var copies []liveCopy
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		copies = append(copies, benchCopy(b, 101+i, i%2 == 1))
 	}
 	installDestBench(b, map[int][]liveCopy{mobId: copies})

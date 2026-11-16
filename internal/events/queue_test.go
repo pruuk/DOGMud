@@ -128,7 +128,7 @@ func TestQueueConcurrency(t *testing.T) {
 	done := make(chan bool)
 
 	// Writer goroutines
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		go func(start int) {
 			for j := start; j < start+100; j++ {
 				q.Push(j)
@@ -138,11 +138,11 @@ func TestQueueConcurrency(t *testing.T) {
 	}
 
 	// Reader goroutines
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go func() {
 			// We don't know how many items will be available each time we poll,
 			// but we'll do a few polls.
-			for k := 0; k < 100; k++ {
+			for range 100 {
 				q.Poll() // It's fine if it returns 0 sometimes if queue is temporarily empty.
 			}
 			done <- true
@@ -150,7 +150,7 @@ func TestQueueConcurrency(t *testing.T) {
 	}
 
 	// Wait for all goroutines to complete
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		<-done
 	}
 
@@ -166,7 +166,7 @@ func BenchmarkQueuePushPoll(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 
-		for j := 0; j < 100; j++ {
+		for j := range 100 {
 
 			q.Push(i)
 			if j%3 == 0 {

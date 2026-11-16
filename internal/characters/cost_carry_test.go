@@ -13,7 +13,7 @@ func TestApplyCostFloatCarriesTheRemainder(t *testing.T) {
 	c.StaminaMax.Value = 1000
 	c.Stamina = 1000
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		c.ApplyCostFloat(PoolStamina, 1.5)
 	}
 
@@ -30,7 +30,7 @@ func TestApplyCostFloatPreservesSmallModifierDifferences(t *testing.T) {
 		c := New()
 		c.StaminaMax.Value = 10000
 		c.Stamina = 10000
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			c.ApplyCostFloat(PoolStamina, each)
 		}
 		return 10000 - c.Stamina

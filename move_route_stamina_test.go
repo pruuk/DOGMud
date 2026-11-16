@@ -146,7 +146,7 @@ func TestShippedRoutedMobsCanPayTheirWorstStep(t *testing.T) {
 		pool := math.MaxInt
 		var worst, hidden float64
 		worstRoom := 0
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			inst := mobs.NewMobByIdFresh(spec.MobId, stops[0])
 			if inst == nil {
 				t.Fatalf("mob %d did not spawn", spec.MobId)

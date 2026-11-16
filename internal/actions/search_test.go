@@ -159,7 +159,7 @@ func TestSearch_MobActorSilent(t *testing.T) {
 func searchRoomWithHiddenNouns(roomId, n int) *rooms.Room {
 	room := newSearchTestRoom(roomId)
 	room.HiddenNouns = map[string]rooms.HiddenNoun{}
-	for i := 0; i < n; i++ {
+	for i := range n {
 		key := fmt.Sprintf("hidden-thing-%d", i)
 		room.HiddenNouns[key] = rooms.HiddenNoun{HiddenDescription: "Something is here."}
 	}

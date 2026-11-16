@@ -13,7 +13,7 @@ func TestBlankLineAllowedIsTheScreenSet(t *testing.T) {
 		CategoryAdmin:           true,
 		CategoryRoomDescription: true,
 	}
-	for c := CategoryDefault; c < categoryMax; c++ {
+	for c := range categoryMax {
 		if got := BlankLineAllowed(c); got != want[c] {
 			t.Errorf("BlankLineAllowed(%s) = %v, want %v", c, got, want[c])
 		}

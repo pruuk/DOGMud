@@ -22,7 +22,7 @@ func TestTryMarkPending_OnlyOneWinnerPerMob(t *testing.T) {
 	var wg sync.WaitGroup
 	start := make(chan struct{})
 
-	for g := 0; g < goroutines; g++ {
+	for range goroutines {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -86,12 +86,12 @@ func TestTryMarkPending_ConcurrentChurnAcrossMobs(t *testing.T) {
 	const mobs = 16
 	const rounds = 50
 
-	for r := 0; r < rounds; r++ {
+	for r := range rounds {
 		var winners [mobs]atomic.Int32
 		var wg sync.WaitGroup
 		start := make(chan struct{})
 
-		for g := 0; g < mobs*4; g++ {
+		for g := range mobs * 4 {
 			wg.Add(1)
 			go func(g int) {
 				defer wg.Done()
@@ -105,7 +105,7 @@ func TestTryMarkPending_ConcurrentChurnAcrossMobs(t *testing.T) {
 		close(start)
 		wg.Wait()
 
-		for m := 0; m < mobs; m++ {
+		for m := range mobs {
 			if got := winners[m].Load(); got != 1 {
 				t.Fatalf("round %d mob %d: winners = %d, want 1", r, m, got)
 			}

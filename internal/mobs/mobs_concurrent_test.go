@@ -15,11 +15,11 @@ func TestConcurrentInstanceAccess(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Writers create and destroy instances.
-	for w := 0; w < writers; w++ {
+	for w := range writers {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			for i := 0; i < iters; i++ {
+			for i := range iters {
 				m := &Mob{InstanceId: id*1000 + i}
 				m.Character.Name = "racer"
 				storeInstanceForTest(m)
@@ -29,11 +29,11 @@ func TestConcurrentInstanceAccess(t *testing.T) {
 	}
 
 	// Readers iterate and read.
-	for r := 0; r < readers; r++ {
+	for range readers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for i := 0; i < iters; i++ {
+			for i := range iters {
 				_ = GetAllMobInstanceIds()
 				_ = GetInstance(i)
 			}

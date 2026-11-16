@@ -53,7 +53,7 @@ func TestSwitchedOffStillHearsItsOwnEvents(t *testing.T) {
 	}
 
 	// The engine samples the complaint once per NoListenerSampleSize.
-	for i := 0; i < events.NoListenerSampleSize; i++ {
+	for range events.NoListenerSampleSize {
 		events.DoListeners(events.Emote{UserId: 1, RoomId: 1, Text: `waves`})
 		events.DoListeners(events.Healed{HealerUserId: 1, MobInstanceId: 42})
 		events.DoListeners(events.GoldGiven{UserId: 1, MobInstanceId: 42, Amount: 5})
@@ -64,7 +64,7 @@ func TestSwitchedOffStillHearsItsOwnEvents(t *testing.T) {
 
 	// And the null probe: an event nobody listens to is still reported, so
 	// the silence above is the module's doing.
-	for i := 0; i < events.NoListenerSampleSize; i++ {
+	for range events.NoListenerSampleSize {
 		events.DoListeners(events.GiftAccepted{})
 	}
 	if !tee.contains(`no listener for event`) {

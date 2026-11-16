@@ -69,7 +69,7 @@ func TestAnsiTagLen_MatchesTheExpressionItReplaced(t *testing.T) {
 	}
 	rng := rand.New(rand.NewSource(20261109))
 	tagsSeen := 0
-	for n := 0; n < 50000; n++ {
+	for range 50000 {
 		var b strings.Builder
 		for k := rng.Intn(10); k >= 0; k-- {
 			b.WriteString(frags[rng.Intn(len(frags))])

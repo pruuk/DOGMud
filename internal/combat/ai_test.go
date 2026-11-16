@@ -812,7 +812,7 @@ func TestChooseSpecialMove_SerpentNeverPounces(t *testing.T) {
 	target.Health = 100
 	setCombatPositionParallel(target, position.Standing)
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		move := ChooseSpecialMove(mob, target)
 		if move == "pounce" || move == "hamstring" || move == "trip" || move == "kick" {
 			t.Errorf("legless serpent picked a legged move %q", move)
@@ -856,7 +856,7 @@ func TestChooseSpecialMove_PredatorProfile_NeverGrapple(t *testing.T) {
 	}
 
 	seen := map[string]int{}
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		move := ChooseSpecialMove(mob, target)
 		if move != "" {
 			seen[move]++
@@ -1011,7 +1011,7 @@ func TestSelectSpecialMove_NoChanceRoll(t *testing.T) {
 	setCombatPositionParallel(target, position.Standing)
 
 	// ChooseSpecialMove must return "" every time when chance=0
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		move := ChooseSpecialMove(mob, target)
 		if move != "" {
 			t.Errorf("ChooseSpecialMove with chance=0 returned %q, want \"\"", move)
@@ -1020,7 +1020,7 @@ func TestSelectSpecialMove_NoChanceRoll(t *testing.T) {
 
 	// SelectSpecialMove must return a valid beast move (bypasses chance gate)
 	found := false
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		move := SelectSpecialMove(mob, target)
 		if move != "" {
 			found = true

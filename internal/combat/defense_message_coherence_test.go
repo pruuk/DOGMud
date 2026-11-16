@@ -32,7 +32,7 @@ func TestSendDefenseMessagesMeleePathCoordinatesAllThreeRoles(t *testing.T) {
 	toDefender := make(items.MessageOptions, n)
 	toAttacker := make(items.MessageOptions, n)
 	toRoom := make(items.MessageOptions, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		toDefender[i] = items.ItemMessage(fmt.Sprintf("MELEE-DEF-%d", i))
 		toAttacker[i] = items.ItemMessage(fmt.Sprintf("MELEE-ATK-%d", i))
 		toRoom[i] = items.ItemMessage(fmt.Sprintf("MELEE-ROOM-%d", i))
@@ -66,7 +66,7 @@ func TestSendDefenseMessagesMeleePathCoordinatesAllThreeRoles(t *testing.T) {
 	}
 
 	const trials = 40
-	for i := 0; i < trials; i++ {
+	for i := range trials {
 		result := &AttackResult{}
 		// partial=false so the defender/attacker personal lines are sent
 		// alongside the room line (mirrors the defenseCrit call site).

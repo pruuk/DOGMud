@@ -256,8 +256,8 @@ func gridWorld(t *testing.T, base, cols, rows int, cell func(x, y int) (zone, sy
 		return ok
 	}
 	var rs []fixtureRoom
-	for y := 0; y < rows; y++ {
-		for x := 0; x < cols; x++ {
+	for y := range rows {
+		for x := range cols {
 			zone, symbol, ok := cell(x, y)
 			if !ok {
 				continue
@@ -384,7 +384,7 @@ func TestGetLimitedMapLoadsNoRoomWhenMapsAreBuilt(t *testing.T) {
 	m := GetMapper(center)
 	GetMapper(base + 2 + 1) // zr_b's map, as PreCacheMaps builds it
 	var far []int
-	for y := 0; y < 9; y++ {
+	for y := range 9 {
 		for x := 2; x < 12; x++ {
 			far = append(far, base+y*100+x+1)
 		}
@@ -471,8 +471,8 @@ func TestFindRoomsInDistanceKeepsMastersSignedSum(t *testing.T) {
 
 	// Master's result on this grid, cell by cell: (x, y) with x + y in 2..6.
 	var want []int
-	for y := 0; y < 5; y++ {
-		for x := 0; x < 5; x++ {
+	for y := range 5 {
+		for x := range 5 {
 			if s := x + y; s >= 2 && s <= 6 && (x != 2 || y != 2) {
 				want = append(want, id(x, y))
 			}

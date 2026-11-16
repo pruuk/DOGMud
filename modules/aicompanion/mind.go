@@ -274,7 +274,7 @@ func saveMindBackup(plug *plugins.Plugin, m *Mind) error {
 // loadNewestBackup returns the readable backup with the most sessions.
 func loadNewestBackup(plug *plugins.Plugin, ownerUserId int, p *Profile) *Mind {
 	var best *Mind
-	for slot := 0; slot < mindBackups; slot++ {
+	for slot := range mindBackups {
 		b := &Mind{}
 		if err := plug.ReadIntoStruct(backupIdentifier(ownerUserId, p.MobId, slot), b); err != nil {
 			continue

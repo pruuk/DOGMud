@@ -406,7 +406,7 @@ func distributeStatPoolFromConfig(mob *Mob, statPool int) {
 // primary/secondary distribution.
 func distributeStatPool(mob *Mob, statPool int, primaryShare float64) {
 	primaryPermille := int(primaryShare * 3 * 1000)
-	for i := 0; i < statPool; i++ {
+	for range statPool {
 		var statIdx int
 		switch mob.Archetype {
 		case "fighting":

@@ -40,7 +40,7 @@ func spellTestCaster(spellcasting int) *characters.Character {
 func meanSpellDamage(t *testing.T, sd *spells.SpellData, caster, target *characters.Character, isCrit bool, samples int) float64 {
 	t.Helper()
 	total := 0.0
-	for i := 0; i < samples; i++ {
+	for range samples {
 		total += float64(calcSpellDamageForCharacter(sd, caster, target, 0, isCrit))
 	}
 	return total / float64(samples)

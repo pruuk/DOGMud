@@ -29,7 +29,7 @@ func TestPlant_CaughtFiresCaughtPlantingOnTheMark(t *testing.T) {
 	mobs.SetInstanceForTest(testPlantMobInstId, mob)
 	defer mobs.SetInstanceForTest(testPlantMobInstId, nil)
 
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		*fired = nil
 		actor := newPlantPlayerActor(1, 1)
 		seedPlantItem(actor)
@@ -49,7 +49,7 @@ func TestPlant_UnseenFiresNothing(t *testing.T) {
 	mobs.SetInstanceForTest(testPlantMobInstId, mob)
 	defer mobs.SetInstanceForTest(testPlantMobInstId, nil)
 
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		*fired = nil
 		actor := newPlantPlayerActor(100000, 8)
 		seedPlantItem(actor)

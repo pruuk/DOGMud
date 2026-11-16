@@ -119,7 +119,7 @@ func TestWouldFire_HasNoSideEffects(t *testing.T) {
 	e := seedDryRunQuest()
 	player := newFullMockPlayer(500)
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		assert.True(t, e.WouldFire("room_gate", EventDetails{UserId: 1, RoomId: 500}, player))
 	}
 	// No token granted, the chained quest_granted trigger did not run.

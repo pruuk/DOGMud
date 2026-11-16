@@ -280,7 +280,7 @@ func TestShadow_DetectionWin(t *testing.T) {
 	detectionCount := 0
 	successCount := 0
 
-	for i := 0; i < trials; i++ {
+	for range trials {
 		// Reset cooldown and Hidden condition each trial.
 		delete(actor.char.Cooldowns, skills.Skullduggery.String("shadow"))
 		resetHiddenCondition(actor)

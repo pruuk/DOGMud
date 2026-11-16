@@ -21,7 +21,7 @@ func setMovementSearchTrainChance(t *testing.T, chance float64) {
 // observeGateRate runs the gate n times and returns the observed fire rate.
 func observeGateRate(n int) float64 {
 	fired := 0
-	for i := 0; i < n; i++ {
+	for range n {
 		if movementTrainsSearch() {
 			fired++
 		}
@@ -54,7 +54,7 @@ func TestMovementTrainsSearch_FiresAtConfiguredRate(t *testing.T) {
 func TestMovementTrainsSearch_ZeroKnobDisables(t *testing.T) {
 	setMovementSearchTrainChance(t, 0)
 
-	for i := 0; i < 200000; i++ {
+	for i := range 200000 {
 		if movementTrainsSearch() {
 			t.Fatalf("gate fired on iteration %d with MovementSearchTrainChance at zero", i)
 		}
@@ -68,7 +68,7 @@ func TestMovementTrainsSearch_ZeroKnobDisables(t *testing.T) {
 func TestMovementTrainsSearch_NegativeKnobDisables(t *testing.T) {
 	setMovementSearchTrainChance(t, -1)
 
-	for i := 0; i < 10000; i++ {
+	for i := range 10000 {
 		if movementTrainsSearch() {
 			t.Fatalf("gate fired on iteration %d with a negative MovementSearchTrainChance", i)
 		}

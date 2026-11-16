@@ -27,7 +27,7 @@ func TestPickTemplateRandomization(t *testing.T) {
 	// Pick should rotate through both available templates given enough
 	// calls; with cooldown empty, both should be reachable.
 	seen := map[string]bool{}
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		tmpl := PickTemplate(lib.Advancements["clinch_to_mount"].Controller, cooldowns, "adv:clinch_to_mount:ctrl")
 		seen[tmpl] = true
 	}
@@ -47,7 +47,7 @@ func TestPickTemplateRespectsCooldownByExactString(t *testing.T) {
 
 	// Subsequent picks should avoid the cooldown-marked template until
 	// all are exhausted, then reset.
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		next := PickTemplate(lib.Advancements["clinch_to_mount"].Controller, cooldowns, cooldownKey)
 		// At least one of the two templates must be the "other" one
 		// (cooldown not yet exhausted with both).

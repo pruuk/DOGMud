@@ -448,7 +448,7 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 	promptLen := len(promptStr)
 	tagStartPos := -1
 
-	for i := 0; i < promptLen; i++ {
+	for i := range promptLen {
 		if promptStr[i] == '{' {
 			tagStartPos = i
 			continue

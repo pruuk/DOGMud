@@ -47,7 +47,7 @@ func newArrestStampScene(t *testing.T) *arrestStampScene {
 		s.roomB.RemovePlayer(stampTestUserId)
 	})
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		g := &mobs.Mob{MobId: 1, InstanceId: 8850 + i, Groups: []string{"guard", "test_guards"}}
 		g.Character.Name = "Guard"
 		s.guards = append(s.guards, g)

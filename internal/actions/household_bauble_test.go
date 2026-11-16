@@ -188,7 +188,7 @@ func TestStealHousehold_TooHeavyIsNoCrime(t *testing.T) {
 	h := setupHousehold(t, 9706, 2, keeper(9706, "Martha"), true)
 	h.thief.char.Stats.Strength.ValueAdj = 0
 	h.thief.char.Items = nil
-	for i := 0; i < 400; i++ { // weigh the thief down
+	for range 400 { // weigh the thief down
 		h.thief.char.Items = append(h.thief.char.Items, h.itm)
 	}
 

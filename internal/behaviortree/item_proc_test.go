@@ -162,7 +162,7 @@ func TestProcDrawsOnlyThroughItsRandomDecorator(t *testing.T) {
 	draws := func(event string) int {
 		restore := util.SetRandForTest(99)
 		var want []int
-		for i := 0; i < 4; i++ {
+		for range 4 {
 			want = append(want, util.Rand(1000))
 		}
 		restore()

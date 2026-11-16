@@ -64,7 +64,7 @@ func TestSmother_HitBlindsAndSmothers_OtherwiseNothing(t *testing.T) {
 	sawHit, sawOther := false, false
 	for _, dex := range []int{1, 5_000} {
 		target := seedSmotherFixture(t, 7461, dex)
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			target.Character.Conditions = conditions.New()
 			char := newSmoke(7461)
 			res := ExecuteSmother(newStubActor(char, newTestRoom()))
@@ -89,7 +89,7 @@ func TestSmother_HitBlindsAndSmothers_OtherwiseNothing(t *testing.T) {
 // the mob command would judge a sighted target's hit line blind.
 func TestSmother_ActeeSightBeforeIsTakenBeforeTheBlinding(t *testing.T) {
 	target := seedSmotherFixture(t, 7463, 1)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		target.Character.Conditions = conditions.New()
 		target.Character.Perception = characters.New().Perception
 		res := ExecuteSmother(newStubActor(newSmoke(7463), nil))

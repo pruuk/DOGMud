@@ -234,7 +234,7 @@ func TestSell_Quantity_SellFive_HaveSeven(t *testing.T) {
 	_, merchantCleanup := seedMerchantInRoom(t, user, 10000)
 	defer merchantCleanup()
 
-	for i := 0; i < 7; i++ {
+	for range 7 {
 		require.True(t, user.Character.StoreItem(items.New(testSellItemId)))
 	}
 
@@ -259,7 +259,7 @@ func TestSell_Quantity_SellFive_HaveThree(t *testing.T) {
 	_, merchantCleanup := seedMerchantInRoom(t, user, 10000)
 	defer merchantCleanup()
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		require.True(t, user.Character.StoreItem(items.New(testSellItemId)))
 	}
 
@@ -284,7 +284,7 @@ func TestSell_AllDot(t *testing.T) {
 	defer merchantCleanup()
 
 	const n = 4
-	for i := 0; i < n; i++ {
+	for range n {
 		require.True(t, user.Character.StoreItem(items.New(testSellItemId)))
 	}
 
@@ -309,7 +309,7 @@ func TestSell_AllSpace(t *testing.T) {
 	defer merchantCleanup()
 
 	const n = 3
-	for i := 0; i < n; i++ {
+	for range n {
 		require.True(t, user.Character.StoreItem(items.New(testSellItemId)))
 	}
 
@@ -348,7 +348,7 @@ func TestSell_MerchantRunsOutOfGold(t *testing.T) {
 	defer merchantCleanup()
 
 	const n = 5
-	for i := 0; i < n; i++ {
+	for range n {
 		require.True(t, user.Character.StoreItem(items.New(testSellItemId)))
 	}
 

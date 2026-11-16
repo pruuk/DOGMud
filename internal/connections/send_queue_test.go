@@ -161,7 +161,7 @@ func TestSendQueue_SendToReturnsQuicklyWhenPeerNeverReads(t *testing.T) {
 	id, _ := addPipeConnection(t)
 
 	const msgSize = 256 * 1024
-	for i := 0; i < 12; i++ { // 3 MiB: under the 4 MiB cap, so the connection stays
+	for i := range 12 { // 3 MiB: under the 4 MiB cap, so the connection stays
 		msg := bigMessage(i, msgSize)
 		var elapsed time.Duration
 		_ = waitFor(t, writeTimeout+5*time.Second, "SendTo", func() error {
@@ -190,7 +190,7 @@ func TestSendQueue_SlowConnectionClosedAtCapHealthyKeepsReceiving(t *testing.T) 
 
 	const msgSize = 256 * 1024
 	const total = 24 // 6 MiB: past the 4 MiB cap for the slow peer
-	for i := 0; i < total; i++ {
+	for i := range total {
 		msg := bigMessage(i, msgSize)
 		var elapsed time.Duration
 		_ = waitFor(t, writeTimeout+5*time.Second, "SendTo", func() error {
@@ -229,7 +229,7 @@ func TestSendQueue_TelnetOrderPreserved(t *testing.T) {
 	r := startPipeReader(client)
 
 	const total = 2000
-	for i := 0; i < total; i++ {
+	for i := range total {
 		SendTo([]byte(fmt.Sprintf("<MSG%05d>", i)), id)
 	}
 
@@ -275,12 +275,12 @@ func TestSendQueue_WebsocketOrderPreserved(t *testing.T) {
 	t.Cleanup(func() { _ = Remove(id) })
 
 	const total = 500
-	for i := 0; i < total; i++ {
+	for i := range total {
 		SendTo([]byte(fmt.Sprintf("<MSG%05d>", i)), id)
 	}
 
 	_ = client.SetReadDeadline(time.Now().Add(10 * time.Second))
-	for i := 0; i < total; i++ {
+	for i := range total {
 		_, msg, err := client.ReadMessage()
 		if err != nil {
 			t.Fatalf("read message %d: %v", i, err)

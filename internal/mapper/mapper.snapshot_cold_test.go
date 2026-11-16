@@ -242,8 +242,8 @@ func BenchmarkSnapshotCold960(b *testing.B) {
 	desc := strings.Repeat("The grass bends under a steady wind off the steppe. ", 20)
 	id := func(x, y int) int { return 20000 + y*w + x }
 	ids := []int{}
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
+	for y := range h {
+		for x := range w {
 			r := &rooms.Room{RoomId: id(x, y), Zone: "bench", Title: fmt.Sprintf("Steppe %d,%d", x, y),
 				Description: desc, X: x, Y: y, Exits: map[string]exit.RoomExit{}}
 			if x > 0 {

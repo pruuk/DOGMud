@@ -77,7 +77,7 @@ func TestHasIngredientsWithStorage_IsDeterministicInRecipeOrder(t *testing.T) {
 		},
 	}
 
-	for i := 0; i < 500; i++ {
+	for i := range 500 {
 		ok, missing := HasIngredientsWithStorage(nil, nil, nil, recipe)
 		if ok {
 			t.Fatalf("iteration %d: nothing is held anywhere, got ok=true", i)

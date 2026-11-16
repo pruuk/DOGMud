@@ -46,7 +46,7 @@ func main() {
 	for _, m := range matchups {
 		var oldS, newS shares
 		wins := 0
-		for i := 0; i < samples; i++ {
+		for range samples {
 			res := combat.RunContest(m.atkScore, []contest.Entry{{Name: "dodge", Score: m.defScore}})
 			if res.Success { // the attacker won; no defence narration is sent
 				continue

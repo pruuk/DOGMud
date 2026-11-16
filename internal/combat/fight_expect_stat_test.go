@@ -72,7 +72,7 @@ func TestMeleePredictionMatchesCombat(t *testing.T) {
 			want := meleeDamagePerRound(attacker, defender, User)
 			ctx := neutralCtx()
 			total := 0.0
-			for i := 0; i < meleePredictionRounds; i++ {
+			for range meleePredictionRounds {
 				attacker.Stamina, attacker.Health = attacker.StaminaMax.Value, attacker.HealthMax.Value
 				defender.Stamina, defender.Health = defender.StaminaMax.Value, defender.HealthMax.Value
 				if !attacker.Position.IsStanding() {

@@ -16,7 +16,7 @@ import (
 func roundForHour(hour int) int {
 	c := configs.GetTimingConfig()
 	rpd := int(c.RoundsPerDay)
-	for r := 0; r < rpd; r++ {
+	for r := range rpd {
 		hourFloat, _ := math.Modf(float64(r) / float64(rpd) * 24)
 		if int(hourFloat) == hour {
 			return r + rpd // offset by rpd so we never send round 0

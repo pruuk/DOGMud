@@ -180,7 +180,7 @@ func cooldownsScreenFixture() any {
 // stack count, for long, enchanted, bonus-damage items, past ten slots.
 func storageScreenFixture() any {
 	slots := []string{}
-	for i := 0; i < 11; i++ {
+	for i := range 11 {
 		itm := screenItem(99300+i, "Basalt-Iron Blade", items.Weapon, 0, false)
 		if i == 4 {
 			itm = screenItem(99300+i, "A Salt-Stiff Page of a Sailor's Telling", items.Weapon, 12, true)

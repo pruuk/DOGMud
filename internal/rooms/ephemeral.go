@@ -30,7 +30,7 @@ var (
 
 func GetChunkCount() int {
 	result := 0
-	for i := 0; i < ephemeralChunksLimit; i++ {
+	for i := range ephemeralChunksLimit {
 		if len(ephemeralRoomChunks[i]) > 0 {
 			result++
 		}
@@ -76,7 +76,7 @@ func CreateEphemeralRoomIds(roomIds ...int) (map[int]int, error) {
 
 	// First reserve the chunk
 	chunkId := -1
-	for i := 0; i < ephemeralChunksLimit; i++ {
+	for i := range ephemeralChunksLimit {
 		if len(ephemeralRoomChunks[i]) == 0 {
 			chunkId = i
 			break
@@ -251,7 +251,7 @@ func EphemeralRoomMaintenance() []int {
 		return []int{}
 	}
 
-	for i := 0; i < ephemeralChunksLimit; i++ {
+	for i := range ephemeralChunksLimit {
 		if len(ephemeralRoomChunks[i]) > 0 {
 			return TryEphemeralCleanup(ephemeralRoomChunks[i][0])
 		}

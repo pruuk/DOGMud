@@ -64,7 +64,7 @@ func TestRollDeepeningNeverPicksAnOverBudgetRank(t *testing.T) {
 	pinShippedMaxLevel(t)
 	owned := map[string]int{"titan-growth": 3, "extra-arms": 3, "dense-muscles": 1, "padded-soles": 1}
 	sawDense := false
-	for i := 0; i < 300; i++ {
+	for range 300 {
 		got := RollDeepening(owned)
 		assert.Contains(t, []string{"dense-muscles", "padded-soles"}, got)
 		sawDense = sawDense || got == "dense-muscles"

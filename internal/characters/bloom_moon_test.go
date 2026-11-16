@@ -24,7 +24,7 @@ func TestBloomSeedNewMutation_MoonFilter(t *testing.T) {
 	defer util.SetRandForTest(42)()
 	// A grant adds the mutation to the character, so use a FRESH character each
 	// iteration; re-read the bucket each time (it advances with the game clock).
-	for i := 0; i < 12; i++ {
+	for range 12 {
 		c := New()
 		bucket := gametime.CurrentMoonFlavorBucket()
 		id, _ := c.BloomSeedNewMutation()

@@ -517,7 +517,7 @@ func TestCalcHitDamage_CritSpreadTracksCritMean(t *testing.T) {
 
 	critRolls := make([]float64, samples)
 	normalRolls := make([]float64, samples)
-	for i := 0; i < samples; i++ {
+	for i := range samples {
 		c, _ := calcHitDamage(&AttackResult{}, true, false, sdp)
 		critRolls[i] = float64(c)
 		n, _ := calcHitDamage(&AttackResult{}, false, false, sdp)

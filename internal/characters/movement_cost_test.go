@@ -111,7 +111,7 @@ func TestACheapMoveIsBankedNotFree(t *testing.T) {
 	}
 
 	// Banked, not forgiven: enough of them do add up to real stamina.
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		if !c.ApplyCostFloatOrRefuse(PoolStamina, c.GetMovementStaminaCost(0.25)) {
 			t.Fatalf("cheap move %d was refused with %d stamina in hand", i+2, c.Stamina)
 		}
@@ -143,7 +143,7 @@ func TestMovementBanksItsFractionalRemainder(t *testing.T) {
 		costs.EncumbranceMultiplier(c.GetCarriedWeight(), c.CarryCapacity()) *
 		costs.SkillCostMultiplier(1)
 
-	for i := 0; i < moves; i++ {
+	for i := range moves {
 		if !c.ApplyCostFloatOrRefuse(PoolStamina, c.GetMovementStaminaCost(1.0)) {
 			t.Fatalf("move %d was refused with %d stamina in hand", i+1, c.Stamina)
 		}
@@ -181,7 +181,7 @@ func TestARefusedMoveBanksNothing(t *testing.T) {
 			"on hand for this test to exercise refusal at all", cost)
 	}
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		if c.ApplyCostFloatOrRefuse(PoolStamina, cost) {
 			t.Fatalf("attempt %d: a crushed traveller with 1 stamina was allowed to "+
 				"move; movement must refuse rather than pay what it can", i+1)

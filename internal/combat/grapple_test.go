@@ -83,7 +83,7 @@ func TestAttemptGrapple_Statistical(t *testing.T) {
 
 	t.Run("higher dex attacker wins more often", func(t *testing.T) {
 		wins := 0
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			atk := characters.New()
 			atk.Stats.Dexterity.ValueAdj = 150
 			atk.Skills["unarmed-combat"] = 50
@@ -103,7 +103,7 @@ func TestAttemptGrapple_Statistical(t *testing.T) {
 
 	t.Run("equal characters → ~50/50", func(t *testing.T) {
 		wins := 0
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			atk := characters.New()
 			atk.Stats.Dexterity.ValueAdj = 100
 			atk.Skills["unarmed-combat"] = 25
@@ -123,7 +123,7 @@ func TestAttemptGrapple_Statistical(t *testing.T) {
 
 	t.Run("prone defender gets penalized", func(t *testing.T) {
 		wins := 0
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			atk := characters.New()
 			atk.Stats.Dexterity.ValueAdj = 100
 			atk.Skills["unarmed-combat"] = 25
@@ -145,7 +145,7 @@ func TestAttemptGrapple_Statistical(t *testing.T) {
 
 func TestAttemptGrapple_PositionTransition(t *testing.T) {
 	// Successful grapple against standing → Clinched
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		atk := characters.New()
 		atk.Stats.Dexterity.ValueAdj = 200
 		atk.Skills["unarmed-combat"] = 50

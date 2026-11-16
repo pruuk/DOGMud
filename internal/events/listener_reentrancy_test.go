@@ -138,11 +138,11 @@ func TestDoListeners_ConcurrentDispatchAndRegistration(t *testing.T) {
 	})
 
 	var wg sync.WaitGroup
-	for g := 0; g < 8; g++ {
+	for g := range 8 {
 		wg.Add(1)
 		go func(g int) {
 			defer wg.Done()
-			for i := 0; i < 100; i++ {
+			for range 100 {
 				if g%2 == 0 {
 					DoListeners(reentrancyEvent{name: "reentrancy.mixed"})
 				} else {
@@ -165,11 +165,11 @@ func TestDoListeners_UnhandledEventIsCountedSafely(t *testing.T) {
 	resetListeners(t)
 
 	var wg sync.WaitGroup
-	for g := 0; g < 8; g++ {
+	for range 8 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for i := 0; i < 50; i++ {
+			for range 50 {
 				DoListeners(reentrancyEvent{name: "reentrancy.nobody"})
 			}
 		}()

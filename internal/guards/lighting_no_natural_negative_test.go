@@ -106,7 +106,7 @@ func TestNoShippedRoomReadsBelowZeroWithoutDarkness(t *testing.T) {
 	}
 	var samples []sample
 	for _, doy := range []int{356, 81, 172} {
-		for hour := 0; hour < 24; hour++ {
+		for hour := range 24 {
 			for _, m := range []float64{0, 0.5, 1} {
 				celestial := gametime.CelestialLightAt(cfg, doy, float64(hour), m, m, m)
 				samples = append(samples, sample{

@@ -279,7 +279,7 @@ func collectPlayers() []*users.UserRecord {
 // Returns +Inf if any rank below r has zero chance.
 func usesToReach(chanceAt func(rank int) float64, r int) float64 {
 	total := 0.0
-	for k := 0; k < r; k++ {
+	for k := range r {
 		ch := chanceAt(k)
 		if ch <= 0 {
 			return math.Inf(1)
@@ -308,7 +308,7 @@ func usesToReach(chanceAt func(rank int) float64, r int) float64 {
 // does not carry. Triage signal, not a measurement.
 func expectedRankForUses(chanceAt func(rank int) float64, uses int, maxRank int) int {
 	total := 0.0
-	for r := 0; r < maxRank; r++ {
+	for r := range maxRank {
 		ch := chanceAt(r)
 		if ch <= 0 {
 			return r

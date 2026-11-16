@@ -262,7 +262,7 @@ func TestIntegration_OpposedCombatRolls(t *testing.T) {
 
 	wins := 0
 	iterations := 1000
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		atkWins, _, _, _ := dice.OpposedRollStatRaw(strongAtk, weakDef)
 		if atkWins {
 			wins++
@@ -275,7 +275,7 @@ func TestIntegration_OpposedCombatRolls(t *testing.T) {
 
 	// Equal stats should produce roughly 50/50
 	equalWins := 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		atkWins, _, _, _ := dice.OpposedRollStatRaw(100.0, 100.0)
 		if atkWins {
 			equalWins++
@@ -293,7 +293,7 @@ func TestIntegration_CritAndFumbleZScores(t *testing.T) {
 	fumbles := 0
 	iterations := 5000
 
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		result := dice.RollStat(100.0)
 		if result.ZScore >= 2.0 {
 			crits++

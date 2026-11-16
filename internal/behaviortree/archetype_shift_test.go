@@ -102,7 +102,7 @@ func TestReevaluateArchetypeShift_RarestPullWins(t *testing.T) {
 func TestStrongestArchetypePull_TiebreakDeterministic(t *testing.T) {
 	seedShiftSpecs(t)
 	owned := map[string]int{"fangs": 1, "aura": 1} // both r5
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		if got := strongestArchetypePull(owned); got != "defensive_caster" {
 			t.Fatalf("iteration %d: got %q, want defensive_caster (alphabetical tiebreak must be deterministic)", i, got)
 		}

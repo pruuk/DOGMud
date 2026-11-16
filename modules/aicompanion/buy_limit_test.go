@@ -114,7 +114,7 @@ func countWafers(c *characters.Character) int {
 // Owner at the limit: the companion is refused as the owner would be.
 func TestCompanionBuy_OwnerAtTheLimitRefusesHer(t *testing.T) {
 	s := limitFixture(t)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		require.True(t, s.ownerBuys().Success, `owner buy %d`, i+1)
 	}
 	gold, stock := s.her.Character.Gold, s.shop.GetStock(limitWaferId).Current

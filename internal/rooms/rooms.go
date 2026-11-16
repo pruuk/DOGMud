@@ -1394,7 +1394,7 @@ func (r *Room) RemoveMob(mobInstanceId int) {
 	r.MarkVisited(mobInstanceId, VisitorMob, 1)
 
 	mobLen := len(r.mobs)
-	for i := 0; i < mobLen; i++ {
+	for i := range mobLen {
 		if r.mobs[i] == mobInstanceId {
 			r.mobs = append(r.mobs[:i], r.mobs[i+1:]...)
 			break

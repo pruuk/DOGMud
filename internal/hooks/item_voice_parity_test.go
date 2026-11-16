@@ -148,7 +148,7 @@ func runVoiceParity(t *testing.T, room *rooms.Room, itemId int, slot string) str
 	_ = events.DrainQueuedMessagesForTest(u.UserId)
 
 	var b strings.Builder
-	for i := 0; i < voiceParityRounds; i++ {
+	for i := range voiceParityRounds {
 		util.SetRoundCountForTest(uint64(voiceParityFirst + i))
 		switch i {
 		case voiceParityFightAt:

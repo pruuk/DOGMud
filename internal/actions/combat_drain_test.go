@@ -133,7 +133,7 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	// high per round; ContestFloor caps it at roughly a 1-in-8 save).
 	var res DrainResult
 	hitSeen := false
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		// Reset state for each attempt: re-arm aggro + cooldowns.
 		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		char.Cooldowns = characters.Cooldowns{} // clear cooldown from previous attempt
@@ -220,7 +220,7 @@ func TestDrain_HealStopsAtReservedCeiling(t *testing.T) {
 	}
 
 	hitSeen := false
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		char.Cooldowns = characters.Cooldowns{}
 		char.Health = ceiling - 1
@@ -281,7 +281,7 @@ func TestDrain_PartialDamageHealsWithoutBleed(t *testing.T) {
 
 	var res DrainResult
 	foundPartial := false
-	for i := 0; i < 500; i++ {
+	for range 500 {
 		// Reset state for each attempt: re-arm aggro + cooldowns, and reset
 		// health/bleed on both sides so a stale condition from a prior
 		// iteration can't taint the assertions below.
@@ -418,7 +418,7 @@ func TestDrainArea_SinglePlayer(t *testing.T) {
 
 	var result DrainAreaResult
 	hitSeen := false
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		char := drainAreaAttacker()
 		char.Health = char.HealthMax.Value - 100 // 100 HP below max so heal is observable
 		p1.Character.Health = 500
@@ -512,7 +512,7 @@ func TestDrainArea_MultiPlayer(t *testing.T) {
 
 	var result DrainAreaResult
 	allHit := false
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		char := drainAreaAttacker()
 		char.Health = char.HealthMax.Value - 300 // well below max so aggregate heal is observable
 		for _, p := range players {

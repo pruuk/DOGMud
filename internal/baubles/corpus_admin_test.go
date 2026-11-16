@@ -200,7 +200,7 @@ func spoolOverlayFrom(id string) string {
 // servedNames is every name Fallback can draw for an interior cheap find.
 func servedNames() map[string]bool {
 	out := map[string]bool{}
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		n := i
 		out[Fallback(Place{Biome: `interior`}, TierCheap, SourceSearch, nil, func(int) int { return n }).Reply.Name] = true
 	}
@@ -617,7 +617,7 @@ func TestOverlaySurvivesTheCatalog(t *testing.T) {
 	// records go, rewriting their shard in the overlay's directory.
 	now := time.Now().Add(time.Minute)
 	pruned := 0
-	for i := 0; i < minUnseenSweeps; i++ {
+	for i := range minUnseenSweeps {
 		_, n, shardErrors := applySweep(now, map[string]bool{}, 0)
 		if shardErrors != 0 {
 			t.Fatalf("sweep %d: %d shard writes failed", i+1, shardErrors)

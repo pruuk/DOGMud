@@ -26,7 +26,7 @@ func TestRun_MarginIsAttackPositive(t *testing.T) {
 // downstream effect that scales by margin silently uses a number that does not
 // correspond to what was rolled.
 func TestRun_MarginMatchesTheRolls(t *testing.T) {
-	for i := 0; i < 500; i++ {
+	for range 500 {
 		res := Run(100, []Entry{{Name: "a", Score: 90}, {Name: "b", Score: 110}})
 		want := res.AttackRoll.Value - res.DefenseRoll.Value
 		assert.InDelta(t, want, res.Margin, 1e-9, "margin must equal atk - def of the reported rolls")
@@ -39,7 +39,7 @@ func TestRun_MarginMatchesTheRolls(t *testing.T) {
 func TestRun_KeepsTheBestDefence(t *testing.T) {
 	// "wall" scores so far above the others that it must win essentially always.
 	strongWins := 0
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		res := Run(100, []Entry{
 			{Name: "paper", Score: 1},
 			{Name: "wall", Score: 10000},
@@ -153,7 +153,7 @@ func TestRunWithFloors_ZeroFloorsMatchRun(t *testing.T) {
 	restore = dice.SetRandForTest(seed)
 	defer restore()
 	wins := 0
-	for i := 0; i < draws; i++ {
+	for i := range draws {
 		res := RunWithFloors(100, entries, 0)
 		assert.Equal(t, plain[i], res, "draw %d: zero floors must match Run exactly", i)
 		assert.False(t, res.Floored, "no floor was configured, so nothing was floored")
@@ -171,7 +171,7 @@ func TestRunWithFloors_ZeroFloorsMatchRun(t *testing.T) {
 func TestRunWithFloors_SuccessFloorRescuesAHopelessAttack(t *testing.T) {
 	const samples = 20000
 	wins := 0
-	for i := 0; i < samples; i++ {
+	for range samples {
 		// Attacker cannot win on merit at these scores.
 		if RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 0.15).Success {
 			wins++
@@ -185,7 +185,7 @@ func TestRunWithFloors_SuccessFloorRescuesAHopelessAttack(t *testing.T) {
 func TestRunWithFloors_ResistFloorSavesADoomedDefender(t *testing.T) {
 	const samples = 20000
 	saves := 0
-	for i := 0; i < samples; i++ {
+	for range samples {
 		if !RunWithFloors(100000, []Entry{{Name: "d", Score: 1}}, 0.15).Success {
 			saves++
 		}
@@ -207,7 +207,7 @@ func TestRunWithFloors_StampsTheSentinelMargin(t *testing.T) {
 	// silently stops guarding anything while staying green.
 	sawSuccess, sawResist := false, false
 
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		granted := RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 0.5)
 		if granted.Success {
 			sawSuccess = true
@@ -234,7 +234,7 @@ func TestRunWithFloors_StampsTheSentinelMargin(t *testing.T) {
 func TestRunWithFloors_ClampsFloors(t *testing.T) {
 	const samples = 20000
 	wins := 0
-	for i := 0; i < samples; i++ {
+	for range samples {
 		// 5.0 must be clamped to 0.5, not treated as "always".
 		if RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 5.0).Success {
 			wins++
@@ -244,7 +244,7 @@ func TestRunWithFloors_ClampsFloors(t *testing.T) {
 	assert.InDelta(t, 0.5, rate, 0.03, "a floor above 0.5 must clamp to 0.5")
 
 	// A negative floor must clamp to 0, never rescue anything.
-	for i := 0; i < 500; i++ {
+	for range 500 {
 		assert.False(t, RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, -1.0).Success,
 			"a negative floor must clamp to 0")
 	}
@@ -267,7 +267,7 @@ func TestRunWithFloors_SymmetricBoundsBothDirections(t *testing.T) {
 	const floor = 0.125
 
 	hopeless := 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		if RunWithFloors(10, []Entry{{Score: 10000}}, floor).Success {
 			hopeless++
 		}
@@ -278,7 +278,7 @@ func TestRunWithFloors_SymmetricBoundsBothDirections(t *testing.T) {
 	}
 
 	overwhelming := 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		if !RunWithFloors(10000, []Entry{{Score: 10}}, floor).Success {
 			overwhelming++
 		}
@@ -292,7 +292,7 @@ func TestRunWithFloors_SymmetricBoundsBothDirections(t *testing.T) {
 // A floored outcome must carry the sentinel margin, which is the only reason a
 // floor-granted hit cannot also crit.
 func TestRunWithFloors_FlippedOutcomeCarriesSentinel(t *testing.T) {
-	for i := 0; i < 5000; i++ {
+	for range 5000 {
 		res := RunWithFloors(10, []Entry{{Score: 10000}}, 0.5)
 		if res.Floored {
 			if res.Margin != 1 && res.Margin != -1 {

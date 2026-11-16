@@ -72,13 +72,13 @@ func TestCouleeFlavourTrees_SpeakOnlyToAPlayerWithEveryBridge(t *testing.T) {
 				GetEngine().EvaluateEvent(tc.mobId, tc.mobId, EventContext{EventType: "player_enter", UserId: userId}, state)
 			}
 
-			for i := 0; i < 400; i++ {
+			for range 400 {
 				enter(8602)
 			}
 			DrainAllDelayedActionsForTest(t)
 			require.Empty(t, *calls, "a player missing a bridge hears nothing")
 
-			for i := 0; i < 400; i++ {
+			for range 400 {
 				enter(8601)
 			}
 			DrainAllDelayedActionsForTest(t)

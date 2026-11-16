@@ -47,7 +47,7 @@ func TestBuildGossipLine_CommonTalk(t *testing.T) {
 
 	// A gossiper that knows nothing tells common talk, not the fallback.
 	blank := &mobs.Mob{MobId: 9911, Character: characters.Character{Zone: "CommonTestZone"}}
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		require.True(t, strings.HasPrefix(buildGossipLine(blank), "COMMON "), "a mob with no facts tells common talk")
 	}
 
@@ -61,7 +61,7 @@ func TestBuildGossipLine_CommonTalk(t *testing.T) {
 	mob := &mobs.Mob{MobId: knower, Character: characters.Character{Zone: "CommonTestZone"}}
 	const rounds = 20000
 	common := 0
-	for i := 0; i < rounds; i++ {
+	for range rounds {
 		if strings.HasPrefix(buildGossipLine(mob), "COMMON ") {
 			common++
 		}

@@ -77,7 +77,7 @@ func TestMeleeCritAndSpellCritAgreeAboveTheKnee(t *testing.T) {
 	fullCrit := sdp.rawDmgForCrit * sdp.critDmgMult
 
 	meleeTotal := 0.0
-	for i := 0; i < samples; i++ {
+	for range samples {
 		dmg, _ := calcHitDamage(&AttackResult{}, true, false, sdp)
 		meleeTotal += float64(dmg)
 	}
@@ -87,7 +87,7 @@ func TestMeleeCritAndSpellCritAgreeAboveTheKnee(t *testing.T) {
 	spellBare := 0.0
 	spellHeavy := 0.0
 	curve := MitigationCurveFor(ChannelPhysical)
-	for i := 0; i < samples; i++ {
+	for range samples {
 		spellBare += float64(CritOrMitigatedDamage(sdp.rawDmgForCrit, rank, true, 0, curve))
 		spellHeavy += float64(CritOrMitigatedDamage(sdp.rawDmgForCrit, rank, true, defender.GetPhysicalMitigation(), curve))
 	}

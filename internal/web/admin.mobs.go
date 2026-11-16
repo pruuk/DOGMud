@@ -84,7 +84,7 @@ func mobData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dropChances := []int{}
-	for i := 0; i < 101; i++ {
+	for i := range 101 {
 		dropChances = append(dropChances, i)
 	}
 

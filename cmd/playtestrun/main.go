@@ -199,7 +199,7 @@ func cmdStop(ctx context.Context, args []string, stdout, stderr io.Writer, env e
 	failed := false
 
 	var stopErr error
-	for attempt := 0; attempt < stopLockRetries; attempt++ {
+	for range stopLockRetries {
 		_, stopErr = env.Stop(ctx, opts)
 		// The supervising process may be stopping the same run right now.
 		if !errors.Is(stopErr, playtestenv.ErrLockBusy) {

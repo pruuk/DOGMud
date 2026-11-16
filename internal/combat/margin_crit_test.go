@@ -100,7 +100,7 @@ func TestMarginCrit_ParityRateMatchesLegacy(t *testing.T) {
 	sd := dice.StdDevFor(stat)
 
 	crits := 0
-	for i := 0; i < trials; i++ {
+	for range trials {
 		atk := dice.Roll(stat, sd)
 		def := dice.Roll(stat, sd)
 		b := bestDefenseResult{
@@ -128,7 +128,7 @@ func TestMarginCrit_AdvantageRaisesCritRate(t *testing.T) {
 	rateFor := func(atkStat, defStat float64) float64 {
 		sd := dice.StdDevFor(atkStat)
 		crits := 0
-		for i := 0; i < trials; i++ {
+		for range trials {
 			a := dice.Roll(atkStat, sd)
 			d := dice.Roll(defStat, sd)
 			b := bestDefenseResult{

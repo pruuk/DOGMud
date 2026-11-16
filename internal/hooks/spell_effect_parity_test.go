@@ -56,7 +56,7 @@ const (
 // health lost beside the mean of the shared formula on the same combatants.
 func parityMeanAmount(f *spellParityFixture, p spellParityPairing, spell *spells.SpellData) (got, want float64) {
 	casterChar, targetChar := p.caster(f), p.target(f)
-	for i := 0; i < paritySamples; i++ {
+	for range paritySamples {
 		targetChar.Health = 1000
 		targetChar.Position = position.NewMachine()
 		want += float64(parityWantAmount(spell, casterChar, targetChar))

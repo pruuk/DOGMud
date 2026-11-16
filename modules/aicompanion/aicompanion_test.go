@@ -201,7 +201,7 @@ func TestBuildMessagesQuotesPlayerText(t *testing.T) {
 
 func TestMindCaps(t *testing.T) {
 	m := &Mind{}
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		m.addLine(Line{Speaker: `a`, Kind: `said`, Text: `x`}, 10)
 	}
 	if len(m.RecentLines) != 10 {
@@ -345,7 +345,7 @@ func TestRetrievalPrefersRelevantAndImportant(t *testing.T) {
 func TestPruneKeepsImportantMemories(t *testing.T) {
 	now := int64(10_000_000)
 	var mems []Memory
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		mems = append(mems, Memory{Id: int64(i), Unix: now - int64(i)*86400, Text: `x`, Importance: 2})
 	}
 	mems = append(mems, Memory{Id: 99, Unix: now - 400*86400, Text: `unforgettable`, Importance: 9})
@@ -648,7 +648,7 @@ func TestFrontierPrefersSafeNearbyRooms(t *testing.T) {
 
 func TestOwnPhrasesAndSaytoSanitize(t *testing.T) {
 	m := &Mind{}
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		m.addOwnPhrase(fmt.Sprintf(`line %d`, i), 12)
 	}
 	if len(m.OwnPhrases) != 12 || m.OwnPhrases[0] != `line 8` {
@@ -1311,7 +1311,7 @@ func TestCombatVarianceAndMoves(t *testing.T) {
 	}
 	loose := &AICompanionModule{cfg: Config{CombatVariance: 0.25}}
 	spread := map[float64]bool{}
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		j := loose.jitter()
 		if j < -0.25 || j > 0.25 {
 			t.Fatalf("jitter out of range: %v", j)
@@ -1392,7 +1392,7 @@ func TestIdlePastimeChanceBounds(t *testing.T) {
 func TestWorkingMemoryKeepsTalkOverGoingsOn(t *testing.T) {
 	m := &Mind{}
 	m.addLine(Line{Speaker: `Corvin`, Kind: `said`, Text: `about the mill`}, 8)
-	for i := 0; i < 40; i++ {
+	for i := range 40 {
 		m.addLine(Line{Kind: `event`, Text: fmt.Sprintf(`You searched the area (%d).`, i)}, 8)
 	}
 	talk, events := 0, 0
@@ -1508,7 +1508,7 @@ func TestRomanceIsEarnedSlowly(t *testing.T) {
 	}
 	// Earned, a step at a time, and never more than twice a day.
 	now := time.Now().Unix()
-	for i := 0; i < 6; i++ {
+	for range 6 {
 		mind.Romance.LastGainDay = `` // a fresh day each time
 		mind.addMilestone(`defended`, now)
 		mind.addMilestone(`revived`, now)
@@ -1565,7 +1565,7 @@ func TestConversationsBecomeOneMemory(t *testing.T) {
 	c := &controller{profile: p, mind: newMind(1, p), ownerUserId: 1}
 
 	// Four turns of talk with three notes taken along the way.
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		m.noteConversation(c, 7, `Corvin`, 1, Line{Speaker: `Corvin`, Kind: `said`, Text: fmt.Sprintf(`line %d`, i)})
 		if i < 3 {
 			held := m.holdMemory(c, Memory{Text: fmt.Sprintf(`note %d`, i), Importance: 4, Kind: `conversation`})
@@ -1605,7 +1605,7 @@ func TestConversationBreaksOnRoomAndSilence(t *testing.T) {
 	m.cfg.ConversationSummaries = false
 	c := &controller{profile: p, mind: newMind(1, p), ownerUserId: 1}
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		m.noteConversation(c, 7, `Corvin`, 1, Line{Speaker: `Corvin`, Kind: `said`, Text: `x`})
 	}
 	// Moving rooms ends one talk and starts another.
@@ -1654,7 +1654,7 @@ func TestCoreMemoriesAreFewAndKept(t *testing.T) {
 		t.Fatal("with everything lately told, she says nothing")
 	}
 	// They are never pruned by the ordinary memory rules.
-	for i := 0; i < maxCoreMemories+5; i++ {
+	for i := range maxCoreMemories + 5 {
 		mind.addCore(CoreMemory{Unix: now, Text: fmt.Sprintf(`moment %d`, i)})
 	}
 	if len(mind.CoreMemories) != maxCoreMemories {
@@ -2198,7 +2198,7 @@ func countingServer(t *testing.T) (*httptest.Server, *atomic.Int64) {
 func driveEverySender(t *testing.T, m *AICompanionModule, c *controller, baseURL string) {
 	now := time.Now().Unix()
 	util.LockMud()
-	for i := 0; i < 6; i++ {
+	for i := range 6 {
 		c.mind.addLine(Line{Speaker: `Corvin`, Kind: `said`, Text: fmt.Sprintf(`line %d`, i), Unix: now}, 50)
 	}
 	m.startReflection(c.mind, c.profile, `Corvin`, 0)
@@ -2457,7 +2457,7 @@ func TestStrangerReservationsCannotSlipPastTheCapTogether(t *testing.T) {
 	m := &AICompanionModule{cfg: Config{StrangerDailyTokens: 1000, DailyTokensPerCompanion: 1000000}}
 	var admitted atomic.Int32
 	done := make(chan struct{})
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		go func() {
 			util.LockMud()
 			if tryRoute(m, route{kind: routeServer}, 1, 2, 400) {
@@ -2467,7 +2467,7 @@ func TestStrangerReservationsCannotSlipPastTheCapTogether(t *testing.T) {
 			done <- struct{}{}
 		}()
 	}
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		<-done
 	}
 	if admitted.Load() != 2 || strangerSpent(m, 2) != 800 {
@@ -2564,7 +2564,7 @@ func strangerTalk(t *testing.T, baseURL string) (*AICompanionModule, *controller
 	// As getMind keeps it: the summary finds her mind through the cache.
 	m.minds = map[string]*Mind{mindIdentifier(c.mind.OwnerUserId, c.mind.MobId): c.mind}
 	m.ctrls = map[int]*controller{c.ownerUserId: c}
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		m.noteConversation(c, 7, `Bram`, 2, Line{Speaker: `Bram`, Kind: `said`, Text: fmt.Sprintf(`line %d`, i)})
 	}
 	return m, c

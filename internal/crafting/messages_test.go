@@ -108,7 +108,7 @@ func TestCraftRoomLines_FullAndVagueShareOneVariant(t *testing.T) {
 	t.Cleanup(SeedCraftingMessagesForTest(CraftingMessages{"cooking": validPools()}))
 	ctx := textutil.TokenContext{ActorName: "Kael", ActorPlainName: "Kael"}
 	pick := narration.SequencePicker()
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		full, vague := CraftRoomLines("cooking", PhaseStart, ctx, "Stew", pick)
 		if strings.Replace(full, "Stew", "something", 1) != vague {
 			t.Fatalf("round %d: full %q and vague %q are different variants", i, full, vague)

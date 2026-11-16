@@ -78,7 +78,7 @@ func TestRiposte_ReadsCounterDamageKnob(t *testing.T) {
 		attacker := critEffectFighter("Aggressor", 100)
 		defender := critEffectFighter("Fencer", 100)
 		total := 0
-		for i := 0; i < samples; i++ {
+		for range samples {
 			attacker.Health = 100000
 			res := applyCritEffects(attacker, defender,
 				combat.AttackResult{ParryCritDetected: true}, nil)

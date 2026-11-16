@@ -71,7 +71,7 @@ func TestResolveDefenseOutcome_FloorReachesACrittingDefender(t *testing.T) {
 	critThreshold := calcCritThreshold(attacker, defender, attacker.Equipment.Weapon)
 
 	hits := 0
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		result := &AttackResult{}
 		best := runBestOfAllDefense(result, attacker, defender,
 			[]combatvocab.Defence{combatvocab.DefenceDodge}, hopelessAttackScore, false, ctx)
@@ -111,7 +111,7 @@ func TestResolveDefenseOutcome_FlooredOutcomesNeverCrit(t *testing.T) {
 	critThreshold := calcCritThreshold(attacker, defender, attacker.Equipment.Weapon)
 
 	floored := 0
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		result := &AttackResult{}
 		best := runBestOfAllDefense(result, attacker, defender,
 			[]combatvocab.Defence{combatvocab.DefenceDodge}, hopelessAttackScore, false, ctx)

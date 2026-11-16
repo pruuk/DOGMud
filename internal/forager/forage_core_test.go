@@ -33,7 +33,7 @@ func TestForageCore_HighScoreFinds(t *testing.T) {
 
 func TestForageCore_LowScoreMisses(t *testing.T) {
 	// Score 1 vs any biome difficulty (110+) — should always miss.
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		r := ForageCore(ForageAttempt{Biome: "forest", SearchScore: 1})
 		if r.Found {
 			t.Errorf("expected miss at SearchScore=1, got Found=true ItemId=%d", r.ItemId)
@@ -89,7 +89,7 @@ func TestForageCore_NightYieldsAppendedForForestAtNight(t *testing.T) {
 	// We can't deterministically force a moonpetal, but we can confirm
 	// no out-of-table items appear and many runs eventually hit moonpetal.
 	moonpetalSeen := false
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		r := ForageCore(ForageAttempt{Biome: "forest", SearchScore: 1000, AtNight: true})
 		if !r.Found {
 			continue

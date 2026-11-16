@@ -69,7 +69,7 @@ func GenerateOasisCube(
 
 	// 1. Reserve a chunk of ephemeral IDs.
 	chunkId := -1
-	for i := 0; i < ephemeralChunksLimit; i++ {
+	for i := range ephemeralChunksLimit {
 		if len(ephemeralRoomChunks[i]) == 0 {
 			chunkId = i
 			break
@@ -85,9 +85,9 @@ func GenerateOasisCube(
 	roomIds := make([]int, cubeTotal)
 	rooms := make([]*Room, cubeTotal)
 
-	for x := 0; x < cubeSize; x++ {
-		for y := 0; y < cubeSize; y++ {
-			for z := 0; z < cubeSize; z++ {
+	for x := range cubeSize {
+		for y := range cubeSize {
+			for z := range cubeSize {
 				idx := cubeIndex(x, y, z)
 				roomId := baseId + idx
 				roomIds[idx] = roomId
@@ -106,9 +106,9 @@ func GenerateOasisCube(
 	}
 
 	// 3. Wire wrapping exits on every room.
-	for x := 0; x < cubeSize; x++ {
-		for y := 0; y < cubeSize; y++ {
-			for z := 0; z < cubeSize; z++ {
+	for x := range cubeSize {
+		for y := range cubeSize {
+			for z := range cubeSize {
 				idx := cubeIndex(x, y, z)
 				room := rooms[idx]
 
@@ -132,7 +132,7 @@ func GenerateOasisCube(
 	//    since the base templates are companion mobs (not hostile).
 	//    All mobs wander through the cube.
 	wanderIdle := []string{"wander", "", "wander", ""}
-	for i := 0; i < cubeTotal; i++ {
+	for i := range cubeTotal {
 		rooms[i].SpawnInfo = []SpawnInfo{
 			{
 				MobId:        cubeTrashMobs[util.Rand(len(cubeTrashMobs))],
@@ -176,7 +176,7 @@ func GenerateOasisCube(
 	}
 
 	// 6. Add all rooms to memory and stamp temp data.
-	for i := 0; i < cubeTotal; i++ {
+	for i := range cubeTotal {
 		if err := addRoomToMemory(rooms[i]); err != nil {
 			return nil, 0, fmt.Errorf("GenerateOasisCube: addRoomToMemory room %d: %w", rooms[i].RoomId, err)
 		}

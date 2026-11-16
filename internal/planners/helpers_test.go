@@ -25,7 +25,7 @@ func TestPickSocialEmote_ReturnsValidEmote(t *testing.T) {
 		"emote waves":         true,
 		"emote grins":         true,
 	}
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		got := pickSocialEmote()
 		if !valid[got] {
 			t.Errorf("pickSocialEmote returned unexpected emote %q", got)

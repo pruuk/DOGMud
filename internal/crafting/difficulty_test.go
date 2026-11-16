@@ -158,7 +158,7 @@ func TestDearestMaterialTierIsDeterministic(t *testing.T) {
 	}
 
 	first := DearestMaterialTier(consumed)
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		if got := DearestMaterialTier(consumed); got != first {
 			t.Fatalf("tier flipped between identical calls: %v then %v. That is "+
 				"the FindSpecByComponentTag map-order trap", first, got)

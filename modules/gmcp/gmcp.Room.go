@@ -242,7 +242,7 @@ func (g *GMCPRoomModule) buildAndSendGMCPPayload(e events.Event) events.Listener
 			identifier = strings.TrimSpace(identifier)
 
 			identifierParts := strings.Split(strings.ToLower(identifier), `.`)
-			for i := 0; i < len(identifierParts); i++ {
+			for i := range identifierParts {
 				identifierParts[i] = strings.Title(identifierParts[i])
 			}
 

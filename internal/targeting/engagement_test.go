@@ -51,7 +51,7 @@ func TestEngagementOf_IsPure(t *testing.T) {
 	c := characters.New()
 	c.SetAggro(0, 77, characters.SurpriseAttack)
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		assert.True(t, EngagementOf(c).OpeningUnspent,
 			"EngagementOf must not consume the opening strike (call %d)", i+1)
 	}

@@ -99,7 +99,7 @@ func Title(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	// Sort descending by value
-	for i := 0; i < len(statVals); i++ {
+	for i := range statVals {
 		for j := i + 1; j < len(statVals); j++ {
 			if statVals[j].Value > statVals[i].Value {
 				statVals[i], statVals[j] = statVals[j], statVals[i]

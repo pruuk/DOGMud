@@ -123,7 +123,7 @@ func TestPocketDummyTreeRefillsOneSandPurse(t *testing.T) {
 		})
 	}
 
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		eval("player_enter")
 	}
 	require.Equal(t, 0, carried(m, sandPurseId), "only an idle tick refills")
@@ -137,7 +137,7 @@ func TestPocketDummyTreeRefillsOneSandPurse(t *testing.T) {
 	require.NotZero(t, refilledAfter, "two hundred idle ticks at one in five must refill")
 	require.Equal(t, 1, carried(m, sandPurseId))
 
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		require.NotEqual(t, Success, eval("mob_idle"), "a full pocket says nothing")
 	}
 	require.Equal(t, 1, carried(m, sandPurseId), "a full pocket gains nothing")

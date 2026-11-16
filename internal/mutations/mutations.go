@@ -285,7 +285,7 @@ func GetWeightedPoolWithFloor(owned map[string]int, sp *species.Species, minRari
 			continue
 		}
 		weight := max(11-spec.Rarity-rarityBonus, 1)
-		for i := 0; i < weight; i++ {
+		for range weight {
 			pool = append(pool, id)
 		}
 	}

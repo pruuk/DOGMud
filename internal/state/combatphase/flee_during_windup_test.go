@@ -55,7 +55,7 @@ func TestFlee_IsAllowedDuringTheWindUp(t *testing.T) {
 func TestFlee_SurvivesBeingRetargetedEveryRound(t *testing.T) {
 	m := engagedActor(t)
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		m.OnRoundTick()
 		require.NoError(t, m.TransitionToEngaging(
 			EngagingData{Target: state.ActorRef{MobInstanceId: 800 + i}, RoundsUntil: 1},

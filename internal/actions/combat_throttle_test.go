@@ -134,7 +134,7 @@ func TestThrottle_Executed_BleedAndCondition(t *testing.T) {
 	// Retry until we observe a hit.
 	hitSeen := false
 	var res ThrottleResult
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		char.Cooldowns = characters.Cooldowns{}
 
@@ -264,7 +264,7 @@ func TestThrottle_CastInterrupt(t *testing.T) {
 	// Retry until we observe a hit.
 	var res ThrottleResult
 	hitSeen := false
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		// Reset casting state for each attempt (previous hit may have cleared it).
 		if !targetMob.Character.IsCasting() {
 			setCastingForTest(&targetMob.Character, activity.CastingData{

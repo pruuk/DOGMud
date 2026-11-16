@@ -36,7 +36,7 @@ func AnsiParseMouseClickPayload(info []byte) (xPos int, yPos int, err error) {
 func AnsiParseScreenSizePayload(info []byte) (width int, height int, err error) {
 	if len(info) >= 1 {
 		// find the semicolon
-		for i := 0; i < len(info); i++ {
+		for i := range info {
 			// when we hit the SEMICOLON, make sure it's not the end of the []byte
 			if info[i] == ';' && i < len(info)-1 {
 				height, err = strconv.Atoi(string(info[0:i]))

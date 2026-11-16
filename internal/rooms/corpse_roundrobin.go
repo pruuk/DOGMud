@@ -23,7 +23,7 @@ func RoundRobinOrder(nItems int, members []int, startCursor int) (assignees []in
 	}
 
 	assignees = make([]int, nItems)
-	for i := 0; i < nItems; i++ {
+	for i := range nItems {
 		assignees[i] = members[(cursor+i)%n]
 	}
 	endCursor = (cursor + nItems) % n

@@ -92,7 +92,7 @@ func foldRoomProse(roomTpl Room, plain []byte) ([]byte, bool) {
 	// single retry always suffices; the extra rounds are belt and braces.
 	skip := map[string]bool{}
 
-	for attempt := 0; attempt < 4; attempt++ {
+	for range 4 {
 
 		work, bodies := collectProseFolds(roomTpl, skip)
 		if len(bodies) == 0 {

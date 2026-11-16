@@ -55,7 +55,7 @@ func TestOnStatUseScaled_HonoursItsMultiplier(t *testing.T) {
 	// Multiplier 0.0: no advancement, ever.
 	zero := newProgressionTestCharacter(t)
 	before := zero.GetStatTraining(stat)
-	for i := 0; i < trials; i++ {
+	for i := range trials {
 		if zero.OnStatUseScaled(stat, 0, 0.0) {
 			t.Fatalf("OnStatUseScaled at multiplier 0.0 reported a gain on trial %d", i)
 		}
@@ -69,7 +69,7 @@ func TestOnStatUseScaled_HonoursItsMultiplier(t *testing.T) {
 	// not a flake, it is a broken path.
 	one := newProgressionTestCharacter(t)
 	beforeOne := one.GetStatTraining(stat)
-	for i := 0; i < trials; i++ {
+	for range trials {
 		one.OnStatUseScaled(stat, 0, 1.0)
 	}
 	if after := one.GetStatTraining(stat); after <= beforeOne {
@@ -91,7 +91,7 @@ func TestOnStatUse_DelegatesToOnStatUseScaledAtOne(t *testing.T) {
 	const stat = "willpower"
 	const freshChars = 30
 
-	for i := 0; i < freshChars; i++ {
+	for i := range freshChars {
 		c := newProgressionTestCharacter(t)
 		if !c.OnStatUse(stat, 0) {
 			t.Fatalf("OnStatUse did not progress a rank 0 %s on character %d, but chance is pinned to 1.0", stat, i)
@@ -104,7 +104,7 @@ func TestOnStatUse_DelegatesToOnStatUseScaledAtOne(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < freshChars; i++ {
+	for i := range freshChars {
 		c := newProgressionTestCharacter(t)
 		if !c.OnStatUseScaled(stat, 0, 1.0) {
 			t.Fatalf("OnStatUseScaled at 1.0 did not progress a rank 0 %s on character %d, but chance is pinned to 1.0", stat, i)
@@ -119,7 +119,7 @@ func TestOnStatUse_DelegatesToOnStatUseScaledAtOne(t *testing.T) {
 	// back certain (P(all 30 succeed) is about 1e-9). If this ever passes, the
 	// multiplier is being ignored and the certainty assertions above are vacuous.
 	allSucceeded := true
-	for i := 0; i < freshChars; i++ {
+	for range freshChars {
 		c := newProgressionTestCharacter(t)
 		if !c.OnStatUseScaled(stat, 0, 0.5) {
 			allSucceeded = false

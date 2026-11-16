@@ -50,13 +50,13 @@ func TestFindRecipesByName_SubstringReturnsAllSorted(t *testing.T) {
 func TestFindRecipesByName_Deterministic(t *testing.T) {
 	defer seedFindFixture(t)()
 	first := names(FindRecipesByName("cloak"))
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		if again := names(FindRecipesByName("cloak")); !equalStrings(first, again) {
 			t.Fatalf("iteration %d returned a different order: %v vs %v", i, again, first)
 		}
 	}
 	// And the single-pick wrapper follows the same order.
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if r := FindRecipeByName("cloak"); r == nil || r.RecipeId != "wool-cloak" {
 			t.Fatalf("FindRecipeByName must deterministically pick wool-cloak")
 		}

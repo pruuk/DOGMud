@@ -20,7 +20,7 @@ func TestPickIndexIsCooldownAware(t *testing.T) {
 	// so three calls must return three DIFFERENT indices.
 	seen := map[int]bool{}
 	pick := narration.SequencePicker()
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		idx := PickIndex(3, cd, "k", pick)
 		if idx < 0 || idx >= 3 {
 			t.Fatalf("index %d out of range", idx)

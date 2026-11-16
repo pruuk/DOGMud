@@ -99,7 +99,7 @@ func TestIdleMobs_TiredPatrolMobWaitsWithoutSpinning(t *testing.T) {
 	t.Cleanup(func() { mobs.SetInstanceForTest(7150, nil) })
 
 	// More ticks than the default retry cap, so a counted rest would trip it.
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		IdleMobs(events.NewRound{RoundNumber: uint64(i + 1)})
 	}
 	require.Empty(t, events.DrainQueuedInputsForTest(7150), "a tired mob queues no step, pathto or home")

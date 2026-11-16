@@ -23,7 +23,7 @@ import (
 // meanOver samples f n times and returns the arithmetic mean.
 func meanOver(n int, f func() int) float64 {
 	total := 0
-	for i := 0; i < n; i++ {
+	for range n {
 		total += f()
 	}
 	return float64(total) / float64(n)
@@ -156,7 +156,7 @@ func runOpeningStrikeRounds(t *testing.T, n int, surprise bool) [][]int {
 	ctx := combatContext{sourceSight: messaging.SightFull, targetSight: messaging.SightFull}
 
 	rounds := make([][]int, 0, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		attacker.Stamina = attacker.StaminaMax.Value
 		attacker.Health = attacker.HealthMax.Value
 		defender.Stamina = defender.StaminaMax.Value

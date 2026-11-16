@@ -53,7 +53,7 @@ func TestDarkSwap_RealComposersBlindReader(t *testing.T) {
 			pool := darkPools(c.viewpoint)
 
 			sawMultiSwing, sawDark := false, false
-			for i := 0; i < 400; i++ {
+			for i := range 400 {
 				atk.Stamina, def.Stamina, def.Health = 1000, 500, 5000
 				ctx := newCombatContext(atk, def, verdictLight(100), false)
 				plan := buildAttackPlan(atk, def)

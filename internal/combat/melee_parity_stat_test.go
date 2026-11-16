@@ -195,7 +195,7 @@ func buildParityAnchor(atkScore, defScore, dmgMean, critMean float64) parityAnch
 	// deflection multiplies and rounds again, and a landing hit floors at 1.
 	steps := int(0.5/a.gDefendStep) + 2
 	a.gDefend = make([]float64, steps)
-	for i := 0; i < steps; i++ {
+	for i := range steps {
 		mult := float64(i) * a.gDefendStep
 		e := 0.0
 		for k := 1; k < len(cleanPMF); k++ {

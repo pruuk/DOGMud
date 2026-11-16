@@ -63,7 +63,7 @@ func TestQuest100_RankOneWalksPastTheBruteOftenEnough(t *testing.T) {
 	bal := configs.GetBalanceConfig()
 	rate := func(light int, modifier float64) float64 {
 		won := 0
-		for i := 0; i < trials; i++ {
+		for range trials {
 			brute := mobs.NewMobByIdFresh(bruteMobId, 5257)
 			require.NotNil(t, brute)
 			observer, _ := sneakObserverScore(&brute.Character, messaging.FixedLight(light))

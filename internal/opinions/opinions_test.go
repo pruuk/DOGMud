@@ -242,11 +242,11 @@ func TestParallelBumpsConverge(t *testing.T) {
 	const delta = 1
 
 	var wg sync.WaitGroup
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for j := 0; j < bumpsPer; j++ {
+			for range bumpsPer {
 				Bump(41, 17, delta)
 			}
 		}()

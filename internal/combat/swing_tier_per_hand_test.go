@@ -58,7 +58,7 @@ func TestBuildAttackMessages_TierAndFeintReadTheSwingingHand(t *testing.T) {
 	offHand := weaponSetup{weaponName: "fists", weaponSubType: items.Unarmed}
 	sdp := swingDamageParams{dmgMean: 20}
 
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		hit := &AttackResult{}
 		buildAttackMessages(hit, src, tgt, offHand, sdp, 15, 0, 0, 0, User, User, "", false, false)
 		if got := hit.MessagesToSource[0].Text; got != beginnerHit {

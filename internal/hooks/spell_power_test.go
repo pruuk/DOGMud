@@ -30,7 +30,7 @@ func TestCalcSpellDamage_SpellPowerAmplifies(t *testing.T) {
 	// over many rolls to compare means deterministically.
 	avg := func(c *characters.Character) int {
 		total := 0
-		for i := 0; i < 300; i++ {
+		for range 300 {
 			total += calcSpellDamageForCharacter(spell, c, target, 0, false)
 		}
 		return total

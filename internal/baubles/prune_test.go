@@ -69,7 +69,7 @@ func TestConcurrentUpdatesAllReachDisk(t *testing.T) {
 	SetDirForTest(dir)
 	t.Cleanup(func() { items.SetBaubleResolver(nil) })
 	ids := []string{}
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		r, err := Create(Record{Name: `Glass Marble`, NameSimple: `marble`, Tier: TierCheap, Value: 1, Status: StatusReady})
 		if err != nil {
 			t.Fatal(err)

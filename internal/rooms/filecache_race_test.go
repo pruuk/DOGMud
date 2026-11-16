@@ -24,11 +24,11 @@ func TestFileCache_ConcurrentDistinctWrites(t *testing.T) {
 	const perGoroutine = 25
 
 	var wg sync.WaitGroup
-	for g := 0; g < goroutines; g++ {
+	for g := range goroutines {
 		wg.Add(1)
 		go func(g int) {
 			defer wg.Done()
-			for i := 0; i < perGoroutine; i++ {
+			for i := range perGoroutine {
 				id := g*perGoroutine + i
 				rm.setCachedFilePath(id, fmt.Sprintf("zone/%d.yaml", id))
 			}
@@ -49,11 +49,11 @@ func TestFileCache_ConcurrentReadWriteSameKey(t *testing.T) {
 	rm.setCachedFilePath(roomId, "zone/42.yaml")
 
 	var wg sync.WaitGroup
-	for g := 0; g < 16; g++ {
+	for g := range 16 {
 		wg.Add(1)
 		go func(g int) {
 			defer wg.Done()
-			for i := 0; i < 100; i++ {
+			for i := range 100 {
 				if g%2 == 0 {
 					rm.setCachedFilePath(roomId, fmt.Sprintf("zone/%d-%d.yaml", g, i))
 				} else if path, ok := rm.cachedFilePath(roomId); ok && path == "" {
@@ -70,7 +70,7 @@ func TestFileCache_ConcurrentReadWriteSameKey(t *testing.T) {
 // the memory reporter snapshotting.
 func TestFileCache_ConcurrentMixedAccessors(t *testing.T) {
 	rm := &RoomManager{roomIdToFileCache: make(map[int]string)}
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		rm.setCachedFilePath(i, fmt.Sprintf("zone/%d.yaml", i))
 	}
 
@@ -88,11 +88,11 @@ func TestFileCache_ConcurrentMixedAccessors(t *testing.T) {
 	}
 
 	for _, fn := range work {
-		for g := 0; g < 4; g++ {
+		for range 4 {
 			wg.Add(1)
 			go func(fn func(int)) {
 				defer wg.Done()
-				for i := 0; i < 100; i++ {
+				for i := range 100 {
 					fn(i)
 				}
 			}(fn)
@@ -109,7 +109,7 @@ func TestFileCache_SetIfAbsentKeepsFirstWriter(t *testing.T) {
 	rm.setCachedFilePath(roomId, "original/7.yaml")
 
 	var wg sync.WaitGroup
-	for g := 0; g < 16; g++ {
+	for g := range 16 {
 		wg.Add(1)
 		go func(g int) {
 			defer wg.Done()
@@ -129,16 +129,16 @@ func TestFileCache_SetIfAbsentKeepsFirstWriter(t *testing.T) {
 // concurrently. Misses walk a non-existent tree and return "" quickly.
 func TestFileCache_ConcurrentGetFilePath(t *testing.T) {
 	rm := &RoomManager{roomIdToFileCache: make(map[int]string)}
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		rm.setCachedFilePath(i, fmt.Sprintf("zone/%d.yaml", i))
 	}
 
 	var wg sync.WaitGroup
-	for g := 0; g < 24; g++ {
+	for g := range 24 {
 		wg.Add(1)
 		go func(g int) {
 			defer wg.Done()
-			for i := 0; i < 50; i++ {
+			for i := range 50 {
 				// Half hit the warm entries, half miss and take the
 				// search-then-write path.
 				if g%2 == 0 {
@@ -152,7 +152,7 @@ func TestFileCache_ConcurrentGetFilePath(t *testing.T) {
 	wg.Wait()
 
 	// Warm entries must survive untouched.
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		if got, ok := rm.cachedFilePath(i); !ok || got != fmt.Sprintf("zone/%d.yaml", i) {
 			t.Fatalf("warm entry %d corrupted: %q (present=%v)", i, got, ok)
 		}

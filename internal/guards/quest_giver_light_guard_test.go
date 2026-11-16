@@ -193,7 +193,7 @@ func TestEveryQuestGiverIsSeenByFace(t *testing.T) {
 			var darkOrder []int
 
 			for _, d := range nightTradeSampleDays {
-				for hour := 0; hour < 24; hour++ {
+				for hour := range 24 {
 					round := uint64(d.Doy-1)*900 + uint64(math.Ceil(float64(hour)*37.5))
 					util.SetRoundCount(round)
 					gd := gametime.GetDate(round)

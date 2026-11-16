@@ -26,7 +26,7 @@ func TestValidate(t *testing.T) {
 func TestNext_RotatesInOrderAndWraps(t *testing.T) {
 	defer SeedForTest([]string{"a", "b", "c"})()
 	var got []string
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		got = append(got, Next())
 	}
 	want := []string{"a", "b", "c", "a", "b"}

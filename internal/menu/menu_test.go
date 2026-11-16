@@ -71,7 +71,7 @@ func TestRender_DetailWrapsAtLabelIndentWithin80(t *testing.T) {
 
 func TestRender_NumbersRightAlignPastNine(t *testing.T) {
 	m := Menu{}
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		m.Entries = append(m.Entries, Entry{Id: string(rune('a' + i)), Label: "x"})
 	}
 	lines := strings.Split(plain(renderAt80(m)), "\n")
@@ -132,7 +132,7 @@ func TestRender_TwoColumnsAlignAndSeparate(t *testing.T) {
 
 func TestRender_TwoColumnsTenPlusEntries(t *testing.T) {
 	m := Menu{Columns: 2}
-	for i := 0; i < 12; i++ {
+	for i := range 12 {
 		m.Entries = append(m.Entries, Entry{Id: string(rune('a' + i)), Label: strings.Repeat("n", 20+i)})
 	}
 	assertCol2(t, m)

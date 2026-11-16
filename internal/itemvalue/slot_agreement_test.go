@@ -103,7 +103,7 @@ func TestScorerAndWearAgreeOnEverySlotChoice(t *testing.T) {
 	rng := rand.New(rand.NewSource(20260929))
 	checked, refused := 0, 0
 	for _, extra := range []int{0, 1, 2, 4} {
-		for n := 0; n < 1500; n++ {
+		for range 1500 {
 			seed := rng.Int63()
 			for _, cs := range []items.ItemSpec{agSword, agGreat, agShield, agRing, agBracer} {
 				delta := ItemValueDelta(agreementChar(extra, seed), PhysicalBruiser, agItem(9000, cs, false))

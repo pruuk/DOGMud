@@ -105,7 +105,7 @@ func TestCritOrMitigatedDamage_CritBypassesMitigationAndScales(t *testing.T) {
 	)
 
 	critTotal, normalTotal := 0.0, 0.0
-	for i := 0; i < samples; i++ {
+	for range samples {
 		critTotal += float64(CritOrMitigatedDamage(rawDmg, rank, true, 0.50, shippedCurveForTest))
 		normalTotal += float64(CritOrMitigatedDamage(rawDmg, rank, false, 0.0, shippedCurveForTest))
 	}
@@ -126,7 +126,7 @@ func TestCritOrMitigatedDamage_NormalHitRespectsMitigation(t *testing.T) {
 	)
 
 	mitigated, plain := 0.0, 0.0
-	for i := 0; i < samples; i++ {
+	for range samples {
 		mitigated += float64(CritOrMitigatedDamage(rawDmg, 10, false, 0.50, shippedCurveForTest))
 		plain += float64(CritOrMitigatedDamage(rawDmg, 10, false, 0.0, shippedCurveForTest))
 	}
@@ -141,7 +141,7 @@ func TestCritOrMitigatedDamage_FloorsAtOne(t *testing.T) {
 	// Spell and taunt both floor at 1 rather than 0 — a landed hit that deals
 	// nothing reads to the player as a bug. Note melee deliberately differs
 	// (it floors at 0), which is why this resolver is not shared with it.
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		if got := CritOrMitigatedDamage(0.0, 1, false, 0.75, shippedCurveForTest); got < 1 {
 			t.Fatalf("CritOrMitigatedDamage floored at %d, want >= 1", got)
 		}
@@ -252,7 +252,7 @@ func TestCalcHitDamage_CritScalesByCritDamageMultiplier(t *testing.T) {
 
 	plainRolls := make([]float64, samples)
 	scaledRolls := make([]float64, samples)
-	for i := 0; i < samples; i++ {
+	for i := range samples {
 		p, _ := calcHitDamage(&AttackResult{}, true, false, plain)
 		plainRolls[i] = float64(p)
 		s, _ := calcHitDamage(&AttackResult{}, true, false, scaled)
@@ -276,7 +276,7 @@ func TestCalcHitDamage_NormalHitIgnoresCritDamageMultiplier(t *testing.T) {
 
 	plainRolls := make([]float64, samples)
 	scaledRolls := make([]float64, samples)
-	for i := 0; i < samples; i++ {
+	for i := range samples {
 		p, _ := calcHitDamage(&AttackResult{}, false, false, plain)
 		plainRolls[i] = float64(p)
 		s, _ := calcHitDamage(&AttackResult{}, false, false, scaled)

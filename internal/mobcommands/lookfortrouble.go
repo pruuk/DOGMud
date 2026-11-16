@@ -260,7 +260,7 @@ func applyGrappledControlledTiebreak(pool []int) []int {
 		}
 		if user.Character.IsGrappling() && user.Character.IsBeingControlled() {
 			deficit := maxWeight - w
-			for i := 0; i < deficit; i++ {
+			for range deficit {
 				out = append(out, uid)
 			}
 		}

@@ -132,7 +132,7 @@ func TestRefusedFindsAreLoggedOnceAMinute(t *testing.T) {
 
 	for _, refusal := range []error{allowance, share} {
 		installGenerator(t, func(ctx context.Context, req GenRequest) (GenResult, error) { return GenResult{}, refusal })
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			if res := Generate(context.Background(), GenRequest{Tier: TierCheap}, nil); res.Generator != GeneratorLocal {
 				t.Fatalf("a refused find is a generic trinket: %+v", res)
 			}
@@ -158,7 +158,7 @@ func TestRefusedFindsAreLoggedOnceAMinute(t *testing.T) {
 	withCorpus(t, testSeed, ``)
 	clock = clock.Add(time.Minute)
 	installGenerator(t, func(ctx context.Context, req GenRequest) (GenResult, error) { return GenResult{}, allowance })
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		if res := Generate(context.Background(), GenRequest{Tier: TierCheap}, nil); res.Generator != GeneratorCorpus {
 			t.Fatalf("a refused find with a corpus loaded draws from it: %+v", res)
 		}
@@ -168,7 +168,7 @@ func TestRefusedFindsAreLoggedOnceAMinute(t *testing.T) {
 	}
 
 	installGenerator(t, func(ctx context.Context, req GenRequest) (GenResult, error) { return GenResult{}, errors.New(`boom`) })
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		_ = Generate(context.Background(), GenRequest{Tier: TierCheap}, nil)
 	}
 	if n := tee.count(`boom`); n != 3 {

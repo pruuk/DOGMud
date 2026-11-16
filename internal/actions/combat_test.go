@@ -311,7 +311,7 @@ func TestSpecialMoveFamilyAdmission(t *testing.T) {
 				// does not set, so the seeding this loop used to do bought
 				// nothing -- every iteration was already an independent random
 				// draw, which is exactly what makes the retry work.
-				for attempt := 0; attempt < 20; attempt++ {
+				for range 20 {
 					actor, char, _ := newSpecialMoveAdmissionActor(t, tc.speciesID, 50, 0, false)
 					got := tc.execute(actor)
 					if got.hit {
@@ -691,7 +691,7 @@ func TestFindAttackTarget_WildcardAnyone_MultipleTargets(t *testing.T) {
 
 	// Run several times — randomness means we can't guarantee which is picked,
 	// but the actor must never appear as the result.
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		result := FindAttackTarget("*", room, actorUserId, 0, nil)
 		if result.Found {
 			assert.NotEqual(t, actorUserId, result.UserId,
@@ -710,7 +710,7 @@ func TestFindAttackTarget_WildcardMob_ExcludesSelf(t *testing.T) {
 	room.AddMob(actorMobId)
 	room.AddMob(otherMobId)
 
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		result := FindAttackTarget("*mob", room, 0, actorMobId, nil)
 		if result.Found {
 			assert.NotEqual(t, actorMobId, result.MobInstanceId,

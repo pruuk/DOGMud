@@ -282,7 +282,7 @@ func TestGenericTrinket(t *testing.T) {
 	if r.WeightLbs != 0.1 || r.Value != TierAverage.RollValue(nil) {
 		t.Fatalf("nil randn: lightest weight and the tier midpoint, got %v %d", r.WeightLbs, r.Value)
 	}
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		g := GenericTrinket(TierRare, util.Rand)
 		if g.Name != `Trinket` || !TierRare.Range().Contains(g.Value) || g.WeightLbs < 0.1 || g.WeightLbs > 0.8 {
 			t.Fatalf("random generic out of bounds: %+v", g)

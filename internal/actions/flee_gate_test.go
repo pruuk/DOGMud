@@ -55,7 +55,7 @@ func TestResolveFlee_PlayerNeverPicksAGatedExit(t *testing.T) {
 	two := map[string]exit.RoomExit{"north": {RoomId: fleeParityNorthId}, "east": {RoomId: fleeParityEastId}}
 	// With two exits a random pick lands on the gated one about half the
 	// time, so 40 runs leave a 1 in 2^40 chance of a false pass.
-	for i := 0; i < 40; i++ {
+	for i := range 40 {
 		o := resolvePlayerFlee(t, two, ``)
 		if !o.Escaped() || o.ExitName != "east" {
 			t.Fatalf("run %d: outcome %+v, want an escape through east (north is gated)", i, o)
@@ -101,7 +101,7 @@ func TestResolveFlee_AMobNeverFleesIntoAGatedRoom(t *testing.T) {
 	two := map[string]exit.RoomExit{"north": {RoomId: fleeParityNorthId}, "east": {RoomId: fleeParityEastId}}
 	// With two exits a random pick lands on the gated one about half the time,
 	// so 40 runs leave a 1 in 2^40 chance of a false pass.
-	for i := 0; i < 40; i++ {
+	for i := range 40 {
 		_, m := fleeBoth(t, fleeRow{name: "mob", engage: true, resolve: true, exits: two})
 		if !m.outcome.Escaped() || m.outcome.ExitName != "east" {
 			t.Fatalf("run %d: mob outcome %+v, want an escape through east (north is gated)", i, m.outcome)

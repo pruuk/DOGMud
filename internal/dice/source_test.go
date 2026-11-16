@@ -10,7 +10,7 @@ import (
 func TestSetRandForTest_ReplaysEveryDrawKind(t *testing.T) {
 	draw := func() []float64 {
 		out := make([]float64, 0, 60)
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			ok, roll := Percentile(50)
 			_ = ok
 			_, _, a, d := OpposedRollStatWithFloors(100, 100, 0.2, 0.2)
@@ -42,11 +42,11 @@ func TestSetRandForTest_ReplaysEveryDrawKind(t *testing.T) {
 func TestSetRandForTest_ConcurrentDrawsAreRaceFree(t *testing.T) {
 	t.Cleanup(SetRandForTest(3))
 	var wg sync.WaitGroup
-	for g := 0; g < 8; g++ {
+	for range 8 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for i := 0; i < 200; i++ {
+			for range 200 {
 				Roll(100, 15)
 				Intn(10)
 				Float64()

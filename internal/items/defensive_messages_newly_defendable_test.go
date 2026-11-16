@@ -91,7 +91,7 @@ func TestNewlyDefendableAttackNamesRenderTriads(t *testing.T) {
 				if variants < 5 {
 					t.Fatalf("%s %s has %d variants; want at least 5", defence, band.name, variants)
 				}
-				for idx := 0; idx < variants; idx++ {
+				for idx := range variants {
 					triad := RenderDefenseMessage(defence, band.crit, band.margin, map[TokenName]string{
 						TokenActor:  "Rurik",
 						TokenActee:  "Selka",
@@ -176,7 +176,7 @@ func TestCounterPoolsRenderTriads(t *testing.T) {
 			if variants < 5 {
 				t.Fatalf("%s %s has %d variants; want at least 5", pool, band.name, variants)
 			}
-			for idx := 0; idx < variants; idx++ {
+			for idx := range variants {
 				triad := RenderDefenseMessage(pool, band.crit, band.margin, map[TokenName]string{
 					TokenActor: "Rurik",
 					TokenActee: "Selka",

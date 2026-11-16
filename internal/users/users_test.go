@@ -938,7 +938,7 @@ func TestUserLog_ItemsEarlyExit(t *testing.T) {
 func TestUserLog_Growth(t *testing.T) {
 	log := UserLog{}
 	// Add enough entries to trigger capacity growth
-	for i := 0; i < LogMinAllocation+5; i++ {
+	for range LogMinAllocation + 5 {
 		log.Add("test", "entry")
 	}
 	assert.Equal(t, LogMinAllocation+5, len(log))
@@ -1074,7 +1074,7 @@ func TestUserRecord_WimpyCheck(t *testing.T) {
 func TestUserLog_Overflow(t *testing.T) {
 	log := UserLog{}
 	// Fill to max capacity
-	for i := 0; i < LogMaxAllocation+10; i++ {
+	for range LogMaxAllocation + 10 {
 		log.Add("test", "entry")
 	}
 	// Should be capped at LogMaxAllocation

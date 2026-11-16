@@ -942,7 +942,7 @@ func (mod *AuctionsModule) resolveSeizedLot(a *AuctionItem) {
 			// What fits goes to the backpack; anything over carry capacity is
 			// mailed instead (StoreItem returns false when over ~2x capacity).
 			mailed := 0
-			for i := 0; i < count; i++ {
+			for range count {
 				if acquire.AcquireItem(winner, a.ItemData, acquire.AcquireAuction) {
 					continue
 				}
@@ -960,7 +960,7 @@ func (mod *AuctionsModule) resolveSeizedLot(a *AuctionItem) {
 		} else {
 			users.SearchOfflineUsers(func(u *users.UserRecord) bool {
 				if u.UserId == a.HighestBidUserId {
-					for i := 0; i < count; i++ {
+					for range count {
 						itemCopy := a.ItemData
 						u.Inbox.Add(users.Message{
 							FromName: `Auction System`,

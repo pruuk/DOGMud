@@ -147,7 +147,7 @@ var wrapAllowlist = map[Category]bool{
 // without updating its own count.
 func TestShouldWrapMatchesPinnedAllowlist(t *testing.T) {
 	admitted := 0
-	for c := CategoryDefault; c < categoryMax; c++ {
+	for c := range categoryMax {
 		got := shouldWrap(c)
 		want := wrapAllowlist[c]
 		if got != want {

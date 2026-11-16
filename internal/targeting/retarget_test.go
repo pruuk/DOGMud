@@ -17,7 +17,7 @@ func TestCommit_RetargetKeepsTheStoresInAgreement(t *testing.T) {
 	c := characters.New()
 
 	Commit(c, state.ActorRef{MobInstanceId: 100}, ReasonAttack)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		c.CombatPhase.OnRoundTick()
 	}
 	require.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId)
@@ -38,7 +38,7 @@ func TestCommitTaunt_RetargetKeepsTheStoresInAgreement(t *testing.T) {
 	c := characters.New()
 
 	Commit(c, state.ActorRef{UserId: 7}, ReasonAttack)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		c.CombatPhase.OnRoundTick()
 	}
 	require.Equal(t, 7, c.CurrentCombatTarget().UserId)

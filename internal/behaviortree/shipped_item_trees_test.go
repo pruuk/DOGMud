@@ -146,7 +146,7 @@ func TestShippedFixtureTrees(t *testing.T) {
 	if v, _ := itemlight.Get(engineProbeRoomId, arch.UUID); v != 52 {
 		t.Errorf("midwinter 08:00: the arch lantern reads %v, want 52 with the street lamps", v)
 	}
-	for r := uint64(0); r < 24; r++ {
+	for r := range uint64(24) {
 		util.SetRoundCountForTest(dusk + r)
 		TryItemBehavior(idle, stone)
 		v, _ := itemlight.Get(engineProbeRoomId, stone.UUID)

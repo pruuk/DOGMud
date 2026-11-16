@@ -59,7 +59,7 @@ func benchUsers(b *testing.B, n int) {
 	userManager.mu.Lock()
 	prevUsers := userManager.Users
 	seeded := make(map[int]*UserRecord, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		id := 950000 + i
 		u := NewUserRecord(id, 0)
 		u.Username = fmt.Sprintf("benchuser%d", i)

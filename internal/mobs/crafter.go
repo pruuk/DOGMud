@@ -493,7 +493,7 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 		}
 		removed := shopInv.RemoveStockAtRound(spec.ItemId, ing.Quantity, round)
 		shopInv.ConsumedByCrafterCount += removed
-		for i := 0; i < removed; i++ {
+		for range removed {
 			consumed = append(consumed, items.Item{ItemId: spec.ItemId, Spec: spec})
 		}
 	}

@@ -13,11 +13,11 @@ func TestConcurrentUserAccess(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for w := 0; w < writers; w++ {
+	for w := range writers {
 		wg.Add(1)
 		go func(base int) {
 			defer wg.Done()
-			for i := 0; i < iters; i++ {
+			for i := range iters {
 				u := &UserRecord{UserId: base*1000 + i}
 				u.Username = "racer"
 				storeUserForTest(u)
@@ -26,11 +26,11 @@ func TestConcurrentUserAccess(t *testing.T) {
 		}(w)
 	}
 
-	for r := 0; r < readers; r++ {
+	for range readers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for i := 0; i < iters; i++ {
+			for i := range iters {
 				_ = GetByUserId(i)
 			}
 		}()

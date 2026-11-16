@@ -6,7 +6,7 @@ import "testing"
 // ForageCore is pure, so this needs no fixture beyond the attempt itself.
 func forageFindRate(score float64, trials int) float64 {
 	found := 0
-	for i := 0; i < trials; i++ {
+	for range trials {
 		if ForageCore(ForageAttempt{Biome: "land", SearchScore: score}).Found {
 			found++
 		}

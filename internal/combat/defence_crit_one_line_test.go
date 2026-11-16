@@ -39,7 +39,7 @@ func TestResolveCombatRound_DefenceCritSendsOneLinePerAudience(t *testing.T) {
 	ctx := combatContext{sourceSight: messaging.SightFull, targetSight: messaging.SightFull}
 
 	sawDefenceCrit := false
-	for i := 0; i < 80; i++ {
+	for i := range 80 {
 		attacker.Stamina = attacker.StaminaMax.Value
 		defender.Stamina = defender.StaminaMax.Value
 		attacker.Health = attacker.HealthMax.Value
@@ -117,7 +117,7 @@ func TestResolveCombatRound_DefenceCritCanStillFeint(t *testing.T) {
 	}
 
 	defenceCrits, feints := 0, 0
-	for i := 0; i < 80; i++ {
+	for i := range 80 {
 		attacker.Stamina = attacker.StaminaMax.Value
 		defender.Stamina = defender.StaminaMax.Value
 		attacker.Health = attacker.HealthMax.Value

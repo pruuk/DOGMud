@@ -207,7 +207,7 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 		dark := map[int][]string{}
 		var darkOrder []int
 		for _, d := range nightTradeSampleDays {
-			for hour := 0; hour < 24; hour++ {
+			for hour := range 24 {
 				// 37.5 rounds to the hour; ceil so an odd hour lands just
 				// inside the hour rather than just before it.
 				round := uint64(d.Doy-1)*900 + uint64(math.Ceil(float64(hour)*37.5))

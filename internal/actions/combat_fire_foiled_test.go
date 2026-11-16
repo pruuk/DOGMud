@@ -41,7 +41,7 @@ func TestExecuteFire_RaisesAmbushFoiledOnAMissFromCover(t *testing.T) {
 	defer cleanup()
 	fired := stubMobEvents(t)
 
-	for i := 0; i < 300; i++ {
+	for range 300 {
 		*fired = nil
 		res := ExecuteFire(newStubActor(newSurpriseShooter(true), rooms.LoadRoom(1)), "skeleton")
 		require.True(t, res.Executed)

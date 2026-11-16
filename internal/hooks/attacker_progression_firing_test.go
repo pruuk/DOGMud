@@ -301,7 +301,7 @@ func TestProcessAttackerProgression_SixArmsStillAwardOnce(t *testing.T) {
 	requireCertainAttackerAward(t, c)
 
 	hits := make([]combat.WeaponHitInfo, 0, 6)
-	for i := 0; i < 6; i++ {
+	for range 6 {
 		hits = append(hits, weaponSwing(attackerAwardSkill, true, false))
 	}
 

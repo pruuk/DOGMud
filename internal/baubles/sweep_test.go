@@ -192,7 +192,7 @@ func TestRunSweepKeepsARolledBackSale(t *testing.T) {
 	root := t.TempDir()
 	writeDataFiles(t, root, map[string]string{`users/3.yaml`: "character:\n  items:\n  - itemid: 900\n    bauble: " + id + "\n"})
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if st := runSweep(now.Add(time.Duration(i)*time.Hour), root); !st.OK || st.Pruned != 0 {
 			t.Fatalf("sweep %d: %+v", i, st)
 		}
@@ -243,7 +243,7 @@ func TestSweepRacesWithCatalogWrites(t *testing.T) {
 	t.Cleanup(func() { items.SetBaubleResolver(nil) })
 	now := time.Now().UTC()
 	ids := []string{}
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		ids = append(ids, sweepRecord(t, `Glass Marble`, func(r *Record) { r.FoundAt = now.Add(-60 * 24 * time.Hour) }))
 	}
 	withLiveSources(t, map[string]LiveWalk{`users`: holding(ids[:10]...)})
@@ -253,13 +253,13 @@ func TestSweepRacesWithCatalogWrites(t *testing.T) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			runSweep(now.Add(time.Duration(i)*time.Hour), root)
 		}
 	}()
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 50; i++ {
+		for i := range 50 {
 			v := i%5 + 1
 			Update(ids[i%20], func(r *Record) { r.Value = v })
 			Get(ids[(i+7)%20])
@@ -294,7 +294,7 @@ func TestSweepLoopRunsUntilStopped(t *testing.T) {
 		})
 		close(done)
 	}()
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		select {
 		case <-runs:
 		case <-time.After(2 * time.Second):

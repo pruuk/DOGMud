@@ -76,7 +76,7 @@ func TestSitting_NoEdgeFromTheFloorOrAGrapple(t *testing.T) {
 func TestSitting_CountRoundDownIgnoresSitting(t *testing.T) {
 	m := position.NewMachine()
 	_ = m.TransitionToSitting(sitReason())
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		if got := m.CountRoundDown(); got != 0 {
 			t.Fatalf("CountRoundDown on a sitter = %d, want 0", got)
 		}

@@ -152,7 +152,7 @@ func TestRunContest_ParityUnaffectedByCompression(t *testing.T) {
 	rate := func(k float64) float64 {
 		setContestGapSaturationForTest(t, k)
 		wins := 0
-		for i := 0; i < trials; i++ {
+		for range trials {
 			if RunContest(score, []contest.Entry{{Score: score}}).Success {
 				wins++
 			}
@@ -172,7 +172,7 @@ func TestRunContest_CompressionReducesLopsidedWins(t *testing.T) {
 	rate := func(k float64) float64 {
 		setContestGapSaturationForTest(t, k)
 		wins := 0
-		for i := 0; i < trials; i++ {
+		for range trials {
 			if RunContest(455, []contest.Entry{{Score: 92}}).Success {
 				wins++
 			}
@@ -206,7 +206,7 @@ func TestRunContest_UnderdogUnaffected(t *testing.T) {
 	rate := func(k float64) float64 {
 		setContestGapSaturationForTest(t, k)
 		wins := 0
-		for i := 0; i < trials; i++ {
+		for range trials {
 			if RunContest(105, []contest.Entry{{Score: 185}}).Success {
 				wins++
 			}

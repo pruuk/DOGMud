@@ -677,13 +677,13 @@ func (w *World) GetAutoComplete(userId int, inputText string) []string {
 				if typeSearchCt > 0 || subtypeSearchCt > 0 {
 					skip = true
 
-					for i := 0; i < typeSearchCt; i++ {
+					for i := range typeSearchCt {
 						if iSpec.Type == itemTypeSearch[i] {
 							skip = false
 						}
 					}
 
-					for i := 0; i < subtypeSearchCt; i++ {
+					for i := range subtypeSearchCt {
 						if iSpec.Subtype == itemSubtypeSearch[i] {
 							skip = false
 						}

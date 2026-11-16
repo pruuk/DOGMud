@@ -35,7 +35,7 @@ func seedBenchRooms(b *testing.B, tempDir string, n int, dirty bool) func() {
 	b.Helper()
 
 	ids := make([]int, 0, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		roomId := 900000 + i
 		tpl := &Room{
 			RoomId:      roomId,

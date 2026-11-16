@@ -57,7 +57,7 @@ func TestAddCompanion_AtCap(t *testing.T) {
 	c := New()
 	// Soft backstop is 5 (the real limit is the Conviction budget, tested
 	// separately). Filling to the backstop and rejecting the next verifies it.
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		ok := c.AddCompanion(CompanionInfo{MobId: 1000 + i, InstanceId: i + 1, Name: "Wolf"})
 		assert.True(t, ok, "add under the soft cap should succeed")
 	}

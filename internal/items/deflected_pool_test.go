@@ -12,7 +12,7 @@ import (
 
 func deflectedFixture(tag string, n int) *DeflectedPool {
 	p := &DeflectedPool{}
-	for i := 0; i < n; i++ {
+	for i := range n {
 		p.Actor = append(p.Actor, tag+"-atk-"+string(rune('0'+i))+" {actee} {damage}")
 		p.Actee = append(p.Actee, tag+"-def-"+string(rune('0'+i))+" {actor} {damage}")
 	}
@@ -76,7 +76,7 @@ func TestRenderDeflectedSwingPicksPoolPerDefenceAndPairsRoles(t *testing.T) {
 		{"none", combatvocab.DefenceNone, "generic"},
 	}
 	for _, tc := range cases {
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			a, d, ok := RenderDeflectedSwing(tc.d, toks, i)
 			if !ok {
 				t.Fatalf("%s: not ok", tc.name)
@@ -90,7 +90,7 @@ func TestRenderDeflectedSwingPicksPoolPerDefenceAndPairsRoles(t *testing.T) {
 	}
 
 	// Unpicked: both roles still come from one index.
-	for n := 0; n < 40; n++ {
+	for range 40 {
 		a, d, _ := RenderDeflectedSwing(combatvocab.DefenceDodge, toks)
 		if a[len(a)-len(" Selka light wounds")-1] != d[len(d)-len(" Rurik light wounds")-1] {
 			t.Fatalf("roles drew different variants: %q / %q", a, d)

@@ -116,7 +116,7 @@ func TestGossipHint_NotSpentOnAnEmptyRoom(t *testing.T) {
 func TestGossipHint_ZeroIsOff(t *testing.T) {
 	_, room := hintTimerFixture(t, 0, true)
 	room.AddPlayer(1)
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		HandleIdleMobs(events.MobIdle{MobInstanceId: 201})
 		require.False(t, spokeHint(events.DrainQueuedInputsForTest(201)), "0 turns the hint timer off")
 	}

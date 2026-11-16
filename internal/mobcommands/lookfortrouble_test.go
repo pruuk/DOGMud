@@ -224,10 +224,10 @@ func TestApplyGrappledControlledTiebreak_PrefersGrappledInTieBand(t *testing.T) 
 	// GetByUserId on in-tie-band candidates BELOW maxWeight, so user 10 is
 	// never looked up (it's already at maxWeight).
 	pool := make([]int, 0, 19)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		pool = append(pool, 10)
 	}
-	for i := 0; i < 9; i++ {
+	for range 9 {
 		pool = append(pool, 20)
 	}
 
@@ -255,10 +255,10 @@ func TestApplyGrappledControlledTiebreak_DoesNotOverrideClearPreference(t *testi
 	defer cleanup()
 
 	pool := make([]int, 0, 15)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		pool = append(pool, 10)
 	}
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		pool = append(pool, 20)
 	}
 

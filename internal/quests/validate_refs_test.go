@@ -280,7 +280,7 @@ func TestValidateRefs_SequenceNestingThreeDeep(t *testing.T) {
 	v.StepExists = func(string) bool { return false }
 
 	deep := ActionDef{Grant: "9-hidden"}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		deep = ActionDef{Sequence: &SequenceDef{Lines: []SayLineDef{{Text: "..."}},
 			OnComplete: []ActionDef{deep}}}
 	}

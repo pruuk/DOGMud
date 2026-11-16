@@ -20,7 +20,7 @@ func TestRunBestOfAllDefense_CarriesFlooredFlag(t *testing.T) {
 	attacker, defender := defenceFixture(100)
 
 	sawFloored := false
-	for i := 0; i < 5000; i++ {
+	for range 5000 {
 		result := &AttackResult{}
 		ctx := combatContext{sourceSight: messaging.SightFull, targetSight: messaging.SightFull}
 

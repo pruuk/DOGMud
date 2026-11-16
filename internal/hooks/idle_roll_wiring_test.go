@@ -36,7 +36,7 @@ func idleMobFixture(t *testing.T, al int, pool []string, chatter, movement float
 
 func idleInputs(rounds int) []string {
 	var all []string
-	for i := 0; i < rounds; i++ {
+	for range rounds {
 		HandleIdleMobs(events.MobIdle{MobInstanceId: 100})
 		all = append(all, events.DrainQueuedInputsForTest(100)...)
 	}

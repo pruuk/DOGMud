@@ -474,7 +474,7 @@ func TestAffixedStock_AddListRemove(t *testing.T) {
 
 func TestAffixedStock_CapEvictsOldest(t *testing.T) {
 	si := &ShopInventory{}
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		si.AddAffixedStock(items.Item{ItemId: 100 + i, Affixed: true,
 			Spec: &items.ItemSpec{Value: 100}}, 50, 3, time.Time{}, shelfT0)
 	}

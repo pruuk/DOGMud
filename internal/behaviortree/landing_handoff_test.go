@@ -184,7 +184,7 @@ func TestLandingLinesNameTheMarkOnScreen(t *testing.T) {
 
 			// room_idle has no player. The counter speaks on the seventh round.
 			set()
-			for i := 0; i < 8; i++ {
+			for range 8 {
 				TryRoomBehavior(room.RoomId, EventContext{EventType: "room_idle", RoomId: room.RoomId})
 			}
 			check("re-prompting")

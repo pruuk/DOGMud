@@ -73,7 +73,7 @@ func TestBuildGossipLine_DiscLineHintRate(t *testing.T) {
 	const rounds = 20000
 	share := func() float64 {
 		hints := 0
-		for i := 0; i < rounds; i++ {
+		for range rounds {
 			if strings.HasPrefix(buildGossipLine(mob), "HINT ") {
 				hints++
 			}

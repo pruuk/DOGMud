@@ -72,7 +72,7 @@ func TestSwingDefences_OneEntryPerContestedSwing(t *testing.T) {
 	atk, def := swingDefencePopulationCombatants()
 
 	sawMultiSwingRound := false
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		plan := buildAttackPlan(atk, def)
 		res := calculateCombat(atk, def, User, Mob, plan, combatContext{
 			sourceSight: messaging.SightFull, targetSight: messaging.SightFull,
@@ -167,7 +167,7 @@ func TestWeaponHits_BestRollIsPopulated(t *testing.T) {
 	atk, def := swingDefencePopulationCombatants()
 
 	sawRound := false
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		plan := buildAttackPlan(atk, def)
 		res := calculateCombat(atk, def, User, Mob, plan, combatContext{
 			sourceSight: messaging.SightFull, targetSight: messaging.SightFull,

@@ -196,7 +196,7 @@ func TestRand(t *testing.T) {
 	}
 
 	// Rand(2) should be in [0,1]
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		v := Rand(2)
 		if v != 0 && v != 1 {
 			t.Fatalf("Expected Rand(2) to be 0 or 1, got %d", v)

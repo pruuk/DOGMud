@@ -32,7 +32,7 @@ func pinShippedCurve(t *testing.T) {
 // mitigation.
 func critMeanOver(samples int, rawDmg float64, rank int, mitig float64) float64 {
 	total := 0.0
-	for i := 0; i < samples; i++ {
+	for range samples {
 		total += float64(CritOrMitigatedDamage(rawDmg, rank, true, mitig, shippedCurveForTest))
 	}
 	return total / float64(samples)

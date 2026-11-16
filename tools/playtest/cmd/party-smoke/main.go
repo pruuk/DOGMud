@@ -308,7 +308,7 @@ func run() error {
 		_ = jAgent.send("party say Stomp landed.")
 	}
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		_ = lAgent.send("attack thug")
 		_ = jAgent.send("attack thug")
 		time.Sleep(4 * time.Second)

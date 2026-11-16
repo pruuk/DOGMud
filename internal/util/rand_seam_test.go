@@ -41,7 +41,7 @@ func TestSetRandForTestReplaysASeededSequence(t *testing.T) {
 func TestSetRandForTestAlsoReplaysDiceRolls(t *testing.T) {
 	draw := func() []float64 {
 		out := make([]float64, 0, 40)
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			out = append(out,
 				dice.Roll(100, 15).Value,
 				dice.Float64(),

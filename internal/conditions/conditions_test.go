@@ -163,7 +163,7 @@ func TestConditions_HasFlag(t *testing.T) {
 		bs2 := New()
 		bs2.AddCondition(105, false) // Slow
 		before := bs2.List[bs2.conditionIds[105]].TriggersLeft
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			assert.True(t, bs2.HasFlag(Slow))
 			assert.True(t, bs2.HasFlag(All))
 		}
@@ -925,7 +925,7 @@ func TestPB_332_BrokenLimbCondition_ExpiresNaturally(t *testing.T) {
 		"PB-332: broken-limb condition must not be expired on application")
 
 	// Tick 3 rounds — each trigger should decrement TriggersLeft.
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		bs.Trigger()
 	}
 

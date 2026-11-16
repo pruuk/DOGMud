@@ -122,7 +122,7 @@ func TestStorageSlot_SlotCount_OneBilledForLargeStack(t *testing.T) {
 	registerSpec(106, items.Object, true)
 
 	s := &Storage{}
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		s.AddItem(items.Item{ItemId: 106})
 	}
 
@@ -184,7 +184,7 @@ func TestStorageSlot_ForfeitSort(t *testing.T) {
 	})
 
 	s := &Storage{}
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		s.AddItem(items.Item{ItemId: 108}) // 5 cheap → 1 slot, value = 2×5=10
 	}
 	s.AddItem(items.Item{ItemId: 109}) // 1 expensive → 1 slot, value = 100×1=100

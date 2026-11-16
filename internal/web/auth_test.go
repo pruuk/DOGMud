@@ -280,7 +280,7 @@ func TestFailedAuthIsThrottledPerSource(t *testing.T) {
 
 	const attacker = "198.51.100.7:6000"
 
-	for i := 0; i < authMaxFailures; i++ {
+	for i := range authMaxFailures {
 		if code, _ := doAuthRequest(t, "adminuser", "wrong-password", attacker); code != http.StatusUnauthorized {
 			t.Fatalf("attempt %d: status=%d, want 401", i+1, code)
 		}
@@ -309,7 +309,7 @@ func TestAuthFailureTrackerIsBounded(t *testing.T) {
 	defer resetAuthStateForTest()
 
 	now := time.Now()
-	for i := 0; i < authTrackerMaxEntries+500; i++ {
+	for i := range authTrackerMaxEntries + 500 {
 		noteAuthFailure("10.0."+strconv.Itoa(i/256)+"."+strconv.Itoa(i%256), now)
 	}
 

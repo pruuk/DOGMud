@@ -131,12 +131,12 @@ func TestAuthoredKeywordIsSafeWhileItemsAreWritten(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		for i := 0; i < 2000; i++ {
+		for range 2000 {
 			_ = AuthoredKeyword(`lantern`)
 			_ = AuthoredName(`Hooded Lantern`)
 		}
 	}()
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		RegisterTestItemSpec(&ItemSpec{ItemId: 1000 + i, Name: `Test Candle`, NameSimple: `candle`})
 	}
 	<-done

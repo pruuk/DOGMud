@@ -102,7 +102,7 @@ func (p *Prompt) Ask(question string, responseOptions []string, defaultOption ..
 	}
 
 	qCt := len(p.Questions)
-	for i := 0; i < qCt; i++ {
+	for i := range qCt {
 		if p.Questions[i].Question == question {
 			return p.Questions[i]
 		}
@@ -177,7 +177,7 @@ func (q *Question) Resolve(answer string) menu.Result {
 func (p *Prompt) GetNextQuestion() *Question {
 
 	qCt := len(p.Questions)
-	for i := 0; i < qCt; i++ {
+	for i := range qCt {
 		if !p.Questions[i].Done {
 			return p.Questions[len(p.Questions)-1]
 		}
@@ -241,7 +241,7 @@ func (q *Question) Answer(answer string) {
 
 		testAnswer := strings.ToLower(answer)
 
-		for i := 0; i < optLen; i++ {
+		for i := range optLen {
 			optTest := strings.ToLower(q.Options[i])
 
 			if optTest == testAnswer {
@@ -250,7 +250,7 @@ func (q *Question) Answer(answer string) {
 			}
 
 			longestPossible := min(len(testAnswer), len(optTest))
-			for j := 0; j < longestPossible; j++ {
+			for j := range longestPossible {
 				if optTest[j] != testAnswer[j] {
 					break
 				}
@@ -297,7 +297,7 @@ func (q *Question) String() string {
 	if optLen > 0 {
 
 		ret.WriteString(` <ansi fg="black-bold">[</ansi>`)
-		for i := 0; i < optLen; i++ {
+		for i := range optLen {
 
 			if q.DefaultResponse != `` {
 

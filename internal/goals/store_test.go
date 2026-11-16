@@ -368,7 +368,7 @@ func TestConcurrentAdd_DifferentMobsNoRace(t *testing.T) {
 	ClearCache()
 	resetRegistry()
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		go func(mobId int) {
 			defer wg.Done()
@@ -386,7 +386,7 @@ func TestConcurrentAdd_SameMobSerializes(t *testing.T) {
 	ClearCache()
 	resetRegistry()
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()

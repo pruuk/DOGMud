@@ -37,7 +37,7 @@ func searchFindRate(t *testing.T, perception int, trials int) float64 {
 func searchFindRateAt(t *testing.T, perception, lamp int, trials int) float64 {
 	t.Helper()
 	found := 0
-	for i := 0; i < trials; i++ {
+	for i := range trials {
 		room := newSecretExitRoom(9300 + i)
 		room.Lamp = rooms.LampPtr(lamp)
 		actor := newSearchFakeActor("ContestSearcher", room, false, 0)

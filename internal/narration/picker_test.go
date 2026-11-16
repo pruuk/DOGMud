@@ -6,7 +6,7 @@ import "testing"
 // index for any positive n, and a safe 0 for a degenerate pool.
 func TestDefaultPickerStaysInRange(t *testing.T) {
 	for _, n := range []int{1, 2, 5, 50} {
-		for i := 0; i < 200; i++ {
+		for range 200 {
 			got := DefaultPicker(n)
 			if got < 0 || got >= n {
 				t.Fatalf("DefaultPicker(%d) = %d, out of range", n, got)
@@ -32,7 +32,7 @@ func TestSequencePickerIsDeterministic(t *testing.T) {
 	first := SequencePicker()
 	second := SequencePicker()
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		a, b := first(7), second(7)
 		if a != b {
 			t.Fatalf("call %d: two fresh sequence pickers diverged (%d vs %d)", i, a, b)
@@ -49,10 +49,10 @@ func TestSequencePickerIsDeterministic(t *testing.T) {
 func TestSequencePickerCoversThePool(t *testing.T) {
 	pick := SequencePicker()
 	seen := map[int]bool{}
-	for i := 0; i < 12; i++ {
+	for range 12 {
 		seen[pick(4)] = true
 	}
-	for want := 0; want < 4; want++ {
+	for want := range 4 {
 		if !seen[want] {
 			t.Errorf("index %d never selected; the sequence must cover the pool", want)
 		}

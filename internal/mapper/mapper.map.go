@@ -12,9 +12,9 @@ func newMapRender(mapWidth int, mapHeight int) mapRender {
 		legend: make(map[rune]string, 3),
 	}
 
-	for y := 0; y < mapHeight; y++ {
+	for y := range mapHeight {
 		ret.Render[y] = make([]rune, mapWidth)
-		for x := 0; x < mapWidth; x++ {
+		for x := range mapWidth {
 			ret.Render[y][x] = ' '
 		}
 	}

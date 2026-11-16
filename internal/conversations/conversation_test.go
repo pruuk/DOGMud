@@ -88,7 +88,7 @@ func TestPickExchange_SubtypeAdditive(t *testing.T) {
 
 	// Across many picks, both "base" and a "fond*" line should appear.
 	seen := map[string]bool{}
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		ex, ok := pickExchange("friend", "fond", 100, 200)
 		if !ok {
 			t.Fatalf("expected pick to succeed")
@@ -120,7 +120,7 @@ func TestPickExchange_PairOverrideAdditive(t *testing.T) {
 	defer unregisterTestPairOverride(100, 200)
 
 	seen := map[string]bool{}
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		ex, ok := pickExchange("friend", "", 100, 200)
 		if !ok {
 			t.Fatalf("expected pick to succeed")

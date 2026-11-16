@@ -22,7 +22,7 @@ func seedPackmateScenario(t *testing.T, victimRoutine string, candidateCount int
 	}
 	candidates := make([]*Mob, candidateCount)
 	instances := map[int]*Mob{1: victim}
-	for i := 0; i < candidateCount; i++ {
+	for i := range candidateCount {
 		id := 100 + i
 		m := &Mob{
 			InstanceId: id,

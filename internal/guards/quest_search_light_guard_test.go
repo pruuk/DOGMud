@@ -181,7 +181,7 @@ type sampleHour struct {
 func sampleHours() []sampleHour {
 	var out []sampleHour
 	for _, d := range nightTradeSampleDays {
-		for hour := 0; hour < 24; hour++ {
+		for hour := range 24 {
 			out = append(out, sampleHour{d.Name, d.Doy, hour})
 		}
 	}

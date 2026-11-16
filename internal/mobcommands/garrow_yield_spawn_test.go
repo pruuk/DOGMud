@@ -130,7 +130,7 @@ func TestGarrowsYieldKeepsHimGoneForHisRateThenNarratesHisReturn(t *testing.T) {
 	require.Nil(t, mobs.GetInstance(mob.InstanceId))
 
 	// HandleRespawns prepares an occupied room every round.
-	for offset := uint64(0); offset < 5; offset++ {
+	for offset := range uint64(5) {
 		util.SetRoundCountForTest(start + offset)
 		room.Prepare(false)
 		require.Empty(t, room.GetMobs(), "he is still gone %d rounds after his yield", offset)

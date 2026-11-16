@@ -221,7 +221,7 @@ func TestForage_ZoneOverlayPlayerOnly(t *testing.T) {
 	}
 
 	mobHits := 0
-	for i := 0; i < trials; i++ {
+	for range trials {
 		if forageOnce(false) {
 			mobHits++
 		}
@@ -231,7 +231,7 @@ func TestForage_ZoneOverlayPlayerOnly(t *testing.T) {
 	}
 
 	playerHits := 0
-	for i := 0; i < trials; i++ {
+	for range trials {
 		if forageOnce(true) {
 			playerHits++
 		}

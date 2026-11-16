@@ -611,7 +611,7 @@ func TestExecuteCraft_OutputItemFreshlyCreated(t *testing.T) {
 func roundForHourCrafter(hour int) int {
 	c := configs.GetTimingConfig()
 	rpd := int(c.RoundsPerDay)
-	for r := 0; r < rpd; r++ {
+	for r := range rpd {
 		hourFloat, _ := math.Modf(float64(r) / float64(rpd) * 24)
 		if int(hourFloat) == hour {
 			return r + rpd // offset so we never send round 0
@@ -927,7 +927,7 @@ func TestExecuteCraftLegacy_TheAwardIgnoresRecipeDifficulty(t *testing.T) {
 
 	advancesFor := func(recipeId string, skillMinimum int) int {
 		advanced := 0
-		for i := 0; i < trials; i++ {
+		for range trials {
 			m := mobCrafterForProgressionTest(skill)
 			before := m.Character.Skills[skill]
 			executeCraftLegacy(m, &crafting.RecipeSpec{

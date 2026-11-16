@@ -46,7 +46,7 @@ func benchDrain(b *testing.B, perTick, payloadBytes int) {
 	queues := make([]*Queue, b.N)
 	for i := range queues {
 		writes := make([]PendingWrite, 0, perTick)
-		for j := 0; j < perTick; j++ {
+		for j := range perTick {
 			writes = append(writes, PendingWrite{
 				Kind:    "room",
 				Id:      j,

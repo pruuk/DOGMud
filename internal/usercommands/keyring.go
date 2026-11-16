@@ -99,7 +99,7 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			diff := len(actualSequence) - len(sequence)/2
 			if diff > 0 {
 				complete = false
-				for i := 0; i < diff; i++ {
+				for range diff {
 					sequence += `? `
 				}
 			}

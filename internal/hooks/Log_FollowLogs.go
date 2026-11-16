@@ -66,7 +66,7 @@ func FollowLogs(e events.Event) events.ListenerReturn {
 
 func removeFromSendLists(connId connections.ConnectionId) {
 
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 
 		for idx := len(sendLists[i]) - 1; idx >= 0; idx-- {
 

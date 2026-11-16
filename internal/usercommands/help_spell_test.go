@@ -65,7 +65,7 @@ func TestGetHelpContents_SpellWithNoNameShowsTheSpellsPage(t *testing.T) {
 	want, err := GetHelpContents("spells", 80)
 	require.NoError(t, err)
 	for _, topic := range []string{"spell", "spell "} {
-		for i := 0; i < 20; i++ {
+		for range 20 {
 			out, err := GetHelpContents(topic, 80)
 			require.NoError(t, err, topic)
 			assert.Equal(t, want, out, "%q must render the spells page", topic)

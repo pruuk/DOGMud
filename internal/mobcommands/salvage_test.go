@@ -216,7 +216,7 @@ func TestSalvage_HighSkill_YieldExpected(t *testing.T) {
 
 	mob.Character.Skills[string(skills.Salvage)] = 50
 
-	for attempt := 0; attempt < 10; attempt++ {
+	for range 10 {
 		room.AddCorpse(buildAnimalCorpse())
 		require.Len(t, room.Corpses, 1)
 
