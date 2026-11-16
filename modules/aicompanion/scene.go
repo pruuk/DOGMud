@@ -201,8 +201,8 @@ func buildScene(mob *mobs.Mob, owner *users.UserRecord, p *Profile, mind *Mind, 
 		sort.Strings(nouns)
 		for _, n := range nouns {
 			desc := room.Nouns[n]
-			if strings.HasPrefix(desc, `:`) {
-				desc = room.Nouns[strings.TrimPrefix(desc, `:`)]
+			if after, ok := strings.CutPrefix(desc, `:`); ok {
+				desc = room.Nouns[after]
 			}
 			add(thing{Kind: `fixture`, Name: n, Class: `part of this place`, Key: fmt.Sprintf(`fixture:%s@%d`, n, room.RoomId),
 				FixtureDesc: plainText(desc), Score: 0.15})

@@ -62,12 +62,12 @@ func Locate(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if searchTerm == `*` {
 		listAll = true
 	}
-	if strings.HasPrefix(searchTerm, `*`) {
-		searchTerm = strings.TrimPrefix(searchTerm, `*`)
+	if after, ok := strings.CutPrefix(searchTerm, `*`); ok {
+		searchTerm = after
 		endsWith = true
 	}
-	if strings.HasSuffix(searchTerm, `*`) {
-		searchTerm = strings.TrimSuffix(searchTerm, `*`)
+	if before, ok := strings.CutSuffix(searchTerm, `*`); ok {
+		searchTerm = before
 		startsWith = true
 	}
 	if startsWith && endsWith {

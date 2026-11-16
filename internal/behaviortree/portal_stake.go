@@ -125,8 +125,8 @@ func AnswerStake(user *users.UserRecord) (StakeOutcome, string) {
 func parseStake(s string) (int, bool) {
 	s = strings.ToLower(strings.TrimSpace(s))
 	for _, unit := range []string{`gold`, `g`} {
-		if strings.HasSuffix(s, unit) {
-			s = strings.TrimSpace(strings.TrimSuffix(s, unit))
+		if before, ok := strings.CutSuffix(s, unit); ok {
+			s = strings.TrimSpace(before)
 			break
 		}
 	}

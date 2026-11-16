@@ -21,8 +21,8 @@ var (
 func (c *Character) GetDescription() string {
 
 	desc := c.Description
-	if strings.HasPrefix(desc, `h:`) {
-		hash := strings.TrimPrefix(desc, `h:`)
+	if after, ok := strings.CutPrefix(desc, `h:`); ok {
+		hash := after
 		desc = descriptionCache[hash]
 	}
 

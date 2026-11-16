@@ -125,8 +125,8 @@ func wrapFileImports(f *ast.File) map[string]string {
 			local = spec.Name.Name
 		}
 		imports[local] = ""
-		if strings.HasPrefix(importPath, wrapGuardModulePrefix) {
-			imports[local] = strings.TrimPrefix(importPath, wrapGuardModulePrefix)
+		if after, ok := strings.CutPrefix(importPath, wrapGuardModulePrefix); ok {
+			imports[local] = after
 		}
 	}
 	return imports
