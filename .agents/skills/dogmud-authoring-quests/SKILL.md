@@ -1,0 +1,746 @@
+---
+name: dogmud-authoring-quests
+description: Use when writing or editing a quest, a dialogue file, or any NPC text. Covers the two ways a dialogue file used to mute its NPC (both now refused at boot), the questExcluded end-token rule that stops a completed quest being re-offered, first-person NPC text versus narrator hints, quest flags and branching-quest gating, and the give.go trap where an item transfers before any handler can refuse it.
+---
+
+This skill covers authoring DOGMud quests, dialogue files, and NPC text.
+Since quest arc #375 phase 1 a dialogue file is an opener plus a menu of
+keyed topics that `talk <npc>` shows; the old keyword patterns and
+conversation tree are deleted. The skill covers the two old silent-failure
+modes (now refused at boot), quest re-grant prevention, discoverability,
+voice, the give.go item-transfer trap, quest flags and branching, and the
+quest engine's event-name vocabulary.
+
+## Two ways a dialogue file used to mute an NPC
+
+Both of these once failed silently, with no boot panic and the NPC simply
+mute. Both are now refused at boot (the dialogue door in `main_dialogue.go`
+panics on any problem) and by the CI sweep
+`TestSmoke_ShippedDialoguePassesTheValidators`. Run the boot smoke tests
+before pushing dialogue changes.
+
+**Filename convention.** Dialogue YAML files must be named `<mobId>.yaml`
+only, not `<mobId>-<name>.yaml`, and sit in the folder of the mob's zone.
+Mob and behavior-tree files use the `<mobId>-<name>.yaml` convention, which
+makes it intuitive (and wrong) to assume dialogue follows the same pattern.
+Caught 2026-04-30 when all three foragers had dialogue named `371-vella.yaml`
+etc and were mute. The loader now reports a file name that is not a mob id, a
+`mobid:` that differs from the file name, and a file in the wrong zone
+folder. [[feedback_dialogue_filename_convention]]
+
+**Bare-scalar list fields.** A dialogue `[]string` field (`questRequired`,
+`questExcluded`, `heardRequired`) written as a bare scalar instead of a
+one-element list, for example `questRequired: "34-end"` instead of
+`questRequired: ["34-end"]`, fails the whole file's decode. That once
+silenced 7 quest-giver NPCs in production undetected. Decoding is now strict
+(an unknown key fails too, so a typo or a leftover `patterns:` cannot be
+ignored) and the boot door reports the file.
+[[feedback_dialogue_bare_scalar_list_mutes_npc]]
+
+## A topic file
+
+`_datafiles/world/dogmud/dialogue/<zone folder>/<mobId>.yaml`. Trimmed from
+Tamsin Reed (`greywater_flats/9191.yaml`, quest 62):
+
+```yaml
+mobid: 9191
+zone: Greywater Flats
+defaultMood: neutral
+opener:                      # said aloud when talk opens, before the menu
+  text: I am Tamsin Reed. I keep the ford crossing here.
+  hints: You could ask Tamsin about whatever is striking her passengers.
+  variants:                  # first one whose gates pass replaces text
+  - questRequired: [62-end]
+    text: The reeds have stayed quiet since you cleared them.
+topics:
+- key: quest_start           # ^[a-z0-9_]+$, unique in the file, in the manifest
+  kind: offer                # [!]; Accept / Leave card, grants on Accept
+  quest: 62
+  label: Adders in the Ford  # must be the quest's title
+  playerLine: Do you want help with whatever is striking your passengers?
+  text: Would you? There is a marsh adder lairing in the reeds.
+  questExcluded: [62-start, 62-end]
+  grantsQuest: 62-start      # an offer grants the start token
+- key: quest_turnin
+  kind: handin               # [?]; completes on choice, no card
+  quest: 62
+  label: Adders in the Ford
+  playerLine: The marsh adder in the reeds is dead.
+  text: Dead, is it. You have made my crossing a kinder one.
+  questRequired: [62-start, 62-adder]
+  questExcluded: [62-end]
+  grantsQuest: 62-end        # a hand-in grants the end token
+- key: ford_talk
+  kind: info                 # grey once heard; [*] while unheard if marked
+  label: How do I cross the ford safely?
+  text: Keep to the line of withy stakes and it is an easy crossing.
+```
+
+- Every new key needs a line `<mobId>.<key>` in
+  `_datafiles/world/dogmud/dialogue/topic-keys.txt`; a removed or renamed
+  key moves to its `# retired` or `# renamed` section, because saved
+  characters hold heard keys (`internal/guards/topic_manifest_test.go`).
+- Labels follow the menu language in `dogmud-player-copy` (player's voice,
+  at most 50 characters, `menu.LintLabels` checks the rest). `playerLine`
+  may use only what the player can see at that moment (R27).
+- An item hand-in adds `requiresItem` (taken) or `carriesItem` (shown and
+  kept). `breadcrumb` (offers only) is a line the NPC says while the offer is
+  still closed. `heardRequired: [key]` opens a topic once an info topic on
+  the same NPC was heard. `behavior: true` fires the mob's tree as
+  `player_topic` and needs a matching `topic_is` branch.
+- A choice that cannot be undone is made in a talk menu, after a topic the
+  player must hear explains it (`heardRequired`), never by a room command
+  (R28).
+- Validate a draft with `go run ./cmd/dialoguecheck -data
+  _datafiles/world/dogmud -dialogue <folder>` before the boot smoke tests.
+
+## Gating fields at a glance
+
+Three different things gate whether a topic is on the menu, and two of their
+names differ by one word. Do not reach for one when you mean the other.
+
+- `questExcluded`: a list of quest TOKENS, e.g. `["10-start", "10-end"]`.
+  Hides a topic if the player holds one of these tokens (used for quest
+  re-grant prevention, immediately below).
+- `questFlagExcluded`: a map of flag KEY to VALUE, e.g.
+  `{"11-branch": "sylara"}`. Hides a topic if a quest flag equals that value
+  (used for branching-quest gating, in Quest flags and branching below).
+- `heardRequired`: a list of info topic KEYS on the same NPC that the player
+  must have heard first. It replaces the old tree's `requires`/`unlocks`, and
+  what a player has heard is saved on the character, so it never expires.
+
+## Re-grant prevention
+
+### Quest Re-Grant Prevention SOP
+Every topic with `grantsQuest` must include the quest's **end token** (e.g.,
+`{questid}-end`) in `questExcluded`, not just the token being granted.
+Without this, a player who completed the quest can get it re-offered.
+Example: `grantsQuest: "10-start"` requires
+`questExcluded: ["10-start", "10-end"]`. `dialogue.ValidateWorld` refuses
+either omission, at boot and in CI.
+
+The end-token requirement is the part that gets missed: it is easy to
+exclude the token you just granted (`10-start`) and forget the token the
+quest ends on (`10-end`). Both must be present in `questExcluded`, or a
+player who finished the quest can walk back up and get offered it again.
+
+## Discoverability
+
+### Quest NPC Dialogue SOP
+There are no trigger words to discover: `talk <npc>` lists every topic the
+player may choose. A quest offer is a topic of `kind: offer` whose `label` is
+the quest's title and whose `grantsQuest` is the quest's start token; a
+hand-in is `kind: handin`, granting the end token. `ValidateWorld` checks
+both. The room roster puts the viewer's best marker before the NPC's name:
+`[?]` an eligible hand-in, else `[!]` an eligible offer, else `[*]` an unheard
+`marked: true` info topic (`DialogueFile.Marker`). Players are taught to look
+for `[!]` (`hint` with no active quest says so, R23), so a quest giver whose
+offer is gated shut shows nothing: leave a `breadcrumb` or an opener hint.
+
+### Dialogue Voice & Discoverability
+- NPC `text` fields are spoken by the NPC, always first person ("I", "my", "me").
+- `hints` are narrator text for the player, describe options from the player's
+  perspective. **NEVER** write 3rd-person self-references like "Ask about why she
+  left" when "she" is the speaking NPC. Write "You could ask why she left" or
+  "You could ask about the marriage."
+- A topic hidden behind gates the player cannot see should leave a trail:
+  an offer can carry a `breadcrumb` line the NPC says while the offer is
+  closed, and an opener variant or hint can point at what unlocks it.
+
+Provenance note: an earlier implementation rendered hints via
+`mob.Command("say ...")`, which caused exactly the NPC self-reference
+problem the rule above forbids; hints now use a separate `SendText` path.
+[[feedback_hint_voice]]
+
+Discoverability extends past dialogue into room content: quest engine
+`look_at` triggers do an exact string match on the player's typed
+noun, with no fuzzy matching or alias resolution (that forgiveness happens
+in the room's `FindNoun`/`FindHiddenNoun`, which runs after the trigger has
+already fired on the raw noun). Author hidden_noun keys as single intuitive
+words (`carving`, not `bench-vise carving`), put a `` Try `look <key>`. ``
+hint at the end of the hidden_description, and write one `look_at`
+trigger per plausible noun variant a player might type (`altar stone`,
+`altar`, and `stone` as three separate triggers with the same conditions and
+actions). Cross-reference room nouns against trigger nouns before shipping.
+[[feedback_room_interact_noun_matching]]
+
+There is no space/hyphen normalization on either side, which is the form
+this bites in most often. `usercommands.go` notifies the engine with
+`Noun: strings.ToLower(rest)` and `questengine/engine.go` compares
+`t.Noun != d.Noun` as an exact string, and the `noun:` spellings once
+shipped mixed: hyphenated (`old-guild-mark`, `hearth-marks`, `paper-scrap`) and
+spaced (`gray material`, `buried marker`). Quest 68's trigger noun was
+`loose-floorboard` while room 5720 lists the noun `loose floorboard`, so
+`look loose floorboard` printed the room text and only `look loose-floorboard`
+fired the trigger, which no player could guess (#375 phase 7 tier 5 moved
+quests 63, 65 and 68 to 71 to `search`, so none of these spellings is live).
+Check the current quests with `grep -n "noun:" _datafiles/world/dogmud/quests/*.yaml`
+before citing an example. When a quest interaction "does
+nothing," diff the room noun spelling against the trigger noun before
+suspecting the step gate. Normalizing both sides in the engine is filed as an
+owner call on the quest mechanisms arc, not a fix to make in passing.
+[[project-quest-room-interact-noun-hyphen-trap]]
+
+## Items
+
+### Quest Item Delivery: give.go Gotcha
+Since #375 (R7, R8) an item hand-in is a dialogue topic, never a quest
+trigger: an `item_give` trigger may not carry a `grant` (the boot validators
+refuse it). `give <item> <npc>` asks the NPC's topics first, BEFORE any
+transfer. It asks before it even picks the item, so `give rubbing dross` reaches
+the rubbing a topic wants wherever another rubbing lies in the pack:
+- A topic wanting the item (`requiresItem`, taken; or `carriesItem`, shown
+  and kept) that is eligible plays exactly as if chosen from the talk menu,
+  and takes the instance the player named (`give 2.purse`).
+- A topic wants it but none is eligible: the item never leaves the player.
+  The mob's tree may say why: a `player_give` branch with an `item_matches`
+  condition for that item, using only speech and `return_item`, plays as a
+  hand-back (Arn's "See Drunn first, then come back."). It can credit
+  nothing. Otherwise the player reads "<npc> looks at the <item> and hands
+  it back."
+- No topic wants it: the old give. `give.go` transfers the item to the mob
+  BEFORE the tree's `player_give` fires, so a handler can only react after
+  the fact, typically by giving it back with `return_item`.
+- Quest givers who hand out physical items via `givesItem` must also have a
+  recovery topic that gives a replacement if the player lost the item
+
+### Dialogue Engine: givesItem
+Topics support `givesItem: <itemId>`. When a topic with `givesItem` is
+chosen, the player receives the item and sees "You receive a <itemname>."
+Use this for NPCs handing quest items to the player during dialogue. If the
+item cannot be carried, nothing else the topic does applies, so it can be
+chosen again once the player makes room.
+
+For an item no topic wants this is a hard constraint: by the time any
+handler runs, the item is already gone from the player. A handler cannot
+inspect the item and decide to refuse it, it can only react after the fact
+(typically by giving it back with `return_item`). To refuse a quest item
+before it moves, make a topic want it.
+
+Two more item rules for quests:
+
+- Quest delivery items (anything referenced by `requiresItem` in dialogue,
+  or checked by an `item_give` trigger) must never have `is_component: true`.
+  That flag auto-routes the item to the component pouch on pickup, and both
+  the `give` command and dialogue `requiresItem` check only search the
+  backpack and the bandolier, not the pouch, breaking the delivery.
+  [[feedback_quest_items_not_components]]
+- A potion is fine as a delivery item. It lands in a worn bandolier by itself,
+  and a topic's `requiresItem` and `carriesItem` read it there, the topic takes
+  it from there, and `give <item> <npc>` reaches it when a topic on that NPC
+  wants it. Never tell a player to move it first. An ordinary give, with no
+  topic wanting the item, stays backpack only.
+- Loot must never be placed directly on the ground via `spawninfo`. Use mob
+  drops (primary), locked chests or containers (secondary, gated by keys or
+  lockpicking), or quest rewards (for special/unique items). Flavor nouns
+  that aren't items are fine. [[feedback_loot_placement]]
+
+## Selling recipes
+
+A recipe sold for gold is a `kind: sale` topic, never a quest (#375 phase 7
+tier 3b; Veyra's nine secrets, `dialogue/the_confluence/9584.yaml`):
+
+```yaml
+- key: teach_blackrazor
+  kind: sale
+  label: Secret of the Blackrazor
+  playerLine: Will you teach me the Blackrazor?
+  text: The Blackrazor. Not a blade I'd show just anyone. 25,000 gold up front.
+  notReadyText: Come back when you've practiced at the jeweler's bench, the alchemy bench and the forge.
+  paidText: Paid. The recipes are in your hands.
+  chargesGold: 25000
+  teachesRecipes: [hungering-guard, obsidian-edge-resin, assemble-the-blackrazor]
+```
+
+- A sale grants no quest and takes no `quest`, `grantsQuest` or `goldRequired`.
+  Accept charges `chargesGold`, then teaches every recipe in `teachesRecipes`.
+- The line stays on the menu until the player knows every recipe in it.
+  Choosing it without the skill for EVERY recipe (each recipe's own skill at its
+  own minimum) plays `notReadyText` and shows no card. Name the trades in
+  words and never a number. With the skill, the pitch plays and the card shows
+  the price, so the pitch can state it too.
+- Every recipe id must exist (the validator checks it). `notReadyText` and
+  `paidText` follow the spoken-text rules: first person, no `;`, no dashes.
+
+## Quest flags and branching
+
+### Quest Flags System
+Quest flags store arbitrary metadata about quest choices. Primary use case:
+tracking which branch a player took in an opposed/branching quest.
+
+#### Flag Declaration (Quest YAML)
+Quests declare expected flags with allowed values. **Undeclared flag
+references cause a server panic at startup**, catching typos before
+they reach production.
+
+```yaml
+flags:
+  - key: branch
+    values: [sylara, rhett]
+    description: "Which NPC the player sided with"
+```
+
+Flag key convention: `"{questId}-{flagName}"` (e.g., `"11-branch"`).
+
+#### Dialogue Integration
+- `setsQuestFlag: {key: "11-branch", value: "rhett"}`: set a flag when
+  the topic is chosen
+- `questFlagRequired: {"11-branch": "rhett"}`: gate on flag value
+- `questFlagExcluded: {"11-branch": "sylara"}`: hide if flag matches
+
+#### Quest Engine Integration
+- Conditions: `has_flag: {"11-branch": "rhett"}`, `missing_flag: ...`
+- Action: `set_flag: {key: "11-branch", value: "rhett"}`
+
+#### Admin/Scripting
+- `questtoken flags`: show all flags on your character
+- `questtoken flag <key> [value]`: view or set a flag
+- JS scripting: `user.GetQuestFlag(key)`, `user.SetQuestFlag(key, value)`,
+  `user.HasQuestFlag(key)`
+
+#### Branching Quest SOP
+Every branching quest MUST have:
+1. Flag declaration in quest YAML with all valid values
+2. `setsQuestFlag` on each branch NPC's quest-start topic
+3. `questFlagRequired` on followup quest offers to gate by branch
+4. `questFlagExcluded` (or `questFlagRequired`) on every branch topic, so a
+   wrong-path player's menu never shows the other branch. The menu lists
+   only eligible topics, so no ordering or dismissal topic is needed.
+5. Opener variants with `questFlagRequired` for path-specific openers
+6. Mid-quest opener variants for cross-NPC visits during the OTHER quest
+
+### Quest reward YAML keys
+
+Quest `rewards:` fields (`itemid`, `skillinfo`, `conditionid`, `roomid`,
+`spellid`, `questid`) load via a tag-less struct
+that binds on the lowercased field name with no underscore handling, so
+`itemid` is correct and `item_id` silently fails to load with no panic and
+no warning. This is scoped to the rewards block only: trigger
+`actions:`/`conditions:` and the dialogue fields used elsewhere in this
+document (`grantsQuest`, `setsQuestFlag`, `questExcluded`, `givesItem`) are
+properly snake_case-tagged structs and are correct as written throughout
+this skill; only the rewards block is the no-underscore exception.
+[[reference_quest_reward_yaml_key_gotcha]]
+
+The reward block's two narrated lines are NOT in that no-underscore set: they
+are `actor` (the completing player's line) and `observer` (the room's), both
+explicitly tagged. M4b-1 renamed them from `playermessage` and `roommessage`,
+and renamed the two narrating trigger actions from `send_text` and `room_text`
+to the same two words, so one vocabulary covers both blocks.
+
+## A room gate speaks and does nothing else
+
+A `room_gate` takes only `actor` and `observer` text, and the loader refuses
+anything more (`quests.validateGateActions`): a look through the exit fires the
+gate that would refuse the step, so a grant there would pay for looking at a door.
+A gate also closes a scan and a shot to the player it would refuse. A mob has no
+tokens to read, so its flee, its planner's route and a companion's errand stay out
+of any room a gate guards (`Engine.GuardsRoom`), whatever the gate's conditions.
+
+## Search steps need sight
+
+A `command: search` step (and a `search_at` spot) does not move when the
+player sees nothing at all in the room (owner ruling 2026-11-02): they read "It
+is too dark to make anything out." and the step stays. The test is the game's own
+sight decision, so a carried light, night vision or infravision counts. When a
+site is dark for a bare character at some hour, the hint for the step that
+sends the player there says to bring a light ("Bring a light after dark.").
+`guards/quest_search_light_guard_test.go` requires every shipped search room to
+be seen by a character carrying only a torch (item 20096) at every sampled
+hour, so a new search room that fails needs room light, not a longer hint.
+
+## Command trigger filters: `target`, `mob`, `item`
+
+A `command` trigger can say what the command was aimed at (#375 phase 3b
+slice 2). `target:` is one of `self`, `mob`, `player`, `item`, `container`;
+omit it to accept any target (including none). The loader refuses `target` on
+any other event and any other value. `mob:` (a mob template id) and `item:`
+(an item template id) now also work on `command` triggers: they match the
+mob or item the command was aimed at, used or traded. For `container`
+targets (steal, plant) `noun:` names the room container.
+
+```yaml
+  - event: command
+    command: throw
+    target: mob
+    mob: 9112
+    conditions:
+      has: ["39-leech"]
+      missing: ["39-boar"]
+    actions:
+      - grant: "39-boar"
+```
+
+A command aimed at several targets (a thrown blast over three mobs) raises
+one event per target under one guard, so a trigger fires at most once per
+command however many targets it matches. A trigger with no `target:` filter
+fires once for the whole command, not once per target.
+
+## Item gains: `reason`
+
+`item_gain` fires on every way an item reaches the pack, so a step that means
+one way says so. `reason:` is how it arrived: `steal`, `get`, `loot`, `buy`,
+`give`, `craft` and the rest of `quests.TriggerGainReasons` (the words of
+`acquire.AcquireReason`). Omit it to accept any. The loader refuses it on any
+other event and any other value.
+
+```yaml
+  - event: item_gain
+    item: 60
+    room: 5218
+    reason: steal
+    conditions:
+      has: ["99-hidden"]
+      missing: ["99-lifted"]
+    actions:
+      - grant: "99-lifted"
+```
+
+Without it, a player drops the item and picks it up again to pass the step, and
+kills the mark to loot it. A `count` on an unfiltered `item_gain` counts that
+loop too, so a repeatable quest that gives a reward pays for it.
+
+### An item the player already holds
+
+A plain `item_gain` (no `reason`, `count`, `room`, `area` or `zone`) counts a
+held item when its step starts (`questengine.heldAtStepStart`, on
+`quest_granted`), saying its `held_line` or "You already have the <item>."
+"Held" is anywhere on the player (`Character.CarriesItem`: backpack, bags,
+bandolier, worn). Never ask a player to drop an item and pick it up again.
+
+- A quest whose first step is getting a findable item gets a second offer for
+  a player already carrying it: `carriesItem`, an `objective` (the card's first
+  line), and `itemExcluded` on the first offer, as Tessara's `help_quest` and
+  `help_quest_carrying`. Accepting grants the start token, Hook 1 moves the
+  step, and the talk menu returns with the hand-in.
+- A quest item whose keeper stands beside it comes from the keeper as a
+  `givesItem` topic, as Harn's `lend_ledger`, not from a loose spawn.
+- A behaviour tree's `grant_quest` sets its token before the step-start check,
+  so a step a tree starts gets no Hook 1. Start the step from a topic or
+  trigger if a held item must count.
+- A save already resting on the first step with the item in hand starts no step,
+  so give it a `have_it` info topic with `carriesItem` and a `topic_heard`
+  trigger that grants the next step.
+
+## Spell triggers: `spell_landed` and `effect`
+
+`event: spell_landed` fires when a player's spell actually lands on a target
+(#375 phase 3b slice 3): a heal that reaches its mark, a bolt that hits. A
+miss, a fizzle, a fumble or a defended help spell raises nothing. Filters:
+`noun:` is the spell id, `effect:` is the spell's `effect_type` (`heal`,
+`damage`, `shield`, `condition`, `charm`, ...), plus `target`, `mob`, `item`
+and `room` as on `command`. "Mend the scout":
+
+```yaml
+  - event: spell_landed
+    effect: heal
+    mob: 9112
+    conditions:
+      has: ["41-start"]
+    actions:
+      - grant: "41-mended"
+```
+
+`command: cast` stays the ATTEMPT event ("try casting at the dummy" lessons);
+`spell_landed` is the success event. Mob casters raise nothing, so "be healed
+by the priest" is not expressible. A cast over several targets raises one
+event per target under one guard, so a trigger fires at most once per cast.
+A spell with no creature target (identify, a summon, fold-anchor) raises one
+event with no target when it succeeds.
+
+Reachability. The walkthrough reports `walk-no-spell` when the player on the
+quest's path holds no spell that can land the step. A spell counts when it is
+a starter, when a `teach_spell` action or a `spellid` reward met earlier on
+the path teaches it, or when the offer is gated on another quest that teaches
+it. Fix an unreachable step by teaching the spell earlier on the path, or by
+gating the offer on a quest that teaches it and giving the hidden offer a
+breadcrumb that names the teacher. A spell a player may learn only by random
+discovery or from a book does not count: the walk cannot know they have it.
+`ValidateQuestRefs` refuses an unknown spell id and an `effect` no loaded spell
+has.
+
+## Talk steps: `topic_heard`
+
+A mid-quest talk step ("the scout tells you where the cache is") is a quest
+trigger, not a topic grant (#375 phase 3b slice 1). `event: topic_heard`
+fires when the player plays an NPC's topic: `mob` is the NPC's template id and
+`topic` is the topic key. Both are required; the loader refuses `topic` on any
+other event, and boot refuses a topic the NPC's dialogue file lacks.
+
+```yaml
+  - event: topic_heard
+    mob: 107
+    topic: reassure
+    conditions:
+      has: ["8-start"]
+      missing: ["8-found"]
+    actions:
+      - grant: "8-found"
+```
+
+- The topic keeps its gates (`questRequired`, `questExcluded`) and its other
+  effects (flags, items, gold). It never carries `grantsQuest` for a mid step;
+  only a quest's first step (an offer) and final step (a hand-in) are granted
+  by topics. The `talk-on-quest` loop rule flags any other topic grant.
+- A trigger may not grant the token its topic's own `grantsQuest` grants:
+  boot refuses it (the token would be queued twice, and an `-end` token would
+  pay its rewards twice).
+- The event fires after the topic's effects landed, for a menu choice, an
+  accepted offer, or a companion asking for its owner. A refused topic (a
+  price the player cannot pay) raises nothing.
+- The topic that is the current step's objective shows `[*]` in the talk menu
+  even when the player has already heard it, and the NPC's name shows `[*]`
+  in the room.
+- A topic heard before the step does not count: the trigger needs the
+  previous step's token when the topic is played, so the player picks the
+  topic again. Gate the topic on `questRequired` so it is offered then.
+- A topic that hands out an item for the step is a source for that quest only
+  once the trigger's grant is held; the walkthrough and the item-source check
+  read the trigger's grants the same way.
+
+## Areas, counts and explore
+
+Areas, `count` and `distinct` landed in #375 phase 3b slice 4. They let a step
+say "kill wolves on the steppe", "gather 5 roots" or "explore the Grove".
+
+**Area files.** One file per area in `_datafiles/world/dogmud/areas/<key>.yaml`
+(`<DataFiles>/areas/`; `internal/areas/context.md` has the loader):
+
+```yaml
+key: unquiet_grove          # must equal the file name without .yaml
+name: the unquiet grove     # player-facing, used in the explored line
+zones: [Pothole Coulee]     # optional: every room in each zone (display name)
+rooms: [5311, 5312, 5313]   # optional: single template room ids
+```
+
+An area is a named set of template rooms and may span zones. Zone names are
+the display names rooms store (`Pothole Coulee`), not file-style keys. The
+loader refuses an unknown zone or room, a key that is not the file name, an
+unknown field and an area that resolves to no rooms. Every new key goes in
+`areas/area-keys.txt`; a key may leave only through a `# retired` or
+`# renamed` line (`internal/guards/area_manifest_test.go`).
+
+**`area:` and `zone:`** on any trigger match the room the event happened in
+(its template room, so an instance counts). Use one or the other. Quest 45's
+grove cast step is one `area: unquiet_grove` trigger instead of three copies
+with a `room:` each.
+
+**`count: N`** (N 2 or more) fires the trigger on its Nth match. The ids and
+the `the_steppe` area below are illustrative; no shipped quest counts yet.
+
+```yaml
+  - event: item_gain
+    item: 1201
+    area: the_steppe
+    count: 5
+    label: Roots gathered
+    conditions:
+      has: ["80-start"]
+      missing: ["80-gathered"]
+    actions:
+      - grant: "80-gathered"
+```
+
+- The trigger needs a `has` naming a step of its own quest (the step it counts
+  on), a `missing` naming a token it grants, and a grant. The loader refuses
+  it otherwise.
+- Progress is per trigger and saved as `<questId>-<step>-t<triggerIndex>`. It
+  counts only while the player is on that step, and clears when the quest's
+  progress moves.
+- `count` is refused on `room_gate`, `look_at`, `search_at` and `item_give`: a match
+  short of the count would swallow the player's move, look or give.
+- `label` (at most 40 characters) names the tracker and quest log line
+  ("Roots gathered: 2 of 5"); with none it reads "Progress: 2 of 5". Label
+  needs `count` or `distinct`.
+
+**`distinct: all|N`** on a `room_enter` trigger with an `area` is an explore
+step. It is never matched on ordinary room entry. Progress is how many of the
+area's rooms are on the player's map, so rooms mapped before the quest count
+and a room crossed in the dark does not. It is checked when a room of the area
+is newly mapped and when the step starts.
+
+```yaml
+  - event: room_enter
+    area: unquiet_grove
+    distinct: all
+    label: Grove explored
+    explored_line: You know this grove already.   # optional
+    conditions:
+      has: ["80-start"]
+      missing: ["80-explored"]
+    actions:
+      - grant: "80-explored"
+```
+
+- Default line when the area is already mapped at step start: "You already
+  know every corner of <area name>." for `all`, "You have already seen enough
+  of <area name>." for N. `explored_line` overrides it.
+- `distinct` never combines with `count`. Boot refuses `all` on an area with a
+  gated room (behind a locked exit or a `room_gate` trigger), refuses N larger
+  than the area, and warns past 40 rooms.
+
+**The builder and GMCP** already offer these fields. `EVENT_FILTERS` and
+`FILTER_KINDS` in `_datafiles/html/public/static/js/quests.js` and
+`questEventVocab` in `modules/gmcp/gmcp.Quest.go` list `area`, `zone`,
+`count`, `label`, `distinct` and `explored_line` per event, with count and
+label left off the three events that refuse count, and
+`TestQuestBuilderFiltersMatchTheVocab` keeps the two lists in step.
+
+**The seven quest shapes** (the owner's list; phase 4 draws the map side):
+
+| Quest shape | Resolves on | Map outside the area | Map inside, not done |
+|---|---|---|---|
+| Go to area | `room_enter` + `area` | Arrow to the nearest area room | Done on arrival |
+| Gather mats there | `item_gain` + `item` + `area` + `count` | Arrow | Area outlined; tracker count |
+| Kill mobs there | `mob_death` + `mob` + `area` + `count` | Arrow | Area outlined; tracker count |
+| Find a specific room | `room_enter` + `room` | Arrow to the area, never the room | Area outlined; room not revealed |
+| Explore it fully | `room_enter` + `area` + `distinct: all` | Arrow | Rooms not yet mapped marked; tracker count |
+| Find a wandering NPC | the action on that NPC (topic, give, kill) | Arrow to the area | Area outlined; NPC not tracked |
+| Rare drop anywhere there | `item_gain` + `item` + `area` | Arrow | Area outlined |
+
+Phase 4 slice 1 gives the arrow (the quest log's guide line and the GMCP
+`next_dir`) and sends the outline's rooms (`target_rooms`); the web client
+draws the outline in slice 2. "Arrow to the area, never the room" is a
+`destination: {area: ...}` on that step, so the room is not given away.
+
+## Step destinations: `destination:`
+
+Each step can say where the map and the quest log point while the player is
+on it (#375 phase 4; it replaced `map_target` and `map_target_mob`, which
+are gone). The engine resolves it per player (`questengine.ResolveDestination`)
+and the quest log prints one line from it ("Head north.", "You are in the
+unquiet grove.", "Destination unknown.").
+
+```yaml
+steps:                 # the room and mob ids here are illustrative
+  - id: start
+    description: Find the hermit in the grove.
+    destination: {mob: 5120, area: unquiet_grove}   # the NPC, else the area
+  - id: hunt
+    destination: {area: unquiet_grove}
+  - id: report
+    destination: {room: 5012}
+  - id: think
+    destination: anywhere      # no marker, and no warning
+  - id: end
+```
+
+- **Shapes:** `anywhere`; `room`; `area` (a key from
+  `_datafiles/world/dogmud/areas/`); `zone`; or `mob`, alone or with one of
+  `room`, `area`, `zone` as its fallback. Any other word or key refuses the
+  file; naming two of room, area and zone refuses it too.
+- **`mob`** points at the live copies the player could actually see where
+  they stand. A hidden copy, or one in a room too dark for the player, is not
+  tracked: the map falls back to the step's room, area or zone, else to the
+  rooms that spawn the mob. A bare `mob` that no room spawns is a
+  `walk-destination` finding.
+- **`mob` takes one id or a list** when any one of several NPCs will do:
+  `destination: {mob: [9316, 9300]}` (quest 63, the Dock Constable or Jesset
+  takes the tally-book). The map points at the nearest perceived copy of any
+  of them; with none perceived, the declared fallback, else every room that
+  spawns any of them. A list with no fallback is a finding only when none of
+  its mobs is spawned anywhere. One id is written back as a single id.
+- **Choosing a mob's fallback.** An NPC that stays put needs none: its spawn
+  room is the fallback. A beast with several spawns takes a bare `mob`, so an
+  unseen one points at every room that spawns it (quest 33 `start`, the Bandit
+  Scout). A hidden or wandering NPC takes the place it haunts, `zone:` or
+  `area:`, because the player will rarely see it and its spawn room would
+  give away where it hides (quest 61 `bandit`, the Reach-Touched in The Empty
+  Reach). Inside a zone or area fallback the log reads "You are in <name>.".
+- **Seen means seen where it stands** (owner ruling 20). A copy counts only
+  when the room it stands in is bright enough for the player: the light of
+  the destination room decides, never the light where the player is. That
+  room's light includes what anyone there carries, so the player's own light
+  helps only for a copy in the player's room. In a dim place (the wash in Pothole Coulee by day) the
+  map shows the spawn rooms or the fallback for every scout further off.
+- **Live examples of each kind** are held by
+  `TestShippedContent_EveryDestinationKindHasALiveStep`
+  (`internal/quests/live_destination_kinds_test.go`): area, quest 45 `met`;
+  zone, quest 61 `bandit`. Moving the last step of a kind fails it.
+- **No block:** the destination is inferred from the step's triggers. A
+  trigger belongs to the latest step of its own quest that its `has` lists
+  (`Quest.CountStep`), and its `room`, `conditions.in_room`, `mob`, `area`
+  and `zone` are the places. Write a block when the inference would point at
+  the wrong place, or would give away a room the player should find.
+- **A trigger's `target:` is a different thing.** It filters what a
+  `command` was aimed at (self, mob, item...) and never feeds the
+  destination.
+- **The final step** has no destination; leave it off.
+- **`anywhere`** is for steps that truly can happen anywhere. If a trigger on
+  that step names a place, `walk-destination-anywhere` says so: drop
+  `anywhere` and let it infer.
+- **Findings:** boot refuses on `walk-destination` and
+  `walk-destination-anywhere` (a panic at boot, an error on a reload), and the
+  CI sweep fails on them. There is no backlog to park one on (it was retired
+  at the #375 closing step); a new quest must add none.
+
+## Abandon and resume
+
+Players can set a quest aside (`quests abandon`, or the web panel). Five rules
+follow for authors (#375 phase 5):
+
+1. **An abandoned quest is shelved, not held.** Its triggers stop counting, it
+   leaves the log and the map, and the giver's `[!]` returns. Re-accepting takes
+   the saved step back.
+2. **A resume hands over nothing of resale value, from any source:** the offer's
+   `givesItem`, a `quest_granted` trigger's `give_item`, and `give_gold`. Only an
+   item worth nothing that the player does not carry is given again. So an item a
+   quest needs that only an NPC hands out should be authored worth nothing
+   (`value: 0`), or a player who loses it cannot get it back by resuming.
+3. **Abandon needs an NPC offer.** A quest is abandonable only when some topic
+   grants its `-start`. A quest started only by a trigger cannot be
+   abandoned. (Quest 28 was one until #375 phase 7 gave it Dewey's offer.)
+4. **A pick made in the offer can change through abandon.** A player may abandon
+   and take the other offer on resume (quest 34's `34-boon`). A pick that must
+   stick belongs mid-quest, where the shelf keeps the flags and the step reached.
+5. **A quest started automatically cannot be abandoned, even with an offer.** If
+   any quest trigger's `grant:` (a sequence's `on_complete` included) or any
+   behaviour tree's `grant_quest` gives `N-start`, that grant would take the
+   shelved quest back up without the player choosing to, so quest N stays
+   unabandonable (owner ruling 6). Quest 30 was the instance until #375 phase
+   7 removed its `room_enter 5200` and room 6467 grants, leaving Hadwen's offer.
+   An offer, a `rewards.questid` and an item `questtoken` do not count. Boot
+   logs every offered quest this rule (or a hidden offer) blocks, as `offered
+   but not abandonable`. To make such a quest abandonable, start it only through
+   an NPC offer.
+
+## Verify event names against the loader
+
+Quest YAML triggers panic at startup if the `event:` name is not in the
+quest engine's hardcoded `validEvents` map (`internal/questengine/loader.go`,
+around line 39-43). The behavior tree event vocabulary
+(`mob_die`, `mob_hurt`, `mob_idle`, `player_topic`, `player_give`,
+`player_enter`, `mob_flee`) is a separate system and does not overlap with
+quest engine event names. Do not guess an event name from the behavior tree
+vocabulary or from what sounds plausible: `mob_killed` and `mob_die` both
+sound right for a mob-death trigger, and the actual quest engine event is
+`mob_death`. The events are: `room_enter`, `room_gate`, `item_give`,
+`skill_use`, `mob_death`, `command`, `command_issued`, `item_gain`,
+`quest_granted`, `look_at`, `search_at`, `spell_landed`, `topic_heard`. Before writing a trigger, grep `validEvents` in
+`internal/questengine/loader.go` for the current canonical list, or copy the
+spelling from an existing quest YAML that uses the event you want.
+`look_at` and `search_at` replaced `room_interact` at the #375 closing step; the loader refuses the old name and any `verb:` key.
+[[feedback_quest_engine_event_names]]
+
+## Sources
+
+Lifted verbatim from AGENTS.md:
+- "Quest Re-Grant Prevention SOP" (lines 786-793)
+- "Quest NPC Dialogue SOP" (lines 794-799)
+- "Dialogue Voice & Trigger Discoverability" (lines 800-813)
+- "Quest Item Delivery: give.go Gotcha" (lines 814-825)
+- "Dialogue Engine: givesItem" (lines 826-830)
+- "Quest Flags System" (lines 831-875)
+
+Folded memory files:
+- [[feedback_dialogue_filename_convention]]
+- [[feedback_dialogue_bare_scalar_list_mutes_npc]]
+- [[feedback_hint_voice]]
+- [[feedback_quest_engine_event_names]]
+- [[feedback_quest_items_not_components]]
+- [[feedback_loot_placement]]
+- [[feedback_room_interact_noun_matching]]
+- [[project-quest-room-interact-noun-hyphen-trap]] (the space/hyphen half of
+  the same exact-match rule; its engine-normalization proposal belongs to
+  [[project-quest-mechanisms-arc]])
+- [[reference_quest_reward_yaml_key_gotcha]]

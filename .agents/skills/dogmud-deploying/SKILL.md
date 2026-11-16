@@ -1,0 +1,165 @@
+---
+name: dogmud-deploying
+description: Use when preparing or reasoning about a deploy to the DOGMud production droplet, or when diagnosing a deploy that behaved oddly. Covers the 1 CPU / 961 MB limits, the unbounded Docker build cache, verifying the checkout SHA before building, root-owned files blocking git writes, and the Caddy container's TrustedProxies range. The owner performs deploys, not Codex.
+---
+
+## The owner performs deploys
+
+The owner runs every production deploy themselves; Codex merges to master but
+does not deploy and does not ask to. After `gh pr merge`, report the merge
+commit and say plainly that prod is still on the previous commit until the
+owner deploys. Merging to master is still shipping in the code sense, but the
+deploy step stays the owner's, on their own eye, because the droplet is small
+and their Docker expertise is self-described as zero. [[feedback-owner-does-the-deploys]]
+
+Nothing below is permission to run a deploy. It is context for reasoning about
+one, reviewing one, or helping the owner diagnose one.
+
+## Droplet limits
+
+The production droplet is 1 CPU / 961 MB RAM. Disk pressure from the build
+cache (see below) is the same reason `Logging.LogToFile: false` is required in
+`_datafiles/config.yaml`: the droplet does not have the disk headroom for
+accumulating log files on top of the build cache. Compilation there is CPU and
+memory bound, not cache bound, so build-cache tricks are not the first lever
+to reach for. [[reference-droplet-build-cache-and-dockerfile]]
+
+## Verify the checkout before building
+
+A suspiciously fast rebuild is a signal, not a relief: it usually means the
+checkout did not actually land before the build ran. Verify with
+`git rev-parse HEAD` BEFORE building, and compare FULL SHAs, not abbreviated
+ones, against the commit that was meant to deploy.
+
+## A prod build is not a test signal
+
+`provisioning/Dockerfile` defines a `test` stage (`CMD go test -race ./...`),
+but nothing depends on it and BuildKit skips unreferenced stages, so a real
+build goes straight from `[builder 8/8]` to `[runner 2/5]`. **`docker compose
+up --build` runs NO tests**, despite the stage existing. Do not treat a
+successful prod build as any kind of test signal.
+[[reference-droplet-build-cache-and-dockerfile]]
+
+## Known deploy failures
+
+Three failure modes have hit prod, each with its own fix:
+
+- **Build cache growth.** The Docker build cache on the droplet grows
+  unbounded and nothing prunes it automatically; it has reached 12 GB (77% of
+  disk) before. `docker builder prune -f` reclaimed it back down to a few
+  hundred MB without interrupting the running game, though the next build
+  after a prune is cold and slower than normal (the build after that is the
+  real number). Whether a BuildKit cache mount is worth adding on top of this
+  is an open question in the source file itself: it documents a decision NOT
+  to add one, and a later section reverses that read and calls it likely to
+  help. Both halves stand in the file; this skill does not adjudicate between
+  them. [[reference-droplet-build-cache-and-dockerfile]]
+- **Root-owned files blocking git writes.** Roughly 9,620 files under the prod
+  repo are owned by root, not `mudadmin`. Any git operation that must write
+  one of those paths, including `git reset --hard`, fails partway through and
+  leaves the working tree half-updated, including live game content YAML,
+  which is exactly how a boot panic or a subtly-wrong world happens.
+  `sudo chown -R mudadmin:mudadmin` on the repo is the fix.
+  [[reference-droplet-root-owned-files-block-git-writes]]
+- **Caddy runs as a container, not on loopback.** Prod fronts the MUD with
+  Caddy as a separate container on `mud_network`, so the server sees Caddy's
+  container address, not `127.0.0.1`. Left at the loopback-only default,
+  `Network.TrustedProxies` never trusts the `X-Forwarded-For` header Caddy
+  sends, so every web visitor collapses onto Caddy's one address: the admin
+  page locks out on shared throttle buckets, and web-client IP bans do
+  nothing. The fix is `TrustedProxies: ["172.18.0.0/16"]` (the `mud_network`
+  subnet) in `~/mud-config/config-production.yaml`, then a `restart server`
+  to also clear the in-memory lockout map. Confirmed fixed on the droplet
+  2026-08-21. [[reference-prod-trustedproxies-caddy-container]]
+
+## MOTD
+
+The MOTD lives on the `Motd:` line in `_datafiles/config.yaml` (position
+drifts, not the `motd.template` help file). It is a YAML single-quoted string
+wrapping a Go template call: apostrophes need `'` (the doubled backslash
+is because YAML eats one layer), paragraph breaks are literal `\n`, and
+backticks and URLs are fine raw. Copy the existing prefix and suffix exactly
+and swap only the inner prose, or avoid apostrophes entirely.
+[[reference_motd_location]]
+
+Keep the body to at most four highlights, each a caps headline plus one tight
+sentence, and prune every push: the MOTD is a rolling snapshot of the latest
+release, not a cumulative changelog. Older detail belongs in
+`PATCH_NOTES.md`. End with two links, always on the final lines, never in the
+middle: the novel (`https://dogmud.org/novel`) and the full patch notes
+(`https://dogmud.org/patch-notes`). These are short links (#845,
+`internal/web/shortlinks.go`) that redirect to the long GitHub addresses, so
+every word fits a narrow screen; a test holds the shipped MOTD to them.
+An in-game `setmotd` writes to the overrides file, which wins over
+`config.yaml` and survives a deploy; prod had no MOTD override on 2026-11-11.
+[[feedback_motd_format]]
+
+## `config.yaml` and local overrides
+
+On the owner's dev machine `_datafiles/config.yaml` is an ordinary tracked
+file holding shipped values only (skip-worktree retired 2026-10-10). Local dev
+values (`HttpPort`, `LogLevel`, `LogToFile`, a `Playtest:` block) belong in
+the gitignored `_datafiles/world/dogmud/config-overrides.yaml`, which the
+engine overlays at boot, so they can no longer leak onto master. The droplet's
+checkout may still carry the skip-worktree bit from before:
+`git ls-files -v _datafiles/config.yaml` shows `S` if so, and then a pull
+there can refuse when master changes the file. Prod's own values come from
+its config mount, not from this file. [[feedback-skip-worktree-config-leak]]
+
+## Build time baseline
+
+`reference_docker_build_times` records a single before-and-after baseline,
+not a general rule about diff size: prod rebuilds ran roughly 130 to 160
+seconds before the 2026-04-18 push, and roughly 100 seconds after it, once
+that push had consolidated several large refactors (combat-quadrant
+unification, bleedout-system removal, target-resolution work) that
+measurably shrank the compiled surface. Its own follow-up guidance is to
+re-check the metric after future cleanup passes: if a refactor lands and
+rebuild time does not improve, that is worth a second look, treated as a
+casual, not precision-profiled, observation. [[reference_docker_build_times]]
+
+A later running log, `reference_prod_perf_baseline` (cite-only below, not
+folded here as a rule), records a different pattern across more recent
+pushes: deploy cost held near 135 to 145 seconds regardless of how much code
+changed, which that log attributes to `COPY . .` invalidating the Go build
+cache on essentially every build. The two sources are in tension about
+whether tree size moves the number; this skill does not adjudicate between
+them.
+
+## The guide
+
+`docs/guides/DEPLOYMENT_GUIDE.md` is accurate and current as of this writing
+and is the authoritative walkthrough for the full deploy lifecycle: creating
+the droplet, initial server setup and firewall, installing Docker, cloning
+and configuring, the production compose file and Caddyfile, DNS, the first
+deploy, and day to day maintenance (logs, restart, backups, OS updates). It
+also carries its own troubleshooting section (stuck certificates, port
+conflicts, a `git pull` that silently does nothing, a stale Docker layer
+cache, the full copy-paste deploy checklist, SSH lockout recovery, and
+copying files off the server with `scp`). Its section 6.x on
+`TrustedProxies` and the reverse-proxy subnet already reflects the same fix
+recorded above and is not stale. Use the guide as the procedure; this skill
+adds the facts and failure modes the guide does not carry: the droplet's
+resource ceiling as an operating constraint, the SHA-verification step before
+trusting a rebuild, the two additional failure modes (build cache growth,
+root-owned files), the MOTD convention, and the `config.yaml` skip-worktree
+hazard.
+
+## Sources
+
+Folded: [[feedback-skip-worktree-config-leak]] ·
+[[reference_docker_build_times]] · [[feedback_motd_format]] ·
+[[reference_motd_location]]
+
+Cited, not folded: the dated narrative of how each incident was found and
+diagnosed stays in each source file; the operational fix from each is
+already stated in the body above, not merely pointed at.
+[[reference-droplet-build-cache-and-dockerfile]] (self-contradictory on the
+build-cache-mount question, deliberately left unresolved above) ·
+[[reference-droplet-root-owned-files-block-git-writes]] ·
+[[reference-prod-trustedproxies-caddy-container]] ·
+[[reference_hotswap_upstream_prs_638_639]] (hot-reboot/copyover on prod,
+adjacent to but not part of the build-and-restart deploy path covered above) ·
+[[reference_prod_perf_baseline]] (running log of pull/restart timing and idle
+CPU, newest first; its diff-size-independent build-time observation is
+attributed above in Build time baseline, not folded as a rule)
