@@ -51,11 +51,10 @@ func TestThePhantomsLairIsBlack(t *testing.T) {
 	// Each loader replaces its registry with no restore of its own; seeding a
 	// throwaway first captures the pre-test registry for a real restore.
 	t.Cleanup(conditions.SeedConditionsForTest(nil))
-	t.Cleanup(species.SeedSpeciesForTest(nil))
 	t.Cleanup(items.SeedItemsForTest(nil))
 	t.Cleanup(rooms.SeedBiomesForTest(nil))
 	conditions.LoadDataFiles()
-	species.LoadDataFiles()
+	species.LoadForTest(t)
 	items.LoadDataFiles()
 	rooms.LoadBiomeDataFiles()
 

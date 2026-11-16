@@ -40,7 +40,7 @@ func TestDumpMobStats(t *testing.T) {
 	if err := configs.ReloadConfigForTest(t); err != nil {
 		t.Fatalf("reload config: %v", err)
 	}
-	species.LoadDataFiles()
+	species.LoadForTest(t)
 	LoadDataFiles()
 
 	ids := []int{}

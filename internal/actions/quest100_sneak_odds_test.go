@@ -42,10 +42,9 @@ func TestQuest100_RankOneWalksPastTheBruteOftenEnough(t *testing.T) {
 	configs.SetConfigForTest(t, cfg)
 	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{}))
 	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{}))
-	t.Cleanup(species.SeedSpeciesForTest(nil))
 	t.Cleanup(mobs.SeedMobsForTest(map[int]*mobs.Mob{}, map[int]*mobs.Mob{}))
 	conditions.LoadDataFiles()
-	species.LoadDataFiles()
+	species.LoadForTest(t)
 	items.LoadDataFiles()
 	mobs.LoadDataFiles()
 

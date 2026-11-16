@@ -70,7 +70,7 @@ func TestSell_RuskBuysTheCraftedDaggerOnAFreshWorld(t *testing.T) {
 	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{}))
 	t.Cleanup(mobs.SeedMobsForTest(map[int]*mobs.Mob{}, map[int]*mobs.Mob{}))
 	conditions.LoadDataFiles()
-	species.LoadDataFiles()
+	species.LoadForTest(t)
 	items.LoadDataFiles()
 	mobs.LoadDataFiles()
 	// The real quest registry is global with no seed helper: the step order
