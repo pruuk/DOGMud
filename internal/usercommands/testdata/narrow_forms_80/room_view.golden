@@ -17,6 +17,6 @@ against the far wall, its lock the size of a fist.                       ║    
         <ansi fg="yellow-bold">This is an item storage location!</ansi> Type <ansi fg="command">storage</ansi> to store/unstore.
 <ansi fg="red">────────────────────────────────────────────────────────────────────────────────</ansi></ansi>
 
-<ansi fg="room-description"><ansi fg="room-description-dark">Also here: </ansi><ansi fg="username">Bobrick</ansi> <ansi fg="black-bold">(100%)</ansi> and <ansi fg="mobname"><ansi fg="mobname">Skeleton</ansi> <ansi fg="black-bold">(50%)</ansi></ansi></ansi>
+<ansi fg="room-description"><ansi fg="room-description-dark">Also here: </ansi><ansi fg="username">Bobrick</ansi> and <ansi fg="mobname"><ansi fg="mobname">Skeleton</ansi></ansi></ansi>
 
 <ansi fg="room-description"><ansi fg="yellow">Exits: </ansi><ansi fg="exit">north</ansi></ansi>

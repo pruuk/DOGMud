@@ -95,3 +95,19 @@ func TestGetDetails_ClearViewerReadsNames(t *testing.T) {
 		t.Errorf("clear roster anonymized someone: %q", joined)
 	}
 }
+
+// #283: the roster never shows a health percent. The owner ruled health is
+// hidden from player view; a wounded mob in clear sight still lists by name.
+func TestGetDetails_RosterShowsNoHealthPercent(t *testing.T) {
+	r, viewer := detailsSightRoom(t, "cave")
+	lamp := 90
+	r.Lamp = &lamp
+	mobs.GetInstance(detailsSightScoutId).Character.Health = 4
+	joined := strings.Join(detailsRoster(GetDetails(r, viewer)), " ")
+	if !strings.Contains(joined, "Midroad Scout") {
+		t.Fatalf("precondition: clear roster %q is missing the scout", joined)
+	}
+	if strings.Contains(joined, "%") {
+		t.Errorf("roster shows a health percent: %q", joined)
+	}
+}
