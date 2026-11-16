@@ -37,11 +37,15 @@ func actGrantQuest(params map[string]any, ctx *EvalContext) Result {
 	// rewards — the same pipeline the dialogue and questengine grant paths use.
 	// Without this, behavior-tree grants (e.g. Hadwen granting 30-woken at the
 	// close of the Awakening Rite) advanced the quest silently, with no banner
-	// and no rewards.
-	user.Character.GiveQuestToken(quest)
+	// and no rewards. A token the player already holds is not granted
+	// again, so nothing is queued (#660: a second banner).
+	if !user.Character.GiveQuestToken(quest) {
+		return Success
+	}
 	events.AddToQueue(events.Quest{
 		UserId:     user.UserId,
 		QuestToken: quest,
+		PreGranted: true,
 	})
 	return Success
 }

@@ -219,6 +219,7 @@ func (b *GameBridge) GrantQuest(token string) {
 		events.AddToQueue(events.Quest{
 			UserId:     b.user.UserId,
 			QuestToken: token,
+			PreGranted: true, // set above; HandleQuestUpdate pays the rewards
 		})
 		return
 	}

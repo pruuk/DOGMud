@@ -101,14 +101,15 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		}
 	}
 
-	// Try to advance the quest. If it fails, check whether the quest engine
-	// already set this token (GrantQuest sets it synchronously for chain
-	// evaluation, then fires this event for rewards). In that case, proceed
-	// with reward processing.
+	// Try to advance the quest. A token that does not land is either set
+	// already by its producer (PreGranted: a behaviour tree's grant_quest or
+	// the quest engine's end step set it synchronously, then fire this event
+	// for the banner and rewards) or a repeat grant of a step the player
+	// holds, which changes nothing: no second banner, no second reward
+	// (#660).
 	freshlyGranted := questUser.Character.GiveQuestToken(evt.QuestToken)
 	if !freshlyGranted {
-		// Already at this step? The quest engine pre-set it. Continue to rewards.
-		if !questUser.Character.HasQuest(evt.QuestToken) {
+		if !evt.PreGranted || !questUser.Character.HasQuest(evt.QuestToken) {
 			return events.Continue
 		}
 	}

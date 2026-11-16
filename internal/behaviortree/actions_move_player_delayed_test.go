@@ -134,7 +134,8 @@ func TestEskPassage_AskerStayed_MovedAndArrives(t *testing.T) {
 
 // A room tree (no mob) queues the same shape: 6467 The Landing moves the
 // player at 4.0s and grants at 4.5s. The room whose tree queued the move is
-// the one the player must still be in.
+// the one the player must still be in. The grant is a start: no quest data is
+// loaded here, and grant_quest queues only a token that lands (#660).
 const delayedRoomMoveTree = `
 tree:
   type: sequence
@@ -145,7 +146,7 @@ tree:
       delay: 1.0
     - type: action
       do: grant_quest
-      quest: "77-end"
+      quest: "77-start"
       delay: 1.5
 `
 
@@ -196,7 +197,7 @@ func TestDelayedRoomMove_PlayerStayed_MovedAndGranted(t *testing.T) {
 	if roomId != 2 {
 		t.Errorf("player who stayed: in room %d, want 2", roomId)
 	}
-	if len(grants) != 1 || grants[0] != "77-end" {
-		t.Errorf("player who stayed: grants %v, want [77-end]", grants)
+	if len(grants) != 1 || grants[0] != "77-start" {
+		t.Errorf("player who stayed: grants %v, want [77-start]", grants)
 	}
 }
