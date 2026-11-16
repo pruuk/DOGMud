@@ -50,7 +50,7 @@ func TestEat_RaisesTheEatCommandEvent(t *testing.T) {
 				Drink("stew", user, room, 0)
 			}
 
-			require.Contains(t, sentTo(user), "You eat some of the", "the meal must actually be eaten for the probe to mean anything")
+			require.Contains(t, sentTo(user), "You eat ", "the meal must actually be eaten for the probe to mean anything")
 			require.True(t, user.Character.HasQuest("999303-start"), "eating must raise the eat command event naming the food")
 		})
 	}

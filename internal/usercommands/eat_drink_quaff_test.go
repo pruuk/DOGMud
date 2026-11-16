@@ -66,10 +66,10 @@ func TestEatAndDrinkTakeFoodAndCookedDrinks(t *testing.T) {
 		typed  string
 		line   string
 	}{
-		{"eat", edqBreadId, "test bread", "You eat some of the"},
-		{"drink", edqBreadId, "test bread", "You eat some of the"},
-		{"drink", edqTeaId, "test tea", "You drink some of the"},
-		{"eat", edqTeaId, "test tea", "You drink some of the"},
+		{"eat", edqBreadId, "test bread", "You eat the"},
+		{"drink", edqBreadId, "test bread", "You eat the"},
+		{"drink", edqTeaId, "test tea", "You drink the"},
+		{"eat", edqTeaId, "test tea", "You drink the"},
 	} {
 		require.True(t, user.Character.StoreItem(items.New(c.itemId)), c.verb)
 		events.DrainQueuedMessagesForTest(1)
@@ -118,6 +118,21 @@ func TestQuaffTakesPotionsOnly(t *testing.T) {
 	assert.False(t, edqCarries(user, edqTonicId))
 }
 
+// #755: the last use finishes the item ("You drink the Herbal Tea."); an item
+// with uses to spare is only partly eaten ("You drink some of the").
+func TestEatLineSaysSomeOfOnlyWhileUsesRemain(t *testing.T) {
+	user, room := edqScene(t)
+	pot := items.New(edqTeaId)
+	pot.Uses = 3
+	told := edqFoodRun(t, user, room, "drink", "test tea", []items.Item{pot}, nil)
+	assert.Contains(t, told, "You drink some of the")
+	assert.True(t, edqCarries(user, edqTeaId), "two uses remain")
+
+	told = edqFoodRun(t, user, room, "drink", "test tea", []items.Item{items.New(edqTeaId)}, nil)
+	assert.Contains(t, told, "You drink the")
+	assert.NotContains(t, told, "some of")
+}
+
 // Herbal Tea was a potion until #375 phase 7, so a player may hold one in a
 // bandolier. drink still finds it there.
 func TestDrinkFindsACookedDrinkInTheBandolier(t *testing.T) {
@@ -126,7 +141,7 @@ func TestDrinkFindsACookedDrinkInTheBandolier(t *testing.T) {
 	events.DrainQueuedMessagesForTest(1)
 	_, err := Drink("test tea", user, room, 0)
 	require.NoError(t, err)
-	assert.Contains(t, aimTold(1), "You drink some of the")
+	assert.Contains(t, aimTold(1), "You drink the")
 	assert.Empty(t, user.Character.PotionItems)
 }
 
@@ -146,7 +161,7 @@ func TestBandolierItemsAnswerAHandle(t *testing.T) {
 	events.DrainQueuedMessagesForTest(1)
 	_, err = Drink(characters.ItemHandleSigil+tea.UUID.String(), user, room, 0)
 	require.NoError(t, err)
-	assert.Contains(t, aimTold(1), "You drink some of the")
+	assert.Contains(t, aimTold(1), "You drink the")
 	assert.Empty(t, user.Character.PotionItems)
 }
 
@@ -177,7 +192,7 @@ func TestDrinkTakesBandolierTeaOverAnOlderTonic(t *testing.T) {
 	user, room := edqScene(t)
 	told := edqFoodRun(t, user, room, "drink", "tea", nil,
 		[]items.Item{edqItem(edqSteadyId, 1), edqItem(edqHerbalId, 5)})
-	assert.Contains(t, told, "You drink some of the Herbal Tea.")
+	assert.Contains(t, told, "You drink the Herbal Tea.")
 	assert.False(t, edqCarries(user, edqHerbalId), "the tea is drunk")
 	assert.True(t, edqCarries(user, edqSteadyId), "the tonic stays")
 }
@@ -212,11 +227,11 @@ func TestFoodLookupOrder(t *testing.T) {
 	leaf, herbal, mint := items.New(edqTeaLeafId), items.New(edqHerbalId), items.New(edqMintId)
 
 	told := edqFoodRun(t, user, room, "drink", "tea", []items.Item{mint}, []items.Item{herbal})
-	assert.Contains(t, told, "You drink some of the Mint Tea.", "edible in the pack comes first")
+	assert.Contains(t, told, "You drink the Mint Tea.", "edible in the pack comes first")
 	assert.True(t, edqCarries(user, edqHerbalId))
 
 	told = edqFoodRun(t, user, room, "drink", "tea", []items.Item{leaf}, []items.Item{herbal})
-	assert.Contains(t, told, "You drink some of the Herbal Tea.", "edible in the bandolier beats an inedible in the pack")
+	assert.Contains(t, told, "You drink the Herbal Tea.", "edible in the bandolier beats an inedible in the pack")
 	assert.True(t, edqCarries(user, edqTeaLeafId))
 
 	told = edqFoodRun(t, user, room, "drink", "tea", []items.Item{leaf, items.New(edqSteadyId)}, nil)
