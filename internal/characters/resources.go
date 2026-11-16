@@ -72,8 +72,8 @@ import (
 // terrain is a property of the move being priced rather than of the actor, so it
 // belongs there. This is also numerically identical to the pre-U7 arithmetic,
 // which began `baseCost * terrainMultiplier` too. The practical effect of the
-// clamp on movement is nil either way: encumbrance tops out at 5.0 and the
-// inverse-skill curve at 1.10, a product of 5.5 that cannot reach 6.0. The real
+// clamp on movement is nil either way: encumbrance tops out at 5.5 and the
+// inverse-skill curve at 1.10, a product of 6.05 that cannot reach 7.5. The real
 // ceiling on a move is MovementMaxStaminaCost, which unlike Calc's clamp bounds
 // terrain and the hidden-movement multiplier as well.
 func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) float64 {
