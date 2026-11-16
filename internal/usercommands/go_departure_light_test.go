@@ -31,7 +31,6 @@ func TestGo_DepartureIsJudgedByTheMoversOwnLight(t *testing.T) {
 		u.Character.RoomId = 2
 		cave.AddPlayer(u.UserId)
 	}
-	mover.Character.ActionPoints = 100
 	require.True(t, mover.Character.Conditions.AddCondition(goDepartureLightCond, false))
 	require.Equal(t, messaging.SightFull, cave.ParticipantSight(watcher.UserId), "fixture: the mover's light lights the cave")
 	events.DrainQueuedMessagesForTest(watcher.UserId)

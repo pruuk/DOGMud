@@ -6,13 +6,13 @@ import (
 )
 
 func TestCalcComposesEveryFactor(t *testing.T) {
-	// base 1.0 x encumbrance at the knee (1.5) x skill rank 25 (1.0) x 1.25
+	// base 1.0 x encumbrance at 75% (3.1921) x skill rank 25 (1.0) x 1.25
 	got := Calc(Input{
 		Base: 1.0, Carried: 75, Capacity: 100, Physical: true,
 		SkillRank: 25, HasSkill: true, Modifier: 1.25,
 	})
-	if math.Abs(got-1.875) > 0.001 {
-		t.Fatalf("got %.4f, want 1.875", got)
+	if math.Abs(got-3.9902) > 0.001 {
+		t.Fatalf("got %.4f, want 3.9902", got)
 	}
 }
 
@@ -42,9 +42,9 @@ func TestCalcClampsTheProduct(t *testing.T) {
 		Base: 1.0, Carried: 100, Capacity: 100, Physical: true,
 		SkillRank: 0, HasSkill: true, Modifier: 1.25,
 	})
-	// unclamped this is 5.0 x 1.10 x 1.25 = 6.875
-	if got > 6.0001 {
-		t.Fatalf("product not clamped: got %.4f, want <= 6.0", got)
+	// unclamped this is 5.5 x 1.10 x 1.25 = 7.5625, over the Go default cap of 7.5
+	if got > 7.5001 {
+		t.Fatalf("product not clamped: got %.4f, want <= 7.5", got)
 	}
 }
 
@@ -56,9 +56,10 @@ func TestCalcMatchesTheTunedBenchFigures(t *testing.T) {
 		rank              int
 		wantSwing         float64
 	}{
-		{"newcomer", 35.2, 100, 1, 1.35},
-		{"mid", 44.9, 100, 25, 1.30},
-		{"meirok", 36.7, 100, 69, 0.81},
+		// Re-derived for the smooth curve (#401): encumbrance x skill.
+		{"newcomer", 35.2, 100, 1, 1.459}, // 1.3308 x 1.096
+		{"mid", 44.9, 100, 25, 1.608},     // 1.6080 x 1.000
+		{"meirok", 36.7, 100, 69, 0.886},  // 1.3672 x 0.648
 	}
 	for _, c := range cases {
 		got := Calc(Input{

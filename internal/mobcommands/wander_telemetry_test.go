@@ -20,6 +20,7 @@ func wanderTelemetryFixture(t *testing.T) (*mobs.Mob, *rooms.Room) {
 	cfg := configs.GetConfig()
 	cfg.Balance.AmbientTelemetry = true
 	cfg.Balance.PackRoamingEnabled = true
+	cfg.Balance.MovementBaseStaminaCost = 5 // whole-stamina steps; see wholeStepCost
 	configs.SetConfigForTest(t, cfg)
 	t.Cleanup(ambient.ResetForTest())
 
@@ -33,8 +34,6 @@ func wanderTelemetryFixture(t *testing.T) (*mobs.Mob, *rooms.Room) {
 
 	mob.MaxWander = -1
 	mob.WanderCount = 0
-	mob.Character.ActionPointsMax.Value = 200
-	mob.Character.ActionPointsSettled = false
 	mob.Character.StaminaMax.Value = 100
 	mob.Character.Stamina = 100
 	return mob, room
@@ -56,7 +55,7 @@ func TestWanderTelemetry_NoStepCountsNothing(t *testing.T) {
 		name  string
 		setup func(m *mobs.Mob)
 	}{
-		{"too tired to pay the step", func(m *mobs.Mob) { m.Character.ActionPointsMax.Value = 5 }},
+		{"too exhausted to pay the step", func(m *mobs.Mob) { m.Character.Stamina = 0 }},
 		{"MaxWander 0 never wanders", func(m *mobs.Mob) { m.MaxWander = 0 }},
 		{"scattered pack member", func(m *mobs.Mob) { m.ScatterRounds = 3 }},
 		{"non-alpha pack member", func(m *mobs.Mob) { m.PackAlphaId = 200 }},
@@ -76,12 +75,12 @@ func TestWanderTelemetry_NoStepCountsNothing(t *testing.T) {
 // it; a follower that cannot pay its step stays behind and is not counted.
 func TestWanderTelemetry_PackFollowersCountWhenTheyMove(t *testing.T) {
 	for _, tc := range []struct {
-		name          string
-		followerAPMax int
-		want          int
+		name            string
+		followerStamina int
+		want            int
 	}{
-		{"follower goes too", 200, 2},
-		{"tired follower stays", 5, 1},
+		{"follower goes too", 100, 2},
+		{"exhausted follower stays", 0, 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			alpha, room := wanderTelemetryFixture(t)
@@ -91,10 +90,8 @@ func TestWanderTelemetry_PackFollowersCountWhenTheyMove(t *testing.T) {
 			f.PackAlphaId = alpha.InstanceId
 			f.MaxWander = -1
 			f.Character.Zone = alpha.Character.Zone
-			f.Character.ActionPointsMax.Value = tc.followerAPMax
-			f.Character.ActionPointsSettled = false
 			f.Character.StaminaMax.Value = 100
-			f.Character.Stamina = 100
+			f.Character.Stamina = tc.followerStamina
 
 			_, err := Wander("", alpha, room)
 			require.NoError(t, err)

@@ -201,61 +201,6 @@ func TestCharacter_GetDescription(t *testing.T) {
 		assert.Equal(t, descriptionCache[""], got)
 	})
 }
-func TestCharacter_DeductActionPoints(t *testing.T) {
-	tests := []struct {
-		name         string
-		startAP      int
-		deductAmount int
-		wantResult   bool
-		wantFinalAP  int
-	}{
-		{
-			name:         "Enough action points",
-			startAP:      10,
-			deductAmount: 5,
-			wantResult:   true,
-			wantFinalAP:  5,
-		},
-		{
-			name:         "Exact action points",
-			startAP:      5,
-			deductAmount: 5,
-			wantResult:   true,
-			wantFinalAP:  0,
-		},
-		{
-			name:         "Not enough action points",
-			startAP:      3,
-			deductAmount: 5,
-			wantResult:   false,
-			wantFinalAP:  3,
-		},
-		{
-			name:         "Deduct more than available, negative AP clamp",
-			startAP:      2,
-			deductAmount: 3,
-			wantResult:   false,
-			wantFinalAP:  2,
-		},
-		{
-			name:         "Deduct zero action points",
-			startAP:      7,
-			deductAmount: 0,
-			wantResult:   true,
-			wantFinalAP:  7,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := New()
-			c.ActionPoints = tt.startAP
-			got := c.DeductActionPoints(tt.deductAmount)
-			assert.Equal(t, tt.wantResult, got)
-			assert.Equal(t, tt.wantFinalAP, c.ActionPoints)
-		})
-	}
-}
 func TestCharacter_SetUserId(t *testing.T) {
 	tests := []struct {
 		name   string

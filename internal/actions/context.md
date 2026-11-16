@@ -424,23 +424,20 @@ second price or detection implementation.
 type MoveRefusal int
 const (
 	MoveOK MoveRefusal = iota
-	MoveRefuseEncumbered
-	MoveRefuseTired
 	MoveRefuseExhausted
 )
 
 type MoveCharge struct {
 	Refusal     MoveRefusal
-	ActionCost  int     // 10, or 50 over carry capacity
 	StaminaCost float64 // fractional stamina price, banked through the carry
 	Winded      bool    // paid, and stamina is now under a quarter of its reachable max
 	Never       bool    // refused, and this actor could not pay the step even fully rested
 }
 func (m MoveCharge) OK() bool
 
-func MovePrice(c *characters.Character, dest *rooms.Room) (actionCost int, staminaCost float64)
+func MovePrice(c *characters.Character, dest *rooms.Room) (staminaCost float64)
 func QuoteMove(actor Actor, dest *rooms.Room) MoveCharge  // prices, spends nothing
-func ChargeMove(actor Actor, dest *rooms.Room) MoveCharge // pays, or refunds AP on a stamina refusal
+func ChargeMove(actor Actor, dest *rooms.Room) MoveCharge // pays the stamina, or refuses and takes nothing
 func QuoteMobStep(mob *mobs.Mob, exitName string) MoveCharge // quotes a mob's next step by exit name; a step that does not resolve quotes as affordable
 func TrainSearchOnMove(actor Actor) // the rare Search training a completed step earns
 func InterruptWorkOnMove(c *characters.Character) activity.State // stops Crafting/Salvaging; returns the work interrupted, or Free
@@ -469,12 +466,15 @@ despawn) do not call it, matching a player, whose forced moves keep their
 work.
 
 `MovePrice` reads the destination biome by NAME (`rooms.GetBiome(dest.Biome)`)
-and multiplies by `FlightMoveStaminaMult` when the mover is flying. The
-action-point price is the hardcoded 10 (50 over carry capacity), not a knob.
-`QuoteMove` and `ChargeMove` both settle a MOB'S action points first
-(`SettleActionPoints`, see `internal/characters/context.md`) and never settle
-a player's: the per-turn hook (`hooks.ActionPoints`) already credits players,
-and settling here too would double-credit the same turns. `Never` is true
+and multiplies by `FlightMoveStaminaMult` when the mover is flying. **Stamina
+is the whole price** since #401 (owner ruling 2026-11-16): action points were
+removed. A step costs `MovementBaseStaminaCost` x the destination biome's
+movement cost x the shared encumbrance curve (`costs.EncumbranceMultiplier`)
+x the Search discount, capped by `CostTotalMultiplierMax` and
+`MovementMaxStaminaCost` (`characters.GetMovementStaminaCost`); a heavy load
+slows a traveller by costing more stamina a room. Flee does not come through
+here: it pays its own stamina partially and is never refused for lack of it
+(owner ruling). `Never` is true
 when the actor could not pay the step even fully rested (pool max below the
 price), so a walker can tell "wait, it will recover" from "give up, it never
 will" (spec deviation: added beyond the spec's plain refusal).

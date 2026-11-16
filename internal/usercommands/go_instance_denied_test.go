@@ -30,7 +30,6 @@ func TestGo_InstanceDenialIsNotAFault(t *testing.T) {
 	room := rooms.LoadRoom(1)
 	room.AddPlayer(user.UserId)
 	user.Character.RoomId = 1
-	user.Character.ActionPoints = 100
 
 	inst := &rooms.ZoneInstance{
 		InstanceId:      ephId,

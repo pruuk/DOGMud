@@ -48,7 +48,6 @@ func goShopWakeScene(t *testing.T) (*mobs.Mob, *users.UserRecord, *rooms.Room) {
 		u.Character.RoomId = 2
 		cave.AddPlayer(u.UserId)
 	}
-	mover.Character.ActionPoints = 100
 	events.DrainQueuedMessagesForTest(mover.UserId)
 	return keeper, mover, cave
 }

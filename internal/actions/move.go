@@ -30,15 +30,12 @@ type MoveRefusal int
 
 const (
 	MoveOK MoveRefusal = iota
-	MoveRefuseEncumbered
-	MoveRefuseTired
 	MoveRefuseExhausted
 )
 
 // MoveCharge reports one priced step.
 type MoveCharge struct {
 	Refusal     MoveRefusal
-	ActionCost  int     // 10, or 50 over carry capacity
 	StaminaCost float64 // fractional stamina price, banked through the carry
 	Winded      bool    // paid, and stamina is now under a quarter of its reachable max
 	Never       bool    // refused, and this actor could not pay the step even fully rested
@@ -47,21 +44,14 @@ type MoveCharge struct {
 // OK reports whether the step was (or, for a quote, would be) paid.
 func (m MoveCharge) OK() bool { return m.Refusal == MoveOK }
 
-// The hardcoded step prices (fact V2). Not knobs; the spec keeps them as they
-// are.
-const (
-	moveActionCost           = 10
-	moveEncumberedActionCost = 50
-)
-
-// MovePrice is the price of one step into dest for c: action points, and the
-// fractional stamina cost. It reads the destination biome by NAME
-// (rooms.GetBiome(dest.Biome)), exactly as the player path always has.
-func MovePrice(c *characters.Character, dest *rooms.Room) (int, float64) {
-	actionCost := moveActionCost
-	if c.GetCarriedWeight() > c.CarryCapacity() {
-		actionCost = moveEncumberedActionCost
-	}
+// MovePrice is the stamina price of one step into dest for c: the base, times
+// the destination's terrain, the shared encumbrance curve and the Search
+// discount (GetMovementStaminaCost), then Winged Flight. Stamina is the whole
+// price since #401 (owner 2026-11-16): action points were removed, and the
+// encumbrance curve is what makes a heavy load slow a traveller. It reads the
+// destination biome by NAME (rooms.GetBiome(dest.Biome)), exactly as the
+// player path always has.
+func MovePrice(c *characters.Character, dest *rooms.Room) float64 {
 	terrain := 1.0
 	if biome, _ := rooms.GetBiome(dest.Biome); biome != nil {
 		terrain = biome.GetMovementCost()
@@ -71,60 +61,33 @@ func MovePrice(c *characters.Character, dest *rooms.Room) (int, float64) {
 		// Winged Flight glides over terrain: movement barely tires you.
 		stamina *= float64(configs.GetBalanceConfig().FlightMoveStaminaMult)
 	}
-	return actionCost, stamina
-}
-
-// settleMoverActionPoints brings a mob's points up to date. Players are
-// credited per turn by hooks.ActionPoints and must never be settled here.
-func settleMoverActionPoints(actor Actor) {
-	if actor.IsPlayer() {
-		return
-	}
-	actor.GetCharacter().SettleActionPoints(util.GetTurnCount())
-}
-
-func apRefusal(actionCost int) MoveRefusal {
-	if actionCost == moveEncumberedActionCost {
-		return MoveRefuseEncumbered
-	}
-	return MoveRefuseTired
+	return stamina
 }
 
 // QuoteMove prices a step without paying for it, for callers that must decide
 // before issuing one (the path walker, wander, behaviour-tree steps, the AI
-// companion). Settling a mob's points is bookkeeping, not a charge.
+// companion).
 func QuoteMove(actor Actor, dest *rooms.Room) MoveCharge {
 	c := actor.GetCharacter()
-	settleMoverActionPoints(actor)
-	ap, st := MovePrice(c, dest)
-	q := MoveCharge{ActionCost: ap, StaminaCost: st}
-	switch {
-	case c.ActionPoints < ap:
-		q.Refusal = apRefusal(ap)
-		q.Never = ap > c.ActionPointsMax.Value
-	case !c.CanAffordCostFloat(characters.PoolStamina, st):
+	st := MovePrice(c, dest)
+	q := MoveCharge{StaminaCost: st}
+	if !c.CanAffordCostFloat(characters.PoolStamina, st) {
 		q.Refusal = MoveRefuseExhausted
 		q.Never = st > float64(c.EffectivePoolMax(characters.PoolStamina))
 	}
 	return q
 }
 
-// ChargeMove pays for one step into dest: action points first, then stamina,
-// refunding the points when stamina refuses. Wrappers call it AFTER their
-// lock checks and any exit-message requeue, so a door that stays locked costs
-// nothing and a requeued step is charged once (fact V4).
+// ChargeMove pays for one step into dest in stamina. Wrappers call it AFTER
+// their lock checks and any exit-message requeue, so a door that stays locked
+// costs nothing and a requeued step is charged once (fact V4). Flee does not
+// come through here: it pays its own stamina partially and is never refused
+// for lack of it (owner ruling 2026-11-16).
 func ChargeMove(actor Actor, dest *rooms.Room) MoveCharge {
 	c := actor.GetCharacter()
-	settleMoverActionPoints(actor)
-	ap, st := MovePrice(c, dest)
-	m := MoveCharge{ActionCost: ap, StaminaCost: st}
-	if !c.DeductActionPoints(ap) {
-		m.Refusal = apRefusal(ap)
-		m.Never = ap > c.ActionPointsMax.Value
-		return m
-	}
+	st := MovePrice(c, dest)
+	m := MoveCharge{StaminaCost: st}
 	if !c.ApplyCostFloatOrRefuse(characters.PoolStamina, st) {
-		c.ActionPoints += ap
 		m.Refusal = MoveRefuseExhausted
 		m.Never = st > float64(c.EffectivePoolMax(characters.PoolStamina))
 		return m

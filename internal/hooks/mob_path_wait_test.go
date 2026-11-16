@@ -39,7 +39,6 @@ func walkerWorld(t *testing.T, stamina, staminaMax int) *mobs.Mob {
 	m := &mobs.Mob{InstanceId: 7150}
 	m.Character = *characters.New()
 	m.Character.RoomId = 7101
-	m.Character.ActionPointsMax.Value = 200
 	m.Character.StaminaMax.Value = staminaMax
 	m.Character.Stamina = stamina
 	m.Path.SetPath([]mobs.PathRoom{walkerTestStep{"north", 7102}})

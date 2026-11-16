@@ -69,7 +69,7 @@ func worstStepPrice(c *characters.Character, route map[int]bool) (float64, int) 
 		if r == nil {
 			continue
 		}
-		if _, st := actions.MovePrice(c, r); st > worst {
+		if st := actions.MovePrice(c, r); st > worst {
 			worst, worstRoom = st, rid
 		}
 	}

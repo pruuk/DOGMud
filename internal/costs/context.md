@@ -134,7 +134,8 @@ value gets a neutral 1.0 rather than a free action.
   penalty 1.10 and a defence premium 1.25 stack to 6.875x. A laden novice priced
   at nearly seven times base cannot pay for anything, and "cannot pay" does not
   read to the player as expensive — it reads as autofail-everything. One ceiling
-  on the composed product (`CostTotalMultiplierMax`, default 6.0) is the only
+  on the composed product (`CostTotalMultiplierMax`, default and shipped 7.5
+  since #401) is the only
   place that guarantee can live. `Input.Base` sits OUTSIDE the clamp: it is the
   authored price of the action, and capping it would flatten cheap actions
   against expensive ones.
@@ -145,21 +146,21 @@ value gets a neutral 1.0 rather than a free action.
   (one attack swing) and `usercommands.Flee`. Retuning `CostTotalMultiplierMax`
   therefore moves defence, movement, attack and flee prices together. In
   practice it still binds only on defence: movement's worst case is
-  `5.0 x 1.10 = 5.5` against the 6.0 ceiling, and attack's and flee's are the
+  `5.5 x 1.10 = 6.05` against the 7.5 ceiling, and attack's and flee's are the
   same, because none of the three carries a per-action premium above 1.0.
 
 - **The clamp is rank-dependent, and only bites novices.** It caps the composed
   multiplier, so the rank the actor holds decides the load at which it starts
   applying. At rank 1 (which is what `characters.New()` seeds every skill to)
-  dodge reaches 6.0 above roughly **95.6%** of carry capacity, block above
-  **98.3%** and parry above **99.8%** — so at capacity all three converge on the
-  same 6.0 and the per-defence modifiers stop being visible. At a realistic
-  ~40% load none of them are close (1.735 / 1.597 / 1.527). At the skill cap the
-  question does not arise at all: dodge's worst case is
-  `5.0 x 0.40 x 1.25 = 2.5`, so **a mastered defender never reaches the clamp at
-  any load.** The convergence at capacity is ACCEPTED — a defender hauling their
-  own weight in ore paying a flat ceiling for any defence is the intended
-  behaviour, not a defect to fix.
+  Under the #401 curve (`1 + 4.5 x load^2.5`, ceiling 7.5) only dodge reaches
+  it, above roughly **99.8%** of carry capacity (`5.5 x 1.096 x 1.25 = 7.535`);
+  block tops out at 6.93 and parry at 6.63, so the per-defence modifiers stay
+  visible even at capacity. At a realistic ~40% load none of them are close
+  (1.994 / 1.834 / 1.755). At the skill cap the question does not arise at
+  all: dodge's worst case is `5.5 x 0.40 x 1.25 = 2.75`, so **a mastered
+  defender never reaches the clamp at any load.** Before #401 (knee curve,
+  ceiling 6.0) all three converged on 6.0 near capacity; that convergence was
+  accepted then and is now simply rarer.
 
 - **Leaf rule: never import `internal/characters`.** `characters` reaches this
   package (or will), so the reverse edge is a cycle. That is why `Input` carries
@@ -209,8 +210,10 @@ value gets a neutral 1.0 rather than a free action.
   (`SkillTag`) is now only a transitive dependency through it.
 
 Knobs owned: `CostSkillMultAtZero`, `CostSkillMultAtMid`, `CostSkillMultAtCap`,
-`CostSkillMidRank`, `CostSkillCapRank`, `CostEncumbranceKnee`,
-`CostEncumbranceKneeMult`, `CostEncumbranceMax`, `CostTotalMultiplierMax`.
+`CostSkillMidRank`, `CostSkillCapRank`, `CostEncumbranceShape`,
+`CostEncumbranceMax`, `CostTotalMultiplierMax`. (The knee pair,
+`CostEncumbranceKnee` and `CostEncumbranceKneeMult`, was replaced by the
+smooth shape exponent in #401.)
 Declared in `internal/configs/config.balance.go`, defaulted and validated in
 `internal/configs/config.balance.progression.go`.
 

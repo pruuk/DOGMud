@@ -797,10 +797,6 @@ func newMobByIdInternal(mobId MobId, homeRoomId int, skipInstanceLoad bool, forc
 		mob.Character.SetPoolFraction(characters.PoolHealth, 1.0)
 		mob.Character.SetPoolFraction(characters.PoolStamina, 1.0)
 		mob.Character.SetPoolFraction(characters.PoolConviction, 1.0)
-		// Movement parity 4b: a spawn starts with full action points, settled
-		// at the current turn. Nothing else ever set a mob's points, so every
-		// live mob held 0.
-		mob.Character.SettleActionPoints(util.GetTurnCount())
 
 		// Stage 3.0d: pre-stamp fold-recall anchor if the YAML template set one.
 		stampFoldAnchor(&mob.Character, m.FoldAnchorRoom)

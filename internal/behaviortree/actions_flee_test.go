@@ -29,7 +29,6 @@ func TestActFlee_OutOfCombatWalksAway(t *testing.T) {
 	// Rested enough to pay the step the walk quotes.
 	mob.Character.Stamina = 100
 	mob.Character.StaminaMax.Value = 100
-	mob.Character.ActionPointsMax.Value = 200
 	mob.Character.Conditions = conditions.New()
 	queuedCmds(mob.InstanceId)
 

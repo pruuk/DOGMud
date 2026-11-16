@@ -49,7 +49,6 @@ func TestGenericFighter_HeardCallforhelp_IssuesGoCommand(t *testing.T) {
 	responder.Character.Health = 100
 	responder.Character.Stamina = 100
 	responder.Character.Conviction = 500
-	responder.Character.ActionPointsMax.Value = 200 // movement parity 4b: steps cost action points
 	responder.Character.Conditions = conditions.New()
 
 	seed := mobs.SeedMobsForTest(nil, map[int]*mobs.Mob{
@@ -112,7 +111,6 @@ func TestLookout_HeardCallforhelp_IssuesGoCommand(t *testing.T) {
 	responder.Character.Health = 100
 	responder.Character.Stamina = 100
 	responder.Character.Conviction = 500
-	responder.Character.ActionPointsMax.Value = 200 // movement parity 4b: steps cost action points
 	responder.Character.Conditions = conditions.New()
 
 	seed := mobs.SeedMobsForTest(nil, map[int]*mobs.Mob{

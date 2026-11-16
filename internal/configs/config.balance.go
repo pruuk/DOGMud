@@ -549,11 +549,10 @@ type Balance struct {
 
 	// ── COSTS: ENCUMBRANCE MULTIPLIER (U7) ───────────────────────────────────
 	// costs.EncumbranceMultiplier prices carried weight into PHYSICAL actions
-	// only. Two linear segments joined at CostEncumbranceKnee: gentle from
-	// empty to the knee, steep from the knee to capacity, flat at/above it.
-	CostEncumbranceKnee     ConfigFloat `yaml:"CostEncumbranceKnee"`     // Fraction of capacity where the curve steepens (default 0.75)
-	CostEncumbranceKneeMult ConfigFloat `yaml:"CostEncumbranceKneeMult"` // Multiplier at the knee (default 1.5)
-	CostEncumbranceMax      ConfigFloat `yaml:"CostEncumbranceMax"`      // Multiplier at/above capacity (default 5.0)
+	// only, on a smooth curve: 1 + (Max - 1) * (load/capacity)^Shape, flat at
+	// and above capacity (#401, owner 2026-11-16; it replaced a 75% knee).
+	CostEncumbranceShape ConfigFloat `yaml:"CostEncumbranceShape"` // Curve exponent: 1 is a straight line, higher stays light longer (default 2.5)
+	CostEncumbranceMax   ConfigFloat `yaml:"CostEncumbranceMax"`   // Multiplier at/above capacity (default 5.5)
 
 	// ── COSTS: COMPOSED-TOTAL CEILING (U7) ───────────────────────────────────
 	// costs.Calc clamps the PRODUCT of its multipliers (encumbrance x inverse
@@ -562,7 +561,7 @@ type Balance struct {
 	// and a defence premium 1.25 stack to 6.875x, which a laden novice cannot
 	// pay — and "cannot pay" reads to the player as autofail-everything, not as
 	// expensive. The action's Base price sits OUTSIDE this clamp.
-	CostTotalMultiplierMax ConfigFloat `yaml:"CostTotalMultiplierMax"` // Ceiling on the composed cost multiplier (default 6.0)
+	CostTotalMultiplierMax ConfigFloat `yaml:"CostTotalMultiplierMax"` // Ceiling on the composed cost multiplier (default 7.5, #401)
 
 	// ── PROGRESSION MULTIPLIERS ──────────────────────────────────────────────
 	// Per-stat and per-skill multipliers on progression chance.

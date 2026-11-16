@@ -267,18 +267,21 @@ func TestMovementCostMagnitudes(t *testing.T) {
 		itemId   int
 		wantCost float64
 	}{
-		// Road. 0.5 x encumbrance x 1.096.
-		{"light, road", 0.09, 1.0, 99829, 0.580880},
-		{"heavy, road", 0.66, 1.0, 99830, 0.789120},
-		{"overburdened, road", 0.88, 1.0, 99831, 1.819360},
-		{"crushed, road", 1.32, 1.0, 99835, 2.740000},
+		// Re-signed for #401 (owner ruling 2026-11-16, the smooth curve):
+		// 0.5 (the Go-default base) x (1 + 4.5 x load^2.5, load capped at 1)
+		// x 1.096, worked independently of the code.
+		// Road.
+		{"light, road", 0.09, 1.0, 99829, 0.553992},
+		{"heavy, road", 0.66, 1.0, 99830, 1.420676},
+		{"overburdened, road", 0.88, 1.0, 99831, 2.339430},
+		{"crushed, road", 1.32, 1.0, 99835, 3.014000},
 
 		// Rough ground doubles the base, and terrain lives INSIDE the base by
 		// design, so every row is exactly twice its road counterpart.
-		{"light, rough", 0.09, 2.0, 99836, 1.161760},
-		{"heavy, rough", 0.66, 2.0, 99837, 1.578240},
-		{"overburdened, rough", 0.88, 2.0, 99838, 3.638720},
-		{"crushed, rough", 1.32, 2.0, 99839, 5.480000},
+		{"light, rough", 0.09, 2.0, 99836, 1.107985},
+		{"heavy, rough", 0.66, 2.0, 99837, 2.841352},
+		{"overburdened, rough", 0.88, 2.0, 99838, 4.678859},
+		{"crushed, rough", 1.32, 2.0, 99839, 6.028000},
 	}
 
 	seen := make(map[float64]string, len(cases))

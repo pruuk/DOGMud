@@ -212,11 +212,6 @@ func NewMobById(mobId MobId, homeRoomId int, forceStatPool int) *Mob {
         mob.Character.Stamina = mob.Character.StaminaMax.Value
         mob.Character.Conviction = mob.Character.ConvictionMax.Value
 
-        // Movement parity 4b: settle action points full at the current turn.
-        // Nothing else ever set a mob's points; every live mob held 0 before
-        // this. See internal/characters/context.md's ActionPoints gotcha.
-        mob.Character.SettleActionPoints(util.GetTurnCount())
-
         // Apply permanent conditions
         mob.Character.SetPermanentConditions(mob.ConditionIds)
 

@@ -45,8 +45,6 @@ func partyFollowScene(t *testing.T, leaderLit bool) (leader, member *users.UserR
 	require.True(t, p.InvitePlayer(2))
 	require.True(t, p.AcceptInvite(2))
 
-	leader.Character.ActionPoints = 100
-	member.Character.ActionPoints = 100
 	events.DrainQueuedUserInputsForTest(2)
 	events.DrainQueuedMessagesForTest(2)
 	return leader, member, room

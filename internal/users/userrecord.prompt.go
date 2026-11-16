@@ -693,7 +693,8 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 				}
 
 			case `{ap}`:
-				promptOut.WriteString(strconv.Itoa(u.Character.ActionPoints))
+				// Action points were removed (#401). A prompt saved with the
+				// token shows nothing in its place rather than "{ap}".
 
 			case `{h}`:
 				hiddenFlag := ``

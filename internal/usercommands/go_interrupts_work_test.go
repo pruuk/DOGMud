@@ -39,7 +39,6 @@ func TestGo_MovementInterruptsWorkButNotACast(t *testing.T) {
 				user.Character.Activity = activity.NewMachine()
 			}
 			require.NoError(t, tc.begin(user.Character.Activity))
-			user.Character.ActionPoints = 100
 			events.DrainQueuedMessagesForTest(user.UserId)
 
 			handled, err := Go("north", user, room, 0)

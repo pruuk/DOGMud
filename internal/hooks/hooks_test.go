@@ -755,55 +755,6 @@ func TestCheckMoonPhase_NewMoonDetection(t *testing.T) {
 	// the queue from here, but we verify no panic and correct return.
 }
 
-// ─── ActionPoints ─────────────────────────────────────────────────────────────
-
-func TestActionPoints_IncrementsForAllUsers(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-
-	u1 := users.GetByUserId(1)
-	u2 := users.GetByUserId(2)
-
-	// Set AP below max
-	u1.Character.ActionPoints = 3
-	u2.Character.ActionPoints = 7
-
-	evt := events.NewTurn{TurnNumber: 1}
-	result := ActionPoints(evt)
-
-	assert.Equal(t, events.Continue, result)
-	assert.Equal(t, 4, u1.Character.ActionPoints, "alice AP should increment by 1")
-	assert.Equal(t, 8, u2.Character.ActionPoints, "bob AP should increment by 1")
-}
-
-func TestActionPoints_CapsAtMax(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-
-	u1 := users.GetByUserId(1)
-	u1.Character.ActionPoints = u1.Character.ActionPointsMax.Value
-
-	evt := events.NewTurn{TurnNumber: 1}
-	ActionPoints(evt)
-
-	assert.Equal(t, u1.Character.ActionPointsMax.Value, u1.Character.ActionPoints,
-		"AP should not exceed max")
-}
-
-func TestActionPoints_DoesNotExceedMax(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-
-	u1 := users.GetByUserId(1)
-	u1.Character.ActionPointsMax.Value = 5
-	u1.Character.ActionPoints = 5
-
-	evt := events.NewTurn{TurnNumber: 2}
-	ActionPoints(evt)
-
-	assert.Equal(t, 5, u1.Character.ActionPoints)
-}
-
 // ─── AutoHeal ─────────────────────────────────────────────────────────────────
 
 func TestAutoHeal_SkipsNonDivisibleRounds(t *testing.T) {

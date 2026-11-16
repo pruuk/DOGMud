@@ -10,16 +10,15 @@ import (
 // actor is carrying, as a fraction of carry capacity. It applies to PHYSICAL
 // actions only — mental and social actions never take it.
 //
-// The curve is two linear segments joined at the knee (CostEncumbranceKnee,
-// default 0.75 of capacity):
+// The curve is smooth (owner ruling 2026-11-16, #401): with r the load as a
+// fraction of capacity, clamped to [0, 1], the multiplier is
+// 1 + (CostEncumbranceMax - 1) * r^CostEncumbranceShape. It is 1.0 when
+// empty and CostEncumbranceMax at and above capacity.
 //
-//   - r = 0        -> 1.0 (empty, no penalty)
-//   - r = knee      -> CostEncumbranceKneeMult (default 1.5)
-//   - r >= 1.0      -> CostEncumbranceMax (default 5.0), clamped
-//
-// Gentle from empty to the knee, then steep from the knee to capacity, flat
-// at and above capacity. A realistically equipped character (roughly 35-45%
-// of capacity) lands near 1.25.
+// A shape above 1 stays light for most of the range and climbs late, the
+// job the old 75% knee did with two straight segments. It replaced that knee
+// when action points were removed and movement came to be paid in stamina
+// alone.
 //
 // This deliberately replaces the encumbrance term inline in
 // GetMovementStaminaCost, which was flat 1.0 until the actor EXCEEDED
@@ -43,19 +42,20 @@ func EncumbranceMultiplier(carried, capacity float64) float64 {
 
 	bal := configs.GetBalanceConfig()
 
-	knee := float64(bal.CostEncumbranceKnee)
-	kneeMult := float64(bal.CostEncumbranceKneeMult)
+	shape := float64(bal.CostEncumbranceShape)
 	maxMult := float64(bal.CostEncumbranceMax)
 
 	// Belt-and-braces, not a defence against a zero-value Balance:
-	// GetBalanceConfig() calls ensureConfigValidated(), so a Balance reaching
-	// this function has already been validated at load time and cannot carry a
-	// knee of zero, a negative knee, or a knee at/above 1.0. This guard exists
-	// only in case a future caller constructs a Balance by hand and skips
-	// validation -- cheap insurance against a divide-by-zero or a degenerate
-	// curve. It is not the primary defence and is not expected to fire.
-	if knee <= 0 || knee >= 1.0 {
-		knee = 0.75
+	// GetBalanceConfig() validates at load, so a shape at or below 0 or a top
+	// below 1 cannot reach here. This guard exists only in case a caller
+	// builds a Balance by hand and skips validation; a non-positive shape
+	// would make r^shape flat or infinite, and a top below 1 would make
+	// loading up cheaper.
+	if shape <= 0 {
+		shape = 2.5
+	}
+	if maxMult < 1.0 {
+		maxMult = 1.0
 	}
 
 	r := carried / capacity
@@ -66,8 +66,5 @@ func EncumbranceMultiplier(carried, capacity float64) float64 {
 		r = 1.0
 	}
 
-	if r <= knee {
-		return 1.0 + (kneeMult-1.0)*(r/knee)
-	}
-	return kneeMult + (maxMult-kneeMult)*((r-knee)/(1-knee))
+	return 1.0 + (maxMult-1.0)*math.Pow(r, shape)
 }

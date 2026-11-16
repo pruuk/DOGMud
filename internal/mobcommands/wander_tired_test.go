@@ -3,27 +3,39 @@ package mobcommands
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/stretchr/testify/require"
 )
 
-// Movement parity 4b: a tired wanderer does not count a wander it cannot
-// walk, so it is not sent home early for steps it never took. The rested
-// control proves the fixture reaches the counting branch at all (Wander only
-// counts a step into the mob's own zone).
-func TestWander_TiredMobDoesNotCount(t *testing.T) {
+// wholeStepCost makes one step cost several whole stamina. Test binaries load
+// the Go default base (0.5), which prices a step under 1: that is carried as a
+// fraction and a mob with an empty pool still walks. The shipped base is 1.5.
+func wholeStepCost(t *testing.T) {
+	t.Helper()
+	cfg := configs.GetConfig()
+	cfg.Balance.MovementBaseStaminaCost = 5
+	configs.SetConfigForTest(t, cfg)
+}
+
+// An exhausted wanderer does not count a wander it cannot walk, so it is not
+// sent home early for steps it never took. The rested control proves the
+// fixture reaches the counting branch at all (Wander only counts a step into
+// the mob's own zone).
+func TestWander_ExhaustedMobDoesNotCount(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
-		apMax     int
+		stamina   int
 		wantCount int
 	}{
-		{"rested control counts the step", 200, 1},
-		{"tired mob does not", 5, 0},
+		{"rested control counts the step", 100, 1},
+		{"exhausted mob does not", 0, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cleanup := seedAllRegistries()
 			defer cleanup()
+			wholeStepCost(t)
 			mob, room := getTestMobAndRoom(t)
 
 			north, ok := room.Exits["north"]
@@ -37,10 +49,8 @@ func TestWander_TiredMobDoesNotCount(t *testing.T) {
 
 			mob.MaxWander = -1
 			mob.WanderCount = 0
-			mob.Character.ActionPointsMax.Value = tc.apMax
-			mob.Character.ActionPointsSettled = false
 			mob.Character.StaminaMax.Value = 100
-			mob.Character.Stamina = 100
+			mob.Character.Stamina = tc.stamina
 
 			handled, err := Wander("", mob, room)
 			require.True(t, handled)

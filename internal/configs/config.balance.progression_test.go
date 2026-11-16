@@ -35,40 +35,40 @@ func TestValidateProgression_CostSkillRankPairPreservedWhenValid(t *testing.T) {
 	}
 }
 
-// A knee multiplier ABOVE the maximum makes costs.EncumbranceMultiplier's
-// second segment run backwards: 3.00 at the knee falling to 1.50 at capacity,
-// so loading further toward capacity would get CHEAPER. Both fields are
-// individually positive, so the old per-field guards passed this through.
-func TestValidateProgression_CostEncumbranceMaxBelowKneeMultIsCorrected(t *testing.T) {
-	b := &Balance{CostEncumbranceKneeMult: 3.0, CostEncumbranceMax: 1.5}
-	b.validateProgression()
-	if float64(b.CostEncumbranceMax) <= float64(b.CostEncumbranceKneeMult) {
-		t.Errorf("CostEncumbranceMax = %.2f, CostEncumbranceKneeMult = %.2f; max must be strictly greater than the knee multiplier after validation",
-			float64(b.CostEncumbranceMax), float64(b.CostEncumbranceKneeMult))
+// A top below 1.0 inverts the curve: loading up would make every physical
+// action cheaper. It is corrected to the default, as an absent key (0) is.
+func TestValidateProgression_CostEncumbranceMaxBelowOneIsCorrected(t *testing.T) {
+	for _, bad := range []float64{0, 0.5} {
+		b := &Balance{CostEncumbranceShape: 2.5, CostEncumbranceMax: ConfigFloat(bad)}
+		b.validateProgression()
+		if float64(b.CostEncumbranceMax) != 5.5 {
+			t.Errorf("CostEncumbranceMax %.2f validated to %.2f, want the default 5.5", bad, float64(b.CostEncumbranceMax))
+		}
 	}
 }
 
-// Equal pair (degenerate, not just inverted) must also be corrected: it flattens
-// the steep segment to a constant, so the curve stops responding to load at all
-// past the knee.
-func TestValidateProgression_CostEncumbranceMaxEqualToKneeMultIsCorrected(t *testing.T) {
-	b := &Balance{CostEncumbranceKneeMult: 2.0, CostEncumbranceMax: 2.0}
-	b.validateProgression()
-	if float64(b.CostEncumbranceMax) <= float64(b.CostEncumbranceKneeMult) {
-		t.Errorf("CostEncumbranceMax = %.2f, CostEncumbranceKneeMult = %.2f; max must be strictly greater than the knee multiplier after validation",
-			float64(b.CostEncumbranceMax), float64(b.CostEncumbranceKneeMult))
+// A shape at or below 0 makes the curve flat or undefined; it falls back to
+// the default.
+func TestValidateProgression_CostEncumbranceShapeNotPositiveIsCorrected(t *testing.T) {
+	for _, bad := range []float64{0, -1} {
+		b := &Balance{CostEncumbranceShape: ConfigFloat(bad), CostEncumbranceMax: 5.5}
+		b.validateProgression()
+		if float64(b.CostEncumbranceShape) != 2.5 {
+			t.Errorf("CostEncumbranceShape %.2f validated to %.2f, want the default 2.5", bad, float64(b.CostEncumbranceShape))
+		}
 	}
 }
 
-// A well-formed encumbrance pair must be left exactly as authored.
+// A well-formed pair is left exactly as authored, including a top of exactly
+// 1 (a flat curve, which tests use to price load out).
 func TestValidateProgression_CostEncumbrancePairPreservedWhenValid(t *testing.T) {
-	b := &Balance{CostEncumbranceKneeMult: 1.5, CostEncumbranceMax: 5.0}
-	b.validateProgression()
-	if float64(b.CostEncumbranceKneeMult) != 1.5 {
-		t.Errorf("CostEncumbranceKneeMult = %.2f, want 1.50 (explicit value preserved)", float64(b.CostEncumbranceKneeMult))
-	}
-	if float64(b.CostEncumbranceMax) != 5.0 {
-		t.Errorf("CostEncumbranceMax = %.2f, want 5.00 (explicit value preserved)", float64(b.CostEncumbranceMax))
+	for _, c := range []struct{ shape, max float64 }{{2.5, 5.5}, {1, 1}, {4, 8}} {
+		b := &Balance{CostEncumbranceShape: ConfigFloat(c.shape), CostEncumbranceMax: ConfigFloat(c.max)}
+		b.validateProgression()
+		if float64(b.CostEncumbranceShape) != c.shape || float64(b.CostEncumbranceMax) != c.max {
+			t.Errorf("(%.2f, %.2f) validated to (%.2f, %.2f), want them preserved", c.shape, c.max,
+				float64(b.CostEncumbranceShape), float64(b.CostEncumbranceMax))
+		}
 	}
 }
 
@@ -96,21 +96,5 @@ func TestProgressionBonuses_NegativeIsCorrected(t *testing.T) {
 	}
 	if float64(b.ObservedCritProgressionBonus) != 0.5 {
 		t.Errorf("ObservedCritProgressionBonus = %.2f, want 0.5 (default after negative correction)", float64(b.ObservedCritProgressionBonus))
-	}
-}
-
-// A knee multiplier BELOW 1.0 inverts the first segment: the curve would run
-// from 1.0 at empty down to the knee, making a loaded character cheaper to act
-// than an empty one. Positive, so the old `<= 0` guard let it through.
-func TestValidateProgression_CostEncumbranceKneeMultBelowOneIsCorrected(t *testing.T) {
-	b := &Balance{CostEncumbranceKneeMult: 0.5, CostEncumbranceMax: 5.0}
-	b.validateProgression()
-	if float64(b.CostEncumbranceKneeMult) < 1.0 {
-		t.Errorf("CostEncumbranceKneeMult = %.2f; a value below 1.0 inverts the gentle segment and must be corrected at validation",
-			float64(b.CostEncumbranceKneeMult))
-	}
-	if float64(b.CostEncumbranceMax) <= float64(b.CostEncumbranceKneeMult) {
-		t.Errorf("CostEncumbranceMax = %.2f is not above the corrected knee multiplier %.2f",
-			float64(b.CostEncumbranceMax), float64(b.CostEncumbranceKneeMult))
 	}
 }

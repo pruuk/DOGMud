@@ -31,7 +31,7 @@ func TestRecalculateSumsComponents(t *testing.T) {
 }
 
 // A pool-sized value must pass through untouched. HealthMax/StaminaMax/
-// ConvictionMax/ActionPointsMax are StatInfo and set Mods, so this is the
+// ConvictionMax are StatInfo and set Mods, so this is the
 // path that was silently costing every character ~40% of every pool.
 func TestPoolSizedValuesAreNotCompressed(t *testing.T) {
 	si := StatInfo{Mods: 530}
@@ -39,9 +39,9 @@ func TestPoolSizedValuesAreNotCompressed(t *testing.T) {
 	if si.ValueAdj != 530 {
 		t.Errorf("pool Mods=530 -> ValueAdj=%d, want 530", si.ValueAdj)
 	}
-	ap := StatInfo{Mods: 200}
-	ap.Recalculate()
-	if ap.ValueAdj != 200 {
-		t.Errorf("ActionPointsMax 200 -> ValueAdj=%d, want 200", ap.ValueAdj)
+	st := StatInfo{Mods: 200}
+	st.Recalculate()
+	if st.ValueAdj != 200 {
+		t.Errorf("StaminaMax 200 -> ValueAdj=%d, want 200", st.ValueAdj)
 	}
 }

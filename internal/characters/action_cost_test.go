@@ -79,8 +79,8 @@ func TestActionCostAppliesLoadOnlyToPhysicalActions(t *testing.T) {
 		}), CostFullOrRefuse).Charged
 	}
 
-	if empty, laden := quoteAndCommit(costs.ActionShoot, false), quoteAndCommit(costs.ActionShoot, true); empty != 10 || laden != 50 {
-		t.Fatalf("physical shoot charged empty/laden %d/%d, want 10/50", empty, laden)
+	if empty, laden := quoteAndCommit(costs.ActionShoot, false), quoteAndCommit(costs.ActionShoot, true); empty != 10 || laden != 55 {
+		t.Fatalf("physical shoot charged empty/laden %d/%d, want 10/55 (full load is 5.5x, #401)", empty, laden)
 	}
 	if empty, laden := quoteAndCommit(costs.ActionTaunt, false), quoteAndCommit(costs.ActionTaunt, true); empty != 10 || laden != 10 {
 		t.Fatalf("mental taunt charged empty/laden %d/%d, want 10/10", empty, laden)

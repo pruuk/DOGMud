@@ -24,13 +24,11 @@ func TestGo_ALockedDoorCostsNothing(t *testing.T) {
 	t.Cleanup(func() { room.Exits["north"] = orig })
 	require.True(t, room.Exits["north"].Lock.IsLocked(), "fixture premise: the north exit is locked")
 
-	user.Character.ActionPoints = 100
 	stamina := user.Character.Stamina
 
 	handled, err := Go("north", user, room, 0)
 	require.True(t, handled)
 	require.NoError(t, err)
 	require.Equal(t, 1, user.Character.RoomId, "the door stayed locked")
-	require.Equal(t, 100, user.Character.ActionPoints, "a locked door costs no action points")
 	require.Equal(t, stamina, user.Character.Stamina, "a locked door costs no stamina")
 }
