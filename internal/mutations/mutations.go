@@ -16,7 +16,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/pkg/errors"
 )
 
 // MutationEffect describes a single pro or con effect on a mutation.
@@ -157,7 +156,7 @@ func LoadMutationFiles() {
 	dataPath := string(configs.GetFilePathsConfig().DataFiles) + `/mutations`
 	tmpAll, err := fileloader.LoadAllFlatFiles[string, *MutationSpec](dataPath)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+dataPath))
+		panic(fmt.Errorf("filepath: %s: %w", dataPath, err))
 	}
 
 	allMutations = tmpAll

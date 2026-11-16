@@ -1,13 +1,13 @@
 package keywords
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -238,7 +238,7 @@ func LoadAliases(f ...fileloader.ReadableGroupFS) {
 	dataPath := string(configs.GetFilePathsConfig().DataFiles) + `/keywords.yaml`
 	tmpLoadedKeywords, err := fileloader.LoadFlatFile[*Aliases](dataPath)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+dataPath))
+		panic(fmt.Errorf("filepath: %s: %w", dataPath, err))
 	}
 
 	loadedKeywords = tmpLoadedKeywords

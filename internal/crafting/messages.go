@@ -12,7 +12,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/narration"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -124,14 +123,14 @@ func LoadCraftingMessages() {
 	path := string(configs.GetFilePathsConfig().DataFiles) + `/crafting-messages.yaml`
 	data, err := os.ReadFile(path)
 	if err != nil {
-		panic(errors.Wrap(err, "reading "+path))
+		panic(fmt.Errorf("reading %s: %w", path, err))
 	}
 	var cm CraftingMessages
 	if err := yaml.Unmarshal(data, &cm); err != nil {
-		panic(errors.Wrap(err, "parsing "+path))
+		panic(fmt.Errorf("parsing %s: %w", path, err))
 	}
 	if err := cm.Validate(RecipeSkills()); err != nil {
-		panic(errors.Wrap(err, "validating "+path))
+		panic(fmt.Errorf("validating %s: %w", path, err))
 	}
 	craftingMessages = cm
 	mudlog.Info("crafting.LoadCraftingMessages()", "skills", len(cm), "Time Taken", time.Since(start))

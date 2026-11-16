@@ -19,7 +19,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/narration"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/pkg/errors"
 )
 
 type ItemType string
@@ -942,7 +941,7 @@ func LoadDataFilesE() (err error) {
 	dataPath := string(configs.GetFilePathsConfig().DataFiles)
 	tmpItems, err := fileloader.LoadAllFlatFiles[int, *ItemSpec](dataPath + `/items`)
 	if err != nil {
-		return errors.Wrap(err, `filepath: `+dataPath+`/items`)
+		return fmt.Errorf("filepath: %s: %w", dataPath+`/items`, err)
 	}
 
 	for id, spec := range tmpItems {
@@ -956,12 +955,12 @@ func LoadDataFilesE() (err error) {
 
 	tmpAttackMessages, err := fileloader.LoadAllFlatFiles[ItemSubType, *WeaponAttackMessageGroup](dataPath + `/combat-messages`)
 	if err != nil {
-		return errors.Wrap(err, `filepath: `+dataPath+`/combat-messages`)
+		return fmt.Errorf("filepath: %s: %w", dataPath+`/combat-messages`, err)
 	}
 
 	tmpDefenseMessages, err := fileloader.LoadAllFlatFiles[DefencePool, *DefenseMessageGroup](dataPath + `/defense-messages`)
 	if err != nil {
-		return errors.Wrap(err, `filepath: `+dataPath+`/defense-messages`)
+		return fmt.Errorf("filepath: %s: %w", dataPath+`/defense-messages`, err)
 	}
 
 	// Every set loaded; swap them in together. rebuildAuthoredKeywords reads

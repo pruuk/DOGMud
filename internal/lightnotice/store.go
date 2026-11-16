@@ -7,6 +7,8 @@
 package lightnotice
 
 import (
+	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"unicode/utf8"
@@ -14,7 +16,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/narration"
-	"github.com/pkg/errors"
 )
 
 // Cause names what changed the light, as the player is told it.
@@ -84,23 +85,23 @@ func (g *CauseGroup) Filepath() string { return string(g.Cause) + ".yaml" }
 // would be silence in play rather than a boot failure.
 func (g *CauseGroup) Validate() error {
 	if !slices.Contains(allCauses, g.Cause) {
-		return errors.Errorf("unknown cause %q", g.Cause)
+		return fmt.Errorf("unknown cause %q", g.Cause)
 	}
 	for tr := range g.Transitions {
 		if !slices.Contains(allTransitions, tr) {
-			return errors.Errorf("cause %q declares unknown transition %q", g.Cause, tr)
+			return fmt.Errorf("cause %q declares unknown transition %q", g.Cause, tr)
 		}
 	}
 	for _, tr := range allTransitions {
 		p, ok := g.Transitions[tr]
 		if !ok {
-			return errors.Errorf("cause %q is missing transition %q", g.Cause, tr)
+			return fmt.Errorf("cause %q is missing transition %q", g.Cause, tr)
 		}
 		if p == nil {
-			return errors.Errorf("cause %q transition %q is empty", g.Cause, tr)
+			return fmt.Errorf("cause %q transition %q is empty", g.Cause, tr)
 		}
 		if err := p.validate(); err != nil {
-			return errors.Wrapf(err, "cause %q transition %q", g.Cause, tr)
+			return fmt.Errorf("cause %q transition %q: %w", g.Cause, tr, err)
 		}
 	}
 	return nil
@@ -125,11 +126,11 @@ func (p *Pools) validate() error {
 			continue
 		}
 		if err := narration.ValidateVariants(narration.Variants{Actor: n.pool}, MinVariants, narration.RoleActor); err != nil {
-			return errors.Wrap(err, n.name)
+			return fmt.Errorf("%s: %w", n.name, err)
 		}
 		for i, text := range n.pool {
 			if err := validateLine(text); err != nil {
-				return errors.Wrapf(err, "%s variant %d", n.name, i)
+				return fmt.Errorf("%s variant %d: %w", n.name, i, err)
 			}
 		}
 	}
@@ -141,7 +142,7 @@ func (p *Pools) validate() error {
 // store fills none, so a token would render its own braces).
 func validateLine(text string) error {
 	if n := utf8.RuneCountInString(text); n > maxLineColumns {
-		return errors.Errorf("is %d columns, over %d", n, maxLineColumns)
+		return fmt.Errorf("is %d columns, over %d", n, maxLineColumns)
 	}
 	if strings.ContainsAny(text, "0123456789") {
 		return errors.New("shows a number")
@@ -174,11 +175,11 @@ var loaded map[string]*CauseGroup
 func LoadFrom(dir string) error {
 	got, err := fileloader.LoadAllFlatFiles[string, *CauseGroup](dir)
 	if err != nil {
-		return errors.Wrap(err, "loading light notices")
+		return fmt.Errorf("loading light notices: %w", err)
 	}
 	for _, c := range allCauses {
 		if got[string(c)] == nil {
-			return errors.Errorf("light notices: no file for cause %q", c)
+			return fmt.Errorf("light notices: no file for cause %q", c)
 		}
 	}
 	loaded = got

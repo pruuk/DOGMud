@@ -14,7 +14,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/ansitags"
 	"github.com/mattn/go-runewidth"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -256,7 +255,7 @@ func LoadColorPatterns() {
 
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+path))
+		panic(fmt.Errorf("filepath: %s: %w", path, err))
 	}
 
 	clear(numericPatterns)
@@ -265,7 +264,7 @@ func LoadColorPatterns() {
 
 	err = yaml.Unmarshal(bytes, &numericPatterns)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+path))
+		panic(fmt.Errorf("filepath: %s: %w", path, err))
 	}
 
 	CompileColorPatterns()

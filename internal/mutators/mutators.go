@@ -12,7 +12,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -328,7 +327,7 @@ func (m *MutatorSpec) Validate() error {
 
 	if m.SkyLight != nil {
 		if v := *m.SkyLight; math.IsNaN(v) || v < 0 || v > 1 {
-			return errors.Errorf("mutator %q skylight %v is outside 0 to 1", m.MutatorId, v)
+			return fmt.Errorf("mutator %q skylight %v is outside 0 to 1", m.MutatorId, v)
 		}
 	}
 
@@ -355,7 +354,7 @@ func LoadDataFiles() {
 	dataPath := configs.GetFilePathsConfig().DataFiles.String() + `/mutators`
 	tmpMutators, err := fileloader.LoadAllFlatFiles[string, *MutatorSpec](dataPath)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+dataPath))
+		panic(fmt.Errorf("filepath: %s: %w", dataPath, err))
 	}
 
 	allMutators = tmpMutators

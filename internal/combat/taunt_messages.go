@@ -9,7 +9,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/narration"
-	"github.com/pkg/errors"
 )
 
 // TauntIntensity represents the outcome type of a taunt attempt.
@@ -113,7 +112,7 @@ func LoadTauntMessageFiles() {
 		// The log line stays so an operator sees the directory in the server
 		// log as well as in the panic.
 		mudlog.Error("combat.LoadTauntMessageFiles()", "path", dir, "error", err)
-		panic(errors.Wrap(err, `filepath: `+dir))
+		panic(fmt.Errorf("filepath: %s: %w", dir, err))
 	}
 
 	tauntMessages = tmpAll

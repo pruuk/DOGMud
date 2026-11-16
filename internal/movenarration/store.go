@@ -8,13 +8,13 @@
 package movenarration
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/narration"
-	"github.com/pkg/errors"
 )
 
 // This store's event tokens, beyond the four canonical name tokens every store
@@ -96,14 +96,14 @@ func (g *MoveNarrationGroup) Validate() error {
 		return errors.New("moveid is empty")
 	}
 	if len(g.Events) == 0 {
-		return errors.Errorf("move %q declares no events", g.MoveId)
+		return fmt.Errorf("move %q declares no events", g.MoveId)
 	}
 	for key, ev := range g.Events {
 		if ev == nil {
-			return errors.Errorf("move %q event %q is empty", g.MoveId, key)
+			return fmt.Errorf("move %q event %q is empty", g.MoveId, key)
 		}
 		if err := narration.ValidateVariants(ev.variants(), 1); err != nil {
-			return errors.Wrapf(err, "move %q event %q", g.MoveId, key)
+			return fmt.Errorf("move %q event %q: %w", g.MoveId, key, err)
 		}
 		if err := validateEventTokens(g.MoveId, key, ev); err != nil {
 			return err
@@ -120,7 +120,7 @@ func validateEventTokens(moveId string, key EventKey, ev *EventMessages) error {
 		for i, text := range pool {
 			for _, tok := range tokenPattern.FindAllString(text, -1) {
 				if !allowedTokens[tok] {
-					return errors.Errorf("move %q event %q variant %d uses unknown token %s", moveId, key, i, tok)
+					return fmt.Errorf("move %q event %q variant %d uses unknown token %s", moveId, key, i, tok)
 				}
 			}
 		}
@@ -157,7 +157,7 @@ var loadedMoves map[string]*MoveNarrationGroup
 func LoadFrom(dir string) error {
 	loaded, err := fileloader.LoadAllFlatFiles[string, *MoveNarrationGroup](dir)
 	if err != nil {
-		return errors.Wrap(err, "loading special-move narration")
+		return fmt.Errorf("loading special-move narration: %w", err)
 	}
 	loadedMoves = loaded
 	return nil

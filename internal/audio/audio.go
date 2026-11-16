@@ -1,12 +1,12 @@
 package audio
 
 import (
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -34,14 +34,14 @@ func LoadAudioConfig() {
 
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+path))
+		panic(fmt.Errorf("filepath: %s: %w", path, err))
 	}
 
 	clear(audioLookup)
 
 	err = yaml.Unmarshal(bytes, &audioLookup)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+path))
+		panic(fmt.Errorf("filepath: %s: %w", path, err))
 	}
 
 	mudlog.Info("...LoadAudioConfig()", "loadedCount", len(audioLookup), "Time Taken", time.Since(start))
