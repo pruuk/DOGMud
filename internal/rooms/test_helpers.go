@@ -1,6 +1,26 @@
 package rooms
 
-import "github.com/GoMudEngine/GoMud/internal/configs"
+import (
+	"sync/atomic"
+
+	"github.com/GoMudEngine/GoMud/internal/configs"
+)
+
+// instanceSavesOff, when set, makes LoadRoomInstance ignore rooms.instances
+// and SaveRoomInstance write nothing. See DisableInstanceSavesForTest.
+var instanceSavesOff atomic.Bool
+
+// DisableInstanceSavesForTest turns room instance saves off for the rest of
+// the test binary and returns a restore func. A test package that loads the
+// shipped world from the real tree (internal/guards, the repo root) calls it
+// once in TestMain: rooms.instances there holds a local server's saves, which
+// overlaid the templates and made a guard fail on one machine and pass on
+// another (#890: a saved Rift Stone in room 5000), and a test must not write
+// into that folder either.
+func DisableInstanceSavesForTest() func() {
+	prev := instanceSavesOff.Swap(true)
+	return func() { instanceSavesOff.Store(prev) }
+}
 
 // SeedRoomsForTest replaces the global roomManager with a fresh instance
 // populated from the supplied maps and returns a cleanup function.
