@@ -51,11 +51,12 @@ a reward when you finish.
   <ansi fg="command">quests all</ansi>          Show every quest you have started, finished ones too
 ::
 ::keep
-  <ansi fg="command">quests focus <name></ansi>
+  <ansi fg="command">quests follow <name></ansi>
 ::
 ::rows
         Follow that quest:  the map and the hint point to it.
 ::
+        The list marks it (following). <ansi fg="command">quests focus <name></ansi> does the same.
 ::keep
   <ansi fg="command">quests abandon <name></ansi>
 ::

@@ -197,6 +197,19 @@ func GetHelpContents(input string, width int) (string, error) {
 		helpName = keywords.TryHelpAlias(helpName)
 	}
 
+	// A help page answers to every name its command answers to (owner,
+	// 2026-11-16): `quest` runs `quests`, so `help quest` opens the quests
+	// page. Only when the word has no page of its own; a command alias with
+	// arguments ("bank deposit") opens its command's page.
+	if !templates.Exists(`help/` + helpName) {
+		if target := keywords.TryCommandAlias(helpName); target != helpName {
+			command, _, _ := strings.Cut(target, ` `)
+			if templates.Exists(`help/` + command) {
+				helpName = command
+			}
+		}
+	}
+
 	var helpVars any = nil
 
 	if helpName == `emote` {
