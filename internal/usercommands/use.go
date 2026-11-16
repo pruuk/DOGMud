@@ -22,14 +22,7 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		return true, nil
 	}
 
-	containerName := room.FindContainerByName(rest)
-	if containerName != `` {
-		if c, exists := room.Containers[containerName]; exists && c.Hidden {
-			if user == nil || !user.Character.HasDiscovery(room.RoomId, containerName) {
-				containerName = ``
-			}
-		}
-	}
+	containerName := room.FindVisibleContainerByName(characterOf(user), rest)
 	if containerName != `` {
 
 		container := room.Containers[containerName]

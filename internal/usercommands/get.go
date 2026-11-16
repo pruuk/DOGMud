@@ -169,14 +169,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		// get all <container> — grab everything from a specific container
 		if len(args) >= 2 {
-			cName := room.FindContainerByName(args[len(args)-1])
-			if cName != `` {
-				if c, exists := room.Containers[cName]; exists && c.Hidden {
-					if user == nil || !user.Character.HasDiscovery(room.RoomId, cName) {
-						cName = ``
-					}
-				}
-			}
+			cName := room.FindVisibleContainerByName(characterOf(user), args[len(args)-1])
 			if cName != `` {
 				container := room.Containers[cName]
 				if container.Gold > 0 {
@@ -396,8 +389,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			case parser.KindRoomContainer:
 				// Preserve the hidden-container discovery gate: only claim the
 				// container if it's visible or already discovered.
-				if c, exists := room.Containers[cm.ContainerName]; exists &&
-					(!c.Hidden || (user != nil && user.Character.HasDiscovery(room.RoomId, cm.ContainerName))) {
+				if room.ContainerVisibleTo(characterOf(user), cm.ContainerName) {
 					containerName = cm.ContainerName
 					getFromStash = false
 					rest = itemPart
@@ -726,14 +718,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		return true, nil
 	}
 
-	containerName = room.FindContainerByName(rest)
-	if containerName != `` {
-		if c, exists := room.Containers[containerName]; exists && c.Hidden {
-			if user == nil || !user.Character.HasDiscovery(room.RoomId, containerName) {
-				containerName = ``
-			}
-		}
-	}
+	containerName = room.FindVisibleContainerByName(characterOf(user), rest)
 	if containerName != `` {
 		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You can't pick up the <ansi fg="container">%s</ansi>. Try looking at it.`, containerName))
 	} else {

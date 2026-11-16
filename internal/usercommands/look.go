@@ -248,14 +248,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
-	containerName := room.FindContainerByName(lookAt)
-	if containerName != `` {
-		if container, exists := room.Containers[containerName]; exists && container.Hidden {
-			if user == nil || !user.Character.HasDiscovery(room.RoomId, containerName) {
-				containerName = `` // Treat as not found
-			}
-		}
-	}
+	containerName := room.FindVisibleContainerByName(characterOf(user), lookAt)
 	if containerName != `` {
 
 		itemNames := []string{}
@@ -847,10 +840,8 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	for containerName, container := range room.Containers {
 
 		// Skip hidden containers the user hasn't discovered
-		if container.Hidden {
-			if user == nil || !user.Character.HasDiscovery(room.RoomId, containerName) {
-				continue
-			}
+		if !room.ContainerVisibleTo(characterOf(user), containerName) {
+			continue
 		}
 
 		chestName := fmt.Sprintf(`<ansi fg="container">%s</ansi>`, containerName)

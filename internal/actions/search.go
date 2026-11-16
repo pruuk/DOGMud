@@ -456,11 +456,10 @@ func searchWholeRoom(actor Actor, room *rooms.Room, opts SearchOptions, searchSc
 	}
 
 	// ── Tier 1 (target 125): Hidden containers ──────────────────
-	for containerName, container := range room.Containers {
-		if !container.Hidden {
-			continue
-		}
-		if char.HasDiscovery(room.RoomId, containerName) {
+	for containerName := range room.Containers {
+		// Only a hidden container this character has not yet discovered is
+		// left to find: everything they can already see is skipped (#442).
+		if room.ContainerVisibleTo(char, containerName) {
 			continue
 		}
 		rolledAgainstSomething = true

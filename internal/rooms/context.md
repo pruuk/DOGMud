@@ -668,8 +668,15 @@ type Container struct {
 
 **Behavior:**
 - When `Hidden` is `true`, the container doesn't appear in room descriptions or `look` output
-- After discovery via `search`, all players see the container in room details
-- Discovery is tracked per-player in the character's discovery map
+- After a character discovers it via `search`, that character sees it; others
+  still do not until they find it themselves
+- Discovery is tracked per character in the character's discovery map
+- **The rule lives in one place (#442):** `Room.ContainerVisibleTo(char, name)`
+  (exists, and not hidden or discovered by `char` in this room; a nil `char`
+  sees no hidden container) and `Room.FindVisibleContainerByName(char, input)`
+  (`FindContainerByName` limited to those). Every command, the GMCP room view
+  and search's "still to find" loop call them; the guard
+  `TestHiddenContainerRuleIsWrittenOnce` fails on a hand-written copy
 - The container noun in the room description should be subtly highlighted with `<ansi fg="itemname">noun</ansi>` for discoverability hints
 
 ### Authoring Convention
