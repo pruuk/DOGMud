@@ -8,8 +8,9 @@ food to sustain them through hardship. The skill is governed by
 <ansi fg="yellow">━━━ Requirements ━━━</ansi>
 
 ::rows
-  Station:   A <ansi fg="yellow">hearth</ansi> must be in the room with you.
-             You'll find a hearth in Pothole Coulee and most towns.
+  Station:   A <ansi fg="yellow">cooking fire</ansi> must be in the room with you:
+             a hearth, a fire pit or a kitchen fire. You'll find one
+             in Pothole Coulee and most towns.
   Materials:  Fresh ingredients from foraging, hunting, and vendors.
               Find them on the ground in the Kitchen or loot from mobs.
 ::

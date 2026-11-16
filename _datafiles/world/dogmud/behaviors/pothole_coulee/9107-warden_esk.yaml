@@ -38,9 +38,9 @@ tree:
           do: say
           text: >-
             Thornwall sits on the far side. Temple stone, city noise,
-            more people than you have ever needed. Walk through. The
-            arch keeps no count and no grudge. You can come back
-            through the portal in the Thornwall temple.
+            more people than you have ever needed. The arch will
+            carry you through; it keeps no count and no grudge. You
+            can come back through the portal in the Thornwall temple.
           delay: 5.5
         # The line the move follows goes out through `respond`, which sends
         # at its own delay. An emote goes through mob.Command onto Esk's
