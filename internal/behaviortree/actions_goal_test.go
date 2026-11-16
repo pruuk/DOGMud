@@ -104,7 +104,7 @@ func TestTryGoalPlanner_NilMob_Failure(t *testing.T) {
 // TestTryGoalPlanner_NoCurrentGoal_Failure verifies that a mob with no
 // goals returns Failure.
 func TestTryGoalPlanner_NoCurrentGoal_Failure(t *testing.T) {
-	goals.ClearCache()
+	goals.IsolateForTest(t)
 	buildGoalMob(t, 9901, 99701, "no_goal_test", 1)
 
 	ctx := &EvalContext{
@@ -121,9 +121,8 @@ func TestTryGoalPlanner_NoCurrentGoal_Failure(t *testing.T) {
 // TestTryGoalPlanner_NoRegisteredPlanner_Failure verifies that a mob with
 // a current goal but no registered planner for that type returns Failure.
 func TestTryGoalPlanner_NoRegisteredPlanner_Failure(t *testing.T) {
-	goals.ClearCache()
+	goals.IsolateForTest(t)
 	mob := buildGoalMob(t, 9902, 99702, "no_planner_test", 1)
-	t.Cleanup(func() { goals.ClearCache() })
 
 	if _, err := goals.Add(int(mob.MobId), "no_planner_test",
 		&goals.Goal{Type: "unregistered-goal-type-9902", Priority: 50}); err != nil {
@@ -145,7 +144,7 @@ func TestTryGoalPlanner_NoRegisteredPlanner_Failure(t *testing.T) {
 // dispatch path: a registered planner returning StatusSuccess maps to
 // btree Success.
 func TestTryGoalPlanner_RegisteredPlanner_PropagatesSuccess(t *testing.T) {
-	goals.ClearCache()
+	goals.IsolateForTest(t)
 	const testGoalType = "test-goal-planner-success-9903"
 	planners.RegisterPlanner(testGoalType, func(*mobs.Mob, *goals.Goal) planners.PlanResult {
 		return planners.PlanResult{Status: planners.StatusSuccess}
@@ -153,7 +152,6 @@ func TestTryGoalPlanner_RegisteredPlanner_PropagatesSuccess(t *testing.T) {
 	t.Cleanup(func() { planners.RegisterPlanner(testGoalType, nil) })
 
 	mob := buildGoalMob(t, 9903, 99703, "planner_success_test", 1)
-	t.Cleanup(func() { goals.ClearCache() })
 
 	if _, err := goals.Add(int(mob.MobId), "planner_success_test",
 		&goals.Goal{Type: testGoalType, Priority: 50}); err != nil {
@@ -177,7 +175,7 @@ func TestTryGoalPlanner_RegisteredPlanner_PropagatesSuccess(t *testing.T) {
 // "goalActedRound" TempData key. The idle handler reads this to suppress its
 // legacy idle block on ticks the planner is actively acting on.
 func TestTryGoalPlanner_StampsGoalActedRound_WhenCommandIssued(t *testing.T) {
-	goals.ClearCache()
+	goals.IsolateForTest(t)
 	util.SetRoundCountForTest(4242)
 	const testGoalType = "test-goal-planner-stamp-9905"
 	planners.RegisterPlanner(testGoalType, func(*mobs.Mob, *goals.Goal) planners.PlanResult {
@@ -186,7 +184,6 @@ func TestTryGoalPlanner_StampsGoalActedRound_WhenCommandIssued(t *testing.T) {
 	t.Cleanup(func() { planners.RegisterPlanner(testGoalType, nil) })
 
 	mob := buildGoalMob(t, 9905, 99705, "planner_stamp_test", 1)
-	t.Cleanup(func() { goals.ClearCache() })
 
 	if _, err := goals.Add(int(mob.MobId), "planner_stamp_test",
 		&goals.Goal{Type: testGoalType, Priority: 50}); err != nil {
@@ -217,7 +214,7 @@ func TestTryGoalPlanner_StampsGoalActedRound_WhenCommandIssued(t *testing.T) {
 // returns an empty Command (idle-Running, e.g. nothing to buy), actGoalPlanner
 // does NOT stamp goalActedRound — leaving legacy idle free to emit emotes.
 func TestTryGoalPlanner_NoStamp_WhenCommandEmpty(t *testing.T) {
-	goals.ClearCache()
+	goals.IsolateForTest(t)
 	util.SetRoundCountForTest(5555)
 	const testGoalType = "test-goal-planner-nostamp-9906"
 	planners.RegisterPlanner(testGoalType, func(*mobs.Mob, *goals.Goal) planners.PlanResult {
@@ -226,7 +223,6 @@ func TestTryGoalPlanner_NoStamp_WhenCommandEmpty(t *testing.T) {
 	t.Cleanup(func() { planners.RegisterPlanner(testGoalType, nil) })
 
 	mob := buildGoalMob(t, 9906, 99706, "planner_nostamp_test", 1)
-	t.Cleanup(func() { goals.ClearCache() })
 
 	if _, err := goals.Add(int(mob.MobId), "planner_nostamp_test",
 		&goals.Goal{Type: testGoalType, Priority: 50}); err != nil {
@@ -261,7 +257,7 @@ func TestRunGoalPlanner_NilMob_Failure(t *testing.T) {
 // stamps BOTH goalPlannerRanRound (dedup marker) and goalActedRound (planner-
 // owns-the-tick marker) with the caller-supplied round.
 func TestRunGoalPlanner_CommandIssued_StampsBothMarkers(t *testing.T) {
-	goals.ClearCache()
+	goals.IsolateForTest(t)
 	const testGoalType = "test-run-goal-planner-cmd-9910"
 	planners.RegisterPlanner(testGoalType, func(*mobs.Mob, *goals.Goal) planners.PlanResult {
 		return planners.PlanResult{Command: "pathto 100", Status: planners.StatusRunning}
@@ -269,7 +265,6 @@ func TestRunGoalPlanner_CommandIssued_StampsBothMarkers(t *testing.T) {
 	t.Cleanup(func() { planners.RegisterPlanner(testGoalType, nil) })
 
 	mob := buildGoalMob(t, 9910, 99710, "run_planner_cmd_test", 1)
-	t.Cleanup(func() { goals.ClearCache() })
 
 	if _, err := goals.Add(int(mob.MobId), "run_planner_cmd_test",
 		&goals.Goal{Type: testGoalType, Priority: 50}); err != nil {
@@ -294,7 +289,7 @@ func TestRunGoalPlanner_CommandIssued_StampsBothMarkers(t *testing.T) {
 // dedup marker (goalPlannerRanRound) but NOT goalActedRound — so legacy idle
 // stays free to emit flavor emotes.
 func TestRunGoalPlanner_EmptyCommand_StampsRanNotActed(t *testing.T) {
-	goals.ClearCache()
+	goals.IsolateForTest(t)
 	const testGoalType = "test-run-goal-planner-empty-9911"
 	planners.RegisterPlanner(testGoalType, func(*mobs.Mob, *goals.Goal) planners.PlanResult {
 		return planners.PlanResult{Command: "", Status: planners.StatusRunning}
@@ -302,7 +297,6 @@ func TestRunGoalPlanner_EmptyCommand_StampsRanNotActed(t *testing.T) {
 	t.Cleanup(func() { planners.RegisterPlanner(testGoalType, nil) })
 
 	mob := buildGoalMob(t, 9911, 99711, "run_planner_empty_test", 1)
-	t.Cleanup(func() { goals.ClearCache() })
 
 	if _, err := goals.Add(int(mob.MobId), "run_planner_empty_test",
 		&goals.Goal{Type: testGoalType, Priority: 50}); err != nil {
@@ -325,9 +319,8 @@ func TestRunGoalPlanner_EmptyCommand_StampsRanNotActed(t *testing.T) {
 // TestRunGoalPlanner_NoCurrentGoal_Failure verifies that a mob with no goal
 // returns Failure and does NOT stamp the dedup marker.
 func TestRunGoalPlanner_NoCurrentGoal_Failure(t *testing.T) {
-	goals.ClearCache()
+	goals.IsolateForTest(t)
 	mob := buildGoalMob(t, 9912, 99712, "run_planner_nogoal_test", 1)
-	t.Cleanup(func() { goals.ClearCache() })
 
 	if got := RunGoalPlanner(mob, 1234); got != Failure {
 		t.Errorf("no current goal: got %v, want Failure", got)
@@ -340,7 +333,7 @@ func TestRunGoalPlanner_NoCurrentGoal_Failure(t *testing.T) {
 // TestTryGoalPlanner_PlannerPanic_RecoveredFailure verifies that a panic
 // inside the planner is recovered and maps to Failure, not a crash.
 func TestTryGoalPlanner_PlannerPanic_RecoveredFailure(t *testing.T) {
-	goals.ClearCache()
+	goals.IsolateForTest(t)
 	const testGoalType = "test-goal-planner-panic-9904"
 	planners.RegisterPlanner(testGoalType, func(*mobs.Mob, *goals.Goal) planners.PlanResult {
 		panic("planner boom in dispatch test")
@@ -348,7 +341,6 @@ func TestTryGoalPlanner_PlannerPanic_RecoveredFailure(t *testing.T) {
 	t.Cleanup(func() { planners.RegisterPlanner(testGoalType, nil) })
 
 	mob := buildGoalMob(t, 9904, 99704, "planner_panic_test", 1)
-	t.Cleanup(func() { goals.ClearCache() })
 
 	if _, err := goals.Add(int(mob.MobId), "planner_panic_test",
 		&goals.Goal{Type: testGoalType, Priority: 50}); err != nil {

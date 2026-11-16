@@ -14,7 +14,7 @@ import (
 )
 
 func TestGoalsOf_EmptyWhenNothingPersisted(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	if got := GoalsOf(99001, "ghost"); len(got) != 0 {
 		t.Errorf("expected empty, got %d goals", len(got))
@@ -22,7 +22,7 @@ func TestGoalsOf_EmptyWhenNothingPersisted(t *testing.T) {
 }
 
 func TestGoalsOf_LazyLoadFromDisk(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	mg := &MobGoals{
 		MobId:      99002,
@@ -46,6 +46,7 @@ func TestGoalsOf_LazyLoadFromDisk(t *testing.T) {
 }
 
 func TestIsSatisfied_NoPredicateReturnsFalse(t *testing.T) {
+	IsolateForTest(t)
 	resetRegistry()
 	g := &Goal{Id: "g1", Type: "noexist", OwnerMobId: 1}
 	if IsSatisfied(g, nil) {
@@ -54,6 +55,7 @@ func TestIsSatisfied_NoPredicateReturnsFalse(t *testing.T) {
 }
 
 func TestIsSatisfied_InvokesRegisteredPredicate(t *testing.T) {
+	IsolateForTest(t)
 	resetRegistry()
 	called := false
 	RegisterGoalType("pingtest", GoalTypeMeta{
@@ -72,6 +74,7 @@ func TestIsSatisfied_InvokesRegisteredPredicate(t *testing.T) {
 }
 
 func TestIsExpired_ZeroNeverExpires(t *testing.T) {
+	IsolateForTest(t)
 	g := &Goal{Id: "g1"}
 	if IsExpired(g, time.Now()) {
 		t.Error("zero ExpiresAt should never expire")
@@ -79,6 +82,7 @@ func TestIsExpired_ZeroNeverExpires(t *testing.T) {
 }
 
 func TestIsExpired_PastTime(t *testing.T) {
+	IsolateForTest(t)
 	g := &Goal{Id: "g1", ExpiresAt: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
 	if !IsExpired(g, time.Now()) {
 		t.Error("expected expired")
@@ -86,6 +90,7 @@ func TestIsExpired_PastTime(t *testing.T) {
 }
 
 func TestIsExpired_FutureTime(t *testing.T) {
+	IsolateForTest(t)
 	g := &Goal{Id: "g1", ExpiresAt: time.Now().Add(time.Hour)}
 	if IsExpired(g, time.Now()) {
 		t.Error("expected not expired")
@@ -93,7 +98,7 @@ func TestIsExpired_FutureTime(t *testing.T) {
 }
 
 func TestAdd_HappyPath(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	g := &Goal{Type: "revenge", Priority: 70, Params: map[string]any{"k": "v"}}
 	res, err := Add(99003, "addmob", g)
@@ -119,7 +124,7 @@ func TestAdd_HappyPath(t *testing.T) {
 }
 
 func TestAdd_AssignsSequentialIds(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	for i, want := range []string{"g1", "g2", "g3"} {
 		res, err := Add(99004, "seqmob", &Goal{
@@ -136,7 +141,7 @@ func TestAdd_AssignsSequentialIds(t *testing.T) {
 }
 
 func TestAdd_PersistsAcrossClearCache(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	if _, err := Add(99005, "persistmob", &Goal{Type: "alpha", Priority: 50}); err != nil {
 		t.Fatalf("Add: %v", err)
@@ -149,7 +154,7 @@ func TestAdd_PersistsAcrossClearCache(t *testing.T) {
 }
 
 func TestAdd_SameTypeBlockedByHigherOrEqualPriority(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	if _, err := Add(99006, "conflict1", &Goal{Type: "revenge", Priority: 70}); err != nil {
 		t.Fatal(err)
@@ -168,7 +173,7 @@ func TestAdd_SameTypeBlockedByHigherOrEqualPriority(t *testing.T) {
 }
 
 func TestAdd_SameTypeDisplacesLowerPriority(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	if _, err := Add(99007, "conflict2", &Goal{Type: "revenge", Priority: 30}); err != nil {
 		t.Fatal(err)
@@ -187,7 +192,7 @@ func TestAdd_SameTypeDisplacesLowerPriority(t *testing.T) {
 }
 
 func TestAdd_CrossTypeConflict_BothDirectionsDeclared(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	RegisterGoalType("revenge", GoalTypeMeta{ConflictsWith: []string{"protection"}})
 	RegisterGoalType("protection", GoalTypeMeta{ConflictsWith: []string{"revenge"}})
@@ -203,6 +208,7 @@ func TestAdd_CrossTypeConflict_BothDirectionsDeclared(t *testing.T) {
 }
 
 func TestAdd_CrossTypeConflict_SymmetrySafetyNet(t *testing.T) {
+	IsolateForTest(t)
 	// "revenge" declares protection as a conflict, but "protection"
 	// does NOT declare revenge. Adding protection while revenge exists
 	// should still be blocked, because the existing type's metadata
@@ -229,7 +235,7 @@ func TestAdd_CrossTypeConflict_SymmetrySafetyNet(t *testing.T) {
 }
 
 func TestAdd_DisplacesMultipleConflicts(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	RegisterGoalType("a", GoalTypeMeta{ConflictsWith: []string{"b", "c"}})
 	RegisterGoalType("b", GoalTypeMeta{ConflictsWith: []string{"a"}})
@@ -255,7 +261,7 @@ func TestAdd_DisplacesMultipleConflicts(t *testing.T) {
 }
 
 func TestRemove_HappyPath(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	res, err := Add(99011, "removable", &Goal{Type: "alpha", Priority: 50})
 	if err != nil {
@@ -270,7 +276,7 @@ func TestRemove_HappyPath(t *testing.T) {
 }
 
 func TestRemove_MissingIdReturnsErrGoalNotFound(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	err := Remove(99012, "empty", "g999")
 	if !errors.Is(err, ErrGoalNotFound) {
@@ -279,6 +285,7 @@ func TestRemove_MissingIdReturnsErrGoalNotFound(t *testing.T) {
 }
 
 func TestRemove_DoesNotResetNextGoalId(t *testing.T) {
+	IsolateForTest(t)
 	// Ids are never reused even after Remove. After Add → Remove → Add,
 	// the second Add should produce g2, not g1.
 	ClearCache()
@@ -297,6 +304,7 @@ func TestRemove_DoesNotResetNextGoalId(t *testing.T) {
 }
 
 func TestClear_RemovesAllAndResetsCounter(t *testing.T) {
+	IsolateForTest(t)
 	// Note: spec says ids never reused for the lifetime of a mob's file.
 	// Clear is admin-only and intentionally heavy-hand — it wipes the
 	// file AND resets NextGoalId to 1 so the operator gets a clean slate.
@@ -324,7 +332,7 @@ func TestClear_RemovesAllAndResetsCounter(t *testing.T) {
 }
 
 func TestGoalsOf_PriorityDescThenIdAsc(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	// Different types to avoid same-type conflict.
 	if _, err := Add(99015, "ordering", &Goal{Type: "a", Priority: 30}); err != nil {
@@ -350,6 +358,7 @@ func TestGoalsOf_PriorityDescThenIdAsc(t *testing.T) {
 }
 
 func TestGoalsOf_ReturnedSliceIsCopy(t *testing.T) {
+	IsolateForTest(t)
 	// Mutating the returned slice (sort, append) must not affect the cache.
 	ClearCache()
 	resetRegistry()
@@ -365,7 +374,7 @@ func TestGoalsOf_ReturnedSliceIsCopy(t *testing.T) {
 }
 
 func TestConcurrentAdd_DifferentMobsNoRace(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	var wg sync.WaitGroup
 	for i := 0; i < 10; i++ {
@@ -383,7 +392,7 @@ func TestConcurrentAdd_DifferentMobsNoRace(t *testing.T) {
 }
 
 func TestConcurrentAdd_SameMobSerializes(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	var wg sync.WaitGroup
 	for i := 0; i < 5; i++ {
@@ -407,7 +416,7 @@ func TestConcurrentAdd_SameMobSerializes(t *testing.T) {
 }
 
 func TestRecompute_FreshSelection_PersistsCurrentGoal(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	mobId := 99001
 	name := "recompute_fresh"
 	g := &Goal{Type: "wealth", Priority: 50}
@@ -437,7 +446,7 @@ func TestRecompute_FreshSelection_PersistsCurrentGoal(t *testing.T) {
 }
 
 func TestRecompute_NoSwitch_DoesNotRewriteFile(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	mobId := 99002
 	name := "recompute_nochange"
 	g := &Goal{Type: "wealth", Priority: 50}
@@ -466,7 +475,7 @@ func TestRecompute_NoSwitch_DoesNotRewriteFile(t *testing.T) {
 }
 
 func TestCurrentGoalOf_AfterRecompute_ReturnsCurrentGoal(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	mobId := 99003
 	name := "currentof_test"
 	g := &Goal{Type: "wealth", Priority: 50}
@@ -485,7 +494,7 @@ func TestCurrentGoalOf_AfterRecompute_ReturnsCurrentGoal(t *testing.T) {
 }
 
 func TestCurrentGoalOf_NoGoals_ReturnsNil(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	got := CurrentGoalOf(99004, "no_goals_mob")
 	if got != nil {
 		t.Errorf("got=%v, want nil (no goals)", got)
@@ -493,7 +502,7 @@ func TestCurrentGoalOf_NoGoals_ReturnsNil(t *testing.T) {
 }
 
 func TestCurrentGoalOf_StaleId_ReturnsNil(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	mobId := 99005
 	name := "stale_id_test"
 	// Seed the file with a current_goal_id that doesn't exist in goals slice.
@@ -511,7 +520,7 @@ func TestCurrentGoalOf_StaleId_ReturnsNil(t *testing.T) {
 }
 
 func TestAdd_EagerRecompute_FirstGoalBecomesCurrent(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	mobId := 99101
 	name := "eager_first"
 	g := &Goal{Type: "wealth", Priority: 50}
@@ -528,7 +537,7 @@ func TestAdd_EagerRecompute_FirstGoalBecomesCurrent(t *testing.T) {
 }
 
 func TestRemove_OfCurrent_ClearsSelection_ThenEagerRecomputeSelectsFresh(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	mobId := 99102
 	name := "eager_remove"
 	g1 := &Goal{Type: "wealth", Priority: 30}
@@ -560,7 +569,7 @@ func TestRemove_OfCurrent_ClearsSelection_ThenEagerRecomputeSelectsFresh(t *test
 }
 
 func TestRemove_OfNonCurrent_DoesNotChangeCurrent(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	mobId := 99103
 	name := "eager_remove_noncurr"
 	g1 := &Goal{Type: "wealth", Priority: 90}
@@ -581,7 +590,7 @@ func TestRemove_OfNonCurrent_DoesNotChangeCurrent(t *testing.T) {
 }
 
 func TestClear_ZerosAllSelectionFields(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	mobId := 99104
 	name := "eager_clear"
 	if _, err := Add(mobId, name, &Goal{Type: "wealth", Priority: 50}); err != nil {
@@ -603,7 +612,7 @@ func TestClear_ZerosAllSelectionFields(t *testing.T) {
 }
 
 func TestAdd_ParamSchemaViolation_RejectsGoal(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	RegisterGoalType("test-paramreq", GoalTypeMeta{
 		Params: []ParamSchema{{Key: "target", Required: true, GoType: "int"}},
 	})
@@ -626,7 +635,7 @@ func TestAdd_ParamSchemaViolation_RejectsGoal(t *testing.T) {
 }
 
 func TestAdd_AllowMultiple_DifferentDedupKeys_BothAdded(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	RegisterGoalType("test-multi", GoalTypeMeta{
 		AllowMultiple: true,
 		DedupKey: func(g *Goal) string {
@@ -654,7 +663,7 @@ func TestAdd_AllowMultiple_DifferentDedupKeys_BothAdded(t *testing.T) {
 }
 
 func TestAdd_AllowMultiple_SameDedupKey_ConflictsByPriority(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	RegisterGoalType("test-multi2", GoalTypeMeta{
 		AllowMultiple: true,
 		DedupKey: func(g *Goal) string {
@@ -687,7 +696,7 @@ func TestAdd_AllowMultiple_SameDedupKey_ConflictsByPriority(t *testing.T) {
 }
 
 func TestAdd_AllowMultiple_SameDedupKey_HigherPriority_Displaces(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	RegisterGoalType("test-multi3", GoalTypeMeta{
 		AllowMultiple: true,
 		DedupKey: func(g *Goal) string {
@@ -716,6 +725,7 @@ func TestAdd_AllowMultiple_SameDedupKey_HigherPriority_Displaces(t *testing.T) {
 }
 
 func TestAdd_AllowMultipleFalse_StillBlocksSameType(t *testing.T) {
+	IsolateForTest(t)
 	// Confirms 4.1 behavior preserved for types that don't opt in.
 	ClearCache()
 	RegisterGoalType("test-singleton", GoalTypeMeta{})
@@ -735,7 +745,7 @@ func TestAdd_AllowMultipleFalse_StillBlocksSameType(t *testing.T) {
 }
 
 func TestAdd_DedupKey_PanicRecovered_FallsThroughToNoKeyCollision(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	RegisterGoalType("test-panicky", GoalTypeMeta{
 		AllowMultiple: true,
 		DedupKey: func(g *Goal) string {
@@ -760,7 +770,7 @@ func TestAdd_DedupKey_PanicRecovered_FallsThroughToNoKeyCollision(t *testing.T) 
 }
 
 func TestLoadOrLazyInit_FreshMob_NoLookup_SetsSentinelTrueNoSeeds(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	SetArchetypeDefaultsLookup(nil)
 	mobId := 99501
 	name := "fresh_no_lookup"
@@ -774,7 +784,7 @@ func TestLoadOrLazyInit_FreshMob_NoLookup_SetsSentinelTrueNoSeeds(t *testing.T) 
 }
 
 func TestLoadOrLazyInit_FreshMob_WithLookup_SeedsAndPersists(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	RegisterGoalType("test-seedable", GoalTypeMeta{})
 	defer resetRegistry()
 	SetArchetypeDefaultsLookup(func(mob *mobs.Mob) []GoalDefault {
@@ -804,7 +814,7 @@ func TestLoadOrLazyInit_FreshMob_WithLookup_SeedsAndPersists(t *testing.T) {
 // Previously this test asserted "lookup not called, 0 goals" — that behaviour
 // was the bug.  After the fix, the lookup IS called and the missing goal IS added.
 func TestLoadOrLazyInit_ExistingFileWithSentinelTrue_MergeSeeds(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	RegisterGoalType("test-skipseed", GoalTypeMeta{})
 	defer resetRegistry()
 	called := 0
@@ -840,7 +850,7 @@ func TestLoadOrLazyInit_ExistingFileWithSentinelTrue_MergeSeeds(t *testing.T) {
 }
 
 func TestClear_PreservesSentinel(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	RegisterGoalType("test-preserve", GoalTypeMeta{})
 	defer resetRegistry()
 	SetArchetypeDefaultsLookup(func(mob *mobs.Mob) []GoalDefault {
@@ -864,7 +874,7 @@ func TestClear_PreservesSentinel(t *testing.T) {
 }
 
 func TestLoadOrLazyInit_SeededDefaultFailsValidation_LogsAndContinues(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	RegisterGoalType("test-strict", GoalTypeMeta{
 		Params: []ParamSchema{{Key: "target", Required: true, GoType: "int"}},
 	})
@@ -900,7 +910,7 @@ func TestLoadOrLazyInit_SeededDefaultFailsValidation_LogsAndContinues(t *testing
 // (no defaults → sentinel set, empty goals), then archetype changed to
 // guard_captain which declares default goals.
 func TestMergeSeed_MissingDefaultSeededOntoPreviouslySeededMob(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	RegisterGoalType("test-merge-survival", GoalTypeMeta{})
 	RegisterGoalType("test-merge-upgrade", GoalTypeMeta{})
@@ -958,7 +968,7 @@ func TestMergeSeed_MissingDefaultSeededOntoPreviouslySeededMob(t *testing.T) {
 // TestMergeSeed_AlreadyPresentTypeNotDuplicated verifies that a default type
 // already present on the mob is not added again.
 func TestMergeSeed_AlreadyPresentTypeNotDuplicated(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	RegisterGoalType("test-merge-dup", GoalTypeMeta{})
 	defer resetRegistry()
@@ -1001,7 +1011,7 @@ func TestMergeSeed_AlreadyPresentTypeNotDuplicated(t *testing.T) {
 // has set a goal of the same type at HIGHER priority than the archetype default,
 // the merge-seed does NOT replace or displace it.
 func TestMergeSeed_AdminSetHigherPriorityNotClobbered(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	RegisterGoalType("test-merge-admin", GoalTypeMeta{})
 	defer resetRegistry()
@@ -1048,7 +1058,7 @@ func TestMergeSeed_AdminSetHigherPriorityNotClobbered(t *testing.T) {
 // TestMergeSeed_PartiallySeeded_OnlyMissingTypesAdded verifies that when a mob
 // has some (but not all) archetype defaults, only the missing ones are seeded.
 func TestMergeSeed_PartiallySeeded_OnlyMissingTypesAdded(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	RegisterGoalType("test-merge-present", GoalTypeMeta{})
 	RegisterGoalType("test-merge-absent", GoalTypeMeta{})
@@ -1113,7 +1123,7 @@ func TestMergeSeed_PartiallySeeded_OnlyMissingTypesAdded(t *testing.T) {
 //
 // This test FAILS before the fix (step 3 didn't exist) and PASSES after.
 func TestMergeSeed_RecomputeWithLiveMob_SeedsMissingDefault(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	RegisterGoalType("test-recompute-seed", GoalTypeMeta{})
 	defer resetRegistry()
@@ -1170,7 +1180,7 @@ func TestMergeSeed_RecomputeWithLiveMob_SeedsMissingDefault(t *testing.T) {
 }
 
 func TestRecompute_SwitchInvokesPlanStateClear(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	called := false
 	SetPlanStateClear(func(mob *mobs.Mob) {
 		called = true
@@ -1191,7 +1201,7 @@ func TestRecompute_SwitchInvokesPlanStateClear(t *testing.T) {
 }
 
 func TestRecompute_NoSwitch_DoesNotInvokeCallback(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	mobId := 99602
 	name := "noswitch_callback"
 	g := &Goal{Type: "wealth", Priority: 50}
@@ -1212,7 +1222,7 @@ func TestRecompute_NoSwitch_DoesNotInvokeCallback(t *testing.T) {
 }
 
 func TestRecompute_NoCallbackRegistered_NoError(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	SetPlanStateClear(nil)
 	mobId := 99603
 	name := "no_callback"

@@ -1,8 +1,6 @@
 package hooks
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
@@ -64,18 +62,7 @@ func setupTheftWorld(t *testing.T) *theftWorld {
 	cfg.Balance.GoalSelectTickEnabled = true
 	configs.SetConfigForTest(t, cfg)
 
-	dir := filepath.Join(t.TempDir(), "goals")
-	prev, had := os.LookupEnv("DOGMUD_GOALS_DIR_OVERRIDE")
-	os.Setenv("DOGMUD_GOALS_DIR_OVERRIDE", dir)
-	t.Cleanup(func() {
-		if had {
-			os.Setenv("DOGMUD_GOALS_DIR_OVERRIDE", prev)
-		} else {
-			os.Unsetenv("DOGMUD_GOALS_DIR_OVERRIDE")
-		}
-	})
-	goals.ClearCache()
-	t.Cleanup(goals.ClearCache)
+	goals.IsolateForTest(t)
 
 	here := &rooms.Room{RoomId: theftRoom, Zone: theftZone}
 	there := &rooms.Room{RoomId: theftOtherRoom, Zone: theftZone}
