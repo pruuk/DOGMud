@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,18 +19,6 @@ import (
 // explicitly persistent living economy state (CLAUDE.md) — it is never wiped by
 // the instance-save SOP precisely because it cannot be regenerated.
 // ---------------------------------------------------------------------------
-
-// withShopDataDir points FilePaths.DataFiles at a temp dir for one test.
-func withShopDataDir(t *testing.T) string {
-	t.Helper()
-	dir := t.TempDir()
-	prev := configs.GetFilePathsConfig().DataFiles.String()
-	configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dir})
-	t.Cleanup(func() {
-		configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": prev})
-	})
-	return dir
-}
 
 func templateShop() ShopInventory {
 	return ShopInventory{
@@ -62,8 +49,7 @@ func quarantined(t *testing.T, path string) []string {
 
 // Control leg: no file really is a fresh shop, and must stay silent.
 func TestRegisterShop_AbsentFileSeedsFromTemplateAndQuarantinesNothing(t *testing.T) {
-	withShopDataDir(t)
-	ClearCache()
+	IsolateForTest(t)
 
 	inv := RegisterShop("testzone", 42, 100, templateShop())
 
@@ -76,8 +62,7 @@ func TestRegisterShop_AbsentFileSeedsFromTemplateAndQuarantinesNothing(t *testin
 // The finding: a corrupt file must be preserved, not silently replaced by a
 // fresh shop whose first save overwrites the damaged economy.
 func TestRegisterShop_CorruptFileIsQuarantinedNotSilentlyReseeded(t *testing.T) {
-	withShopDataDir(t)
-	ClearCache()
+	IsolateForTest(t)
 
 	corrupt := "gold: 12345\nstock:\n  - itemid: 1001\n    current: 7\n  \x00bad: [unclosed\n"
 	path := writeCorruptShopFile(t, "testzone", 42, 100, corrupt)
@@ -102,8 +87,7 @@ func TestRegisterShop_CorruptFileIsQuarantinedNotSilentlyReseeded(t *testing.T) 
 // After quarantine the shop must be able to save again, otherwise the merchant
 // is permanently unable to persist.
 func TestRegisterShop_QuarantineLeavesTheShopAbleToSave(t *testing.T) {
-	withShopDataDir(t)
-	ClearCache()
+	IsolateForTest(t)
 
 	path := writeCorruptShopFile(t, "testzone", 42, 100, "this: [is not valid\n")
 
@@ -120,8 +104,7 @@ func TestRegisterShop_QuarantineLeavesTheShopAbleToSave(t *testing.T) {
 
 // A valid file must still load its persisted economy rather than reseeding.
 func TestRegisterShop_ValidFileIsLoadedNotReseeded(t *testing.T) {
-	withShopDataDir(t)
-	ClearCache()
+	IsolateForTest(t)
 
 	require.NoError(t, os.MkdirAll(filepath.Dir(shopPath("testzone", 42, 100)), 0o755))
 	inv := RegisterShop("testzone", 42, 100, templateShop())

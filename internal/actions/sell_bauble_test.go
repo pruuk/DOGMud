@@ -162,10 +162,7 @@ func TestSell_Bauble_LivingShopByCraftSupport(t *testing.T) {
 	defer seedSellRoom(t)()
 	defer seedSellMerchant(t, 0)()
 
-	shops.ClearCache()
-	_ = shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 
 	si := shops.RegisterShop("TestZone", 2, 1, shops.ShopInventory{Gold: 1000})
 
@@ -200,10 +197,7 @@ func TestSell_Bauble_LivingShopReserveRefuses(t *testing.T) {
 	defer seedSellRoom(t)()
 	defer seedSellMerchant(t, 0)()
 
-	shops.ClearCache()
-	_ = shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 
 	// Starting gold 1000 keeps 500 in reserve; 503 on hand cannot pay 6.
 	si := shops.RegisterShop("TestZone", 2, 1, shops.ShopInventory{Gold: 503, StartingGold: 1000, CraftSupport: shops.CraftSupportJewelcrafting})
@@ -265,10 +259,7 @@ func TestSell_Bauble_OnlyAPlayersShelvableSaleIsShelved(t *testing.T) {
 	defer seedSellRoom(t)()
 	defer seedSellMerchant(t, 0)()
 
-	shops.ClearCache()
-	_ = shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	si := shops.RegisterShop("TestZone", 2, 1, shops.ShopInventory{Gold: 1000, CraftSupport: shops.CraftSupportGeneral})
 
 	mob := newSellerActor(t, false)
@@ -303,10 +294,7 @@ func TestSell_Bauble_CheapTierBoundaryIsPinned(t *testing.T) {
 	defer seedSellRoom(t)()
 	defer seedSellMerchant(t, 0)()
 
-	shops.ClearCache()
-	_ = shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	si := shops.RegisterShop("TestZone", 2, 1, shops.ShopInventory{Gold: 1000, CraftSupport: shops.CraftSupportGeneral})
 
 	max := baubles.TierCheap.Range().Max

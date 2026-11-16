@@ -24,7 +24,7 @@ func mergeDefaultsLookup(m *mobs.Mob) []GoalDefault {
 // swapping BehaviorArchetype. A pre-existing goal of a DIFFERENT type
 // survives, and the missing default type is added.
 func TestMergeArchetypeDefaults(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	const mobId = 99805
 	const name = "mergeprobe"
 
@@ -58,7 +58,7 @@ func TestMergeArchetypeDefaults(t *testing.T) {
 // default (Add's ConflictError, swallowed by the merge) — it is neither
 // displaced nor duplicated.
 func TestMergeArchetypeDefaults_SameTypeHigherPriorityKept(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	const mobId = 99806
 	const name = "mergeprobe_prio"
 

@@ -38,8 +38,7 @@ func pinBuyLimit(t *testing.T) {
 		bloomWaferItemId: {ItemId: bloomWaferItemId, Name: "Bloom Wafer", Type: items.Potion, Subtype: items.Drinkable, Uses: 1, Value: 120, Weight: 0.1},
 		sellTestItemId:   {ItemId: sellTestItemId, Name: "iron sword", Type: items.Weapon, Value: 100},
 	}))
-	shops.ClearCache()
-	t.Cleanup(shops.ClearCache)
+	shops.IsolateForTest(t)
 	t.Cleanup(util.ResetRoundCountForTest)
 	gametime.ClearDateCacheForTest()
 }

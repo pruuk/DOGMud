@@ -12,8 +12,25 @@ type fakeEvent struct{ typeName string }
 
 func (f fakeEvent) Type() string { return f.typeName }
 
+// resetRegistryForTest empties the rule registry for one test and restores
+// it when the test ends. The registry holds the rules every init() in this
+// package registered; a reset that did not restore them left the
+// *_Registered tests failing on the second pass of `go test -count=2` (#896).
+func resetRegistryForTest(t *testing.T) {
+	t.Helper()
+	registryMu.Lock()
+	saved := registry
+	registry = map[string][]registration{}
+	registryMu.Unlock()
+	t.Cleanup(func() {
+		registryMu.Lock()
+		registry = saved
+		registryMu.Unlock()
+	})
+}
+
 func TestRegister_DispatchInvokesRuleForMatchingType(t *testing.T) {
-	resetRegistryForTest()
+	resetRegistryForTest(t)
 	var called atomic.Int32
 	Register("test-rule", func(events.Event) {
 		called.Add(1)
@@ -26,7 +43,7 @@ func TestRegister_DispatchInvokesRuleForMatchingType(t *testing.T) {
 }
 
 func TestDispatch_NoRulesForType_NoOp(t *testing.T) {
-	resetRegistryForTest()
+	resetRegistryForTest(t)
 	// No rules registered. Dispatch must not panic.
 	ret := Dispatch(fakeEvent{typeName: "unsubscribed-type"})
 	if ret != events.Continue {
@@ -35,7 +52,7 @@ func TestDispatch_NoRulesForType_NoOp(t *testing.T) {
 }
 
 func TestDispatch_OnlyMatchingTypeFires(t *testing.T) {
-	resetRegistryForTest()
+	resetRegistryForTest(t)
 	var calledA, calledB int32
 	Register("rule-A", func(events.Event) { atomic.AddInt32(&calledA, 1) }, "type-A")
 	Register("rule-B", func(events.Event) { atomic.AddInt32(&calledB, 1) }, "type-B")
@@ -50,7 +67,7 @@ func TestDispatch_OnlyMatchingTypeFires(t *testing.T) {
 }
 
 func TestDispatch_MultipleRulesForSameType_AllFire(t *testing.T) {
-	resetRegistryForTest()
+	resetRegistryForTest(t)
 	var calledA, calledB int32
 	Register("rule-A", func(events.Event) { atomic.AddInt32(&calledA, 1) }, "shared-type")
 	Register("rule-B", func(events.Event) { atomic.AddInt32(&calledB, 1) }, "shared-type")
@@ -62,7 +79,7 @@ func TestDispatch_MultipleRulesForSameType_AllFire(t *testing.T) {
 }
 
 func TestDispatch_PanicInOneRule_OthersStillFire(t *testing.T) {
-	resetRegistryForTest()
+	resetRegistryForTest(t)
 	var calledAfter atomic.Int32
 	Register("rule-panic", func(events.Event) {
 		panic("boom")
@@ -79,7 +96,7 @@ func TestDispatch_PanicInOneRule_OthersStillFire(t *testing.T) {
 }
 
 func TestRegister_OneRuleMultipleTypes(t *testing.T) {
-	resetRegistryForTest()
+	resetRegistryForTest(t)
 	var called int32
 	Register("multi-type", func(events.Event) {
 		atomic.AddInt32(&called, 1)

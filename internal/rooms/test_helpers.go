@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"sync/atomic"
+	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 )
@@ -51,6 +52,38 @@ func SeedRoomsForTest(roomMap map[int]*Room, zoneMap map[string]*ZoneConfig) fun
 // Intended for cross-package tests that need a "cold" room.
 func UnloadRoomForTest(roomId int) {
 	delete(roomManager.rooms, roomId)
+}
+
+// ForgetRoomsLoadedDuringTest makes the room manager forget, when the test
+// ends, every room id it first learned of during the test: the id leaves the
+// file-path cache (what GetAllRoomIds lists), the in-memory room cache and its
+// zone's room set. Rooms it already knew are left alone.
+//
+// The boot load indexes only rooms whose file name starts with a digit, so a
+// room such as -1 (the Shadow Realm's root) joins GetAllRoomIds the first time
+// anything looks it up. In a test binary that loads the shipped world once and
+// keeps it, a test that looked one up changed what every later test, and the
+// next pass of `go test -count=2`, saw as "every shipped room".
+func ForgetRoomsLoadedDuringTest(t testing.TB) {
+	t.Helper()
+	known := map[int]struct{}{}
+	for _, id := range roomManager.cachedFilePathIds() {
+		known[id] = struct{}{}
+	}
+	t.Cleanup(func() {
+		for _, id := range roomManager.cachedFilePathIds() {
+			if _, ok := known[id]; ok {
+				continue
+			}
+			if room, ok := roomManager.rooms[id]; ok {
+				if zoneInfo, ok := roomManager.zones[room.Zone]; ok {
+					delete(zoneInfo.RoomIds, id)
+				}
+				delete(roomManager.rooms, id)
+			}
+			roomManager.deleteCachedFilePath(id)
+		}
+	})
 }
 
 // SeedTemplateSpawnsForTest makes roomId's spawninfo place mobIds in the spawn

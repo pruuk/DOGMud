@@ -52,6 +52,7 @@ func gateShop(zone string, mobId, room int) {
 }
 
 func TestShopFinders_SkipAGatedRoom(t *testing.T) {
+	shops.IsolateForTest(t)
 	registerRoomGate(t, gatedShopRoom)
 	gateShop("GateShop Only", 1, gatedShopRoom)
 	only := gateShopMob("GateShop Only")
@@ -81,6 +82,7 @@ func TestShopFinders_SkipAGatedRoom(t *testing.T) {
 }
 
 func TestScanZoneUpgrades_SkipsAGatedRoom(t *testing.T) {
+	shops.IsolateForTest(t)
 	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
 		gatedShopItem: {ItemId: gatedShopItem, Name: "Test Blade", Type: items.Weapon, Subtype: items.Slashing, Value: 10},
 	}))

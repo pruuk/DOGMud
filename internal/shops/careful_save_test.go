@@ -13,21 +13,19 @@ import (
 // leaves behind in the scratch file.
 const tornWriteSentinel = "TORN PARTIAL WRITE - MUST NOT SURVIVE\n"
 
-// useTempShopDataFiles points FilePaths.DataFiles at a temp tree and sets
-// FilePaths.CarefulSaveFiles, restoring both when the test ends.
-func useTempShopDataFiles(t *testing.T, careful bool) {
+// useIsolatedCarefulSave gives the test its own shops folder (IsolateForTest)
+// and sets FilePaths.CarefulSaveFiles, restoring it when the test ends.
+func useIsolatedCarefulSave(t *testing.T, careful bool) {
 	t.Helper()
 
-	tempDir := t.TempDir()
+	IsolateForTest(t)
 	prev := configs.GetFilePathsConfig()
 
 	require.NoError(t, configs.AddOverlayOverrides(map[string]any{
-		"FilePaths.DataFiles":        tempDir,
 		"FilePaths.CarefulSaveFiles": careful,
 	}))
 	t.Cleanup(func() {
 		_ = configs.AddOverlayOverrides(map[string]any{
-			"FilePaths.DataFiles":        prev.DataFiles.String(),
 			"FilePaths.CarefulSaveFiles": bool(prev.CarefulSaveFiles),
 		})
 	})
@@ -56,9 +54,7 @@ func TestSaveShop_HonoursCarefulSaveFiles(t *testing.T) {
 		roomId = 7
 	)
 
-	useTempShopDataFiles(t, true)
-	ClearCache()
-	t.Cleanup(ClearCache)
+	useIsolatedCarefulSave(t, true)
 
 	RegisterShop(zone, mobId, roomId, makeTemplate())
 
@@ -93,9 +89,7 @@ func TestSaveShop_CarefulSaveFilesOffWritesDirectly(t *testing.T) {
 		roomId = 7
 	)
 
-	useTempShopDataFiles(t, false)
-	ClearCache()
-	t.Cleanup(ClearCache)
+	useIsolatedCarefulSave(t, false)
 
 	RegisterShop(zone, mobId, roomId, makeTemplate())
 

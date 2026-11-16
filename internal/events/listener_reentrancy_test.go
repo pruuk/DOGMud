@@ -42,12 +42,30 @@ func runBounded(t *testing.T, d time.Duration, what string, fn func()) {
 	}
 }
 
+// resetListeners gives a test an empty listener registry and empty
+// unhandled-event counters, and puts the previous registry and counters back
+// when the test ends.
+//
+// The counters must be part of it: eventsWithoutListeners only ever grows, so
+// without a reset the second pass of `go test -count=2` started
+// TestDoListeners_UnhandledEventIsCountedSafely from the first pass's 400.
 func resetListeners(t *testing.T) {
 	t.Helper()
 	listenerLock.Lock()
+	savedListeners := eventListeners
+	savedWildcard := hasWildcardListener
+	savedUnhandled := eventsWithoutListeners
 	eventListeners = map[string][]ListenerWrapper{}
 	hasWildcardListener = false
+	eventsWithoutListeners = map[string]int{}
 	listenerLock.Unlock()
+	t.Cleanup(func() {
+		listenerLock.Lock()
+		eventListeners = savedListeners
+		hasWildcardListener = savedWildcard
+		eventsWithoutListeners = savedUnhandled
+		listenerLock.Unlock()
+	})
 }
 
 // The headline deadlock: a listener that registers another listener.

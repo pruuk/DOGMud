@@ -37,6 +37,7 @@ func seedGoals(t *testing.T, mobId int, name string, gs ...*Goal) {
 }
 
 func TestPrune_RemovesSatisfied(t *testing.T) {
+	IsolateForTest(t)
 	registerPruneType(t)
 	seedGoals(t, 99301, "p-sat",
 		&Goal{Id: "g1", Type: "prune-sat", Priority: 50, CreatedAt: time.Now().UTC()})
@@ -53,6 +54,7 @@ func TestPrune_RemovesSatisfied(t *testing.T) {
 }
 
 func TestPrune_RemovesExpired(t *testing.T) {
+	IsolateForTest(t)
 	registerPruneType(t)
 	seedGoals(t, 99302, "p-exp",
 		&Goal{Id: "g1", Type: "prune-live", Priority: 50, CreatedAt: time.Now().UTC(),
@@ -64,6 +66,7 @@ func TestPrune_RemovesExpired(t *testing.T) {
 }
 
 func TestPrune_AbandonsDormantPastThreshold(t *testing.T) {
+	IsolateForTest(t)
 	registerPruneType(t)
 	pruneCtxScore = 0.0
 	defer func() { pruneCtxScore = 1.0 }()
@@ -77,6 +80,7 @@ func TestPrune_AbandonsDormantPastThreshold(t *testing.T) {
 }
 
 func TestPrune_StampsDormancyButKeepsUnderThreshold(t *testing.T) {
+	IsolateForTest(t)
 	registerPruneType(t)
 	pruneCtxScore = 0.0
 	defer func() { pruneCtxScore = 1.0 }()
@@ -93,6 +97,7 @@ func TestPrune_StampsDormancyButKeepsUnderThreshold(t *testing.T) {
 }
 
 func TestPrune_ClearsDormancyWhenLiveAgain(t *testing.T) {
+	IsolateForTest(t)
 	registerPruneType(t)
 	pruneCtxScore = 1.0
 	seedGoals(t, 99305, "p-clear",
@@ -109,6 +114,7 @@ func TestPrune_ClearsDormancyWhenLiveAgain(t *testing.T) {
 }
 
 func TestPrune_BatchRemovesMultiple(t *testing.T) {
+	IsolateForTest(t)
 	registerPruneType(t)
 	seedGoals(t, 99306, "p-batch",
 		&Goal{Id: "g1", Type: "prune-sat", Priority: 50, CreatedAt: time.Now().UTC()},
@@ -124,7 +130,7 @@ func TestPrune_BatchRemovesMultiple(t *testing.T) {
 }
 
 func TestGoal_DormantSinceRound_Persists(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	resetRegistry()
 	mg := &MobGoals{MobId: 99201, NextGoalId: 2, Goals: []*Goal{
 		{Id: "g1", Type: "revenge", Priority: 70, CreatedAt: time.Now().UTC(), DormantSinceRound: 4242},
@@ -144,6 +150,7 @@ func TestGoal_DormantSinceRound_Persists(t *testing.T) {
 }
 
 func TestPrune_DormantAlreadyStamped_NotRestamped(t *testing.T) {
+	IsolateForTest(t)
 	registerPruneType(t)
 	pruneCtxScore = 0.0
 	defer func() { pruneCtxScore = 1.0 }()
@@ -165,6 +172,7 @@ func TestPrune_DormantAlreadyStamped_NotRestamped(t *testing.T) {
 // score, NOT on selection: a live (score > 0) goal that is NOT the current
 // goal — a lower-priority "backseat" goal waiting its turn — is kept.
 func TestPrune_LiveBackseatGoalKept(t *testing.T) {
+	IsolateForTest(t)
 	registerPruneType(t)
 	pruneCtxScore = 1.0 // both goals live (never satisfied, score > 0)
 	ClearCache()

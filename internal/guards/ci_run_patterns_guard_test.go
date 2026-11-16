@@ -82,7 +82,7 @@ func testNamesIn(t *testing.T, pkg string) []string {
 			}
 			if d.IsDir() {
 				switch d.Name() {
-				case ".git", "vendor", "node_modules", "_datafiles":
+				case ".git", ".claude", "vendor", "node_modules", "_datafiles":
 					return filepath.SkipDir
 				}
 				return nil

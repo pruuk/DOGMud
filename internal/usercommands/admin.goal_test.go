@@ -27,8 +27,7 @@ func goalFixtureMobIdent(t *testing.T) (int, string) {
 func goalTestSetup(t *testing.T) func() {
 	t.Helper()
 	cleanup := seedAllRegistries()
-	t.Setenv("DOGMUD_GOALS_DIR_OVERRIDE", t.TempDir())
-	goals.ClearCache()
+	goals.IsolateForTest(t)
 	return cleanup
 }
 

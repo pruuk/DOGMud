@@ -24,7 +24,7 @@ var (
 )
 
 func goalsBaseDir() string {
-	if override := os.Getenv("DOGMUD_GOALS_DIR_OVERRIDE"); override != "" {
+	if override := os.Getenv(goalsDirEnv); override != "" {
 		return override
 	}
 	return filepath.Join(string(configs.GetFilePathsConfig().DataFiles), "goals")

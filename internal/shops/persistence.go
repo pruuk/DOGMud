@@ -27,13 +27,23 @@ func shopKey(zone string, mobId int, roomId int) string {
 	return fmt.Sprintf("%s/%d/room%d", zone, mobId, roomId)
 }
 
+// shopsDirOverride, when set, replaces the configured shops folder. Only
+// IsolateForTest sets it.
+var shopsDirOverride string
+
+// shopsBaseDir returns the folder every shop save lives under.
+func shopsBaseDir() string {
+	if shopsDirOverride != "" {
+		return shopsDirOverride
+	}
+	return util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/`, `shops`)
+}
+
 // shopPath returns the full filesystem path for a shop's YAML save file.
 func shopPath(zone string, mobId int, roomId int) string {
 	zoneSanitized := util.ConvertForFilename(zone)
 	filename := fmt.Sprintf("%d-room%d.yaml", mobId, roomId)
-	return util.FilePath(
-		configs.GetFilePathsConfig().DataFiles.String(), `/`, `shops`, `/`, zoneSanitized, `/`, filename,
-	)
+	return util.FilePath(shopsBaseDir(), `/`, zoneSanitized, `/`, filename)
 }
 
 // GetShopInventory returns the ShopInventory for the given location. It checks
@@ -325,10 +335,7 @@ func PrewarmFromPersistedFilesIn(baseDir string, zoneLookup func(mobId int) (str
 // mob-template zone lookup from mobs.AllMobTemplates(). Call after
 // mobs.LoadDataFiles().
 func PrewarmFromPersistedFiles(mobZoneLookup func(mobId int) (string, bool)) (int, error) {
-	baseDir := util.FilePath(
-		configs.GetFilePathsConfig().DataFiles.String(), `/`, `shops`,
-	)
-	return PrewarmFromPersistedFilesIn(baseDir, mobZoneLookup)
+	return PrewarmFromPersistedFilesIn(shopsBaseDir(), mobZoneLookup)
 }
 
 // loadFromDisk reads a shop's YAML save file and returns the parsed

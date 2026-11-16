@@ -1510,6 +1510,22 @@ func seedActiveUser(t *testing.T, userId int, name string) *UserRecord {
 func TestRenameUser_Success(t *testing.T) {
 	u := seedActiveUser(t, 100, "Alice")
 
+	// seedActiveUser restores only the name it seeded. The rename claims
+	// "bobbi" in the Usernames index too, and left there it made the next
+	// pass of `go test -count=2` refuse this rename as already claimed.
+	userManager.mu.RLock()
+	prevBobbiId, hadBobbi := userManager.Usernames["bobbi"]
+	userManager.mu.RUnlock()
+	t.Cleanup(func() {
+		userManager.mu.Lock()
+		if hadBobbi {
+			userManager.Usernames["bobbi"] = prevBobbiId
+		} else {
+			delete(userManager.Usernames, "bobbi")
+		}
+		userManager.mu.Unlock()
+	})
+
 	if err := RenameUser(u, "Bobbi"); err != nil {
 		t.Fatalf("expected nil err, got %v", err)
 	}

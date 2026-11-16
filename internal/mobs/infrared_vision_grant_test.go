@@ -64,22 +64,17 @@ func TestSomeShippedMobSensesHeat(t *testing.T) {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
 
-	// conditions.LoadDataFiles() and species.LoadDataFiles() both replace
-	// their package's entire map with no restore of their own (unlike
-	// configs.SetConfigForTest above). Left alone, loading the real shipped
-	// data here would permanently overwrite whatever minimal test fixtures
-	// other tests in this shared binary seeded via
-	// species.SeedSpeciesForTest / conditions.SeedConditionsForTest, leaking
-	// forward into every test that runs after this one. Both seed helpers
-	// capture the map that was live at the moment they are called and
-	// restore exactly that on cleanup, so calling them with a throwaway
-	// value first (immediately overwritten by the real Load below) captures
-	// the pre-test snapshot for a genuine restore.
+	// conditions.LoadDataFiles() replaces the package's entire map with no
+	// restore of its own. Left alone, loading the real shipped data here
+	// would permanently overwrite whatever fixtures other tests in this
+	// binary seeded. The seed helper captures the map live at the moment it
+	// is called and restores exactly that on cleanup, so calling it with a
+	// throwaway value first captures the pre-test snapshot. Species has a
+	// helper that does both (species.LoadForTest).
 	t.Cleanup(conditions.SeedConditionsForTest(nil))
-	t.Cleanup(species.SeedSpeciesForTest(nil))
 
 	conditions.LoadDataFiles()
-	species.LoadDataFiles()
+	species.LoadForTest(t)
 
 	const sentryDriftId = 9555
 	dataPath := string(configs.GetFilePathsConfig().DataFiles) + `/mobs/crash_site_interior`

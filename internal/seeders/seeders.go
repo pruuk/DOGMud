@@ -88,11 +88,3 @@ func invokeRuleSafely(ruleName string, fn RuleFn, event events.Event) {
 	}()
 	fn(event)
 }
-
-// resetRegistryForTest wipes the registry. Test-only seam — package-
-// internal so tests can isolate rule registration.
-func resetRegistryForTest() {
-	registryMu.Lock()
-	registry = map[string][]registration{}
-	registryMu.Unlock()
-}

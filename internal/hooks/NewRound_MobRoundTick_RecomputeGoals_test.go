@@ -1,35 +1,14 @@
 package hooks
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/goals"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 )
 
-// setGoalsTempDir points DOGMUD_GOALS_DIR_OVERRIDE at a per-test temp
-// directory so that goals.Add / goals.Recompute can persist to disk
-// without needing a real datafiles tree. Returns a cleanup func that
-// removes the temp dir and restores the env var.
-func setGoalsTempDir(t *testing.T) func() {
-	t.Helper()
-	dir, err := os.MkdirTemp("", "goals-hook-test-*")
-	if err != nil {
-		t.Fatalf("setGoalsTempDir: mkdirtemp: %v", err)
-	}
-	prev := os.Getenv("DOGMUD_GOALS_DIR_OVERRIDE")
-	os.Setenv("DOGMUD_GOALS_DIR_OVERRIDE", filepath.Join(dir, "goals"))
-	return func() {
-		os.Setenv("DOGMUD_GOALS_DIR_OVERRIDE", prev)
-		os.RemoveAll(dir)
-	}
-}
-
 func TestTickMobRecomputeGoals_EmptyGoalList_NoOp(t *testing.T) {
-	cleanupDir := setGoalsTempDir(t)
-	defer cleanupDir()
+	goals.IsolateForTest(t)
 
 	goals.ClearCache()
 	mob := &mobs.Mob{MobId: mobs.MobId(99201)}
@@ -41,8 +20,7 @@ func TestTickMobRecomputeGoals_EmptyGoalList_NoOp(t *testing.T) {
 }
 
 func TestTickMobRecomputeGoals_WithGoals_RecomputesCurrent(t *testing.T) {
-	cleanupDir := setGoalsTempDir(t)
-	defer cleanupDir()
+	goals.IsolateForTest(t)
 
 	goals.ClearCache()
 	mob := &mobs.Mob{MobId: mobs.MobId(99202)}

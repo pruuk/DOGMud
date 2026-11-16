@@ -40,10 +40,9 @@ func loadCouleeProp(t *testing.T, mobId int) *mobs.Mob {
 
 	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{}))
 	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{}))
-	t.Cleanup(species.SeedSpeciesForTest(nil))
 	t.Cleanup(mobs.SeedMobsForTest(map[int]*mobs.Mob{}, map[int]*mobs.Mob{}))
 	conditions.LoadDataFiles()
-	species.LoadDataFiles()
+	species.LoadForTest(t)
 	items.LoadDataFiles()
 	mobs.LoadDataFiles()
 	require.NoError(t, factions.LoadAllDefinitions())

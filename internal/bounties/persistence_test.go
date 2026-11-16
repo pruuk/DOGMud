@@ -9,7 +9,7 @@ import (
 )
 
 func TestSaveAndLoadRoundTrip(t *testing.T) {
-	resetCache()
+	resetCache(t)
 
 	r := &Registry{
 		NextId: 2,
@@ -62,14 +62,14 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 }
 
 func TestLoadMissingFileReturnsNil(t *testing.T) {
-	resetCache()
+	resetCache(t)
 	if loadRegistryFromDisk() != nil {
 		t.Errorf("expected nil for missing file")
 	}
 }
 
 func TestLoadOrLazyInitConcurrent(t *testing.T) {
-	resetCache()
+	resetCache(t)
 	const N = 50
 	var wg sync.WaitGroup
 	var seen [N]*Registry

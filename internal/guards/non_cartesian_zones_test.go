@@ -37,6 +37,10 @@ func loadWorldRooms(t *testing.T) []string {
 	}
 	rooms.LoadBiomeDataFiles()
 	rooms.LoadDataFiles()
+	// Zone roots these tests load include room -1, which the boot load does
+	// not index; forget it afterwards so the lighting goldens' "every shipped
+	// room" walk does not grow on the next pass.
+	rooms.ForgetRoomsLoadedDuringTest(t)
 
 	zones := rooms.GetAllZoneNames()
 	if len(zones) < 20 {

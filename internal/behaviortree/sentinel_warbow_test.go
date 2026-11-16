@@ -45,11 +45,10 @@ func TestTheSentinelFiresItsWarbow(t *testing.T) {
 	require.NoError(t, configs.ReloadConfigForTest(t))
 
 	t.Cleanup(conditions.SeedConditionsForTest(nil))
-	t.Cleanup(species.SeedSpeciesForTest(nil))
 	t.Cleanup(items.SeedItemsForTest(nil))
 	t.Cleanup(rooms.SeedBiomesForTest(nil))
 	conditions.LoadDataFiles()
-	species.LoadDataFiles()
+	species.LoadForTest(t)
 	items.LoadDataFiles()
 	rooms.LoadBiomeDataFiles()
 

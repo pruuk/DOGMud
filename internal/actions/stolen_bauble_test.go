@@ -814,10 +814,7 @@ func TestStolenBauble_AFencePaysFromItsShopGold(t *testing.T) {
 	pinStolenClock(t, stolenTestNow)
 	merchantInstance().Groups = []string{`fence`}
 
-	shops.ClearCache()
-	_ = shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	si := shops.RegisterShop("TestZone", 2, 1, shops.ShopInventory{Gold: 1000, StartingGold: 1000, CraftSupport: shops.CraftSupportGeneral})
 
 	seller := newSellerActor(t, true)
@@ -860,10 +857,7 @@ func TestStolenBauble_AFenceShopRefusesOrdinaryLootButBuysBaubles(t *testing.T) 
 	pinStolenClock(t, stolenTestNow)
 	merchantInstance().Groups = []string{`fence`}
 
-	shops.ClearCache()
-	_ = shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	si := shops.RegisterShop("TestZone", 2, 1, shops.ShopInventory{Gold: 1000, StartingGold: 1000})
 
 	seller := newSellerActor(t, true, sellTestItemId)
@@ -1011,10 +1005,7 @@ func TestStolenBauble_AHotOneIsShelvedHeldUntilItCools(t *testing.T) {
 	configs.SetConfigForTest(t, cfg)
 	merchantInstance().Groups = []string{`fence`}
 
-	shops.ClearCache()
-	_ = shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	si := shops.RegisterShop("TestZone", 2, 1, shops.ShopInventory{Gold: 1000, StartingGold: 1000, CraftSupport: shops.CraftSupportGeneral})
 
 	stolenAt := stolenTestNow.Add(-time.Hour)
@@ -1049,10 +1040,7 @@ func TestStolenBauble_AFullBackroomRefusesHotGoods(t *testing.T) {
 	configs.SetConfigForTest(t, cfg)
 	merchantInstance().Groups = []string{`fence`}
 
-	shops.ClearCache()
-	_ = shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	si := shops.RegisterShop("TestZone", 2, 1, shops.ShopInventory{Gold: 1000, StartingGold: 1000, CraftSupport: shops.CraftSupportGeneral})
 	later := stolenTestNow.Add(24 * time.Hour)
 	for _, name := range []string{"held one", "held two"} {
@@ -1100,10 +1088,7 @@ func TestStolenBauble_AnHonestShopWithAFullBackroomHasNoRoom(t *testing.T) {
 	cfg.Balance.BaubleStolenHeatHours = 72
 	configs.SetConfigForTest(t, cfg)
 
-	shops.ClearCache()
-	_ = shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.RemoveShopFile("TestZone", 2, 1)
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	si := shops.RegisterShop("TestZone", 2, 1, shops.ShopInventory{Gold: 1000, StartingGold: 1000, CraftSupport: shops.CraftSupportGeneral})
 	held := shops.AffixedStockEntry{
 		Item:  items.Item{ItemId: sellTestItemId, Affixed: true, Spec: &items.ItemSpec{Name: "held", Value: 10}},

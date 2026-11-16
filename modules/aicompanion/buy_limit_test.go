@@ -83,8 +83,7 @@ func limitFixture(t *testing.T) *limitScene {
 	t.Cleanup(func() { mobs.SetInstanceForTest(limitHerId, nil) })
 	room.AddMob(limitHerId)
 
-	shops.ClearCache()
-	t.Cleanup(shops.ClearCache)
+	shops.IsolateForTest(t)
 	shop := shops.RegisterShop(`LimitZone`, limitKeeperTpl, limitRoomId, shops.ShopInventory{Gold: 500, CraftSupport: shops.CraftSupportAlchemy,
 		Stock: []shops.StockEntry{{ItemId: limitWaferId, RestockQty: 50, MaxStock: 50, Current: 50}}})
 	return &limitScene{owner: owner, her: her, keeper: keeper, room: room, shop: shop}

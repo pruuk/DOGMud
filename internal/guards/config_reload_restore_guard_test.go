@@ -26,7 +26,9 @@ func TestTestsReloadTheShippedConfigOnlyThroughTheRestoringHelper(t *testing.T) 
 		}
 		if d.IsDir() {
 			switch d.Name() {
-			case ".git", "node_modules", "_datafiles":
+			// .claude holds agent worktrees: whole second copies of the
+			// repo whose exempt files sit at other paths.
+			case ".git", ".claude", "node_modules", "_datafiles":
 				return filepath.SkipDir
 			}
 			return nil
