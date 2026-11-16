@@ -1,11 +1,11 @@
 package characters
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,12 +30,13 @@ func TestBloomSeedStopsAtMutationMaxCount(t *testing.T) {
 	top := mutations.MaxRankOf("cap-a")
 
 	capped := &Character{Mutations: map[string]int{"cap-a": top, "cap-b": top}}
-	id, lvl := capped.BloomSeedNewMutation(rand.New(rand.NewSource(1)))
+	defer util.SetRandForTest(1)()
+	id, lvl := capped.BloomSeedNewMutation()
 	assert.Equal(t, "", id, "a seed at the cap grants nothing")
 	assert.Equal(t, 0, lvl)
 	assert.Len(t, capped.Mutations, 2)
 
-	id, lvl = capped.BloomAdvanceMutation(rand.New(rand.NewSource(1)))
+	id, lvl = capped.BloomAdvanceMutation()
 	assert.Equal(t, "", id, "advance falling through to seed grants nothing at the cap")
 	assert.Equal(t, 0, lvl)
 	assert.Len(t, capped.Mutations, 2)
@@ -43,7 +44,7 @@ func TestBloomSeedStopsAtMutationMaxCount(t *testing.T) {
 
 	// Control: one under the count can still take a new mutation.
 	under := &Character{Mutations: map[string]int{"cap-a": top}}
-	id, lvl = under.BloomSeedNewMutation(rand.New(rand.NewSource(1)))
+	id, lvl = under.BloomSeedNewMutation()
 	assert.NotEqual(t, "", id, "one under the cap still seeds")
 	assert.Equal(t, 1, lvl)
 	assert.Len(t, under.Mutations, 2)
@@ -58,7 +59,8 @@ func TestBloomAdvanceStillDeepensAtMutationMaxCount(t *testing.T) {
 	}
 
 	c := &Character{Mutations: map[string]int{"cap-a": 1, "cap-b": top}}
-	id, lvl := c.BloomAdvanceMutation(rand.New(rand.NewSource(1)))
+	defer util.SetRandForTest(1)()
+	id, lvl := c.BloomAdvanceMutation()
 	assert.Equal(t, "cap-a", id)
 	assert.Equal(t, 2, lvl)
 	assert.Equal(t, 2, c.Mutations["cap-a"])

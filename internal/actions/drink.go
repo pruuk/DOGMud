@@ -2,12 +2,12 @@ package actions
 
 import (
 	"fmt"
-	"math/rand"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -464,10 +464,11 @@ func Quaff(actor DrinkActor, rest string) DrinkResult {
 		// BloomMutationAdvanceChance to deepen the strongest existing mutation
 		// (which falls through to seeding when the drinker has none / all are capped).
 		var mutId string
-		if rand.Float64() < float64(bal.BloomNewMutationChance) {
-			mutId, _ = char.BloomSeedNewMutation(nil)
-		} else if rand.Float64() < float64(bal.BloomMutationAdvanceChance) {
-			mutId, _ = char.BloomAdvanceMutation(nil)
+		// Through the seedable source, so a test can replay the rolls (#594).
+		if dice.Float64() < float64(bal.BloomNewMutationChance) {
+			mutId, _ = char.BloomSeedNewMutation()
+		} else if dice.Float64() < float64(bal.BloomMutationAdvanceChance) {
+			mutId, _ = char.BloomAdvanceMutation()
 		}
 		if mutId != "" {
 			actor.SendText(messaging.CategoryWarning,

@@ -2,7 +2,8 @@ package conditions
 
 import (
 	"math"
-	"math/rand"
+
+	"github.com/GoMudEngine/GoMud/internal/dice"
 )
 
 // ComputeTickAmount calculates the per-tick heal/damage amount.
@@ -22,7 +23,7 @@ func ComputeTickAmount(maxPool int, percent float64, variance float64, minAmount
 
 	effectivePercent := percent
 	if variance > 0 {
-		effectivePercent += rand.Float64() * variance
+		effectivePercent += dice.Float64() * variance // seedable (#594)
 	}
 
 	base := float64(maxPool) * effectivePercent
