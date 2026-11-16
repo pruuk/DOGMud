@@ -885,8 +885,12 @@ strand a word on its own line (#430). A line for one actor alone wraps at
   It goes through `messaging.SendTrio`, so a counter in the dark names nobody.
 - **`FireCounterTaunt(room, shape, counterer, countered, countererRecipient,
   countererId, counteredRecipient, counteredId)`**: the defy answer's shared
-  dispatch, used by taunt's `counterTauntExit` and `hooks.fireSpellCounterTier`
-  (a defied charm). Refuses a `shape` whose targeting is not single, the same
+  dispatch, used by `hooks.fireSpellCounterTier` (a defied charm), which tells
+  the retort at once. Taunt's `counterTauntExit` calls the unexported
+  `fireCounterTaunt`, which holds the retort in `CounterTauntResult.Send`: the
+  taunt command (`usercommands.Taunt`, `mobcommands.narrateMobTaunt`) defers
+  `Send`, so the retort reads below the taunt and defence lines it answers
+  (#263). Refuses a `shape` whose targeting is not single, the same
   gate the swing primitive carries. Dispatches directly via
   `SendText`/`SendTextVisual`, not `messaging.SendTrio`; moving the retort onto
   the darkness seam is M4d's.

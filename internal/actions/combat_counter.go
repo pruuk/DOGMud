@@ -127,6 +127,17 @@ type CounterTauntResult struct {
 	Fumbled bool
 	Damage  int
 	Defence combat.ChannelDefenceResult
+	// send tells the retort when it was held back (counterTauntExit): the
+	// taunt's own lines go first, then the retort that answers them (#263).
+	send func()
+}
+
+// Send tells a held-back retort. A retort already told, or none, sends
+// nothing, so a caller can always defer it.
+func (r CounterTauntResult) Send() {
+	if r.send != nil {
+		r.send()
+	}
 }
 
 // executeCounterTaunt is the defy carve-out's cost-free entry point: the
@@ -253,6 +264,18 @@ func executeCounterTaunt(counterer, target *characters.Character) CounterTauntRe
 func FireCounterTaunt(room *rooms.Room, shape combatvocab.Attack, counterer, countered *characters.Character,
 	countererRecipient messaging.Recipient, countererId int,
 	counteredRecipient messaging.Recipient, counteredId int) CounterTauntResult {
+	res := fireCounterTaunt(room, shape, counterer, countered, countererRecipient, countererId, counteredRecipient, counteredId)
+	res.Send()
+	res.send = nil
+	return res
+}
+
+// fireCounterTaunt resolves a counter-taunt and holds its lines in the
+// result's Send; FireCounterTaunt tells them at once, counterTauntExit leaves
+// them for the taunt command to tell after its own lines (#263).
+func fireCounterTaunt(room *rooms.Room, shape combatvocab.Attack, counterer, countered *characters.Character,
+	countererRecipient messaging.Recipient, countererId int,
+	counteredRecipient messaging.Recipient, counteredId int) CounterTauntResult {
 
 	// A counter answers one deliberate attack at one target (owner ruling):
 	// the same gate the swing primitive carries, here because a defy win
@@ -288,11 +311,18 @@ func FireCounterTaunt(room *rooms.Room, shape combatvocab.Attack, counterer, cou
 	if room != nil {
 		aud.Room = room
 	}
-	messaging.SendTrio(messaging.Trio{
-		Actor:    messaging.Say(messaging.CategoryTauntSuccess, countererMsg),
-		Actee:    messaging.Say(messaging.CategoryTauntSuccess, counteredMsg),
-		Observer: messaging.Say(messaging.CategoryTauntSuccess, roomMsg),
-	}, aud)
+	sent := false
+	res.send = func() {
+		if sent {
+			return
+		}
+		sent = true
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategoryTauntSuccess, countererMsg),
+			Actee:    messaging.Say(messaging.CategoryTauntSuccess, counteredMsg),
+			Observer: messaging.Say(messaging.CategoryTauntSuccess, roomMsg),
+		}, aud)
+	}
 	return res
 }
 
@@ -318,7 +348,10 @@ func counterTauntExit(actor Actor, char *characters.Character, target AggroTarge
 	if actor.IsPlayer() {
 		counteredRecipient = actor
 	}
-	return FireCounterTaunt(rooms.LoadRoom(char.RoomId), combatvocab.Rhetoric(combatvocab.TargetSingle),
+	// Held: the taunt command tells its own lines first, then the retort
+	// (TauntResult.Counter.Send), so the retort reads below what it answers
+	// (#263).
+	return fireCounterTaunt(rooms.LoadRoom(char.RoomId), combatvocab.Rhetoric(combatvocab.TargetSingle),
 		target.Char, char, countererRecipient, target.UserId, counteredRecipient, actor.GetUserId())
 }
 

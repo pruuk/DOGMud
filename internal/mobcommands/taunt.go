@@ -78,6 +78,10 @@ const (
 // predator_test.go keep seeing the action seam in the wrapper; this function
 // only narrates an Executed result.
 func narrateMobTaunt(mob *mobs.Mob, room *rooms.Room, result actions.TauntResult, pool, command string, legacy mobTauntLegacy, aggroLine string) (bool, error) {
+	// A defy-crit retort answers the lines told below, so it goes last
+	// (#263). A counter only fires on an Executed taunt, which is the only
+	// kind that reaches here.
+	defer result.Counter.Send()
 	targetName := result.Target.Name
 
 	var targetPlayer *users.UserRecord

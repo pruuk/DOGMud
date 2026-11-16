@@ -352,6 +352,7 @@ type zoneUpdateReq struct {
 	PortalDuration string   `json:"portalDuration"`
 	EntryRoom      int      `json:"entryRoom"`
 	AllowRecall    bool     `json:"allowRecall"`
+	InstanceGold   bool     `json:"instanceGold"` // #595: paid-instance mobs carry gold scaled by the entry
 	NonCartesian   bool     `json:"nonCartesian"`
 	DefaultPlane   int      `json:"defaultPlane"`
 }
@@ -405,8 +406,8 @@ func buildZoneGet(d zoneDeps, zone string) (zoneDetail, bool) {
 			MusicFile: cfg.MusicFile, IdleMessages: cfg.IdleMessages,
 			Instanced: cfg.Instanced, DeathPolicy: cfg.DeathPolicy,
 			PortalDuration: cfg.PortalDuration, EntryRoom: cfg.EntryRoom,
-			AllowRecall: cfg.AllowRecall, NonCartesian: cfg.NonCartesian,
-			DefaultPlane: cfg.DefaultPlane,
+			AllowRecall: cfg.AllowRecall, InstanceGold: cfg.InstanceGold,
+			NonCartesian: cfg.NonCartesian, DefaultPlane: cfg.DefaultPlane,
 		},
 		Enums: collectZoneEnums(d),
 	}, true
@@ -483,6 +484,7 @@ func buildZoneUpdate(d zoneDeps, req zoneUpdateReq) BuildResult {
 	out.PortalDuration = req.PortalDuration
 	out.EntryRoom = req.EntryRoom
 	out.AllowRecall = req.AllowRecall
+	out.InstanceGold = req.InstanceGold
 	out.NonCartesian = req.NonCartesian
 	out.DefaultPlane = req.DefaultPlane
 

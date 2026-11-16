@@ -398,6 +398,14 @@ func TestCounterTaunt_RetortNarratesToThePlayerTaunter(t *testing.T) {
 	require.True(t, res.Defence.DefensiveCrit, "fixture error: the taunt was supposed to be defy-critted")
 	require.True(t, res.Counter.Fired, "the defy crit must fire the counter-taunt")
 
+	// #263: ExecuteTaunt holds the retort, so the taunt command can tell its
+	// own lines first; nothing says RETORT until the command sends it.
+	for _, line := range events.DrainQueuedMessagesForTest(actor.GetUserId()) {
+		require.NotContains(t, line, "RETORT!", "the retort must wait for Counter.Send")
+	}
+	res.Counter.Send()
+	res.Counter.Send() // a second Send tells nothing more
+
 	lines := events.DrainQueuedMessagesForTest(actor.GetUserId())
 	retortLines := []string{}
 	for _, line := range lines {

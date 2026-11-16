@@ -1,5 +1,5 @@
 # messaging/grapple_outcomes.yaml store snapshot
-# category counts at time of writing: advancements=20 degradations=8 reversals=3 escapes=1 holds=5 striking_apex=1 gradients=4
+# category counts at time of writing: advancements=20 degradations=8 reversals=3 escapes=2 holds=5 striking_apex=1 gradients=4
 # dimensions: category x key x role. Triad categories (advancements/degradations/reversals/escapes/holds)
 # and gradients BOTH use role in {actor,actee,observer}: M4b-1 merged the two authored vocabularies
 # (controller/controlled/observers and self/partner/observers). striking_apex is single-speaker (no role).
@@ -99,6 +99,9 @@ reversals|generic_reverse|observer => Controlled reverses the position on Contro
 reversals|mount_reverse|actor => Controlled bridges and you tumble forward. They roll up between your legs and now you're in their guard.
 reversals|mount_reverse|actee => You bridge hard, post on the temple, and roll Controller between your legs: full guard, you're on top.
 reversals|mount_reverse|observer => Controlled bridges and rolls Controller forward into a guard reversal as top and bottom flip.
+escapes|escape_after_reversal|actor => You have barely taken the upper hand when Controlled twists loose and scrambles to their feet.
+escapes|escape_after_reversal|actee => Controller has barely taken the upper hand when you twist loose and scramble to your feet.
+escapes|escape_after_reversal|observer => Controller has barely taken the upper hand when Controlled twists loose and scrambles up.
 escapes|generic_escape|actor => Controlled explodes free and they're back on their feet before you can grab again.
 escapes|generic_escape|actee => You explode through the gap and scramble to your feet, free of Controller's grip at last.
 escapes|generic_escape|observer => Controlled explodes free of Controller and scrambles back to their feet.

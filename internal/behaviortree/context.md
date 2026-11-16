@@ -1232,6 +1232,16 @@ any other spell while one of its `ConditionIds` is held. Each shield and
 heal spell lands its own condition, and a new one only replaces the old, so
 casting a second ward or heal would swap one for another.
 
+Of the candidates left, `chooseCategoryCandidate` picks by
+`base_folds × cost`. In an attack category (`harmCategories`: `harm_single`,
+`harm_multi`) the pick is random, weighted by that score (#369,
+2026-11-16): a stronger spell is cast more often, and every candidate is cast
+sometimes. It used to take the top score every time, so casters only ever
+cast Mind Fog. Every other category (heals, shields, buffs) still takes the
+top score, ties to the lower spell id, so a healer never reaches for its
+weaker heal when a packmate is dying. The draw goes through `util.Rand`, so
+`util.SetRandForTest` replays it.
+
 ## Ambient budget (#317)
 
 An `item_idle` line from `speak` goes through `ambient.Plan` (source

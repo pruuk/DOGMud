@@ -568,12 +568,9 @@ func dispatchCritAndMessaging(atk, def actions.Actor, res *combat.AttackResult) 
 	markGlareCombatant(atk, srcCanSee)
 	markGlareCombatant(def, tgtCanSee)
 
-	// Crit effects (riposte / sweep / bash) compute side-specific text.
+	// Crit effects (riposte / sweep / bash) compute side-specific text. They
+	// apply now; their lines go after the swing's below (#263).
 	critResult := applyCritEffects(atkChar, defChar, *res, atkRoom)
-
-	// Crit message routing. Through the seam, so a reader who cannot see the
-	// other combatant reads "something" and the room line is sight-gated.
-	sendCritEffectTrio(atk, def, atkRoom, critResult)
 
 	// Conditions from the round (ConditionSource → atk, ConditionTarget → def).
 	for _, conditionId := range res.ConditionSource {
@@ -619,6 +616,14 @@ func dispatchCritAndMessaging(atk, def actions.Actor, res *combat.AttackResult) 
 	// before this round drew a line.
 	drainSpectatorLines(atkRoom, res.MessagesToSourceRoom, excludes)
 	recordSpectatorTallies(atkRoom, defRoom, atk, def, res, excludes)
+
+	// Crit message routing, after the swing's lines: a riposte or sweep
+	// answers the parry or dodge they describe, so it reads below them (#263:
+	// "RIPOSTE!" printed above "Bandit Scout awkwardly intercepts your
+	// Sling!"). Through the seam, so a reader who cannot see the other
+	// combatant reads "something" and the room line is sight-gated.
+	sendCritEffectTrio(atk, def, atkRoom, critResult)
+
 	sendUnsightedCombatSound(atkRoom, excludes...)
 }
 

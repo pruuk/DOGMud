@@ -150,14 +150,15 @@ plane 5, over plane 0 rooms); none was new.
 
 `FindAdjacentRoom` (`build room <dir>`, `teleport <dir>`) walks cells in a
 direction to the first room. Since maps stop at their border it reads a cell
-this map lacks from the maps of `WebMap` (`adjacentInOthers`: a room on the
-centre's plane first, else one on another plane) and stops outside all of
-them, as it stopped outside the one map that held them all (#375 phase 4
-Task 20). Compared with 8534cf6a1 on shipped data (every room, ten
-directions, one step and unbounded, 13,050 lookups): identical. That
-includes a quirk kept on purpose: the one map kept one room per cell
-whatever its plane, so from Dustwalk Road 400 `down` finds The Foldweave's
-6427 (plane 5), and `build room down` there would join the two planes.
+this map lacks from the maps of `WebMap` (`adjacentInOthers`) and stops
+outside all of them, as it stopped outside the one map that held them all
+(#375 phase 4 Task 20). Task 20 matched 8534cf6a1 exactly on shipped data
+(13,050 lookups), including a quirk it kept for parity: the one map kept one
+room per cell whatever its plane, so from Dustwalk Road 400 `down` found The
+Foldweave's 6427 (plane 5), and `build room down` there would have joined
+the two planes. Since #705 (2026-11-16) only a room on the centre's plane
+counts, in this map and the joined ones: a cell held only by another plane's
+room is empty (`TestFindAdjacentRoomStaysOnItsPlane`).
 
 ### Rendering
 
