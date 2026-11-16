@@ -14,7 +14,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/stats"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/pkg/errors"
 )
 
 type SpellData struct {
@@ -486,7 +485,7 @@ func LoadSpellFiles() {
 	dataPath := string(configs.GetFilePathsConfig().DataFiles) + `/spells`
 	tmpAllSpells, err := fileloader.LoadAllFlatFiles[string, *SpellData](dataPath)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+dataPath))
+		panic(fmt.Errorf("filepath: %s: %w", dataPath, err))
 	}
 
 	for _, s := range tmpAllSpells {

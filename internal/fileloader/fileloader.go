@@ -1,6 +1,7 @@
 package fileloader
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -75,7 +75,7 @@ func LoadFlatFile[T LoadableSimple](path string) (T, error) {
 
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return loaded, errors.Wrap(err, `filepath: `+path)
+		return loaded, fmt.Errorf("filepath: %s: %w", path, err)
 	}
 
 	if fileInfo.IsDir() {
@@ -89,13 +89,13 @@ func LoadFlatFile[T LoadableSimple](path string) (T, error) {
 
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return loaded, errors.Wrap(err, `filepath: `+path)
+		return loaded, fmt.Errorf("filepath: %s: %w", path, err)
 	}
 
 	err = yaml.Unmarshal(bytes, &loaded)
 	probeStrict[T](path, bytes)
 	if err != nil {
-		return loaded, errors.Wrap(err, `filepath: `+path)
+		return loaded, fmt.Errorf("filepath: %s: %w", path, err)
 	}
 
 	// Make sure the Filepath it claims is correct in case we need to save it later
@@ -105,7 +105,7 @@ func LoadFlatFile[T LoadableSimple](path string) (T, error) {
 
 	// validate the structure
 	if err := loaded.Validate(); err != nil {
-		return loaded, errors.Wrap(err, `filepath: `+path)
+		return loaded, fmt.Errorf("filepath: %s: %w", path, err)
 	}
 
 	return loaded, nil
@@ -201,7 +201,7 @@ func LoadAllFlatFiles[K comparable, T Loadable[K]](basePath string, filePattern 
 
 		bytes, err := os.ReadFile(path)
 		if err != nil {
-			return errors.Wrap(err, `filepath: `+path)
+			return fmt.Errorf("filepath: %s: %w", path, err)
 		}
 
 		var loaded T
@@ -209,7 +209,7 @@ func LoadAllFlatFiles[K comparable, T Loadable[K]](basePath string, filePattern 
 		err = yaml.Unmarshal(bytes, &loaded)
 		probeStrict[T](path, bytes)
 		if err != nil {
-			return errors.Wrap(err, `filepath: `+path)
+			return fmt.Errorf("filepath: %s: %w", path, err)
 		}
 
 		if !strings.HasSuffix(path, filepath.FromSlash(loaded.Filepath())) {
@@ -217,7 +217,7 @@ func LoadAllFlatFiles[K comparable, T Loadable[K]](basePath string, filePattern 
 		}
 
 		if err := loaded.Validate(); err != nil {
-			return errors.Wrap(err, `filepath: `+path)
+			return fmt.Errorf("filepath: %s: %w", path, err)
 		}
 
 		if _, ok := loadedData[loaded.Id()]; ok {

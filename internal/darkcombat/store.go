@@ -9,6 +9,8 @@
 package darkcombat
 
 import (
+	"errors"
+	"fmt"
 	"regexp"
 	"slices"
 	"strings"
@@ -17,7 +19,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/narration"
-	"github.com/pkg/errors"
 )
 
 // Viewpoint is whose personal line a dark line replaces.
@@ -75,24 +76,24 @@ func (g *ViewpointGroup) Filepath() string { return string(g.Viewpoint) + ".yaml
 // from combat, so a missing one would be silence in a dark fight.
 func (g *ViewpointGroup) Validate() error {
 	if !slices.Contains(allViewpoints, g.Viewpoint) {
-		return errors.Errorf("unknown viewpoint %q", g.Viewpoint)
+		return fmt.Errorf("unknown viewpoint %q", g.Viewpoint)
 	}
 	for o := range g.Outcomes {
 		if !slices.Contains(allOutcomes, o) {
-			return errors.Errorf("viewpoint %q declares unknown outcome %q", g.Viewpoint, o)
+			return fmt.Errorf("viewpoint %q declares unknown outcome %q", g.Viewpoint, o)
 		}
 	}
 	for _, o := range allOutcomes {
 		pool, ok := g.Outcomes[o]
 		if !ok {
-			return errors.Errorf("viewpoint %q is missing outcome %q", g.Viewpoint, o)
+			return fmt.Errorf("viewpoint %q is missing outcome %q", g.Viewpoint, o)
 		}
 		if err := narration.ValidateVariants(narration.Variants{Actor: pool}, MinVariants, narration.RoleActor); err != nil {
-			return errors.Wrapf(err, "viewpoint %q outcome %q", g.Viewpoint, o)
+			return fmt.Errorf("viewpoint %q outcome %q: %w", g.Viewpoint, o, err)
 		}
 		for i, text := range pool {
 			if err := validateLine(text); err != nil {
-				return errors.Wrapf(err, "viewpoint %q outcome %q variant %d", g.Viewpoint, o, i)
+				return fmt.Errorf("viewpoint %q outcome %q variant %d: %w", g.Viewpoint, o, i, err)
 			}
 		}
 	}
@@ -105,7 +106,7 @@ func (g *ViewpointGroup) Validate() error {
 func validateLine(text string) error {
 	plain := ansiTag.ReplaceAllString(text, "")
 	if n := utf8.RuneCountInString(plain); n > maxLineColumns {
-		return errors.Errorf("is %d visible columns, over %d", n, maxLineColumns)
+		return fmt.Errorf("is %d visible columns, over %d", n, maxLineColumns)
 	}
 	if strings.ContainsAny(plain, "0123456789") {
 		return errors.New("shows a number")
@@ -126,11 +127,11 @@ var loaded map[string]*ViewpointGroup
 func LoadFrom(dir string) error {
 	got, err := fileloader.LoadAllFlatFiles[string, *ViewpointGroup](dir)
 	if err != nil {
-		return errors.Wrap(err, "loading dark-combat lines")
+		return fmt.Errorf("loading dark-combat lines: %w", err)
 	}
 	for _, v := range allViewpoints {
 		if got[string(v)] == nil {
-			return errors.Errorf("dark-combat lines: no file for viewpoint %q", v)
+			return fmt.Errorf("dark-combat lines: no file for viewpoint %q", v)
 		}
 	}
 	loaded = got

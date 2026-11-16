@@ -1077,7 +1077,7 @@ func ValidateWorldFiles(exampleWorldPath string, worldPath string) error {
 
 	entries, err := os.ReadDir(exampleWorldPath)
 	if err != nil {
-		return fmt.Errorf("unable to read directory %s: %v", exampleWorldPath, err)
+		return fmt.Errorf("unable to read directory %s: %w", exampleWorldPath, err)
 	}
 
 	var subfolders []string
@@ -1094,7 +1094,7 @@ func ValidateWorldFiles(exampleWorldPath string, worldPath string) error {
 
 		info, err := os.Stat(testPath)
 		if err != nil {
-			return fmt.Errorf("'%s' missing folder '%s': %v", worldPath, folder, err)
+			return fmt.Errorf("'%s' missing folder '%s': %w", worldPath, folder, err)
 		}
 		if !info.IsDir() {
 			return fmt.Errorf("'%s' exists but is not a directory", testPath)

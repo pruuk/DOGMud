@@ -22,7 +22,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	pkgerrors "github.com/pkg/errors"
 )
 
 // companionTransport is set at startup by main.go to wire the
@@ -1088,7 +1087,7 @@ func LoadDataFiles() {
 	}
 
 	if err := loadAllRoomZones(); err != nil {
-		panic(pkgerrors.Wrap(err, `filepath: rooms`))
+		panic(fmt.Errorf("filepath: rooms: %w", err))
 	}
 
 }

@@ -74,19 +74,19 @@ func Parse(v string) (Version, error) {
 
 	major, err := strconv.Atoi(parts[0])
 	if err != nil {
-		return Version{}, fmt.Errorf("invalid major version: %v", err)
+		return Version{}, fmt.Errorf("invalid major version: %w", err)
 	}
 
 	minor, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return Version{}, fmt.Errorf("invalid minor version: %v", err)
+		return Version{}, fmt.Errorf("invalid minor version: %w", err)
 	}
 
 	patch := 0
 	if len(parts) == 3 {
 		patch, err = strconv.Atoi(parts[2])
 		if err != nil {
-			return Version{}, fmt.Errorf("invalid patch version: %v", err)
+			return Version{}, fmt.Errorf("invalid patch version: %w", err)
 		}
 	}
 

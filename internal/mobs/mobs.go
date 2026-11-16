@@ -30,7 +30,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -1433,7 +1432,7 @@ func LoadDataFiles() {
 	dataPath := configs.GetFilePathsConfig().DataFiles.String() + `/mobs`
 	tmpMobs, err := fileloader.LoadAllFlatFiles[int, *Mob](dataPath)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+dataPath))
+		panic(fmt.Errorf("filepath: %s: %w", dataPath, err))
 	}
 
 	// Validate display names are canonical before building caches.

@@ -10,7 +10,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -531,7 +530,7 @@ func LoadDataFiles() {
 	dataPath := questsDataRoot()
 	tmpQuests, err := fileloader.LoadAllFlatFiles[int, *Quest](dataPath)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+dataPath))
+		panic(fmt.Errorf("filepath: %s: %w", dataPath, err))
 	}
 
 	quests = tmpQuests

@@ -9,7 +9,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
-	"github.com/pkg/errors"
 )
 
 type BiomeInfo struct {
@@ -202,7 +201,7 @@ func LoadBiomeDataFiles() {
 	dataPath := configs.GetFilePathsConfig().DataFiles.String() + `/biomes`
 	tmpBiomes, err := fileloader.LoadAllFlatFiles[string, *BiomeInfo](dataPath)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+dataPath))
+		panic(fmt.Errorf("filepath: %s: %w", dataPath, err))
 	}
 
 	biomes = tmpBiomes

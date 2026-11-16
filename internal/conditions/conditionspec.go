@@ -15,7 +15,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/statmods"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/pkg/errors"
 )
 
 // Something temporarily attached to a character
@@ -468,7 +467,7 @@ func LoadDataFiles() {
 	dataPath := string(configs.GetFilePathsConfig().DataFiles) + `/conditions`
 	tmpConditions, err := fileloader.LoadAllFlatFiles[int, *ConditionSpec](dataPath)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+dataPath))
+		panic(fmt.Errorf("filepath: %s: %w", dataPath, err))
 	}
 
 	for id, b := range tmpConditions {
