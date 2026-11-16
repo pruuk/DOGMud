@@ -13,7 +13,7 @@ The `internal/facts` package maintains a central registry of world facts and per
 - **facts_test.go**: Unit tests for registry operations (declare/collision/withdraw/expire/prune/withdraw-on-respawn), registry reads (AllActiveFacts/AllFactsByTag), awareness lifecycle (heard events with bounded FIFO, known facts, idempotence)
 - **persistence_test.go**: Tests for disk I/O, cache lifecycle, concurrent access patterns
 - **types_test.go**: Type enum and data structure tests
-- **test_main_test.go**: TestMain setup with temp-dir isolation, `resetCaches()` helper
+- **test_main_test.go**: TestMain setup with temp-dir isolation, `resetCaches(t)` helper
 
 ## Key Functions
 
@@ -202,12 +202,12 @@ command (mob-aliveness chunk 6.4). Two rows are reported: `registry`
 - **facts_test.go**: ~150 lines covering registry operations (declare/collision/withdraw/expire/prune/WithdrawAllBoundTo), registry reads (AllActiveFacts/AllFactsByTag), awareness writes (RecordHeardEvent with bounded FIFO + dedup, RecordKnowsFact with idempotence, ForgetFact, ForgetAll), awareness reads (HeardEvent, KnowsFact, KnownFactsOf), lifecycle transitions.
 - **persistence_test.go**: Tests for disk I/O (load/save round-trip), cache lifecycle, lazy-load double-check-lock correctness, concurrent saves.
 - **types_test.go**: Data structure marshaling/unmarshaling tests.
-- **test_main_test.go**: TestMain setup with temp-dir isolation via config override; `resetCaches()` helper clears both registry and awareness caches and removes facts.yaml from disk.
+- **test_main_test.go**: TestMain setup with temp-dir isolation via config override; `resetCaches(t)` helper clears both registry and awareness caches and removes facts.yaml and the saved awareness files from disk.
 
 ### Test Helpers and Patterns
-- **resetCaches()**: Clears `registry`, wipes `awarenessCache`, removes facts.yaml from disk. Called between tests to ensure clean state.
+- **resetCaches(t)**: Clears `registry`, wipes `awarenessCache`, removes facts.yaml and every file under `facts.awareness/`, then does the same again in `t.Cleanup`. Called at the start of every test that touches the registry or awareness. The awareness files matter: the temp data folder is shared by every pass of `go test -count=N`, so a file one pass saved would otherwise be loaded by the next.
 - **roundForTest / heardEventsMaxForTest**: Injection hooks for testing; tests assign closures and must clear (`defer`) them after use.
-- **In-memory pattern**: Tests do not rely on disk I/O for core logic tests. Disk I/O is tested separately in persistence_test.go. The `resetCaches()` helper keeps disk state synchronized with test expectations.
+- **In-memory pattern**: Tests do not rely on disk I/O for core logic tests. Disk I/O is tested separately in persistence_test.go. The `resetCaches(t)` helper keeps disk state synchronized with test expectations.
 
 ### Key Test Scenarios
 - **Registry lifecycle**: Declare → GetFact (active) → Withdraw → GetFact (withdrawn) → AllActiveFacts (filtered).
