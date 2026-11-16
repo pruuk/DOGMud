@@ -21,8 +21,21 @@ linters:
     - ineffassign  # dead assignments; cheap, catches copy/paste bugs
     - unconvert    # unnecessary type conversions
     - modernize    # keeps new code on current Go idioms (#348)
+    - godoclint    # new declarations carry a doc comment (#360)
 
   settings:
+    godoclint:
+      # Owner ruling 2026-11-16: new code needs doc comments, exported and
+      # unexported alike, so a human can take the code over. Old code is
+      # not gated (CI lints changed lines only); its backfill is #360.
+      # Test files are excluded below: a test's name says what it checks.
+      default: none
+      enable:
+        - require-doc
+      options:
+        require-doc:
+          ignore-exported: false
+          ignore-unexported: false
     modernize:
       disable:
         # omitzero changes JSON output (omitempty fields start being omitted
@@ -51,3 +64,4 @@ linters:
       - path: _test\.go
         linters:
           - errcheck
+          - godoclint
