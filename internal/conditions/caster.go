@@ -27,7 +27,7 @@ type plainCondition Condition
 // restart the same number names a different creature, or none: a saved mob
 // caster would credit a stranger. A record whose caster was a mob is saved
 // with no caster.
-func (b Condition) MarshalYAML() (interface{}, error) {
+func (b Condition) MarshalYAML() (any, error) {
 	p := plainCondition(b)
 	p.Caster.MobInstanceId = 0
 	return p, nil
@@ -36,7 +36,7 @@ func (b Condition) MarshalYAML() (interface{}, error) {
 // UnmarshalYAML loads a record and drops any mob caster it carries, for a
 // save written before MarshalYAML stripped it. The yaml.v2 form, which
 // yaml.v3 also honours.
-func (b *Condition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (b *Condition) UnmarshalYAML(unmarshal func(any) error) error {
 	var p plainCondition
 	if err := unmarshal(&p); err != nil {
 		return err

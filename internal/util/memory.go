@@ -97,7 +97,7 @@ func sizeOf(v reflect.Value) uintptr {
 	}
 }
 
-func MemoryUsage(i interface{}) uint64 {
+func MemoryUsage(i any) uint64 {
 	return uint64(sizeOf(reflect.ValueOf(i)))
 }
 

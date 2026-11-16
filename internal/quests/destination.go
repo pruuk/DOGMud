@@ -38,7 +38,7 @@ type mobIds []int
 // UnmarshalYAML takes `mob: 94` or `mob: [9316, 9300]`. An empty list decodes
 // as an empty, non-nil list so Validate refuses it rather than reading it as
 // no mob at all.
-func (m *mobIds) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (m *mobIds) UnmarshalYAML(unmarshal func(any) error) error {
 	var one int
 	if err := unmarshal(&one); err == nil {
 		*m = mobIds{one}
@@ -54,7 +54,7 @@ func (m *mobIds) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // MarshalYAML writes one id as a single id and several as a list, so a file
 // written with `mob: 94` stays a fixed point.
-func (m mobIds) MarshalYAML() (interface{}, error) {
+func (m mobIds) MarshalYAML() (any, error) {
 	if len(m) == 1 {
 		return m[0], nil
 	}
@@ -71,7 +71,7 @@ func (d StepDestination) IsZero() bool {
 
 // UnmarshalYAML takes the scalar anywhere or a mapping of room, mob, area and
 // zone; any other word or key refuses the file.
-func (d *StepDestination) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (d *StepDestination) UnmarshalYAML(unmarshal func(any) error) error {
 	var word string
 	if err := unmarshal(&word); err == nil {
 		if word != DestinationAnywhere {
@@ -80,7 +80,7 @@ func (d *StepDestination) UnmarshalYAML(unmarshal func(interface{}) error) error
 		*d = StepDestination{Anywhere: true}
 		return nil
 	}
-	var raw map[string]interface{}
+	var raw map[string]any
 	if err := unmarshal(&raw); err != nil {
 		return fmt.Errorf("destination: want %q or a mapping of room, mob, area, zone: %w", DestinationAnywhere, err)
 	}
@@ -98,7 +98,7 @@ func (d *StepDestination) UnmarshalYAML(unmarshal func(interface{}) error) error
 }
 
 // MarshalYAML writes anywhere as the scalar and anything else as the mapping.
-func (d StepDestination) MarshalYAML() (interface{}, error) {
+func (d StepDestination) MarshalYAML() (any, error) {
 	if d.Anywhere {
 		return DestinationAnywhere, nil
 	}

@@ -31,11 +31,11 @@ func migratedMutations(t *testing.T, path string) (map[string]int, bool) {
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	if err := yaml.Unmarshal(raw, &m); err != nil {
 		t.Fatalf("parse %s: %v", path, err)
 	}
-	ch, _ := m["character"].(map[interface{}]interface{})
+	ch, _ := m["character"].(map[any]any)
 	migrated, _ := ch["mutation_migrated"].(bool)
 	return yamlIntMap(ch["mutations"]), migrated
 }

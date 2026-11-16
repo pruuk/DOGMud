@@ -912,15 +912,15 @@ func TestEveryTownHasAFenceNearby(t *testing.T) {
 		require.NoError(t, err)
 		// Decoded loosely: mob files carry fields of many shapes, and only
 		// three matter here.
-		var mob map[string]interface{}
+		var mob map[string]any
 		require.NoError(t, yaml.Unmarshal(data, &mob), f)
-		groups, _ := mob[`groups`].([]interface{})
+		groups, _ := mob[`groups`].([]any)
 		for _, g := range groups {
 			if g != `fence` {
 				continue
 			}
 			name := f
-			if c, ok := mob[`character`].(map[interface{}]interface{}); ok {
+			if c, ok := mob[`character`].(map[any]any); ok {
 				if n, ok := c[`name`].(string); ok {
 					name = n
 				}
@@ -938,7 +938,7 @@ func TestEveryTownHasAFenceNearby(t *testing.T) {
 			} else {
 				assert.NotEmpty(t, craft, "%s: a fence that was already a trader keeps its craft_support", name)
 			}
-			shop, _ := mob[`character`].(map[interface{}]interface{})[`shop`].([]interface{})
+			shop, _ := mob[`character`].(map[any]any)[`shop`].([]any)
 			assert.NotEmpty(t, shop, "%s: a fence keeps a shop", name)
 			zone := filepath.Base(filepath.Dir(f))
 			fencesIn[zone] = append(fencesIn[zone], name)

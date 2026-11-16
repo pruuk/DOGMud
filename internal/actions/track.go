@@ -581,7 +581,7 @@ func findPresentTargetByNoun(viewer *characters.Character, room *rooms.Room, nou
 // target ids. Exit direction is found by scanning adjacent rooms for the
 // strongest trail.
 func lookupAdjacentTrail(room *rooms.Room, targetNoun string, excludeUserId int) (
-	applied bool, miscKey string, miscVal interface{}, dirExit string, targetUserId int, targetMobId int, targetName string,
+	applied bool, miscKey string, miscVal any, dirExit string, targetUserId int, targetMobId int, targetName string,
 ) {
 	// First try users in current room's visitor log.
 	allUserNames := []string{}

@@ -177,7 +177,7 @@ func getUserBoolOption(user *users.UserRecord, key string, defaultValue bool) bo
 }
 
 // Helper to send GMCP event
-func sendGMCP(userId int, module string, payload interface{}) {
+func sendGMCP(userId int, module string, payload any) {
 	if userId < 1 {
 		return
 	}

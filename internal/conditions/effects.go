@@ -109,7 +109,7 @@ type EffectValue struct {
 	UsesMagnitude bool
 }
 
-func (v *EffectValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (v *EffectValue) UnmarshalYAML(unmarshal func(any) error) error {
 	var s string
 	if err := unmarshal(&s); err == nil {
 		if s == "magnitude" {
@@ -131,7 +131,7 @@ func (v *EffectValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (v EffectValue) MarshalYAML() (interface{}, error) {
+func (v EffectValue) MarshalYAML() (any, error) {
 	if v.UsesMagnitude {
 		return "magnitude", nil
 	}

@@ -76,7 +76,7 @@ func PrepareInstanceWrite(r Room) (savequeue.PendingWrite, error) {
 	tplVal := reflect.ValueOf(*rTpl)
 	t := reflect.TypeOf(r)
 
-	instanceSaveData := make(map[string]interface{})
+	instanceSaveData := make(map[string]any)
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)

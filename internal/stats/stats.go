@@ -44,7 +44,7 @@ type StatInfo struct {
 // The local type strips the method set so the nested unmarshal does not recurse
 // back into here; the probe then re-reads the same node just to see whether the
 // key existed at all.
-func (si *StatInfo) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (si *StatInfo) UnmarshalYAML(unmarshal func(any) error) error {
 	type plainStatInfo StatInfo
 	var raw plainStatInfo
 	if err := unmarshal(&raw); err != nil {

@@ -78,7 +78,7 @@ func Config_Typed(c Config) uint64 {
 	return uint64(c.Timing.turnsPerRound)
 }
 
-func Config_Interface(c interface{}) uint64 {
+func Config_Interface(c any) uint64 {
 	return uint64(c.(Config).Timing.turnsPerRound)
 }
 

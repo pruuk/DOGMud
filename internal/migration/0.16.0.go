@@ -67,7 +67,7 @@ func freezeExploitedVitalityInDir(usersDir string, dryRun bool) error {
 		// Parse as a generic map to preserve every other field untouched,
 		// mirroring migrate_UserStatsRename (0.10.0) and
 		// migrate_ReclassifyPlayerMutations (0.14.0).
-		var userMap map[string]interface{}
+		var userMap map[string]any
 		if err := yaml.Unmarshal(raw, &userMap); err != nil {
 			mudlog.Warn("Migration 0.16.0", "file", filepath.Base(path), "error", err)
 			continue
@@ -79,17 +79,17 @@ func freezeExploitedVitalityInDir(usersDir string, dryRun bool) error {
 		}
 		found = true
 
-		charData, ok := userMap["character"].(map[interface{}]interface{})
+		charData, ok := userMap["character"].(map[any]any)
 		if !ok {
 			mudlog.Warn("Migration 0.16.0", "file", filepath.Base(path), "message", "fyttyn save has no character data, skipping")
 			continue
 		}
-		statsData, ok := charData["stats"].(map[interface{}]interface{})
+		statsData, ok := charData["stats"].(map[any]any)
 		if !ok {
 			mudlog.Warn("Migration 0.16.0", "file", filepath.Base(path), "message", "fyttyn save has no stats data, skipping")
 			continue
 		}
-		vitalityData, ok := statsData["vitality"].(map[interface{}]interface{})
+		vitalityData, ok := statsData["vitality"].(map[any]any)
 		if !ok {
 			mudlog.Warn("Migration 0.16.0", "file", filepath.Base(path), "message", "fyttyn save has no vitality stat, skipping")
 			continue

@@ -115,13 +115,13 @@ func TestLoadRoomInstance_RestoresSkipTaggedFieldsFromTemplate(t *testing.T) {
 
 	// Create a corrupt instance file with different Title/Description/Exits
 	// (simulating a pre-fix save file that mistakenly wrote skip-tagged fields)
-	corruptInstance := map[string]interface{}{
+	corruptInstance := map[string]any{
 		"gold": 42, // non-skip field; should be applied
 		// Skip-tagged fields that should NOT be applied
 		"title":       "Corrupt Title",
 		"description": "Bad data.",
-		"exits": map[string]interface{}{
-			"east": map[string]interface{}{
+		"exits": map[string]any{
+			"east": map[string]any{
 				"roomid": 999,
 			},
 		},
@@ -205,7 +205,7 @@ func TestLoadRoomInstance_AppliesNonSkipFields(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Create an instance file with Gold=99
-	instanceData := map[string]interface{}{
+	instanceData := map[string]any{
 		"gold": 99, // non-skip; should be applied
 	}
 
