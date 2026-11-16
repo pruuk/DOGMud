@@ -299,9 +299,9 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 				break
 			}
 
-			// A hidden container the viewer has not discovered is not listed,
-			// the rule text look and search use (look.go, search_feature.go).
-			if container.Hidden && !user.Character.HasDiscovery(room.RoomId, name) {
+			// A hidden container the viewer has not discovered is not listed:
+			// the rule look and search use (Room.ContainerVisibleTo, #442).
+			if !room.ContainerVisibleTo(user.Character, name) {
 				continue
 			}
 

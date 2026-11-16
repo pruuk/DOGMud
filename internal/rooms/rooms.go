@@ -2438,6 +2438,33 @@ func (r *Room) FindContainerByName(containerNameSearch string) string {
 	return closeMatch
 }
 
+// ContainerVisibleTo reports whether char can see the room's container
+// named name: it exists, and it is not hidden or char has discovered it in
+// this room (search records the find). A nil char sees no hidden container.
+// The one statement of the rule: every command and the GMCP room view used
+// to write it out by hand (#442).
+func (r *Room) ContainerVisibleTo(char *characters.Character, name string) bool {
+	c, ok := r.Containers[name]
+	if !ok {
+		return false
+	}
+	if !c.Hidden {
+		return true
+	}
+	return char != nil && char.HasDiscovery(r.RoomId, name)
+}
+
+// FindVisibleContainerByName is FindContainerByName limited to the
+// containers char can see (ContainerVisibleTo): "" when the match is a
+// hidden container char has not discovered, as if it were not there.
+func (r *Room) FindVisibleContainerByName(char *characters.Character, containerNameSearch string) string {
+	name := r.FindContainerByName(containerNameSearch)
+	if name == `` || !r.ContainerVisibleTo(char, name) {
+		return ``
+	}
+	return name
+}
+
 // FindHiddenNoun looks up a hidden noun by key. Returns the noun key,
 // the HiddenNoun, and true if found. Returns empty values and false if not.
 func (r *Room) FindHiddenNoun(search string) (string, HiddenNoun, bool) {

@@ -203,12 +203,5 @@ func lookNamesAnObject(actor Actor, lookAt string) bool {
 	if room.MatchesSealedCrate(strings.ToLower(lookAt)) {
 		return true
 	}
-	name := room.FindContainerByName(lookAt)
-	if name == `` {
-		return false
-	}
-	if c, ok := room.Containers[name]; ok && c.Hidden {
-		return actor.GetCharacter().HasDiscovery(room.RoomId, name)
-	}
-	return true
+	return room.FindVisibleContainerByName(actor.GetCharacter(), lookAt) != ``
 }

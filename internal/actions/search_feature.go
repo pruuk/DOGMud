@@ -135,8 +135,8 @@ func FindSearchFeature(char *characters.Character, room *rooms.Room, typed strin
 
 	if len(room.Containers) > 0 {
 		visible := make([]string, 0, len(room.Containers))
-		for key, c := range room.Containers {
-			if c.Hidden && (char == nil || !char.HasDiscovery(room.RoomId, key)) {
+		for key := range room.Containers {
+			if !room.ContainerVisibleTo(char, key) {
 				continue
 			}
 			visible = append(visible, key)

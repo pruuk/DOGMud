@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -187,20 +188,13 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 // failure. Returns lockTargetNone if nothing usable is found.
 func resolveDefuseLockTarget(actor Actor, room *rooms.Room, noun string) defuseLockTarget {
 	// Try containers first.
-	containerName := room.FindContainerByName(noun)
-	if containerName != "" {
-		// Respect hidden-container discovery (source behavior).
-		if c, exists := room.Containers[containerName]; exists && c.Hidden {
-			discovered := false
-			if actor.IsPlayer() {
-				discovered = actor.GetCharacter().HasDiscovery(room.RoomId,
-					containerName)
-			}
-			if !discovered {
-				containerName = ""
-			}
-		}
+	// Respect hidden-container discovery (source behavior): only a player's
+	// discoveries count, so a mob sees no hidden container.
+	var viewer *characters.Character
+	if actor.IsPlayer() {
+		viewer = actor.GetCharacter()
 	}
+	containerName := room.FindVisibleContainerByName(viewer, noun)
 
 	if containerName != "" {
 		container := room.Containers[containerName]
