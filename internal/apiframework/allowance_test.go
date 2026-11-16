@@ -338,10 +338,18 @@ func TestSaveBudgetCopiesEveryMapUnderTheLock(t *testing.T) {
 	for progress.Load() < 20 {
 		runtime.Gosched()
 	}
+	// At least 100 saves, and on until the writers have moved during them
+	// (#878: under CI's -race scheduling, 100 saves could all finish before a
+	// writer ran, and the fixture failed its own precondition). The cap only
+	// matters if the writers are starved for ten seconds.
 	before := progress.Load()
-	for i := 0; i < 100; i++ {
+	deadline := time.Now().Add(10 * time.Second)
+	for i := 0; i < 100 || (progress.Load()-before < 8 && time.Now().Before(deadline)); i++ {
 		SaveBudget()
 		round.Add(1)
+		if i >= 100 {
+			runtime.Gosched()
+		}
 	}
 	during := progress.Load() - before
 	close(stop)
