@@ -52,7 +52,7 @@ type fakeOpenAI struct {
 	modStatus      int          // when set, the moderation endpoint answers this status
 	flagWord       string       // when set, any moderation input containing it is flagged
 	lastModeration atomic.Value // the last moderation inputs, newline-joined
-	moderations    int32        // moderation calls made, status answered or not
+	moderations    atomic.Int32 // moderation calls made, status answered or not
 	hang           bool         // chat calls answer only after a second
 	chats          int32
 	lastBody       atomic.Value
@@ -81,7 +81,7 @@ func newFakeOpenAI(t *testing.T) *fakeOpenAI {
 			}
 			_ = json.NewEncoder(w).Encode(resp)
 		case strings.HasSuffix(r.URL.Path, `/moderations`):
-			atomic.AddInt32(&f.moderations, 1)
+			f.moderations.Add(1)
 			if f.modStatus != 0 {
 				w.WriteHeader(f.modStatus)
 				return
@@ -835,10 +835,10 @@ func TestFailedChecksOpenTheModerationBreakerAlone(t *testing.T) {
 	}
 
 	f.modStatus = 0
-	checks := atomic.LoadInt32(&f.moderations)
+	checks := f.moderations.Load()
 	relay.allowed[7] = true
 	res, err := m.generate(context.Background(), request())
-	if err != nil || !res.FinderOnly || res.Moderated || atomic.LoadInt32(&f.moderations) != checks {
+	if err != nil || !res.FinderOnly || res.Moderated || f.moderations.Load() != checks {
 		t.Fatalf("with the breaker open, the finder's text is kept to them, unchecked: %+v %v", res, err)
 	}
 	relay.allowed[7] = false
