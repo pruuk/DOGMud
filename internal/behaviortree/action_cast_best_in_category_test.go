@@ -295,20 +295,31 @@ func TestCastBestInCategory_RankingSelectsHighestScore(t *testing.T) {
 		t.Fatalf("want 3 candidates, got %d: %v", len(candidates), spellIds(candidates))
 	}
 
-	// #369: the pick is weighted by score, not always the top one (casters
-	// only ever cast Mind Fog). Over many seeded draws every candidate is
-	// cast, and the order of frequency follows the score.
+	// A heal, shield or buff category takes the top score every time: a
+	// healer must not pick its weaker heal for a badly wounded packmate
+	// (review of #369).
 	restore := util.SetRandForTest(369)
 	defer restore()
-	counts := map[string]int{}
-	for i := 0; i < 3400; i++ {
-		counts[chooseCategoryCandidate(candidates).SpellId]++
+	for i := 0; i < 200; i++ {
+		if got := chooseCategoryCandidate("self_defense", candidates).SpellId; got != "hi" {
+			t.Fatalf("self_defense draw %d picked %s, want the top score 'hi' every time", i, got)
+		}
 	}
-	if counts["lo"] == 0 || counts["mid"] == 0 || counts["hi"] == 0 {
-		t.Fatalf("every candidate must sometimes be cast: %v", counts)
-	}
-	if !(counts["hi"] > counts["mid"] && counts["mid"] > counts["lo"]) {
-		t.Errorf("frequency must follow the score (hi 120 > mid 40 > lo 10): %v", counts)
+
+	// #369: an attack category is weighted by score, not always the top one
+	// (casters only ever cast Mind Fog). Over many seeded draws every
+	// candidate is cast, and the order of frequency follows the score.
+	for _, category := range harmCategories {
+		counts := map[string]int{}
+		for i := 0; i < 3400; i++ {
+			counts[chooseCategoryCandidate(category, candidates).SpellId]++
+		}
+		if counts["lo"] == 0 || counts["mid"] == 0 || counts["hi"] == 0 {
+			t.Fatalf("%s: every candidate must sometimes be cast: %v", category, counts)
+		}
+		if !(counts["hi"] > counts["mid"] && counts["mid"] > counts["lo"]) {
+			t.Errorf("%s: frequency must follow the score (hi 120 > mid 40 > lo 10): %v", category, counts)
+		}
 	}
 }
 
@@ -326,19 +337,25 @@ func TestCastBestInCategory_TieBreaksBySpellIdAsc(t *testing.T) {
 		t.Fatalf("want 2, got %d", len(candidates))
 	}
 
-	// Equal scores are equally likely, and the draw does not depend on the
-	// spellbook map's order: the same seed picks the same spell every run.
-	restore := util.SetRandForTest(7)
-	first := chooseCategoryCandidate(candidates).SpellId
-	restore()
-	for i := 0; i < 5; i++ {
-		reversed := []*spells.SpellData{candidates[1], candidates[0]}
-		restore = util.SetRandForTest(7)
-		if got := chooseCategoryCandidate(reversed).SpellId; got != first {
-			t.Errorf("the same seed picked %s for one order and %s for the other", first, got)
+	// A tie in a top-score category goes to the lower spell id, whatever the
+	// spellbook map's order.
+	reversed := []*spells.SpellData{candidates[1], candidates[0]}
+	for _, order := range [][]*spells.SpellData{candidates, reversed} {
+		if got := chooseCategoryCandidate("self_defense", order).SpellId; got != "aaa" {
+			t.Errorf("tie-break: expected 'aaa', got %s", got)
 		}
-		restore()
 	}
+
+	// In an attack category equal scores are equally likely, and the draw
+	// does not depend on the order: the same seed picks the same spell.
+	restore := util.SetRandForTest(7)
+	first := chooseCategoryCandidate("harm_single", candidates).SpellId
+	restore()
+	restore = util.SetRandForTest(7)
+	if got := chooseCategoryCandidate("harm_single", reversed).SpellId; got != first {
+		t.Errorf("the same seed picked %s for one order and %s for the other", first, got)
+	}
+	restore()
 }
 
 // ─── Action-level smoke tests ─────────────────────────────────────────────────

@@ -2,6 +2,7 @@ package behaviortree
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -90,7 +91,7 @@ func actCastBestInCategory(params map[string]any, ctx *EvalContext) Result {
 		return Failure
 	}
 
-	chosen := chooseCategoryCandidate(candidates)
+	chosen := chooseCategoryCandidate(category, candidates)
 
 	// Packmate targets are addressed via `cast <spell> #<instanceId>`.
 	// target=self issues the cast without a target suffix; HelpSingle-type
@@ -103,17 +104,32 @@ func actCastBestInCategory(params map[string]any, ctx *EvalContext) Result {
 	return Success
 }
 
-// chooseCategoryCandidate picks the spell to cast, weighted by its score
-// (base_folds × cost, at least 1): a stronger spell is cast more often, and
-// every candidate is cast sometimes. It always took the top score, so casters
-// only ever cast Mind Fog (300) and never Nerve Disruption (200) or Mind
-// Spike (40) (#369). Candidates are sorted by spell id first, so a seeded draw
+// harmCategories are the attack categories, where a caster varies its spells.
+var harmCategories = []string{"harm_single", "harm_multi"}
+
+// chooseCategoryCandidate picks the spell to cast by its score (base_folds ×
+// cost). In an attack category the pick is random, weighted by the score: a
+// stronger spell is cast more often, and every candidate sometimes. It always
+// took the top score, so casters only ever cast Mind Fog (300) and never
+// Nerve Disruption (200) or Mind Spike (40) (#369). Every other category
+// (heals, shields, buffs) takes the top score, ties to the lower spell id: a
+// healer must not reach for its weaker heal when a packmate is dying.
+// Candidates are sorted by spell id first, so a seeded draw
 // (util.SetRandForTest) does not depend on the spellbook map's order.
 // candidates must not be empty.
-func chooseCategoryCandidate(candidates []*spells.SpellData) *spells.SpellData {
+func chooseCategoryCandidate(category string, candidates []*spells.SpellData) *spells.SpellData {
 	sorted := append([]*spells.SpellData(nil), candidates...)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].SpellId < sorted[j].SpellId })
 	weight := func(sd *spells.SpellData) int { return max(1, sd.BaseFolds*sd.Cost) }
+	if !slices.Contains(harmCategories, category) {
+		best := sorted[0]
+		for _, sd := range sorted[1:] {
+			if weight(sd) > weight(best) {
+				best = sd
+			}
+		}
+		return best
+	}
 	total := 0
 	for _, sd := range sorted {
 		total += weight(sd)
