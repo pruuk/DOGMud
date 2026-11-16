@@ -51,7 +51,7 @@ func TestRegression_IsDisabledOnlyChecksHealth(t *testing.T) {
 // where alignment dead code could be reintroduced. The Character struct
 // must not contain an Alignment field.
 func TestRegression_AlignmentFullyRemoved(t *testing.T) {
-	charType := reflect.TypeOf(Character{})
+	charType := reflect.TypeFor[Character]()
 
 	// Verify no field named "Alignment" exists on the Character struct
 	for i := 0; i < charType.NumField(); i++ {

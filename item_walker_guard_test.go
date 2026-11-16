@@ -44,28 +44,28 @@ type sweepRoot struct {
 // and modules/auctions register, one per source name.
 func sweepRoots() []sweepRoot {
 	return []sweepRoot{
-		{`auctions`, reflect.TypeOf((*auctions.AuctionManager)(nil)).Elem(), func(v reflect.Value, fn func(*items.Item)) {
+		{`auctions`, reflect.TypeFor[auctions.AuctionManager](), func(v reflect.Value, fn func(*items.Item)) {
 			v.Addr().Interface().(*auctions.AuctionManager).WalkItems(fn)
 		}},
-		{`guilds`, reflect.TypeOf((*guilds.Guild)(nil)).Elem(), func(v reflect.Value, fn func(*items.Item)) {
+		{`guilds`, reflect.TypeFor[guilds.Guild](), func(v reflect.Value, fn func(*items.Item)) {
 			v.Addr().Interface().(*guilds.Guild).WalkItems(fn)
 		}},
-		{`mobs`, reflect.TypeOf((*mobs.Mob)(nil)).Elem(), func(v reflect.Value, fn func(*items.Item)) {
+		{`mobs`, reflect.TypeFor[mobs.Mob](), func(v reflect.Value, fn func(*items.Item)) {
 			v.Addr().Interface().(*mobs.Mob).WalkItems(fn)
 		}},
-		{`rooms`, reflect.TypeOf((*rooms.Room)(nil)).Elem(), func(v reflect.Value, fn func(*items.Item)) {
+		{`rooms`, reflect.TypeFor[rooms.Room](), func(v reflect.Value, fn func(*items.Item)) {
 			v.Addr().Interface().(*rooms.Room).WalkItems(fn)
 		}},
-		{`shops`, reflect.TypeOf((*shops.ShopInventory)(nil)).Elem(), func(v reflect.Value, fn func(*items.Item)) {
+		{`shops`, reflect.TypeFor[shops.ShopInventory](), func(v reflect.Value, fn func(*items.Item)) {
 			v.Addr().Interface().(*shops.ShopInventory).WalkItems(fn)
 		}},
-		{`users`, reflect.TypeOf((*users.UserRecord)(nil)).Elem(), func(v reflect.Value, fn func(*items.Item)) {
+		{`users`, reflect.TypeFor[users.UserRecord](), func(v reflect.Value, fn func(*items.Item)) {
 			v.Addr().Interface().(*users.UserRecord).WalkItems(fn)
 		}},
 	}
 }
 
-var walkGuardItemType = reflect.TypeOf(items.Item{})
+var walkGuardItemType = reflect.TypeFor[items.Item]()
 
 var walkGuardReach = map[reflect.Type]bool{}
 

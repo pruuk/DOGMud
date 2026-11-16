@@ -115,7 +115,7 @@ func TestEveryItemSpecFieldIsClassifiedExactlyOnce(t *testing.T) {
 		data[f] = true
 	}
 	fields := map[string]bool{}
-	st := reflect.TypeOf(items.ItemSpec{})
+	st := reflect.TypeFor[items.ItemSpec]()
 	for i := 0; i < st.NumField(); i++ {
 		f := st.Field(i)
 		if !f.IsExported() {

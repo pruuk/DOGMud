@@ -253,7 +253,7 @@ func TestCanAffordCompanionIsGone(t *testing.T) {
 	// absence directly rather than leaving a skip that proves nothing. A
 	// skip-only test also trips the repo's own TestNoSkipOnlyPlaceholderTests
 	// guard, which exists for exactly this reason.
-	if _, found := reflect.TypeOf(&Character{}).MethodByName("CanAffordCompanion"); found {
+	if _, found := reflect.TypeFor[*Character]().MethodByName("CanAffordCompanion"); found {
 		t.Fatal("CanAffordCompanion is back. D5 removed it: two ceilings on one " +
 			"pool means the weaker never fires. Companion affordability is now " +
 			"WouldBreachReservationCap(PoolConviction, reserve) plus the " +

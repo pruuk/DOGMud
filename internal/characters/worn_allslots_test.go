@@ -17,7 +17,7 @@ import (
 // nil UUID and collide for @handle targeting (the bug class this guards).
 func TestWornAllSlotsCoversEveryItemField(t *testing.T) {
 	w := &Worn{}
-	itemType := reflect.TypeOf(items.Item{})
+	itemType := reflect.TypeFor[items.Item]()
 	v := reflect.ValueOf(w).Elem()
 
 	// want: address -> struct field name, for every items.Item field on Worn.

@@ -28,7 +28,7 @@ func TestShippedConfigSurfacesEveryLightingKnob(t *testing.T) {
 		t.Fatalf("read config.yaml: %v", err)
 	}
 	keys := []string{"WorldLatitude", "DarknessCombatPenalty", "DazzleCap"}
-	bt := reflect.TypeOf(configs.Balance{})
+	bt := reflect.TypeFor[configs.Balance]()
 	for i := 0; i < bt.NumField(); i++ {
 		name, _, _ := strings.Cut(bt.Field(i).Tag.Get("yaml"), ",")
 		if strings.HasPrefix(name, "Light") {

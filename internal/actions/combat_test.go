@@ -96,7 +96,7 @@ func embeddedSpecialMoveCost(t *testing.T, result any) characters.CostCommitResu
 		t.Errorf("%s must embed Cost characters.CostCommitResult", typ.Name())
 		return characters.CostCommitResult{}
 	}
-	if field.Type != reflect.TypeOf(characters.CostCommitResult{}) {
+	if field.Type != reflect.TypeFor[characters.CostCommitResult]() {
 		t.Errorf("%s.Cost must be a characters.CostCommitResult", typ.Name())
 		return characters.CostCommitResult{}
 	}

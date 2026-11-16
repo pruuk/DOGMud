@@ -76,7 +76,7 @@ func TestInputDone_WebClientWithoutGMCPNegotiatedGetsNothing(t *testing.T) {
 // R7: nothing typed is ever sent back. The event has no field that could
 // hold text, and the payload has exactly its two keys.
 func TestInputDone_CarriesNoTypedText(t *testing.T) {
-	ty := reflect.TypeOf(events.InputDone{})
+	ty := reflect.TypeFor[events.InputDone]()
 	for i := 0; i < ty.NumField(); i++ {
 		require.NotEqual(t, reflect.String, ty.Field(i).Type.Kind(),
 			"InputDone.%s must not hold text", ty.Field(i).Name)
