@@ -1,9 +1,11 @@
 package hooks
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 )
 
@@ -41,15 +43,59 @@ func TestTrackingCleanup_DropsShadowsOnTheDepartedQuarry(t *testing.T) {
 
 			PlayerDespawnTrackingCleanup(events.PlayerDespawn{UserId: shadowQuarryUser, CharacterName: "Quarry"})
 
+			// #275: the record is dropped, not expired, so the prune pass
+			// tells no "Your focus on the quarry breaks." end line.
+			for _, pruned := range c.Conditions.Prune() {
+				if pruned.ConditionId == actions.ShadowingConditionId {
+					t.Error("the logoff expired the shadow, so its end line would print")
+				}
+			}
 			if !shadowEnded(c) {
 				t.Error("the shadow on the departed player survived")
 			}
 			if shadowCooldown(c) != 0 {
 				t.Error("the logoff cleanup started a cooldown")
 			}
-			if got := len(events.DrainQueuedMessagesForTest(shadowSlyUser)); got != 0 {
-				t.Errorf("the logoff cleanup sent the shadower %d lines", got)
+			got := events.DrainQueuedMessagesForTest(shadowSlyUser)
+			if shadower == shadowMob {
+				if len(got) != 0 {
+					t.Errorf("a mob shadower's logoff cleanup sent the sly user %d lines", len(got))
+				}
+				return
+			}
+			if len(got) != 1 || !strings.Contains(got[0], logoffQuarryLine("Quarry")) {
+				t.Errorf("the shadower read %q, want one line %q", got, logoffQuarryLine("Quarry"))
 			}
 		})
+	}
+}
+
+// #275, its tracking sibling: a tracker whose quarry logs off reads the same
+// one line, and condition 86 is dropped without its end line.
+func TestPlayerDespawnTrackingCleanup_TrackerReadsTheQuarryRetired(t *testing.T) {
+	s := newShadowScene(t)
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		activeTrackingCondition: {ConditionId: activeTrackingCondition, Name: "Active Tracking", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 25},
+	}))
+	c := s.sly(shadowPlayer)
+	c.SetMiscData("tracking-user", "Quarry")
+	if err := c.AddCondition(activeTrackingCondition, false); err != nil {
+		t.Fatalf("precondition: the tracker should hold Active Tracking: %v", err)
+	}
+	events.DrainQueuedMessagesForTest(shadowSlyUser)
+
+	PlayerDespawnTrackingCleanup(events.PlayerDespawn{UserId: shadowQuarryUser, CharacterName: "Quarry"})
+
+	for _, pruned := range c.Conditions.Prune() {
+		if pruned.ConditionId == activeTrackingCondition {
+			t.Error("the logoff expired Active Tracking, so its end line would print")
+		}
+	}
+	if c.HasCondition(activeTrackingCondition) || c.GetMiscData("tracking-user") != nil {
+		t.Error("the tracking on the departed player survived")
+	}
+	got := events.DrainQueuedMessagesForTest(shadowSlyUser)
+	if len(got) != 1 || !strings.Contains(got[0], logoffQuarryLine("Quarry")) {
+		t.Errorf("the tracker read %q, want one line %q", got, logoffQuarryLine("Quarry"))
 	}
 }

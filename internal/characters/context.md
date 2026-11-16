@@ -529,7 +529,10 @@ It survives save, load and restart.
   `timed_state_guard_test.go`, fails `go test ./internal/guards/` on a second collection or on
   any of those spellings coming back.
 - **Aggro system** (`aggro.go`): Combat targeting and threat management
-- **Conditions integration**: Status effects that modify character capabilities
+- **Conditions integration**: Status effects that modify character capabilities.
+  `RemoveCondition` expires a record, and the next prune tells its end line;
+  `DiscardCondition` deletes it outright, so no end line prints, for an ending
+  whose caller says something else (#275, a quarry logging off).
 - **Perception of hidden creatures** (`character.go`): `Perceives(other)` is
   true for yourself, for anyone not hidden, or when you have see-hidden from any
   source (condition or mutation). No pet is involved. The room listing and

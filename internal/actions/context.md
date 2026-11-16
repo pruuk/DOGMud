@@ -1740,7 +1740,11 @@ all by the same rules (player/mob parity slice 6).
   two misc-data keys behind it are unexported constants, and nothing outside
   this package names them (`shadow_follow_guard_test.go`).
 - **`ClearShadow(c)`** drops the quarry and condition 87 with no cooldown and
-  no line: the stale-state guard and the death and logoff cleanups.
+  no line of its own: the stale-state guard and the mob-death cleanup.
+- **`DropShadow(c) bool`** is `ClearShadow` with condition 87 discarded
+  (`Character.DiscardCondition`) rather than expired, so its end line never
+  prints: the logoff cleanup, which tells the shadower the quarry has
+  retired instead (#275).
 - **`EndShadow(actor, reason)`** is `ClearShadow` plus the cooldown plus
   `reason` to the actor: `shadow stop` and the spotted end.
 - `RemoveCondition` only expires condition 87; it is pruned, and a player

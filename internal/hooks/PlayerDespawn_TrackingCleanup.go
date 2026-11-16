@@ -1,9 +1,12 @@
 package hooks
 
 import (
+	"fmt"
+
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -16,9 +19,13 @@ import (
 // State cleared per pointing character:
 //   - tracking-user misc (string match on CharacterName)
 //   - tracking-display-count misc (cleared alongside tracking-user)
-//   - condition 86 (Active Tracking) — only if tracking-user state was on this char
-//   - the shadow (actions.ClearShadow: target and Shadowing condition, no
-//     cooldown, no message), only if actions.ShadowTargetOf names this player
+//   - condition 86 (Active Tracking), only if tracking-user state was on this char
+//   - the shadow (actions.DropShadow: target and Shadowing condition, no
+//     cooldown), only if actions.ShadowTargetOf names this player
+//
+// #275: both conditions are discarded, so neither stock end line ("Your focus
+// on the trail breaks.", "Your focus on the quarry breaks.") prints; a player
+// who lost the quarry reads one logoffQuarryLine instead (owner wording).
 func PlayerDespawnTrackingCleanup(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.PlayerDespawn)
 	if !ok {
@@ -28,21 +35,26 @@ func PlayerDespawnTrackingCleanup(e events.Event) events.ListenerReturn {
 	leavingName := evt.CharacterName
 	leavingUserId := evt.UserId
 
-	clearPointers := func(c *characters.Character) {
+	// clearPointers reports whether c was tracking or shadowing the player.
+	clearPointers := func(c *characters.Character) bool {
+		lost := false
 		// Tracking by name.
 		if leavingName != "" {
 			if v := c.GetMiscData("tracking-user"); v != nil {
 				if s, ok := v.(string); ok && s == leavingName {
 					c.SetMiscData("tracking-user", nil)
 					c.SetMiscData("tracking-display-count", nil)
-					c.RemoveCondition(activeTrackingCondition)
+					c.DiscardCondition(activeTrackingCondition)
+					lost = true
 				}
 			}
 		}
 		// Shadow by UserId.
 		if userId, _ := actions.ShadowTargetOf(c); userId != 0 && userId == leavingUserId {
-			actions.ClearShadow(c)
+			actions.DropShadow(c)
+			lost = true
 		}
+		return lost
 	}
 
 	// Walk all other online users.
@@ -50,7 +62,9 @@ func PlayerDespawnTrackingCleanup(e events.Event) events.ListenerReturn {
 		if u == nil || u.UserId == leavingUserId {
 			continue
 		}
-		clearPointers(u.Character)
+		if clearPointers(u.Character) && leavingName != "" {
+			u.SendText(messaging.CategorySystem, logoffQuarryLine(leavingName))
+		}
 	}
 
 	// Walk all active mob instances.
@@ -63,4 +77,10 @@ func PlayerDespawnTrackingCleanup(e events.Event) events.ListenerReturn {
 	}
 
 	return events.Continue
+}
+
+// logoffQuarryLine is what a tracker or shadower reads when their quarry logs
+// off (#275, owner wording).
+func logoffQuarryLine(quarryName string) string {
+	return fmt.Sprintf("%s has retired to their home and can no longer be tracked.", quarryName)
 }

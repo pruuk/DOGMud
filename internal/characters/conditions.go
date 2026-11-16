@@ -339,6 +339,19 @@ func (c *Character) RemoveCondition(conditionId int) {
 	_ = c.Validate()
 }
 
+// DiscardCondition drops a held condition without its end line: unlike
+// RemoveCondition, which expires the record for the prune pass to narrate,
+// the record is deleted outright (Conditions.Discard). For an ending whose
+// stock line would be wrong, when the caller tells the player something else
+// (#275: a quarry logging off). Reports whether it was held.
+func (c *Character) DiscardCondition(conditionId int) bool {
+	if !c.Conditions.Discard(conditionId) {
+		return false
+	}
+	_ = c.Validate()
+	return true
+}
+
 // Used with SpawnInfo to gift spawning mobs with permanent conditions.
 //
 // The list is copied: both spawn callers pass a slice they do not own (the
