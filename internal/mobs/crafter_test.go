@@ -166,8 +166,10 @@ func registerCrafterTestRecipe() *crafting.RecipeSpec {
 // RegisterShop seeds Current at the abundance level (not RestockQty), so we
 // register then force Current=qty and RestockQty=0 to reflect crafter-item
 // semantics (supply cart doesn't refill it, only crafting does).
+//
+// The caller must have called shops.IsolateForTest(t) first: the helper has
+// no t.
 func newShopWithIngredients(qty int) *shops.ShopInventory {
-	shops.ClearCache()
 	inv := shops.RegisterShop("test_zone", 9999, 1, shops.ShopInventory{
 		Gold:         500,
 		StartingGold: 500,
@@ -213,7 +215,7 @@ func TestTickMobCraft_SuppressesRestockInCaravanServedZones(t *testing.T) {
 // seeder previously ignored the field and re-seeded at 500g across
 // the board.
 func TestRegisterMobShop_SeedsStartingGoldFromYAML(t *testing.T) {
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 
 	mob := &Mob{
 		MobId:      9001,
@@ -243,7 +245,7 @@ func TestRegisterMobShop_SeedsStartingGoldFromYAML(t *testing.T) {
 // (500) wins everywhere — exactly what happened in prod after the
 // 2026-05-04 hotfix landed but before this second-pass fix.
 func TestPrewarmShopForSpawnPlacement_ForwardsGold(t *testing.T) {
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 
 	template := &Mob{
 		MobId: 9003,
@@ -270,7 +272,7 @@ func TestPrewarmShopForSpawnPlacement_ForwardsGold(t *testing.T) {
 // edit accidentally drops a mob's gold below 500, the seeder bumps
 // it back up so the merchant has meaningful purchasing power.
 func TestRegisterMobShop_AppliesGoldFloor(t *testing.T) {
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 
 	mob := &Mob{
 		MobId:      9002,
@@ -293,12 +295,24 @@ func TestRegisterMobShop_AppliesGoldFloor(t *testing.T) {
 	assert.Equal(t, 500, inv.StartingGold, "values < 500 must floor up to 500")
 }
 
+// pinPositiveRound sets a round count above zero for one test. The
+// round-aware stock calls ignore round 0, so a test that asserts on
+// CurrentDepletion or StockEvents needs a real round; without this it passed
+// only on the round count an earlier test happened to leave behind, and failed
+// on the second pass of `go test -count=2`.
+func pinPositiveRound(t *testing.T) {
+	t.Helper()
+	prev := util.GetRoundCount()
+	util.SetRoundCountForTest(1000)
+	t.Cleanup(func() { util.SetRoundCountForTest(prev) })
+}
+
 // newShopWithStock registers a shop where the test ingredient has the given
 // Current and MaxStock, allowing reserve-floor tests to control both.
 // RestockQty is set to current for seeding, then zeroed to reflect crafter
-// semantics (supply cart never refills).
+// semantics (supply cart never refills). The caller must have called
+// shops.IsolateForTest(t) first: the helper has no t.
 func newShopWithStock(current, maxStock int) *shops.ShopInventory {
-	shops.ClearCache()
 	inv := shops.RegisterShop("test_zone", 9999, 1, shops.ShopInventory{
 		Gold:         500,
 		StartingGold: 500,
@@ -444,6 +458,8 @@ func TestReserveFloor_PerIngredientCheck(t *testing.T) {
 func TestExecuteCraft_ConsumesIngredientsViaRoundAwareRemove(t *testing.T) {
 	registerCrafterTestItems()
 	recipe := registerCrafterTestRecipe()
+	shops.IsolateForTest(t)
+	pinPositiveRound(t)
 	shopInv := newShopWithIngredients(2)
 	_ = stubSaveShop(t)
 
@@ -477,13 +493,14 @@ func TestExecuteCraft_ConsumesIngredientsViaRoundAwareRemove(t *testing.T) {
 // for bug #2: craft output must push a completed StockEvent when the output
 // slot was previously depleted (Kerra's longsword bug).
 func TestExecuteCraft_SuccessAddsOutputViaRoundAwareAdd(t *testing.T) {
+	pinPositiveRound(t)
 	registerCrafterTestItems()
 	recipe := registerCrafterTestRecipe()
 	_ = stubSaveShop(t)
 	forceCraftSuccess(t)
 
 	// Pre-condition: output slot depleted and marked.
-	shops.ClearCache()
+	shops.IsolateForTest(t)
 	shopInv := shops.RegisterShop("test_zone", 9999, 1, shops.ShopInventory{
 		Gold:         500,
 		StartingGold: 500,
@@ -529,6 +546,7 @@ func TestExecuteCraft_SuccessAddsOutputViaRoundAwareAdd(t *testing.T) {
 func TestExecuteCraft_SuccessCallsSaveShop(t *testing.T) {
 	registerCrafterTestItems()
 	recipe := registerCrafterTestRecipe()
+	shops.IsolateForTest(t)
 	shopInv := newShopWithIngredients(2)
 	forceCraftSuccess(t)
 	saveCount := stubSaveShop(t)
@@ -546,6 +564,7 @@ func TestExecuteCraft_SuccessCallsSaveShop(t *testing.T) {
 func TestExecuteCraft_FailureStillConsumesIngredients(t *testing.T) {
 	registerCrafterTestItems()
 	recipe := registerCrafterTestRecipe()
+	shops.IsolateForTest(t)
 	shopInv := newShopWithIngredients(2)
 	_ = stubSaveShop(t)
 	forceCraftFailure(t)
@@ -576,7 +595,7 @@ func TestExecuteCraft_OutputItemFreshlyCreated(t *testing.T) {
 	forceCraftSuccess(t)
 
 	// Shop has ONLY the ingredient — no StockEntry for the output at all.
-	shops.ClearCache()
+	shops.IsolateForTest(t)
 	shopInv := shops.RegisterShop("test_zone", 9999, 1, shops.ShopInventory{
 		Gold:         500,
 		StartingGold: 500,
@@ -715,6 +734,7 @@ func TestTickMobCraft_ScheduleGate_NoScheduleIsUnaffected(t *testing.T) {
 func TestExecuteCraft_SuccessAlwaysRoutesToShop(t *testing.T) {
 	registerCrafterTestItems()
 	recipe := registerCrafterTestRecipe()
+	shops.IsolateForTest(t)
 	shopInv := newShopWithIngredients(2)
 	_ = stubSaveShop(t)
 	forceCraftSuccess(t)
@@ -762,6 +782,7 @@ func TestTickMobShopBaselineRestock_RefillsCommonTiersOnCadence(t *testing.T) {
 
 	items.RegisterTestItemSpec(&items.ItemSpec{ItemId: 7001, RarityTier: 50})
 	items.RegisterTestItemSpec(&items.ItemSpec{ItemId: 7002, RarityTier: 30})
+	shops.IsolateForTest(t)
 	shops.RegisterShop("gsr_zone", 7700, 1, shops.ShopInventory{
 		Zone:         "gsr_zone",
 		StartingGold: 500,

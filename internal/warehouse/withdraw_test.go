@@ -1,18 +1,14 @@
 package warehouse
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func TestWithdraw_DecrementsAndCounts(t *testing.T) {
@@ -123,8 +119,7 @@ func TestReleaseToVendorsInRoom_TopsGapsBounded(t *testing.T) {
 func setupReleaseTestFixtures(t *testing.T, stock []shops.StockEntry) func() {
 	t.Helper()
 
-	shops.ClearCache()
-	wipeReleaseTestShopFile(t)
+	shops.IsolateForTest(t)
 
 	tmpl := shops.ShopInventory{
 		Gold:         500,
@@ -166,21 +161,5 @@ func setupReleaseTestFixtures(t *testing.T, stock []shops.StockEntry) func() {
 	return func() {
 		mobs.SetInstanceForTest(vendor.InstanceId, nil)
 		cleanRoom()
-		shops.ClearCache()
-		wipeReleaseTestShopFile(t)
 	}
-}
-
-// wipeReleaseTestShopFile removes the on-disk shop YAML for the release
-// test zone/vendor, so repeated test runs (and the shops.RegisterShop ->
-// loadFromDisk fallback) don't leak a prior run's stock levels into the
-// next. Mirrors caravan/visit_test.go's wipePickupTestShopFile.
-func wipeReleaseTestShopFile(t *testing.T) {
-	t.Helper()
-	zoneDir := filepath.Join(
-		configs.GetFilePathsConfig().DataFiles.String(),
-		"shops",
-		util.ConvertForFilename(releaseTestZone),
-	)
-	_ = os.RemoveAll(zoneDir)
 }

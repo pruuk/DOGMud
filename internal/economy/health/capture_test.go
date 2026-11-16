@@ -61,8 +61,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestCaptureSnapshot_Shops(t *testing.T) {
-	shops.ClearCache()
-	t.Cleanup(shops.ClearCache)
+	shops.IsolateForTest(t)
 
 	tmpl := shops.ShopInventory{
 		Gold:         500,
@@ -287,8 +286,7 @@ func TestCaptureSnapshot_Foragers(t *testing.T) {
 // boot) and returns the shopkeeper's name. This prevents the dashboard
 // from rendering "#<mobId>" when a merchant is offline.
 func TestLookupShopMobName_FallsBackToTemplate(t *testing.T) {
-	shops.ClearCache()
-	t.Cleanup(shops.ClearCache)
+	shops.IsolateForTest(t)
 
 	// Seed a test mob template (mobId 999) with a known name.
 	// No live instance is spawned, so lookupShopMobName must fall back.

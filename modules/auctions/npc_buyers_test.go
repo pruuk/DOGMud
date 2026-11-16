@@ -142,8 +142,7 @@ func TestShopkeeper_InterestedAndMaxBid(t *testing.T) {
 	item, cleanup := newShopkeeperTestItem(t)
 	defer cleanup()
 
-	shops.ClearCache()
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	smith := shops.RegisterShop("testzone", 1, 100, shops.ShopInventory{
 		Gold: 5000, StartingGold: 5000, CraftSupport: shops.CraftSupportBlacksmithing})
 	shops.RegisterShop("testzone", 2, 100, shops.ShopInventory{
@@ -165,8 +164,7 @@ func TestShopkeeper_InterestedAndMaxBid(t *testing.T) {
 func TestShopkeeper_NoMatchingShop(t *testing.T) {
 	item, cleanup := newShopkeeperTestItem(t)
 	defer cleanup()
-	shops.ClearCache()
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	shops.RegisterShop("testzone", 2, 100, shops.ShopInventory{
 		Gold: 5000, StartingGold: 5000, CraftSupport: shops.CraftSupportTailoring})
 
@@ -182,8 +180,7 @@ func TestShopkeeper_NoMatchingShop(t *testing.T) {
 func TestShopkeeper_EscrowUsesRealShopGold(t *testing.T) {
 	item, cleanup := newShopkeeperTestItem(t)
 	defer cleanup()
-	shops.ClearCache()
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	smith := shops.RegisterShop("testzone", 1, 100, shops.ShopInventory{
 		Gold: 5000, StartingGold: 5000, CraftSupport: shops.CraftSupportBlacksmithing})
 
@@ -216,8 +213,7 @@ func TestShopkeeper_SelectionUpdatesPerItem(t *testing.T) {
 			VendorCategories: []string{shops.CraftSupportTailoring}},
 	})
 	defer cleanup()
-	shops.ClearCache()
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	shops.RegisterShop("z", 1, 100, shops.ShopInventory{Gold: 5000, StartingGold: 5000, CraftSupport: shops.CraftSupportBlacksmithing})
 	shops.RegisterShop("z", 2, 100, shops.ShopInventory{Gold: 5000, StartingGold: 5000, CraftSupport: shops.CraftSupportTailoring})
 
@@ -236,8 +232,7 @@ func TestShopkeeper_SelectionUpdatesPerItem(t *testing.T) {
 func TestShopkeeper_WinRelistsIntoBoundShop(t *testing.T) {
 	item, cleanup := newShopkeeperTestItem(t)
 	defer cleanup()
-	shops.ClearCache()
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	smith := shops.RegisterShop("testzone", 1, 100, shops.ShopInventory{
 		Gold: 5000, StartingGold: 5000, CraftSupport: shops.CraftSupportBlacksmithing})
 	other := shops.RegisterShop("testzone", 9, 100, shops.ShopInventory{
@@ -395,8 +390,7 @@ func TestShopkeeper_RegisteredAndResolvable(t *testing.T) {
 func TestShopkeeper_DisabledIsUninterested(t *testing.T) {
 	item, cleanup := newShopkeeperTestItem(t)
 	defer cleanup()
-	shops.ClearCache()
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	shops.RegisterShop("testzone", 1, 100, shops.ShopInventory{
 		Gold: 5000, StartingGold: 5000, CraftSupport: shops.CraftSupportBlacksmithing})
 
@@ -411,8 +405,7 @@ func TestShopkeeper_DisabledIsUninterested(t *testing.T) {
 func TestShopkeeper_BoundShopRoundTrip(t *testing.T) {
 	item, cleanup := newShopkeeperTestItem(t)
 	defer cleanup()
-	shops.ClearCache()
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	smith := shops.RegisterShop("bindzone", 7, 100, shops.ShopInventory{
 		Gold: 5000, StartingGold: 5000, CraftSupport: shops.CraftSupportBlacksmithing})
 
@@ -446,8 +439,7 @@ func TestShopkeeper_BoundShopRoundTrip(t *testing.T) {
 func TestNpcBid_PersistsShopkeeperBinding(t *testing.T) {
 	item, cleanup := newShopkeeperTestItem(t)
 	defer cleanup()
-	shops.ClearCache()
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	shops.RegisterShop("bindzone", 7, 100, shops.ShopInventory{
 		Gold: 5000, StartingGold: 5000, CraftSupport: shops.CraftSupportBlacksmithing})
 
@@ -474,8 +466,7 @@ func TestNpcBid_PersistsShopkeeperBinding(t *testing.T) {
 }
 
 func TestRestoreNpcBinding_RebindsRegistryShopkeeper(t *testing.T) {
-	shops.ClearCache()
-	defer shops.ClearCache()
+	shops.IsolateForTest(t)
 	smith := shops.RegisterShop("bindzone", 7, 100, shops.ShopInventory{
 		Gold: 5000, StartingGold: 5000, CraftSupport: shops.CraftSupportBlacksmithing})
 

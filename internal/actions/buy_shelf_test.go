@@ -35,8 +35,7 @@ func shelfBuyFixture(t *testing.T, limit int, now time.Time) *shops.ShopInventor
 	orig := shops.ShelfNow
 	shops.ShelfNow = func() time.Time { return now }
 	t.Cleanup(func() { shops.ShelfNow = orig })
-	shops.ClearCache()
-	t.Cleanup(shops.ClearCache)
+	shops.IsolateForTest(t)
 	return shops.RegisterShop("TestZone", 2, 1, shops.ShopInventory{Gold: 1000, StartingGold: 1000, CraftSupport: shops.CraftSupportGeneral})
 }
 

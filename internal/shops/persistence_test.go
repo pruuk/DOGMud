@@ -38,7 +38,7 @@ func writeShopFile(t *testing.T, dir string, mobId int, roomId int, inv ShopInve
 // ---- Cache-level tests (no disk I/O via the real shopPath) ----
 
 func TestRegisterShop_NoDisk_SeedsFromTemplate(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	tmpl := makeTemplate()
 
 	inv := RegisterShop("testzone", 42, 100, tmpl)
@@ -66,7 +66,7 @@ func TestRegisterShop_NoDisk_SeedsFromTemplate(t *testing.T) {
 // Current = min(MaxStock, ceil(RestockQty × AbundanceThreshold)); 0 when
 // RestockQty == 0. AbundanceThreshold default is 3.0.
 func TestRegisterShop_SeedsAtAbundance(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 
 	tmpl := ShopInventory{
 		Gold:         200,
@@ -87,7 +87,7 @@ func TestRegisterShop_SeedsAtAbundance(t *testing.T) {
 }
 
 func TestRegisterShop_ReturnsCachedOnSecondCall(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	tmpl := makeTemplate()
 
 	first := RegisterShop("testzone", 42, 101, tmpl)
@@ -97,7 +97,7 @@ func TestRegisterShop_ReturnsCachedOnSecondCall(t *testing.T) {
 }
 
 func TestGetShopInventory_ReturnsCached(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	tmpl := makeTemplate()
 
 	registered := RegisterShop("testzone", 42, 102, tmpl)
@@ -107,14 +107,14 @@ func TestGetShopInventory_ReturnsCached(t *testing.T) {
 }
 
 func TestGetShopInventory_NotFound_ReturnsNil(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	// No registration, no disk file → should return nil.
 	got := GetShopInventory("nonexistent_zone", 9999, 9999)
 	assert.Nil(t, got)
 }
 
 func TestClearCache(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	tmpl := makeTemplate()
 	RegisterShop("testzone", 42, 103, tmpl)
 
@@ -126,7 +126,7 @@ func TestClearCache(t *testing.T) {
 }
 
 func TestRegisterShop_TemplateNotMutated(t *testing.T) {
-	ClearCache()
+	IsolateForTest(t)
 	tmpl := makeTemplate()
 
 	inv := RegisterShop("testzone", 42, 104, tmpl)
@@ -201,15 +201,9 @@ func TestRegisterShop_MigratesEmptyCraftSupport(t *testing.T) {
 		testRoomId = 1
 	)
 
-	// Remove any stale on-disk artifact from a previous run, then clean up
-	// again when the test finishes (the migration path writes to disk).
-	diskPath := shopPath(testZone, testMobId, testRoomId)
-	os.Remove(diskPath) //nolint:errcheck // best-effort pre-cleanup
-	ClearCache()
-	t.Cleanup(func() {
-		ClearCache()
-		os.Remove(diskPath) //nolint:errcheck // best-effort post-cleanup
-	})
+	// The migration path writes to disk; IsolateForTest gives it a folder of
+	// its own, so no stale file can exist and none outlives the test.
+	IsolateForTest(t)
 
 	// Seed a cached shop with empty CraftSupport.
 	tmplNoTag := makeTemplate()
@@ -235,16 +229,10 @@ func TestRegisterShop_MigratesEmptyCraftSupport_DiskLoadPath(t *testing.T) {
 		testRoomId = 1
 	)
 
-	// Compute the path the package will use so we can write directly to it.
+	// Isolate first: shopPath reads the per-test folder. Then compute the path
+	// the package will use so we can write directly to it.
+	IsolateForTest(t)
 	diskPath := shopPath(testZone, testMobId, testRoomId)
-
-	// Cleanup: remove any stale file from a previous run and reset cache.
-	os.Remove(diskPath) //nolint:errcheck // best-effort pre-cleanup
-	ClearCache()
-	t.Cleanup(func() {
-		ClearCache()
-		os.Remove(diskPath) //nolint:errcheck // best-effort post-cleanup
-	})
 
 	// Pre-write a YAML file on disk with craft_support empty — simulates a
 	// shop save that predates the CraftSupport field.

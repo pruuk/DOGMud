@@ -36,8 +36,7 @@ func agreeShop(t *testing.T) (*users.UserRecord, *rooms.Room) {
 		agreeTaggedId: {ItemId: agreeTaggedId, Name: "brass bell", Type: items.Object, Value: 40,
 			VendorCategories: []string{"trinket"}},
 	}))
-	shops.ClearCache()
-	t.Cleanup(shops.ClearCache)
+	shops.IsolateForTest(t)
 	shops.RegisterShop("TestZone", 841, 8410, shops.ShopInventory{Gold: 100000, CraftSupport: shops.CraftSupportGeneral})
 	room.AddPlayer(user.UserId) // so the merchant's spoken lines reach the seller
 	t.Cleanup(func() { room.RemovePlayer(user.UserId) })
