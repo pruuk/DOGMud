@@ -4797,6 +4797,25 @@ func TestCooldownsNameTheSharedTimer(t *testing.T) {
 	assert.NotContains(t, got, "special-move")
 }
 
+// #755: no raw key reaches the list. A skill-scoped key reads as its move
+// ("skullduggery:steal" is "steal"), and hyphens and underscores read as
+// spaces. Two keys that land on one word keep the longer wait.
+func TestCooldownsShowNoRawKeys(t *testing.T) {
+	got := cooldownsForDisplay(map[string]int{
+		"skullduggery:steal": 4,
+		"homunculus-respawn": 9,
+		"stamina_low":        1,
+		"search":             2,
+		"a:search":           5,
+	})
+	assert.Equal(t, map[string]int{
+		"steal":              4,
+		"homunculus respawn": 9,
+		"stamina low":        1,
+		"search":             5,
+	}, got)
+}
+
 // ─── Deeper Coverage: Emote aliases via TryCommand ──────────────────────────
 
 func TestEmoteAliasThroughDispatcher(t *testing.T) {

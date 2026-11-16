@@ -1,6 +1,8 @@
 package usercommands
 
 import (
+	"strings"
+
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -17,13 +19,26 @@ func Cooldowns(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	return true, nil
 }
 
-// cooldownsForDisplay renames the shared special-move timer to its player
-// word, so the list reads "special moves" rather than the raw "special-move"
-// key (#620). all is a copy (GetAllCooldowns) and is changed in place.
+// cooldownsForDisplay names every timer in player words. The shared
+// special-move timer reads "special moves" (#620); any other key reads as its
+// last colon-separated part with hyphens and underscores as spaces, so
+// "skullduggery:steal" is "steal" and "homunculus-respawn" is "homunculus
+// respawn" (#755). Two keys that land on one word keep the longer wait.
 func cooldownsForDisplay(all map[string]int) map[string]int {
-	if rounds, ok := all[actions.SpecialMoveCooldownTag]; ok {
-		delete(all, actions.SpecialMoveCooldownTag)
-		all[actions.SpecialMoveCooldownLabel] = rounds
+	shown := make(map[string]int, len(all))
+	for key, rounds := range all {
+		name := key
+		if key == actions.SpecialMoveCooldownTag {
+			name = actions.SpecialMoveCooldownLabel
+		} else {
+			if i := strings.LastIndex(key, `:`); i >= 0 {
+				name = key[i+1:]
+			}
+			name = strings.NewReplacer(`-`, ` `, `_`, ` `).Replace(name)
+		}
+		if rounds > shown[name] {
+			shown[name] = rounds
+		}
 	}
-	return all
+	return shown
 }
