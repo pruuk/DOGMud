@@ -307,25 +307,6 @@ func pinPositiveRound(t *testing.T) {
 	t.Cleanup(func() { util.SetRoundCountForTest(prev) })
 }
 
-// newShopWithStock registers a shop where the test ingredient has the given
-// Current and MaxStock, allowing reserve-floor tests to control both.
-// RestockQty is set to current for seeding, then zeroed to reflect crafter
-// semantics (supply cart never refills). The caller must have called
-// shops.IsolateForTest(t) first: the helper has no t.
-func newShopWithStock(current, maxStock int) *shops.ShopInventory {
-	inv := shops.RegisterShop("test_zone", 9999, 1, shops.ShopInventory{
-		Gold:         500,
-		StartingGold: 500,
-		Stock: []shops.StockEntry{
-			{ItemId: crafterTestIngredientID, RestockQty: current, MaxStock: maxStock},
-		},
-	})
-	if e := inv.GetStock(crafterTestIngredientID); e != nil {
-		e.RestockQty = 0
-	}
-	return inv
-}
-
 // ── reserve-floor regression tests ────────────────────────────────────────────
 // These five tests pin the CrafterIngredientReservePct behavior introduced to
 // prevent crafter mobs from draining their own ingredient stock to a single
