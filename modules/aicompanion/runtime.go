@@ -649,9 +649,7 @@ func (m *AICompanionModule) dispatch(c *controller) {
 	}
 	m.countCall()
 
-	m.decisions.Add(1)
-	go func() {
-		defer m.decisions.Done()
+	m.decisions.Go(func() {
 		// The breakers' leave is always handed back last: a no-op once its
 		// outcome was recorded, and what frees a half-open breaker's probe
 		// if a panic kept the outcome from ever being recorded.
@@ -714,7 +712,7 @@ func (m *AICompanionModule) dispatch(c *controller) {
 			}()
 			m.applyResult(ownerId, seq, rev, roomAtCall, reserved, stims, sc, tier, call.Model, rt, res)
 		}()
-	}()
+	})
 }
 
 // applyResult acts on a model reply. Runs under the mud lock.

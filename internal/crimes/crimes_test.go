@@ -557,15 +557,13 @@ func TestParallelRecordsConverge(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for range goroutines {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range recordsPer {
 				Record([]string{"f"}, KindAssault,
 					Perpetrator{Type: PerpPlayer, Id: 17},
 					victim, 250, 467, "z", false)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 

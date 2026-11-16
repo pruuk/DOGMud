@@ -30,14 +30,12 @@ func TestConcurrentInstanceAccess(t *testing.T) {
 
 	// Readers iterate and read.
 	for range readers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for i := range iters {
 				_ = GetAllMobInstanceIds()
 				_ = GetInstance(i)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()

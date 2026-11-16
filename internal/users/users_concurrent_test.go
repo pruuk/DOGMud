@@ -27,13 +27,11 @@ func TestConcurrentUserAccess(t *testing.T) {
 	}
 
 	for range readers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for i := range iters {
 				_ = GetByUserId(i)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()

@@ -24,13 +24,11 @@ func TestRoundCount_ConcurrentIncrementIsExact(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for range goroutines {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range perGoroutine {
 				IncrementRoundCount()
 			}
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -50,13 +48,11 @@ func TestTurnCount_ConcurrentIncrementIsExact(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for range goroutines {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range perGoroutine {
 				IncrementTurnCount()
 			}
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -76,19 +72,15 @@ func TestRoundCount_ConcurrentReadersSeeMonotonicValues(t *testing.T) {
 	done := make(chan struct{})
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() { // the "world loop"
-		defer wg.Done()
+	wg.Go(func() { // the "world loop"
 		for range 2000 {
 			IncrementRoundCount()
 		}
 		close(done)
-	}()
+	})
 
 	for range 8 { // async consumers
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			last := uint64(0)
 			for {
 				select {
@@ -103,7 +95,7 @@ func TestRoundCount_ConcurrentReadersSeeMonotonicValues(t *testing.T) {
 					last = cur
 				}
 			}
-		}()
+		})
 	}
 
 	wg.Wait()

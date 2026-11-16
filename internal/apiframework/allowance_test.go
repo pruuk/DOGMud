@@ -549,16 +549,14 @@ func TestConcurrentReservationsNeverPassAnAllowanceTogether(t *testing.T) {
 	var held atomic.Int64
 	var wg sync.WaitGroup
 	for range callers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			<-start
 			if _, err := k.Reserve(ConsumerCompanion, tokens, true, owner); err == nil {
 				held.Add(tokens)
 			} else if RefusedBy(err) != DimCompanionOwner {
 				t.Errorf("refused by the owner's allowance, not %v", err)
 			}
-		}()
+		})
 	}
 	close(start)
 	wg.Wait()

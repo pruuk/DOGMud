@@ -110,11 +110,9 @@ func TestDoListeners_SlowHandlerDoesNotBlockRegistration(t *testing.T) {
 	})
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		DoListeners(reentrancyEvent{name: "reentrancy.slow"})
-	}()
+	})
 
 	<-inHandler // handler is now mid-flight
 
@@ -166,13 +164,11 @@ func TestDoListeners_UnhandledEventIsCountedSafely(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for range 8 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range 50 {
 				DoListeners(reentrancyEvent{name: "reentrancy.nobody"})
 			}
-		}()
+		})
 	}
 	runBounded(t, 20*time.Second, "concurrent unhandled events", wg.Wait)
 

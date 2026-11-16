@@ -444,12 +444,10 @@ func TestUserRecord_TakeTempDataConsumesAtomically(t *testing.T) {
 	results := make(chan any, consumers)
 	var wg sync.WaitGroup
 	for range consumers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			<-start
 			results <- u.TakeTempData("single-use")
-		}()
+		})
 	}
 	close(start)
 	wg.Wait()

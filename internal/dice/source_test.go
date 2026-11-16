@@ -43,15 +43,13 @@ func TestSetRandForTest_ConcurrentDrawsAreRaceFree(t *testing.T) {
 	t.Cleanup(SetRandForTest(3))
 	var wg sync.WaitGroup
 	for range 8 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range 200 {
 				Roll(100, 15)
 				Intn(10)
 				Float64()
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }
