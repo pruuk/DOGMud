@@ -5,7 +5,9 @@ import (
 	"testing"
 )
 
-// Gentle to the knee, punishing from the knee to capacity, clamped above it.
+// The smooth curve at the shipped defaults (#401, owner 2026-11-16):
+// 1 + (5.5 - 1) x r^2.5, flat at and above capacity. Expected values are
+// worked by hand from that formula, not read back from the code.
 func TestEncumbranceMultiplierCurve(t *testing.T) {
 	cases := []struct {
 		name              string
@@ -13,12 +15,12 @@ func TestEncumbranceMultiplierCurve(t *testing.T) {
 		want              float64
 	}{
 		{"empty", 0, 100, 1.0},
-		{"quarter load", 25, 100, 1.1667},
-		{"realistic load", 40, 100, 1.2667},
-		{"at the knee", 75, 100, 1.5},
-		{"halfway up the steep segment", 87.5, 100, 3.25},
-		{"at capacity", 100, 100, 5.0},
-		{"above capacity clamps", 250, 100, 5.0},
+		{"quarter load", 25, 100, 1.1406},      // 0.25^2.5 = 0.03125
+		{"realistic load", 40, 100, 1.4554},    // 0.40^2.5 = 0.10119
+		{"three quarters", 75, 100, 3.1921},    // 0.75^2.5 = 0.48714
+		{"most of the way", 87.5, 100, 4.2228}, // 0.875^2.5 = 0.71618
+		{"at capacity", 100, 100, 5.5},
+		{"above capacity clamps", 250, 100, 5.5},
 	}
 	for _, c := range cases {
 		got := EncumbranceMultiplier(c.carried, c.capacity)

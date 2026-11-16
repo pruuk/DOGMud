@@ -119,7 +119,7 @@ func TestRecalculateStats_BaseStatHydrationFromSpecies(t *testing.T) {
 // TestRecalculateStats_PoolMaxDerivation verifies that pool maximums are
 // computed and floored by RecalculateStats. Without real config data loaded,
 // all balance multipliers are 0, so pool Mods = 0. The floor logic in
-// RecalculateStats is still exercised: HealthMax ≥ 1, ActionPointsMax ≥ 50,
+// RecalculateStats is still exercised: HealthMax ≥ 1,
 // Stamina/Conviction ≥ 0.
 //
 // Current characterization (no config data loaded): all pools sit at their
@@ -138,12 +138,9 @@ func TestRecalculateStats_PoolMaxDerivation(t *testing.T) {
 	assert.GreaterOrEqual(t, c.HealthMax.Value, 1, "HealthMax floor is 1")
 	assert.GreaterOrEqual(t, c.StaminaMax.Value, 0, "StaminaMax floor is 0")
 	assert.GreaterOrEqual(t, c.ConvictionMax.Value, 0, "ConvictionMax floor is 0")
-	assert.GreaterOrEqual(t, c.ActionPointsMax.Value, 50, "ActionPointsMax floor is 50")
 	// Without config data (all balance multipliers = 0), HealthMax sits at its floor.
-	// ActionPointsMax is hardcoded to Mods=200 in RecalculateStats, so it is well above
-	// the floor of 50. Characterize the exact values to catch drift.
+	// Characterize the exact value to catch drift.
 	assert.Equal(t, 1, c.HealthMax.Value, "HealthMax=1 at floor when config not loaded")
-	assert.Equal(t, 200, c.ActionPointsMax.Value, "ActionPointsMax=200 (hardcoded Mods) when config not loaded")
 }
 
 // TestRecalculateStats_EquipmentStatMods verifies that after RecalculateStats,

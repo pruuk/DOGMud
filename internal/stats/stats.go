@@ -74,8 +74,8 @@ func (si *StatInfo) SetMod(mod ...int) {
 }
 
 // Recalculate previously ran a soft-cap compression on ValueAdj above
-// StatSoftCap. Removed 2026-08-02: HealthMax/StaminaMax/ConvictionMax/
-// ActionPointsMax are StatInfo too and shared this method, so the
+// StatSoftCap. Removed 2026-08-02: HealthMax/StaminaMax/ConvictionMax
+// (and ActionPointsMax, removed by #401) are StatInfo too and shared this method, so the
 // compression was silently shrinking every resource pool by ~40%
 // (e.g. a true 530 HP played as 322), and the curve actually amplified
 // rather than diminished for values 151-163. ValueAdj is kept, always

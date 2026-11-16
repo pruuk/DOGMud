@@ -98,7 +98,6 @@ events.RegisterListener(events.NewRound{}, FlushWorkInterruptNarration, events.L
 events.RegisterListener(events.NewTurn{}, CleanupZombies)         // Remove disconnected users
 events.RegisterListener(events.NewTurn{}, AutoSave)               // Automatic data saves
 events.RegisterListener(events.NewTurn{}, PruneConditions)             // Remove expired conditions
-events.RegisterListener(events.NewTurn{}, ActionPoints)           // Regenerate action points
 ```
 
 ### Player Lifecycle Handlers

@@ -87,8 +87,6 @@ func NewTestUser(userId int, username string, charName string, connId uint64) *U
 	ch.StaminaMax.Value = 100
 	ch.ConvictionMax.Value = 50
 	ch.Conviction = 50
-	ch.ActionPointsMax.Value = 10
-	ch.ActionPoints = 5
 	ch.Stats.Strength.ValueAdj = 100
 	ch.Stats.Dexterity.ValueAdj = 100
 	ch.Stats.Perception.ValueAdj = 100

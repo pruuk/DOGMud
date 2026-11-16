@@ -120,7 +120,8 @@ Three things to know about it:
 
 There is no compression. `ValueAdj` is retained only so existing call sites
 compile; it is always equal to `Value`. Do not reintroduce a soft cap here —
-`HealthMax`, `StaminaMax`, `ConvictionMax` and `ActionPointsMax` are also
+`HealthMax`, `StaminaMax` and `ConvictionMax` (and `ActionPointsMax` until
+#401 removed it) are also
 `StatInfo` and call the same `Recalculate()`, so anything added here silently
 applies to every resource pool as well. That was the 2026-08-02 bug: a median
 character's true 530 HP was being played as 322. Pool sizing belongs in the

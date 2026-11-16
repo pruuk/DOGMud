@@ -11,18 +11,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/statmods"
 )
 
-func (c *Character) DeductActionPoints(amount int) bool {
-
-	if c.ActionPoints < amount {
-		return false
-	}
-	c.ActionPoints -= amount
-	if c.ActionPoints < 0 {
-		c.ActionPoints = 0
-	}
-	return true
-}
-
 // GetMovementStaminaCost prices one room move in stamina.
 //
 // terrainMultiplier: 1.0 = normal terrain, 2.0 = rough terrain, etc. The result

@@ -1,5 +1,13 @@
 # DOGMud Patch Notes
 
+## 2026-11-16: Travel runs on stamina
+
+- Action points are gone. Walking from room to room now costs only stamina, and rough ground such as cliffs, swamps and mountains costs more than a road.
+- A heavy load makes every step dearer, so a loaded traveller covers fewer rooms before needing a rest. Your load weighs on every physical action on a smooth curve now: a light pack is barely felt, half your limit costs nearly twice as much, and it climbs steeply from there.
+- You get your stamina back faster than before.
+- When you are too exhausted to take another step, rest until your stamina returns. Fleeing always works, however tired you are.
+- The `{ap}` prompt token no longer shows anything; you can take it out of your prompt. `help encumbrance` explains the new travel costs.
+
 ## 2026-11-16: Small fixes
 
 - The list of who is here no longer shows a health percent after each name. Use `consider` to size up a creature before a fight.

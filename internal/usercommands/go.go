@@ -17,7 +17,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
@@ -222,15 +221,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		// are actions.ChargeMove, shared with mobs. U5b-2: movement REFUSES
 		// when unaffordable, leaving no debt behind.
 		charge := actions.ChargeMove(actions.NewUserActorInRoom(user, room), destRoom)
-		switch charge.Refusal {
-		case actions.MoveRefuseEncumbered:
-			user.SendText(messaging.CategoryRefusal, "You're too encumbered to move (<ansi fg=\"command\">help encumbrance</ansi>)!")
-			return true, nil
-		case actions.MoveRefuseTired:
-			user.SendText(messaging.CategoryRefusal, "You're too tired to move (slow down)!")
-			mudlog.Debug("No ActionPoints", "AP", user.Character.ActionPoints, "Needed", charge.ActionCost)
-			return true, nil
-		case actions.MoveRefuseExhausted:
+		// Stamina is the whole price since #401: a heavy load costs more of
+		// it per room through the encumbrance curve.
+		if charge.Refusal == actions.MoveRefuseExhausted {
 			user.SendText(messaging.CategoryRefusal, "You're too exhausted to move! Rest and recover your stamina.")
 			return true, nil
 		}

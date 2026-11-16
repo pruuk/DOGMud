@@ -749,8 +749,7 @@ func TestFireReload_NoviceEvidenceCycle(t *testing.T) {
 	cfg.Balance.ShootBaseStaminaCost = 2
 	cfg.Balance.ReloadBaseStaminaCost = 1
 	cfg.Balance.CarryCapacityMultiplier = 0.65
-	cfg.Balance.CostEncumbranceKnee = 0.75
-	cfg.Balance.CostEncumbranceKneeMult = 1.5
+	cfg.Balance.CostEncumbranceShape = 2.5
 	cfg.Balance.CostSkillMidRank = 25
 	cfg.Balance.CostSkillMultAtMid = 1
 	configs.SetConfigForTest(t, cfg)
@@ -784,7 +783,9 @@ func TestFireReload_NoviceEvidenceCycle(t *testing.T) {
 		Action: costs.ActionReload, Pool: characters.PoolStamina, Base: 1, Modifier: 1, Units: 1,
 	})
 	reloadCost := quoted.CommitCost(reloadQuote, characters.CostFullOrRefuse)
-	require.Equal(t, 4, shootCost.Charged+reloadCost.Charged)
+	// 5 since the smooth encumbrance curve (#401): the ballast puts this
+	// fixture mid-curve, where the new curve prices higher than the old knee.
+	require.Equal(t, 5, shootCost.Charged+reloadCost.Charged)
 
 	// ONE call now. Firing chambers its own next round, so the whole cycle this
 	// test prices is a single action -- and the debit must still be the SAME
@@ -798,7 +799,7 @@ func TestFireReload_NoviceEvidenceCycle(t *testing.T) {
 	require.True(t, fire.Chambered.Loaded, "the shot must chamber the next round itself")
 	assert.Equal(t, shootCost, fire.Cost, "the shot charges the shoot quote")
 	assert.Equal(t, reloadCost, fire.Chambered.Cost, "the chambering charges the reload quote")
-	assert.Equal(t, 46, char.Stamina, "50 less the same 4 the two-command cycle cost")
+	assert.Equal(t, 45, char.Stamina, "50 less the same 5 the two-command cycle cost")
 	assert.Equal(t, 19, char.Items[1].Uses)
 	assert.True(t, char.Equipment.Weapon.Loaded)
 	shootRaw := costs.Calc(costs.Input{
@@ -807,8 +808,10 @@ func TestFireReload_NoviceEvidenceCycle(t *testing.T) {
 	reloadRaw := costs.Calc(costs.Input{
 		Base: 1, Carried: 32.5, Capacity: 65, Physical: true, SkillRank: 5, HasSkill: true, Modifier: 1,
 	})
-	assert.Equal(t, 2.88, math.Round(shootRaw*100)/100)
-	assert.Equal(t, 1.44, math.Round(reloadRaw*100)/100)
+	// Half capacity on the smooth curve (#401): 1 + 4.5 x 0.5^2.5 = 1.79550,
+	// times rank 5's 1.08: shot 2 x 1.9391 = 3.878, reload 1.939.
+	assert.Equal(t, 3.88, math.Round(shootRaw*100)/100)
+	assert.Equal(t, 1.94, math.Round(reloadRaw*100)/100)
 }
 
 // ---------------------------------------------------------------------------

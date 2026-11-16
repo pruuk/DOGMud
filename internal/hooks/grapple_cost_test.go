@@ -29,9 +29,8 @@ func setGrappleCostConfig(t *testing.T) configs.Balance {
 	cfg.Balance.CostSkillMultAtCap = 0.4
 	cfg.Balance.CostSkillMidRank = 25
 	cfg.Balance.CostSkillCapRank = 100
-	cfg.Balance.CostEncumbranceKnee = 0.75
-	cfg.Balance.CostEncumbranceKneeMult = 1.5
-	cfg.Balance.CostEncumbranceMax = 5
+	cfg.Balance.CostEncumbranceShape = 2.5
+	cfg.Balance.CostEncumbranceMax = 5.5
 	cfg.Balance.CostTotalMultiplierMax = 6
 	// U6b Task 14: the drift skill term is SkillWeight (was hardcoded
 	// 2.2/2.0) and the aggressor edge is GrappleAggressorDriftBonus.
@@ -167,10 +166,13 @@ func TestGrappleMaintenanceQuotesEachRoleAtEveryModeledLoad(t *testing.T) {
 		load                           float64
 		wantController, wantControlled int
 	}{
+		// The smooth curve (#401): 1 + 4.5 x load^2.5 on 2 and 4 stamina,
+		// whole stamina charged (1.326 at 35% gives 2.65 and 5.30; 3.192 at
+		// 75% gives 6.38 and 12.77).
 		{name: "empty", load: 0, wantController: 2, wantControlled: 4},
-		{name: "typical", load: 0.35, wantController: 2, wantControlled: 4},
-		{name: "knee", load: 0.75, wantController: 3, wantControlled: 6},
-		{name: "capacity", load: 1, wantController: 10, wantControlled: 20},
+		{name: "typical", load: 0.35, wantController: 2, wantControlled: 5},
+		{name: "three quarters", load: 0.75, wantController: 6, wantControlled: 12},
+		{name: "capacity", load: 1, wantController: 11, wantControlled: 22},
 	}
 	for i, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -197,17 +199,19 @@ func TestGrappleMaintenanceQuotesEachRoleAtEveryModeledLoad(t *testing.T) {
 // Catches resetting fractional carry, rounding each role-adjusted price, or
 // multiplying the controlled role after a controller-sized quote has already
 // split whole debit from carry. At 35% load the shared encumbrance multiplier
-// is 1.2333..., so controller/controlled prices are 2.4666.../4.9333....
+// is 1 + 4.5 x 0.35^2.5 = 1.32612 (the smooth curve, #401), so
+// controller/controlled prices are 2.65225.../5.30450..., and each cumulative
+// whole debit is floor(rounds x price).
 func TestGrappleMaintenancePreservesIndependentFractionalCarryAcrossRounds(t *testing.T) {
 	setGrappleCostConfig(t)
 	controller, controlled := grappleCostPair(t, 1650, 1651)
 	loadGrapplerToFraction(controller, 99300, 0.35)
 	loadGrapplerToFraction(controlled, 99301, 0.35)
 
-	wantControllerDebit := []int{2, 2, 3, 2, 3, 2}
-	wantControlledDebit := []int{4, 5, 5, 5, 5, 5}
-	wantControllerSpent := []int{2, 4, 7, 9, 12, 14}
-	wantControlledSpent := []int{4, 9, 14, 19, 24, 29}
+	wantControllerDebit := []int{2, 3, 2, 3, 3, 2}
+	wantControlledDebit := []int{5, 5, 5, 6, 5, 5}
+	wantControllerSpent := []int{2, 5, 7, 10, 13, 15}
+	wantControlledSpent := []int{5, 10, 15, 21, 26, 31}
 	previousController := 100
 	previousControlled := 100
 	for round := range wantControllerDebit {

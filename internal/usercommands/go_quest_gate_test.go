@@ -42,7 +42,6 @@ func TestGo_QuestGateRefusesBeforeTheMove(t *testing.T) {
 	require.Equal(t, 1, room.RoomId, "fixture premise: the user starts in room 1")
 	registerGateQuest(t, 1)
 
-	user.Character.ActionPoints = 100
 	stamina := user.Character.Stamina
 	events.DrainQueuedMessagesForTest(user.UserId)
 
@@ -54,7 +53,6 @@ func TestGo_QuestGateRefusesBeforeTheMove(t *testing.T) {
 	require.Equal(t, 1, user.Character.RoomId, "the gate kept the player in room 1")
 	require.Contains(t, out, gateTestLine, "the gate says why")
 	require.NotContains(t, out, "You head", "no departure line for a refused move")
-	require.Equal(t, 100, user.Character.ActionPoints, "a refused step costs no action points")
 	require.Equal(t, stamina, user.Character.Stamina, "a refused step costs no stamina")
 }
 
@@ -85,7 +83,6 @@ func TestGo_QuestGateOnlyGuardsItsOwnSide(t *testing.T) {
 	user, room := getTestUserAndRoom(t)
 	registerGateQuest(t, 99) // a gate for players standing in room 99 only
 	t.Cleanup(func() { _ = rooms.MoveToRoom(user.UserId, 1) })
-	user.Character.ActionPoints = 100
 	events.DrainQueuedMessagesForTest(user.UserId)
 
 	handled, err := Go("north", user, room, 0)

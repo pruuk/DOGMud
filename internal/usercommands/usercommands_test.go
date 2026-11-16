@@ -704,8 +704,6 @@ func TestGo(t *testing.T) {
 	user, room := getTestUserAndRoom(t)
 
 	t.Run("valid_exit", func(t *testing.T) {
-		// Give enough action points for movement
-		user.Character.ActionPoints = 100
 		origRoom := user.Character.RoomId
 		handled, err := Go("north", user, room, 0)
 		assert.True(t, handled)
@@ -715,7 +713,6 @@ func TestGo(t *testing.T) {
 		// Move back for other tests
 		user.Character.RoomId = origRoom
 		room.AddPlayer(1)
-		user.Character.ActionPoints = 5
 	})
 
 	t.Run("no_exit", func(t *testing.T) {
@@ -1934,7 +1931,6 @@ func TestAdminTeleport(t *testing.T) {
 	})
 
 	t.Run("room_id", func(t *testing.T) {
-		user.Character.ActionPoints = 100
 		handled, err := Teleport("2", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
@@ -3331,7 +3327,6 @@ func TestFleeInCombatWithExits(t *testing.T) {
 
 	user, room := getTestUserAndRoom(t)
 	user.Character.SetAggro(0, 100, characters.DefaultAttack)
-	user.Character.ActionPoints = 100
 
 	handled, err := Flee("north", user, room, 0)
 	assert.True(t, handled)
@@ -3341,7 +3336,6 @@ func TestFleeInCombatWithExits(t *testing.T) {
 	user.Character.EndAggro()
 	user.Character.RoomId = 1
 	room.AddPlayer(1)
-	user.Character.ActionPoints = 5
 }
 
 // ─── Deeper Coverage: Set with invalid ──────────────────────────────────────
@@ -3565,17 +3559,17 @@ func TestGoDeepBranches(t *testing.T) {
 
 	user, room := getTestUserAndRoom(t)
 
-	t.Run("no_action_points", func(t *testing.T) {
-		user.Character.ActionPoints = 0
+	t.Run("no_stamina", func(t *testing.T) {
+		origStamina := user.Character.Stamina
+		defer func() { user.Character.Stamina = origStamina }()
+		user.Character.Stamina = 0
 		handled, err := Go("north", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.ActionPoints = 5
 	})
 
 	t.Run("prone_movement", func(t *testing.T) {
 		setCombatPositionParallel(user.Character, position.Prone)
-		user.Character.ActionPoints = 100
 		handled, err := Go("north", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
@@ -3583,7 +3577,6 @@ func TestGoDeepBranches(t *testing.T) {
 		setCombatPositionParallel(user.Character, position.Standing)
 		user.Character.RoomId = 1
 		room.AddPlayer(1)
-		user.Character.ActionPoints = 5
 	})
 }
 
@@ -4204,14 +4197,12 @@ func TestTryCommand(t *testing.T) {
 
 	t.Run("exit_as_command", func(t *testing.T) {
 		user := users.GetByUserId(1)
-		user.Character.ActionPoints = 100
 		handled, err := TryCommand("north", "", 1, events.CmdSkipScripts)
 		assert.True(t, handled)
 		assert.NoError(t, err)
 		// Restore
 		user.Character.RoomId = 1
 		rooms.LoadRoom(1).AddPlayer(1)
-		user.Character.ActionPoints = 5
 	})
 
 	t.Run("downed_blocks_non_allowed", func(t *testing.T) {
@@ -4440,24 +4431,20 @@ func TestAdminTeleportDeep(t *testing.T) {
 	defer func() { user.Role = users.RoleUser }()
 
 	t.Run("teleport_direction", func(t *testing.T) {
-		user.Character.ActionPoints = 100
 		handled, err := Teleport("north", user, room, 0)
 		assert.True(t, handled)
 		_ = err
 		// Restore
 		user.Character.RoomId = 1
 		room.AddPlayer(1)
-		user.Character.ActionPoints = 5
 	})
 
 	t.Run("teleport_to_player", func(t *testing.T) {
-		user.Character.ActionPoints = 100
 		handled, err := Teleport("bobrick", user, room, 0)
 		assert.True(t, handled)
 		_ = err
 		user.Character.RoomId = 1
 		room.AddPlayer(1)
-		user.Character.ActionPoints = 5
 	})
 }
 
@@ -5093,7 +5080,6 @@ func TestFleeMoreBranches(t *testing.T) {
 	t.Run("flee_prone", func(t *testing.T) {
 		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		setCombatPositionParallel(user.Character, position.Prone)
-		user.Character.ActionPoints = 100
 		handled, err := Flee("", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
@@ -5101,7 +5087,6 @@ func TestFleeMoreBranches(t *testing.T) {
 		setCombatPositionParallel(user.Character, position.Standing)
 		user.Character.RoomId = 1
 		room.AddPlayer(1)
-		user.Character.ActionPoints = 5
 	})
 }
 
@@ -5531,13 +5516,11 @@ func TestAdminTeleportWithArgs(t *testing.T) {
 	defer func() { user.Role = users.RoleUser }()
 
 	t.Run("teleport_self_to_room", func(t *testing.T) {
-		user.Character.ActionPoints = 100
 		handled, err := Teleport("aliceia 2", user, room, 0)
 		assert.True(t, handled)
 		_ = err
 		user.Character.RoomId = 1
 		room.AddPlayer(1)
-		user.Character.ActionPoints = 5
 	})
 }
 

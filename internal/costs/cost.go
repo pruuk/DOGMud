@@ -26,7 +26,7 @@ type Input struct {
 // Modifier applies only when it is positive, so a caller that leaves it at the
 // zero value gets a neutral 1.0 rather than a free action.
 //
-// The clamp — CostTotalMultiplierMax, default 6.0 — applies to the PRODUCT of
+// The clamp — CostTotalMultiplierMax, default 7.5 — applies to the PRODUCT of
 // the three multipliers, NOT to each factor in turn. This matters. Clamping
 // factors individually still lets a capacity-laden encumbrance of 5.0, a rank-0
 // skill penalty of 1.10 and a defence premium of 1.25 stack to 6.875x, and a
@@ -53,7 +53,7 @@ func Calc(in Input) float64 {
 
 	max := float64(configs.GetBalanceConfig().CostTotalMultiplierMax)
 	if max <= 0 {
-		max = 6.0
+		max = 7.5
 	}
 	if mult > max {
 		mult = max

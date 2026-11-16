@@ -56,7 +56,6 @@ character:
   health: 0
   stamina: 0
   conviction: 0
-  actionpoints: 0
   gold: 0
   bank: 0
   spellbook:

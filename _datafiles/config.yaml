@@ -1346,7 +1346,7 @@ Balance:
 
   # ── REGEN RATES (fraction of pool max per tick; 0.01 = 1%) ────────────────
   PlayerHealthRegenPct: 0.02     # Bumped from 1% to 2%; players needed faster recovery
-  PlayerStaminaRegenPct: 0.02    # Tuned 39.2: doubled from 0.01; fights felt too exhausting at 1%
+  PlayerStaminaRegenPct: 0.025   # Tuned 39.2: doubled from 0.01; fights felt too exhausting at 1%. 2.5% since #401 (2026-11-16): movement now costs stamina
   PlayerConvictionRegenPct: 0.02  # Bumped to 2% to match health/stamina regen rates
   MobHealthRegenPct: 0.01        # NPC HP regen per tick (1% of HealthMax)
   MobStaminaRegenPct: 0.02       # NPC stamina regen per tick (raised to match players)
@@ -1374,9 +1374,15 @@ Balance:
   #   the move was to make load, rather than distance, the thing that tires you.
   #
   #   Terrain still multiplies on top, so a swamp remains dearer than a road.
-  MovementBaseStaminaCost: 0.5
+  #
+  #   Raised to 1.5 by #401 (owner 2026-11-16): action points are gone, so
+  #   stamina alone paces travel. At 1.5 an unloaded walker on flat ground
+  #   pays about 1.65 a room, and once out of stamina regen holds them to
+  #   about 1.5 rooms a second. Typical pool 405: about 245 rooms from full.
+  MovementBaseStaminaCost: 1.5
   # MovementMaxStaminaCost: ceiling for any single move, regardless of terrain.
-  MovementMaxStaminaCost: 20.0
+  #   25 since #401 (was 20), so a loaded climb keeps costing more.
+  MovementMaxStaminaCost: 25.0
   # MovementSearchTrainChance: chance that one successful move records a use of
   #   the search skill, which is what gives movement its inverse-skill
   #   discount. Deliberately tiny. Search is already easy to train through
@@ -1889,20 +1895,17 @@ Balance:
   CostSkillMidRank: 25
   CostSkillCapRank: 100
 
-  # ENCUMBRANCE MULTIPLIER. Prices carried weight into physical actions. Two
-  #   straight segments joined at the knee: gentle from empty up to the knee,
-  #   steep from the knee to full capacity, flat at or beyond capacity.
-  #
-  #   The knee is the whole design. Below it a player should not have to think
-  #   about weight at all, so the climb to 1.5 across three quarters of the
-  #   range is barely perceptible. Above it the cost triples across the last
-  #   quarter, which is what turns "carry everything" from the obvious choice
-  #   into a real decision. Lowering CostEncumbranceKnee makes the game
-  #   punish hoarding much earlier and is the single most disruptive value in
-  #   this block.
-  CostEncumbranceKnee: 0.75
-  CostEncumbranceKneeMult: 1.5
-  CostEncumbranceMax: 5.0
+  # ENCUMBRANCE MULTIPLIER. Prices carried weight into physical actions,
+  #   movement included, on a smooth curve: 1 + (Max - 1) x load^Shape, where
+  #   load is carried weight over capacity, flat at or beyond capacity. Owner
+  #   ruling 2026-11-16 (#401): action points are gone, so a step is paid in
+  #   stamina and this curve is what makes a heavy load slow you down.
+  #   "We'll punish being loaded down a bit more, but give back more stamina."
+  #   At these values: 1.14x at a quarter load, about 1.46x at a typical 40%,
+  #   1.8x at half, 3.2x at three quarters, 5.5x full. A higher Shape stays
+  #   light longer and climbs later; 1 is a straight line.
+  CostEncumbranceShape: 2.5
+  CostEncumbranceMax: 5.5
 
   # COMPOSED-TOTAL CEILING. Clamps the PRODUCT of the three multipliers, not
   #   each one in turn. Clamping them individually still lets a full
@@ -1911,7 +1914,9 @@ Balance:
   #   cost nobody can pay does not read to the player as expensive. It reads
   #   as everything failing for no stated reason. The action's base price sits
   #   OUTSIDE this ceiling, so raising a base still raises the final cost.
-  CostTotalMultiplierMax: 6.0
+  #   7.5 since #401 (was 6.0), so a full load still costs a novice its full
+  #   5.5x encumbrance on top of the novice penalty.
+  CostTotalMultiplierMax: 7.5
 
   # ── CHARACTER CREATION ──────────────────────────────────────────────────────
   # Stats are rolled as a normal distribution, clamped to [Min, Max].

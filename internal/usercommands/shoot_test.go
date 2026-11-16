@@ -140,8 +140,7 @@ func pinRangedCostEvidence(t *testing.T) {
 	cfg.Balance.ShootBaseStaminaCost = 2
 	cfg.Balance.ReloadBaseStaminaCost = 1
 	cfg.Balance.CarryCapacityMultiplier = 0.65
-	cfg.Balance.CostEncumbranceKnee = 0.75
-	cfg.Balance.CostEncumbranceKneeMult = 1.5
+	cfg.Balance.CostEncumbranceShape = 2.5
 	cfg.Balance.CostSkillMidRank = 25
 	cfg.Balance.CostSkillMultAtMid = 1
 	configs.SetConfigForTest(t, cfg)
@@ -571,8 +570,9 @@ func TestShootReload_PlayerAndMobWrappersShareMechanicalDeltas(t *testing.T) {
 	require.Equal(t, player, mob, "player and mob must fire identically")
 
 	// The whole cycle is ONE action now, and it costs what the two commands cost
-	// together before: 2 for the shot plus 2 for the chambering.
-	assert.Equal(t, 4, player.fireDebit)
+	// together before. 5 since the smooth encumbrance curve (#401): the fixture's
+	// load sits mid-curve, where the new curve prices higher than the old knee.
+	assert.Equal(t, 5, player.fireDebit)
 	assert.Equal(t, 1, player.roundsAfterFire)
 
 	// Fired AND chambered: one projectile spent, weapon ready again.

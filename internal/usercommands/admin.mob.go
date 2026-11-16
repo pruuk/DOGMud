@@ -220,16 +220,12 @@ func mob_Spawn(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	return true, nil
 }
 
-// mobVitalsLine is the stamina and action point readout for `mob schedule`
-// (movement parity 4b). The mob's points are settled first, so the number is
-// what its next step would see.
-func mobVitalsLine(m *mobs.Mob, turn uint64) string {
-	m.Character.SettleActionPoints(turn)
+// mobVitalsLine is the stamina readout for `mob schedule` (movement parity
+// 4b). Stamina is the whole price of a step since #401.
+func mobVitalsLine(m *mobs.Mob) string {
 	return fmt.Sprintf(
-		"  stamina:         %d / %d\n"+
-			"  action points:   %d / %d",
-		m.Character.Stamina, m.Character.EffectivePoolMax(characters.PoolStamina),
-		m.Character.ActionPoints, m.Character.ActionPointsMax.Value)
+		"  stamina:         %d / %d",
+		m.Character.Stamina, m.Character.EffectivePoolMax(characters.PoolStamina))
 }
 
 // mob_Schedule prints the schedule debug summary for a single mob instance.
@@ -255,7 +251,7 @@ func mob_Schedule(args []string, user *users.UserRecord, room *rooms.Room, _ eve
 	// Vitals come first so a patrol-only mob, which has no schedule, still
 	// shows whether it is too tired to walk (movement parity 4b).
 	user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Vitals for %s (instance %d):\n%s",
-		m.Character.Name, instId, mobVitalsLine(m, util.GetTurnCount())))
+		m.Character.Name, instId, mobVitalsLine(m)))
 	if m.ScheduleId == "" {
 		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf(`%s (mob %d, instance %d) has no schedule.`,

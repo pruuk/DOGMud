@@ -112,12 +112,9 @@ func (c *Character) RecalculateStats() {
 		c.Stats.Charisma.ValueAdj*int(rb.ConvictionPerCharisma) +
 		c.Stats.Willpower.ValueAdj*int(rb.ConvictionPerWillpower)
 
-	c.ActionPointsMax.Mods = 200 // hard coded for now
-
 	c.HealthMax.Recalculate()
 	c.StaminaMax.Recalculate()
 	c.ConvictionMax.Recalculate()
-	c.ActionPointsMax.Recalculate()
 
 	// Stage 12.1: health_multiplier mutation after HealthMax.Recalculate().
 	if hMult := mutations.GetHealthMultiplier(c.Mutations); hMult != 0 {
@@ -156,9 +153,6 @@ func (c *Character) RecalculateStats() {
 	}
 	if c.HealthMax.Value < 1 {
 		c.HealthMax.Value = 1
-	}
-	if c.ActionPointsMax.Value < 50 {
-		c.ActionPointsMax.Value = 50
 	}
 
 	// Pool reservation clamping. GetPoolReservation totals BOTH Chrysalis

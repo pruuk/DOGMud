@@ -25,16 +25,24 @@ either of those harder.
 <ansi fg="yellow">━━━ The Shape of the Penalty ━━━</ansi>
 
 The cost does not wait until you are overloaded. It begins as soon as you
-pick anything up, but the climb is gentle across most of the range, so a pack
-is barely felt and you should not have to think about it. As you approach
-the limit of what you can carry, the price climbs sharply, and the last
-stretch before your limit costs far more than the whole comfortable range
-below it. Past your limit it stops rising and simply stays punishing.
+pick anything up and climbs on a smooth curve: a light pack is barely felt,
+half your limit makes everything physical cost nearly twice as much, and
+from there it rises steeply. At your limit every step and every swing costs
+several times what it would empty-handed. Past your limit it stops rising
+and simply stays punishing.
 
 The practical upshot: carrying a little is close to free, carrying a lot is
-close to crippling, and there is no gentle middle ground near the top. Walk
-into a fight loaded to your limit and you will feel it in the first few
-rounds.
+close to crippling. Walk into a fight loaded to your limit and you will feel
+it in the first few rounds.
+
+<ansi fg="yellow">━━━ Travelling Loaded ━━━</ansi>
+
+Walking from room to room is paid in stamina, and rough ground such as
+cliffs, swamps and mountains costs more than a road. A heavy load makes each
+room dearer, so you get fewer rooms out of a full stamina pool, and once it
+runs dry you move only as fast as you recover. When you are too exhausted
+to take another step, rest until your stamina returns. Fleeing always works,
+however tired you are.
 
 <ansi fg="yellow">━━━ Reading Your Load ━━━</ansi>
 

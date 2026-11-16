@@ -106,49 +106,45 @@ const (
 )
 
 type Character struct {
-	Name                    string           // The name of the character
-	Description             string           // A description of the character.
-	Adjectives              []string         `yaml:"adjectives,omitempty"` // Decorative text for the name of the character (e.g. "sleeping", "dead", "wounded")
-	RoomId                  int              // The room id the character is in.
-	Zone                    string           // The zone the character is in. The folder the room can be located in too.
-	SpeciesId               int              // Character species
-	Stats                   stats.Statistics // Character stats
-	Health                  int              // The health of the character
-	Stamina                 int              // The stamina of the character (physical energy)
-	Conviction              int              // The conviction of the character (mental/spiritual energy)
-	Toxicity                float64          `yaml:"toxicity,omitempty"`               // Current toxicity from potions
-	BloomAddiction          int              `yaml:"bloom_addiction,omitempty"`        // Bloom-drug addiction level (0 = clean)
-	BloomAbstinentRounds    uint64           `yaml:"bloom_abstinent_rounds,omitempty"` // Rounds spent online since the last Bloom dose, less a period per point decayed. Only time online counts (owner 2026-11-04), so logging out waits off nothing; saved, so a relog stops nothing either
-	BloomHadCommunion       bool             `yaml:"bloom_had_communion,omitempty"`    // True while condition 90 was active last tick (Crash transition gate). Saved so a Communion ending on the first round back still crashes
-	ActionPoints            int              // The resevoir of action points the character has to spend on movement etc.
-	ActionPointsSettled     bool             `yaml:"-"` // runtime: SettleActionPoints has run at least once (mobs only; movement parity 4b)
-	ActionPointsSettledTurn uint64           `yaml:"-"` // runtime: the turn ActionPoints was last settled to
-	Gold                    int              // The gold the character is holding
-	Bank                    int              // The gold the character has in the bank
-	StorageFeeLastMonth     int              `yaml:"storagefee_lastmonth,omitempty"` // Game month when storage fees were last charged
-	LastMailSentRound       uint64           `yaml:"lastmailsentround,omitempty"`    // Round of the character's last sent mail (mail send cooldown)
-	Shop                    Shop             `yaml:"shop,omitempty"`                 // Definition of shop services/items this character stocks (or just has at the moment)
-	SpellBook               map[string]int   `yaml:"spellbook,omitempty"`            // The spells the character has learned
-	KnownRecipes            map[string]int   `yaml:"knownrecipes,omitempty"`         // The crafting recipes the character has discovered
+	Name                 string           // The name of the character
+	Description          string           // A description of the character.
+	Adjectives           []string         `yaml:"adjectives,omitempty"` // Decorative text for the name of the character (e.g. "sleeping", "dead", "wounded")
+	RoomId               int              // The room id the character is in.
+	Zone                 string           // The zone the character is in. The folder the room can be located in too.
+	SpeciesId            int              // Character species
+	Stats                stats.Statistics // Character stats
+	Health               int              // The health of the character
+	Stamina              int              // The stamina of the character (physical energy)
+	Conviction           int              // The conviction of the character (mental/spiritual energy)
+	Toxicity             float64          `yaml:"toxicity,omitempty"`               // Current toxicity from potions
+	BloomAddiction       int              `yaml:"bloom_addiction,omitempty"`        // Bloom-drug addiction level (0 = clean)
+	BloomAbstinentRounds uint64           `yaml:"bloom_abstinent_rounds,omitempty"` // Rounds spent online since the last Bloom dose, less a period per point decayed. Only time online counts (owner 2026-11-04), so logging out waits off nothing; saved, so a relog stops nothing either
+	BloomHadCommunion    bool             `yaml:"bloom_had_communion,omitempty"`    // True while condition 90 was active last tick (Crash transition gate). Saved so a Communion ending on the first round back still crashes
+	Gold                 int              // The gold the character is holding
+	Bank                 int              // The gold the character has in the bank
+	StorageFeeLastMonth  int              `yaml:"storagefee_lastmonth,omitempty"` // Game month when storage fees were last charged
+	LastMailSentRound    uint64           `yaml:"lastmailsentround,omitempty"`    // Round of the character's last sent mail (mail send cooldown)
+	Shop                 Shop             `yaml:"shop,omitempty"`                 // Definition of shop services/items this character stocks (or just has at the moment)
+	SpellBook            map[string]int   `yaml:"spellbook,omitempty"`            // The spells the character has learned
+	KnownRecipes         map[string]int   `yaml:"knownrecipes,omitempty"`         // The crafting recipes the character has discovered
 	// NonCombatant indicates whether this character is exempt from combat.
 	// Default false (i.e., everyone is a combatant by default). Set true for
 	// non-combatant NPCs and future player passivity spells. Inverted name
 	// gives a sensible zero value — no init needed in New().
 	// For mobs, this is populated from Mob.NonCombatant during Mob.Validate().
 	// Consumed by Combat Phase's veto chain (chunk 0 Task 10).
-	NonCombatant    bool                  `yaml:"non_combatant,omitempty"`  // True = exempt from combat
-	Charmed         *CharmInfo            `yaml:"-"`                        // If they are charmed, this is the info
-	EverCharmed     bool                  `yaml:"-"`                        // True if this mob was ever a companion (survives dismiss)
-	CharmedMobs     []int                 `yaml:"-"`                        // If they have charmed anyone, this is the list of mob instance ids
-	Items           []items.Item          `yaml:"items,omitempty"`          // The items the character is holding
-	ComponentItems  []items.Item          `yaml:"componentitems,omitempty"` // Contents of equipped component bag
-	PotionItems     []items.Item          `yaml:"potionitems,omitempty"`    // Contents of equipped potion bandolier
-	Conditions      conditions.Conditions `yaml:"conditions,omitempty"`     // The conditions the character has active
-	Equipment       Worn                  `yaml:"equipment,omitempty"`      // The equipment the character is wearing
-	HealthMax       stats.StatInfo        `yaml:"-"`                        // The maximum health of the character. Don't write to yaml since is dynamically calculated.
-	StaminaMax      stats.StatInfo        `yaml:"-"`                        // The maximum stamina of the character. Don't write to yaml since is dynamically calculated.
-	ConvictionMax   stats.StatInfo        `yaml:"-"`                        // The maximum conviction of the character. Don't write to yaml since is dynamically calculated.
-	ActionPointsMax stats.StatInfo        `yaml:"-"`                        // The maximum actions of character. Don't write to yaml since is dynamically calculated.
+	NonCombatant   bool                  `yaml:"non_combatant,omitempty"`  // True = exempt from combat
+	Charmed        *CharmInfo            `yaml:"-"`                        // If they are charmed, this is the info
+	EverCharmed    bool                  `yaml:"-"`                        // True if this mob was ever a companion (survives dismiss)
+	CharmedMobs    []int                 `yaml:"-"`                        // If they have charmed anyone, this is the list of mob instance ids
+	Items          []items.Item          `yaml:"items,omitempty"`          // The items the character is holding
+	ComponentItems []items.Item          `yaml:"componentitems,omitempty"` // Contents of equipped component bag
+	PotionItems    []items.Item          `yaml:"potionitems,omitempty"`    // Contents of equipped potion bandolier
+	Conditions     conditions.Conditions `yaml:"conditions,omitempty"`     // The conditions the character has active
+	Equipment      Worn                  `yaml:"equipment,omitempty"`      // The equipment the character is wearing
+	HealthMax      stats.StatInfo        `yaml:"-"`                        // The maximum health of the character. Don't write to yaml since is dynamically calculated.
+	StaminaMax     stats.StatInfo        `yaml:"-"`                        // The maximum stamina of the character. Don't write to yaml since is dynamically calculated.
+	ConvictionMax  stats.StatInfo        `yaml:"-"`                        // The maximum conviction of the character. Don't write to yaml since is dynamically calculated.
 	// bandolierReleases (transient, not serialized) is what the last wear's
 	// PreserveBandolier let go of, held for the equip command to tell the
 	// player (TakeBandolierReleases, #794).

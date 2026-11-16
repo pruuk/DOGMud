@@ -46,9 +46,8 @@ func pinAutoattackAdmissionBalance(t *testing.T) {
 	b.CostSkillMultAtCap = 1
 	b.CostSkillMidRank = 25
 	b.CostSkillCapRank = 100
-	b.CostEncumbranceKnee = 0.75
-	b.CostEncumbranceKneeMult = 1
-	b.CostEncumbranceMax = 1
+	b.CostEncumbranceShape = 2.5
+	b.CostEncumbranceMax = 1 // flat: load prices nothing here
 	b.CostTotalMultiplierMax = 6
 	b.SkillWeight = 1
 	b.SkillSoftCap = 50

@@ -184,6 +184,9 @@ func TestFleeParity_Begin(t *testing.T) {
 		{fleeRow{name: "prone refuses", engage: true, setup: knockDown}, false, FleeRefuseProne, false},
 		{fleeRow{name: "grappled refuses", engage: true, setup: clinch}, false, FleeRefuseGrappled, false},
 		{fleeRow{name: "paid in full is accepted with skill", engage: true}, true, FleeOK, false},
+		// Owner ruling 2026-11-16 (#401): flee is never refused for lack of
+		// stamina. TestFleeNeverChargesAStep (internal/guards) keeps the flee
+		// paths off the step charge that would refuse it.
 		{fleeRow{name: "spent is accepted without skill", engage: true, setup: func(t *testing.T, c *characters.Character) { c.Stamina = 0 }}, true, FleeOK, true},
 	}
 	for _, tc := range rows {

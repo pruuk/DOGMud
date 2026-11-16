@@ -892,24 +892,13 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
 - **No direct pool mutation emits an event**, and neither primitive does. The two
   indirect emitters (`ApplyHealthChange` via `Validate`, and `Life_Cascades`'
   respawn set) are deliberate.
-- **ActionPoints is a fourth pool and is NOT in `Pool`.** It is an inherited
-  GoMud movement throttle, redundant with stamina movement costs. Movement is
-  a two-pool transaction with a hand-rolled refund (`actions.ChargeMove`).
-  A player's points are credited per turn by `hooks.ActionPoints`
-  (`NewTurn_ActionPoints.go`), which loops `users.GetAllActiveUsers()` only.
-  **A mob's are never looped or credited that way** (movement parity 4b):
-  every live mob held 0 action points before this slice, because spawn never
-  set them and nothing regenerated them. `(*Character).SettleActionPoints(turn
-  uint64)` (`action_points.go`) is the fix: it brings a MOB's points up to
-  date lazily, adding one point per elapsed turn (the player rate) up to
-  `ActionPointsMax.Value`, and stamps `ActionPointsSettled` /
-  `ActionPointsSettledTurn` so a same-turn re-settle mints nothing and a
-  turn-counter restart (the counter is 0 on reboot) refills rather than reads
-  as a debt. **NEVER call it for a player**: the per-turn hook already
-  credits them, and settling here too would double-credit the same turns.
-  Only `actions.QuoteMove` and `actions.ChargeMove` call it, and only for a
-  non-player `Actor`. `mobs.NewMobById` settles a spawn full at the current
-  turn so a fresh mob is never frozen at 0.
+- **There are no action points** (#401, owner ruling 2026-11-16). The
+  inherited GoMud movement throttle (`ActionPoints`, `ActionPointsMax`, the
+  per-turn `hooks.ActionPoints` credit and the mob settle) was removed;
+  movement is paid in stamina alone through `actions.ChargeMove`, and a heavy
+  load costs more stamina a room through the shared encumbrance curve. An old
+  save's `actionpoints:` key is ignored on load, and a prompt saved with the
+  `{ap}` token shows nothing in its place.
 
   `CanAffordCostFloat(pool Pool, amount float64) bool` (`pools.go`, after
   `ApplyCostFloatOrRefuse`) is the read-only twin of
@@ -920,18 +909,14 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   `QuoteActionCost` cannot price a step, whose cap applies after the hidden
   and mutation multipliers `costs.Calc` cannot express.
 
-  **Only `actions.ChargeMove` spends action points.** The guard
-  `move_wrapper_guard_test.go` (internal/guards) fails `go test ./internal/guards/` if `usercommands/go.go` or
-  `mobcommands/go.go` call `DeductActionPoints` themselves, and a second test
-  in the same file walks every non-test `.go` file under `internal/` and
-  `modules/` (excluding `internal/actions` and `internal/characters`
-  themselves) for a second `DeductActionPoints(` call site.
+  **Only `actions.ChargeMove` prices and pays a step.** The guard
+  `move_wrapper_guard_test.go` (internal/guards) fails if `usercommands/go.go`
+  or `mobcommands/go.go` price or charge a step themselves.
 - **Legacy deductors no longer exist.** Registered actions use
   `QuoteActionCost` and `CommitCost`. Autoattack prices its pre-resolution swing
   plan once; defence quotes every candidate and commits only the winner; flee
   commits once before its asynchronous blocker resolution; grapple maintenance
-  commits each participant independently before drift. `DeductActionPoints` is
-  a different pool entirely (see the ActionPoints note above).
+  commits each participant independently before drift.
 - **Defence costs are one config formula, not per-defence Go arithmetic.** U7
   Task 6 deleted `GetDefenseStaminaCost` and with it the three per-defence base
   knobs (`DodgeBaseStaminaCost`, `ParryBaseStaminaCost`,

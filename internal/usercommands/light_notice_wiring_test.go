@@ -112,7 +112,6 @@ func TestLightNoticeEndToEndAcrossARoomChange(t *testing.T) {
 	u := users.GetByUserId(1)
 	require.NotNil(t, u)
 	u.Character.RoomId = 1
-	u.Character.ActionPoints = 100
 	lightnotice.Check(u, lightnotice.TriggerQuiet)
 
 	captured, capCleanup := captureAllMessages(t)
