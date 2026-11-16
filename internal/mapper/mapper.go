@@ -739,30 +739,21 @@ func (r *mapper) joinedMaps(zone string) []*mapper {
 	return out
 }
 
-// adjacentInOthers is the room in cell (x, y, z) of the joined maps: one on
-// plane first, else one on another plane. The one map of the connected world
-// that FindAdjacentRoom read before zone maps stopped at their border kept a
-// single room per cell whatever its plane, so a plane-0 room looking into a
-// cell only The Foldweave (plane 5) fills found the Foldweave room (400 down
-// gives 6427); where both planes fill the cell it held the plane-0 room.
-// Measured on shipped data (every room, ten directions, one step and
-// unbounded, 13,050 lookups) this matches it exactly.
+// adjacentInOthers is the room on plane in cell (x, y, z) of the joined maps.
+// A cell held only by another plane's room counts as empty (#705): the one
+// map of the connected world that FindAdjacentRoom read before zone maps
+// stopped at their border kept a single room per cell whatever its plane, so
+// `build room down` from Dustwalk Road (400, plane 0) found The Foldweave's
+// 6427 (plane 5) and would have linked the two planes with an exit.
 func adjacentInOthers(others []*mapper, x, y, z, plane int) (int, error) {
-	other := 0
 	for _, m := range others {
 		id, err := m.GetRoomId(x, y, z)
 		if err != nil {
 			continue
 		}
-		if m.crawledRooms[id].Plane == plane {
+		if n := m.crawledRooms[id]; n != nil && n.Plane == plane {
 			return id, nil
 		}
-		if other == 0 {
-			other = id
-		}
-	}
-	if other != 0 {
-		return other, nil
 	}
 	return 0, ErrRoomNotFound
 }
@@ -842,6 +833,12 @@ func (r *mapper) FindAdjacentRoom(centerRoomId int, direction string, limitDista
 		}
 
 		roomId, err := r.GetRoomId(x, y, z)
+		if err == nil {
+			// Only a room on the caller's plane counts (#705).
+			if n := r.crawledRooms[roomId]; n == nil || n.Plane != startNode.Plane {
+				err = ErrRoomNotFound
+			}
+		}
 		if err != nil {
 			roomId, err = adjacentInOthers(others, x, y, z, startNode.Plane)
 		}

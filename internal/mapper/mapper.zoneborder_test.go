@@ -35,6 +35,7 @@ type fixtureRoom struct {
 	zone     string
 	exits    map[string]int
 	symbol   string // mapsymbol, legend "Mark"; "" for the zone's biome
+	plane    int    // coordinate space; 0 = overworld
 }
 
 // writeFixtureWorld writes rooms to a temp data tree and seeds the zones they
@@ -55,7 +56,7 @@ func writeFixtureWorld(t *testing.T, rs []fixtureRoom) {
 	}))
 	for _, r := range rs {
 		room := &rooms.Room{RoomId: r.id, Zone: r.zone, Title: fmt.Sprintf("Room %d", r.id), X: r.x, Y: r.y,
-			Exits: map[string]exit.RoomExit{}}
+			Plane: r.plane, Exits: map[string]exit.RoomExit{}}
 		if r.symbol != "" {
 			room.MapSymbol, room.MapLegend = r.symbol, "Mark"
 		}
@@ -637,6 +638,44 @@ func TestClearCacheRebuildsJoinedMaps(t *testing.T) {
 	}
 	if id, _ := GetMapper(b+2).FindAdjacentRoom(b+2, "west", 1); id != b+1 {
 		t.Errorf("FindAdjacentRoom west of %d after ClearCache = %d, want %d", b+2, id, b+1)
+	}
+}
+
+// #705: build room <dir> and teleport <dir> find only a room on the
+// caller's plane. 9301 (zone pz_a, plane 0) joins 9302 (zone pz_b, plane 5),
+// whose 9303 sits in the cell northwest of 9301. That cell holds no plane-0
+// room, so northwest finds nothing (it found 9303, as Dustwalk Road's down
+// found The Foldweave's 6427). The same fixture on one plane finds 9303,
+// so the lookup itself is shown to reach that cell.
+func TestFindAdjacentRoomStaysOnItsPlane(t *testing.T) {
+	isolateMapperCaches(t)
+	writeFixtureWorld(t, []fixtureRoom{
+		{id: 9301, x: 0, zone: "pz_a", exits: map[string]int{"east": 9302}},
+		{id: 9302, x: 1, zone: "pz_b", plane: 5, exits: map[string]int{"west": 9301, "north": 9303}},
+		{id: 9303, x: -1, y: -1, zone: "pz_b", plane: 5, exits: map[string]int{"south": 9302}},
+	})
+	GetMapper(9302) // both zones' maps are built, as PreCacheMaps builds every map at boot
+	if id, _ := GetMapper(9301).FindAdjacentRoom(9301, "northwest", 1); id != 0 {
+		t.Errorf("northwest of 9301 (plane 0) found %d on plane 5, want nothing", id)
+	}
+	if id, _ := GetMapper(9301).FindAdjacentRoom(9301, "east"); id != 9302 {
+		t.Errorf("an exit is still followed: east of 9301 = %d, want 9302", id)
+	}
+}
+
+// The control for the test above: the same layout all on plane 0 finds the
+// room in that cell. Its own ids and zones, so the loaded rooms of the test
+// above (on plane 5) cannot stand in for these.
+func TestFindAdjacentRoomCrossesABorderOnOnePlane(t *testing.T) {
+	isolateMapperCaches(t)
+	writeFixtureWorld(t, []fixtureRoom{
+		{id: 9311, x: 0, zone: "pz_c", exits: map[string]int{"east": 9312}},
+		{id: 9312, x: 1, zone: "pz_d", exits: map[string]int{"west": 9311, "north": 9313}},
+		{id: 9313, x: -1, y: -1, zone: "pz_d", exits: map[string]int{"south": 9312}},
+	})
+	GetMapper(9312)
+	if id, _ := GetMapper(9311).FindAdjacentRoom(9311, "northwest", 1); id != 9313 {
+		t.Errorf("northwest of 9311 on one plane = %d, want 9313", id)
 	}
 }
 
