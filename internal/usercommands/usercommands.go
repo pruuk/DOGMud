@@ -175,6 +175,7 @@ var (
 		`password`:        {Password, true, true, false},
 		`paz`:             {Paz, true, true, true}, // Admin only
 		`pet`:             {Pet, false, true, false},
+		`pets`:            {Pets, true, true, false},
 		`petition`:        {Petition, true, true, false}, // Player — contact staff into the moderation queue
 		`petitions`:       {Petitions, true, true, true}, // Admin only — review the petition queue
 		`picklock`:        {Picklock, false, true, false},

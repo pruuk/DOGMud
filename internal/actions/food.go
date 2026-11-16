@@ -101,9 +101,15 @@ func ConsumeFood(actor Actor, verb string, rest string) {
 	if itemSpec.Type == items.Drink {
 		you, they = `drink`, `drinks`
 	}
-	actor.SendText(messaging.CategorySystem, fmt.Sprintf(`You %s some of the <ansi fg="itemname">%s</ansi>.`, you, matchItem.DisplayName()))
+	// The last use (UseItem removes an item at one use or none) finishes it:
+	// "You drink the Herbal Tea.", not "some of" a one-use cup (#755).
+	yourPart, theirPart := `some of the`, `some`
+	if matchItem.Uses <= 1 {
+		yourPart, theirPart = `the`, `the`
+	}
+	actor.SendText(messaging.CategorySystem, fmt.Sprintf(`You %s %s <ansi fg="itemname">%s</ansi>.`, you, yourPart, matchItem.DisplayName()))
 	if room != nil {
-		room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="%s">%s</ansi> %s some <ansi fg="itemname">%s</ansi>.`, nameColor, char.Name, they, matchItem.DisplayName()), []string{char.Name}, roomExclude...)
+		room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="%s">%s</ansi> %s %s <ansi fg="itemname">%s</ansi>.`, nameColor, char.Name, they, theirPart, matchItem.DisplayName()), []string{char.Name}, roomExclude...)
 	}
 
 	usesLeft := 0

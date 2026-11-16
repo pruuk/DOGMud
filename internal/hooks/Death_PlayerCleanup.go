@@ -47,10 +47,7 @@ func wirePlayerDeathCleanup(c *characters.Character) {
 
 			// 2. Stat decay + skill rust — preserved normal-death
 			//    penalties. Guard matches suicide.go allowPenalties check.
-			allowPenalties := u.Character.GetTotalSkillRanks() > int(config.Death.ProtectionSkillRanks)
-			// chunk 4d: skip deprogression for submission outcomes that
-			// intentionally leave the victim alive (subdue/cripple).
-			if allowPenalties && !d.NoDeprogression {
+			if deathPenaltiesApply(u, d) {
 				applyPlayerStatDecay(u, config)
 				applyPlayerSkillRust(u, config)
 			}
@@ -59,6 +56,16 @@ func wirePlayerDeathCleanup(c *characters.Character) {
 			//    members who are not in the dead player's room.
 			notifyPartyOfPlayerDeath(c)
 		})
+}
+
+// deathPenaltiesApply reports whether this death costs the player stat decay
+// and skill rust: past the newcomer protection (more skill ranks than
+// Death.ProtectionSkillRanks), and not a submission outcome that leaves the
+// victim alive (chunk 4d: subdue, cripple). The cleanup applies the penalties
+// and the announcement says "You feel weakened" by this one test (#599).
+func deathPenaltiesApply(u *users.UserRecord, d life.DeadData) bool {
+	protection := int(configs.GetGamePlayConfig().Death.ProtectionSkillRanks)
+	return u.Character.GetTotalSkillRanks() > protection && !d.NoDeprogression
 }
 
 // recordKDDeath mirrors the KD-tracking block from suicide.go

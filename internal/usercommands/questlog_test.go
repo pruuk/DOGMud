@@ -149,6 +149,17 @@ func TestQuestsCommand_AbandonAndFocusWords(t *testing.T) {
 	require.Equal(t, [2]string{"", "all"}, questsSubcommand("all"))
 }
 
+// #755: the list says "(following)", so players type `quests follow <name>`;
+// it reprinted the list and followed nothing. follow is focus, and a word
+// the command does not know is refused with the words it does.
+func TestQuestsCommand_FollowIsFocusAndUnknownWordsAreRefused(t *testing.T) {
+	require.Equal(t, [2]string{"focus", "first blood"}, questsSubcommand("follow first blood"))
+	require.Equal(t, [2]string{"focus", "hunt"}, questsSubcommand("Follow hunt"))
+	require.Equal(t, [2]string{"", ""}, questsSubcommand(""))
+	require.Equal(t, [2]string{"", "all+"}, questsSubcommand("all+"))
+	require.Equal(t, [2]string{"unknown", "track hunt"}, questsSubcommand("track hunt"))
+}
+
 func TestShelvedRows(t *testing.T) {
 	u := questlogFixture(t)
 	_, _ = AbandonQuest(u, 42)

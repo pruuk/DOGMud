@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -37,6 +38,29 @@ func seedCharacterScreenRegistries(t *testing.T) {
 	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
 		83: {ConditionId: 83, Name: "Broken Limb", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 12},
 	}))
+	// The shipped names: status shows these, not the ids (#687).
+	t.Cleanup(mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
+		"reflect-skin-frostbite": {MutationId: "reflect-skin-frostbite", Name: "Frostbite Skin"},
+		"sustaining-presence":    {MutationId: "sustaining-presence", Name: "Sustaining Presence"},
+	}))
+}
+
+// #687: status lists mutations by name, as `mutations` does, at every width.
+func TestStatusNamesMutationsNotIds(t *testing.T) {
+	templateRenderSetup(t)
+	seedCharacterScreenRegistries(t)
+	for _, width := range templateWidths {
+		out, err := templates.ProcessAtWidth("character/status", statusScreenFixture(), width)
+		if err != nil {
+			t.Fatalf("status at %d: %v", width, err)
+		}
+		if !strings.Contains(out, "Frostbite Skin") || !strings.Contains(out, "Sustaining Presence") {
+			t.Errorf("status at %d does not name the mutations:\n%s", width, out)
+		}
+		if strings.Contains(out, "reflect-skin-frostbite") || strings.Contains(out, "sustaining-presence") {
+			t.Errorf("status at %d shows a raw mutation id:\n%s", width, out)
+		}
+	}
 }
 
 // screenItem is an item whose spec is its own, so no item registry is read.

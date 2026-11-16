@@ -26,11 +26,20 @@ func TestMutationGainedRevealWrongEventType(t *testing.T) {
 func TestDeepenFlourishText(t *testing.T) {
 	got := deepenFlourishText("Chameleon Skin", 2, 3)
 	assert.Contains(t, got, "Chameleon Skin")
-	assert.Contains(t, got, "Level 2")
 	assert.NotContains(t, got, "fully matured")
 
 	got = deepenFlourishText("Chameleon Skin", 3, 3)
 	assert.Contains(t, got, "fully matured")
+}
+
+// #687: the depth is a word, never "Level 2", and no verb follows the name,
+// so "Your Dense Muscles grows stronger" cannot come back.
+func TestDeepenFlourishText_WordsNotNumbers(t *testing.T) {
+	got := deepenFlourishText("Dense Muscles", 2, 4)
+	assert.Contains(t, got, "now moderate")
+	assert.NotRegexp(t, `\d`, strings.ReplaceAll(strings.ReplaceAll(got, `fg="magenta"`, ""), `fg="yellow"`, ""))
+	assert.NotContains(t, got, "grows")
+	assert.Contains(t, deepenFlourishText("Dense Muscles", 3, 4), "now major")
 }
 
 func TestRevealCaption(t *testing.T) {

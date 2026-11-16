@@ -3,6 +3,7 @@ package usercommands
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -51,7 +52,13 @@ func Mutations(rest string, user *users.UserRecord, room *rooms.Room, flags even
 			continue
 		}
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="yellow">%s</ansi> <ansi fg="magenta">(%s)</ansi>`, spec.Name, depth))
-		user.SendText(messaging.CategorySystem, indented(`    `, fmt.Sprintf(`<ansi fg="white">%s</ansi>`, spec.Description)))
+		// The description is a YAML block scalar, hard-wrapped and ending in
+		// a newline. Flatten it to one paragraph first (as the reveal does),
+		// or its trailing newline leaves an indent-only line that the
+		// pipeline closes with a lone "." (#687), and its authored breaks
+		// fight the reader's width.
+		description := strings.Join(strings.Fields(spec.Description), " ")
+		user.SendText(messaging.CategorySystem, indented(`    `, fmt.Sprintf(`<ansi fg="white">%s</ansi>`, description)))
 
 		// What it actually does (descriptive, no raw numbers): benefits then
 		// drawbacks. Effects with no player-facing summary are skipped.

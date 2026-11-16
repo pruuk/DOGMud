@@ -17,6 +17,7 @@ package usercommands
 
 import (
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -25,6 +26,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -296,6 +298,24 @@ func TestThrowSeam_DefensiveCritFullyNegatesAndDoesNotEngage(t *testing.T) {
 	assert.Equal(t, 500, targets[0].Character.Health, "a defensive crit fully negates the splash")
 	assert.False(t, targets[0].Character.IsInCombat(), "an untouched target does not engage")
 	assert.False(t, user.Character.IsInCombat(), "a throw that touched nothing starts no fight")
+}
+
+// #787: a fully defended throw named the item "firebomb" whatever was thrown
+// ("absorbs your feeble firebomb!" after a Flashbang). It names the thrown
+// item ("bomb" here, the fixture's simple name).
+func TestThrowSeam_DefendedLineNamesTheThrownItem(t *testing.T) {
+	user, room, _ := seedThrowSeamFixture(t, 1, 0, 0)
+	restore := combat.SetChannelAttackContestRunnerForTest(func(atkScore float64, entries []contest.Entry) contest.Result {
+		return throwSeamResult(atkScore, entries, -3.0, 0.5)
+	})
+	defer restore()
+
+	events.DrainQueuedMessagesForTest(user.UserId)
+	_, err := Throw("bomb", user, room, 0)
+	require.NoError(t, err)
+	told := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
+	require.NotEmpty(t, told)
+	assert.NotContains(t, told, "firebomb")
 }
 
 // TestThrowSeam_AttackerCritBypassesMitigationAndScales: throw gains the crit

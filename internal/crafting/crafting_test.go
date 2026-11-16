@@ -1,6 +1,7 @@
 package crafting
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -304,6 +305,22 @@ func TestGetEligibleRecipes(t *testing.T) {
 	eligible = GetEligibleRecipes(allKnown, map[string]int{"blacksmithing": 50, "alchemy": 50}, "blacksmithing")
 	if len(eligible) != 0 {
 		t.Errorf("all known: expected 0 eligible, got %d", len(eligible))
+	}
+}
+
+// #692: an enchant with time_rounds <= 0 took the instant-craft branch,
+// which consumes the ingredients and makes the output item without applying
+// the enchant. No shipped recipe does it (all have 3 or more); the load now
+// refuses one, so none can be authored by accident.
+func TestRecipeValidateRefusesAnInstantEnchant(t *testing.T) {
+	r := RecipeSpec{RecipeId: "instant-enchant", Name: "Instant", Skill: "enchanting",
+		EnchantType: "keen", TargetType: "weapon", TimeRounds: 0}
+	if err := r.Validate(); err == nil || !strings.Contains(err.Error(), "time_rounds") {
+		t.Fatalf("an enchant with time_rounds 0 must fail the load naming time_rounds, got %v", err)
+	}
+	r.TimeRounds = 3
+	if err := r.Validate(); err != nil && strings.Contains(err.Error(), "time_rounds") {
+		t.Fatalf("a timed enchant passes the time_rounds rule, got %v", err)
 	}
 }
 

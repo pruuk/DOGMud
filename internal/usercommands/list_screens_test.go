@@ -232,9 +232,9 @@ func TestSkillsExtraNamesCooldownsInWords(t *testing.T) {
 		}
 		require.GreaterOrEqual(t, at, 0, "at %d no cooldown heading:\n%s", width, out)
 		tail := strings.Join(lines[at:], "\n")
-		want := "Cooldown Tracking:\n enchant-tierup-blocked: well established\n special moves: briefly active"
+		want := "Cooldown Tracking:\n enchant tierup blocked: well established\n special moves: briefly active"
 		if width < 41 {
-			want = "Cooldown Tracking:\n enchant-tierup-blocked:\n   well established\n special moves: briefly active"
+			want = "Cooldown Tracking:\n enchant tierup blocked:\n   well established\n special moves: briefly active"
 		}
 		require.Equal(t, want, tail, "at %d", width)
 		require.NotRegexp(t, `: \d`, tail, "a raw round count")

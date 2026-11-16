@@ -81,6 +81,13 @@ func (r *RecipeSpec) Validate() error {
 	if r.Output.ItemId < 1 && r.EnchantType == "" {
 		return fmt.Errorf("recipe %q: output.item_id must be > 0 (or enchant_type must be set)", r.RecipeId)
 	}
+	// An instant craft (time_rounds <= 0) completes through completeCraft,
+	// which makes the output item and never applies an enchant, so an
+	// instant enchant would eat its ingredients for nothing (#692). Only the
+	// timed path (NewRound_UserRoundTick) applies EnchantType.
+	if r.EnchantType != "" && r.TimeRounds <= 0 {
+		return fmt.Errorf("recipe %q: an enchant recipe needs time_rounds of 1 or more (instant crafts cannot apply an enchant)", r.RecipeId)
+	}
 	return r.validateNarration()
 }
 

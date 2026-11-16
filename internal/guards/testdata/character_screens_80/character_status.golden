@@ -18,5 +18,5 @@
  <ansi fg="yellow">Submission policy:</ansi> subdue
  <ansi fg="red-bold">Broken limb: 12 rounds remaining</ansi>
  <ansi fg="black-bold">.:</ansi><ansi fg="20">Mutations</ansi><ansi fg="black-bold">:.</ansi>
-   <ansi fg="yellow">reflect-skin-frostbite   </ansi> <ansi fg="magenta">extreme</ansi>
-   <ansi fg="yellow">sustaining-presence      </ansi> <ansi fg="magenta">moderate</ansi>
+   <ansi fg="yellow">Frostbite Skin           </ansi> <ansi fg="magenta">extreme</ansi>
+   <ansi fg="yellow">Sustaining Presence      </ansi> <ansi fg="magenta">moderate</ansi>

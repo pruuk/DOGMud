@@ -152,16 +152,28 @@ func activeQuestRecord(user *users.UserRecord, questInfo *quests.Quest, questSte
 	}.withProgress(completion), completion
 }
 
-// questsSubcommand splits `quests abandon <name>` / `quests focus <name>`;
-// anything else is the list's own argument ("", "all", "all+").
+// questsSubcommand splits `quests abandon <name>` / `quests focus <name>`
+// (`follow` is focus: the list marks the focused quest "(following)", #755).
+// The list's own arguments ("", "all", "all+") come back with no word; any
+// other first word comes back as `unknown`, so it is refused rather than
+// reprinting the list as if it had worked.
 func questsSubcommand(rest string) [2]string {
-	word, arg, _ := strings.Cut(strings.TrimSpace(rest), ` `)
+	trimmed := strings.TrimSpace(rest)
+	word, arg, _ := strings.Cut(trimmed, ` `)
 	switch strings.ToLower(word) {
 	case `abandon`, `focus`:
 		return [2]string{strings.ToLower(word), strings.TrimSpace(arg)}
+	case `follow`:
+		return [2]string{`focus`, strings.TrimSpace(arg)}
+	case ``, `all`, `all+`:
+		return [2]string{``, rest}
 	}
-	return [2]string{``, rest}
+	return [2]string{`unknown`, trimmed}
 }
+
+// questsUnknownWordLine answers `quests <word>` for a word the command does
+// not take.
+const questsUnknownWordLine = `Type <ansi fg="command">quests</ansi> to list your quests, <ansi fg="command">quests all</ansi> to include finished ones, <ansi fg="command">quests focus</ansi> <ansi fg="cyan"><quest></ansi> to follow one, or <ansi fg="command">quests abandon</ansi> <ansi fg="cyan"><quest></ansi> to set one aside.`
 
 // shelvedRows are the `quests all` rows for quests set aside, in quest id
 // order. They carry no step description, bar or percentage.
@@ -193,6 +205,9 @@ func SendQuestLogLine(user *users.UserRecord, ok bool, line string) {
 func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	switch sub := questsSubcommand(rest); sub[0] {
+	case `unknown`:
+		user.SendText(messaging.CategoryRefusal, questsUnknownWordLine)
+		return true, nil
 	case `abandon`, `focus`:
 		id, ambiguous := findActiveQuest(user, sub[1])
 		if ambiguous {

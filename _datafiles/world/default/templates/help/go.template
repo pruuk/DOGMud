@@ -1,6 +1,6 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">go</ansi>
 
-The <ansi fg="command">go</ansi> command is used to travel from are to area.
+The <ansi fg="command">go</ansi> command is used to travel from area to area.
 
 Typing <ansi fg="command">go</ansi> is unnecessary though, you can just type the exit name.
 

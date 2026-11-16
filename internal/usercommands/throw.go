@@ -437,7 +437,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				Attacker: user.Character.GetPlayerName(user.UserId).String(),
 				Defender: mob.Character.GetMobNameIndexed(user.UserId,
 					room.GetMobDuplicateIndex(mob.InstanceId)).String(),
-			}, "firebomb")
+			}, matchItem.NameSimple()) // the item thrown, not always "firebomb" (#787)
 			messaging.SendTrio(messaging.Trio{
 				Actor:    lineOrNone(messaging.CategoryDodge, string(triad.ToAttacker)),
 				Actee:    messaging.NoLine,

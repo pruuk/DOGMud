@@ -58,7 +58,7 @@ func TestScreenRowsEndWithoutAStop(t *testing.T) {
 		last string
 	}{
 		{name: "help afk ends in See also", cmd: Help, rest: "afk", last: "See also: help online"},
-		{name: "status ends in a mutation row", cmd: Status, last: "   fixture-gills             minor"},
+		{name: "status ends in a mutation row", cmd: Status, last: "   Fixture Gills             minor"},
 		{name: "channels", cmd: Channels,
 			want: []string{"Channels (channels <name> to toggle):", "  chat: on"}, last: "  trade: on"},
 		{name: "macros", cmd: Macros, want: []string{"Your macros:", "  =1:", "      a) look", "      b) say hi"}},
