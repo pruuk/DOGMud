@@ -153,8 +153,10 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 
 **The design now:**
 - xterm's `screenReaderMode` is never turned on. Its row mirror, its live region, the private `_clearLiveRegion` and `_accessibilityManager` calls, the Mac re-append and the 20-line limit all go.
-- A visually hidden `<div id="sr-log" role="log" aria-live="polite" aria-relevant="additions" aria-label="Game text">` receives each piece of server text the page writes, as a new child element, while the mode is on. A screen reader announces each new entry once, polite (queued after what it is saying, as Narrator treats every region anyway).
-- Text is made plain first: escape sequences, carriage returns, trailing spaces and blank lines at the ends removed (`plainText`).
+- A visually hidden `<div id="sr-log" role="log" aria-live="polite" aria-relevant="additions" aria-atomic="false" aria-label="Game text">` receives each piece of server text the page writes, as a new child element, while the mode is on. A screen reader announces each new entry once, polite (queued after what it is saying, as Narrator treats every region anyway). `aria-atomic="false"` is explicit: Narrator reads a region whose atomic property it cannot see as a whole ([Mozilla bug 1887790](https://bugzilla.mozilla.org/show_bug.cgi?id=1887790)). The region sits after the game in the page, so a phone screen reader swiping from the top meets the game first; the hint stays first. Each entry holds one element per line, so line breaks survive.
+- Text is made plain first (`plainText`): escape sequences (CSI, OSC, charset), control characters, drawing symbols a screen reader reads by name (box drawing and block elements, U+2500 to U+259F, and the prompt's sun, moon and arrow), doubled spaces, spaces at line ends and blank lines at the ends removed.
+- The page's own lines (a dropped connection, "Not connected", the automation login message, the name-prompt nudge) go into the log through one helper, `gameLine`, so a blind player hears them.
+- A screen reader account gets the MOTD as plain words ("Message of the day." and the text) instead of the box with its spaced title (`motdFor`, `internal/usercommands/motd.go`).
 - Nothing is cleared while the mode is on, so nothing can be emptied before it is read. The oldest entries are removed past 100 (`MAX_ENTRIES`); `aria-relevant="additions"` means a removal is not announced. The kept entries can be read back with the screen reader's own reading keys.
 - A piece with no line break at its end is a prompt. A prompt identical to the last one announced is skipped, because the server redraws the prompt after every message (`internal/hooks/RedrawPrompt_SendRedraw.go`); a changed prompt (a health change) is announced.
 - The page's own lines (the "on" confirmation and the repeated waiting prompt) go into the log too. "Off" is still spoken by the status region, and the log is emptied when the mode goes off.
@@ -164,6 +166,8 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - **No flood limit on unprompted text.** The 20-line limit was xterm's; a long burst is now read in full, and the player stops speech with their screen reader's own key (Ctrl in Narrator and NVDA). If wrong: a later change can summarise bursts over some size.
 - **100 entries kept for reading back.** Enough for a fight or a long help page; small enough not to grow the page. If wrong: a different number, one constant.
 - **Polite, not assertive.** New game text waits for the current sentence instead of cutting it off. If wrong: assertive would let urgent text interrupt; nothing marks text as urgent yet (#733).
+- **The prompt's bars are dropped as symbols.** The prompt then reads "HP SP CP", so a change only in the bars is not announced again. Vitals by voice are #733's open question. If wrong: a words prompt for screen reader accounts (the `{hp}` style tokens) would need the owner's call on showing numbers.
+- **"Read in full" means the log holds the whole piece.** A screen reader may still stop speaking when the player types (NVDA interrupts on typed characters and Enter by default); the entry stays in the log to read back line by line.
 
 ## Decisions taken without asking
 

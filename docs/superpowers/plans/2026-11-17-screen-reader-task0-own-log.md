@@ -2,30 +2,32 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace xterm's screen reader mode with a visually hidden `role="log"` region the page fills with each piece of game text, so Narrator (and other screen readers) read each new piece once, never reread from the top, and never go silent.
+**Goal:** Replace xterm's screen reader mode with a visually hidden `role="log"` region the page fills with each piece of game text and each of its own status lines, so screen readers read each piece once, never reread from the top, and never go silent.
 
-**Architecture:** `static/js/screenreader.js` keeps its switch (phrase, device memory, account follow) and loses its timing machinery (pieces, quiet gaps, answer tracking, xterm private calls). Its `write(text)` turns server text into plain text and appends it to `#sr-log` as a new entry while the mode is on. The page writes server text to xterm as before and passes the same text to `screenReader.write`. The server does not change.
+**Architecture:** `static/js/screenreader.js` keeps its switch (phrase, device memory, account follow) and loses its timing machinery (pieces, quiet gaps, answer tracking, xterm private calls). Its `write(text)` turns terminal text into plain words (no escapes, no drawing symbols) and appends it to `#sr-log` as a new entry while the mode is on. The page writes server text to xterm as before and passes the same text to `screenReader.write`; its own status lines go through one helper, `gameLine`, that does both. The server sends a screen reader account a plain MOTD.
 
-**Spec:** `docs/superpowers/specs/2026-11-17-screen-reader-task0-design.md`, section 11 (owner ruling 2026-11-17, option 1 after the Narrator test). Branch `feature/screen-reader-task0`, worktree `C:/tmp/dogmud-sr0`. Follows plan `2026-11-17-screen-reader-task0.md` (Tasks 1 to 9).
+**Spec:** `docs/superpowers/specs/2026-11-17-screen-reader-task0-design.md`, section 11 (owner ruling 2026-11-17, option 1 after the Narrator test). Branch `feature/screen-reader-task0`, worktree `C:/tmp/dogmud-sr0`. Follows plan `2026-11-17-screen-reader-task0.md` (Tasks 1 to 9). Revised after a blind adversarial review (two reviewers, 2026-11-17).
 
-## Facts verified against source (worktree at `03e3f7a99`)
+## Facts verified against source (worktree at `a9e43c7e0`)
 
 | Fact | Where |
 |---|---|
-| The page writes each piece of server text at one place, through `screenReader.write(...)` today | `webclient-pure.html:3284` |
-| `screenReader` is created with `term`, `termWrite`, `clearSpoken` (private `_accessibilityManager`) among its opts | `webclient-pure.html:553-597` |
-| `screenReader.inputDone(d.seq)` in the `Char.Input.Done` handler; `inputSent(linesSent)` after the copyover token and in `SendData`; `keyTyped()` first in the command box keydown | `webclient-pure.html:1126`, `:3143`, `:3483`, `:3395` |
-| The status region exists | `webclient-pure.html:251` |
-| `.xterm .xterm-accessibility { pointer-events: none; }` exists only for xterm's overlay | `dashboard.css:1971` |
-| `roomtitlebold.test.js` pins the server-text write line; `webclient-connect.test.js` stands in for `screenReader` with `isOn`, `loggedOut`, `inputSent`, `write` | `tools/jstest/roomtitlebold.test.js:34`; `tools/jstest/webclient-connect.test.js:88-90` |
-| Each message is sent as column 0, erase line, text; the prompt is redrawn as its own frame with no line break | `internal/hooks/Message_SendMessages.go:40`; `internal/hooks/RedrawPrompt_SendRedraw.go` |
-| xterm adds to its live region with `textContent +=` and empties it only on its own input's keys | `xterm.4.19.0.js` `_announceCharacters`, `_onKey` |
+| The page writes each piece of server text at one place, through `screenReader.write(...)` today; `RELOGTKN:`, `TEXTMASK:` and `!!` frames return before it | `webclient-pure.html:3284`, `:3170` |
+| `screenReader` is created with `term`, `termWrite`, `clearSpoken` (private `_accessibilityManager`) among its opts, before `init()` connects | `webclient-pure.html:553-597` |
+| `inputDone(d.seq)`, `inputSent(linesSent)` after the copyover token and in `SendData`, and `keyTyped()` are the module calls this addendum removes | `webclient-pure.html:1126`, `:3143`, `:3483`, `:3395` |
+| The page's own lines go straight to xterm: `onclose` (connection died, closed cleanly, left the game, server restarting, could not reconnect), "Not connected…", the automation login message, the name-prompt nudge, the full-screen refusal | `webclient-pure.html:3310-3340`, `:3454`, `:2920`, `:2990`, `:2824` |
+| `webclient-connect.test.js` evaluates the page from `function markInGame() {` to the command box keydown listener, with a `screenReader` stand-in | `tools/jstest/webclient-connect.test.js:82-90` |
+| `.visually-hidden` (with `white-space: nowrap`) ends at `dashboard.css:1968`; the overlay rule and its comment are `:1969-1971` | `dashboard.css` |
+| The default prompt draws 10 block characters per bar and a sun or moon (`renderVitalBar`, `{t}`); the prompt redraw is its own frame with no line break and is not screen-reader stripped | `config.yaml:2489`; `internal/users/userrecord.prompt.go:217-236`; `internal/hooks/RedrawPrompt_SendRedraw.go` |
+| The MOTD is a `║ ╠ ╣` box with a letter-spaced title, sent by the `motd` command, which login runs | `internal/usercommands/motd.go:26-100`; `config.yaml:76` |
+| Each `SendTo` is one websocket frame; a message ends with a line break | `internal/connections` send queue; `userrecord.go:528` |
+| Narrator reads a live region whose atomic property is not exposed as atomic, that is, whole | [Mozilla bug 1887790](https://bugzilla.mozilla.org/show_bug.cgi?id=1887790) |
 
 ## Rules for every task
 
 - Edit files with the Edit and Write tools only; never write a repo file from the shell.
 - `git add` named paths only; never `--no-verify`; never stash. Commit messages through a quoted heredoc ending with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
-- No em or en dashes in anything written.
+- Doc comments on new or edited Go declarations. No em or en dashes in anything written.
 
 ---
 
@@ -33,7 +35,7 @@
 
 **Files:** `_datafiles/html/public/static/js/screenreader.js` (replace), `tools/jstest/screenreader.test.js` (replace).
 
-- [ ] **Step 1: Replace the test** with exactly this content, and run it: it fails (the old module has no `plainText` or log).
+- [ ] **Step 1: Replace the test** with exactly this content and run it: it fails (the old module has no `plainText`, and the page checks need Task 11).
 
 ```js
 // screenreader.test.js: the web client's screen reader switch (touch arc
@@ -60,7 +62,12 @@ function check(name, ok, detail) {
 // xterm's own screen reader mode is never used: its live region reread from
 // the top under Narrator and fell silent when cleared (section 11).
 check('the page never turns on xterm screenReaderMode', page.indexOf('screenReaderMode') < 0, '');
-check('the page has the log region', /id="sr-log"[^>]*role="log"/.test(page), '');
+check('the page has the log region, not atomic (Narrator reads a region it takes as atomic whole)',
+    /id="sr-log"[^>]*role="log"[^>]*aria-atomic="false"/.test(page), '');
+check('the page passes the log to the switch', page.indexOf("log: document.getElementById('sr-log')") >= 0, '');
+check('the page feeds server text to the log', page.indexOf('screenReader.write(shown);') >= 0, '');
+var moduleSrc = fs.readFileSync(path.join(pub, 'static', 'js', 'screenreader.js'), 'utf8');
+check('the module never reaches into xterm', !/setOption|_accessibilityManager|_clearLiveRegion|screenReaderMode/.test(moduleSrc.replace(/^\s*\/\/.*$/gm, '')), '');
 
 // ---- matchPhrase -----------------------------------------------------------
 
@@ -79,6 +86,13 @@ check('not a string', SR.matchPhrase(undefined, false) === null, '');
 check('colour codes go', SR.plainText('\x1b[1;32mA rat\x1b[0m arrives.\r\n') === 'A rat arrives.', JSON.stringify(SR.plainText('\x1b[1;32mA rat\x1b[0m arrives.\r\n')));
 check('the line erase before a message goes', SR.plainText('\x1b[1G\x1b[2KYou say hi.\r\n') === 'You say hi.', '');
 check('blank lines at the ends go, inner ones stay', SR.plainText('\r\n\r\nOne\r\n\r\nTwo  \r\n\r\n') === 'One\n\nTwo', JSON.stringify(SR.plainText('\r\n\r\nOne\r\n\r\nTwo  \r\n\r\n')));
+// The real prompt (config.yaml Prompt, userrecord.prompt.go renderVitalBar):
+// the bars and the sun or moon would be read out as symbol names.
+var prompt = '\x1b[1G\x1b[2K[☀ HP:███████░░░ SP:██████████ CP:▒▒▒▒▒▒▒▒▒▒]:';
+check('prompt bars and marks go', SR.plainText(prompt) === '[ HP: SP: CP: ]:', JSON.stringify(SR.plainText(prompt)));
+check('MOTD box sides go', SR.plainText(' ║ Welcome back.        ║\r\n') === 'Welcome back.', JSON.stringify(SR.plainText(' ║ Welcome back.        ║\r\n')));
+check('an OSC ended by ESC backslash goes, text after it stays', SR.plainText('\x1b]0;x\x1b\\A\r\nB\x07C\r\n') === 'A\nBC', JSON.stringify(SR.plainText('\x1b]0;x\x1b\\A\r\nB\x07C\r\n')));
+check('charset escapes and control characters go', SR.plainText('\x1b(BHi\x07 there\r\n') === 'Hi there', JSON.stringify(SR.plainText('\x1b(BHi\x07 there\r\n')));
 
 // ---- fakes -----------------------------------------------------------------
 
@@ -190,6 +204,24 @@ sr.write('[HP:20/20]: ');
 sr.write('The rat bites you.\r\n');
 sr.write('[HP:17/20]: ');
 check('an unchanged prompt is not read again', f.log.texts().join('|') === 'A rat arrives.|[HP:20/20]:|The rat squeaks.|The rat bites you.|[HP:17/20]:', f.log.texts().join('|'));
+// A health bar change is not news once the bars are gone: same words.
+sr.write(prompt);
+sr.write('You rest.\r\n');
+sr.write(prompt.replace('█░', '██'));
+check('a bar-only prompt change is not read again', f.log.texts().slice(-2).join('|') === '[ HP: SP: CP: ]:|You rest.', f.log.texts().slice(-2).join('|'));
+// After a reconnect the same login prompt is asked again and must be read.
+sr.write('Username (or "new"): ');
+sr.loggedOut();
+sr.write('Username (or "new"): ');
+check('after a reconnect the same prompt is read again', f.log.texts().slice(-2).join('|') === 'Username (or "new"):|Username (or "new"):', f.log.texts().slice(-2).join('|'));
+
+// No log element: nothing throws, for sighted players too.
+f = fakes('true');
+f.opts.log = undefined;
+sr = SR.create(f.opts);
+var threw = false;
+try { sr.load(); sr.write('Hi.\r\n'); sr.phrase('off'); } catch (e) { threw = e.message; }
+check('a missing log never throws', threw === false, threw);
 
 // ---- the phrase ------------------------------------------------------------
 
@@ -274,6 +306,7 @@ check('account on: mode on, remembered', sr.isOn() && f.store.screenReader === '
 sr.write('Hello.\r\n');
 sr.account(false);
 check('account off: mode off, remembered, log emptied', !sr.isOn() && f.store.screenReader === 'false' && f.log.childNodes.length === 0, '');
+check('account off: spoken by the status region', f.status === SR.SAID_OFF, f.status);
 
 // Logged out: the account is forgotten. inGame stays true here so only
 // loggedOut can explain the missing set command.
@@ -347,16 +380,27 @@ console.log('all passed');
         return null;
     }
 
+    // ESCAPES matches a terminal escape sequence: CSI (colour, cursor moves,
+    // the line erase before each message), OSC ended by BEL or ESC \, and
+    // the two-character forms (charset selection and the like).
+    var ESCAPES = /\x1b(\[[0-?]*[ -\/]*[@-~]|\][^\x07\x1b]*(\x07|\x1b\\)|[()%][0-9A-Za-z@]|.)/g;
+    // SYMBOLS are characters a screen reader reads out by name: box drawing
+    // and block elements (U+2500 to U+259F: the MOTD box, the health bars in
+    // the prompt) and the prompt's sun, moon and arrow marks.
+    var SYMBOLS = /[─-▟☀☾»]/g;
+
     // plainText is what a screen reader should hear of a piece of terminal
-    // text: no escape sequences (colour, cursor moves, the line erase before
-    // each message), no carriage returns, no trailing spaces on a line, and no
-    // blank lines at either end.
+    // text: no escape sequences, no control characters other than line
+    // breaks, no drawing symbols, single spaces, no spaces at either end of
+    // a line (indentation means nothing aloud), and no blank lines at either
+    // end.
     function plainText(s) {
         return String(s)
-            .replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '')
-            .replace(/\x1b\][^\x07]*\x07/g, '')
+            .replace(ESCAPES, '')
             .replace(/\r/g, '')
-            .split('\n').map(function (l) { return l.replace(/\s+$/, ''); }).join('\n')
+            .replace(/[\x00-\x09\x0B-\x1F\x7F]/g, '')
+            .replace(SYMBOLS, ' ')
+            .split('\n').map(function (l) { return l.replace(/ {2,}/g, ' ').trim(); }).join('\n')
             .replace(/^\n+|\n+$/g, '');
     }
 
@@ -380,8 +424,9 @@ console.log('all passed');
         }
 
         function clearLog() {
-            while (opts.log.firstChild) opts.log.removeChild(opts.log.firstChild);
             lastPrompt = null;
+            if (!opts.log) return;
+            while (opts.log.firstChild) opts.log.removeChild(opts.log.firstChild);
         }
 
         function show(value) {
@@ -403,9 +448,10 @@ console.log('all passed');
         // last prompt announced is skipped, so a prompt redrawn unchanged
         // after every message is not read again (a changed one is).
         function speak(raw) {
+            if (!opts.log) return;
             var text = plainText(raw);
             if (!text.trim()) return;
-            var unterminated = !/\n\s*$/.test(String(raw).replace(/\x1b\[[0-9;?]*[A-Za-z]/g, ''));
+            var unterminated = !/\n\s*$/.test(String(raw).replace(ESCAPES, ''));
             if (unterminated) {
                 if (text === lastPrompt) return;
                 lastPrompt = text;
@@ -474,13 +520,18 @@ console.log('all passed');
                 if (value !== on) {
                     show(value);
                     remember(value);
+                    // Turned off from elsewhere (set screenreader off, or another
+                    // device): the log was just emptied, so say it here.
+                    if (!value) say(SAID_OFF);
                 }
             },
 
-            // The connection closed: the next login names the account again.
+            // The connection closed: the next login names the account again,
+            // and the next prompt is news even if it reads the same.
             loggedOut: function () {
                 accountSetting = null;
                 lastPushed = null;
+                lastPrompt = null;
             }
         };
     }
@@ -497,27 +548,35 @@ console.log('all passed');
 }));
 ```
 
-- [ ] **Step 3: Run** `node --check _datafiles/html/public/static/js/screenreader.js`. The module checks of `node tools/jstest/screenreader.test.js` pass; its two page checks ("the page never turns on xterm screenReaderMode", "the page has the log region") fail until Task 11. Commit both files together with Task 11 (one commit), so no commit leaves the test red.
+- [ ] **Step 3:** `node --check` the module. Its own checks pass; the four page checks pass after Task 11. Commit Tasks 10 and 11 together (Task 11 Step 9), so no commit leaves the test red.
 
 ### Task 11: The page feeds the log
 
 **Files:** `_datafiles/html/public/webclient-pure.html`, `_datafiles/html/public/static/css/dashboard.css`, `tools/jstest/roomtitlebold.test.js`, `tools/jstest/webclient-connect.test.js`.
 
-- [ ] **Step 1: The log region.** After the `#sr-status` line (`:251`), add:
+- [ ] **Step 1: The log region.** Immediately before the main inline `<script>` that follows `#dashboard` (`:458`, after the `</div>` that closes `#dashboard`), add the region, so a phone screen reader swiping from the top meets the game before up to 100 log entries. `#sr-hint` stays the first element of `body`.
 
 ```html
     <!-- Game text for screen readers, one entry per piece, seen by no one
-         (static/js/screenreader.js; spec section 11). -->
-    <div id="sr-log" class="visually-hidden" role="log" aria-live="polite" aria-relevant="additions" aria-label="Game text"></div>
+         (static/js/screenreader.js; spec section 11). aria-atomic="false"
+         is explicit because Narrator reads a region it cannot see as
+         non-atomic as a whole. -->
+    <div id="sr-log" class="visually-hidden" role="log" aria-live="polite" aria-relevant="additions" aria-atomic="false" aria-label="Game text"></div>
 ```
 
-- [ ] **Step 2: The opts.** In the `window.ScreenReader.create({...})` call, remove the `term`, `termWrite` and `clearSpoken` entries (with `clearSpoken`'s comment), and add:
+- [ ] **Step 2: The opts.** In `window.ScreenReader.create({...})`, remove `term`, `termWrite` and `clearSpoken` (with its comment), and add:
 
 ```js
             log: document.getElementById('sr-log'),
             createEntry: function (text) {
+                // One child per line, so line breaks survive in the
+                // accessibility tree (.visually-hidden sets nowrap).
                 var entry = document.createElement('div');
-                entry.textContent = text;
+                text.split('\n').forEach(function (line) {
+                    var row = document.createElement('div');
+                    row.textContent = line;
+                    entry.appendChild(row);
+                });
                 return entry;
             },
 ```
@@ -541,21 +600,74 @@ with
                 screenReader.write(shown);
 ```
 
-- [ ] **Step 4: Remove the answer tracking calls**, each with its comment: `screenReader.inputDone(d.seq);` in the `Char.Input.Done` handler; `screenReader.inputSent(linesSent);` after the copyover token's `socket.send(t);` (rewrite that block's comment to drop the answer wording, keep `linesSent++;` directly followed by `socket.send(t);`); `screenReader.inputSent(linesSent);` in `SendData`; and the `keyTyped` line at the top of the command box keydown handler. `grep -n "inputSent\|inputDone\|keyTyped\|clearSpoken\|termWrite\|screenReaderMode\|_accessibilityManager" _datafiles/html/public/webclient-pure.html` must print nothing.
+- [ ] **Step 4: The page's own lines.** Immediately above `function markInGame() {` add (here, so `webclient-connect.test.js`'s extract includes it):
 
-- [ ] **Step 5: CSS.** Remove the `.xterm .xterm-accessibility { pointer-events: none; }` rule and its comment from `dashboard.css` (`:1968-1971`); xterm's overlay is never created now.
+```js
+        // gameLine writes one of the page's own lines into the game window
+        // and, while screen reader mode is on, into the screen reader log,
+        // so a blind player hears it (a dropped connection above all).
+        function gameLine(text) {
+            term.writeln(text);
+            screenReader.write(text + '\r\n');
+        }
+```
 
-- [ ] **Step 6: Tests.** In `roomtitlebold.test.js`, put the server-text regex back to `/term\.write\(window\.RoomTitleBold \? window\.RoomTitleBold\.apply\(shown\) : shown\);/`. In `webclient-connect.test.js`, drop `inputSent` from the `screenReader` stand-in and its comment, and make its `write` a no-op (`write: function () {}`), since the page now writes to `term` itself.
+Then change these `term.writeln(...)` (or `term.write('\r\n' + X + '\r\n')`) calls to `gameLine(...)` with the same text: every message in `socket.onclose` (connection died, closed cleanly, left the game, "Server is restarting…", "Could not reconnect…"), "Not connected to the server. Click Enter Game to play.", the automation login message, "Type your character name in the box below…", and the full-screen refusal. Leave the `term.writeln("")` blank lines (or fold them into the text), the reconnect heartbeat `term.write(".")`, and "Connected to the server!" (cleared at once) as they are. `writeLine` in the opts stays `term.write('\r\n' + text)` (the module speaks those lines itself).
 
-- [ ] **Step 7: Gates and commit.** Run `node tools/jstest/screenreader.test.js` (all passed), then every `tools/jstest/*.test.js` and `tools/webclient-tests/*.js`, and `node --check` on every non-vendored `.js`; no FAIL. Commit Tasks 10 and 11 as one commit: "feat(webclient): screen readers read a log of game text, not xterm's region (#733)".
+- [ ] **Step 5: Remove the answer tracking calls**, each with its comment: `screenReader.inputDone(d.seq);`; `screenReader.inputSent(linesSent);` after the copyover token's `socket.send(t);` (keep `linesSent++;` directly followed by `socket.send(t);`) and in `SendData`; and the `keyTyped` line at the top of the command box keydown handler. Rewrite the stale comments at `:246-249` ("speaks what xterm's own region cannot") and `:3114-3115` ("before the token below opens an answer") to match. `grep -n "inputSent\|inputDone\|keyTyped\|clearSpoken\|termWrite\|screenReaderMode\|_accessibilityManager" _datafiles/html/public/webclient-pure.html` prints nothing.
+
+- [ ] **Step 6: CSS.** Remove from `dashboard.css` the rule `.xterm .xterm-accessibility { pointer-events: none; }` and the comment above it (`:1969-1971`). Do not touch `.visually-hidden` (`:1959-1968`).
+
+- [ ] **Step 7: Tests.** `roomtitlebold.test.js`: put the server-text regex back to `/term\.write\(window\.RoomTitleBold \? window\.RoomTitleBold\.apply\(shown\) : shown\);/`. `webclient-connect.test.js`: the `screenReader` stand-in drops `inputSent` and records writes, `write: function (t) { global.__srWrites.push(t); }` with `global.__srWrites = []` set before each case that checks it. Add checks, following the file's own patterns for driving the socket: a plain server frame reaches `__srWrites`; a `!!MUSIC(` frame and a `RELOGTKN:` frame do not; closing the socket puts its message ("Connection died" or whichever the case triggers) into `__srWrites`.
+
+- [ ] **Step 8: Gates.** `node tools/jstest/screenreader.test.js` (all passed), every `tools/jstest/*.test.js` and `tools/webclient-tests/*.js`, and `node --check` on every non-vendored `.js`; no FAIL.
+
+- [ ] **Step 9: Commit** Tasks 10 and 11 together: "feat(webclient): screen readers read a log of game text, not xterm's region (#733)".
+
+### Task 11a: A plain MOTD for screen reader accounts (server)
+
+**Files:** `internal/usercommands/motd.go`, a test beside the existing MOTD tests (`grep -ln "motdBox" internal/usercommands/*_test.go`).
+
+- [ ] **Step 1: Test first.** Add `motdFor(text string, lw int, screenReader bool) string` tests: with `screenReader` true at 80 and at 42, the output contains the MOTD text, the words `Message of the day`, and none of `║ ╠ ╣ ═ ╔ ╗ ╚ ╝` and not `M E S S A G E`; with false it equals `motdBox(text, lw)`. Run: fails (undefined).
+
+- [ ] **Step 2: Implement.**
+
+```go
+// motdFor is the MOTD as one reader gets it: the box (motdBox) for most,
+// and plain words for a screen reader account, which would otherwise hear
+// the box sides by name and the spaced title letter by letter (spec 2026-11-17,
+// section 11).
+func motdFor(text string, lw int, screenReader bool) string {
+	if !screenReader {
+		return motdBox(text, lw)
+	}
+	return "Message of the day.\n" + messaging.WrapAnsi(text, lw) + "\n"
+}
+```
+
+and in `Motd`, send `motdFor(text, user.WrapWidth(), user.ScreenReader)` instead of `motdBox(...)`. Run the test: passes. Run `go test ./internal/usercommands/ ./internal/guards/ -count=1`. Commit "feat(motd): a plain MOTD for screen reader accounts (#733)".
 
 ### Task 12: Docs
 
-- [ ] `internal/` and `modules/` docs need no change (the server is unchanged). Update `docs/README.md`'s `screenreader.js` row: "the web client's screen reader switch: the spoken opt-in phrase, device memory, the account's setting, and a hidden log of game text that screen readers read (spec section 11)". In `docs/PATCH_NOTES.md`'s screen reader entry, nothing names xterm; leave it. Commit "docs: screen reader log (#733)".
+- [ ] **Spec** (`docs/superpowers/specs/2026-11-17-screen-reader-task0-design.md`): mark as superseded by section 11, keeping their history, every place that still states xterm's mode as current: section 2 (`term.setOption('screenReaderMode', true)`), sections 3 and 5 ("xterm's mode"), ruling 1 ("xterm's screen reader mode stays off unless…": now "nothing is added to the log unless…"), ruling 5's reason (the 20-line limit no longer applies; light combat text stays because long bursts are slow to hear, and the owner should be told the stated reason changed), the general decisions on xterm's mode, the 2 second reset and the private xterm calls, and the Testing section's `.xterm-accessibility` line. In section 11 add: "Read in full" holds for the log; a screen reader may still cut a long entry short when the player types (NVDA interrupts speech on typed characters and Enter by default), and the entries stay in the log to read back line by line. Also add to section 11's decisions: the prompt's bars are dropped as symbols, so a bar-only change in health is not announced (vitals are #733's open question).
+- [ ] **docs/README.md**: the `tools/jstest/` row's screen reader note (`:106`, "resets of xterm's spoken region") and the spec row (`:319`, "turns on xterm's `screenReaderMode` at runtime") describe the log instead; the `screenreader.js` row reads "the web client's screen reader switch: the spoken opt-in phrase, device memory, the account's setting, and a hidden log of game text that screen readers read (spec section 11)".
+- [ ] `internal/usercommands/context.md`: one line for `motdFor`.
+- [ ] Commit "docs: screen reader log (#733)".
 
 ### Task 13: Checks and the owner's retest (controller)
 
 - [ ] Restart the test server on the new head (kill only its own PID).
-- [ ] Rewrite the headless check's speech assertions to read `#sr-log` entries instead of xterm's region: the overlay `.xterm-accessibility` never exists; after `screen reader on` the log holds "Screen reader mode is on." and the waiting prompt; typing at a prompt removes no entry; the login welcome is in the log with no "Too much output"; `help set` is one entry ending with its last line; a returning visit's log holds the words-only splash and the name prompt; `set screenreader off` empties the log.
-- [ ] Full Go suite, lint, JS gate.
-- [ ] Owner retests with Narrator, the same steps as before.
+- [ ] Headless check, rewritten to read `#sr-log` (entries' `textContent`) and `#sr-status`:
+  - sighted: with the mode off, `#sr-log` has no children after login, `look` and `help set`; `.xterm-accessibility` never exists;
+  - `#sr-hint` is the first element of `body`; `page.getByRole('log', { name: 'Game text' })` is found (in the accessibility tree);
+  - after `screen reader on`: entries "Screen reader mode is on." and the waiting prompt;
+  - typing at a prompt removes no entry (regression check);
+  - the creation burst after "y" is in the log, ending with the prompt;
+  - `help set` is one entry whose last line names `help submission`;
+  - after `look`, an unchanged prompt adds no entry; no entry contains `\x1b`, `<ansi`, a box character or a block character;
+  - the MOTD entry reads "Message of the day." with no box characters;
+  - a returning visit: the words-only splash and the name prompt are entries;
+  - stopping the server's socket (close the page's socket from the test) adds the onclose message as an entry;
+  - `screen reader off`: the log is empty and `#sr-status` says "Screen reader mode is off.".
+- [ ] Full Go suite, lint, JS gate, telnet check (unchanged server paths plus the MOTD).
+- [ ] Owner retests with Narrator. Pass criteria: no rereading from the top after a pause in typing; game text heard after typing; two messages a few seconds apart are each heard once (not the whole log again); `help set` heard to its end when not typing; a dropped connection heard; the MOTD heard as words.
