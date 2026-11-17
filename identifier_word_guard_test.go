@@ -197,12 +197,46 @@ func jsHasTemplateActions(src []byte) bool {
 	return templateActionPattern.Match(src)
 }
 
+// templateMatchSaysBuff reports whether a template field match is a real buff
+// spelling. It strips identifierGuardBufferSubstring runs from the match and
+// reports whether identifierGuardWordPattern still matches, the same two-step
+// rule TestNoIdentifierSaysBuff uses, so ".buffer" is exempt and ".buffErr"
+// is not.
+func templateMatchSaysBuff(match string) bool {
+	return identifierGuardWordPattern.MatchString(identifierGuardBufferSubstring.ReplaceAllString(match, ""))
+}
+
+// TestTemplateMatchSaysBuff pins the buffer exemption for template field
+// matches: bytes and terminal buffers pass, real buff spellings do not.
+func TestTemplateMatchSaysBuff(t *testing.T) {
+	cases := []struct {
+		match string
+		want  bool
+	}{
+		{".buffer", false},
+		{".Buffer", false},
+		{".bufferSize", false},
+		{".BUFFER", false},
+		{".buff", true},
+		{".buffs", true},
+		{".BuffId", true},
+		{".permabuff", true},
+		{".buffErr", true},
+	}
+	for _, c := range cases {
+		if got := templateMatchSaysBuff(c.match); got != c.want {
+			t.Errorf("templateMatchSaysBuff(%q) = %v, want %v", c.match, got, c.want)
+		}
+	}
+}
+
 // TestNoTemplateReadsABuffField scans every shipped template and admin HTML
 // page for a dotted reference to a buff-named Go field or map key. A hit
 // inside a `{{ ... }}` template action is a live reference the template
 // engine resolves at render time with no compile-time check, so it always
 // fails; a hit outside one (JS, HTML attribute text) is allowed only when
-// templateBuffFieldAllowlist records it as verified wire.
+// templateBuffFieldAllowlist records it as verified wire. Buffer (bytes,
+// terminal buffers) is exempt by the same rule as identifiers.
 func TestNoTemplateReadsABuffField(t *testing.T) {
 	_, here, _, ok := runtime.Caller(0)
 	if !ok {
@@ -255,6 +289,9 @@ func TestNoTemplateReadsABuffField(t *testing.T) {
 
 		for _, loc := range templateBuffFieldPattern.FindAllIndex(src, -1) {
 			match := string(src[loc[0]:loc[1]])
+			if !templateMatchSaysBuff(match) {
+				continue
+			}
 			line := 1 + strings.Count(string(src[:loc[0]]), "\n")
 			if inAction(loc[0]) {
 				offenses = append(offenses, offense{rel, line, match})
