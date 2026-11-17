@@ -25,6 +25,10 @@ check('the page never turns on xterm screenReaderMode', page.indexOf('screenRead
 check('the page has the log region, not atomic (Narrator reads a region it takes as atomic whole)',
     /id="sr-log"[^>]*role="log"[^>]*aria-atomic="false"/.test(page), '');
 check('the page passes the log to the switch', page.indexOf("log: document.getElementById('sr-log')") >= 0, '');
+check('the page has the assertive answers region, not atomic',
+    /id="sr-answers"[^>]*role="log"[^>]*aria-live="assertive"[^>]*aria-atomic="false"/.test(page), '');
+check('the page passes the answers region to the switch', page.indexOf("answers: document.getElementById('sr-answers')") >= 0, '');
+check('the Enter key sends through playerSend', /var sent = playerSend\(line\);/.test(page), '');
 check('the page feeds server text to the log', page.indexOf('screenReader.write(shown);') >= 0, '');
 var moduleSrc = fs.readFileSync(path.join(pub, 'static', 'js', 'screenreader.js'), 'utf8');
 check('the module never reaches into xterm', !/setOption|_accessibilityManager|_clearLiveRegion|screenReaderMode/.test(moduleSrc.replace(/^\s*\/\/.*$/gm, '')), '');
@@ -87,7 +91,7 @@ function fakes(saved) {
         clock: c,
         label: null, hint: null, status: '', lines: [], reports: [], setCommands: 0, setValues: [],
         waiting: ['Username (or "new"): '], setOk: true,
-        store: saved === undefined ? {} : { screenReader: saved }, inGame: false, log: fakeLog()
+        store: saved === undefined ? {} : { screenReader: saved }, inGame: false, log: fakeLog(), answers: fakeLog()
     };
     f.opts = {
         storage: {
@@ -98,6 +102,7 @@ function fakes(saved) {
         hint: {},
         status: {},
         log: f.log,
+        answers: f.answers,
         createEntry: function (text) { return { text: text }; },
         report: function (on) { f.reports.push(on); return true; },
         setCommand: function (value) { f.setCommands++; f.setValues.push(value); return f.setOk; },
@@ -236,6 +241,35 @@ sr.load();
 sr.write('Username (or "new"): ');
 sr.write('Password: ');
 check('login prompts are not held', f.log.texts().join('|') === 'Username (or "new"):|Password:', f.log.texts().join('|'));
+
+// The answer to a line the player sent interrupts: it goes to the assertive
+// region until the prompt; anything else stays in the polite log.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.write('A rat squeaks.\r\n');
+check('without a sent line, text queues in the log', f.log.texts().join('|') === 'A rat squeaks.' && f.answers.childNodes.length === 0, f.answers.texts().join('|'));
+sr.lineSent();
+sr.write('Trail North\r\nA narrow trail climbs between red rocks.\r\n');
+sr.write('You see a rat here.\r\n');
+check('the answer goes to the interrupting region', f.answers.texts().join('|') === 'Trail North\nA narrow trail climbs between red rocks.|You see a rat here.', f.answers.texts().join('|'));
+sr.write('[HP:unhurt]: ');
+sr.write('The rat bites you.\r\n');
+check('the prompt ends the answer; later text queues again', f.log.texts().slice(-1)[0] === 'The rat bites you.' && f.answers.childNodes.length === 2, f.log.texts().join('|'));
+sr.lineSent();
+sr.loggedOut();
+sr.write('Connected.\r\n');
+check('logging out ends an answer', f.log.texts().slice(-1)[0] === 'Connected.', f.log.texts().join('|'));
+sr.lineSent();
+sr.write('Your answer.\r\n');
+sr.phrase('off');
+check('off empties both regions', f.log.childNodes.length === 0 && f.answers.childNodes.length === 0, '');
+// Mode off: a sent line does not open an answer for later.
+sr.lineSent();
+sr.phrase('on');
+sr.write('Plain text.\r\n');
+check('a line sent while off opens no answer', f.log.texts().slice(-1)[0] === 'Plain text.' && f.answers.childNodes.length === 0, f.answers.texts().join('|'));
 
 // No log element: nothing throws, for sighted players too.
 f = fakes('true');

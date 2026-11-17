@@ -18,6 +18,13 @@
 // not used. Sighted players never see any of it: with the mode off nothing is
 // added.
 //
+// The answer to a line the player sends (from lineSent until the game
+// redraws the prompt) goes into a second, assertive log instead, so it cuts
+// off whatever the screen reader is still reading: each command drops the
+// backlog, as desktop MUD clients do for blind players (owner ruling
+// 2026-11-17, after NVDA kept up in order but fell rooms behind). Everything
+// else queues politely in the first log.
+//
 // tools/jstest/screenreader.test.js is the regression guard.
 
 (function (root, factory) {
@@ -81,8 +88,9 @@
 
     // opts: storage (localStorage, any call may throw); input (the command
     // box); hint (the hidden first paragraph); status (a visually hidden
-    // role="status" element, for "off"); log (the visually hidden role="log"
-    // element); createEntry(text) (a new element holding text, for the log);
+    // role="status" element, for "off"); log (the visually hidden polite
+    // role="log" element); answers (the visually hidden assertive role="log"
+    // element, for the answer to a line the player sent); createEntry(text) (a new element holding text, for the log);
     // report(on) (sends Client.Display); setCommand(on) (sends "set
     // screenreader on" or "off", a state and never a toggle, false when it
     // could not); writeLine(text) (writes a local line into the game window);
@@ -99,6 +107,7 @@
         var lastPromptAt = null;   // when it was announced
         var pendingPrompt = null;  // a changed prompt held until a round has passed
         var promptTimer = null;
+        var answering = false;     // the player sent a line; its answer has not ended
 
         function remember(value) {
             try { opts.storage.setItem(STORAGE_KEY, JSON.stringify(value)); } catch (e) { /* storage blocked: this visit only */ }
@@ -112,15 +121,24 @@
             if (promptTimer) { clearT(promptTimer); promptTimer = null; }
         }
 
-        function clearLog() {
-            forgetPrompt();
-            if (!opts.log) return;
-            while (opts.log.firstChild) opts.log.removeChild(opts.log.firstChild);
+        function empty(region) {
+            if (!region) return;
+            while (region.firstChild) region.removeChild(region.firstChild);
         }
 
-        function append(text) {
-            opts.log.appendChild(opts.createEntry(text));
-            while (opts.log.childNodes.length > MAX_ENTRIES) opts.log.removeChild(opts.log.firstChild);
+        function clearLog() {
+            forgetPrompt();
+            answering = false;
+            empty(opts.log);
+            empty(opts.answers);
+        }
+
+        // append adds an entry to region (the polite log unless given),
+        // keeping at most MAX_ENTRIES.
+        function append(text, region) {
+            region = region || opts.log;
+            region.appendChild(opts.createEntry(text));
+            while (region.childNodes.length > MAX_ENTRIES) region.removeChild(region.firstChild);
         }
 
         function announcePrompt(text) {
@@ -164,7 +182,13 @@
             var text = plainText(raw);
             if (!text.trim()) return;
             var unterminated = !/\n\s*$/.test(String(raw).replace(ESCAPES, ''));
-            if (!unterminated) { append(text); return; }
+            if (!unterminated) {
+                // The answer to the player's line interrupts; anything else queues.
+                append(text, answering && opts.answers ? opts.answers : opts.log);
+                return;
+            }
+            // A prompt ends the answer to the line the player sent.
+            answering = false;
             if (text === lastPrompt) { pendingPrompt = null; return; }
             var since = lastPromptAt === null ? Infinity : now() - lastPromptAt;
             if (opts.inGame() && since < PROMPT_GAP_MS) {
@@ -198,6 +222,13 @@
             // to the log.
             write: function (text) {
                 if (on) speak(text);
+            },
+
+            // The player sent a line (typed, the numpad, a macro key, a chip,
+            // an item menu; never automation): its answer, up to the next
+            // prompt, interrupts whatever is still being read.
+            lineSent: function () {
+                if (on) answering = true;
             },
 
             // The player typed the phrase: which is 'on' or 'off'.
@@ -246,6 +277,7 @@
             loggedOut: function () {
                 accountSetting = null;
                 lastPushed = null;
+                answering = false;
                 forgetPrompt();
             }
         };

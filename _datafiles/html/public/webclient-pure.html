@@ -461,6 +461,10 @@
          is explicit because Narrator reads a region it cannot see as
          non-atomic as a whole. -->
     <div id="sr-log" class="visually-hidden" role="log" aria-live="polite" aria-relevant="additions" aria-atomic="false" aria-label="Game text"></div>
+    <!-- The answer to a line the player sent, read at once, cutting off
+         whatever is still being read (static/js/screenreader.js; spec
+         section 12). -->
+    <div id="sr-answers" class="visually-hidden" role="log" aria-live="assertive" aria-relevant="additions" aria-atomic="false" aria-label="Answers"></div>
 
     <script>
 
@@ -565,6 +569,7 @@
             hint: document.getElementById('sr-hint'),
             status: document.getElementById('sr-status'),
             log: document.getElementById('sr-log'),
+            answers: document.getElementById('sr-answers'),
             createEntry: function (text) {
                 // One child per line, so line breaks survive in the
                 // accessibility tree (.visually-hidden sets nowrap).
@@ -2308,9 +2313,9 @@
             if (type === "macro") {
                 // Strip leading '=' if present, then send '=N'
                 var num = key.replace(/^=/, "");
-                SendData("=" + num);
+                playerSend("=" + num);
             } else if (type === "alias") {
-                SendData(key);
+                playerSend(key);
             }
         });
 
@@ -2897,6 +2902,16 @@
             screenReader.write(text + '\r\n');
         }
 
+        // playerSend sends a line the player asked for (typed, the numpad, a
+        // macro key, a chip, an item menu) and marks its answer for the
+        // screen reader, so it interrupts what is still being read (spec
+        // section 12). Automation and the page's own commands use SendData.
+        function playerSend(line) {
+            var sent = SendData(line);
+            if (sent) screenReader.lineSent();
+            return sent;
+        }
+
         // Called by the Char GMCP handler: the first Char push after connecting
         // means a character is now in the world, so the bar offers Leave Game.
         function markInGame() {
@@ -3397,7 +3412,7 @@
             // Macro support: F-keys
             if (event.key.substring(0, 1) === "F" && event.key.length === 2) {
                 let macroNum = event.key.substring(1);
-                SendData("=" + macroNum);
+                playerSend("=" + macroNum);
                 if (event.preventDefault) event.preventDefault();
                 return false;
             }
@@ -3416,7 +3431,7 @@
 
             // If input is empty, check for numeric keypad / arrow key shortcuts
             if ( textInput.value.length === 0 && codeShortcuts[event.code] ) {
-                SendData(codeShortcuts[event.code]);
+                playerSend(codeShortcuts[event.code]);
                 if (event.preventDefault) event.preventDefault();
                 return false;
             }
@@ -3448,7 +3463,7 @@
                 }
 
                 var line = event.target.value;
-                var sent = SendData(line);
+                var sent = playerSend(line);
                 if ( sent ) {
                     event.target.value = '';
                 } else {
@@ -4230,7 +4245,7 @@
                 }
 
                 function send(verb) {
-                    SendData(verb + " @" + handle);
+                    playerSend(verb + " @" + handle);
                 }
 
                 // Look (always — default/highlighted)
@@ -4276,8 +4291,8 @@
                 menu.appendChild(sepDrop);
                 if (collection === "worn") {
                     menu.appendChild(makeRow("Drop", false, function() {
-                        SendData("remove @" + handle);
-                        SendData("drop @" + handle);
+                        playerSend("remove @" + handle);
+                        playerSend("drop @" + handle);
                     }));
                 } else {
                     menu.appendChild(makeRow("Drop", false, function() { send("drop"); }));

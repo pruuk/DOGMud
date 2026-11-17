@@ -391,7 +391,7 @@ var fs = require('fs');
 var page = fs.readFileSync(path.join(
     __dirname, '..', '..', '_datafiles', 'html', 'public', 'webclient-pure.html'
 ), 'utf8');
-var sendAt = page.indexOf('var sent = SendData(line);');
+var sendAt = page.indexOf('var sent = playerSend(line);');
 var decideAt = page.indexOf('window.HotInput.keyboardAfterSend({');
 check('the command box asks HotInput after sending', sendAt >= 0 && decideAt > sendAt, true);
 check('the decision is fed the send result and the typed line',
