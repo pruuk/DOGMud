@@ -328,6 +328,13 @@ already known, so no presence leaks.
   `StealOptions.HouseholdItem` (the steal checks; see
   `internal/actions/context.md`).
 
+#### **Screen reader and newcomer combat text**
+
+`cmdSetScreenReader` (`set.go`) takes `on`, `off` or nothing (toggle); turning
+on goes through `users.TurnOnScreenReader`. `newcomerCombatVerbosity` in
+`start.go` picks the combat text level the newcomer route starts at: medium,
+except light for a screen reader user.
+
 ### Special Features
 
 #### **Command Suggestions**

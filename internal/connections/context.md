@@ -111,6 +111,11 @@ type ClientSettings struct {
     Display           DisplaySettings // Screen dimensions and display options
     MSPEnabled        bool           // MUD Sound Protocol support
     SendTelnetGoAhead bool           // Telnet IAC GA after prompts
+    AsciiMode         bool           // Convert UTF-8 decorative chars to ASCII equivalents
+    ScreenReader      bool           // The client said its player uses a screen reader
+    MTTSReported      bool           // A telnet client answered MTTS
+    TermTypeReplies   int            // Count of terminal type replies so far
+    TermTypeLast      string         // Latest terminal type reply; a repeat ends the MTTS cycle
 }
 
 type DisplaySettings struct {

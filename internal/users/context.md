@@ -628,6 +628,18 @@ their errors out to it for a web client, and sends telnet's unchanged.
 may not have a user (the goodbye as it leaves): the logged-in user's
 `WrapWidth` when there is one, else `LoginWrapWidth`.
 
+### Screen reader setting (`screenreader.go`)
+
+- `TurnOnScreenReader` is the only way the setting turns on. It also saves
+  light combat text and reports whether combat text changed.
+- `TurnOnReportedScreenReader` is its form for a connection's report. It
+  returns the lines to send: `ScreenReaderOnNotices`, then
+  `ScreenReaderCombatLines` when combat text changed. The caller must own the
+  record (before login publishes it, or on MainWorker).
+- `StoreAddressScreenReader` records the websocket address's `sr=1` on the
+  connection; `StoreReportedScreenReader` writes a web client's report
+  (shared with `Client.Display` in `modules/gmcp`).
+
 ### Game menu session (#375 phase 0)
 
 A player has at most one open game menu (`activeMenu`, with its

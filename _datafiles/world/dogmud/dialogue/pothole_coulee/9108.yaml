@@ -71,9 +71,10 @@ opener:
     questExcluded:
     - 32-verbosity
     - 32-end
-    text: Last thing. Choose how much of a fight you see. Start on full. Change it
+    text: Last thing. Choose how much of a fight you see. Full is every blow, light
+      is one line a round. If a screen reader reads to you, take light. Change it
       when you know what you are changing.
-    hints: Type set combatverbosity full.
+    hints: 'Type set combatverbosity and a level: full, medium or light.'
   - questRequired:
     - 32-verbosity
     questExcluded:
@@ -225,8 +226,9 @@ topics:
 - key: progress_special
   kind: info
   label: I've used my feet. Is there more?
-  text: Almost. Choose how much of a fight you see. Full shows everything. Start there.
-  hints: Type set combatverbosity full.
+  text: Almost. Choose how much of a fight you see. Full shows everything. Start
+    there, or on light if a screen reader reads to you.
+  hints: 'Type set combatverbosity and a level: full, medium or light.'
   questRequired:
   - 32-special
   questExcluded:
@@ -242,8 +244,9 @@ topics:
     up before the fight starts. Combatverbosity controls how much of a fight
     you read. Full gives you every detail of every exchange. Medium shows only the
     hits, the working soldier''s setting. Light gives a short summary of each round,
-    for veterans who already know the shape of a fight. Start on full. Change it when
-    you know what you are changing: type set combatverbosity followed by your choice.
+    for veterans who already know the shape of a fight. Start on full, or on light
+    if a screen reader reads to you. Change it when you know what you are changing:
+    type set combatverbosity followed by your choice.
     Special moves are kick and trip.
     Kick hits harder when they are standing, and trip puts them on the ground so your
     next swing lands harder. Both cost stamina. Use them when the moment calls for

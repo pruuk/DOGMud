@@ -108,6 +108,7 @@ events.RegisterListener(events.PlayerDespawn{}, HandleLeave, events.Last) // Pla
 events.RegisterListener(events.PlayerDrop{}, HandlePlayerDrop)    // Unexpected disconnection
 events.RegisterListener(events.CharacterCreated{}, BroadcastNewChar) // New character announcements
 events.RegisterListener(events.CharacterChanged{}, BroadcastNewChar) // Character update announcements
+events.RegisterListener(events.ScreenReaderReported{}, TurnOnReportedScreenReader) // Reconnect reported a screen reader (ScreenReaderReported_TurnOn.go)
 ```
 
 ### Game Mechanics Handlers

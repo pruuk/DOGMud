@@ -83,7 +83,8 @@ steps:
       one line a round.
     hint: >-
       Combat verbosity sets how much fight text you see. Type set
-      combatverbosity full. For more, type help combatverbosity.
+      combatverbosity and a level: full, medium or light. With a screen
+      reader, light keeps up best. For more, type help combatverbosity.
   - id: verbosity
     destination:
       mob: 9108
@@ -173,7 +174,8 @@ triggers:
     actions:
       - grant: "32-special"
       - actor: "That is a special move. Now choose how much combat detail
-          you see: type set combatverbosity full."
+          you see: type set combatverbosity and a level, full, medium or
+          light."
 
   - event: command
     command: trip
@@ -183,7 +185,8 @@ triggers:
     actions:
       - grant: "32-special"
       - actor: "That is a special move. Now choose how much combat detail
-          you see: type set combatverbosity full."
+          you see: type set combatverbosity and a level, full, medium or
+          light."
 
   # verbosity: set combatverbosity fires a logical "combatverbosity" command
   # event (set.go).

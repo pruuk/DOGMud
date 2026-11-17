@@ -22,6 +22,10 @@ fragments, since both ride on the same telnet subnegotiation framing.
   scroll wheel, and screen-size reports.
 - **msp.go** — MSP (MUD Sound Protocol) command bytes and `IsMSPCommand`.
 - **mssp.go** — MSSP field encoding for MUD-listing crawlers.
+- **mtts.go**: terminal type subnegotiation and MTTS: `ParseMTTS` (reads
+  `MTTS <bits>`), `TelnetWillTermType`, `TelnetWontTermType`,
+  `TelnetTermTypeSend`, `TelnetTermTypeIs`, `TELNET_TTYPE_IS`,
+  `TELNET_TTYPE_SEND` and `MTTSScreenReader` (bit 64).
 
 ## Core Type
 
