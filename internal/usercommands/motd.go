@@ -31,9 +31,20 @@ func Motd(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		text = m
 	}
 
-	user.SendText(messaging.CategoryBroadcast, motdBox(text, user.WrapWidth()))
+	user.SendText(messaging.CategoryBroadcast, motdFor(text, user.WrapWidth(), user.ScreenReader))
 
 	return true, nil
+}
+
+// motdFor is the MOTD as one reader gets it: the box (motdBox) for most,
+// and plain words for a screen reader account, which would otherwise hear
+// the box sides by name and the spaced title letter by letter (spec 2026-11-17,
+// section 11).
+func motdFor(text string, lw int, screenReader bool) string {
+	if !screenReader {
+		return motdBox(text, lw)
+	}
+	return "Message of the day.\n" + messaging.WrapAnsi(text, lw) + "\n"
 }
 
 // motdBox draws the MOTD text in a double-line box exactly lw columns wide,
