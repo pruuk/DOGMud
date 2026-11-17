@@ -1966,9 +1966,6 @@ html.layout-column.keyboard-open #dash-drawer {
   white-space: nowrap;
   border: 0;
 }
-/* xterm's screen reader overlay (static/js/screenreader.js) must not take
-   the mouse: selecting game text works as before while the mode is on. */
-.xterm .xterm-accessibility { pointer-events: none; }
 /* Connected: a small lit lamp in the Pachinko reference's bright green
    #70e010 (Malia 2026-11-02) with a dark umber rim, since the green alone is
    1.2 on the brass; the rim is 6.09 on the brass and 8.11 on the green. */

@@ -31,7 +31,7 @@ var game = fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8');
 check('the game page loads it',
     game.indexOf('/static/js/roomtitlebold.js?v={{ .ASSET_VERSION }}"') !== -1, true);
 check('server text goes through it on the way to the terminal',
-    /screenReader\.write\(window\.RoomTitleBold \? window\.RoomTitleBold\.apply\(shown\) : shown\);/.test(game), true);
+    /term\.write\(window\.RoomTitleBold \? window\.RoomTitleBold\.apply\(shown\) : shown\);/.test(game), true);
 
 if (failures) { console.log(failures + ' failed'); process.exit(1); }
 console.log('all passed');

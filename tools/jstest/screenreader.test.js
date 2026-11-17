@@ -1,5 +1,6 @@
 // screenreader.test.js: the web client's screen reader switch (touch arc
-// Task 0, docs/superpowers/specs/2026-11-17-screen-reader-task0-design.md).
+// Task 0, docs/superpowers/specs/2026-11-17-screen-reader-task0-design.md,
+// section 11).
 //
 // Run:  node tools/jstest/screenreader.test.js
 'use strict';
@@ -8,6 +9,7 @@ var fs = require('fs');
 var path = require('path');
 var pub = path.join(__dirname, '..', '..', '_datafiles', 'html', 'public');
 var SR = require(path.join(pub, 'static', 'js', 'screenreader.js'));
+var page = fs.readFileSync(path.join(pub, 'webclient-pure.html'), 'utf8');
 
 var failures = 0;
 function check(name, ok, detail) {
@@ -16,16 +18,16 @@ function check(name, ok, detail) {
     console.log('FAIL ' + name + '\n  ' + detail);
 }
 
-// ---- the xterm internals the page relies on ---------------------------------
-// The page resets xterm's spoken region through private names. An xterm
-// upgrade that renames them must fail here, not go silent for blind players.
-var xterm = fs.readFileSync(path.join(pub, 'static', 'js', 'xterm.4.19.0.js'), 'utf8');
-check('xterm has _accessibilityManager', xterm.indexOf('this._accessibilityManager=new') >= 0, '');
-check('xterm has _clearLiveRegion', xterm.indexOf('_clearLiveRegion=function') >= 0, '');
-// On a Mac (iPadOS Safari reports MacIntel too) a reset takes the region out
-// of the page; the page puts it back through these names.
-check('xterm has _liveRegion and _accessibilityTreeRoot', xterm.indexOf('this._liveRegion') >= 0 && xterm.indexOf('_accessibilityTreeRoot.appendChild(') >= 0, '');
-check('xterm announces up to 20 lines, then goes silent on the 21st (CHUNK_LINES must stay under 20)', xterm.indexOf('21===this._liveRegionLineCount') >= 0 && SR.CHUNK_LINES < 21, '');
+// ---- the page --------------------------------------------------------------
+// xterm's own screen reader mode is never used: its live region reread from
+// the top under Narrator and fell silent when cleared (section 11).
+check('the page never turns on xterm screenReaderMode', page.indexOf('screenReaderMode') < 0, '');
+check('the page has the log region, not atomic (Narrator reads a region it takes as atomic whole)',
+    /id="sr-log"[^>]*role="log"[^>]*aria-atomic="false"/.test(page), '');
+check('the page passes the log to the switch', page.indexOf("log: document.getElementById('sr-log')") >= 0, '');
+check('the page feeds server text to the log', page.indexOf('screenReader.write(shown);') >= 0, '');
+var moduleSrc = fs.readFileSync(path.join(pub, 'static', 'js', 'screenreader.js'), 'utf8');
+check('the module never reaches into xterm', !/setOption|_accessibilityManager|_clearLiveRegion|screenReaderMode/.test(moduleSrc.replace(/^\s*\/\/.*$/gm, '')), '');
 
 // ---- matchPhrase -----------------------------------------------------------
 
@@ -39,19 +41,42 @@ check('other text', SR.matchPhrase('screen reader', false) === null, '');
 check('a command', SR.matchPhrase('look', false) === null, '');
 check('not a string', SR.matchPhrase(undefined, false) === null, '');
 
+// ---- plainText -------------------------------------------------------------
+
+check('colour codes go', SR.plainText('\x1b[1;32mA rat\x1b[0m arrives.\r\n') === 'A rat arrives.', JSON.stringify(SR.plainText('\x1b[1;32mA rat\x1b[0m arrives.\r\n')));
+check('the line erase before a message goes', SR.plainText('\x1b[1G\x1b[2KYou say hi.\r\n') === 'You say hi.', '');
+check('blank lines at the ends go, inner ones stay', SR.plainText('\r\n\r\nOne\r\n\r\nTwo  \r\n\r\n') === 'One\n\nTwo', JSON.stringify(SR.plainText('\r\n\r\nOne\r\n\r\nTwo  \r\n\r\n')));
+// The real prompt (config.yaml Prompt, userrecord.prompt.go renderVitalBar):
+// the bars and the sun or moon would be read out as symbol names.
+var prompt = '\x1b[1G\x1b[2K[☀ HP:███████░░░ SP:██████████ CP:▒▒▒▒▒▒▒▒▒▒]:';
+check('prompt bars and marks go', SR.plainText(prompt) === '[ HP: SP: CP: ]:', JSON.stringify(SR.plainText(prompt)));
+check('MOTD box sides go', SR.plainText(' ║ Welcome back.        ║\r\n') === 'Welcome back.', JSON.stringify(SR.plainText(' ║ Welcome back.        ║\r\n')));
+check('an OSC ended by ESC backslash goes, text after it stays', SR.plainText('\x1b]0;x\x1b\\A\r\nB\x07C\r\n') === 'A\nBC', JSON.stringify(SR.plainText('\x1b]0;x\x1b\\A\r\nB\x07C\r\n')));
+check('charset escapes and control characters go', SR.plainText('\x1b(BHi\x07 there\r\n') === 'Hi there', JSON.stringify(SR.plainText('\x1b(BHi\x07 there\r\n')));
+
 // ---- fakes -----------------------------------------------------------------
+
+function fakeLog() {
+    var log = { childNodes: [] };
+    Object.defineProperty(log, 'firstChild', { get: function () { return log.childNodes[0] || null; } });
+    log.appendChild = function (n) { log.childNodes.push(n); return n; };
+    log.removeChild = function (n) { var i = log.childNodes.indexOf(n); if (i >= 0) log.childNodes.splice(i, 1); return n; };
+    log.texts = function () { return log.childNodes.map(function (n) { return n.text; }); };
+    return log;
+}
 
 // A fake clock: timers run only when the test advances time.
 function clock() {
-    var now = 0, timers = [];
+    var t = 0, timers = [];
     return {
-        setTimeout: function (f, ms) { var t = { at: now + ms, f: f }; timers.push(t); return t; },
-        clearTimeout: function (t) { timers = timers.filter(function (x) { return x !== t; }); },
+        now: function () { return t; },
+        setTimeout: function (fn, ms) { var x = { at: t + ms, fn: fn }; timers.push(x); return x; },
+        clearTimeout: function (x) { timers = timers.filter(function (y) { return y !== x; }); },
         advance: function (ms) {
-            now += ms;
-            var due = timers.filter(function (t) { return t.at <= now; });
-            timers = timers.filter(function (t) { return t.at > now; });
-            due.forEach(function (t) { t.f(); });
+            t += ms;
+            var due = timers.filter(function (x) { return x.at <= t; });
+            timers = timers.filter(function (x) { return x.at > t; });
+            due.forEach(function (x) { x.fn(); });
         }
     };
 }
@@ -59,21 +84,12 @@ function clock() {
 function fakes(saved) {
     var c = clock();
     var f = {
-        mode: null, label: null, hint: null, status: '', lines: [], reports: [], setCommands: 0, setValues: [],
-        cleared: 0, waiting: ['Username (or "new"): '], setOk: true,
-        written: [],        // every piece handed to xterm, in order
-        events: [],         // 'w:<piece>' and 'clear', interleaved, in order
-        callbacks: [],      // write callbacks not yet run (a piece being parsed)
-        store: saved === undefined ? {} : { screenReader: saved }, inGame: false, clock: c
+        clock: c,
+        label: null, hint: null, status: '', lines: [], reports: [], setCommands: 0, setValues: [],
+        waiting: ['Username (or "new"): '], setOk: true,
+        store: saved === undefined ? {} : { screenReader: saved }, inGame: false, log: fakeLog()
     };
-    f.parse = function () { var cb = f.callbacks.shift(); if (cb) cb(); };
-    f.parseAll = function () { while (f.callbacks.length) f.parse(); };
     f.opts = {
-        term: { setOption: function (k, v) { if (k === 'screenReaderMode') f.mode = v; } },
-        termWrite: function (data, cb) {
-            f.written.push(data); f.events.push('w:' + data);
-            if (cb) f.callbacks.push(cb);
-        },
         storage: {
             getItem: function (k) { return Object.prototype.hasOwnProperty.call(f.store, k) ? f.store[k] : null; },
             setItem: function (k, v) { f.store[k] = v; }
@@ -81,12 +97,14 @@ function fakes(saved) {
         input: { setAttribute: function (k, v) { if (k === 'aria-label') f.label = v; } },
         hint: {},
         status: {},
+        log: f.log,
+        createEntry: function (text) { return { text: text }; },
         report: function (on) { f.reports.push(on); return true; },
         setCommand: function (value) { f.setCommands++; f.setValues.push(value); return f.setOk; },
         writeLine: function (t) { f.lines.push(t); },
         currentLines: function () { return f.waiting.slice(); },
-        clearSpoken: function () { f.cleared++; f.events.push('clear'); },
         inGame: function () { return f.inGame; },
+        now: c.now,
         setTimeout: c.setTimeout,
         clearTimeout: c.clearTimeout
     };
@@ -100,265 +118,150 @@ function nLines(n, tag) {
     for (var i = 1; i <= n; i++) s += tag + i + '\r\n';
     return s;
 }
-function countNewlines(s) { return (s.match(/\n/g) || []).length; }
 
 // ---- load and storage ------------------------------------------------------
 
 var f = fakes();
 var sr = SR.create(f.opts);
 sr.load();
-check('fresh device: off', f.mode === false && !sr.isOn(), 'mode ' + f.mode);
+check('fresh device: off', !sr.isOn(), '');
 check('fresh device: label names the phrase', f.label === SR.LABEL_OFF, f.label);
 check('fresh device: hint names the phrase', f.hint === SR.HINT_OFF, f.hint);
 check('fresh device: nothing reported or stored', f.reports.length === 0 && !('screenReader' in f.store), JSON.stringify(f.store));
+sr.write('A rat arrives.\r\n');
+check('off: nothing is added to the log', f.log.childNodes.length === 0, f.log.texts().join('|'));
 
 f = fakes('true');
 sr = SR.create(f.opts);
 sr.load();
-check('remembered: on at load', f.mode === true && sr.isOn(), 'mode ' + f.mode);
+check('remembered: on at load', sr.isOn(), '');
 check('remembered: label shortened', f.label === SR.LABEL_ON, f.label);
 
 f = fakes();
 f.opts.storage = { getItem: function () { throw new Error('blocked'); }, setItem: function () { throw new Error('blocked'); } };
 sr = SR.create(f.opts);
 sr.load();
-check('blocked storage: off, no throw', f.mode === false, '');
+check('blocked storage: off, no throw', !sr.isOn(), '');
 sr.phrase('on');
-check('blocked storage: still turns on', f.mode === true, '');
+check('blocked storage: still turns on', sr.isOn(), '');
 
-// ---- writing: off means untouched ------------------------------------------
-
-f = fakes();
-sr = SR.create(f.opts);
-sr.load();
-f.inGame = true;
-var big = nLines(50, 'L');
-sr.inputSent(1);
-sr.write(big);
-check('off: written whole, once, no callback', f.written.length === 1 && f.written[0] === big && f.callbacks.length === 0, JSON.stringify(f.written.length));
-f.clock.advance(SR.QUIET_MS * 3);
-check('off: never resets a region that is off', f.cleared === 0, 'cleared ' + f.cleared);
-f.inGame = false;
-sr.write(big);
-check('off before login: written whole too', f.written.length === 2 && f.callbacks.length === 0, f.written.length);
-
-// ---- writing: an answer is read in full ------------------------------------
+// ---- the log ---------------------------------------------------------------
 
 f = fakes('true');
 sr = SR.create(f.opts);
 sr.load();
 f.inGame = true;
-sr.inputSent(1);
-check('sending a line resets the region', f.cleared === 1, 'cleared ' + f.cleared);
-sr.write(big);
-f.parseAll();
-check('answer: every line written, in order', f.written.join('') === big, '');
-check('answer: no piece over CHUNK_LINES', f.written.every(function (p) { return countNewlines(p) <= SR.CHUNK_LINES; }), f.written.map(countNewlines).join());
-check('answer: more than one piece for 50 lines', f.written.length >= 3, f.written.length);
-// After every piece is parsed, the region is reset before the next piece.
-var ok = true, sinceClear = 0;
-f.events.forEach(function (e) {
-    if (e === 'clear') { sinceClear = 0; return; }
-    sinceClear += countNewlines(e.slice(2));
-    if (sinceClear > SR.CHUNK_LINES) ok = false;
-});
-check('answer: never more than CHUNK_LINES between resets', ok, f.events.join(' | ').slice(0, 300));
+sr.write('\x1b[1G\x1b[2KA rat arrives.\r\n');
+sr.write('You see a rat.\r\nIt looks hungry.\r\n');
+check('each piece is one new entry, plain text', f.log.texts().join('|') === 'A rat arrives.|You see a rat.\nIt looks hungry.', f.log.texts().join('|'));
+sr.write('\r\n');
+sr.write('\x1b[1G\x1b[2K');
+check('an empty piece adds nothing', f.log.childNodes.length === 2, f.log.childNodes.length);
 
-// Order holds when more text arrives while a piece is still being parsed.
+// A long answer is one entry, never cut off.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+sr.write(nLines(60, 'L'));
+check('a 60 line answer is one whole entry', f.log.childNodes.length === 1 && f.log.texts()[0].split('\n').length === 60, f.log.texts()[0] && f.log.texts()[0].split('\n').length);
+
+// Entries are never cleared while the mode is on; only the oldest are trimmed.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+for (var i = 1; i <= SR.MAX_ENTRIES + 5; i++) sr.write('line ' + i + '\r\n');
+check('the log keeps MAX_ENTRIES', f.log.childNodes.length === SR.MAX_ENTRIES, f.log.childNodes.length);
+check('the oldest go first', f.log.texts()[0] === 'line 6' && f.log.texts()[SR.MAX_ENTRIES - 1] === 'line ' + (SR.MAX_ENTRIES + 5), f.log.texts()[0]);
+
+// A prompt (a piece with no line break at its end) repeated unchanged is
+// skipped; a changed prompt is announced.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+sr.write('A rat arrives.\r\n');
+sr.write('[HP:20/20]: ');
+sr.write('The rat squeaks.\r\n');
+sr.write('[HP:20/20]: ');
+sr.write('The rat bites you.\r\n');
+sr.write('[HP:17/20]: ');
+check('an unchanged prompt is not read again', f.log.texts().join('|') === 'A rat arrives.|[HP:20/20]:|The rat squeaks.|The rat bites you.|[HP:17/20]:', f.log.texts().join('|'));
+// A health bar change is not news once the bars are gone: same words.
+sr.write(prompt);
+sr.write('You rest.\r\n');
+sr.write(prompt.replace('█░', '██'));
+check('a bar-only prompt change is not read again', f.log.texts().slice(-2).join('|') === '[ HP: SP: CP: ]:|You rest.', f.log.texts().slice(-2).join('|'));
+// After a reconnect the same login prompt is asked again and must be read.
+sr.write('Username (or "new"): ');
+sr.loggedOut();
+sr.write('Username (or "new"): ');
+check('after a reconnect the same prompt is read again', f.log.texts().slice(-2).join('|') === 'Username (or "new"):|Username (or "new"):', f.log.texts().slice(-2).join('|'));
+
+// In game the status is read at most once a round, and only when it changed.
 f = fakes('true');
 sr = SR.create(f.opts);
 sr.load();
 f.inGame = true;
-sr.inputSent(1);
-sr.write(nLines(30, 'A'));
-sr.write('after\r\n');
-check('queued: later text waits for the piece being parsed', f.written.join('').indexOf('after') < 0, f.written.join(''));
-f.parseAll();
-check('queued: everything written, in order', f.written.join('') === nLines(30, 'A') + 'after\r\n', f.written.join(''));
-
-// The mode goes off while pieces are queued: every line is still written, in
-// order, and no reset is made once the mode is off.
-f = fakes('true');
-sr = SR.create(f.opts);
-sr.load();
-f.inGame = true;
-sr.account(true);
-sr.inputSent(1);
-sr.write(big);
-f.setOk = false;
-var clearedBefore = f.cleared;
+sr.write('[HP:unhurt]: ');
+f.clock.advance(1000);
+sr.write('The rat bites you.\r\n');
+sr.write('[HP:hurt]: ');
+check('a changed status within a round is held; messages are not', f.log.texts().join('|') === '[HP:unhurt]:|The rat bites you.', f.log.texts().join('|'));
+f.clock.advance(SR.PROMPT_GAP_MS - 1000);
+check('it is read when the round is over', f.log.texts().join('|') === '[HP:unhurt]:|The rat bites you.|[HP:hurt]:', f.log.texts().join('|'));
+// Changed and changed back within one round: nothing to say.
+sr.write('[HP:badly hurt]: ');
+sr.write('[HP:hurt]: ');
+f.clock.advance(SR.PROMPT_GAP_MS);
+check('a change undone within the round is not read', f.log.texts().slice(-1)[0] === '[HP:hurt]:' && f.log.childNodes.length === 3, f.log.texts().join('|'));
+// Several changes in one round: only the latest is read.
+f.clock.advance(SR.PROMPT_GAP_MS);
+sr.write('[HP:badly hurt]: ');
+f.clock.advance(500);
+sr.write('[HP:near death]: ');
+sr.write('[HP:badly hurt]: ');
+sr.write('[HP:near death]: ');
+f.clock.advance(SR.PROMPT_GAP_MS);
+check('only the latest status of a round is read', f.log.texts().slice(-2).join('|') === '[HP:badly hurt]:|[HP:near death]:', f.log.texts().slice(-3).join('|'));
+// Mode off while one is held: it is never read.
+sr.write('[HP:hurt]: ');
+f.clock.advance(100);
+sr.write('[HP:unhurt]: ');
 sr.phrase('off');
-check('mode off locally while queued', f.mode === false, 'mode ' + f.mode);
-f.parseAll();
-check('mode off mid-queue: every line still written, in order', f.written.join('') === big, f.written.length);
-check('mode off mid-queue: no reset after the mode went off', f.cleared === clearedBefore, 'cleared ' + f.cleared + ' vs ' + clearedBefore);
-
-// The answer ends QUIET_MS after its Char.Input.Done. Output in that gap is
-// still part of it: a macro's commands and anything run through
-// user.Command() are queued for later turns, so they print after the Done.
+f.clock.advance(SR.PROMPT_GAP_MS);
+check('a held status is dropped when the mode goes off', f.log.childNodes.length === 0, f.log.texts().join('|'));
+// Before login, prompts are read at once.
 f = fakes('true');
 sr = SR.create(f.opts);
 sr.load();
-f.inGame = true;
-sr.inputSent(1);
-sr.write('reply\r\n');
-f.parseAll();
-sr.inputDone(1);
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('just after Done (a macro\'s output): still read in full', f.written.length >= 3, f.written.length);
-f.clock.advance(SR.QUIET_MS - 1);
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('output keeps the answer open', f.written.length >= 3, f.written.length);
-f.clock.advance(1); // QUIET_MS since the Done, but output came 1ms ago
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('still open QUIET_MS after the Done, because output kept coming', f.written.length >= 3, f.written.length);
-f.clock.advance(SR.QUIET_MS);
-f.written = []; f.events = [];
-sr.write(big);
-check('quiet after Done: unprompted text written whole', f.written.length === 1 && f.written[0] === big, f.written.length);
-f.parseAll();
+sr.write('Username (or "new"): ');
+sr.write('Password: ');
+check('login prompts are not held', f.log.texts().join('|') === 'Username (or "new"):|Password:', f.log.texts().join('|'));
 
-// Lines are matched by number: a Done for an earlier line (an automation
-// command, a numpad move) does not end a later line's answer.
+// No log element: nothing throws, for sighted players too.
 f = fakes('true');
+f.opts.log = undefined;
 sr = SR.create(f.opts);
-sr.load();
-f.inGame = true;
-sr.inputSent(1);
-sr.inputSent(2);
-sr.inputDone(1);
-f.clock.advance(SR.QUIET_MS);
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('Done for line 1 while line 2 is out: still answering', f.written.length >= 3, f.written.length);
-sr.inputDone(2);
-f.clock.advance(SR.QUIET_MS);
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('Done for the last line sent, then quiet: answer over', f.written.length === 1, f.written.length);
-
-// A Done numbered past the last line sent also ends it (the server counted a
-// line this page did not, such as a reconnect token).
-f = fakes('true');
-sr = SR.create(f.opts);
-sr.load();
-f.inGame = true;
-sr.inputSent(4);
-sr.inputDone(5);
-f.clock.advance(SR.QUIET_MS);
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('a later Done ends it', f.written.length === 1, f.written.length);
-
-// A line sent before login (the creation confirm "y") opens an answer: the
-// welcome burst after Char arrives is read in full. No Char.Input.Done comes
-// for it, so a quiet gap ends it.
-f = fakes('true');
-sr = SR.create(f.opts);
-sr.load();
-f.inGame = false;
-sr.inputSent(1);
-f.inGame = true;
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('a login line opens an answer: the welcome burst is pieced', f.written.length >= 3, f.written.length);
-f.clock.advance(SR.QUIET_MS);
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('a login line answer ends after a quiet gap', f.written.length === 1, f.written.length);
-
-// A slow login: the account's first Char.Info marks login and keeps the login
-// answer open, so the quiet gap cannot end it before the welcome burst.
-f = fakes('true');
-sr = SR.create(f.opts);
-sr.load();
-f.inGame = false;
-sr.inputSent(1);
-f.clock.advance(SR.QUIET_MS - 1);
-f.inGame = true;
-sr.account(true);
-f.clock.advance(SR.QUIET_MS - 1);
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('slow login: Char.Info keeps the login answer open', f.written.length >= 3, f.written.length);
-
-// Typing clears the spoken region, as xterm does for a key in its own input.
-f = fakes('true');
-sr = SR.create(f.opts);
-sr.load();
-sr.keyTyped();
-check('mode on: a key clears the spoken region', f.cleared === 1, 'cleared ' + f.cleared);
-f = fakes();
-sr = SR.create(f.opts);
-sr.load();
-sr.keyTyped();
-check('mode off: a key clears nothing', f.cleared === 0, 'cleared ' + f.cleared);
-
-// A lost Done does not leave answers on forever.
-f = fakes('true');
-sr = SR.create(f.opts);
-sr.load();
-f.inGame = true;
-sr.inputSent(1);
-f.clock.advance(SR.ANSWER_MAX_MS);
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('lost Done: answer ends after ANSWER_MAX_MS', f.written.length === 1, f.written.length);
-
-// Before login everything is read in full: the connect splash and the
-// prompts must reach a returning blind player, and there is no Done yet.
-f = fakes('true');
-sr = SR.create(f.opts);
-sr.load();
-f.inGame = false;
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('before login: read in full', f.written.length >= 3 && f.written.join('') === big, f.written.length);
-
-// ---- writing: unprompted output resets after a quiet gap -------------------
-
-f = fakes('true');
-sr = SR.create(f.opts);
-sr.load();
-f.inGame = true;
-sr.write('round 1\r\n');
-f.clock.advance(SR.QUIET_MS - 1);
-sr.write('round 1 more\r\n');
-f.clock.advance(SR.QUIET_MS - 1);
-check('output still arriving: no reset', f.cleared === 0, 'cleared ' + f.cleared);
-f.clock.advance(1);
-check('output quiet: reset once', f.cleared === 1, 'cleared ' + f.cleared);
-check('QUIET_MS is under a 4 second combat round', SR.QUIET_MS < 4000, SR.QUIET_MS);
+var threw = false;
+try { sr.load(); sr.write('Hi.\r\n'); sr.phrase('off'); } catch (e) { threw = e.message; }
+check('a missing log never throws', threw === false, threw);
 
 // ---- the phrase ------------------------------------------------------------
 
 // Before login: turn on, remember, report, then say so and repeat the
-// waiting prompt (a prompt already on screen is never read by xterm).
+// waiting prompt, in the game window and in the log.
 f = fakes();
 sr = SR.create(f.opts);
 sr.load();
 sr.phrase('on');
-check('phrase on: mode on', f.mode === true, '');
+check('phrase on: mode on', sr.isOn(), '');
 check('phrase on: remembered', f.store.screenReader === 'true', JSON.stringify(f.store));
 check('phrase on: reported', f.reports.join() === 'true', f.reports.join());
-check('phrase on: confirmed, then the waiting prompt', f.lines.join('|') === SR.SAID_ON + '|' + f.waiting[0], f.lines.join('|'));
+check('phrase on: confirmed, then the waiting prompt, in the window', f.lines.join('|') === SR.SAID_ON + '|' + f.waiting[0], f.lines.join('|'));
+check('phrase on: and in the log', f.log.texts().join('|') === SR.SAID_ON + '|' + f.waiting[0].trim(), f.log.texts().join('|'));
 check('phrase on: no set command before login', f.setCommands === 0, '');
 sr.phrase('off');
-check('phrase off: mode off and remembered', f.mode === false && f.store.screenReader === 'false', '');
+check('phrase off: mode off and remembered', !sr.isOn() && f.store.screenReader === 'false', '');
+check('phrase off: the log is emptied', f.log.childNodes.length === 0, f.log.texts().join('|'));
 check('phrase off: spoken by the status region', f.status === SR.SAID_OFF, f.status);
 check('phrase off: shown in the game window', f.lines[f.lines.length - 1] === SR.SAID_OFF, f.lines.join('|'));
 
@@ -375,9 +278,7 @@ check('in game, account off: no local line', f.lines.length === 0, f.lines.join(
 sr.phrase('on');
 check('in game: a second phrase does not toggle it back', f.setCommands === 1, 'set commands ' + f.setCommands);
 
-// A repeated Char.Info value is not news: the page's generic Char handler
-// re-reads the last Info for Char.Enemies, Char.Stats and the like, and that
-// stale value must not undo the phrase before the server answers.
+// A repeated Char.Info value is not news.
 f = fakes();
 sr = SR.create(f.opts);
 sr.load();
@@ -385,19 +286,17 @@ f.inGame = true;
 sr.account(false);
 sr.phrase('on');
 sr.account(false);   // stale: the same value as the last push
-check('stale push: mode stays on', f.mode === true, 'mode ' + f.mode);
+check('stale push: mode stays on', sr.isOn(), '');
 sr.phrase('on');
 check('stale push: no second set command', f.setCommands === 1, 'set commands ' + f.setCommands);
 sr.account(true);    // the server's real answer
-check('real push: mode on', f.mode === true, '');
-// The mode goes off on this device only (the set command could not be
-// sent), then a new login pushes the SAME value as before: it must apply.
+check('real push: mode on', sr.isOn(), '');
 f.setOk = false;
 sr.phrase('off');
-check('local off: mode off', f.mode === false, 'mode ' + f.mode);
+check('local off: mode off', !sr.isOn(), '');
 sr.loggedOut();
 sr.account(true);
-check('after logout: the same value applies again', f.mode === true, 'mode ' + f.mode);
+check('after logout: the same value applies again', sr.isOn(), '');
 
 // In game, the set command could not be sent: confirm locally instead.
 f = fakes();
@@ -425,26 +324,23 @@ f = fakes();
 sr = SR.create(f.opts);
 sr.load();
 sr.account(true);
-check('account on: mode on, remembered', f.mode === true && f.store.screenReader === 'true', '');
+check('account on: mode on, remembered', sr.isOn() && f.store.screenReader === 'true', '');
+sr.write('Hello.\r\n');
 sr.account(false);
-check('account off: mode off, remembered', f.mode === false && f.store.screenReader === 'false', '');
+check('account off: mode off, remembered, log emptied', !sr.isOn() && f.store.screenReader === 'false' && f.log.childNodes.length === 0, '');
+check('account off: spoken by the status region', f.status === SR.SAID_OFF, f.status);
 
-// Logged out: the account and any open answer are forgotten. inGame stays
-// true here so only loggedOut can explain the missing set command.
+// Logged out: the account is forgotten. inGame stays true here so only
+// loggedOut can explain the missing set command.
 f = fakes();
 sr = SR.create(f.opts);
 sr.load();
 f.inGame = true;
 sr.account(false);
-sr.inputSent(1);
 sr.loggedOut();
 sr.phrase('on');
 check('after logout: no set command', f.setCommands === 0, 'set commands ' + f.setCommands);
 check('after logout: local line', f.lines[0] === SR.SAID_ON, f.lines.join('|'));
-f.written = [];
-sr.write(big);
-f.parseAll();
-check('after logout: no answer left open', f.written.length === 1, f.written.length);
 
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }
 console.log('all passed');

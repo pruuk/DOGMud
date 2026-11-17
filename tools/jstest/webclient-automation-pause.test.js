@@ -188,6 +188,11 @@ check('D2 queued tick shows when no triggers are configured', rows2.length === 1
 // in (automationReady), the helper stays out of the way.
 var termLines = [];
 global.term = { write: function (s) { termLines.push(s); }, writeln: function (s) { termLines.push(s + '\r\n'); } };
+// The message goes out through the page's own gameLine, which also feeds the
+// screen reader log (static/js/screenreader.js); a stand-in records that.
+var srWrites = [];
+global.screenReader = { write: function (t) { srWrites.push(t); } };
+(0, eval)(extract('function gameLine(text) {', '// Called by the Char GMCP handler'));
 // Ends at the next comment, not at a newline marker: a Windows checkout has
 // \r\n line endings, which a '\n        }\n' marker never matches.
 (0, eval)(extract('const AUTOMATION_LOGIN_MESSAGE', '// quit is not instant')
@@ -196,6 +201,8 @@ global.term = { write: function (s) { termLines.push(s); }, writeln: function (s
 check('E1 logged out: the helper stops the action', automationNeedsLogin() === true, 'returned false');
 check('E1 logged out: the player is told why, on a line of its own',
     termLines.join('').indexOf('\r\n' + AUTOMATION_LOGIN_MESSAGE + '\r\n') >= 0, JSON.stringify(termLines));
+check('E1 logged out: the screen reader log gets the message too',
+    srWrites.join('').indexOf(AUTOMATION_LOGIN_MESSAGE) >= 0, JSON.stringify(srWrites));
 termLines = [];
 (0, eval)('automationReady = true;');
 check('E2 logged in: the helper lets the action through', automationNeedsLogin() === false, 'returned true');

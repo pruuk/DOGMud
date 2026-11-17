@@ -246,7 +246,8 @@
     <!-- Read first by a screen reader, seen by no one (touch arc Task 0;
          static/js/screenreader.js keeps them current). iOS VoiceOver starts at
          the top of the page rather than at the focused command box. The
-         status region speaks what xterm's own region cannot, such as "off". -->
+         status region speaks what the game text log cannot, such as "off",
+         since the log is emptied when the mode goes off. -->
     <p id="sr-hint" class="visually-hidden">Screen reader users: type screen reader on, then press Enter.</p>
     <div id="sr-status" class="visually-hidden" role="status" aria-live="polite"></div>
 
@@ -455,6 +456,12 @@
       </div><!-- #dash-panels -->
     </div>
 
+    <!-- Game text for screen readers, one entry per piece, seen by no one
+         (static/js/screenreader.js; spec section 11). aria-atomic="false"
+         is explicit because Narrator reads a region it cannot see as
+         non-atomic as a whole. -->
+    <div id="sr-log" class="visually-hidden" role="log" aria-live="polite" aria-relevant="additions" aria-atomic="false" aria-label="Game text"></div>
+
     <script>
 
         /////////////////////////////////////////////
@@ -553,12 +560,22 @@
         // The screen reader switch (static/js/screenreader.js): off unless the
         // player typed "screen reader on" here before, or their account has it.
         var screenReader = window.ScreenReader.create({
-            term: term,
-            termWrite: function (data, cb) { term.write(data, cb); },
             storage: (function () { try { return window.localStorage; } catch (e) { return null; } })(),
             input: document.getElementById('command-input'),
             hint: document.getElementById('sr-hint'),
             status: document.getElementById('sr-status'),
+            log: document.getElementById('sr-log'),
+            createEntry: function (text) {
+                // One child per line, so line breaks survive in the
+                // accessibility tree (.visually-hidden sets nowrap).
+                var entry = document.createElement('div');
+                text.split('\n').forEach(function (line) {
+                    var row = document.createElement('div');
+                    row.textContent = line;
+                    entry.appendChild(row);
+                });
+                return entry;
+            },
             report: function (on) { return SendGMCP('Client.Display', { screenreader: on }); },
             setCommand: function (on) { return SendData('set screenreader ' + (on ? 'on' : 'off')); },
             writeLine: function (text) {
@@ -576,21 +593,6 @@
                     if (text.trim()) return [text];
                 }
                 return [];
-            },
-            clearSpoken: function () {
-                // xterm 4.19 resets its spoken region only on a key in its own
-                // hidden input, which players never use. Private API, as
-                // termfit.js already uses; xterm is pinned at 4.19 (#908), and
-                // tools/jstest/screenreader.test.js fails if the names change.
-                var am = term._core && term._core._accessibilityManager;
-                if (!am || !am._clearLiveRegion) return;
-                am._clearLiveRegion();
-                // On a Mac (and iPadOS Safari) the reset also takes the region
-                // out of the page; put it back now, or the next text is spoken
-                // only if yet more text follows it.
-                if (am._liveRegion && !am._liveRegion.parentNode && am._accessibilityTreeRoot) {
-                    am._accessibilityTreeRoot.appendChild(am._liveRegion);
-                }
             },
             inGame: function () { return inGame; }
         });
@@ -1120,10 +1122,6 @@
                 // number and whether a menu or prompt is open. Never its text.
                 var d = ((GMCPStructs["Char"] || {}).Input || {}).Done || {};
                 if (sendWait) sendWait.done(d.seq, d.menu === true);
-                // The answer to line d.seq is complete: once it is the last line
-                // sent, back to the 20-line limit for unprompted output
-                // (static/js/screenreader.js).
-                screenReader.inputDone(d.seq);
             },
             "Char.Mutation": function() {
                 var m = (GMCPStructs["Char"] || {}).Mutation;
@@ -2821,7 +2819,7 @@
             var req = root.requestFullscreen || root.webkitRequestFullscreen;
             if (!req) return;
             var refused = function (e) {
-                term.writeln('Your browser did not allow full screen' +
+                gameLine('Your browser did not allow full screen' +
                     (e && e.message ? ': ' + e.message : '.'));
             };
             try {
@@ -2891,6 +2889,14 @@
         let leaveFallback = null;
         let inGame = false; // true once the server pushes Char, i.e. after login
 
+        // gameLine writes one of the page's own lines into the game window
+        // and, while screen reader mode is on, into the screen reader log,
+        // so a blind player hears it (a dropped connection above all).
+        function gameLine(text) {
+            term.writeln(text);
+            screenReader.write(text + '\r\n');
+        }
+
         // Called by the Char GMCP handler: the first Char push after connecting
         // means a character is now in the world, so the bar offers Leave Game.
         function markInGame() {
@@ -2917,7 +2923,7 @@
             if (note) { note.textContent = AUTOMATION_LOGIN_MESSAGE; note.hidden = false; }
             // And in the game text, on a line of its own: the login prompt
             // leaves the cursor at the end of "username (or new):".
-            term.write('\r\n' + AUTOMATION_LOGIN_MESSAGE + '\r\n');
+            gameLine('\r\n' + AUTOMATION_LOGIN_MESSAGE);
             return true;
         }
 
@@ -2988,7 +2994,7 @@
             // name, so say so, light up the command box and put the cursor there.
             if (open) {
                 term.writeln("");
-                term.writeln("Type your character name in the box below and press Enter. New here? Type new.");
+                gameLine("Type your character name in the box below and press Enter. New here? Type new.");
                 textInput.classList.add('cmd-nudge');
                 setTimeout(function () { textInput.classList.remove('cmd-nudge'); }, 1500);
                 textInput.focus();
@@ -3123,8 +3129,8 @@
                 // Update session strip connection indicator
                 setSessionState('connected');
 
-                // A new connection is a new login: forget the last one before
-                // the token below opens an answer, or loggedOut would end it.
+                // A new connection is a new login: forget the last account, and
+                // let the first prompt be read even if it matches the last one.
                 screenReader.loggedOut();
                 // The last account's Info stays in GMCPStructs, and the generic
                 // Char handler re-reads it for other Char packages: forget it,
@@ -3138,9 +3144,6 @@
                     pendingReconnectToken = null;
                     linesSent++;
                     socket.send(t);
-                    // The re-attach burst after a server restart is an answer
-                    // to the token, so it is read in full.
-                    screenReader.inputSent(linesSent);
                 }
                 // The server starts every connection at 80 columns. After the
                 // token, so a copyover reconnect reads the token first.
@@ -3279,9 +3282,10 @@
                 // Otherwise, just write to terminal
                 // The MOTD shows without its box here (static/js/motdrestyle.js).
                 var shown = window.MotdRestyle ? window.MotdRestyle.restyle(event.data) : event.data;
-                // Through the screen reader switch (static/js/screenreader.js):
-                // straight to xterm when the mode is off.
-                screenReader.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);
+                term.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);
+                // The same text, as plain words, into the screen reader log
+                // (static/js/screenreader.js); nothing when the mode is off.
+                screenReader.write(shown);
                 // Tap text stream for trigger matching (read-only copy; does not affect terminal output)
                 try {
                     stripAnsi(event.data).split(/\r?\n/).forEach(function(line){ if (line) runTriggers(line, Date.now()); });
@@ -3308,7 +3312,7 @@
                     reconnectAttempts++;
                     if (reconnectAttempts === 1) {
                         term.writeln("");
-                        term.writeln("Server is restarting — you will be reconnected automatically…");
+                        gameLine("Server is restarting — you will be reconnected automatically…");
                     } else {
                         term.write(".");
                     }
@@ -3326,18 +3330,18 @@
                     reconnectAttempts = 0;
                     MusicPlayer.stopAll(); // really disconnected (#838)
                     term.writeln("");
-                    term.writeln("Could not reconnect — the server may still be restarting. Click Enter Game to try again.");
+                    gameLine("Could not reconnect — the server may still be restarting. Click Enter Game to try again.");
                     connectButton.disabled = false;
                     setSessionState('offline');
                     return;
                 }
                 MusicPlayer.stopAll(); // not reconnecting: the last track must not keep looping (#838)
                 if (leavingGame) {
-                    term.writeln("You have left the game.");
+                    gameLine("You have left the game.");
                 } else if (event.wasClean) {
-                    term.writeln(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
+                    gameLine(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
                 } else {
-                    term.writeln("Connection died");
+                    gameLine("Connection died");
                 }
                 // Ready for Enter Game in the session bar to reconnect.
                 connectButton.disabled = false;
@@ -3390,9 +3394,6 @@
         })();
 
         textInput.addEventListener('keydown', function(event) {
-            // Typing clears the spoken region, as xterm does for its own input
-            // (but not for a bare modifier key).
-            if (!/^(Shift|Control|Alt|Meta|CapsLock|AltGraph)$/.test(event.key)) screenReader.keyTyped();
             // Macro support: F-keys
             if (event.key.substring(0, 1) === "F" && event.key.length === 2) {
                 let macroNum = event.key.substring(1);
@@ -3451,7 +3452,7 @@
                 if ( sent ) {
                     event.target.value = '';
                 } else {
-                    term.writeln("Not connected to the server. Click Enter Game to play.");
+                    gameLine("Not connected to the server. Click Enter Game to play.");
                 }
                 // Phones: chat keeps the keyboard; any other in-game command
                 // waits for the game's answer and keeps it only if a menu or
@@ -3477,10 +3478,6 @@
             totalBytesSent += dataToSend.length;
             linesSent++;
             socket.send(dataToSend);
-            // Its answer is read in full, up to the server's Char.Input.Done
-            // for this line (static/js/screenreader.js). Every line counts:
-            // typed, macros, numpad moves, automation.
-            screenReader.inputSent(linesSent);
             // Snap the view back to the newest output whenever the player acts.
             // Without this, scrolling up to re-read and then moving (or any
             // command) leaves you stranded in the backlog instead of showing
