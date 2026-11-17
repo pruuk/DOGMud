@@ -726,6 +726,13 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 		connDetails.ConnectionId(),
 	)
 
+	// Ask for the terminal type, so a client can declare a screen reader
+	// through MTTS before login (internal/inputhandlers/term_iac.go).
+	connections.SendTo(
+		term.TelnetDO(term.TELNET_OPT_TERM_TYPE),
+		connDetails.ConnectionId(),
+	)
+
 	// Send request to change charset
 	connections.SendTo(
 		term.TelnetRequestChangeCharset.BytesWithPayload(nil),
