@@ -278,6 +278,22 @@ sr.write(big);
 f.parseAll();
 check('a login line answer ends after a quiet gap', f.written.length === 1, f.written.length);
 
+// A slow login: the account's first Char.Info marks login and keeps the login
+// answer open, so the quiet gap cannot end it before the welcome burst.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = false;
+sr.inputSent(1);
+f.clock.advance(SR.QUIET_MS - 1);
+f.inGame = true;
+sr.account(true);
+f.clock.advance(SR.QUIET_MS - 1);
+f.written = [];
+sr.write(big);
+f.parseAll();
+check('slow login: Char.Info keeps the login answer open', f.written.length >= 3, f.written.length);
+
 // Typing clears the spoken region, as xterm does for a key in its own input.
 f = fakes('true');
 sr = SR.create(f.opts);

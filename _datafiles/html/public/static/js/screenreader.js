@@ -260,6 +260,10 @@
             // must not undo a phrase the server has not answered yet.
             account: function (value) {
                 if (value === lastPushed) return;
+                // The account's first Char.Info marks login; a slow login
+                // must not let the quiet gap end the login answer before the
+                // welcome burst.
+                if (settling) armSettle();
                 lastPushed = value;
                 accountSetting = value;
                 if (value !== on) {

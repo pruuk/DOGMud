@@ -3123,14 +3123,24 @@
                 // Update session strip connection indicator
                 setSessionState('connected');
 
+                // A new connection is a new login: forget the last one before
+                // the token below opens an answer, or loggedOut would end it.
+                screenReader.loggedOut();
+                // The last account's Info stays in GMCPStructs, and the generic
+                // Char handler re-reads it for other Char packages: forget it,
+                // so the new login's own Char.Info is the first value seen.
+                if (GMCPStructs.Char) { delete GMCPStructs.Char.Info; }
+
                 // Copyover: if we reconnected after a restart, send the token first
                 // so the server re-attaches our session (skips the login prompt).
                 if (pendingReconnectToken) {
                     var t = pendingReconnectToken;
                     pendingReconnectToken = null;
-                    // Counted, but not passed to screenReader.inputSent on purpose: it goes out before login, where the switch reads everything in full anyway, and loggedOut runs just after.
                     linesSent++;
                     socket.send(t);
+                    // The re-attach burst after a server restart is an answer
+                    // to the token, so it is read in full.
+                    screenReader.inputSent(linesSent);
                 }
                 // The server starts every connection at 80 columns. After the
                 // token, so a copyover reconnect reads the token first.
@@ -3140,11 +3150,6 @@
                 // A new connection is a new login: the relay glue waits for
                 // Char.Info to name the account again before it does anything.
                 if (companionGlue) { companionGlue.disconnected(); }
-                screenReader.loggedOut();
-                // The last account's Info stays in GMCPStructs, and the generic
-                // Char handler re-reads it for other Char packages: forget it,
-                // so the new login's own Char.Info is the first value seen.
-                if (GMCPStructs.Char) { delete GMCPStructs.Char.Info; }
 
                 textInput.focus();
             };
@@ -3385,8 +3390,9 @@
         })();
 
         textInput.addEventListener('keydown', function(event) {
-            // Typing clears the spoken region, as xterm does for its own input.
-            screenReader.keyTyped();
+            // Typing clears the spoken region, as xterm does for its own input
+            // (but not for a bare modifier key).
+            if (!/^(Shift|Control|Alt|Meta|CapsLock|AltGraph)$/.test(event.key)) screenReader.keyTyped();
             // Macro support: F-keys
             if (event.key.substring(0, 1) === "F" && event.key.length === 2) {
                 let macroNum = event.key.substring(1);

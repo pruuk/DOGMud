@@ -85,9 +85,9 @@ var code = 'var socket = null, leavingGame = false, leaveFallback = null, inGame
     + 'var sessionButton = document.getElementById("btn-session");\n'
     + 'var sessionConfirm = document.getElementById("sess-confirm");\n'
     // The screen reader switch (static/js/screenreader.js): the connect
-    // handler reads isOn() for the address, onopen calls loggedOut(), and
+    // handler reads isOn() for the address, onopen calls loggedOut() (and inputSent() for a copyover token), and
     // onmessage writes server text through write().
-    + 'var screenReader = { isOn: function () { return global.__srOn === true; }, loggedOut: function () {}, write: function (t) { term.write(t); } };\n'
+    + 'var screenReader = { isOn: function () { return global.__srOn === true; }, loggedOut: function () {}, inputSent: function () {}, write: function (t) { term.write(t); } };\n'
     // onopen forgets the last account's Char.Info.
     + 'var GMCPStructs = {};\n'
     + extract('function markInGame() {', "sessionButton.addEventListener('click'")
