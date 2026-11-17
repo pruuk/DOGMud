@@ -177,6 +177,25 @@ Superseded by section 11 for the bullet on when an answer ends (answers are gone
 - (Owner ruling 2026-11-17, not a decision taken without asking.) **The status in words.** With the bars as symbols dropped, the prompt said nothing about health. A screen reader account's prompt draws each bar as one of four words, measured against the reachable pool: HP unhurt, hurt, badly hurt, near death; SP fresh, tired, very tired, exhausted; CP strong, steady, shaken, broken; at 75, 50 and 25 percent (`vitalWord`, `internal/users/userrecord.prompt.go`; the tank's health in `{tankbar}` too). In game, a changed status is read at most once a round (`PROMPT_GAP_MS`, 4 seconds, one round at `Timing.RoundSeconds` 4) and an unchanged one never; a change undone within the round is not read, and of several changes only the latest is. Login prompts are read at once. The client keeps its own 4 seconds because the per-round `Commands.State` push also goes out on every vitals change, so it cannot mark rounds (`modules/gmcp/gmcp.Commands.go:58-120`).
 - **"Read in full" means the log holds the whole piece.** A screen reader may still cut a long entry short when the player types (NVDA interrupts speech on typed characters and Enter by default); the entries stay in the log to read back line by line.
 
+### 12. Answers interrupt, everything else queues (owner ruling 2026-11-17, after the NVDA tests)
+
+**What the owner found.** A standalone page (`narrator-test.html` in the session scratchpad, the game's exact log region) showed:
+- Under Narrator with Chrome, every web announcement design fails in a burst. The log reads entries out of order and runs far past the burst; a single replaced message area drops nearly everything and repeats the last line; `ariaNotify()` says nothing.
+- Under NVDA, the log passes every test: a burst, trimming at 100, a 60-line entry, and both together, all read in order and to the end.
+- In the game under NVDA, text is read in order but cannot keep up: moving quickly, the player was four rooms on and still hearing the room where the quest was taken.
+- An assertive region cuts in at once under NVDA, and Ctrl clears NVDA's whole queue.
+
+**The design now (adds to section 11):**
+- A second hidden region, `<div id="sr-answers" role="log" aria-live="assertive" aria-relevant="additions" aria-atomic="false" aria-label="Answers">`, beside `#sr-log`.
+- When the player sends a line (typed, the numpad, a macro key, a macro or alias chip, an item menu action; never automation, `quit` or the switch's own `set screenreader`), the page calls `screenReader.lineSent()`. From then until the game redraws the prompt, each piece of text goes to `#sr-answers`, which interrupts whatever the screen reader is still reading. The prompt ends the answer and is handled as before (at most once a round, never unchanged). The server redraws the prompt after a command's output, so no timer is needed.
+- Everything else (combat, other players, chat, the page's own status lines) queues politely in `#sr-log`. The player skips a queue with Ctrl.
+- Both regions keep 100 entries; both empty when the mode goes off.
+- Target screen readers: NVDA and JAWS. Narrator with Chrome is documented as limited (it may skip or jumble text when a lot arrives at once); it is not chased further.
+
+**Decisions taken without asking (section 12):**
+- **Which sends count as the player's.** Typed lines, the numpad, macro keys, chips and item menus, because the player asked for each; automation does not, because a trigger firing in a fight would otherwise cut off the fight text every round. If wrong: one helper (`playerSend`) decides, so a site can move either way.
+- **Unprompted text that arrives between a command and its prompt is spoken at answer priority.** Rare, because the prompt follows a command's output closely. If wrong: the server would have to mark answer text, which it does not today.
+
 ## Decisions taken without asking
 
 - **The phrase is `screen reader on`.** Plain words, easy to dictate on a phone, and the space keeps it from ever being a username. If wrong: any other phrase works, but a single word could collide with a name at the first prompt.
