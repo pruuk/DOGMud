@@ -121,6 +121,16 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - **Login turns the setting on before `LoginUser` publishes the user**, so MainWorker never reads it mid-write.
 - **Phone dictation adds a full stop**, so the phrase match ignores trailing punctuation and also accepts `screenreader on`.
 
+### 9. Found in the second plan review (2026-11-17), verified against source
+
+- **On a Mac (and iPadOS Safari, which reports MacIntel) a reset takes xterm's spoken region out of the page**, and xterm puts it back only if more text arrives after the render (`_clearLiveRegion` and `_onChar` in `xterm.4.19.0.js`). The page's reset puts it back at once.
+- **Before login everything is read in full**, as an answer is: the connect splash and the prompts must reach a returning blind player whose device remembers the mode.
+- **The connect splash is 24 lines of art and goes out before any report.** The web client adds `&sr=1` to its websocket address when its mode is on; the server records it and draws the words-only splash (the 42 and 30 column forms).
+- **Every line the page sends counts as a line with an answer** (typed, macros, numpad moves, automation), matched by number to the server's `Char.Input.Done {seq}`: an earlier line's Done no longer ends a later line's answer.
+- **A repeated `Char.Info` value is ignored**, because the page's generic `Char` handler re-reads the last `Info` for other `Char` packages and would otherwise undo a phrase the server has not answered yet.
+- **A reconnect to a link-dead session continues the user already in memory** (`internal/users/users.go:240-242`), so the login turn-on is applied to the user `LoginUser` returns as well as to the record loaded for the login.
+- **A character made with the setting reported** (the web phrase or MTTS) hears that the mode is on and how to turn it off, as a login does.
+
 ## Decisions taken without asking
 
 - **The phrase is `screen reader on`.** Plain words, easy to dictate on a phone, and the space keeps it from ever being a username. If wrong: any other phrase works, but a single word could collide with a name at the first prompt.
