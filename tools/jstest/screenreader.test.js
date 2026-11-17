@@ -259,7 +259,9 @@ sr.write(big);
 f.parseAll();
 check('a later Done ends it', f.written.length === 1, f.written.length);
 
-// A line sent before login opens no answer, even once the player is in.
+// A line sent before login (the creation confirm "y") opens an answer: the
+// welcome burst after Char arrives is read in full. No Char.Input.Done comes
+// for it, so a quiet gap ends it.
 f = fakes('true');
 sr = SR.create(f.opts);
 sr.load();
@@ -269,7 +271,24 @@ f.inGame = true;
 f.written = [];
 sr.write(big);
 f.parseAll();
-check('a login line opens no answer', f.written.length === 1, f.written.length);
+check('a login line opens an answer: the welcome burst is pieced', f.written.length >= 3, f.written.length);
+f.clock.advance(SR.QUIET_MS);
+f.written = [];
+sr.write(big);
+f.parseAll();
+check('a login line answer ends after a quiet gap', f.written.length === 1, f.written.length);
+
+// Typing clears the spoken region, as xterm does for a key in its own input.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+sr.keyTyped();
+check('mode on: a key clears the spoken region', f.cleared === 1, 'cleared ' + f.cleared);
+f = fakes();
+sr = SR.create(f.opts);
+sr.load();
+sr.keyTyped();
+check('mode off: a key clears nothing', f.cleared === 0, 'cleared ' + f.cleared);
 
 // A lost Done does not leave answers on forever.
 f = fakes('true');

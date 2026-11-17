@@ -191,18 +191,32 @@
 
             // The page sent line number seq to the server (any line: typed,
             // a macro, a numpad move, automation). Reset now, and read its
-            // answer in full. Char.Input.Done comes only after login; before
-            // login everything is read in full anyway.
+            // answer in full. Char.Input.Done comes only after login. A line
+            // sent before login is answered by the login burst, read in full
+            // once it ends on a quiet gap; before login everything is read
+            // in full anyway.
             inputSent: function (seq) {
                 if (on) opts.clearSpoken();
-                if (!opts.inGame()) return;
                 lastSeq = seq;
                 answering = true;
-                settling = false;
-                if (settleTimer) { clearT(settleTimer); settleTimer = null; }
                 if (answerTimer) clearT(answerTimer);
                 answerTimer = setT(endAnswer, ANSWER_MAX_MS);
+                if (!opts.inGame()) {
+                    // A login line (such as the creation confirm) gets no
+                    // Char.Input.Done, and the welcome burst arrives after
+                    // Char, so a quiet gap ends this answer instead.
+                    settling = true;
+                    armSettle();
+                } else {
+                    settling = false;
+                    if (settleTimer) { clearT(settleTimer); settleTimer = null; }
+                }
             },
+
+            // The player is typing, as xterm clears for a key in its own
+            // hidden input, so the screen reader has no stale text to return
+            // to.
+            keyTyped: function () { if (on) opts.clearSpoken(); },
 
             // Char.Input.Done for line seq: the answer is over once the server
             // has finished the last line sent. A Done for an earlier line

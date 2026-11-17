@@ -3385,6 +3385,8 @@
         })();
 
         textInput.addEventListener('keydown', function(event) {
+            // Typing clears the spoken region, as xterm does for its own input.
+            screenReader.keyTyped();
             // Macro support: F-keys
             if (event.key.substring(0, 1) === "F" && event.key.length === 2) {
                 let macroNum = event.key.substring(1);
