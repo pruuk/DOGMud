@@ -100,9 +100,19 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - A reply of the form `MTTS <n>` sets `ClientSettings.ScreenReader` from bit 64. Other replies (client name, terminal type) are logged at debug level and otherwise ignored.
 - A client that answers `WONT` or never answers changes nothing, and the creation question is asked as today.
 
+### 7a. Answers are read in full (owner ruling 2026-11-17, option 1)
+
+- xterm stops speaking at 21 lines per reset. A timing rule cannot help a single long answer (a shop list, a quest menu, a help page, the lockpicking table), because the answer arrives as one burst.
+- So an answer to a typed line is read in full: from the moment the line is sent until the server's `Char.Input.Done` for it (`modules/gmcp/gmcp.InputDone.go`, queued after that command's text), the client writes server text in pieces of at most 18 lines and resets xterm's spoken region after each piece is parsed (`term.write`'s callback).
+- Output nobody asked for (combat rounds, chat, arrivals) keeps xterm's 20-line limit as flood protection, with a reset after 2 seconds of quiet (a combat round is 4 seconds).
+- A lost `Char.Input.Done` ends the answer after 15 seconds. Before login there is no `Char.Input.Done`, and login text is short, so a sent line starts no answer there.
+- With the mode off, server text goes straight to xterm.
+- A player can stop speech at any time with their screen reader's own key. Paging (#842) remains the way to make long menus quick to hear.
+- Not verified: how NVDA, VoiceOver and Narrator handle a reset in the middle of an answer, since xterm's region is `assertive`. Checked in the owner's Narrator test and Malia's device test (#834) before merge.
+
 ### 8. Found in the plan review (2026-11-17), verified against source
 
-- **xterm's speech stops for good after 20 lines on this page.** Its spoken region counts lines and goes silent at 21 until `_clearLiveRegion()` runs, which xterm calls only on a key in its own hidden input or when that input loses focus (`xterm.4.19.0.js`, `_onKey` and `onBlur`). Players type in `#command-input`, so neither fires. The page resets the region itself (private API, as `termfit.js` already does; a jstest fails if the names change): on every Enter, and after output has been quiet for 2 seconds. Each burst then gets its own 20 lines, as ruling 5 assumes.
+- **xterm's speech stops for good after 20 lines on this page.** Its spoken region counts lines and goes silent at 21 until `_clearLiveRegion()` runs, which xterm calls only on a key in its own hidden input or when that input loses focus (`xterm.4.19.0.js`, `_onKey` and `onBlur`). Players type in `#command-input`, so neither fires. The page resets the region itself (private API, as `termfit.js` already does; a jstest fails if the names change), as section 7a sets out: answers to a typed line are read in full, and unprompted bursts get their own 20 lines each.
 - **A prompt already on screen is never read**, because only text written after the mode turns on reaches the spoken region. Typing the phrase before login therefore writes "Screen reader mode is on." and then repeats the waiting prompt.
 - **"Off" cannot be spoken by xterm**, because turning the mode off removes its spoken region at once. A visually hidden `role="status"` region speaks it.
 - **Players reach the game at `/webclient`**, which wraps the game page in an iframe under the site header. The site header gets the same hidden instruction as its first element, on that path only.

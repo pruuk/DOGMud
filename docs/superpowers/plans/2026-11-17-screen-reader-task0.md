@@ -1158,8 +1158,16 @@ EOF
 Facts this module is built on (read from `static/js/xterm.4.19.0.js`, verified by the plan review):
 - `term.setOption('screenReaderMode', v)` creates or disposes xterm's `AccessibilityManager` at runtime. It puts `.xterm-accessibility` (a row mirror, `.xterm-accessibility-tree`, and an `aria-live="assertive"` `.live-region`) inside the `.xterm` element.
 - Only text written AFTER the mode is on reaches the live region. A prompt already on screen is never read.
-- The live region appends text and counts lines; at 21 lines it appends "Too much output to announce" and stays silent until `_clearLiveRegion()` resets it. xterm calls that only on a key in its own hidden input or when that input loses focus. Players type in `#command-input`, so without help speech stops for good after 20 lines. The page therefore resets it (private API, as `termfit.js` already reaches into `term._core`; xterm is pinned at 4.19, #908): on every Enter, and after output has been quiet for `QUIET_MS`, so each burst gets its own 20 lines.
+- The live region appends text and counts lines; at 21 lines it appends "Too much output to announce" and stays silent until `_clearLiveRegion()` resets it. xterm calls that only on a key in its own hidden input or when that input loses focus. Players type in `#command-input`, so without help speech stops for good after 20 lines. The page therefore resets it itself (private API, as `termfit.js` already reaches into `term._core`; xterm is pinned at 4.19, #908; the jstest below fails if the names change).
 - Turning the mode off disposes the live region at once, so "off" must be spoken by our own status region.
+- `term.write(data, callback)` calls back once `data` is parsed, so a reset between two writes lands between them.
+
+Owner ruling 2026-11-17 (option 1): **an answer to a typed command is read in full; only unprompted output keeps the 20-line limit.**
+- An answer runs from the moment a typed line is sent until the server's `Char.Input.Done` for it (`modules/gmcp/gmcp.InputDone.go`: queued after that command's text, logged-in web players only). The module counts lines sent and Done replies; a count stuck by a lost reply ends after `ANSWER_MAX_MS`.
+- While an answer runs, server text is written in pieces of at most `CHUNK_LINES` lines, and the spoken region resets after each piece is parsed, so nothing in an answer is cut off.
+- Outside an answer, text is written whole and the region resets after `QUIET_MS` of quiet (a combat round is 4 seconds, `Timing.RoundSeconds`), so each unprompted burst gets its own 20 lines.
+- With the mode off, every write goes straight to xterm: nothing changes for sighted players.
+- Writes stay in order: once a piece is waiting for its callback, later text queues behind it.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1190,6 +1198,7 @@ function check(name, ok, detail) {
 var xterm = fs.readFileSync(path.join(pub, 'static', 'js', 'xterm.4.19.0.js'), 'utf8');
 check('xterm has _accessibilityManager', xterm.indexOf('this._accessibilityManager=new') >= 0, '');
 check('xterm has _clearLiveRegion', xterm.indexOf('_clearLiveRegion=function') >= 0, '');
+check('xterm stops at 21 lines (CHUNK_LINES must stay under it)', xterm.indexOf('21===this._liveRegionLineCount') >= 0 && SR.CHUNK_LINES < 21, '');
 
 // ---- matchPhrase -----------------------------------------------------------
 
@@ -1203,7 +1212,7 @@ check('other text', SR.matchPhrase('screen reader', false) === null, '');
 check('a command', SR.matchPhrase('look', false) === null, '');
 check('not a string', SR.matchPhrase(undefined, false) === null, '');
 
-// ---- create ----------------------------------------------------------------
+// ---- fakes -----------------------------------------------------------------
 
 // A fake clock: timers run only when the test advances time.
 function clock() {
@@ -1225,10 +1234,19 @@ function fakes(saved) {
     var f = {
         mode: null, label: null, hint: null, status: '', lines: [], reports: [], setCommands: 0,
         cleared: 0, waiting: ['Username (or "new"): '], setOk: true,
+        written: [],        // every piece handed to xterm, in order
+        events: [],         // 'w:<piece>' and 'clear', interleaved, in order
+        callbacks: [],      // write callbacks not yet run (a piece being parsed)
         store: saved === undefined ? {} : { screenReader: saved }, inGame: false, clock: c
     };
+    f.parse = function () { var cb = f.callbacks.shift(); if (cb) cb(); };
+    f.parseAll = function () { while (f.callbacks.length) f.parse(); };
     f.opts = {
         term: { setOption: function (k, v) { if (k === 'screenReaderMode') f.mode = v; } },
+        termWrite: function (data, cb) {
+            f.written.push(data); f.events.push('w:' + data);
+            if (cb) f.callbacks.push(cb);
+        },
         storage: {
             getItem: function (k) { return Object.prototype.hasOwnProperty.call(f.store, k) ? f.store[k] : null; },
             setItem: function (k, v) { f.store[k] = v; }
@@ -1240,7 +1258,7 @@ function fakes(saved) {
         setCommand: function () { f.setCommands++; return f.setOk; },
         writeLine: function (t) { f.lines.push(t); },
         currentLines: function () { return f.waiting.slice(); },
-        clearSpoken: function () { f.cleared++; },
+        clearSpoken: function () { f.cleared++; f.events.push('clear'); },
         inGame: function () { return f.inGame; },
         setTimeout: c.setTimeout,
         clearTimeout: c.clearTimeout
@@ -1250,6 +1268,15 @@ function fakes(saved) {
     return f;
 }
 
+function nLines(n, tag) {
+    var s = '';
+    for (var i = 1; i <= n; i++) s += tag + i + '\r\n';
+    return s;
+}
+function countNewlines(s) { return (s.match(/\n/g) || []).length; }
+
+// ---- load and storage ------------------------------------------------------
+
 var f = fakes();
 var sr = SR.create(f.opts);
 sr.load();
@@ -1257,10 +1284,6 @@ check('fresh device: off', f.mode === false && !sr.isOn(), 'mode ' + f.mode);
 check('fresh device: label names the phrase', f.label === SR.LABEL_OFF, f.label);
 check('fresh device: hint names the phrase', f.hint === SR.HINT_OFF, f.hint);
 check('fresh device: nothing reported or stored', f.reports.length === 0 && !('screenReader' in f.store), JSON.stringify(f.store));
-sr.noteInput();
-sr.noteOutput();
-f.clock.advance(SR.QUIET_MS);
-check('fresh device: never resets a region that is off', f.cleared === 0, 'cleared ' + f.cleared);
 
 f = fakes('true');
 sr = SR.create(f.opts);
@@ -1275,6 +1298,126 @@ sr.load();
 check('blocked storage: off, no throw', f.mode === false, '');
 sr.phrase('on');
 check('blocked storage: still turns on', f.mode === true, '');
+
+// ---- writing: off means untouched ------------------------------------------
+
+f = fakes();
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+var big = nLines(50, 'L');
+sr.inputSent();
+sr.write(big);
+check('off: written whole, once, no callback', f.written.length === 1 && f.written[0] === big && f.callbacks.length === 0, JSON.stringify(f.written.length));
+f.clock.advance(SR.QUIET_MS * 3);
+check('off: never resets a region that is off', f.cleared === 0, 'cleared ' + f.cleared);
+
+// ---- writing: an answer is read in full ------------------------------------
+
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.inputSent();
+check('sending a line resets the region', f.cleared === 1, 'cleared ' + f.cleared);
+sr.write(big);
+f.parseAll();
+check('answer: every line written, in order', f.written.join('') === big, '');
+check('answer: no piece over CHUNK_LINES', f.written.every(function (p) { return countNewlines(p) <= SR.CHUNK_LINES; }), f.written.map(countNewlines).join());
+check('answer: more than one piece for 50 lines', f.written.length >= 3, f.written.length);
+// After every piece is parsed, the region is reset before the next piece.
+var ok = true, sinceClear = 0;
+f.events.forEach(function (e) {
+    if (e === 'clear') { sinceClear = 0; return; }
+    sinceClear += countNewlines(e.slice(2));
+    if (sinceClear > SR.CHUNK_LINES) ok = false;
+});
+check('answer: never more than CHUNK_LINES between resets', ok, f.events.join(' | ').slice(0, 300));
+
+// Order holds when more text arrives while a piece is still being parsed.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.inputSent();
+sr.write(nLines(30, 'A'));
+sr.write('after\r\n');
+check('queued: later text waits for the piece being parsed', f.written.join('').indexOf('after') < 0, f.written.join(''));
+f.parseAll();
+check('queued: everything written, in order', f.written.join('') === nLines(30, 'A') + 'after\r\n', f.written.join(''));
+
+// The answer ends at Char.Input.Done; later output is written whole.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.inputSent();
+sr.write('reply\r\n');
+f.parseAll();
+sr.inputDone();
+f.written = []; f.events = [];
+sr.write(big);
+check('after Done: unprompted text written whole', f.written.length === 1 && f.written[0] === big, f.written.length);
+f.parseAll();
+
+// Two lines sent, one Done: still answering until the second Done.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.inputSent();
+sr.inputSent();
+sr.inputDone();
+f.written = [];
+sr.write(big);
+f.parseAll();
+check('two sent, one Done: still answering', f.written.length >= 3, f.written.length);
+sr.inputDone();
+sr.inputDone(); // an extra Done (a line sent by automation) never goes below zero
+f.written = [];
+sr.write(big);
+f.parseAll();
+check('both Done: whole again, count not negative', f.written.length === 1, f.written.length);
+
+// A lost Done does not leave answers on forever.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.inputSent();
+f.clock.advance(SR.ANSWER_MAX_MS);
+f.written = [];
+sr.write(big);
+f.parseAll();
+check('lost Done: answer ends after ANSWER_MAX_MS', f.written.length === 1, f.written.length);
+
+// Before login there is no Done, so a sent line does not start an answer.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = false;
+sr.inputSent();
+f.written = [];
+sr.write(big);
+f.parseAll();
+check('before login: written whole', f.written.length === 1, f.written.length);
+
+// ---- writing: unprompted output resets after a quiet gap -------------------
+
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.write('round 1\r\n');
+f.clock.advance(SR.QUIET_MS - 1);
+sr.write('round 1 more\r\n');
+f.clock.advance(SR.QUIET_MS - 1);
+check('output still arriving: no reset', f.cleared === 0, 'cleared ' + f.cleared);
+f.clock.advance(1);
+check('output quiet: reset once', f.cleared === 1, 'cleared ' + f.cleared);
+check('QUIET_MS is under a 4 second combat round', SR.QUIET_MS < 4000, SR.QUIET_MS);
+
+// ---- the phrase ------------------------------------------------------------
 
 // Before login: turn on, remember, report, then say so and repeat the
 // waiting prompt (a prompt already on screen is never read by xterm).
@@ -1291,20 +1434,6 @@ sr.phrase('off');
 check('phrase off: mode off and remembered', f.mode === false && f.store.screenReader === 'false', '');
 check('phrase off: spoken by the status region', f.status === SR.SAID_OFF, f.status);
 check('phrase off: shown in the game window', f.lines[f.lines.length - 1] === SR.SAID_OFF, f.lines.join('|'));
-
-// Resetting xterm's spoken region: at once on input, after a quiet gap on output.
-f = fakes('true');
-sr = SR.create(f.opts);
-sr.load();
-sr.noteInput();
-check('input resets the region', f.cleared === 1, 'cleared ' + f.cleared);
-sr.noteOutput();
-f.clock.advance(SR.QUIET_MS - 1);
-sr.noteOutput();
-f.clock.advance(SR.QUIET_MS - 1);
-check('output still arriving: no reset', f.cleared === 1, 'cleared ' + f.cleared);
-f.clock.advance(1);
-check('output quiet: reset once', f.cleared === 2, 'cleared ' + f.cleared);
 
 // In game, account differs: send set screenreader once; the server's line speaks.
 f = fakes();
@@ -1348,17 +1477,22 @@ check('account on: mode on, remembered', f.mode === true && f.store.screenReader
 sr.account(false);
 check('account off: mode off, remembered', f.mode === false && f.store.screenReader === 'false', '');
 
-// Logged out: the account is forgotten. inGame stays true here so only
-// loggedOut can explain the missing set command.
+// Logged out: the account and any open answer are forgotten. inGame stays
+// true here so only loggedOut can explain the missing set command.
 f = fakes();
 sr = SR.create(f.opts);
 sr.load();
 f.inGame = true;
 sr.account(false);
+sr.inputSent();
 sr.loggedOut();
 sr.phrase('on');
 check('after logout: no set command', f.setCommands === 0, 'set commands ' + f.setCommands);
 check('after logout: local line', f.lines[0] === SR.SAID_ON, f.lines.join('|'));
+f.written = [];
+sr.write(big);
+f.parseAll();
+check('after logout: no answer left open', f.written.length === 1, f.written.length);
 
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }
 console.log('all passed');
@@ -1384,13 +1518,17 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
 // phrase here instead of sending it. The choice is remembered on this
 // device, reported to the server (Client.Display), and follows the account's
 // setting (Char.Info.screenreader) once a character is logged in. Sighted
-// players never see any of it, and xterm's mode stays off for them.
+// players never see any of it: with the mode off, write() hands text
+// straight to xterm.
 //
 // xterm 4.19 stops speaking after 20 lines until its spoken region is reset,
 // and resets it only on a key in its own hidden input, which players never
-// use. So the page calls noteInput on every Enter and noteOutput on every
-// write, and this module resets the region on input and after output has
-// been quiet for QUIET_MS: each burst gets its own 20 lines.
+// use. So this module resets it (owner ruling 2026-11-17):
+//   - an answer to a typed line (from inputSent until the server's
+//     Char.Input.Done) is written in pieces of CHUNK_LINES, with a reset
+//     after each piece is parsed, so it is read in full;
+//   - other output is written whole, with a reset after QUIET_MS of quiet,
+//     so each unprompted burst gets its own 20 lines.
 //
 // tools/jstest/screenreader.test.js is the regression guard.
 
@@ -1405,7 +1543,9 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
     'use strict';
 
     var STORAGE_KEY = 'screenReader';
-    var QUIET_MS = 2000;
+    var QUIET_MS = 2000;        // under a 4 second combat round
+    var CHUNK_LINES = 18;       // under xterm's 21-line cut-off
+    var ANSWER_MAX_MS = 15000;  // a lost Char.Input.Done ends the answer
     var LABEL_OFF = 'Game commands. Screen reader users: type screen reader on, then press Enter.';
     var LABEL_ON = 'Game commands.';
     var HINT_OFF = 'Screen reader users: type screen reader on, then press Enter.';
@@ -1425,19 +1565,41 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
         return null;
     }
 
-    // opts: term (xterm, for setOption); storage (localStorage, any call may
-    // throw); input (the command box); hint (the hidden first paragraph);
-    // status (a visually hidden role="status" element); report(on) (sends
+    // splitLines cuts text into pieces of at most max newline-ended lines;
+    // the last piece may end without a newline (a prompt).
+    function splitLines(text, max) {
+        var pieces = [], start = 0, count = 0;
+        for (var i = 0; i < text.length; i++) {
+            if (text.charAt(i) !== '\n') continue;
+            count++;
+            if (count === max) {
+                pieces.push(text.slice(start, i + 1));
+                start = i + 1;
+                count = 0;
+            }
+        }
+        if (start < text.length) pieces.push(text.slice(start));
+        return pieces;
+    }
+
+    // opts: term (xterm, for setOption); termWrite(data, cb) (xterm's write,
+    // cb once data is parsed); storage (localStorage, any call may throw);
+    // input (the command box); hint (the hidden first paragraph); status (a
+    // visually hidden role="status" element); report(on) (sends
     // Client.Display); setCommand() (sends "set screenreader", false when it
-    // could not); writeLine(text) (writes a line into the game window);
-    // currentLines() (the waiting prompt, as lines); clearSpoken() (resets
-    // xterm's spoken region); inGame() (true while a character is logged in);
-    // setTimeout/clearTimeout (the window's, or a test clock).
+    // could not); writeLine(text) (writes a local line into the game
+    // window); currentLines() (the waiting prompt, as lines); clearSpoken()
+    // (resets xterm's spoken region); inGame() (true while a character is
+    // logged in); setTimeout/clearTimeout (the window's, or a test clock).
     function create(opts) {
         var setT = opts.setTimeout || setTimeout, clearT = opts.clearTimeout || clearTimeout;
         var on = false;
         var account = null;    // the account's setting, once Char.Info names it
         var quietTimer = null;
+        var pending = 0;       // typed lines sent and not yet Done
+        var answerTimer = null;
+        var queue = [];        // pieces waiting for the one being parsed
+        var parsing = false;
 
         function remember(value) {
             try { opts.storage.setItem(STORAGE_KEY, JSON.stringify(value)); } catch (e) { /* storage blocked: this visit only */ }
@@ -1458,6 +1620,35 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
             opts.status.textContent = text;
         }
 
+        function endAnswer() {
+            pending = 0;
+            if (answerTimer) { clearT(answerTimer); answerTimer = null; }
+        }
+
+        function armQuiet() {
+            if (quietTimer) clearT(quietTimer);
+            quietTimer = setT(function () { quietTimer = null; if (on) opts.clearSpoken(); }, QUIET_MS);
+        }
+
+        // pump writes the next queued piece; a piece that needs a reset after
+        // it holds the queue until xterm has parsed it.
+        function pump() {
+            while (!parsing && queue.length) {
+                var item = queue.shift();
+                if (item.resetAfter) {
+                    parsing = true;
+                    opts.termWrite(item.text, function () {
+                        parsing = false;
+                        if (on) opts.clearSpoken();
+                        pump();
+                    });
+                } else {
+                    opts.termWrite(item.text);
+                    if (on) armQuiet();
+                }
+            }
+        }
+
         return {
             isOn: function () { return on; },
 
@@ -1467,6 +1658,41 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
                 var saved = false;
                 try { saved = JSON.parse(opts.storage.getItem(STORAGE_KEY) || 'false') === true; } catch (e) { saved = false; }
                 show(saved);
+            },
+
+            // write is the page's only way to put server text in the game
+            // window.
+            write: function (text) {
+                if (!on && !parsing && !queue.length) {
+                    opts.termWrite(text);
+                    return;
+                }
+                if (on && pending > 0) {
+                    splitLines(text, CHUNK_LINES).forEach(function (piece) {
+                        queue.push({ text: piece, resetAfter: true });
+                    });
+                } else {
+                    queue.push({ text: text, resetAfter: false });
+                }
+                pump();
+            },
+
+            // A typed line went to the server: reset now, and, once logged in
+            // (Char.Input.Done is sent only then), read its answer in full.
+            inputSent: function () {
+                if (on) opts.clearSpoken();
+                if (!opts.inGame()) return;
+                pending++;
+                if (answerTimer) clearT(answerTimer);
+                answerTimer = setT(endAnswer, ANSWER_MAX_MS);
+            },
+
+            // Char.Input.Done: the server finished one typed line. A line
+            // sent by automation also gets one, so the count never goes
+            // below zero.
+            inputDone: function () {
+                if (pending > 0) pending--;
+                if (pending === 0) endAnswer();
             },
 
             // The player typed the phrase: which is 'on' or 'off'.
@@ -1502,25 +1728,18 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
                 }
             },
 
-            // The player pressed Enter: a fresh burst, so a fresh 20 lines.
-            noteInput: function () {
-                if (on) opts.clearSpoken();
-            },
-
-            // The game wrote text: reset the spoken region once it goes quiet.
-            noteOutput: function () {
-                if (!on) return;
-                if (quietTimer) clearT(quietTimer);
-                quietTimer = setT(function () { quietTimer = null; opts.clearSpoken(); }, QUIET_MS);
-            },
-
-            // The connection closed: the next login names the account again.
-            loggedOut: function () { account = null; }
+            // The connection closed: the next login names the account again,
+            // and no answer is still running.
+            loggedOut: function () {
+                account = null;
+                endAnswer();
+            }
         };
     }
 
     return {
         STORAGE_KEY: STORAGE_KEY, QUIET_MS: QUIET_MS,
+        CHUNK_LINES: CHUNK_LINES, ANSWER_MAX_MS: ANSWER_MAX_MS,
         LABEL_OFF: LABEL_OFF, LABEL_ON: LABEL_ON,
         HINT_OFF: HINT_OFF, HINT_ON: HINT_ON,
         SAID_ON: SAID_ON, SAID_OFF: SAID_OFF,
@@ -1529,6 +1748,8 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
     };
 }));
 ```
+
+Note on the "in game, account off" test: `setCommand` sends `set screenreader`, which is itself a typed line. The page calls `inputSent` only for lines the player sends through the Enter handler, so the module does not count it; its `Char.Input.Done` is absorbed by the never-below-zero rule.
 
 - [ ] **Step 4: Run it to see it pass**
 
@@ -1551,7 +1772,7 @@ EOF
 ### Task 7: Wire the page
 
 **Files:**
-- Modify: `_datafiles/html/public/webclient-pure.html` (script tags `:234`, `<body>` `:244`, `#command-input` `:310`, `displayReport` `:540-544`, `Char` handler `:903-906`, `socket.onopen` `:3044` with `companionGlue.disconnected()` at `:3075`, Enter handler `:3342`, server text write `:3205`)
+- Modify: `_datafiles/html/public/webclient-pure.html` (script tags `:234`, `<body>` `:244`, `#command-input` `:310`, `displayReport` `:540-544`, `Char` handler `:903-906`, `Char.Input.Done` handler `:1059-1064`, `socket.onopen` `:3044` with `companionGlue.disconnected()` at `:3075`, server text write `:3205`, Enter handler `:3342` and its `SendData(line)` call)
 - Modify: `_datafiles/html/public/_header.html` (after `<body>` at `:38`)
 - Modify: `_datafiles/html/public/static/css/dashboard.css` (beside `.visually-hidden`, `:1959`)
 - Modify: `_datafiles/html/public/static/css/gomud.css` (add `.visually-hidden`; it has none)
@@ -1631,6 +1852,7 @@ Replace the `displayReport` creation (`:540-544`) with:
         // player typed "screen reader on" here before, or their account has it.
         var screenReader = window.ScreenReader.create({
             term: term,
+            termWrite: function (data, cb) { term.write(data, cb); },
             storage: (function () { try { return window.localStorage; } catch (e) { return null; } })(),
             input: document.getElementById('command-input'),
             hint: document.getElementById('sr-hint'),
@@ -1665,7 +1887,7 @@ Replace the `displayReport` creation (`:540-544`) with:
         screenReader.load();
 ```
 
-(`screenReader` is used inside `send` only when a report goes out, after this runs. `inGame` is declared with `let` further down; `inGame()` is only called on a typed phrase, after the page has loaded.)
+(`screenReader` is used inside `send` only when a report goes out, after this runs. `inGame` is declared with `let` further down; `inGame()` is only called after the page has loaded.)
 
 - [ ] **Step 7: Follow the account**
 
@@ -1679,7 +1901,17 @@ In the `"Char"` update handler, after the `companionGlue.hello` block (`:903-906
                 }
 ```
 
-- [ ] **Step 8: Forget the account on a new connection**
+- [ ] **Step 8: The end of an answer**
+
+In the `"Char.Input.Done"` handler (`:1059-1064`), after `if (sendWait) sendWait.done(d.seq, d.menu === true);`, add:
+
+```js
+                // The answer to a typed line is complete: back to the 20-line
+                // limit for unprompted output (static/js/screenreader.js).
+                screenReader.inputDone();
+```
+
+- [ ] **Step 9: Forget the account on a new connection**
 
 In `socket.onopen`, beside `if (companionGlue) { companionGlue.disconnected(); }` (`:3075`), add:
 
@@ -1687,24 +1919,31 @@ In `socket.onopen`, beside `if (companionGlue) { companionGlue.disconnected(); }
                 screenReader.loggedOut();
 ```
 
-- [ ] **Step 9: Tell the switch about output**
+- [ ] **Step 10: Server text goes through the switch**
 
-Directly after the server text write `term.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);` (`:3205`), add:
+Replace the server text write (`:3205`):
 
 ```js
-                screenReader.noteOutput();
+                term.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);
 ```
 
-- [ ] **Step 10: Catch the phrase, and reset on input**
+with:
+
+```js
+                // Through the screen reader switch (static/js/screenreader.js):
+                // straight to xterm when the mode is off.
+                screenReader.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);
+```
+
+Leave the page's own local writes (`term.writeln` status lines, the reconnect dots) as they are.
+
+- [ ] **Step 11: Catch the phrase; mark a sent line**
 
 In the Enter branch (`if (event.key === 'Enter') {` at `:3342`), as its first statements, before the command history push, add:
 
 ```js
-                // A new command is a new burst: give the screen reader a fresh
-                // 20 lines (static/js/screenreader.js).
-                screenReader.noteInput();
-                // "screen reader on" / "off" is the client's own switch:
-                // never sent, never in history.
+                // "screen reader on" / "off" is the client's own switch
+                // (static/js/screenreader.js): never sent, never in history.
                 var srPhrase = window.ScreenReader.matchPhrase(event.target.value, textInput.type === 'password');
                 if (srPhrase) {
                     screenReader.phrase(srPhrase);
@@ -1713,7 +1952,21 @@ In the Enter branch (`if (event.key === 'Enter') {` at `:3342`), as its first st
                 }
 ```
 
-- [ ] **Step 11: Run the JS gates**
+Then, in the same branch, change:
+
+```js
+                var sent = SendData(line);
+```
+
+to:
+
+```js
+                var sent = SendData(line);
+                // Its answer is read in full, up to the server's Char.Input.Done.
+                if (sent) screenReader.inputSent();
+```
+
+- [ ] **Step 12: Run the JS gates**
 
 Run (Git Bash, repo root):
 
@@ -1725,7 +1978,7 @@ for t in tools/webclient-tests/*.js; do node "$t" >/dev/null || echo "FAIL $t"; 
 
 Expected: no `SYNTAX` or `FAIL` lines. (Compare with `.github/workflows/validate.yml`'s javascript job and run exactly what it runs if it differs.)
 
-- [ ] **Step 12: Commit**
+- [ ] **Step 13: Commit**
 
 ```bash
 git add _datafiles/html/public/webclient-pure.html _datafiles/html/public/_header.html _datafiles/html/public/static/css/dashboard.css _datafiles/html/public/static/css/gomud.css
@@ -1924,13 +2177,34 @@ async function type(page, text) {
     ok('creation: combat line printed', await waitPrinted(page, /Combat text is set to light/, 10000));
     ok('creation: screen reader question never printed', !/Are you using a screen reader/.test(await printed(page)));
 
-    // Speech keeps going past 20 lines: entering the world prints well over
+    // Record everything handed to the screen reader from here on: the region
+    // is reset between pieces, so its final text is only the last piece.
+    await page.evaluate(() => {
+        window.__spoken = [];
+        const r = document.querySelector('.xterm .live-region');
+        new MutationObserver(() => { if (r.textContent) window.__spoken.push(r.textContent); })
+            .observe(r, { childList: true, characterData: true, subtree: true });
+    });
+    const spokenLog = () => page.evaluate(() => window.__spoken.join('\n'));
+
+    // Speech keeps going past 20 lines: entering the world printed well over
     // 20, and a command afterwards must still be spoken.
     await page.waitForTimeout(3000);
     await type(page, 'look');
     await page.waitForTimeout(1500);
-    const sp2 = await spoken(page) || '';
-    ok('past 20 lines: a new command is still spoken', sp2.length > 0 && !/Too much output/.test(sp2.split('\n')[0]), sp2.slice(0, 200));
+    ok('past 20 lines: a new command is still spoken', (await spokenLog()).length > 0, await spokenLog());
+
+    // An answer over 20 lines is read to its end (owner ruling, option 1).
+    // help set is over 40 lines at 80 columns; its last line names help submission.
+    await page.evaluate(() => { window.__spoken = []; });
+    await type(page, 'help set');
+    await page.waitForTimeout(4000);
+    const helpPrinted = (await printed(page)).split('\n').filter(l => l.trim());
+    const helpLast = helpPrinted.filter(l => /help submission/.test(l)).pop() || '';
+    const heard = await spokenLog();
+    ok('long answer: over 20 lines printed', helpPrinted.length > 20, helpPrinted.length);
+    ok('long answer: its last line was spoken', helpLast !== '' && heard.indexOf(helpLast.trim()) >= 0, helpLast);
+    ok('long answer: never cut off', !/Too much output/.test(heard), heard.slice(-300));
 
     // The account came back on in Char.Info; set screenreader turns it off everywhere.
     ok('in game: mode still on', await page.locator('.xterm-accessibility').count() === 1);
@@ -1979,7 +2253,7 @@ Plus the JS loop from Task 7 Step 8. Kill the test server by its PID.
 
 - [ ] **Step 5: Owner test (Windows Narrator)**
 
-Hand the owner a short punchlist, player steps only: start Narrator (Ctrl+Win+Enter), open the local web client, hear the instruction, type `screen reader on`, create a character by ear, hear that combat text is light, fight the first rat in the Pothole Coulee, then `set screenreader` and hear it stop. Wait for his result.
+Hand the owner a short punchlist, player steps only: start Narrator (Ctrl+Win+Enter), open the local web client, hear the instruction, type `screen reader on`, create a character by ear, hear that combat text is light, type `help set` and hear it read to the last line without a break, fight the first rat in the Pothole Coulee, then `set screenreader` and hear it stop. Ask specifically whether any part of `help set` was cut off or skipped mid-sentence: that is the unverified risk (xterm's spoken region is assertive, and the page resets it between pieces). Wait for his result.
 
 - [ ] **Step 6: PR**
 
