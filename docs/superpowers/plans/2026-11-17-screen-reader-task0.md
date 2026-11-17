@@ -129,6 +129,19 @@ func TestTurnOnScreenReader_AlreadyLight(t *testing.T) {
 	require.Equal(t, []string{`screenreader`}, drainSettingChanges(t))
 }
 
+// A reported screen reader: the notices, then the combat lines; nothing when
+// the setting is already on.
+func TestTurnOnReportedScreenReader(t *testing.T) {
+	drainSettingChanges(t)
+	u := &UserRecord{UserId: 7}
+	require.Equal(t, append(append([]string{}, ScreenReaderOnNotices...), ScreenReaderCombatLines...), u.TurnOnReportedScreenReader())
+	require.True(t, u.ScreenReader)
+	light := &UserRecord{UserId: 7, CombatVerbosity: `light`}
+	require.Equal(t, ScreenReaderOnNotices, light.TurnOnReportedScreenReader(), "already light: no combat lines")
+	require.Empty(t, u.TurnOnReportedScreenReader(), "already on: nothing")
+	drainSettingChanges(t)
+}
+
 // Already on: nothing changes and nothing fires.
 func TestTurnOnScreenReader_AlreadyOn(t *testing.T) {
 	drainSettingChanges(t)
@@ -141,7 +154,7 @@ func TestTurnOnScreenReader_AlreadyOn(t *testing.T) {
 
 - [ ] **Step 3: Run it to see it fail**
 
-Run: `go test ./internal/users/ -run TestTurnOnScreenReader -count=1`
+Run: `go test ./internal/users/ -run TestTurnOn -count=1`
 Expected: FAIL, `u.TurnOnScreenReader undefined`.
 
 - [ ] **Step 4: Implement**
@@ -152,6 +165,8 @@ Create `internal/users/screenreader.go`:
 package users
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 )
@@ -166,6 +181,30 @@ var ScreenReaderCombatLines = []string{
 	`Type set combatverbosity full to see every blow.`,
 }
 
+// ScreenReaderOnNotices tell a player that their connection turned the
+// account's screen reader setting on, and how to turn it off. Two lines,
+// each under 80 columns, because login text reaches telnet unwrapped.
+var ScreenReaderOnNotices = []string{
+	`Screen reader mode is on for this character.`,
+	`Type set screenreader to turn it off.`,
+}
+
+// TurnOnReportedScreenReader turns u's setting on for a connection that
+// reported a screen reader, and returns the lines to tell the player: the
+// notices, then the combat lines when combat text changed. It returns none
+// when the setting was already on. A caller must own u: before login
+// publishes it, or on MainWorker.
+func (u *UserRecord) TurnOnReportedScreenReader() []string {
+	if u.ScreenReader {
+		return nil
+	}
+	lines := slices.Clone(ScreenReaderOnNotices)
+	if u.TurnOnScreenReader() {
+		lines = append(lines, ScreenReaderCombatLines...)
+	}
+	return lines
+}
+
 // TurnOnScreenReader is the only way an account's screen reader setting
 // turns on (the creation answer, a connection's report at login, and set
 // screenreader). It sets the flag and saves light combat text, firing a
@@ -173,7 +212,9 @@ var ScreenReaderCombatLines = []string{
 // so the caller can send ScreenReaderCombatLines. When the setting is
 // already on it does nothing and reports false. Both values are saved with
 // the account at its next save (autosave, logout or creation), as every set
-// command's are.
+// command's are. At creation the user has no id yet (UserId 0), so the
+// events are dropped by their listeners; the full Char push at spawn carries
+// the setting to the client instead.
 func (u *UserRecord) TurnOnScreenReader() bool {
 	if u.ScreenReader {
 		return false
@@ -191,7 +232,7 @@ func (u *UserRecord) TurnOnScreenReader() bool {
 
 - [ ] **Step 5: Run it to see it pass**
 
-Run: `go test ./internal/users/ -run TestTurnOnScreenReader -count=1`
+Run: `go test ./internal/users/ -run TestTurnOn -count=1`
 Expected: PASS.
 
 - [ ] **Step 6: `set screenreader` turns on through it**
@@ -230,6 +271,9 @@ func cmdSetScreenReader(user *users.UserRecord, args []string) (bool, error) {
 	}
 
 	if !want {
+		// The flag goes off before the line is sent, so "OFF" itself is
+		// rendered without screen reader stripping. It has no art, so it reads
+		// the same either way.
 		user.ScreenReader = false
 		user.SendText(messaging.CategorySystem, `ScreenReader mode toggled <ansi fg="red">OFF</ansi>.`)
 		events.AddToQueue(events.UserSettingChanged{
@@ -297,7 +341,7 @@ Expected: build succeeds, all PASS.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add internal/connections/clientsettings.go internal/users/screenreader.go internal/users/screenreader_test.go internal/usercommands/set.go internal/usercommands/<the test file you added to>
+git add internal/connections/clientsettings.go internal/users/screenreader.go internal/users/screenreader_test.go internal/usercommands/set.go internal/usercommands/usercommands_test.go
 git commit -F - <<'EOF'
 feat(users): TurnOnScreenReader saves light combat text (#733)
 
@@ -462,22 +506,76 @@ func StoreAddressScreenReader(id connections.ConnectionId, raw string) bool {
 
 Pass the value through:
 - `internal/web/web.go:311`: `Listen`'s handler type becomes `func(*websocket.Conn, string, string, string)`; beside `reportedCols := r.URL.Query().Get("cols")` (`:357`) add `reportedSR := r.URL.Query().Get("sr")`, and call `webSocketHandler(conn, clientIP, reportedCols, reportedSR)`. Extend `Listen`'s doc comment: "The fourth is the raw sr value (/ws?sr=1): the player asked for screen reader mode."
-- `main.go:1303`: `func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCols string, reportedSR string)`, with a doc sentence for `reportedSR`. At the splash (`:1395`), after `splashWidth := users.StoreAddressCols(...)`:
+- `main.go:1303`: `func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCols string, reportedSR string)`, with a doc sentence for `reportedSR`. At the splash (`:1395-1397`), replace
 
 ```go
-	// A screen reader hears the words-only splash (the 42 and 30 column
-	// forms), not 24 lines of art.
+	splashTxt, _ := templates.ProcessAtWidth("login/connect-splash", nil, splashWidth)
+```
+
+with
+
+```go
+	// A screen reader gets its own splash (connect-splash.screenreader.template):
+	// no art, no rule of = signs, no spaced-out title, all of which a screen
+	// reader reads symbol by symbol or letter by letter.
+	var splashTxt string
 	if users.StoreAddressScreenReader(connDetails.ConnectionId(), reportedSR) {
-		splashWidth = min(splashWidth, 42)
+		splashTxt, _ = templates.ProcessForWidth("login/connect-splash", nil, true, splashWidth)
+	} else {
+		splashTxt, _ = templates.ProcessAtWidth("login/connect-splash", nil, splashWidth)
 	}
 ```
 
-Run `go build ./... && go test ./internal/users/ ./internal/web/ ./internal/guards/ -count=1`: PASS (`internal/guards/websocket_input_cleaned_test.go` finds `HandleWebSocketConnection` by its name prefix, so the signature change is safe; if it fails, read why before changing anything).
+`templates.processPicked` tries `<name>.screenreader.template` first when the config says screen reader (`internal/templates/templates.go:191-194`), before any width form. Create `_datafiles/world/dogmud/templates/login/connect-splash.screenreader.template`, every line at most 30 columns so the template guard passes at every width:
+
+```
+{{- /* The connect splash for a screen reader: plain words only. No art,
+no rule of = signs and no spaced-out title, which a screen reader reads
+symbol by symbol or letter by letter. Chosen when the web client's
+websocket address carries sr=1 (main.go). */ -}}
+<ansi clear="all"></ansi>
+Welcome to Delusions of
+Grandeur, a MUD set on the
+world of Gaius.
+The Chrysalis awaits.
+```
+
+Write its test first, in a new `internal/inputhandlers/connect_splash_screenreader_test.go` (the package's `loginRenderSetup(t)`, `login_width_test.go:24`, loads the live templates):
+
+```go
+package inputhandlers
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/templates"
+	"github.com/stretchr/testify/require"
+)
+
+// A screen reader's connect splash is plain words at every width: no art,
+// no rule of = signs, no spaced-out title.
+func TestConnectSplash_ScreenReaderIsPlainWords(t *testing.T) {
+	loginRenderSetup(t)
+	for _, w := range []int{30, 42, 80} {
+		out, err := templates.ProcessForWidth("login/connect-splash", nil, true, w)
+		require.NoError(t, err)
+		require.Contains(t, out, `Welcome to Delusions of`, w)
+		require.NotContains(t, out, `===`, w)
+		require.NotContains(t, out, `D e l u s`, w)
+		require.False(t, strings.Contains(out, `*`), "no star art at %d", w)
+	}
+}
+```
+
+Run it before creating the template: FAIL (the 80 base is the art). Create the template: PASS.
+
+Run `go build ./... && go test ./internal/users/ ./internal/web/ ./internal/guards/ ./internal/inputhandlers/ ./internal/templates/ -count=1`: PASS (`internal/guards/websocket_input_cleaned_test.go` finds `HandleWebSocketConnection` by its name prefix, so the signature change is safe; the template guards cover the new template at 30, 42 and 80; if anything fails, read why before changing anything).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add internal/users/screenreader.go internal/users/screenreader_test.go internal/web/web.go main.go modules/gmcp/gmcp.ClientDisplay.go modules/gmcp/gmcp.ClientDisplay_test.go
+git add internal/users/screenreader.go internal/users/screenreader_test.go internal/web/web.go main.go modules/gmcp/gmcp.ClientDisplay.go modules/gmcp/gmcp.ClientDisplay_test.go _datafiles/world/dogmud/templates/login/connect-splash.screenreader.template internal/inputhandlers/connect_splash_screenreader_test.go
 git commit -F - <<'EOF'
 feat(gmcp): Client.Display reports the web client's screen reader switch (#733)
 
@@ -725,7 +823,7 @@ func TestReportedScreenReaderLines(t *testing.T) {
 	lines := reportedScreenReaderLines(off, true)
 	require.True(t, off.ScreenReader)
 	require.Equal(t, `light`, off.CombatVerbosity)
-	require.Equal(t, append(append([]string{}, screenReaderOnNotices...), users.ScreenReaderCombatLines...), lines)
+	require.Equal(t, append(append([]string{}, users.ScreenReaderOnNotices...), users.ScreenReaderCombatLines...), lines)
 
 	on := &users.UserRecord{UserId: 9, ScreenReader: true}
 	require.Empty(t, reportedScreenReaderLines(on, false))
@@ -736,11 +834,14 @@ func TestReportedScreenReaderLines(t *testing.T) {
 	require.False(t, quiet.ScreenReader)
 }
 
-// A reconnect to a link-dead session continues the user already in memory
-// (users.go:240-242), not the record loaded for this login. The report must
-// reach the user that is actually logged in.
+// A reconnect to a link-dead session continues the user already in the world
+// (users.go:240-242), not the record loaded for this login. That user is read
+// by MainWorker every round, so this goroutine must not write it: the report
+// goes to MainWorker as ScreenReaderReported, and no lines are sent here.
 func TestLoginWithScreenReader_LinkDeadReconnect(t *testing.T) {
 	drainSettingEvents(t)
+	events.DrainQueuedByTypeForTest(`ScreenReaderReported`)
+	t.Cleanup(func() { events.DrainQueuedByTypeForTest(`ScreenReaderReported`) })
 	loaded := &users.UserRecord{UserId: 11}
 	inMemory := &users.UserRecord{UserId: 11}
 	fakeLogin := func(u *users.UserRecord) (*users.UserRecord, string, error) {
@@ -751,9 +852,18 @@ func TestLoginWithScreenReader_LinkDeadReconnect(t *testing.T) {
 	got, _, lines, err := loginWithScreenReader(loaded, true, fakeLogin)
 	require.NoError(t, err)
 	require.Same(t, inMemory, got)
-	require.True(t, inMemory.ScreenReader, "the user logged in has the setting on")
-	require.Equal(t, `light`, inMemory.CombatVerbosity)
-	require.NotEmpty(t, lines)
+	require.False(t, inMemory.ScreenReader, "the live user is not written from this goroutine")
+	require.Empty(t, lines, "the hook tells the player, so login sends nothing")
+	queued := events.DrainQueuedByTypeForTest(`ScreenReaderReported`)
+	require.Equal(t, []events.Event{events.ScreenReaderReported{UserId: 11}}, queued)
+
+	// No report: nothing queued.
+	_, _, _, _ = loginWithScreenReader(&users.UserRecord{UserId: 11}, false, fakeLoginNoCheck(inMemory))
+	require.Empty(t, events.DrainQueuedByTypeForTest(`ScreenReaderReported`))
+}
+
+func fakeLoginNoCheck(ret *users.UserRecord) func(*users.UserRecord) (*users.UserRecord, string, error) {
+	return func(*users.UserRecord) (*users.UserRecord, string, error) { return ret, ``, nil }
 }
 
 // The ordinary login: the same record comes back, turned on once.
@@ -763,7 +873,7 @@ func TestLoginWithScreenReader_Ordinary(t *testing.T) {
 	got, _, lines, _ := loginWithScreenReader(loaded, true, func(u *users.UserRecord) (*users.UserRecord, string, error) { return u, ``, nil })
 	require.Same(t, loaded, got)
 	require.True(t, got.ScreenReader)
-	require.Equal(t, append(append([]string{}, screenReaderOnNotices...), users.ScreenReaderCombatLines...), lines)
+	require.Equal(t, append(append([]string{}, users.ScreenReaderOnNotices...), users.ScreenReaderCombatLines...), lines)
 
 	quiet := &users.UserRecord{UserId: 13}
 	_, _, lines, _ = loginWithScreenReader(quiet, false, func(u *users.UserRecord) (*users.UserRecord, string, error) { return u, ``, nil })
@@ -785,7 +895,7 @@ func TestCreationScreenReaderLines(t *testing.T) {
 	reported := &users.UserRecord{}
 	lines = creationScreenReaderLines(reported, map[string]string{}, true)
 	require.True(t, reported.ScreenReader)
-	require.Equal(t, append(append([]string{}, screenReaderOnNotices...), users.ScreenReaderCombatLines...), lines)
+	require.Equal(t, append(append([]string{}, users.ScreenReaderOnNotices...), users.ScreenReaderCombatLines...), lines)
 
 	no := &users.UserRecord{}
 	require.Empty(t, creationScreenReaderLines(no, map[string]string{`screen-reader-new`: `n`}, true))
@@ -892,23 +1002,23 @@ func newUserScreenReader(results map[string]string, reported bool) bool {
 // reportedScreenReaderLines turns u's setting on when its connection
 // reported a screen reader, and returns the lines that tell the player so
 // (none when nothing changed). A connection never turns the setting off.
+// Only for a record no other goroutine can see yet.
 func reportedScreenReaderLines(u *users.UserRecord, reported bool) []string {
-	if !reported || u.ScreenReader {
+	if !reported {
 		return nil
 	}
-	lines := slices.Clone(screenReaderOnNotices)
-	if u.TurnOnScreenReader() {
-		lines = append(lines, users.ScreenReaderCombatLines...)
-	}
-	return lines
+	return u.TurnOnReportedScreenReader()
 }
 
 // loginWithScreenReader logs tmpUser in with login (users.LoginUser in
-// production) and applies the connection's screen reader report twice:
-// to tmpUser before login publishes it, so MainWorker never reads the flag
-// mid-write, and to the user login returns, which is the link-dead session
-// already in memory, not tmpUser, on a reconnect (users.go:240-242). It
-// returns login's results and the lines to tell the player.
+// production) and applies the connection's screen reader report. On an
+// ordinary login it turns tmpUser on before login publishes it, so
+// MainWorker never reads the fields mid-write, and returns the lines to
+// tell the player. On a reconnect to a link-dead session login returns the
+// user already in the world (users.go:240-242), which MainWorker reads every
+// round, so this goroutine never writes it: it queues ScreenReaderReported
+// and the hook on MainWorker turns it on and tells the player
+// (hooks.TurnOnReportedScreenReader). tmpUser's change is then discarded.
 func loginWithScreenReader(tmpUser *users.UserRecord, reported bool, login func(*users.UserRecord) (*users.UserRecord, string, error)) (*users.UserRecord, string, []string, error) {
 	lines := reportedScreenReaderLines(tmpUser, reported)
 	loggedIn, msg, err := login(tmpUser)
@@ -916,9 +1026,10 @@ func loginWithScreenReader(tmpUser *users.UserRecord, reported bool, login func(
 		return loggedIn, msg, nil, err
 	}
 	if loggedIn != tmpUser {
-		if more := reportedScreenReaderLines(loggedIn, reported); len(more) > 0 {
-			lines = more
+		if reported {
+			events.AddToQueue(events.ScreenReaderReported{UserId: loggedIn.UserId})
 		}
+		return loggedIn, msg, nil, nil
 	}
 	return loggedIn, msg, lines, nil
 }
@@ -934,20 +1045,12 @@ func creationScreenReaderLines(u *users.UserRecord, results map[string]string, r
 	}
 	lines := []string{}
 	if _, asked := results["screen-reader-new"]; !asked {
-		lines = append(lines, screenReaderOnNotices...)
+		lines = append(lines, users.ScreenReaderOnNotices...)
 	}
 	if u.TurnOnScreenReader() {
 		lines = append(lines, users.ScreenReaderCombatLines...)
 	}
 	return lines
-}
-
-// screenReaderOnNotices tell a player their connection turned the account's
-// screen reader setting on, and how to turn it off. Two lines, each under
-// 80 columns, because login text reaches telnet unwrapped.
-var screenReaderOnNotices = []string{
-	`Screen reader mode is on for this character.`,
-	`Type set screenreader to turn it off.`,
 }
 
 // sendLoginLines sends each line as login text, one per line.
@@ -1000,6 +1103,65 @@ and after `sharedState["UserObject"] = loggedInUser // For main loop`, add:
 
 If `LoginUser` fails, the change lives only on the discarded `tmpUser`; nothing is saved. Add `"slices"` to `login.go`'s imports (it has none today). The three call sites in `FinalizeLoginOrCreate` are one line each; the decisions are in the helpers the tests above cover, and the Task 9 headless and telnet checks exercise the call sites.
 
+- [ ] **Step 5b: A link-dead session is turned on by MainWorker**
+
+`loginWithScreenReader` queues `events.ScreenReaderReported` instead of writing a user that is already in the world. Add the event to `internal/events/eventtypes.go`, beside `UserSettingChanged` (`:513`):
+
+```go
+// ScreenReaderReported asks MainWorker to turn on a logged-in user's screen
+// reader setting because their new connection reported a screen reader. Login
+// queues it when it continues a link-dead session already in the world, which
+// the connection goroutine must not write (inputhandlers.loginWithScreenReader).
+type ScreenReaderReported struct {
+	UserId int
+}
+
+// Type names the event.
+func (s ScreenReaderReported) Type() string { return `ScreenReaderReported` }
+```
+
+Create `internal/hooks/ScreenReaderReported_TurnOn.go`:
+
+```go
+package hooks
+
+import (
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/users"
+)
+
+// TurnOnReportedScreenReader turns on the screen reader setting of a user
+// whose reconnecting connection reported a screen reader, on MainWorker,
+// and tells them so. The setting is never turned off here.
+func TurnOnReportedScreenReader(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.ScreenReaderReported)
+	if !ok {
+		mudlog.Error("Event", "Expected Type", "ScreenReaderReported", "Actual Type", e.Type())
+		return events.Cancel
+	}
+	u := users.GetByUserId(evt.UserId)
+	if u == nil {
+		return events.Continue
+	}
+	for _, line := range u.TurnOnReportedScreenReader() {
+		u.SendText(messaging.CategorySystem, line)
+	}
+	return events.Continue
+}
+```
+
+Register it in `internal/hooks/hooks.go` beside the `UserSettingChanged` listener (`:138`):
+
+```go
+	// A reconnect continued a link-dead session whose new connection reported
+	// a screen reader: turn it on from here, not from the login goroutine.
+	events.RegisterListener(events.ScreenReaderReported{}, TurnOnReportedScreenReader)
+```
+
+The decision is `UserRecord.TurnOnReportedScreenReader`, tested in Task 1; this hook is its wiring, exercised by the link-dead telnet check in Task 9 Step 3. Run `go build ./... && go test ./internal/hooks/ ./internal/events/ -count=1`: PASS.
+
 - [ ] **Step 5a: The newcomer route keeps light for a screen reader user**
 
 `internal/usercommands/start.go:246` (`startInAntechamber`, route "New to text MUDs") sets `user.CombatVerbosity = "medium"` unconditionally, which would undo the light setting a blind player just got. Write the failing test first, in a new `internal/usercommands/start_screenreader_test.go`:
@@ -1046,7 +1208,7 @@ Expected: PASS, every existing login test included.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add internal/inputhandlers/login_prompt_handler.go internal/inputhandlers/login.go internal/inputhandlers/login_screenreader_test.go internal/usercommands/start.go internal/usercommands/start_screenreader_test.go
+git add internal/inputhandlers/login_prompt_handler.go internal/inputhandlers/login.go internal/inputhandlers/login_screenreader_test.go internal/usercommands/start.go internal/usercommands/start_screenreader_test.go internal/events/eventtypes.go internal/hooks/ScreenReaderReported_TurnOn.go internal/hooks/hooks.go
 git commit -F - <<'EOF'
 feat(login): web and MTTS answer the screen reader question (#733)
 
@@ -2379,20 +2541,24 @@ Expected: PASS. If a width or markup guard fails, rewrap the row as it says; do 
 Quest 32's verbosity step moves on for any `set combatverbosity <level>` (`quests/32-first_blood.yaml:188-191`), but every line tells the player to type `full`, which would undo a blind player's light setting minutes into the game. Change only these strings (keep each YAML key, block style and indentation as it is; rewrap folded YAML at the file's existing width):
 
 `_datafiles/world/dogmud/quests/32-first_blood.yaml`
-- step `special`, `hint` (`:84-86`): `Combat verbosity sets how much fight text you see. Type set combatverbosity, then full, medium or light. With a screen reader, light keeps up best. For more, type help combatverbosity.`
-- both `actor:` lines ending "type set combatverbosity full." (`:175-176`, `:185-186`): `That is a special move. Now choose how much combat detail you see: type set combatverbosity, then full, medium or light.`
+The command must read as ONE command with its level ("type X then full" reads as two commands, and `set combatverbosity` alone only prints the options and does not move the step, `set.go:536-540`). Each hint keeps exactly one "type" outside a help pointer (`typedCount`, `internal/questengine/newbie_topic_steps_test.go:110`) and keeps the text "type set combatverbosity" (`newbie_martial_steps_test.go:152`).
+
+- step `special`, `hint` (`:84-86`): `Combat verbosity sets how much fight text you see. Type set combatverbosity and a level: full, medium or light. With a screen reader, light keeps up best. For more, type help combatverbosity.`
+- both `actor:` lines ending "type set combatverbosity full." (`:175-176`, `:185-186`): `That is a special move. Now choose how much combat detail you see: type set combatverbosity and a level, full, medium or light.`
 
 `_datafiles/world/dogmud/dialogue/pothole_coulee/9108.yaml`
-- opener variant gated on `32-special` (`:74-76`): `text: Last thing. Choose how much of a fight you see. Full is every blow, light is one line a round. If a screen reader reads to you, take light. Change it when you know what you are changing.` and `hints: Type set combatverbosity, then full, medium or light.`
-- topic `progress_special` (`:227-229`): `text: Almost. Choose how much of a fight you see. Full shows everything. Start there, or on light if a screen reader reads to you.` and `hints: Type set combatverbosity, then full, medium or light.`
-- topic `combat_help` (`:245-246`): replace `Start on full. Change it when you know what you are changing:` with `Start on full, or on light if a screen reader reads to you. Change it when you know what you are changing:` (the rest of the sentence stays).
+- opener variant gated on `32-special` (`:74-76`): `text: Last thing. Choose how much of a fight you see. Full is every blow, light is one line a round. If a screen reader reads to you, take light. Change it when you know what you are changing.` and `hints: Type set combatverbosity and a level: full, medium or light.`
+- topic `progress_special` (`:227-229`): `text: Almost. Choose how much of a fight you see. Full shows everything. Start there, or on light if a screen reader reads to you.` and `hints: Type set combatverbosity and a level: full, medium or light.`
+- topic `combat_help` (`:245-246`): replace `Start on full. Change it when you know what you are changing:` with `Start on full, or on light if a screen reader reads to you. Change it when you know what you are changing:` (the rest of the sentence stays). In the file that sentence breaks across two lines inside a single-quoted scalar (`Start on full. Change it when` / `    you know what you are changing:`): match the line break and the 4-space indent, and rewrap the new text at the scalar's existing width.
 
-NPC `text` stays first person; `hints` stay narrator voice; no `;`, no dashes. Then validate:
+NPC `text` stays first person; `hints` stay narrator voice; no `;`, no dashes. Then validate (the `-dialogue` flag takes the folder named `dialogue`, and `-zones` picks the zone, `cmd/dialoguecheck/main.go:68-70, 124`):
 
 ```bash
-go run ./cmd/dialoguecheck -data _datafiles/world/dogmud -dialogue pothole_coulee
+go run ./cmd/dialoguecheck -data _datafiles/world/dogmud -dialogue _datafiles/world/dogmud/dialogue -zones pothole_coulee
 go test ./internal/quests/ ./internal/questengine/ ./internal/dialogue/ ./internal/guards/ -count=1
 ```
+
+Expected: VALIDATION 0, DEAD END 0, RE-OFFER 0, UNSTARTABLE 0 (ASSUMED lines are information, not errors); tests PASS.
 
 Expected: no findings, PASS. The Task 9 boot check loads both files.
 
@@ -2406,7 +2572,7 @@ Add at the top of `docs/PATCH_NOTES.md`, under the title:
 - The web client can now read the game aloud to screen reader users. When the page opens, your screen reader tells you what to do: type `screen reader on` in the command box and press Enter. The web client remembers this on that device. Type `screen reader off` to stop it.
 - Screen reader mode is saved with your character. `set screenreader` turns it on or off wherever you play. If you turn it on in the web client, your character keeps it on.
 - Turning screen reader mode on sets combat text to light, so your screen reader can keep up. `set combatverbosity full` brings every blow back.
-- The combat lesson in Pothole Coulee now accepts full, medium or light, and suggests light to players who use a screen reader.
+- The combat lesson in Pothole Coulee now names full, medium or light, and suggests light to players who use a screen reader.
 - New characters made in the web client are no longer asked whether they use a screen reader. Telnet clients that report their settings to the game (MTTS) are not asked either.
 ```
 
@@ -2414,8 +2580,9 @@ Add at the top of `docs/PATCH_NOTES.md`, under the title:
 
 - `modules/gmcp/context.md`: in the `gmcp.ClientDisplay.go` row, add that the payload may carry `screenreader` (bool), stored on `ClientSettings.ScreenReader` for websockets only, kept when absent or not a bool, and that the client sends it with every width report and alone when the player types the phrase. The file does not describe `Char.Info` yet (`grep -n "Char.Info" modules/gmcp/context.md` finds nothing): add a row or short paragraph where the `gmcp.Char.go` packages are listed, naming `Char.Info`'s fields `account`, `name`, `class`, `race`, `screenreader` (always sent, false included) and that `UserSettingChanged{Name: "screenreader"}` re-pushes it.
 - `internal/connections/context.md`: the `ClientSettings` block (`:110-118`) is missing `AsciiMode` already; add it with `ScreenReader`, `MTTSReported`, `TermTypeReplies` and `TermTypeLast`, one line each.
-- `internal/inputhandlers/context.md`: add a short section: the reserved `_conn_` result keys and `writeConnFacts`; `screen-reader-new` is asked only of telnet without MTTS; `applyReportedScreenReader` at login (applied before `LoginUser` publishes the user); the MTTS cycle in `term_iac.go` (`recordTermType`, `maxTermTypeReplies`, `maxTermTypeLen`).
-- `internal/users/context.md`: add `TurnOnScreenReader` (the only way the setting turns on; saves light combat text) and `ScreenReaderCombatLines`.
+- `internal/inputhandlers/context.md`: add a short section: the reserved `_conn_` result keys and `writeConnFacts`; `screen-reader-new` is asked only of telnet without MTTS; the login helpers `reportedScreenReaderLines`, `loginWithScreenReader` (before `LoginUser` publishes the user; a link-dead session goes to MainWorker as `events.ScreenReaderReported`) and `creationScreenReaderLines`, and `sendLoginLines`; the MTTS cycle in `term_iac.go` (`recordTermType`, `maxTermTypeReplies`, `maxTermTypeLen`).
+- `internal/users/context.md`: add `TurnOnScreenReader` (the only way the setting turns on; saves light combat text), `TurnOnReportedScreenReader` (its form for a connection's report, returning the lines to send), `ScreenReaderCombatLines`, `ScreenReaderOnNotices` and `StoreAddressScreenReader` (the websocket address's `sr=1`).
+- `internal/hooks/context.md` and `internal/events/context.md`: `ScreenReaderReported` and its listener `TurnOnReportedScreenReader`.
 - `internal/term/context.md`: add `mtts.go`: `ParseMTTS`, `TelnetWillTermType`, `TelnetWontTermType`, `TelnetTermTypeSend`, `TelnetTermTypeIs`, `TELNET_TTYPE_IS`, `TELNET_TTYPE_SEND`, `MTTSScreenReader`.
 - `internal/usercommands/context.md`: one line for `newcomerCombatVerbosity` in `start.go`.
 
@@ -2430,6 +2597,9 @@ Add a row for each new file, in the section where its neighbours are listed (fin
 
 - `internal/users/screenreader.go`: `TurnOnScreenReader`, the only way an account's screen reader setting turns on; it also saves light combat text, and `ScreenReaderCombatLines` says so.
 - `internal/term/mtts.go`: terminal type subnegotiation and MTTS (`ParseMTTS`, bit 64 is a screen reader).
+- `internal/hooks/ScreenReaderReported_TurnOn.go`: on MainWorker, turns on the screen reader setting of a link-dead session continued by a reconnect whose connection reported a screen reader.
+- `_datafiles/world/dogmud/templates/login/connect-splash.screenreader.template`: the connect splash in plain words for a screen reader (no art, no rule, no spaced title), chosen by `sr=1` on the websocket address.
+- `internal/inputhandlers/connect_splash_screenreader_test.go`: the screen reader splash is plain words at 30, 42 and 80.
 - `_datafiles/html/public/static/js/screenreader.js`: the web client's screen reader switch: the spoken opt-in phrase, device memory, the account's setting, and resets of xterm's spoken region.
 - `tools/jstest/screenreader.test.js`: not its own row. `tools/jstest/` is one row with dated "Added ..." notes in one cell (`docs/README.md:106`); add a dated note there.
 - `internal/users/screenreader_test.go`, `internal/term/mtts_test.go`, `internal/inputhandlers/login_screenreader_test.go`, `internal/usercommands/start_screenreader_test.go`, `modules/gmcp/gmcp.CharInfo_screenreader_test.go`: one line each saying what they guard.
@@ -2437,7 +2607,7 @@ Add a row for each new file, in the section where its neighbours are listed (fin
 - [ ] **Step 5: Commit**
 
 ```bash
-git add _datafiles/world/dogmud/templates/help/set.template _datafiles/world/dogmud/quests/32-first_blood.yaml _datafiles/world/dogmud/dialogue/pothole_coulee/9108.yaml docs/PATCH_NOTES.md modules/gmcp/context.md internal/connections/context.md internal/inputhandlers/context.md internal/users/context.md internal/term/context.md internal/usercommands/context.md docs/README.md
+git add _datafiles/world/dogmud/templates/help/set.template _datafiles/world/dogmud/quests/32-first_blood.yaml _datafiles/world/dogmud/dialogue/pothole_coulee/9108.yaml docs/PATCH_NOTES.md modules/gmcp/context.md internal/connections/context.md internal/inputhandlers/context.md internal/users/context.md internal/term/context.md internal/usercommands/context.md internal/events/context.md internal/hooks/context.md docs/README.md
 git commit -F - <<'EOF'
 docs: screen reader opt-in in help, patch notes and package docs (#733)
 
@@ -2639,7 +2809,7 @@ If a check fails, read the detail it prints. Fix a wrong regex or wait in the ch
 
 - [ ] **Step 3: Telnet check**
 
-With the test server still up, connect a raw telnet session from a scratch script that answers `IAC DO TTYPE` with `IAC WILL TTYPE`, then each `SEND` with `MUDLET`, `ANSI-TRUECOLOR`, `MTTS 73`; create a character; confirm the screen reader question is not asked, that the player hears "Screen reader mode is on for this character.", that `set` shows ScreenReader ON, and that `set combatverbosity` (no argument) says light. Repeat without answering TTYPE and confirm the question is asked. Record the two transcripts in the scratchpad.
+With the test server still up, connect a raw telnet session from a scratch script that answers `IAC DO TTYPE` with `IAC WILL TTYPE`, then each `SEND` with `MUDLET`, `ANSI-TRUECOLOR`, `MTTS 73`; create a character; confirm the screen reader question is not asked, that the player hears "Screen reader mode is on for this character.", that `set` shows ScreenReader ON, and that `set combatverbosity` (no argument) says light. Repeat without answering TTYPE and confirm the question is asked. Then the link-dead path: log a character in on plain telnet (no TTYPE) with the setting off, cut the socket without `quit` so the session goes link-dead, reconnect with the MTTS-answering script and log in again: the player must hear "Screen reader mode is on for this character." and the two combat lines, and `set` must show ScreenReader ON. Record the three transcripts in the scratchpad.
 
 - [ ] **Step 4: Gates**
 

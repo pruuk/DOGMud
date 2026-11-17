@@ -132,6 +132,15 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - **A reconnect to a link-dead session continues the user already in memory** (`internal/users/users.go:240-242`), so the login turn-on is applied to the user `LoginUser` returns as well as to the record loaded for the login.
 - **A character made with the setting reported** (the web phrase or MTTS) hears that the mode is on and how to turn it off, as a login does.
 
+### 10. Found in the third plan review (2026-11-17), verified against source
+
+- **The client asks for a state, `set screenreader on` or `off`, never the toggle.** A line swallowed by an open prompt (`internal/users/userrecord.promptroute.go:49`) would otherwise leave the client's belief wrong, and its next toggle would flip the account the wrong way. Bare `set screenreader` still toggles for players.
+- **An answer ends after its `Char.Input.Done` and then 2 seconds of quiet output**, because a macro's commands and anything run through `user.Command()` print on later turns, after the Done (`world.go:1046-1061`).
+- **A link-dead session is turned on by MainWorker** (`events.ScreenReaderReported` and its hook), because that user is already in the world and the login goroutine must not write it.
+- **A screen reader gets its own connect splash** (`connect-splash.screenreader.template`): the 42-column form still has a rule of 42 `=` signs and a spaced-out title, which a screen reader reads symbol by symbol and letter by letter.
+- **The tutorial names one command with its level** ("type set combatverbosity and a level: full, medium or light"): "type X, then full" reads as two commands, and `set combatverbosity` alone does not move the step.
+- Two existing page-source tests (`roomtitlebold.test.js`, `webclient-connect.test.js`) change with the page; the last account's `Char.Info` is forgotten on reconnect; `/webclient/` and `/webclient.html` get the outer hint too.
+
 ## Decisions taken without asking
 
 - **The phrase is `screen reader on`.** Plain words, easy to dictate on a phone, and the space keeps it from ever being a username. If wrong: any other phrase works, but a single word could collide with a name at the first prompt.
