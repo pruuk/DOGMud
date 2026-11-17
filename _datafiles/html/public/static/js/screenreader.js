@@ -18,8 +18,9 @@
 // not used. Sighted players never see any of it: with the mode off nothing is
 // added.
 //
-// The answer to a line the player sends (from lineSent until the game
-// redraws the prompt) goes into a second, assertive log instead, so it cuts
+// The answer to a line the player sends (from lineSent until the server's
+// done marker for it, or before login the next prompt) goes into a second,
+// assertive log instead, so it cuts
 // off whatever the screen reader is still reading: each command drops the
 // backlog, as desktop MUD clients do for blind players (owner ruling
 // 2026-11-17, after NVDA kept up in order but fell rooms behind). Everything
@@ -88,20 +89,21 @@
 
     // MAX_ECHOES bounds the echoes waited for, so a lost one cannot pile up.
     var MAX_ECHOES = 20;
-    // ECHO_WAIT_MS: an echo still owed after this long is taken as lost, so a
-    // line the server never echoed cannot keep an answer open.
+    // ECHO_WAIT_MS: an echo or a done marker still owed after this long is
+    // taken as lost, so one the server never sent cannot keep an answer open.
     var ECHO_WAIT_MS = 3000;
 
     // echoOf is what the server sends back for a line the page sent
-    // (internal/inputhandlers/echo.go): the line itself, one * per character
-    // when the box is a password box, and nothing at all for an item panel
-    // line that names an item by its @handle (lineTargetsItemHandle: an @
-    // token followed by 35 lowercase hex digits and hyphens).
+    // (internal/inputhandlers/echo.go): the line itself (the websocket
+    // cleanser has made each tab a space), one * per character when the box is
+    // a password box, and nothing at all for an item panel line that names an
+    // item by its @handle (lineTargetsItemHandle: an @ token followed by 35
+    // lowercase hex digits and hyphens).
     function echoOf(line, masked) {
         if (typeof line !== 'string') return null;
         if (/(^|\s)@[0-9a-f-]{35}(\s|$)/.test(line)) return null;
         if (masked) return new Array(Array.from(line).length + 1).join('*');
-        return plainText(line);
+        return plainText(line.replace(/\t/g, ' '));
     }
 
     // opts: storage (localStorage, any call may throw); input (the command
@@ -126,20 +128,27 @@
         var lastPromptAt = null;   // when it was announced
         var pendingPrompt = null;  // a changed prompt held until a round has passed
         var promptTimer = null;
-        // answering: the player sent a line and its answer has not ended. It
-        // ends at the first real prompt once no player line's echo is still
-        // owed; the server redraws the prompt after every message, so it does
-        // not stay open.
+        // answering: the player sent a line and its answer has not ended. In
+        // game the server marks the end of each typed line's answer with
+        // Char.Input.Done {seq}, after the line's text (world.go
+        // processInput), so the answer ends when every player line's marker
+        // has come: a fight's prompt arriving before then does not end it,
+        // and a fight's text after it queues. Before login there is no
+        // marker, and the answer ends at the first real prompt once no player
+        // line's echo is still owed.
         var answering = false;
         // echoes the server still owes, oldest first: {text, player, at}.
         // player: the player asked for that line, so its answer interrupts.
         var echoes = [];
         var lastSent = null;       // the echo owed for the last line sent, if any
+        var dones = [];            // done markers owed for player lines: {seq, at}
 
-        // answerOwed: a player line's echo is still owed (and not lost).
+        // answerOwed: a player line's echo or done marker is still owed (and
+        // not lost).
         function answerOwed() {
             var t = now();
-            return echoes.some(function (e) { return e.player && t - e.at < ECHO_WAIT_MS; });
+            return echoes.some(function (e) { return e.player && t - e.at < ECHO_WAIT_MS; }) ||
+                dones.some(function (d) { return t - d.at < ECHO_WAIT_MS; });
         }
 
         function remember(value) {
@@ -164,6 +173,7 @@
             answering = false;
             echoes = [];
             lastSent = null;
+            dones = [];
         }
 
         function clearLog() {
@@ -235,8 +245,9 @@
                 if (echoes[i].text === text) { echoes.splice(i, 1); return; }
             }
             if (/^\*+$/.test(text)) return;
-            // A real prompt ends the answer, once every player line's echo has
-            // come (a prompt before an echo belongs to an earlier answer).
+            // A real prompt ends the answer, once nothing is owed for a player
+            // line (a prompt before its echo or done marker belongs to an
+            // earlier answer or to a fight).
             if (!answerOwed()) answering = false;
             if (text === lastPrompt) { pendingPrompt = null; return; }
             var since = lastPromptAt === null ? Infinity : now() - lastPromptAt;
@@ -288,12 +299,27 @@
 
             // The player asked for the line just sent (typed, the numpad, a
             // macro key, a chip, an item menu, a tick's fire now; never
-            // automation): its answer, up to the first prompt after its echo,
-            // interrupts whatever is still being read. Called after sent().
-            lineSent: function () {
+            // automation): its answer interrupts whatever is still being read.
+            // Called after sent(). seq: the line's number, which the server's
+            // done marker carries back (only once a character is in game).
+            lineSent: function (seq) {
                 if (!on) return;
                 answering = true;
                 if (lastSent) lastSent.player = true;
+                if (typeof seq === 'number' && opts.inGame()) {
+                    dones.push({ seq: seq, at: now() });
+                    if (dones.length > MAX_ECHOES) dones.shift();
+                }
+            },
+
+            // Char.Input.Done: the server has finished the line numbered seq,
+            // after all of its text. Lines finish in order, so earlier markers
+            // are no longer owed either. With nothing else owed, the answer
+            // ends here.
+            done: function (seq) {
+                if (typeof seq !== 'number') return;
+                dones = dones.filter(function (d) { return d.seq > seq; });
+                if (answering && !answerOwed()) answering = false;
             },
 
             // The player typed the phrase: which is 'on' or 'off'.

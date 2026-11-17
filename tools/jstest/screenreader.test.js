@@ -30,7 +30,8 @@ check('the page has the assertive answers region, not atomic',
 check('the page passes the answers region to the switch', page.indexOf("answers: document.getElementById('sr-answers')") >= 0, '');
 check('the Enter key sends through playerSend', /var sent = playerSend\(line\);/.test(page), '');
 check('every send tells the switch, with the password box state', page.indexOf("screenReader.sent(dataToSend, textInput.type === 'password');") >= 0, '');
-check('playerSend marks the line as the player\'s', /if \(sent\) screenReader\.lineSent\(\);/.test(page), '');
+check('playerSend marks the line as the player\'s, with its number', /if \(sent\) screenReader\.lineSent\(linesSent\);/.test(page), '');
+check('the done marker reaches the switch', /sendWait\.done\(d\.seq, d\.menu === true\);\s*\/\/[^\n]*\n\s*screenReader\.done\(d\.seq\);/.test(page), '');
 check('the page feeds server text to the log', page.indexOf('screenReader.write(shown);') >= 0, '');
 var moduleSrc = fs.readFileSync(path.join(pub, 'static', 'js', 'screenreader.js'), 'utf8');
 check('the module never reaches into xterm', !/setOption|_accessibilityManager|_clearLiveRegion|screenReaderMode/.test(moduleSrc.replace(/^\s*\/\/.*$/gm, '')), '');
@@ -347,15 +348,74 @@ sr.write('set screenreader on');
 sr.write('ScreenReader mode toggled.\r\n');
 check('the page\'s own command echo is skipped; its answer queues', f.log.texts().slice(-1)[0] === 'ScreenReader mode toggled.' && allTexts(f).indexOf('set screenreader on') < 0, f.log.texts().join('|'));
 
-// What the server echoes: * for a password, nothing for an item @handle line.
+// In game the server's done marker ends the answer. A fight's prompt that
+// arrives after the echo but before the answer does not end it, and fight
+// text after the marker queues.
 f = fakes('true');
 sr = SR.create(f.opts);
 sr.load();
-sr.sent('Secret-1', true);
+f.inGame = true;
+sr.sent('look');
+sr.lineSent(5);
+sr.write('look');
+sr.write('\r\r\n');
+sr.write('[HP:hurt]: ');
+sr.write('The Void\r\n');
+check('a prompt between the echo and the answer does not end it', f.answers.texts().slice(-1)[0] === 'The Void', 'answers ' + f.answers.texts().join('|') + ' log ' + f.log.texts().join('|'));
+sr.write('[HP:hurt]: ');
+sr.write('Exits: drift\r\n');
+check('a prompt before the done marker does not end it', f.answers.texts().slice(-1)[0] === 'Exits: drift', 'answers ' + f.answers.texts().join('|'));
+sr.done(5);
+sr.write('The rat bites you.\r\n');
+check('the done marker ends the answer; fight text after it queues', f.log.texts().slice(-1)[0] === 'The rat bites you.', 'answers ' + f.answers.texts().join('|'));
+// An item panel line owes no echo, but its marker still holds the answer open.
+sr.sent('look @1-000000000000000-01-00000000000000');
+sr.lineSent(6);
+sr.write('[HP:hurt]: ');
+sr.write('A plain knife.\r\n');
+check('an item line\'s answer survives a prompt before its marker', f.answers.texts().slice(-1)[0] === 'A plain knife.', 'answers ' + f.answers.texts().join('|'));
+// Lines finish in order: a later marker settles earlier ones too.
+sr.sent('n'); sr.lineSent(7);
+sr.sent('n'); sr.lineSent(8);
+sr.write('n'); sr.write('n');
+sr.done(8);
+sr.write('A rat arrives.\r\n');
+check('a later marker settles earlier ones', f.log.texts().slice(-1)[0] === 'A rat arrives.', 'answers ' + f.answers.texts().join('|'));
+// A marker that never comes cannot hold the answer open.
+sr.sent('look'); sr.lineSent(9);
+sr.write('look');
+f.clock.advance(SR.ECHO_WAIT_MS);
+sr.write('[HP:hurt]: ');
+sr.write('The rat squeaks.\r\n');
+check('a lost done marker is given up after the wait', f.log.texts().slice(-1)[0] === 'The rat squeaks.', 'answers ' + f.answers.texts().join('|'));
+// Before login there is no marker: no number is owed.
+f.inGame = false;
+sr.sent('srname'); sr.lineSent(10);
+sr.write('srname');
+sr.write('Password: ');
+sr.write('Welcome.\r\n');
+check('before login no marker is owed; the prompt ends the answer', f.log.texts().slice(-1)[0] === 'Welcome.', 'answers ' + f.answers.texts().join('|'));
+f.inGame = true;
+// A tab is echoed as a space (the websocket cleanser).
+sr.sent('say a\tb'); sr.lineSent();
+f.clock.advance(SR.PROMPT_GAP_MS);
+sr.write('say a b');
+check('an echo with a tab made a space is skipped', allTexts(f).indexOf('say a b') < 0, allTexts(f).join('|'));
+
+// What the server echoes: one * per character for a password, as one piece
+// (also for a letter outside ASCII), nothing for an item @handle line. The
+// prompt after the echo ends the answer only if the echo was matched.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+sr.sent('Sécret-1', true);
+sr.lineSent();
 sr.write('********');
-check('a masked echo is skipped', allTexts(f).length === 0, allTexts(f).join('|'));
+sr.write('Welcome back. Press Enter: ');
+sr.write('Message of the day.\r\n');
+check('a masked echo is matched; the prompt after it ends the answer', allTexts(f).indexOf('********') < 0 && f.log.texts().slice(-1)[0] === 'Message of the day.', 'answers ' + f.answers.texts().join('|') + ' log ' + f.log.texts().join('|'));
 sr.write('*');
-check('a lone * is never read', allTexts(f).length === 0, allTexts(f).join('|'));
+check('a lone * is never read', allTexts(f).indexOf('*') < 0, allTexts(f).join('|'));
 f.inGame = true;
 playerLine(sr, 'look @1-000000000000000-01-00000000000000');
 sr.write('A plain knife.\r\n');

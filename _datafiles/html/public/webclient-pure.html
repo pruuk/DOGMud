@@ -1127,6 +1127,8 @@
                 // number and whether a menu or prompt is open. Never its text.
                 var d = ((GMCPStructs["Char"] || {}).Input || {}).Done || {};
                 if (sendWait) sendWait.done(d.seq, d.menu === true);
+                // It also ends the answer the screen reader is reading at once.
+                screenReader.done(d.seq);
             },
             "Char.Mutation": function() {
                 var m = (GMCPStructs["Char"] || {}).Mutation;
@@ -2908,7 +2910,7 @@
         // section 12). Automation and the page's own commands use SendData.
         function playerSend(line) {
             var sent = SendData(line);
-            if (sent) screenReader.lineSent();
+            if (sent) screenReader.lineSent(linesSent);
             return sent;
         }
 
