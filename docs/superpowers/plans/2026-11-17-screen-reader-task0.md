@@ -41,7 +41,9 @@
 | `main.go` | send `IAC DO TTYPE` on telnet connect |
 | `_datafiles/html/public/static/js/screenreader.js` (new) | the client module |
 | `tools/jstest/screenreader.test.js` (new) | its tests |
-| `_datafiles/html/public/webclient-pure.html` | hint, label, script, wiring |
+| `_datafiles/html/public/webclient-pure.html` | hint, status region, label, script, wiring |
+| `_datafiles/html/public/_header.html`, `static/css/gomud.css`, `static/css/dashboard.css` | the outer page's hint, its `.visually-hidden`, the overlay's `pointer-events: none` |
+| `internal/usercommands/start.go`, `start_screenreader_test.go` (new) | the newcomer route keeps light for a screen reader user |
 | `_datafiles/world/dogmud/templates/help/set.template` | `set screenreader` row |
 | `docs/PATCH_NOTES.md`, `modules/gmcp/context.md`, `internal/connections/context.md`, `internal/inputhandlers/context.md`, `internal/users/context.md`, `docs/README.md` | docs |
 
@@ -113,7 +115,8 @@ func TestTurnOnScreenReader_SavesLightCombat(t *testing.T) {
 		require.True(t, u.TurnOnScreenReader(), start)
 		require.True(t, u.ScreenReader)
 		require.Equal(t, `light`, u.CombatVerbosity)
-		require.Equal(t, []string{`screenreader`, `combatverbosity`}, drainSettingChanges(t))
+		// The drain returns heap order, not delivery order (events.go:893).
+		require.ElementsMatch(t, []string{`screenreader`, `combatverbosity`}, drainSettingChanges(t))
 	}
 }
 
@@ -153,18 +156,24 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 )
 
-// ScreenReaderCombatLine tells a player whose screen reader setting just
+// ScreenReaderCombatLines tell a player whose screen reader setting just
 // turned on that combat text was set to light, and how to undo it. xterm's
 // screen reader mode stops announcing after 20 lines of one burst, so full
-// combat text would be cut off.
-const ScreenReaderCombatLine = `Combat text is set to light, so your screen reader can keep up. Type set combatverbosity full to see every blow.`
+// combat text would be cut off. Two lines, each under 80 columns, because
+// login text reaches telnet unwrapped.
+var ScreenReaderCombatLines = []string{
+	`Combat text is set to light, so your screen reader can keep up.`,
+	`Type set combatverbosity full to see every blow.`,
+}
 
 // TurnOnScreenReader is the only way an account's screen reader setting
 // turns on (the creation answer, a connection's report at login, and set
 // screenreader). It sets the flag and saves light combat text, firing a
 // UserSettingChanged for each. It reports whether the combat level changed,
-// so the caller can send ScreenReaderCombatLine. When the setting is
-// already on it does nothing and reports false.
+// so the caller can send ScreenReaderCombatLines. When the setting is
+// already on it does nothing and reports false. Both values are saved with
+// the account at its next save (autosave, logout or creation), as every set
+// command's are.
 func (u *UserRecord) TurnOnScreenReader() bool {
 	if u.ScreenReader {
 		return false
@@ -190,6 +199,9 @@ Expected: PASS.
 Replace `cmdSetScreenReader` at `internal/usercommands/set.go:216-230` with:
 
 ```go
+// cmdSetScreenReader toggles the account's screen reader setting. Turning it
+// on goes through TurnOnScreenReader, which also sets light combat text;
+// turning it off leaves combat text as it is.
 func cmdSetScreenReader(user *users.UserRecord) (bool, error) {
 	if user.ScreenReader {
 		user.ScreenReader = false
@@ -204,11 +216,35 @@ func cmdSetScreenReader(user *users.UserRecord) (bool, error) {
 	combatChanged := user.TurnOnScreenReader()
 	user.SendText(messaging.CategorySystem, `ScreenReader mode toggled <ansi fg="red">ON</ansi>.`)
 	if combatChanged {
-		user.SendText(messaging.CategorySystem, users.ScreenReaderCombatLine)
+		for _, line := range users.ScreenReaderCombatLines {
+			user.SendText(messaging.CategorySystem, line)
+		}
 	}
 	return true, nil
 }
 ```
+
+Add a test to `internal/usercommands/` beside the existing `set` tests (find them with `grep -n "func TestSetSubCommands" internal/usercommands/*_test.go` and reuse the user fixture that file builds; do not invent one):
+
+```go
+// set screenreader: on saves light combat text; off leaves it as it is.
+func TestSetScreenReader_OnSetsLightOffLeavesIt(t *testing.T) {
+	user := /* the fixture TestSetSubCommands uses */
+	user.ScreenReader = false
+	user.CombatVerbosity = ``
+
+	cmdSetScreenReader(user)
+	require.True(t, user.ScreenReader)
+	require.Equal(t, `light`, user.CombatVerbosity)
+
+	cmdSetScreenReader(user)
+	require.False(t, user.ScreenReader)
+	require.Equal(t, `light`, user.CombatVerbosity, "turning off leaves combat text alone")
+}
+```
+
+Run: `go test ./internal/usercommands/ -run TestSetScreenReader -count=1`
+Expected: PASS (written after Step 6; it guards the path, it is not a red-first test).
 
 - [ ] **Step 7: Build and run the touched packages**
 
@@ -218,7 +254,7 @@ Expected: build succeeds, all PASS.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add internal/connections/clientsettings.go internal/users/screenreader.go internal/users/screenreader_test.go internal/usercommands/set.go
+git add internal/connections/clientsettings.go internal/users/screenreader.go internal/users/screenreader_test.go internal/usercommands/set.go internal/usercommands/<the test file you added to>
 git commit -F - <<'EOF'
 feat(users): TurnOnScreenReader saves light combat text (#733)
 
@@ -279,7 +315,7 @@ func TestClientDisplay_ScreenReaderIgnoredOnTelnet(t *testing.T) {
 - [ ] **Step 2: Run them to see them fail**
 
 Run: `go test ./modules/gmcp/ -run TestClientDisplay -count=1`
-Expected: FAIL on the three new tests (screen reader never stored).
+Expected: FAIL on `TestClientDisplay_StoresScreenReader` and `TestClientDisplay_ScreenReaderMissingOrBadKeeps`. `TestClientDisplay_ScreenReaderIgnoredOnTelnet` passes already (the stored value starts false): it is a regression guard, not a red-first test.
 
 - [ ] **Step 3: Implement**
 
@@ -515,7 +551,7 @@ func screenReaderStep(t *testing.T) *PromptStep {
 func TestScreenReaderQuestion_AskedOnlyWithoutAnAnswer(t *testing.T) {
 	cond := screenReaderStep(t).Condition
 	base := func(ws, mtts string) map[string]string {
-		return map[string]string{`username`: `new`, connFactWebsocket: ws, connFactMTTS: mtts, connFactScreenReader: `n`}
+		return map[string]string{`username`: `new`, connFactWebsocket: ws, connFactMTTS: mtts}
 	}
 	require.True(t, cond(base(`n`, `n`)), "telnet without MTTS is asked")
 	require.False(t, cond(base(`y`, `n`)), "web is never asked")
@@ -551,10 +587,31 @@ func TestWriteConnFacts(t *testing.T) {
 
 	r := map[string]string{}
 	writeConnFacts(r, web)
-	require.Equal(t, map[string]string{connFactWebsocket: `y`, connFactMTTS: `n`, connFactScreenReader: `y`}, r)
+	require.Equal(t, map[string]string{connFactWebsocket: `y`, connFactMTTS: `n`}, r)
 	r = map[string]string{}
 	writeConnFacts(r, tel)
-	require.Equal(t, map[string]string{connFactWebsocket: `n`, connFactMTTS: `y`, connFactScreenReader: `n`}, r)
+	require.Equal(t, map[string]string{connFactWebsocket: `n`, connFactMTTS: `y`}, r)
+}
+
+// The handler really writes the facts before a condition: a telnet client
+// that answered MTTS skips the question. Leaving the writeConnFacts call
+// out of advanceAndSendPrompt fails this. (A telnet test connection: a
+// skipped step sends nothing, and the sequence completes.)
+func TestAdvanceAndSendPrompt_SkipsTheQuestionOnMTTS(t *testing.T) {
+	const tel connections.ConnectionId = 97403
+	connections.RegisterTestConnection(tel)
+	t.Cleanup(func() { connections.UnregisterTestConnection(tel) })
+	cs := connections.GetClientSettings(tel)
+	cs.MTTSReported = true
+	connections.OverwriteClientSettings(tel, cs)
+
+	state := &PromptHandlerState{
+		Steps:            []*PromptStep{screenReaderStep(t)},
+		CurrentStepIndex: -1,
+		Results:          map[string]string{`username`: `new`},
+	}
+	require.True(t, advanceAndSendPrompt(state, &connections.ClientInput{ConnectionId: tel}), "the only step is skipped")
+	require.Equal(t, `y`, state.Results[connFactMTTS])
 }
 
 // A connection's report turns an account's setting on, never off.
@@ -595,19 +652,17 @@ In `internal/inputhandlers/login_prompt_handler.go`, after the `ConditionFunc` t
 // it checks each step. No step may use an ID starting connFactPrefix
 // (TestLoginSteps_NoStepUsesAConnFactID).
 const (
-	connFactPrefix       = `_conn_`
-	connFactWebsocket    = `_conn_websocket`
-	connFactMTTS         = `_conn_mtts`
-	connFactScreenReader = `_conn_screenreader`
+	connFactPrefix    = `_conn_`
+	connFactWebsocket = `_conn_websocket`
+	connFactMTTS      = `_conn_mtts`
 )
 
 // writeConnFacts stores what the connection's client has said about itself
-// in results under the reserved keys.
+// in results under the reserved keys. (The screen reader report itself is
+// read from ClientSettings when the account is made, not from here.)
 func writeConnFacts(results map[string]string, id connections.ConnectionId) {
-	cs := connections.GetClientSettings(id)
 	results[connFactWebsocket] = yesNo(connections.IsWebsocket(id))
-	results[connFactMTTS] = yesNo(cs.MTTSReported)
-	results[connFactScreenReader] = yesNo(cs.ScreenReader)
+	results[connFactMTTS] = yesNo(connections.GetClientSettings(id).MTTSReported)
 }
 
 // yesNo is "y" for true and "n" for false, the form prompt results use.
@@ -639,13 +694,15 @@ func loginSteps() []*PromptStep {
 	}
 }
 
+// GetLoginPromptHandler returns a new login and creation prompt sequence
+// for one connection.
 func GetLoginPromptHandler() connections.InputHandler {
 	// Create and return the handler using the generic factory function
 	return CreatePromptHandler(loginSteps(), FinalizeLoginOrCreate)
 }
 ```
 
-Keep `GetLoginPromptHandler`'s existing doc comment if it has one.
+(It has no doc comment today; the lint gate requires one on an edited declaration.)
 
 Change the `screen-reader-new` step's `Condition` to:
 
@@ -686,9 +743,21 @@ func applyReportedScreenReader(u *users.UserRecord, reported bool) (turnedOn boo
 	return true, u.TurnOnScreenReader()
 }
 
-// screenReaderOnNotice tells a player their connection turned the account's
-// screen reader setting on, and how to turn it off.
-const screenReaderOnNotice = `Screen reader mode is on for this character. Type set screenreader to turn it off.`
+// screenReaderOnNotices tell a player their connection turned the account's
+// screen reader setting on, and how to turn it off. Two lines, each under
+// 80 columns, because login text reaches telnet unwrapped.
+var screenReaderOnNotices = []string{
+	`Screen reader mode is on for this character.`,
+	`Type set screenreader to turn it off.`,
+}
+
+// sendLoginLines sends each line as login text, one per line.
+func sendLoginLines(id connections.ConnectionId, lines []string) {
+	for _, line := range lines {
+		sendLoginText(id, line)
+		connections.SendTo(term.CRLF, id)
+	}
+}
 ```
 
 - [ ] **Step 5: Use them in `FinalizeLoginOrCreate`**
@@ -706,33 +775,78 @@ After `sharedState["UserObject"] = newUser // For main loop` in the creation bra
 
 ```go
 		if creationCombatChanged {
-			sendLoginText(clientInput.ConnectionId, users.ScreenReaderCombatLine)
-			connections.SendTo(term.CRLF, clientInput.ConnectionId)
+			sendLoginLines(clientInput.ConnectionId, users.ScreenReaderCombatLines)
 		}
 ```
 
-Existing login, after `sharedState["UserObject"] = loggedInUser // For main loop`, add:
+Existing login: apply the report to `tmpUser` BEFORE `users.LoginUser(tmpUser, ...)` publishes it to the user manager (`users.go:285-290`), so MainWorker never reads the flag mid-write. Immediately before the line `loggedInUser, msg, err := users.LoginUser(tmpUser, clientInput.ConnectionId)`, add:
 
 ```go
-			if turnedOn, combatChanged := applyReportedScreenReader(loggedInUser, connections.GetClientSettings(clientInput.ConnectionId).ScreenReader); turnedOn {
-				sendLoginText(clientInput.ConnectionId, screenReaderOnNotice)
-				connections.SendTo(term.CRLF, clientInput.ConnectionId)
-				if combatChanged {
-					sendLoginText(clientInput.ConnectionId, users.ScreenReaderCombatLine)
-					connections.SendTo(term.CRLF, clientInput.ConnectionId)
+			// The connection's screen reader report turns the account's
+			// setting on (never off), before the user is visible to MainWorker.
+			srTurnedOn, srCombatChanged := applyReportedScreenReader(tmpUser, connections.GetClientSettings(clientInput.ConnectionId).ScreenReader)
+```
+
+and after `sharedState["UserObject"] = loggedInUser // For main loop`, add:
+
+```go
+			if srTurnedOn {
+				sendLoginLines(clientInput.ConnectionId, screenReaderOnNotices)
+				if srCombatChanged {
+					sendLoginLines(clientInput.ConnectionId, users.ScreenReaderCombatLines)
 				}
 			}
 ```
 
+If `LoginUser` fails after this, the change lives only on the discarded `tmpUser`; nothing is saved.
+
+- [ ] **Step 5a: The newcomer route keeps light for a screen reader user**
+
+`internal/usercommands/start.go:246` (`startInAntechamber`, route "New to text MUDs") sets `user.CombatVerbosity = "medium"` unconditionally, which would undo the light setting a blind player just got. Write the failing test first, in a new `internal/usercommands/start_screenreader_test.go`:
+
+```go
+package usercommands
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+// The tutorial starts newcomers at medium, except a screen reader user,
+// who keeps light (spec 2026-11-17, ruling 5).
+func TestNewcomerCombatVerbosity(t *testing.T) {
+	require.Equal(t, `medium`, newcomerCombatVerbosity(``, false))
+	require.Equal(t, `medium`, newcomerCombatVerbosity(`light`, false))
+	require.Equal(t, `light`, newcomerCombatVerbosity(`light`, true))
+}
+```
+
+Run: `go test ./internal/usercommands/ -run TestNewcomerCombatVerbosity -count=1` (expect FAIL: undefined). Then add to `start.go`:
+
+```go
+// newcomerCombatVerbosity is the combat text level the "New to text MUDs"
+// route starts a player at: medium, unless the player uses a screen reader,
+// whose light setting is kept so the reader can keep up.
+func newcomerCombatVerbosity(current string, screenReader bool) string {
+	if screenReader {
+		return current
+	}
+	return `medium`
+}
+```
+
+and replace `user.CombatVerbosity = "medium"` at `:246` with `user.CombatVerbosity = newcomerCombatVerbosity(user.CombatVerbosity, user.ScreenReader)`, adding one sentence to the comment above it: "A screen reader user keeps light." Run the test again: PASS.
+
 - [ ] **Step 6: Run the tests to see them pass**
 
-Run: `go test ./internal/inputhandlers/ -count=1`
+Run: `go test ./internal/inputhandlers/ ./internal/usercommands/ -count=1`
 Expected: PASS, every existing login test included.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add internal/inputhandlers/login_prompt_handler.go internal/inputhandlers/login.go internal/inputhandlers/login_screenreader_test.go
+git add internal/inputhandlers/login_prompt_handler.go internal/inputhandlers/login.go internal/inputhandlers/login_screenreader_test.go internal/usercommands/start.go internal/usercommands/start_screenreader_test.go
 git commit -F - <<'EOF'
 feat(login): web and MTTS answer the screen reader question (#733)
 
@@ -922,7 +1036,17 @@ func TestTelnetIACHandler_MTTSReply(t *testing.T) {
 	TelnetIACHandler(&connections.ClientInput{ConnectionId: id, DataIn: in}, map[string]any{})
 	require.True(t, connections.GetClientSettings(id).ScreenReader)
 }
+
+// A client that refuses terminal type changes nothing: the question is asked.
+func TestTelnetIACHandler_WontTermTypeChangesNothing(t *testing.T) {
+	id := termTypeConn(t)
+	before := connections.GetClientSettings(id)
+	TelnetIACHandler(&connections.ClientInput{ConnectionId: id, DataIn: []byte{term.TELNET_IAC, term.TELNET_WONT, term.TELNET_OPT_TERM_TYPE}}, map[string]any{})
+	require.Equal(t, before, connections.GetClientSettings(id))
+}
 ```
+
+(The `WILL TTYPE` branch is not unit tested: it sends, and `SendTo` on a test connection with no socket removes the connection. Task 9 Step 3's telnet check covers it.)
 
 Also add `"fmt"` and `"strings"` to the test imports.
 
@@ -1031,6 +1155,12 @@ EOF
 - Create: `_datafiles/html/public/static/js/screenreader.js`
 - Create: `tools/jstest/screenreader.test.js`
 
+Facts this module is built on (read from `static/js/xterm.4.19.0.js`, verified by the plan review):
+- `term.setOption('screenReaderMode', v)` creates or disposes xterm's `AccessibilityManager` at runtime. It puts `.xterm-accessibility` (a row mirror, `.xterm-accessibility-tree`, and an `aria-live="assertive"` `.live-region`) inside the `.xterm` element.
+- Only text written AFTER the mode is on reaches the live region. A prompt already on screen is never read.
+- The live region appends text and counts lines; at 21 lines it appends "Too much output to announce" and stays silent until `_clearLiveRegion()` resets it. xterm calls that only on a key in its own hidden input or when that input loses focus. Players type in `#command-input`, so without help speech stops for good after 20 lines. The page therefore resets it (private API, as `termfit.js` already reaches into `term._core`; xterm is pinned at 4.19, #908): on every Enter, and after output has been quiet for `QUIET_MS`, so each burst gets its own 20 lines.
+- Turning the mode off disposes the live region at once, so "off" must be spoken by our own status region.
+
 - [ ] **Step 1: Write the failing test**
 
 Create `tools/jstest/screenreader.test.js`:
@@ -1042,8 +1172,10 @@ Create `tools/jstest/screenreader.test.js`:
 // Run:  node tools/jstest/screenreader.test.js
 'use strict';
 
+var fs = require('fs');
 var path = require('path');
-var SR = require(path.join(__dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'js', 'screenreader.js'));
+var pub = path.join(__dirname, '..', '..', '_datafiles', 'html', 'public');
+var SR = require(path.join(pub, 'static', 'js', 'screenreader.js'));
 
 var failures = 0;
 function check(name, ok, detail) {
@@ -1052,22 +1184,48 @@ function check(name, ok, detail) {
     console.log('FAIL ' + name + '\n  ' + detail);
 }
 
+// ---- the xterm internals the page relies on ---------------------------------
+// The page resets xterm's spoken region through private names. An xterm
+// upgrade that renames them must fail here, not go silent for blind players.
+var xterm = fs.readFileSync(path.join(pub, 'static', 'js', 'xterm.4.19.0.js'), 'utf8');
+check('xterm has _accessibilityManager', xterm.indexOf('this._accessibilityManager=new') >= 0, '');
+check('xterm has _clearLiveRegion', xterm.indexOf('_clearLiveRegion=function') >= 0, '');
+
 // ---- matchPhrase -----------------------------------------------------------
 
 check('on', SR.matchPhrase('screen reader on', false) === 'on', '');
 check('off', SR.matchPhrase('screen reader off', false) === 'off', '');
 check('case and spaces', SR.matchPhrase('  Screen   READER  On ', false) === 'on', '');
+check('dictation full stop', SR.matchPhrase('Screen reader on.', false) === 'on', '');
+check('one word', SR.matchPhrase('screenreader off', false) === 'off', '');
 check('password box never matches', SR.matchPhrase('screen reader on', true) === null, '');
-check('other text', SR.matchPhrase('screenreader on', false) === null, '');
+check('other text', SR.matchPhrase('screen reader', false) === null, '');
 check('a command', SR.matchPhrase('look', false) === null, '');
 check('not a string', SR.matchPhrase(undefined, false) === null, '');
 
 // ---- create ----------------------------------------------------------------
 
+// A fake clock: timers run only when the test advances time.
+function clock() {
+    var now = 0, timers = [];
+    return {
+        setTimeout: function (f, ms) { var t = { at: now + ms, f: f }; timers.push(t); return t; },
+        clearTimeout: function (t) { timers = timers.filter(function (x) { return x !== t; }); },
+        advance: function (ms) {
+            now += ms;
+            var due = timers.filter(function (t) { return t.at <= now; });
+            timers = timers.filter(function (t) { return t.at > now; });
+            due.forEach(function (t) { t.f(); });
+        }
+    };
+}
+
 function fakes(saved) {
+    var c = clock();
     var f = {
-        mode: null, label: null, hint: null, lines: [], reports: [], setCommands: 0,
-        store: saved === undefined ? {} : { screenReader: saved }, inGame: false
+        mode: null, label: null, hint: null, status: '', lines: [], reports: [], setCommands: 0,
+        cleared: 0, waiting: ['Username (or "new"): '], setOk: true,
+        store: saved === undefined ? {} : { screenReader: saved }, inGame: false, clock: c
     };
     f.opts = {
         term: { setOption: function (k, v) { if (k === 'screenReaderMode') f.mode = v; } },
@@ -1077,12 +1235,18 @@ function fakes(saved) {
         },
         input: { setAttribute: function (k, v) { if (k === 'aria-label') f.label = v; } },
         hint: {},
+        status: {},
         report: function (on) { f.reports.push(on); return true; },
-        setCommand: function () { f.setCommands++; return true; },
+        setCommand: function () { f.setCommands++; return f.setOk; },
         writeLine: function (t) { f.lines.push(t); },
-        inGame: function () { return f.inGame; }
+        currentLines: function () { return f.waiting.slice(); },
+        clearSpoken: function () { f.cleared++; },
+        inGame: function () { return f.inGame; },
+        setTimeout: c.setTimeout,
+        clearTimeout: c.clearTimeout
     };
     Object.defineProperty(f.opts.hint, 'textContent', { set: function (v) { f.hint = v; } });
+    Object.defineProperty(f.opts.status, 'textContent', { set: function (v) { f.status = v; }, get: function () { return f.status; } });
     return f;
 }
 
@@ -1092,7 +1256,11 @@ sr.load();
 check('fresh device: off', f.mode === false && !sr.isOn(), 'mode ' + f.mode);
 check('fresh device: label names the phrase', f.label === SR.LABEL_OFF, f.label);
 check('fresh device: hint names the phrase', f.hint === SR.HINT_OFF, f.hint);
-check('fresh device: nothing reported or stored', f.reports.length === 0 && !('screenReader' in f.store), JSON.stringify(f));
+check('fresh device: nothing reported or stored', f.reports.length === 0 && !('screenReader' in f.store), JSON.stringify(f.store));
+sr.noteInput();
+sr.noteOutput();
+f.clock.advance(SR.QUIET_MS);
+check('fresh device: never resets a region that is off', f.cleared === 0, 'cleared ' + f.cleared);
 
 f = fakes('true');
 sr = SR.create(f.opts);
@@ -1108,7 +1276,8 @@ check('blocked storage: off, no throw', f.mode === false, '');
 sr.phrase('on');
 check('blocked storage: still turns on', f.mode === true, '');
 
-// Before login: turn on, remember, report, confirm in the game window.
+// Before login: turn on, remember, report, then say so and repeat the
+// waiting prompt (a prompt already on screen is never read by xterm).
 f = fakes();
 sr = SR.create(f.opts);
 sr.load();
@@ -1116,13 +1285,28 @@ sr.phrase('on');
 check('phrase on: mode on', f.mode === true, '');
 check('phrase on: remembered', f.store.screenReader === 'true', JSON.stringify(f.store));
 check('phrase on: reported', f.reports.join() === 'true', f.reports.join());
-check('phrase on: confirmed', f.lines.join('|') === SR.SAID_ON, f.lines.join('|'));
+check('phrase on: confirmed, then the waiting prompt', f.lines.join('|') === SR.SAID_ON + '|' + f.waiting[0], f.lines.join('|'));
 check('phrase on: no set command before login', f.setCommands === 0, '');
 sr.phrase('off');
 check('phrase off: mode off and remembered', f.mode === false && f.store.screenReader === 'false', '');
-check('phrase off: confirmed', f.lines[1] === SR.SAID_OFF, f.lines.join('|'));
+check('phrase off: spoken by the status region', f.status === SR.SAID_OFF, f.status);
+check('phrase off: shown in the game window', f.lines[f.lines.length - 1] === SR.SAID_OFF, f.lines.join('|'));
 
-// In game, account differs: send set screenreader, let the server's line speak.
+// Resetting xterm's spoken region: at once on input, after a quiet gap on output.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+sr.noteInput();
+check('input resets the region', f.cleared === 1, 'cleared ' + f.cleared);
+sr.noteOutput();
+f.clock.advance(SR.QUIET_MS - 1);
+sr.noteOutput();
+f.clock.advance(SR.QUIET_MS - 1);
+check('output still arriving: no reset', f.cleared === 1, 'cleared ' + f.cleared);
+f.clock.advance(1);
+check('output quiet: reset once', f.cleared === 2, 'cleared ' + f.cleared);
+
+// In game, account differs: send set screenreader once; the server's line speaks.
 f = fakes();
 sr = SR.create(f.opts);
 sr.load();
@@ -1131,8 +1315,20 @@ sr.account(false);
 sr.phrase('on');
 check('in game, account off: set command sent', f.setCommands === 1, '');
 check('in game, account off: no local line', f.lines.length === 0, f.lines.join('|'));
+sr.phrase('on');
+check('in game: a second phrase does not toggle it back', f.setCommands === 1, 'set commands ' + f.setCommands);
 
-// In game, account already matches: no set command, local line.
+// In game, the set command could not be sent: confirm locally instead.
+f = fakes();
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+f.setOk = false;
+sr.account(false);
+sr.phrase('on');
+check('in game, send failed: local line', f.lines[0] === SR.SAID_ON, f.lines.join('|'));
+
+// In game, account already matches: no set command, local line, no prompt repeat.
 f = fakes();
 sr = SR.create(f.opts);
 sr.load();
@@ -1141,7 +1337,7 @@ sr.account(true);
 f.lines = [];
 sr.phrase('on');
 check('in game, account on: no set command', f.setCommands === 0, '');
-check('in game, account on: local line', f.lines.join('|') === SR.SAID_ON, f.lines.join('|'));
+check('in game, account on: local line only', f.lines.join('|') === SR.SAID_ON, f.lines.join('|'));
 
 // The account's setting arrives: the mode follows it and is remembered.
 f = fakes();
@@ -1152,17 +1348,17 @@ check('account on: mode on, remembered', f.mode === true && f.store.screenReader
 sr.account(false);
 check('account off: mode off, remembered', f.mode === false && f.store.screenReader === 'false', '');
 
-// Logged out: the account is forgotten, so the phrase confirms locally again.
+// Logged out: the account is forgotten. inGame stays true here so only
+// loggedOut can explain the missing set command.
 f = fakes();
 sr = SR.create(f.opts);
 sr.load();
 f.inGame = true;
 sr.account(false);
 sr.loggedOut();
-f.inGame = false;
 sr.phrase('on');
-check('after logout: no set command', f.setCommands === 0, '');
-check('after logout: local line', f.lines.join('|') === SR.SAID_ON, f.lines.join('|'));
+check('after logout: no set command', f.setCommands === 0, 'set commands ' + f.setCommands);
+check('after logout: local line', f.lines[0] === SR.SAID_ON, f.lines.join('|'));
 
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }
 console.log('all passed');
@@ -1190,6 +1386,12 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
 // setting (Char.Info.screenreader) once a character is logged in. Sighted
 // players never see any of it, and xterm's mode stays off for them.
 //
+// xterm 4.19 stops speaking after 20 lines until its spoken region is reset,
+// and resets it only on a key in its own hidden input, which players never
+// use. So the page calls noteInput on every Enter and noteOutput on every
+// write, and this module resets the region on input and after output has
+// been quiet for QUIET_MS: each burst gets its own 20 lines.
+//
 // tools/jstest/screenreader.test.js is the regression guard.
 
 (function (root, factory) {
@@ -1203,6 +1405,7 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
     'use strict';
 
     var STORAGE_KEY = 'screenReader';
+    var QUIET_MS = 2000;
     var LABEL_OFF = 'Game commands. Screen reader users: type screen reader on, then press Enter.';
     var LABEL_ON = 'Game commands.';
     var HINT_OFF = 'Screen reader users: type screen reader on, then press Enter.';
@@ -1210,25 +1413,31 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
     var SAID_ON = 'Screen reader mode is on.';
     var SAID_OFF = 'Screen reader mode is off.';
 
-    // matchPhrase returns 'on', 'off' or null for a typed line. Case and
-    // spacing do not matter. A password box never matches, so a password is
-    // never taken for the phrase.
+    // matchPhrase returns 'on', 'off' or null for a typed line. Case,
+    // spacing and a trailing full stop (phone dictation adds one) do not
+    // matter, and "screenreader" works as one word. A password box never
+    // matches, so a password is never taken for the phrase.
     function matchPhrase(line, isPassword) {
         if (isPassword || typeof line !== 'string') return null;
-        var s = line.trim().toLowerCase().replace(/\s+/g, ' ');
-        if (s === 'screen reader on') return 'on';
-        if (s === 'screen reader off') return 'off';
+        var s = line.toLowerCase().replace(/[.!?,\s]+$/, '').trim().replace(/\s+/g, ' ');
+        if (s === 'screen reader on' || s === 'screenreader on') return 'on';
+        if (s === 'screen reader off' || s === 'screenreader off') return 'off';
         return null;
     }
 
-    // opts: term (xterm, for setOption), storage (localStorage; any call may
-    // throw), input (the command box), hint (the hidden paragraph),
-    // report(on) (sends Client.Display), setCommand() (sends "set
-    // screenreader"), writeLine(text) (writes into the game window),
-    // inGame() (true while a character is logged in).
+    // opts: term (xterm, for setOption); storage (localStorage, any call may
+    // throw); input (the command box); hint (the hidden first paragraph);
+    // status (a visually hidden role="status" element); report(on) (sends
+    // Client.Display); setCommand() (sends "set screenreader", false when it
+    // could not); writeLine(text) (writes a line into the game window);
+    // currentLines() (the waiting prompt, as lines); clearSpoken() (resets
+    // xterm's spoken region); inGame() (true while a character is logged in);
+    // setTimeout/clearTimeout (the window's, or a test clock).
     function create(opts) {
+        var setT = opts.setTimeout || setTimeout, clearT = opts.clearTimeout || clearTimeout;
         var on = false;
         var account = null;    // the account's setting, once Char.Info names it
+        var quietTimer = null;
 
         function remember(value) {
             try { opts.storage.setItem(STORAGE_KEY, JSON.stringify(value)); } catch (e) { /* storage blocked: this visit only */ }
@@ -1236,9 +1445,17 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
 
         function show(value) {
             on = value;
+            if (!value && quietTimer) { clearT(quietTimer); quietTimer = null; }
             opts.term.setOption('screenReaderMode', value);
             opts.input.setAttribute('aria-label', value ? LABEL_ON : LABEL_OFF);
             opts.hint.textContent = value ? HINT_ON : HINT_OFF;
+        }
+
+        // say speaks through our own status region: xterm's is gone once the
+        // mode is off.
+        function say(text) {
+            opts.status.textContent = '';
+            opts.status.textContent = text;
         }
 
         return {
@@ -1255,15 +1472,25 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
             // The player typed the phrase: which is 'on' or 'off'.
             phrase: function (which) {
                 var value = which === 'on';
+                // Read the waiting prompt before anything is written over it.
+                var waiting = value && !opts.inGame() ? opts.currentLines() : [];
                 show(value);
                 remember(value);
                 opts.report(value);
-                if (opts.inGame() && account !== null && account !== value) {
-                    // The server's own "ScreenReader mode toggled" line confirms it.
-                    opts.setCommand();
+                if (opts.inGame() && account !== null && account !== value && opts.setCommand() !== false) {
+                    // The server's "ScreenReader mode toggled" line confirms it.
+                    // Count it as done now, so a second phrase before Char.Info
+                    // returns does not toggle it back.
+                    account = value;
+                    if (!value) say(SAID_OFF);
                     return;
                 }
                 opts.writeLine(value ? SAID_ON : SAID_OFF);
+                if (value) {
+                    waiting.forEach(function (line) { opts.writeLine(line); });
+                } else {
+                    say(SAID_OFF);
+                }
             },
 
             // Char.Info named the account's setting.
@@ -1275,13 +1502,25 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
                 }
             },
 
+            // The player pressed Enter: a fresh burst, so a fresh 20 lines.
+            noteInput: function () {
+                if (on) opts.clearSpoken();
+            },
+
+            // The game wrote text: reset the spoken region once it goes quiet.
+            noteOutput: function () {
+                if (!on) return;
+                if (quietTimer) clearT(quietTimer);
+                quietTimer = setT(function () { quietTimer = null; opts.clearSpoken(); }, QUIET_MS);
+            },
+
             // The connection closed: the next login names the account again.
             loggedOut: function () { account = null; }
         };
     }
 
     return {
-        STORAGE_KEY: STORAGE_KEY,
+        STORAGE_KEY: STORAGE_KEY, QUIET_MS: QUIET_MS,
         LABEL_OFF: LABEL_OFF, LABEL_ON: LABEL_ON,
         HINT_OFF: HINT_OFF, HINT_ON: HINT_ON,
         SAID_ON: SAID_ON, SAID_OFF: SAID_OFF,
@@ -1312,7 +1551,12 @@ EOF
 ### Task 7: Wire the page
 
 **Files:**
-- Modify: `_datafiles/html/public/webclient-pure.html` (script tags `:234`, `<body>` `:244`, `#command-input` `:310`, `displayReport` `:540-544`, `Char` handler `:895-910`, socket `onopen` `:3072-3075`, Enter handler `:3342`)
+- Modify: `_datafiles/html/public/webclient-pure.html` (script tags `:234`, `<body>` `:244`, `#command-input` `:310`, `displayReport` `:540-544`, `Char` handler `:903-906`, `socket.onopen` `:3044` with `companionGlue.disconnected()` at `:3075`, Enter handler `:3342`, server text write `:3205`)
+- Modify: `_datafiles/html/public/_header.html` (after `<body>` at `:38`)
+- Modify: `_datafiles/html/public/static/css/dashboard.css` (beside `.visually-hidden`, `:1959`)
+- Modify: `_datafiles/html/public/static/css/gomud.css` (add `.visually-hidden`; it has none)
+
+Anchors are given by line and by the code text; trust the code text if a line moved.
 
 - [ ] **Step 1: Load the module**
 
@@ -1322,22 +1566,57 @@ After the `displayreport.js` script tag (`:234`), add:
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/screenreader.js?v={{ .ASSET_VERSION }}"></script>
 ```
 
-- [ ] **Step 2: The hidden first line**
+- [ ] **Step 2: The hidden first line and the status region**
 
 Immediately after `<body onLoad="init(); return false;">` (`:244`), add:
 
 ```html
     <!-- Read first by a screen reader, seen by no one (touch arc Task 0;
-         static/js/screenreader.js keeps it current). iOS VoiceOver starts at
-         the top of the page rather than at the focused command box. -->
+         static/js/screenreader.js keeps them current). iOS VoiceOver starts at
+         the top of the page rather than at the focused command box. The
+         status region speaks what xterm's own region cannot, such as "off". -->
     <p id="sr-hint" class="visually-hidden">Screen reader users: type screen reader on, then press Enter.</p>
+    <div id="sr-status" class="visually-hidden" role="status" aria-live="polite"></div>
 ```
 
-- [ ] **Step 3: The spoken label**
+- [ ] **Step 3: The outer page**
+
+Players reach the game at `/webclient`, which wraps `webclient-pure.html` in an iframe (`webclient.html:172`) under the site header, so a screen reader starts at the header. In `_datafiles/html/public/_header.html`, immediately after `<body>` (`:38`), add:
+
+```html
+{{ if eq .REQUEST.URL.Path "/webclient" }}<p class="visually-hidden">Screen reader users: the game is below. In its command box, type screen reader on, then press Enter.</p>{{ end }}
+```
+
+Add to `static/css/gomud.css` (it has no such rule):
+
+```css
+/* Text for screen readers only (same rule as dashboard.css). */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+```
+
+- [ ] **Step 4: The overlay keeps out of the mouse's way**
+
+xterm's `.xterm-accessibility` overlay sits over the game text at z-index 10 (`xterm.css:143-152`), which would stop mouse selection while the mode is on. After the `.visually-hidden` rule in `dashboard.css` (`:1959-1968`), add:
+
+```css
+/* xterm's screen reader overlay (static/js/screenreader.js) must not take
+   the mouse: selecting game text works as before while the mode is on. */
+.xterm .xterm-accessibility { pointer-events: none; }
+```
+
+- [ ] **Step 5: The spoken label**
 
 On `#command-input` (`:310`), add `aria-label="Game commands. Screen reader users: type screen reader on, then press Enter."` beside the existing attributes. Change nothing else on the element.
 
-- [ ] **Step 4: Create the switch, and report it with the width**
+- [ ] **Step 6: Create the switch, and report it with the width**
 
 Replace the `displayReport` creation (`:540-544`) with:
 
@@ -1355,9 +1634,32 @@ Replace the `displayReport` creation (`:540-544`) with:
             storage: (function () { try { return window.localStorage; } catch (e) { return null; } })(),
             input: document.getElementById('command-input'),
             hint: document.getElementById('sr-hint'),
+            status: document.getElementById('sr-status'),
             report: function (on) { return SendGMCP('Client.Display', { screenreader: on }); },
             setCommand: function () { return SendData('set screenreader'); },
-            writeLine: function (text) { term.writeln(text); },
+            writeLine: function (text) {
+                // Start on a fresh line: a login prompt leaves the cursor after its text.
+                if (term.buffer.active.cursorX > 0) term.write('\r\n');
+                term.writeln(text);
+            },
+            currentLines: function () {
+                // The waiting prompt: the last line of the game window with text on it.
+                var buf = term.buffer.active;
+                for (var y = buf.baseY + buf.cursorY; y >= 0; y--) {
+                    var line = buf.getLine(y);
+                    var text = line ? line.translateToString(true) : '';
+                    if (text.trim()) return [text];
+                }
+                return [];
+            },
+            clearSpoken: function () {
+                // xterm 4.19 resets its spoken region only on a key in its own
+                // hidden input, which players never use. Private API, as
+                // termfit.js already uses; xterm is pinned at 4.19 (#908), and
+                // tools/jstest/screenreader.test.js fails if the names change.
+                var am = term._core && term._core._accessibilityManager;
+                if (am && am._clearLiveRegion) am._clearLiveRegion();
+            },
             inGame: function () { return inGame; }
         });
         screenReader.load();
@@ -1365,9 +1667,9 @@ Replace the `displayReport` creation (`:540-544`) with:
 
 (`screenReader` is used inside `send` only when a report goes out, after this runs. `inGame` is declared with `let` further down; `inGame()` is only called on a typed phrase, after the page has loaded.)
 
-- [ ] **Step 5: Follow the account**
+- [ ] **Step 7: Follow the account**
 
-In the `"Char"` update handler, after the `companionGlue.hello` block (`:905-907`), add:
+In the `"Char"` update handler, after the `companionGlue.hello` block (`:903-906`), add:
 
 ```js
                 // The account's screen reader setting (Char.Info.screenreader):
@@ -1377,21 +1679,32 @@ In the `"Char"` update handler, after the `companionGlue.hello` block (`:905-907
                 }
 ```
 
-- [ ] **Step 6: Forget the account on a new connection**
+- [ ] **Step 8: Forget the account on a new connection**
 
-In `socket.onopen`, beside `if (companionGlue) { companionGlue.disconnected(); }` (`:3074`), add:
+In `socket.onopen`, beside `if (companionGlue) { companionGlue.disconnected(); }` (`:3075`), add:
 
 ```js
                 screenReader.loggedOut();
 ```
 
-- [ ] **Step 7: Catch the phrase**
+- [ ] **Step 9: Tell the switch about output**
+
+Directly after the server text write `term.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);` (`:3205`), add:
+
+```js
+                screenReader.noteOutput();
+```
+
+- [ ] **Step 10: Catch the phrase, and reset on input**
 
 In the Enter branch (`if (event.key === 'Enter') {` at `:3342`), as its first statements, before the command history push, add:
 
 ```js
-                // "screen reader on" / "off" is the client's own switch
-                // (static/js/screenreader.js): never sent, never in history.
+                // A new command is a new burst: give the screen reader a fresh
+                // 20 lines (static/js/screenreader.js).
+                screenReader.noteInput();
+                // "screen reader on" / "off" is the client's own switch:
+                // never sent, never in history.
                 var srPhrase = window.ScreenReader.matchPhrase(event.target.value, textInput.type === 'password');
                 if (srPhrase) {
                     screenReader.phrase(srPhrase);
@@ -1400,7 +1713,7 @@ In the Enter branch (`if (event.key === 'Enter') {` at `:3342`), as its first st
                 }
 ```
 
-- [ ] **Step 8: Run the JS gates**
+- [ ] **Step 11: Run the JS gates**
 
 Run (Git Bash, repo root):
 
@@ -1410,12 +1723,12 @@ for t in tools/jstest/*.test.js; do node "$t" >/dev/null || echo "FAIL $t"; done
 for t in tools/webclient-tests/*.js; do node "$t" >/dev/null || echo "FAIL $t"; done
 ```
 
-Expected: no `SYNTAX` or `FAIL` lines. (Compare the file list with `.github/workflows/validate.yml`'s javascript job and run exactly what it runs if it differs.)
+Expected: no `SYNTAX` or `FAIL` lines. (Compare with `.github/workflows/validate.yml`'s javascript job and run exactly what it runs if it differs.)
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 12: Commit**
 
 ```bash
-git add _datafiles/html/public/webclient-pure.html
+git add _datafiles/html/public/webclient-pure.html _datafiles/html/public/_header.html _datafiles/html/public/static/css/dashboard.css _datafiles/html/public/static/css/gomud.css
 git commit -F - <<'EOF'
 feat(webclient): spoken opt-in for screen reader mode (#733)
 
@@ -1433,19 +1746,21 @@ EOF
 - Modify: `modules/gmcp/context.md:500` (the `gmcp.ClientDisplay.go` row) and its `Char.Info` description
 - Modify: `internal/connections/context.md:110-118` (`ClientSettings`)
 - Modify: `internal/inputhandlers/context.md` (reserved `_conn_` keys, MTTS)
-- Modify: `internal/users/context.md` (`TurnOnScreenReader`, `ScreenReaderCombatLine`)
+- Modify: `internal/users/context.md` (`TurnOnScreenReader`, `ScreenReaderCombatLines`)
+- Modify: `internal/term/context.md` (`ParseMTTS`, the `TelnetTermType*` commands, `TELNET_TTYPE_*`, `MTTSScreenReader`)
+- Modify: `docs/README.md` (rows for the new files)
 
 - [ ] **Step 1: Help row**
 
 In `set.template`, inside the `::rows` block that holds `set charset`, after the `set charset` entry and its continuation line, add a blank line and:
 
 ```
-  <ansi fg="command">set screenreader</ansi>  Toggles screen reader mode: plainer text without art,
-               and combat text set to light. In the web client, typing
-               <ansi fg="command">screen reader on</ansi> also turns it on and reads the game aloud.
+  <ansi fg="command">set screenreader</ansi>  Turns screen reader mode on or off. On means plainer text
+                    without art and light combat text. In the web client,
+                    typing <ansi fg="command">screen reader on</ansi> also reads the game aloud.
 ```
 
-Match the continuation indent of the `set charset` entry exactly (count its spaces). Then run the help guards:
+The continuation lines start at column 20, the entry's own text column (`  set screenreader  ` is 20 characters): `help_markup_guard_test.go:219-223` requires a continuation to start exactly at its entry's text column. Do not copy `set charset`'s 15. Then run the help guards:
 
 Run: `go test ./internal/guards/ ./internal/templates/ ./internal/devtools/ -count=1`
 Expected: PASS. If a width or markup guard fails, rewrap the row as it says; do not change the guard.
@@ -1457,28 +1772,39 @@ Add at the top of `docs/PATCH_NOTES.md`, under the title:
 ```markdown
 ## 2026-11-17: Screen readers in the web client
 
-- The web client can now read the game aloud to screen reader users. Your screen reader announces how as soon as the page opens: type `screen reader on` in the command box and press Enter. The web client remembers it on that device, and `screen reader off` turns it off.
-- Your character's screen reader setting follows you: `set screenreader` turns it on or off wherever you play, and a device you use it on turns it on for your character.
+- The web client can now read the game aloud to screen reader users. When the page opens, your screen reader tells you what to do: type `screen reader on` in the command box and press Enter. The web client remembers this on that device. Type `screen reader off` to stop it.
+- Screen reader mode is saved with your character. `set screenreader` turns it on or off wherever you play. If you turn it on in the web client, your character keeps it on.
 - Turning screen reader mode on sets combat text to light, so your screen reader can keep up. `set combatverbosity full` brings every blow back.
-- New characters made in the web client are no longer asked whether they use a screen reader. Telnet clients that tell the game their player uses one are not asked either.
+- New characters made in the web client are no longer asked whether they use a screen reader. Telnet clients that report their settings to the game (MTTS) are not asked either.
 ```
 
 - [ ] **Step 3: Package docs**
 
-- `modules/gmcp/context.md`: in the `gmcp.ClientDisplay.go` row, add that the payload may carry `screenreader` (bool), stored on `ClientSettings.ScreenReader` for websockets only, kept when absent or not a bool, and that the client sends it with every width report and alone when the player types the phrase. Where `Char.Info` is described, add the `screenreader` field (always sent, false included) and that `UserSettingChanged{Name: "screenreader"}` re-pushes `Char.Info`.
-- `internal/connections/context.md`: add `ScreenReader`, `MTTSReported`, `TermTypeReplies`, `TermTypeLast` to the `ClientSettings` block with one line each.
-- `internal/inputhandlers/context.md`: add a short section: the reserved `_conn_` result keys and `writeConnFacts`; `screen-reader-new` is asked only of telnet without MTTS; `applyReportedScreenReader` at login; the MTTS cycle in `term_iac.go` (`recordTermType`, `maxTermTypeReplies`).
-- `internal/users/context.md`: add `TurnOnScreenReader` (the only way the setting turns on; saves light combat text) and `ScreenReaderCombatLine`.
+- `modules/gmcp/context.md`: in the `gmcp.ClientDisplay.go` row, add that the payload may carry `screenreader` (bool), stored on `ClientSettings.ScreenReader` for websockets only, kept when absent or not a bool, and that the client sends it with every width report and alone when the player types the phrase. The file does not describe `Char.Info` yet (`grep -n "Char.Info" modules/gmcp/context.md` finds nothing): add a row or short paragraph where the `gmcp.Char.go` packages are listed, naming `Char.Info`'s fields `account`, `name`, `class`, `race`, `screenreader` (always sent, false included) and that `UserSettingChanged{Name: "screenreader"}` re-pushes it.
+- `internal/connections/context.md`: the `ClientSettings` block (`:110-118`) is missing `AsciiMode` already; add it with `ScreenReader`, `MTTSReported`, `TermTypeReplies` and `TermTypeLast`, one line each.
+- `internal/inputhandlers/context.md`: add a short section: the reserved `_conn_` result keys and `writeConnFacts`; `screen-reader-new` is asked only of telnet without MTTS; `applyReportedScreenReader` at login (applied before `LoginUser` publishes the user); the MTTS cycle in `term_iac.go` (`recordTermType`, `maxTermTypeReplies`, `maxTermTypeLen`).
+- `internal/users/context.md`: add `TurnOnScreenReader` (the only way the setting turns on; saves light combat text) and `ScreenReaderCombatLines`.
+- `internal/term/context.md`: add `mtts.go`: `ParseMTTS`, `TelnetWillTermType`, `TelnetWontTermType`, `TelnetTermTypeSend`, `TelnetTermTypeIs`, `TELNET_TTYPE_IS`, `TELNET_TTYPE_SEND`, `MTTSScreenReader`.
+- `internal/usercommands/context.md`: one line for `newcomerCombatVerbosity` in `start.go`.
 
 Verify every symbol named exists:
 
 Run: `python tools/context_md_audit.py`
-Expected: no phantom symbols reported for the four files.
+Expected: no phantom symbols reported for the files above.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 4: docs/README.md rows for the new files**
+
+Add a row for each new file, in the section where its neighbours are listed (find the section with `grep -n "internal/users/\|internal/term/\|static/js/\|tools/jstest/" docs/README.md`), in the existing row format:
+
+- `internal/users/screenreader.go`: `TurnOnScreenReader`, the only way an account's screen reader setting turns on; it also saves light combat text, and `ScreenReaderCombatLines` says so.
+- `internal/term/mtts.go`: terminal type subnegotiation and MTTS (`ParseMTTS`, bit 64 is a screen reader).
+- `_datafiles/html/public/static/js/screenreader.js`: the web client's screen reader switch: the spoken opt-in phrase, device memory, the account's setting, and resets of xterm's spoken region.
+- `tools/jstest/screenreader.test.js`, `internal/users/screenreader_test.go`, `internal/term/mtts_test.go`, `internal/inputhandlers/login_screenreader_test.go`, `internal/usercommands/start_screenreader_test.go`, `modules/gmcp/gmcp.CharInfo_screenreader_test.go`: one line each saying what they guard.
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add _datafiles/world/dogmud/templates/help/set.template docs/PATCH_NOTES.md modules/gmcp/context.md internal/connections/context.md internal/inputhandlers/context.md internal/users/context.md
+git add _datafiles/world/dogmud/templates/help/set.template docs/PATCH_NOTES.md modules/gmcp/context.md internal/connections/context.md internal/inputhandlers/context.md internal/users/context.md internal/term/context.md internal/usercommands/context.md docs/README.md
 git commit -F - <<'EOF'
 docs: screen reader opt-in in help, patch notes and package docs (#733)
 
@@ -1498,30 +1824,37 @@ Follow `dogmud-shipping` "Boot check in an isolated worktree": a detached worktr
 
 - [ ] **Step 2: Run the headless check**
 
-Write this to `<scratchpad>/sr-check/check.js` and run `node <scratchpad>/sr-check/check.js http://127.0.0.1:<webport>/webclient`:
+The game page is `/webclient-pure.html`; `/webclient` wraps it in an iframe under the site header (`webclient.html:172`). The check drives the inner page directly and then checks the outer page's hint. It reads three things: the whole terminal buffer (what was printed), xterm's `.live-region` (what was handed to the screen reader), and the frames sent.
+
+Write this to `<scratchpad>/sr-check/check.js` and run `node <scratchpad>/sr-check/check.js http://127.0.0.1:<webport>`:
 
 ```js
-// Headless check for touch arc Task 0. Sighted path, opt-in path, creation
-// by the accessibility tree, the account round trip, and reload memory.
+// Headless check for touch arc Task 0.
 const { chromium } = require('C:/Users/Calabe Davis/workspace/metaprompter/node_modules/playwright');
 
-const url = process.argv[2];
+const base = process.argv[2];
 const fails = [];
 function ok(name, cond, detail) {
     console.log((cond ? 'ok   ' : 'FAIL ') + name + (cond ? '' : '  ' + (detail || '')));
     if (!cond) fails.push(name);
 }
 
-async function treeText(page) {
+// Everything printed, not just the visible rows.
+function printed(page) {
     return page.evaluate(() => {
-        const t = document.querySelector('.xterm-accessibility-tree');
-        return t ? t.textContent : '';
+        const b = term.buffer.active, out = [];
+        for (let i = 0; i < b.length; i++) { const l = b.getLine(i); if (l) out.push(l.translateToString(true)); }
+        return out.join('\n');
     });
 }
-async function waitFor(page, re, ms) {
+// What xterm handed to the screen reader since its last reset.
+function spoken(page) {
+    return page.evaluate(() => { const r = document.querySelector('.xterm .live-region'); return r ? r.textContent : null; });
+}
+async function waitPrinted(page, re, ms) {
     const end = Date.now() + (ms || 8000);
     while (Date.now() < end) {
-        if (re.test(await treeText(page))) return true;
+        if (re.test(await printed(page))) return true;
         await page.waitForTimeout(200);
     }
     return false;
@@ -1533,59 +1866,92 @@ async function type(page, text) {
 
 (async () => {
     const browser = await chromium.launch();
+
+    // ---- the outer page: its hint comes before the site header ----
+    const outer = await (await browser.newContext()).newPage();
+    await outer.goto(base + '/webclient');
+    ok('outer: hint is first in body', await outer.evaluate(() => {
+        const p = document.body.firstElementChild;
+        return !!p && p.classList.contains('visually-hidden') && /type screen reader on/.test(p.textContent);
+    }));
+    await outer.goto(base + '/');
+    ok('other site pages: no hint', await outer.evaluate(() => !/type screen reader on/.test(document.body.textContent)));
+
+    // ---- the game page ----
     const page = await (await browser.newContext()).newPage();
     const sent = [];
     page.on('websocket', ws => ws.on('framesent', f => {
         sent.push(typeof f.payload === 'string' ? f.payload : Buffer.from(f.payload).toString('latin1'));
     }));
-
-    await page.goto(url);
+    await page.goto(base + '/webclient-pure.html');
     await page.waitForTimeout(2500);
 
-    // Sighted: nothing runs, the label and hint are in place.
-    ok('sighted: no accessibility tree', await page.locator('.xterm-accessibility').count() === 0);
+    // Sighted: nothing runs, the label and hint are in place, the mouse still selects.
+    ok('sighted: no accessibility overlay', await page.locator('.xterm-accessibility').count() === 0);
     ok('label names the phrase', /type screen reader on/.test(await page.getAttribute('#command-input', 'aria-label') || ''));
     ok('hint is first in body', await page.evaluate(() => document.body.firstElementChild && document.body.firstElementChild.id === 'sr-hint'));
     ok('hint is not visible', await page.evaluate(() => { const r = document.getElementById('sr-hint').getBoundingClientRect(); return r.width <= 1 && r.height <= 1; }));
 
-    // Opt in.
-    await type(page, 'Screen  Reader ON');
+    // Opt in at the name prompt.
+    await type(page, 'Screen reader on.');
     await page.waitForTimeout(500);
-    ok('opt-in: accessibility tree exists', await page.locator('.xterm-accessibility').count() === 1);
+    ok('opt-in: overlay exists', await page.locator('.xterm-accessibility').count() === 1);
+    ok('opt-in: overlay ignores the mouse', await page.evaluate(() => getComputedStyle(document.querySelector('.xterm-accessibility')).pointerEvents === 'none'));
     ok('opt-in: label shortened', await page.getAttribute('#command-input', 'aria-label') === 'Game commands.');
     ok('opt-in: phrase never sent as text', !sent.some(s => /screen\s*reader/i.test(s) && !s.includes('Client.Display')), JSON.stringify(sent));
     ok('opt-in: reported', sent.some(s => s.includes('Client.Display') && s.includes('"screenreader":true')));
     ok('opt-in: remembered', await page.evaluate(() => localStorage.getItem('screenReader')) === 'true');
-    ok('opt-in: confirmation read', await waitFor(page, /Screen reader mode is on\./, 3000));
+    await page.waitForTimeout(1200); // the live region fills on a short debounce
+    const sp1 = await spoken(page) || '';
+    ok('opt-in: confirmation spoken', /Screen reader mode is on\./.test(sp1), sp1);
+    ok('opt-in: waiting prompt spoken again', /new/i.test(sp1), sp1);
+    await page.press('#command-input', 'ArrowUp');
+    ok('opt-in: phrase not in history', !/screen/i.test(await page.inputValue('#command-input')), await page.inputValue('#command-input'));
+    await page.fill('#command-input', '');
 
-    // Create a character by the accessibility tree; the question is never asked.
+    // Create a character; the question is never printed.
     const name = 'srcheck' + String(Date.now()).slice(-6);
     await type(page, 'new');
-    ok('creation: name prompt read', await waitFor(page, /login name/i));
+    ok('creation: name prompt printed', await waitPrinted(page, /login name/i));
     await type(page, name);
-    ok('creation: password prompt read', await waitFor(page, /Choose your password/));
+    ok('creation: password prompt printed', await waitPrinted(page, /Choose your password/));
     await type(page, 'Sr-check-pass-1');
-    ok('creation: repeat prompt read', await waitFor(page, /Repeat your password/));
+    ok('creation: repeat prompt printed', await waitPrinted(page, /Repeat your password/));
     await type(page, 'Sr-check-pass-1');
-    if (await waitFor(page, /Email Address/, 4000)) { await type(page, ''); }
-    ok('creation: confirm prompt read', await waitFor(page, /create a new user/i));
-    ok('creation: screen reader question never asked', !/Are you using a screen reader/.test(await treeText(page)));
+    if (await waitPrinted(page, /Email Address/, 4000)) { await type(page, ''); }
+    ok('creation: confirm prompt printed', await waitPrinted(page, /create a new user/i));
     await type(page, 'y');
-    ok('creation: combat line read', await waitFor(page, /Combat text is set to light/, 10000));
+    ok('creation: combat line printed', await waitPrinted(page, /Combat text is set to light/, 10000));
+    ok('creation: screen reader question never printed', !/Are you using a screen reader/.test(await printed(page)));
+
+    // Speech keeps going past 20 lines: entering the world prints well over
+    // 20, and a command afterwards must still be spoken.
+    await page.waitForTimeout(3000);
+    await type(page, 'look');
+    await page.waitForTimeout(1500);
+    const sp2 = await spoken(page) || '';
+    ok('past 20 lines: a new command is still spoken', sp2.length > 0 && !/Too much output/.test(sp2.split('\n')[0]), sp2.slice(0, 200));
 
     // The account came back on in Char.Info; set screenreader turns it off everywhere.
-    await page.waitForTimeout(2000);
     ok('in game: mode still on', await page.locator('.xterm-accessibility').count() === 1);
     await type(page, 'set screenreader');
     await page.waitForTimeout(1500);
     ok('set screenreader off: mode off', await page.locator('.xterm-accessibility').count() === 0);
     ok('set screenreader off: remembered off', await page.evaluate(() => localStorage.getItem('screenReader')) === 'false');
 
-    // Reload with the setting remembered on: on before anything is typed.
+    // Reload with the setting remembered on: the first report already says so.
     await page.evaluate(() => localStorage.setItem('screenReader', 'true'));
+    sent.length = 0;
     await page.reload();
     await page.waitForTimeout(2500);
+    const firstDisplay = sent.find(s => s.includes('Client.Display'));
+    ok('reload: first report carries screenreader true', !!firstDisplay && firstDisplay.includes('"screenreader":true'), firstDisplay);
     ok('reload: on before typing', await page.locator('.xterm-accessibility').count() === 1);
+
+    // Off before login: spoken by our own status region.
+    await type(page, 'screen reader off');
+    await page.waitForTimeout(300);
+    ok('off: spoken by the status region', await page.evaluate(() => document.getElementById('sr-status').textContent) === 'Screen reader mode is off.');
 
     await browser.close();
     console.log(fails.length ? fails.length + ' failure(s)' : 'all passed');
@@ -1593,7 +1959,7 @@ async function type(page, text) {
 })();
 ```
 
-If a prompt regex does not match the live text, read the tree text the check prints on failure, fix the regex in the check (never the game), and rerun. Expected: `all passed`.
+If a check fails, read the detail it prints. Fix a wrong regex or wait in the check; fix a real defect in the game. Never weaken an assertion to make it pass. Expected: `all passed`.
 
 - [ ] **Step 3: Telnet check**
 

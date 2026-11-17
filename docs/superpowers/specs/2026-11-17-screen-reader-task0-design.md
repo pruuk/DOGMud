@@ -84,7 +84,7 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 
 - Creation: the `screen-reader-new` step is skipped when the connection is a websocket, or when the telnet client answered MTTS at all (with bit 64 set or not: an MTTS reply without it is a "no", and asking again would ask twice). When skipped, the answer is the connection's `ClientSettings.ScreenReader`. So every player is asked at most once, at creation, and a web player never.
 - `ClientSettings` also gains `MTTSReported bool`, set when an MTTS reply is parsed.
-- Conditions cannot see the connection (`ConditionFunc` takes only results), so the prompt handler writes the connection's facts into the results map under reserved keys before evaluating each step: `_conn_websocket`, `_conn_mtts` and `_conn_screenreader` ("y" or "n"). Keys starting `_conn_` are reserved; no step may use one as its ID (guarded by a test).
+- Conditions cannot see the connection (`ConditionFunc` takes only results), so the prompt handler writes the connection's facts into the results map under reserved keys before evaluating each step: `_conn_websocket` and `_conn_mtts` ("y" or "n"). The screen reader report itself is read from `ClientSettings` when the account is made. Keys starting `_conn_` are reserved; no step may use one as its ID (guarded by a test).
 - Login to an existing account: when the connection reports a screen reader and the account flag is off, the flag is turned on and the player is told: "Screen reader mode is on for this character. Type set screenreader to turn it off." A connection that does not report one never turns the flag off.
 
 ### 6a. Combat verbosity follows the screen reader turning on (`internal/users`)
@@ -100,6 +100,17 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - A reply of the form `MTTS <n>` sets `ClientSettings.ScreenReader` from bit 64. Other replies (client name, terminal type) are logged at debug level and otherwise ignored.
 - A client that answers `WONT` or never answers changes nothing, and the creation question is asked as today.
 
+### 8. Found in the plan review (2026-11-17), verified against source
+
+- **xterm's speech stops for good after 20 lines on this page.** Its spoken region counts lines and goes silent at 21 until `_clearLiveRegion()` runs, which xterm calls only on a key in its own hidden input or when that input loses focus (`xterm.4.19.0.js`, `_onKey` and `onBlur`). Players type in `#command-input`, so neither fires. The page resets the region itself (private API, as `termfit.js` already does; a jstest fails if the names change): on every Enter, and after output has been quiet for 2 seconds. Each burst then gets its own 20 lines, as ruling 5 assumes.
+- **A prompt already on screen is never read**, because only text written after the mode turns on reaches the spoken region. Typing the phrase before login therefore writes "Screen reader mode is on." and then repeats the waiting prompt.
+- **"Off" cannot be spoken by xterm**, because turning the mode off removes its spoken region at once. A visually hidden `role="status"` region speaks it.
+- **Players reach the game at `/webclient`**, which wraps the game page in an iframe under the site header. The site header gets the same hidden instruction as its first element, on that path only.
+- **xterm's overlay would block mouse selection** while the mode is on (`xterm.css:143-152`, z-index 10); it gets `pointer-events: none`.
+- **The newcomer route sets medium combat text** unconditionally (`internal/usercommands/start.go:246`); a screen reader user keeps light.
+- **Login turns the setting on before `LoginUser` publishes the user**, so MainWorker never reads it mid-write.
+- **Phone dictation adds a full stop**, so the phrase match ignores trailing punctuation and also accepts `screenreader on`.
+
 ## Decisions taken without asking
 
 - **The phrase is `screen reader on`.** Plain words, easy to dictate on a phone, and the space keeps it from ever being a username. If wrong: any other phrase works, but a single word could collide with a name at the first prompt.
@@ -109,6 +120,9 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - **The flag's server effects are unchanged.** It still strips art and picks screen reader templates for both web and telnet. If wrong: web players might want xterm's speech without the art stripping, which would split the flag in two.
 - **xterm's own screen reader mode, not a hand-built live region.** It is what the owner asked to turn on, and it switches at runtime. #733's question list (combat bursts, prompt repeats, vitals, comms, a re-read key) is answered after real use, in #733.
 - **The confirmation line is written locally into the game window,** so it is read by the newly enabled live region and is visible in the log.
+
+- **The spoken region resets after 2 seconds of quiet output.** Short enough that a chat line after a fight is read; long enough that one burst is not split. If wrong: a longer gap keeps bursts together, a shorter one risks clearing mid-burst. Malia's device test (#834) is where this gets judged.
+- **The private xterm calls are accepted** rather than replacing xterm's mode with our own spoken region. xterm is pinned at 4.19 (#908) and a jstest fails if the names change. If wrong: our own region fed from the plain-text copy the client already makes would remove the dependency, at the cost of re-doing what xterm's mode does.
 
 ## Out of scope
 
