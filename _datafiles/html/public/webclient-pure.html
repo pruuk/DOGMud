@@ -3128,6 +3128,7 @@
                 if (pendingReconnectToken) {
                     var t = pendingReconnectToken;
                     pendingReconnectToken = null;
+                    // Counted, but not passed to screenReader.inputSent on purpose: it goes out before login, where the switch reads everything in full anyway, and loggedOut runs just after.
                     linesSent++;
                     socket.send(t);
                 }
