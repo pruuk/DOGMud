@@ -105,8 +105,26 @@ function fakeLog() {
     return log;
 }
 
+// A fake clock: timers run only when the test advances time.
+function clock() {
+    var t = 0, timers = [];
+    return {
+        now: function () { return t; },
+        setTimeout: function (fn, ms) { var x = { at: t + ms, fn: fn }; timers.push(x); return x; },
+        clearTimeout: function (x) { timers = timers.filter(function (y) { return y !== x; }); },
+        advance: function (ms) {
+            t += ms;
+            var due = timers.filter(function (x) { return x.at <= t; });
+            timers = timers.filter(function (x) { return x.at > t; });
+            due.forEach(function (x) { x.fn(); });
+        }
+    };
+}
+
 function fakes(saved) {
+    var c = clock();
     var f = {
+        clock: c,
         label: null, hint: null, status: '', lines: [], reports: [], setCommands: 0, setValues: [],
         waiting: ['Username (or "new"): '], setOk: true,
         store: saved === undefined ? {} : { screenReader: saved }, inGame: false, log: fakeLog()
@@ -125,7 +143,10 @@ function fakes(saved) {
         setCommand: function (value) { f.setCommands++; f.setValues.push(value); return f.setOk; },
         writeLine: function (t) { f.lines.push(t); },
         currentLines: function () { return f.waiting.slice(); },
-        inGame: function () { return f.inGame; }
+        inGame: function () { return f.inGame; },
+        now: c.now,
+        setTimeout: c.setTimeout,
+        clearTimeout: c.clearTimeout
     };
     Object.defineProperty(f.opts.hint, 'textContent', { set: function (v) { f.hint = v; } });
     Object.defineProperty(f.opts.status, 'textContent', { set: function (v) { f.status = v; }, get: function () { return f.status; } });
@@ -214,6 +235,47 @@ sr.write('Username (or "new"): ');
 sr.loggedOut();
 sr.write('Username (or "new"): ');
 check('after a reconnect the same prompt is read again', f.log.texts().slice(-2).join('|') === 'Username (or "new"):|Username (or "new"):', f.log.texts().slice(-2).join('|'));
+
+// In game the status is read at most once a round, and only when it changed.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.write('[HP:unhurt]: ');
+f.clock.advance(1000);
+sr.write('The rat bites you.\r\n');
+sr.write('[HP:hurt]: ');
+check('a changed status within a round is held; messages are not', f.log.texts().join('|') === '[HP:unhurt]:|The rat bites you.', f.log.texts().join('|'));
+f.clock.advance(SR.PROMPT_GAP_MS - 1000);
+check('it is read when the round is over', f.log.texts().join('|') === '[HP:unhurt]:|The rat bites you.|[HP:hurt]:', f.log.texts().join('|'));
+// Changed and changed back within one round: nothing to say.
+sr.write('[HP:badly hurt]: ');
+sr.write('[HP:hurt]: ');
+f.clock.advance(SR.PROMPT_GAP_MS);
+check('a change undone within the round is not read', f.log.texts().slice(-1)[0] === '[HP:hurt]:' && f.log.childNodes.length === 3, f.log.texts().join('|'));
+// Several changes in one round: only the latest is read.
+f.clock.advance(SR.PROMPT_GAP_MS);
+sr.write('[HP:badly hurt]: ');
+f.clock.advance(500);
+sr.write('[HP:near death]: ');
+sr.write('[HP:badly hurt]: ');
+sr.write('[HP:near death]: ');
+f.clock.advance(SR.PROMPT_GAP_MS);
+check('only the latest status of a round is read', f.log.texts().slice(-2).join('|') === '[HP:badly hurt]:|[HP:near death]:', f.log.texts().slice(-3).join('|'));
+// Mode off while one is held: it is never read.
+sr.write('[HP:hurt]: ');
+f.clock.advance(100);
+sr.write('[HP:unhurt]: ');
+sr.phrase('off');
+f.clock.advance(SR.PROMPT_GAP_MS);
+check('a held status is dropped when the mode goes off', f.log.childNodes.length === 0, f.log.texts().join('|'));
+// Before login, prompts are read at once.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+sr.write('Username (or "new"): ');
+sr.write('Password: ');
+check('login prompts are not held', f.log.texts().join('|') === 'Username (or "new"):|Password:', f.log.texts().join('|'));
 
 // No log element: nothing throws, for sighted players too.
 f = fakes('true');
@@ -361,6 +423,10 @@ console.log('all passed');
 
     var STORAGE_KEY = 'screenReader';
     var MAX_ENTRIES = 100;      // entries kept for reading back; older ones go
+    // PROMPT_GAP_MS is the least time between two status prompts read in
+    // game: one combat round (Timing.RoundSeconds, 4 in config.yaml), so the
+    // status is heard at most once a round (owner, 2026-11-17).
+    var PROMPT_GAP_MS = 4000;
     var LABEL_OFF = 'Game commands. Screen reader users: type screen reader on, then press Enter.';
     var LABEL_ON = 'Game commands.';
     var HINT_OFF = 'Screen reader users: type screen reader on, then press Enter.';
@@ -412,21 +478,55 @@ console.log('all passed');
     // screenreader on" or "off", a state and never a toggle, false when it
     // could not); writeLine(text) (writes a local line into the game window);
     // currentLines() (the waiting prompt, as lines); inGame() (true while a
-    // character is logged in).
+    // character is logged in); now(), setTimeout and clearTimeout (the
+    // window's, or a test clock).
     function create(opts) {
+        var setT = opts.setTimeout || setTimeout, clearT = opts.clearTimeout || clearTimeout;
+        var now = opts.now || Date.now;
         var on = false;
         var accountSetting = null; // the account's setting as this page believes it
         var lastPushed = null;     // the last Char.Info.screenreader value seen
-        var lastPrompt = null;     // the last unterminated piece announced
+        var lastPrompt = null;     // the last prompt announced
+        var lastPromptAt = null;   // when it was announced
+        var pendingPrompt = null;  // a changed prompt held until a round has passed
+        var promptTimer = null;
 
         function remember(value) {
             try { opts.storage.setItem(STORAGE_KEY, JSON.stringify(value)); } catch (e) { /* storage blocked: this visit only */ }
         }
 
-        function clearLog() {
+        // forgetPrompt makes the next prompt news, with no gap to wait out.
+        function forgetPrompt() {
             lastPrompt = null;
+            lastPromptAt = null;
+            pendingPrompt = null;
+            if (promptTimer) { clearT(promptTimer); promptTimer = null; }
+        }
+
+        function clearLog() {
+            forgetPrompt();
             if (!opts.log) return;
             while (opts.log.firstChild) opts.log.removeChild(opts.log.firstChild);
+        }
+
+        function append(text) {
+            opts.log.appendChild(opts.createEntry(text));
+            while (opts.log.childNodes.length > MAX_ENTRIES) opts.log.removeChild(opts.log.firstChild);
+        }
+
+        function announcePrompt(text) {
+            lastPrompt = text;
+            lastPromptAt = now();
+            append(text);
+        }
+
+        // flushPrompt reads the held prompt once the gap is over, if it still
+        // differs from the last one read.
+        function flushPrompt() {
+            promptTimer = null;
+            var text = pendingPrompt;
+            pendingPrompt = null;
+            if (on && text !== null && text !== lastPrompt) announcePrompt(text);
         }
 
         function show(value) {
@@ -444,20 +544,26 @@ console.log('all passed');
         }
 
         // speak adds a piece of text to the log as one new entry. A piece
-        // with no line break at its end is a prompt; one identical to the
-        // last prompt announced is skipped, so a prompt redrawn unchanged
-        // after every message is not read again (a changed one is).
+        // with no line break at its end is a prompt. A prompt identical to the
+        // last one read is skipped (the server redraws it after every
+        // message). In game, a changed prompt is read at most once a round:
+        // one arriving within PROMPT_GAP_MS of the last is held, and read when
+        // the gap is over only if it still differs (owner, 2026-11-17).
+        // Login prompts are read at once.
         function speak(raw) {
             if (!opts.log) return;
             var text = plainText(raw);
             if (!text.trim()) return;
             var unterminated = !/\n\s*$/.test(String(raw).replace(ESCAPES, ''));
-            if (unterminated) {
-                if (text === lastPrompt) return;
-                lastPrompt = text;
+            if (!unterminated) { append(text); return; }
+            if (text === lastPrompt) { pendingPrompt = null; return; }
+            var since = lastPromptAt === null ? Infinity : now() - lastPromptAt;
+            if (opts.inGame() && since < PROMPT_GAP_MS) {
+                pendingPrompt = text;
+                if (!promptTimer) promptTimer = setT(flushPrompt, PROMPT_GAP_MS - since);
+                return;
             }
-            opts.log.appendChild(opts.createEntry(text));
-            while (opts.log.childNodes.length > MAX_ENTRIES) opts.log.removeChild(opts.log.firstChild);
+            announcePrompt(text);
         }
 
         // local writes a line of the page's own into the game window and,
@@ -531,13 +637,13 @@ console.log('all passed');
             loggedOut: function () {
                 accountSetting = null;
                 lastPushed = null;
-                lastPrompt = null;
+                forgetPrompt();
             }
         };
     }
 
     return {
-        STORAGE_KEY: STORAGE_KEY, MAX_ENTRIES: MAX_ENTRIES,
+        STORAGE_KEY: STORAGE_KEY, MAX_ENTRIES: MAX_ENTRIES, PROMPT_GAP_MS: PROMPT_GAP_MS,
         LABEL_OFF: LABEL_OFF, LABEL_ON: LABEL_ON,
         HINT_OFF: HINT_OFF, HINT_ON: HINT_ON,
         SAID_ON: SAID_ON, SAID_OFF: SAID_OFF,
@@ -647,11 +753,60 @@ func motdFor(text string, lw int, screenReader bool) string {
 
 and in `Motd`, send `motdFor(text, user.WrapWidth(), user.ScreenReader)` instead of `motdBox(...)`. Run the test: passes. Run `go test ./internal/usercommands/ ./internal/guards/ -count=1`. Commit "feat(motd): a plain MOTD for screen reader accounts (#733)".
 
+### Task 11b: The status in words for screen reader accounts (server)
+
+Owner ruling 2026-11-17: a screen reader account hears its status as words in four buckets, read at most once a round and only when it changed (the once-a-round part is the module's, Task 10). The bars would otherwise be read as block symbols, or, with symbols dropped, say nothing about health.
+
+| Pool | 75% and up | 50 to 74% | 25 to 49% | below 25% |
+|---|---|---|---|---|
+| HP (`{hpbar}`, and the tank's `{tankbar}`) | unhurt | hurt | badly hurt | near death |
+| SP (`{stbar}`) | fresh | tired | very tired | exhausted |
+| CP (`{cvbar}`) | strong | steady | shaken | broken |
+
+The percentage is measured against the reachable pool (the pool less its reservation), as `renderVitalBar` measures its colour (`internal/users/userrecord.prompt.go:165-210`).
+
+**Files:** `internal/users/userrecord.prompt.go`, a test in `internal/users/` beside `prompt_tank_test.go`.
+
+- [ ] **Step 1: Tests first.** A table test of `vitalWord` for each pool at 100, 75, 74, 50, 49, 25, 24 and 0 percent, with and without a reservation (e.g. health 60 of 100 with 20 reserved is 75% of the reachable 80: "unhurt"); `max <= 0` and `current < 0` do not panic. Then a prompt test built the way `prompt_tank_test.go` builds its user (read it and reuse its fixture; do not invent one): with `user.ScreenReader = true`, `ProcessPromptString("{hpbar} {stbar} {cvbar}")` at full pools gives `unhurt fresh strong` and contains no `█`, `░` or `▒`; with it false the output still contains `█`. If `prompt_tank_test.go` covers `{tankbar}`, add the same check for the tank. Run: fails (undefined).
+
+- [ ] **Step 2: Implement** in `internal/users/userrecord.prompt.go`, beside `renderVitalBar`:
+
+```go
+// vitalWords are the four words a screen reader account hears for a pool in
+// place of its bar, best first, for 75% and up, 50 to 74, 25 to 49 and below
+// 25 (owner, 2026-11-17).
+var vitalWords = map[string][4]string{
+	`hp`: {`unhurt`, `hurt`, `badly hurt`, `near death`},
+	`sp`: {`fresh`, `tired`, `very tired`, `exhausted`},
+	`cp`: {`strong`, `steady`, `shaken`, `broken`},
+}
+
+// vitalWord is a pool's bucket word, measured against the reachable pool
+// (maxValue less reserved) as renderVitalBar measures its colour.
+func vitalWord(pool string, current, maxValue, reserved int) string {
+	words := vitalWords[pool]
+	effectiveMax := max(maxValue-max(reserved, 0), 1)
+	current = min(max(current, 0), effectiveMax)
+	pct := float64(current) / float64(effectiveMax) * 100.0
+	switch {
+	case pct >= 75:
+		return words[0]
+	case pct >= 50:
+		return words[1]
+	case pct >= 25:
+		return words[2]
+	default:
+		return words[3]
+	}
+}
+```
+
+and in `ProcessPromptString`, at `{hpbar}`, `{stbar}`, `{cvbar}` and the bar inside `{tankbar}`, write `vitalWord(...)` with the same arguments when `u.ScreenReader` is true, and `renderVitalBar(...)` otherwise. Keep each case's other text (`{tankbar}`'s `Thp:` label) as it is. Run the tests, `go test ./internal/users/ -count=1`, gofmt, lint. Commit "feat(prompt): the status in words for screen reader accounts (#733)".
+
 ### Task 12: Docs
 
-- [ ] **Spec** (`docs/superpowers/specs/2026-11-17-screen-reader-task0-design.md`): mark as superseded by section 11, keeping their history, every place that still states xterm's mode as current: section 2 (`term.setOption('screenReaderMode', true)`), sections 3 and 5 ("xterm's mode"), ruling 1 ("xterm's screen reader mode stays off unless…": now "nothing is added to the log unless…"), ruling 5's reason (the 20-line limit no longer applies; light combat text stays because long bursts are slow to hear, and the owner should be told the stated reason changed), the general decisions on xterm's mode, the 2 second reset and the private xterm calls, and the Testing section's `.xterm-accessibility` line. In section 11 add: "Read in full" holds for the log; a screen reader may still cut a long entry short when the player types (NVDA interrupts speech on typed characters and Enter by default), and the entries stay in the log to read back line by line. Also add to section 11's decisions: the prompt's bars are dropped as symbols, so a bar-only change in health is not announced (vitals are #733's open question).
-- [ ] **docs/README.md**: the `tools/jstest/` row's screen reader note (`:106`, "resets of xterm's spoken region") and the spec row (`:319`, "turns on xterm's `screenReaderMode` at runtime") describe the log instead; the `screenreader.js` row reads "the web client's screen reader switch: the spoken opt-in phrase, device memory, the account's setting, and a hidden log of game text that screen readers read (spec section 11)".
-- [ ] `internal/usercommands/context.md`: one line for `motdFor`.
+- [ ] **Spec** (`docs/superpowers/specs/2026-11-17-screen-reader-task0-design.md`): mark as superseded by section 11, keeping their history, every place that still states xterm's mode as current: section 2 (`term.setOption('screenReaderMode', true)`), sections 3 and 5 ("xterm's mode"), ruling 1 ("xterm's screen reader mode stays off unless…": now "nothing is added to the log unless…"), ruling 5's reason (the 20-line limit no longer applies; light combat text stays because long bursts are slow to hear, and the owner should be told the stated reason changed), the general decisions on xterm's mode, the 2 second reset and the private xterm calls, and the Testing section's `.xterm-accessibility` line. In section 11 add: "Read in full" holds for the log; a screen reader may still cut a long entry short when the player types (NVDA interrupts speech on typed characters and Enter by default), and the entries stay in the log to read back line by line.- [ ] **docs/README.md**: the `tools/jstest/` row's screen reader note (`:106`, "resets of xterm's spoken region") and the spec row (`:319`, "turns on xterm's `screenReaderMode` at runtime") describe the log instead; the `screenreader.js` row reads "the web client's screen reader switch: the spoken opt-in phrase, device memory, the account's setting, and a hidden log of game text that screen readers read (spec section 11)".
+- [ ] `internal/usercommands/context.md`: one line for `motdFor`. `internal/users/context.md`: one line for `vitalWord` and `vitalWords`. `docs/PATCH_NOTES.md` screen reader entry: add "With screen reader mode on, your status is spoken in words (for example unhurt, tired, steady), at most once a round and only when it changes."
 - [ ] Commit "docs: screen reader log (#733)".
 
 ### Task 13: Checks and the owner's retest (controller)
@@ -665,9 +820,10 @@ and in `Motd`, send `motdFor(text, user.WrapWidth(), user.ScreenReader)` instead
   - the creation burst after "y" is in the log, ending with the prompt;
   - `help set` is one entry whose last line names `help submission`;
   - after `look`, an unchanged prompt adds no entry; no entry contains `\x1b`, `<ansi`, a box character or a block character;
+  - the in-game prompt entry reads the status in words (`HP:unhurt SP:fresh CP:strong` at full pools);
   - the MOTD entry reads "Message of the day." with no box characters;
   - a returning visit: the words-only splash and the name prompt are entries;
   - stopping the server's socket (close the page's socket from the test) adds the onclose message as an entry;
   - `screen reader off`: the log is empty and `#sr-status` says "Screen reader mode is off.".
 - [ ] Full Go suite, lint, JS gate, telnet check (unchanged server paths plus the MOTD).
-- [ ] Owner retests with Narrator. Pass criteria: no rereading from the top after a pause in typing; game text heard after typing; two messages a few seconds apart are each heard once (not the whole log again); `help set` heard to its end when not typing; a dropped connection heard; the MOTD heard as words.
+- [ ] Owner retests with Narrator. Pass criteria: no rereading from the top after a pause in typing; game text heard after typing; two messages a few seconds apart are each heard once (not the whole log again); `help set` heard to its end when not typing; a dropped connection heard; the MOTD heard as words; in a fight, the status heard in words, at most once a round and not when unchanged.
