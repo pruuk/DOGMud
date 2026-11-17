@@ -595,7 +595,9 @@ does: a legacy one runs past on its own line at its indent (ruling 8).
   42 wide from 42 to 79 columns and 30 below, as a template's forms are
   picked. `motdrestyle.js` matches only the box, so the web client shows the
   ruled form as sent. Tested with the shipped MOTD read
-  from `_datafiles/config.yaml`.
+  from `_datafiles/config.yaml`. `motdFor` picks what a reader gets: the box
+  for most, and for a screen reader account plain words ("Message of the
+  day." and the text), since the box sides and spaced title read badly aloud.
 - **Achievements** (`achievements.go`): `achievementsScreen` builds the list
   from `achievementEntry` rows at `users.RedrawnFormWidth`; a line that fits
   is master's (`achievements.golden`), a row that does not

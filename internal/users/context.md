@@ -544,6 +544,11 @@ colours and abbreviations as `{pos}`), `{tankbar}` ` Thp:` and a health bar.
 Each carries its own leading space and label because each renders nothing
 when nobody else is tanking or the player can't see the fight.
 
+For a screen reader account `{hpbar}`, `{stbar}`, `{cvbar}` and `{tankbar}`
+draw a word instead of the bar glyphs: `vitalWord` picks one of the four
+words in `vitalWords` (`userrecord.prompt.go`) at 75, 50 and 25 percent of
+the reachable pool.
+
 A player with any toggle set has `fprompt-default-compiled` saved, but the
 prompt renders from `BuildFightPromptTemplate()` (memoized compile) rather
 than the saved string, so a save compiled by an older template cannot pin

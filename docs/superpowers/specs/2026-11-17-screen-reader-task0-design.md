@@ -37,11 +37,11 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 
 ## Rulings (owner, 2026-11-17)
 
-1. Sighted players must not pay for this: no checkbox, nothing visible, and xterm's screen reader mode stays off unless a player asks for it.
+1. Superseded by section 11: nothing is added to the log unless a player asks for it (xterm's screen reader mode is never turned on). Original: sighted players must not pay for this: no checkbox, nothing visible, and xterm's screen reader mode stays off unless a player asks for it.
 2. The opt-in lives in what a screen reader speaks before the first prompt: the command box's label.
 3. Telnet MTTS detection is in scope.
 4. The web client does not ask the creation question; the opt-in is the answer. Telnet keeps the question unless MTTS already answered it.
-5. When an account's screen reader setting turns on, combat verbosity is saved to the account as light. xterm announces at most 20 lines of one burst (on the 21st it appends "Too much output to announce" and stops), so full combat text is cut off. Players learn `set combatverbosity` in the Pothole Coulee tutorial and can change it back. (Owner chose saving it over a default that is not saved.)
+5. Superseded by section 11 as to the reason (the owner should be told the stated reason changed): the 20-line limit no longer applies, because xterm's mode is gone. Light combat text stays because long bursts are slow to hear. Original reason: when an account's screen reader setting turns on, combat verbosity is saved to the account as light. xterm announces at most 20 lines of one burst (on the 21st it appends "Too much output to announce" and stops), so full combat text is cut off. Players learn `set combatverbosity` in the Pothole Coulee tutorial and can change it back. (Owner chose saving it over a default that is not saved.)
 5a. The Pothole Coulee combat lesson (quest 32, Dewey 9108) tells every player to type `set combatverbosity full`, which would undo a blind player's light setting. It now names full, medium or light, and suggests light to a player whose screen reader reads to them; the step already accepts any level. (Owner, option 1 of three: per-player text and leaving it were rejected.)
 6. Long dialogue and quest menus are paged under #842, which moved into the touch arc for this reason; not in this spec.
 
@@ -64,12 +64,12 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 
 - The client intercepts `screen reader on` and `screen reader off` the way it intercepts `!net`: matched case-insensitively with spaces collapsed, never sent to the server, never added to command history.
 - Not intercepted while the box is `type="password"`.
-- On: `term.setOption('screenReaderMode', true)`, remember on this device, report to the server (section 4), and write one confirming line into the game window: "Screen reader mode is on." Off: the reverse, with "Screen reader mode is off."
+- Superseded by section 11: on now turns on the page's own log, not `term.setOption('screenReaderMode', true)`. Original: On: `term.setOption('screenReaderMode', true)`, remember on this device, report to the server (section 4), and write one confirming line into the game window: "Screen reader mode is on." Off: the reverse, with "Screen reader mode is off."
 - After login, `screen reader on/off` also changes the account, by sending `set screenreader` only when the account's current value differs (the client knows it from section 5). So the phrase and `set screenreader` are two ways to the same switch.
 
 ### 3. Remembered on the device (`WP`)
 
-- `localStorage` key `screenReader`, inside try/catch like `soundOn`. On load, when it is true, the client turns xterm's mode on before connecting and reports it, so a returning player never types the phrase again.
+- Superseded by section 11: "xterm's mode" below is the page's log now. Original: `localStorage` key `screenReader`, inside try/catch like `soundOn`. On load, when it is true, the client turns xterm's mode on before connecting and reports it, so a returning player never types the phrase again.
 
 ### 4. The client reports it (`WP`, `modules/gmcp`, `internal/connections`)
 
@@ -79,7 +79,7 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 ### 5. The server tells the client (`modules/gmcp`)
 
 - `Char.Info` gains `screenreader` (a bool always sent, never `omitempty`, so false turns another device off).
-- `set screenreader` pushes `Char.Info` again. The client sets xterm's mode and the device memory to match whenever `Char.Info` arrives.
+- `set screenreader` pushes `Char.Info` again. Superseded by section 11: "xterm's mode" is the page's log now. Original: the client sets xterm's mode and the device memory to match whenever `Char.Info` arrives.
 
 ### 6. Login and creation (`internal/inputhandlers`)
 
@@ -103,6 +103,8 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 
 ### 7a. Answers are read in full (owner ruling 2026-11-17, option 1)
 
+Superseded by section 11: answers, pieces, quiet gaps and `Char.Input.Done` tracking are gone; the log holds each piece whole. History kept below.
+
 - xterm stops speaking at 21 lines per reset. A timing rule cannot help a single long answer (a shop list, a quest menu, a help page, the lockpicking table), because the answer arrives as one burst.
 - So an answer to a typed line is read in full: from the moment the line is sent until the server's `Char.Input.Done` for it (`modules/gmcp/gmcp.InputDone.go`, queued after that command's text), the client writes server text in pieces of at most 18 lines and resets xterm's spoken region after each piece is parsed (`term.write`'s callback).
 - Output nobody asked for (combat rounds, chat, arrivals) keeps xterm's 20-line limit as flood protection, with a reset after 2 seconds of quiet (a combat round is 4 seconds).
@@ -112,6 +114,8 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - Not verified: how NVDA, VoiceOver and Narrator handle a reset in the middle of an answer, since xterm's region is `assertive`. Checked in the owner's Narrator test and Malia's device test (#834) before merge.
 
 ### 8. Found in the plan review (2026-11-17), verified against source
+
+Superseded by section 11 for the xterm bullets (speech stopping after 20 lines, the reset of xterm's region, "off" not speakable by xterm, the overlay's `pointer-events`); the other bullets stand.
 
 - **xterm's speech stops for good after 20 lines on this page.** Its spoken region counts lines and goes silent at 21 until `_clearLiveRegion()` runs, which xterm calls only on a key in its own hidden input or when that input loses focus (`xterm.4.19.0.js`, `_onKey` and `onBlur`). Players type in `#command-input`, so neither fires. The page resets the region itself (private API, as `termfit.js` already does; a jstest fails if the names change), as section 7a sets out: answers to a typed line are read in full, and unprompted bursts get their own 20 lines each.
 - **A prompt already on screen is never read**, because only text written after the mode turns on reaches the spoken region. Typing the phrase before login therefore writes "Screen reader mode is on." and then repeats the waiting prompt.
@@ -124,6 +128,8 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 
 ### 9. Found in the second plan review (2026-11-17), verified against source
 
+Superseded by section 11 for the xterm bullets (the Mac re-append, read-in-full before login, answers matched by `seq`, the repeated `Char.Info` guard as it served the answers); the server-side bullets (the `&sr=1` splash, the link-dead reconnect, the creation message) stand.
+
 - **On a Mac (and iPadOS Safari, which reports MacIntel) a reset takes xterm's spoken region out of the page**, and xterm puts it back only if more text arrives after the render (`_clearLiveRegion` and `_onChar` in `xterm.4.19.0.js`). The page's reset puts it back at once.
 - **Before login everything is read in full**, as an answer is: the connect splash and the prompts must reach a returning blind player whose device remembers the mode.
 - **The connect splash is 24 lines of art and goes out before any report.** The web client adds `&sr=1` to its websocket address when its mode is on; the server records it and draws the words-only splash (the 42 and 30 column forms).
@@ -133,6 +139,8 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - **A character made with the setting reported** (the web phrase or MTTS) hears that the mode is on and how to turn it off, as a login does.
 
 ### 10. Found in the third plan review (2026-11-17), verified against source
+
+Superseded by section 11 for the bullet on when an answer ends (answers are gone); the other bullets stand.
 
 - **The client asks for a state, `set screenreader on` or `off`, never the toggle.** A line swallowed by an open prompt (`internal/users/userrecord.promptroute.go:49`) would otherwise leave the client's belief wrong, and its next toggle would flip the account the wrong way. Bare `set screenreader` still toggles for players.
 - **An answer ends after its `Char.Input.Done` and then 2 seconds of quiet output**, because a macro's commands and anything run through `user.Command()` print on later turns, after the Done (`world.go:1046-1061`).
@@ -167,7 +175,7 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - **100 entries kept for reading back.** Enough for a fight or a long help page; small enough not to grow the page. If wrong: a different number, one constant.
 - **Polite, not assertive.** New game text waits for the current sentence instead of cutting it off. If wrong: assertive would let urgent text interrupt; nothing marks text as urgent yet (#733).
 - (Owner ruling 2026-11-17, not a decision taken without asking.) **The status in words.** With the bars as symbols dropped, the prompt said nothing about health. A screen reader account's prompt draws each bar as one of four words, measured against the reachable pool: HP unhurt, hurt, badly hurt, near death; SP fresh, tired, very tired, exhausted; CP strong, steady, shaken, broken; at 75, 50 and 25 percent (`vitalWord`, `internal/users/userrecord.prompt.go`; the tank's health in `{tankbar}` too). In game, a changed status is read at most once a round (`PROMPT_GAP_MS`, 4 seconds, one round at `Timing.RoundSeconds` 4) and an unchanged one never; a change undone within the round is not read, and of several changes only the latest is. Login prompts are read at once. The client keeps its own 4 seconds because the per-round `Commands.State` push also goes out on every vitals change, so it cannot mark rounds (`modules/gmcp/gmcp.Commands.go:58-120`).
-- **"Read in full" means the log holds the whole piece.** A screen reader may still stop speaking when the player types (NVDA interrupts on typed characters and Enter by default); the entry stays in the log to read back line by line.
+- **"Read in full" means the log holds the whole piece.** A screen reader may still cut a long entry short when the player types (NVDA interrupts speech on typed characters and Enter by default); the entries stay in the log to read back line by line.
 
 ## Decisions taken without asking
 
@@ -176,11 +184,11 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - **A connection's report can turn an account's flag on but never off.** A blind player logging in from a new device must not be left without speech by an old "no". The cost: a sighted person on a device a blind player uses gets screen reader output once, and the message says how to turn it off. If wrong: the account flag would win at login, and a blind player could be silenced by an old answer.
 - **Device memory comes before the account.** The device remembers the last state, so the login screen speaks for a returning blind player before the server knows who they are.
 - **The flag's server effects are unchanged.** It still strips art and picks screen reader templates for both web and telnet. If wrong: web players might want xterm's speech without the art stripping, which would split the flag in two.
-- **xterm's own screen reader mode, not a hand-built live region.** It is what the owner asked to turn on, and it switches at runtime. #733's question list (combat bursts, prompt repeats, vitals, comms, a re-read key) is answered after real use, in #733.
-- **The confirmation line is written locally into the game window,** so it is read by the newly enabled live region and is visible in the log.
+- Superseded by section 11 (a hand-built log replaced xterm's mode after the Narrator test): **xterm's own screen reader mode, not a hand-built live region.** It is what the owner asked to turn on, and it switches at runtime. #733's question list (combat bursts, prompt repeats, vitals, comms, a re-read key) is answered after real use, in #733.
+- **The confirmation line is written locally into the game window,** so it is read by the newly enabled live region and is visible in the log. (Section 11: it goes into the page's log too.)
 
-- **The spoken region resets after 2 seconds of quiet output.** Short enough that a chat line after a fight is read; long enough that one burst is not split. If wrong: a longer gap keeps bursts together, a shorter one risks clearing mid-burst. Malia's device test (#834) is where this gets judged.
-- **The private xterm calls are accepted** rather than replacing xterm's mode with our own spoken region. xterm is pinned at 4.19 (#908) and a jstest fails if the names change. If wrong: our own region fed from the plain-text copy the client already makes would remove the dependency, at the cost of re-doing what xterm's mode does.
+- Superseded by section 11 (no resets, no quiet gaps): **The spoken region resets after 2 seconds of quiet output.** Short enough that a chat line after a fight is read; long enough that one burst is not split. If wrong: a longer gap keeps bursts together, a shorter one risks clearing mid-burst. Malia's device test (#834) is where this gets judged.
+- Superseded by section 11 (the private xterm calls are gone): **The private xterm calls are accepted** rather than replacing xterm's mode with our own spoken region. xterm is pinned at 4.19 (#908) and a jstest fails if the names change. If wrong: our own region fed from the plain-text copy the client already makes would remove the dependency, at the cost of re-doing what xterm's mode does.
 
 ## Out of scope
 
@@ -190,7 +198,7 @@ The rest of #733: comms panels as `role="log"`, connection status as `role="stat
 
 - **Go:** the `Client.Display` handler stores `screenreader` for websockets and ignores it for telnet; a missing field keeps the stored value. MTTS parsing: bit 64 set and unset, non-MTTS replies, a repeating cycle stops, `WONT` changes nothing. Creation skips the question on websocket and on any MTTS reply (bit 64 set and unset), takes the right answer, and still asks a telnet client that sent no MTTS. Existing-account login turns the flag on and never off. A guard that no login step ID starts `_conn_`. `TurnOnScreenReader` saves light from full or medium, reports no change when already light, and turning the setting off leaves verbosity alone; each of the three turn-on paths goes through it. `Char.Info` always carries `screenreader`, false included.
 - **JS (`tools/jstest`):** the phrase matcher (case, extra spaces, not in password mode, not sent, not in history).
-- **Headless (Playwright):** sighted path: no `.xterm-accessibility` element exists after load and login. Opt-in path: after typing the phrase the element exists, the label has shortened, the phrase never reached the socket, and a reload with the remembered value turns it on before connecting.
+- **Headless (Playwright):** Superseded by section 11: xterm's `.xterm-accessibility` element never exists now; the checks are on `#sr-log` (empty while the mode is off, filled while on). Original: sighted path: no `.xterm-accessibility` element exists after load and login. Opt-in path: after typing the phrase the element exists, the label has shortened, the phrase never reached the socket, and a reload with the remembered value turns it on before connecting.
 - **Owner:** Windows Narrator (built in) with Chrome: open the page, hear the instruction, type the phrase, create a character by ear. The question must not be asked.
 - **Malia (#834):** VoiceOver on iPhone, TalkBack on Android: the instruction is heard from the top of the page.
 - **Telnet:** TinTin++ and Mudlet with their screen reader settings on, if they send MTTS bit 64 (not verified for either client).
