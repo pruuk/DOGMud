@@ -3312,7 +3312,7 @@
                     reconnectAttempts++;
                     if (reconnectAttempts === 1) {
                         term.writeln("");
-                        gameLine("Server is restarting — you will be reconnected automatically…");
+                        gameLine("Server is restarting. You will be reconnected automatically...");
                     } else {
                         term.write(".");
                     }
@@ -3330,7 +3330,7 @@
                     reconnectAttempts = 0;
                     MusicPlayer.stopAll(); // really disconnected (#838)
                     term.writeln("");
-                    gameLine("Could not reconnect — the server may still be restarting. Click Enter Game to try again.");
+                    gameLine("Could not reconnect. The server may still be restarting. Click Enter Game to try again.");
                     connectButton.disabled = false;
                     setSessionState('offline');
                     return;
