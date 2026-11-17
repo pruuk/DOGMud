@@ -3,6 +3,7 @@ package users
 import (
 	"slices"
 
+	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 )
@@ -62,5 +63,20 @@ func (u *UserRecord) TurnOnScreenReader() bool {
 	}
 	u.CombatVerbosity = messaging.VerbosityLight.String()
 	events.AddToQueue(events.UserSettingChanged{UserId: u.UserId, Name: `combatverbosity`})
+	return true
+}
+
+// StoreAddressScreenReader takes the raw sr value of a web client's websocket
+// address (/ws?cols=57&sr=1) and, when it is "1", records on the connection
+// that its player asked for screen reader mode, so the connect splash goes
+// out as words only. It reports whether it did. The caller checks that the
+// connection is a websocket.
+func StoreAddressScreenReader(id connections.ConnectionId, raw string) bool {
+	if raw != `1` {
+		return false
+	}
+	cs := connections.GetClientSettings(id)
+	cs.ScreenReader = true
+	connections.OverwriteClientSettings(id, cs)
 	return true
 }

@@ -1300,7 +1300,10 @@ func countLineFrame(msgType int, seq uint64) uint64 {
 // client's column count, which draws the connect splash to the reader's
 // width before its Client.Display report can arrive. A missing or bad value
 // leaves the connection at the default 80.
-func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCols string) {
+//
+// reportedSR is the raw sr value of the address (/ws?sr=1): "1" means the
+// player asked for screen reader mode, so the connect splash is words only.
+func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCols string, reportedSR string) {
 
 	var userObject *users.UserRecord
 	connDetails := connections.Add(nil, conn)
@@ -1393,7 +1396,15 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCo
 	// validated and clamped as Client.Display is. There is no user to measure
 	// for yet, so it is drawn for the width: the widest form that fits.
 	splashWidth := users.StoreAddressCols(connDetails.ConnectionId(), reportedCols)
-	splashTxt, _ := templates.ProcessAtWidth("login/connect-splash", nil, splashWidth)
+	// A screen reader gets its own splash (connect-splash.screenreader.template):
+	// no art, no rule of = signs, no spaced-out title, all of which a screen
+	// reader reads symbol by symbol or letter by letter.
+	var splashTxt string
+	if users.StoreAddressScreenReader(connDetails.ConnectionId(), reportedSR) {
+		splashTxt, _ = templates.ProcessForWidth("login/connect-splash", nil, true, splashWidth)
+	} else {
+		splashTxt, _ = templates.ProcessAtWidth("login/connect-splash", nil, splashWidth)
+	}
 	connections.SendTo([]byte(templates.AnsiParse(splashTxt)), connDetails.ConnectionId())
 
 	// --- Trigger the Prompt Handler to initialize state and send the FIRST prompt ---

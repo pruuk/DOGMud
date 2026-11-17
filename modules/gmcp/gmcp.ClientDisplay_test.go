@@ -129,3 +129,39 @@ func TestClientDisplay_ListenerIsRegistered(t *testing.T) {
 
 	require.Equal(t, uint32(61), storedWidth(id))
 }
+
+func storedScreenReader(id uint64) bool {
+	return connections.GetClientSettings(id).ScreenReader
+}
+
+// The web client reports screenreader with its width, or alone.
+func TestClientDisplay_StoresScreenReader(t *testing.T) {
+	id := clientDisplayConn(t, 80)
+	reportCols(id, `{"cols":42,"screenreader":true}`)
+	require.True(t, storedScreenReader(id))
+	require.Equal(t, uint32(42), storedWidth(id))
+
+	reportCols(id, `{"screenreader":false}`)
+	require.False(t, storedScreenReader(id))
+	require.Equal(t, uint32(42), storedWidth(id), "a report without cols keeps the width")
+}
+
+// A report without the field, or with the wrong type, keeps the stored value.
+func TestClientDisplay_ScreenReaderMissingOrBadKeeps(t *testing.T) {
+	id := clientDisplayConn(t, 80)
+	reportCols(id, `{"screenreader":true}`)
+	for _, payload := range []string{`{"cols":50}`, `{"screenreader":"yes"}`, `{"screenreader":null}`, `not json`} {
+		reportCols(id, payload)
+		require.True(t, storedScreenReader(id), payload)
+	}
+}
+
+// Only a websocket connection is listened to.
+func TestClientDisplay_ScreenReaderIgnoredOnTelnet(t *testing.T) {
+	mudlog.SetupLogger(nil, ``, ``, false)
+	const id uint64 = 97204
+	connections.RegisterTestConnection(id)
+	t.Cleanup(func() { connections.UnregisterTestConnection(id) })
+	reportCols(id, `{"screenreader":true}`)
+	require.False(t, storedScreenReader(id))
+}

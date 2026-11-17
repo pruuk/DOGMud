@@ -3,6 +3,7 @@ package users
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/stretchr/testify/require"
 )
@@ -68,4 +69,17 @@ func TestTurnOnScreenReader_AlreadyOn(t *testing.T) {
 	require.False(t, u.TurnOnScreenReader())
 	require.Equal(t, ``, u.CombatVerbosity)
 	require.Empty(t, drainSettingChanges(t))
+}
+
+// sr=1 on the websocket address marks the connection; anything else does not.
+func TestStoreAddressScreenReader(t *testing.T) {
+	const id connections.ConnectionId = 97601
+	connections.RegisterTestWebsocketConnection(id)
+	t.Cleanup(func() { connections.UnregisterTestConnection(id) })
+	for _, raw := range []string{``, `0`, `true`, `yes`} {
+		require.False(t, StoreAddressScreenReader(id, raw), raw)
+		require.False(t, connections.GetClientSettings(id).ScreenReader, raw)
+	}
+	require.True(t, StoreAddressScreenReader(id, `1`))
+	require.True(t, connections.GetClientSettings(id).ScreenReader)
 }

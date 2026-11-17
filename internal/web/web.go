@@ -308,7 +308,8 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 // third is the address's raw cols value (/ws?cols=57, empty when absent): the
 // web client's columns, so the connect splash can be drawn to them before
 // its Client.Display report arrives. The handler validates it.
-func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string, string)) {
+// The fourth is the raw sr value (/ws?sr=1): the player asked for screen reader mode.
+func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string, string, string)) {
 
 	networkConfig := configs.GetNetworkConfig()
 
@@ -355,6 +356,7 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string, s
 		// request headers are no longer reachable.
 		clientIP := ResolveClientIP(r)
 		reportedCols := r.URL.Query().Get("cols")
+		reportedSR := r.URL.Query().Get("sr")
 
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -374,7 +376,7 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string, s
 		// magnitude under this; exceeding it closes the connection.
 		conn.SetReadLimit(wsMaxMessageBytes)
 
-		webSocketHandler(conn, clientIP, reportedCols)
+		webSocketHandler(conn, clientIP, reportedCols, reportedSR)
 	})
 
 	// No world lock: serving a CSS or JS file has nothing to do with game
