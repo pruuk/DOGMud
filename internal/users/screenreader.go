@@ -75,8 +75,20 @@ func StoreAddressScreenReader(id connections.ConnectionId, raw string) bool {
 	if raw != `1` {
 		return false
 	}
-	cs := connections.GetClientSettings(id)
-	cs.ScreenReader = true
-	connections.OverwriteClientSettings(id, cs)
+	StoreReportedScreenReader(id, true)
 	return true
+}
+
+// StoreReportedScreenReader writes a web client's screen reader report on its
+// connection's settings, only when it differs. Both places a web client
+// reports it use it: the websocket address on connect (main.go) and
+// Client.Display (modules/gmcp). The report belongs to the connection; login
+// decides what it means for the account. The caller checks that the
+// connection is a websocket.
+func StoreReportedScreenReader(id connections.ConnectionId, on bool) {
+	cs := connections.GetClientSettings(id)
+	if cs.ScreenReader != on {
+		cs.ScreenReader = on
+		connections.OverwriteClientSettings(id, cs)
+	}
 }

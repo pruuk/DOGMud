@@ -1,9 +1,10 @@
 {{- /* The connect splash for a screen reader: plain words only. No art,
 no rule of = signs and no spaced-out title, which a screen reader reads
-symbol by symbol or letter by letter. Chosen when the web client's
-websocket address carries sr=1 (main.go). */ -}}
+symbol by symbol or letter by letter. Picked for a screen reader
+connection; today only the websocket path asks for it (main.go). */ -}}
 <ansi clear="all"></ansi>
-Welcome to Delusions of
-Grandeur, a MUD set on the
-world of Gaius.
+Welcome to the MUD
+Delusions of Grandeur.
+It is set on the world
+of Gaius.
 The Chrysalis awaits.

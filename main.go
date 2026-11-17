@@ -791,6 +791,7 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 
 	// --- Send Initial Welcome/Splash ---
 	// (This part was mostly correct before)
+	// Telnet gets the art splash because its MTTS screen reader answer arrives only after the splash has gone out.
 	splashTxt, _ := templates.Process("login/connect-splash", nil)
 	connections.SendTo([]byte(templates.AnsiParse(splashTxt)), connDetails.ConnectionId())
 

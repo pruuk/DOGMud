@@ -71,6 +71,21 @@ func TestTurnOnScreenReader_AlreadyOn(t *testing.T) {
 	require.Empty(t, drainSettingChanges(t))
 }
 
+// A later report replaces an earlier one, in both directions.
+func TestStoreReportedScreenReader(t *testing.T) {
+	const id connections.ConnectionId = 97602
+	connections.RegisterTestWebsocketConnection(id)
+	t.Cleanup(func() { connections.UnregisterTestConnection(id) })
+	StoreReportedScreenReader(id, false)
+	require.False(t, connections.GetClientSettings(id).ScreenReader)
+	StoreReportedScreenReader(id, true)
+	require.True(t, connections.GetClientSettings(id).ScreenReader)
+	StoreReportedScreenReader(id, true)
+	require.True(t, connections.GetClientSettings(id).ScreenReader)
+	StoreReportedScreenReader(id, false)
+	require.False(t, connections.GetClientSettings(id).ScreenReader)
+}
+
 // sr=1 on the websocket address marks the connection; anything else does not.
 func TestStoreAddressScreenReader(t *testing.T) {
 	const id connections.ConnectionId = 97601

@@ -15,7 +15,7 @@ func TestConnectSplash_ScreenReaderIsPlainWords(t *testing.T) {
 	for _, w := range []int{30, 42, 80} {
 		out, err := templates.ProcessForWidth("login/connect-splash", nil, true, w)
 		require.NoError(t, err)
-		require.Contains(t, out, `Welcome to Delusions of`, w)
+		require.Contains(t, out, `Delusions of Grandeur.`, w)
 		require.NotContains(t, out, `===`, w)
 		require.NotContains(t, out, `D e l u s`, w)
 		require.False(t, strings.Contains(out, `*`), "no star art at %d", w)
