@@ -21,8 +21,8 @@ var ScreenReaderCombatLines = []string{
 // account's screen reader setting on, and how to turn it off. Two lines,
 // each under 80 columns, because login text reaches telnet unwrapped.
 var ScreenReaderOnNotices = []string{
-	`Screen reader mode is on for this character.`,
-	`Type set screenreader to turn it off.`,
+	`Screen reader mode is now on.`,
+	`Type set screenreader off to turn it off.`,
 }
 
 // TurnOnReportedScreenReader turns u's setting on for a connection that

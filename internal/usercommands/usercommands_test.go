@@ -2874,13 +2874,28 @@ func TestSetScreenReader_OnSetsLightOffLeavesIt(t *testing.T) {
 	t.Cleanup(func() {
 		user.ScreenReader, user.CombatVerbosity = prevSR, prevCV
 		events.DrainQueuedByTypeForTest(`UserSettingChanged`)
+		events.DrainQueuedByTypeForTest(`Message`)
 	})
 	user.ScreenReader = false
 	user.CombatVerbosity = ``
+	events.DrainQueuedByTypeForTest(`Message`)
 
 	cmdSetScreenReader(user, nil)
 	require.True(t, user.ScreenReader)
 	require.Equal(t, `light`, user.CombatVerbosity)
+	sent := []string{}
+	for _, e := range events.DrainQueuedByTypeForTest(`Message`) {
+		sent = append(sent, e.(events.Message).Text)
+	}
+	for _, line := range users.ScreenReaderCombatLines {
+		count := 0
+		for _, text := range sent {
+			if strings.Contains(text, line) {
+				count++
+			}
+		}
+		require.Equal(t, 1, count, "combat line sent once: %s", line)
+	}
 
 	cmdSetScreenReader(user, nil)
 	require.False(t, user.ScreenReader)
@@ -2888,8 +2903,14 @@ func TestSetScreenReader_OnSetsLightOffLeavesIt(t *testing.T) {
 
 	// Explicit words set a state: repeating one never flips it back.
 	cmdSetScreenReader(user, []string{`on`})
+	events.DrainQueuedByTypeForTest(`Message`)
 	cmdSetScreenReader(user, []string{`on`})
 	require.True(t, user.ScreenReader, "on twice stays on")
+	said := ``
+	for _, e := range events.DrainQueuedByTypeForTest(`Message`) {
+		said += e.(events.Message).Text
+	}
+	require.Contains(t, said, `already`, "on when already on says so")
 	cmdSetScreenReader(user, []string{`off`})
 	cmdSetScreenReader(user, []string{`off`})
 	require.False(t, user.ScreenReader, "off twice stays off")
