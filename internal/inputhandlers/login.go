@@ -380,17 +380,6 @@ func newUserScreenReader(results map[string]string, reported bool) bool {
 	return reported
 }
 
-// reportedScreenReaderLines turns u's setting on when its connection
-// reported a screen reader, and returns the lines that tell the player so
-// (none when nothing changed). A connection never turns the setting off.
-// Only for a record no other goroutine can see yet.
-func reportedScreenReaderLines(u *users.UserRecord, reported bool) []string {
-	if !reported {
-		return nil
-	}
-	return u.TurnOnReportedScreenReader()
-}
-
 // loginWithScreenReader logs tmpUser in with login (users.LoginUser in
 // production) and applies the connection's screen reader report. On an
 // ordinary login it turns tmpUser on before login publishes it, so
@@ -400,8 +389,15 @@ func reportedScreenReaderLines(u *users.UserRecord, reported bool) []string {
 // round, so this goroutine never writes it: it queues ScreenReaderReported
 // and the hook on MainWorker turns it on and tells the player
 // (hooks.TurnOnReportedScreenReader). tmpUser's change is then discarded.
+// On the reconnect and already-logged-in paths the record loaded for this
+// login was turned on and is discarded, so its UserSettingChanged events fire
+// under the live user's id. That is harmless: a template cache clear and a
+// Char.Info push of the live value, which the hook then corrects.
 func loginWithScreenReader(tmpUser *users.UserRecord, reported bool, login func(*users.UserRecord) (*users.UserRecord, string, error)) (*users.UserRecord, string, []string, error) {
-	lines := reportedScreenReaderLines(tmpUser, reported)
+	var lines []string
+	if reported {
+		lines = tmpUser.TurnOnReportedScreenReader()
+	}
 	loggedIn, msg, err := login(tmpUser)
 	if err != nil {
 		return loggedIn, msg, nil, err
@@ -424,14 +420,13 @@ func creationScreenReaderLines(u *users.UserRecord, results map[string]string, r
 	if !newUserScreenReader(results, reported) {
 		return nil
 	}
-	lines := []string{}
 	if _, asked := results["screen-reader-new"]; !asked {
-		lines = append(lines, users.ScreenReaderOnNotices...)
+		return u.TurnOnReportedScreenReader()
 	}
 	if u.TurnOnScreenReader() {
-		lines = append(lines, users.ScreenReaderCombatLines...)
+		return users.ScreenReaderCombatLines
 	}
-	return lines
+	return nil
 }
 
 // sendLoginLines sends each line as login text, one per line.

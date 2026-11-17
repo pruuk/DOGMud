@@ -1,6 +1,7 @@
 package inputhandlers
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -103,22 +104,44 @@ func drainSettingEvents(t *testing.T) {
 }
 
 // A connection's report turns an account's setting on, never off, and says so.
-func TestReportedScreenReaderLines(t *testing.T) {
+func TestLoginWithScreenReader_OnNeverOff(t *testing.T) {
 	drainSettingEvents(t)
+	same := func(u *users.UserRecord) (*users.UserRecord, string, error) { return u, ``, nil }
 
 	off := &users.UserRecord{UserId: 8}
-	lines := reportedScreenReaderLines(off, true)
+	_, _, lines, err := loginWithScreenReader(off, true, same)
+	require.NoError(t, err)
 	require.True(t, off.ScreenReader)
 	require.Equal(t, `light`, off.CombatVerbosity)
 	require.Equal(t, append(append([]string{}, users.ScreenReaderOnNotices...), users.ScreenReaderCombatLines...), lines)
 
 	on := &users.UserRecord{UserId: 9, ScreenReader: true}
-	require.Empty(t, reportedScreenReaderLines(on, false))
+	_, _, lines, err = loginWithScreenReader(on, true, same)
+	require.NoError(t, err)
+	require.Empty(t, lines, "already on: nothing to say")
+	_, _, lines, err = loginWithScreenReader(on, false, same)
+	require.NoError(t, err)
+	require.Empty(t, lines)
 	require.True(t, on.ScreenReader, "a connection never turns the setting off")
 
 	quiet := &users.UserRecord{UserId: 10}
-	require.Empty(t, reportedScreenReaderLines(quiet, false))
+	_, _, lines, err = loginWithScreenReader(quiet, false, same)
+	require.NoError(t, err)
+	require.Empty(t, lines)
 	require.False(t, quiet.ScreenReader)
+}
+
+// A failed login returns the error, sends no lines and queues no report.
+func TestLoginWithScreenReader_FailedLogin(t *testing.T) {
+	drainSettingEvents(t)
+	events.DrainQueuedByTypeForTest(`ScreenReaderReported`)
+	t.Cleanup(func() { events.DrainQueuedByTypeForTest(`ScreenReaderReported`) })
+
+	_, _, lines, err := loginWithScreenReader(&users.UserRecord{UserId: 14}, true,
+		func(*users.UserRecord) (*users.UserRecord, string, error) { return nil, ``, errors.New("no") })
+	require.EqualError(t, err, "no")
+	require.Nil(t, lines)
+	require.Empty(t, events.DrainQueuedByTypeForTest(`ScreenReaderReported`))
 }
 
 // A reconnect to a link-dead session continues the user already in the world
@@ -145,7 +168,8 @@ func TestLoginWithScreenReader_LinkDeadReconnect(t *testing.T) {
 	require.Equal(t, []events.Event{events.ScreenReaderReported{UserId: 11}}, queued)
 
 	// No report: nothing queued.
-	_, _, _, _ = loginWithScreenReader(&users.UserRecord{UserId: 11}, false, fakeLoginNoCheck(inMemory))
+	_, _, _, err = loginWithScreenReader(&users.UserRecord{UserId: 11}, false, fakeLoginNoCheck(inMemory))
+	require.NoError(t, err)
 	require.Empty(t, events.DrainQueuedByTypeForTest(`ScreenReaderReported`))
 }
 
@@ -157,13 +181,15 @@ func fakeLoginNoCheck(ret *users.UserRecord) func(*users.UserRecord) (*users.Use
 func TestLoginWithScreenReader_Ordinary(t *testing.T) {
 	drainSettingEvents(t)
 	loaded := &users.UserRecord{UserId: 12}
-	got, _, lines, _ := loginWithScreenReader(loaded, true, func(u *users.UserRecord) (*users.UserRecord, string, error) { return u, ``, nil })
+	got, _, lines, err := loginWithScreenReader(loaded, true, func(u *users.UserRecord) (*users.UserRecord, string, error) { return u, ``, nil })
+	require.NoError(t, err)
 	require.Same(t, loaded, got)
 	require.True(t, got.ScreenReader)
 	require.Equal(t, append(append([]string{}, users.ScreenReaderOnNotices...), users.ScreenReaderCombatLines...), lines)
 
 	quiet := &users.UserRecord{UserId: 13}
-	_, _, lines, _ = loginWithScreenReader(quiet, false, func(u *users.UserRecord) (*users.UserRecord, string, error) { return u, ``, nil })
+	_, _, lines, err = loginWithScreenReader(quiet, false, func(u *users.UserRecord) (*users.UserRecord, string, error) { return u, ``, nil })
+	require.NoError(t, err)
 	require.Empty(t, lines)
 	require.False(t, quiet.ScreenReader)
 }
