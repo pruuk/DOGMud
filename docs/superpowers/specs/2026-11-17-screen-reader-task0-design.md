@@ -89,7 +89,7 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 
 ### 6a. Combat verbosity follows the screen reader turning on (`internal/users`)
 
-- One function, `(*UserRecord).TurnOnScreenReader() bool`, is the only way the setting turns on: the creation answer, the connection's report at login, and `set screenreader`. It sets `ScreenReader`, fires `UserSettingChanged{Name: "screenreader"}`, and, unless the player has already picked a level (`CombatVerbosity` not empty), saves `CombatVerbosity = "light"`. It returns whether it changed the combat level, so the caller can say so.
+- One function, `(*UserRecord).TurnOnScreenReader() bool`, is the only way the setting turns on: the creation answer, the connection's report at login, and `set screenreader`. It sets `ScreenReader`, fires `UserSettingChanged{Name: "screenreader"}` and, when combat verbosity is not already light, saves `CombatVerbosity = "light"` and fires `UserSettingChanged{Name: "combatverbosity"}`. It returns whether it changed the combat level, so the caller can say so. (`set combatverbosity full` saves an empty value, `internal/usercommands/set.go:546`, so a chosen full and the default cannot be told apart; the turn-on therefore always lands on light, as ruled.)
 - The line, after the turn-on message: "Combat text is set to light, so your screen reader can keep up. Type set combatverbosity full to see every blow."
 - Turning the screen reader off leaves combat verbosity as it is.
 
@@ -108,7 +108,6 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - **Device memory comes before the account.** The device remembers the last state, so the login screen speaks for a returning blind player before the server knows who they are.
 - **The flag's server effects are unchanged.** It still strips art and picks screen reader templates for both web and telnet. If wrong: web players might want xterm's speech without the art stripping, which would split the flag in two.
 - **xterm's own screen reader mode, not a hand-built live region.** It is what the owner asked to turn on, and it switches at runtime. #733's question list (combat bursts, prompt repeats, vitals, comms, a re-read key) is answered after real use, in #733.
-- **A combat level the player already picked is kept** when the screen reader turns on; only an account that never chose one is set to light. If wrong: the turn-on would overwrite a deliberate "full".
 - **The confirmation line is written locally into the game window,** so it is read by the newly enabled live region and is visible in the log.
 
 ## Out of scope
@@ -117,7 +116,7 @@ The rest of #733: comms panels as `role="log"`, connection status as `role="stat
 
 ## Testing
 
-- **Go:** the `Client.Display` handler stores `screenreader` for websockets and ignores it for telnet; a missing field keeps the stored value. MTTS parsing: bit 64 set and unset, non-MTTS replies, a repeating cycle stops, `WONT` changes nothing. Creation skips the question on websocket and on any MTTS reply (bit 64 set and unset), takes the right answer, and still asks a telnet client that sent no MTTS. Existing-account login turns the flag on and never off. A guard that no login step ID starts `_conn_`. `TurnOnScreenReader` sets light on an unset level, keeps a chosen one, and leaves verbosity alone when the setting turns off; each of the three turn-on paths goes through it. `Char.Info` always carries `screenreader`, false included.
+- **Go:** the `Client.Display` handler stores `screenreader` for websockets and ignores it for telnet; a missing field keeps the stored value. MTTS parsing: bit 64 set and unset, non-MTTS replies, a repeating cycle stops, `WONT` changes nothing. Creation skips the question on websocket and on any MTTS reply (bit 64 set and unset), takes the right answer, and still asks a telnet client that sent no MTTS. Existing-account login turns the flag on and never off. A guard that no login step ID starts `_conn_`. `TurnOnScreenReader` saves light from full or medium, reports no change when already light, and turning the setting off leaves verbosity alone; each of the three turn-on paths goes through it. `Char.Info` always carries `screenreader`, false included.
 - **JS (`tools/jstest`):** the phrase matcher (case, extra spaces, not in password mode, not sent, not in history).
 - **Headless (Playwright):** sighted path: no `.xterm-accessibility` element exists after load and login. Opt-in path: after typing the phrase the element exists, the label has shortened, the phrase never reached the socket, and a reload with the remembered value turns it on before connecting.
 - **Owner:** Windows Narrator (built in) with Chrome: open the page, hear the instruction, type the phrase, create a character by ear. The question must not be asked.
