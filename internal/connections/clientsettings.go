@@ -7,11 +7,25 @@ const (
 	DefaultScreenHeight = 24
 )
 
+// ClientSettings are what a connection's client has told the server about
+// itself. They belong to the connection, not the account.
 type ClientSettings struct {
 	Display           DisplaySettings
 	MSPEnabled        bool // Do they accept sound in their client?
 	SendTelnetGoAhead bool // Defaults false, should we send a IAC GA after prompts?
 	AsciiMode         bool // Convert UTF-8 decorative chars to ASCII equivalents?
+	// ScreenReader is true when the client said its player uses a screen
+	// reader: the web client's "screen reader on" (Client.Display) or a
+	// telnet client's MTTS bit 64.
+	ScreenReader bool
+	// MTTSReported is true once a telnet client answered MTTS, with the
+	// screen reader bit set or not. Either way it answers the creation
+	// question, so the question is not asked.
+	MTTSReported bool
+	// TermTypeReplies counts the client's terminal type replies, and
+	// TermTypeLast is the latest one; the MTTS cycle stops on a repeat.
+	TermTypeReplies int
+	TermTypeLast    string
 }
 
 func (c ClientSettings) IsMsp() bool {

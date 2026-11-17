@@ -2865,6 +2865,38 @@ func TestTrip(t *testing.T) {
 	})
 }
 
+// set screenreader: on saves light combat text; off leaves it as it is.
+func TestSetScreenReader_OnSetsLightOffLeavesIt(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	user, _ := getTestUserAndRoom(t)
+	prevSR, prevCV := user.ScreenReader, user.CombatVerbosity
+	t.Cleanup(func() {
+		user.ScreenReader, user.CombatVerbosity = prevSR, prevCV
+		events.DrainQueuedByTypeForTest(`UserSettingChanged`)
+	})
+	user.ScreenReader = false
+	user.CombatVerbosity = ``
+
+	cmdSetScreenReader(user, nil)
+	require.True(t, user.ScreenReader)
+	require.Equal(t, `light`, user.CombatVerbosity)
+
+	cmdSetScreenReader(user, nil)
+	require.False(t, user.ScreenReader)
+	require.Equal(t, `light`, user.CombatVerbosity, "turning off leaves combat text alone")
+
+	// Explicit words set a state: repeating one never flips it back.
+	cmdSetScreenReader(user, []string{`on`})
+	cmdSetScreenReader(user, []string{`on`})
+	require.True(t, user.ScreenReader, "on twice stays on")
+	cmdSetScreenReader(user, []string{`off`})
+	cmdSetScreenReader(user, []string{`off`})
+	require.False(t, user.ScreenReader, "off twice stays off")
+	cmdSetScreenReader(user, []string{`maybe`})
+	require.False(t, user.ScreenReader, "an unknown word changes nothing")
+}
+
 // ─── Deeper Coverage: Set sub-commands ──────────────────────────────────────
 
 func TestSetSubCommands(t *testing.T) {
