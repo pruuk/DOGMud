@@ -138,6 +138,10 @@ func init() {
 	// event only when the band changes.
 	events.RegisterListener(events.SightBandChanged{}, g.sightBandChangedHandler)
 
+	// Char.Info carries the screen reader setting; re-push it when the
+	// setting changes, so the web client switches its mode to match.
+	events.RegisterListener(events.UserSettingChanged{}, g.userSettingChangedHandler)
+
 }
 
 type GMCPCharModule struct {
@@ -169,6 +173,20 @@ func (g *GMCPCharModule) questProgressHandler(e events.Event) events.ListenerRet
 		Identifier: `Char.Quests`,
 	})
 
+	return events.Continue
+}
+
+// userSettingChangedHandler pushes Char.Info when a player's screen reader
+// setting changes (set screenreader, or turned on at login or creation).
+func (g *GMCPCharModule) userSettingChangedHandler(e events.Event) events.ListenerReturn {
+	evt, typeOk := e.(events.UserSettingChanged)
+	if !typeOk || evt.UserId == 0 || !strings.EqualFold(evt.Name, `screenreader`) {
+		return events.Continue
+	}
+	events.AddToQueue(GMCPCharUpdate{
+		UserId:     evt.UserId,
+		Identifier: `Char.Info`,
+	})
 	return events.Continue
 }
 
@@ -495,6 +513,8 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 			Name:    user.Character.Name,
 			Class:   skills.GetTitle(user.Character.Mutations, user.Character.GetAllSkillRanks(), user.Character.Stats),
 			Race:    casing.Title(user.Character.Species()),
+
+			ScreenReader: user.ScreenReader,
 		}
 
 		if !all {
@@ -944,6 +964,9 @@ type GMCPCharModule_Payload_Info struct {
 	Name    string `json:"name,omitempty"`
 	Class   string `json:"class,omitempty"`
 	Race    string `json:"race,omitempty"`
+	// ScreenReader is the account's screen reader setting. Always sent,
+	// false included, so the web client on every device follows it.
+	ScreenReader bool `json:"screenreader"`
 }
 
 // /////////////////
