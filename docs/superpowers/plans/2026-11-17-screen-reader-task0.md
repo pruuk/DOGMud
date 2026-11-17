@@ -2249,6 +2249,28 @@ The continuation lines start at column 20, the entry's own text column (`  set s
 Run: `go test ./internal/guards/ ./internal/templates/ ./internal/devtools/ -count=1`
 Expected: PASS. If a width or markup guard fails, rewrap the row as it says; do not change the guard.
 
+- [ ] **Step 1a: The Pothole Coulee tutorial accepts any level (owner ruling 2026-11-17, option 1)**
+
+Quest 32's verbosity step moves on for any `set combatverbosity <level>` (`quests/32-first_blood.yaml:188-191`), but every line tells the player to type `full`, which would undo a blind player's light setting minutes into the game. Change only these strings (keep each YAML key, block style and indentation as it is; rewrap folded YAML at the file's existing width):
+
+`_datafiles/world/dogmud/quests/32-first_blood.yaml`
+- step `special`, `hint` (`:84-86`): `Combat verbosity sets how much fight text you see. Type set combatverbosity, then full, medium or light. With a screen reader, light keeps up best. For more, type help combatverbosity.`
+- both `actor:` lines ending "type set combatverbosity full." (`:175-176`, `:185-186`): `That is a special move. Now choose how much combat detail you see: type set combatverbosity, then full, medium or light.`
+
+`_datafiles/world/dogmud/dialogue/pothole_coulee/9108.yaml`
+- opener variant gated on `32-special` (`:74-76`): `text: Last thing. Choose how much of a fight you see. Full is every blow, light is one line a round. If a screen reader reads to you, take light. Change it when you know what you are changing.` and `hints: Type set combatverbosity, then full, medium or light.`
+- topic `progress_special` (`:227-229`): `text: Almost. Choose how much of a fight you see. Full shows everything. Start there, or on light if a screen reader reads to you.` and `hints: Type set combatverbosity, then full, medium or light.`
+- topic `combat_help` (`:245-246`): replace `Start on full. Change it when you know what you are changing:` with `Start on full, or on light if a screen reader reads to you. Change it when you know what you are changing:` (the rest of the sentence stays).
+
+NPC `text` stays first person; `hints` stay narrator voice; no `;`, no dashes. Then validate:
+
+```bash
+go run ./cmd/dialoguecheck -data _datafiles/world/dogmud -dialogue pothole_coulee
+go test ./internal/quests/ ./internal/questengine/ ./internal/dialogue/ ./internal/guards/ -count=1
+```
+
+Expected: no findings, PASS. The Task 9 boot check loads both files.
+
 - [ ] **Step 2: Patch notes**
 
 Add at the top of `docs/PATCH_NOTES.md`, under the title:
@@ -2259,6 +2281,7 @@ Add at the top of `docs/PATCH_NOTES.md`, under the title:
 - The web client can now read the game aloud to screen reader users. When the page opens, your screen reader tells you what to do: type `screen reader on` in the command box and press Enter. The web client remembers this on that device. Type `screen reader off` to stop it.
 - Screen reader mode is saved with your character. `set screenreader` turns it on or off wherever you play. If you turn it on in the web client, your character keeps it on.
 - Turning screen reader mode on sets combat text to light, so your screen reader can keep up. `set combatverbosity full` brings every blow back.
+- The combat lesson in Pothole Coulee now accepts full, medium or light, and suggests light to players who use a screen reader.
 - New characters made in the web client are no longer asked whether they use a screen reader. Telnet clients that report their settings to the game (MTTS) are not asked either.
 ```
 
@@ -2289,7 +2312,7 @@ Add a row for each new file, in the section where its neighbours are listed (fin
 - [ ] **Step 5: Commit**
 
 ```bash
-git add _datafiles/world/dogmud/templates/help/set.template docs/PATCH_NOTES.md modules/gmcp/context.md internal/connections/context.md internal/inputhandlers/context.md internal/users/context.md internal/term/context.md internal/usercommands/context.md docs/README.md
+git add _datafiles/world/dogmud/templates/help/set.template _datafiles/world/dogmud/quests/32-first_blood.yaml _datafiles/world/dogmud/dialogue/pothole_coulee/9108.yaml docs/PATCH_NOTES.md modules/gmcp/context.md internal/connections/context.md internal/inputhandlers/context.md internal/users/context.md internal/term/context.md internal/usercommands/context.md docs/README.md
 git commit -F - <<'EOF'
 docs: screen reader opt-in in help, patch notes and package docs (#733)
 

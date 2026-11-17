@@ -42,6 +42,7 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 3. Telnet MTTS detection is in scope.
 4. The web client does not ask the creation question; the opt-in is the answer. Telnet keeps the question unless MTTS already answered it.
 5. When an account's screen reader setting turns on, combat verbosity is saved to the account as light. xterm announces at most 20 lines of one burst (on the 21st it appends "Too much output to announce" and stops), so full combat text is cut off. Players learn `set combatverbosity` in the Pothole Coulee tutorial and can change it back. (Owner chose saving it over a default that is not saved.)
+5a. The Pothole Coulee combat lesson (quest 32, Dewey 9108) tells every player to type `set combatverbosity full`, which would undo a blind player's light setting. It now names full, medium or light, and suggests light to a player whose screen reader reads to them; the step already accepts any level. (Owner, option 1 of three: per-player text and leaving it were rejected.)
 6. Long dialogue and quest menus are paged under #842, which moved into the touch arc for this reason; not in this spec.
 
 ## What players get
