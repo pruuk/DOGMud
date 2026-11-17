@@ -36,6 +36,7 @@
   </script>
 </head>
 <body>
+{{ if or (eq .REQUEST.URL.Path "/webclient") (eq .REQUEST.URL.Path "/webclient/") (eq .REQUEST.URL.Path "/webclient.html") }}<p class="visually-hidden">Screen reader users: the game is below. In its command box, type screen reader on, then press Enter.</p>{{ end }}
   <!-- Site header: wordmark + menu in one borderless glass bar. -->
   <header>
     <!-- Malia's one-line logo, gold, for the teal bar in both themes (2026-11-15, #882).

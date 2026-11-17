@@ -232,6 +232,7 @@
     </script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/termfit.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/displayreport.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/screenreader.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/layoutpick.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js?v={{ .ASSET_VERSION }}"></script>
@@ -242,6 +243,12 @@
     <script>window.COMPANION_RELAY_ORIGIN = {{ .COMPANION_RELAY_ORIGIN_JSON }};</script>
 </head>
 <body onLoad="init(); return false;">
+    <!-- Read first by a screen reader, seen by no one (touch arc Task 0;
+         static/js/screenreader.js keeps them current). iOS VoiceOver starts at
+         the top of the page rather than at the focused command box. The
+         status region speaks what xterm's own region cannot, such as "off". -->
+    <p id="sr-hint" class="visually-hidden">Screen reader users: type screen reader on, then press Enter.</p>
+    <div id="sr-status" class="visually-hidden" role="status" aria-live="polite"></div>
 
     <!-- CONNECT BUTTON FLOATED IN CENTER. Starts hidden: the page connects by
          itself on load, and onclose shows it when the player is not connected. -->
@@ -307,7 +314,7 @@
 
         <section class="dash-panel" id="panel-cmd" data-panel="cmd">
           <div class="dash-panel-body">
-            <input type="text" id="command-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Enter command..." style="flex:1">
+            <input type="text" id="command-input" aria-label="Game commands. Screen reader users: type screen reader on, then press Enter." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Enter command..." style="flex:1">
             <!-- Plan 6 (ruling 14): closes the on-screen keyboard; shown only
                  while it is open (dashboard.css). -->
             <button type="button" id="cmd-close-kbd" class="brass" aria-label="Close keyboard" title="Close keyboard"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M4 4l12 12M16 4L4 16"/></svg></button>
@@ -537,11 +544,57 @@
             } catch (e) { return 1; }
         })();
 
-        // Tell the server the game window's columns (static/js/displayreport.js).
-        // SendGMCP is declared further down this script, so it is hoisted.
+        // Tell the server the game window's columns (static/js/displayreport.js),
+        // and whether this player asked for screen reader mode. SendGMCP is
+        // declared further down this script, so it is hoisted.
         var displayReport = window.DisplayReport.create({
-            send: function (cols) { return SendGMCP('Client.Display', { cols: cols }); }
+            send: function (cols) { return SendGMCP('Client.Display', { cols: cols, screenreader: screenReader.isOn() }); }
         });
+        // The screen reader switch (static/js/screenreader.js): off unless the
+        // player typed "screen reader on" here before, or their account has it.
+        var screenReader = window.ScreenReader.create({
+            term: term,
+            termWrite: function (data, cb) { term.write(data, cb); },
+            storage: (function () { try { return window.localStorage; } catch (e) { return null; } })(),
+            input: document.getElementById('command-input'),
+            hint: document.getElementById('sr-hint'),
+            status: document.getElementById('sr-status'),
+            report: function (on) { return SendGMCP('Client.Display', { screenreader: on }); },
+            setCommand: function (on) { return SendData('set screenreader ' + (on ? 'on' : 'off')); },
+            writeLine: function (text) {
+                // Start on a fresh line: a login prompt leaves the cursor after
+                // its text. (cursorX is not read: earlier writes may not be
+                // parsed yet.)
+                term.write('\r\n' + text);
+            },
+            currentLines: function () {
+                // The waiting prompt: the last line of the game window with text on it.
+                var buf = term.buffer.active;
+                for (var y = buf.baseY + buf.cursorY; y >= 0; y--) {
+                    var line = buf.getLine(y);
+                    var text = line ? line.translateToString(true) : '';
+                    if (text.trim()) return [text];
+                }
+                return [];
+            },
+            clearSpoken: function () {
+                // xterm 4.19 resets its spoken region only on a key in its own
+                // hidden input, which players never use. Private API, as
+                // termfit.js already uses; xterm is pinned at 4.19 (#908), and
+                // tools/jstest/screenreader.test.js fails if the names change.
+                var am = term._core && term._core._accessibilityManager;
+                if (!am || !am._clearLiveRegion) return;
+                am._clearLiveRegion();
+                // On a Mac (and iPadOS Safari) the reset also takes the region
+                // out of the page; put it back now, or the next text is spoken
+                // only if yet more text follows it.
+                if (am._liveRegion && !am._liveRegion.parentNode && am._accessibilityTreeRoot) {
+                    am._accessibilityTreeRoot.appendChild(am._liveRegion);
+                }
+            },
+            inGame: function () { return inGame; }
+        });
+        screenReader.load();
         // Fit the game window to the panel (static/js/termfit.js). The text
         // stays at the --text size; the columns follow the panel, at most 80.
         var termFitter = window.TermFit.create({
@@ -906,6 +959,12 @@
                     companionGlue.hello(obj.Info.account);
                 }
 
+                // The account's screen reader setting (Char.Info.screenreader):
+                // xterm's mode follows it on every device.
+                if ( obj.Info && typeof obj.Info.screenreader === 'boolean' ) {
+                    screenReader.account(obj.Info.screenreader);
+                }
+
                 markInGame();
 
                 // Populate session strip with character name when available
@@ -1061,6 +1120,10 @@
                 // number and whether a menu or prompt is open. Never its text.
                 var d = ((GMCPStructs["Char"] || {}).Input || {}).Done || {};
                 if (sendWait) sendWait.done(d.seq, d.menu === true);
+                // The answer to line d.seq is complete: once it is the last line
+                // sent, back to the 20-line limit for unprompted output
+                // (static/js/screenreader.js).
+                screenReader.inputDone(d.seq);
             },
             "Char.Mutation": function() {
                 var m = (GMCPStructs["Char"] || {}).Mutation;
@@ -3037,7 +3100,10 @@
             // The server sends the connect splash as the socket opens, before
             // the Client.Display report below can arrive, so the address
             // carries the game window's columns for the splash.
-            var wsAddress = wsProto + location.host + '/ws?cols=' + encodeURIComponent(term.cols);
+            // sr=1 tells the server before the connect splash that this player
+            // asked for screen reader mode, so the splash comes as words only.
+            var wsAddress = wsProto + location.host + '/ws?cols=' + encodeURIComponent(term.cols) +
+                (screenReader.isOn() ? '&sr=1' : '');
             debugLog("Connecting to: " + wsAddress);
             socket = new WebSocket(wsAddress);
 
@@ -3073,6 +3139,11 @@
                 // A new connection is a new login: the relay glue waits for
                 // Char.Info to name the account again before it does anything.
                 if (companionGlue) { companionGlue.disconnected(); }
+                screenReader.loggedOut();
+                // The last account's Info stays in GMCPStructs, and the generic
+                // Char handler re-reads it for other Char packages: forget it,
+                // so the new login's own Char.Info is the first value seen.
+                if (GMCPStructs.Char) { delete GMCPStructs.Char.Info; }
 
                 textInput.focus();
             };
@@ -3202,7 +3273,9 @@
                 // Otherwise, just write to terminal
                 // The MOTD shows without its box here (static/js/motdrestyle.js).
                 var shown = window.MotdRestyle ? window.MotdRestyle.restyle(event.data) : event.data;
-                term.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);
+                // Through the screen reader switch (static/js/screenreader.js):
+                // straight to xterm when the mode is off.
+                screenReader.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);
                 // Tap text stream for trigger matching (read-only copy; does not affect terminal output)
                 try {
                     stripAnsi(event.data).split(/\r?\n/).forEach(function(line){ if (line) runTriggers(line, Date.now()); });
@@ -3340,6 +3413,14 @@
 
             // ENTER key
             if (event.key === 'Enter') {
+                // "screen reader on" / "off" is the client's own switch
+                // (static/js/screenreader.js): never sent, never in history.
+                var srPhrase = window.ScreenReader.matchPhrase(event.target.value, textInput.type === 'password');
+                if (srPhrase) {
+                    screenReader.phrase(srPhrase);
+                    event.target.value = '';
+                    return;
+                }
                 if (event.target.value !== '') {
                     if (textInput.type !== "password") {
                         commandHistory.push(event.target.value);
@@ -3387,6 +3468,10 @@
             totalBytesSent += dataToSend.length;
             linesSent++;
             socket.send(dataToSend);
+            // Its answer is read in full, up to the server's Char.Input.Done
+            // for this line (static/js/screenreader.js). Every line counts:
+            // typed, macros, numpad moves, automation.
+            screenReader.inputSent(linesSent);
             // Snap the view back to the newest output whenever the player acts.
             // Without this, scrolling up to re-read and then moving (or any
             // command) leaves you stranded in the backlog instead of showing

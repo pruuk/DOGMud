@@ -84,6 +84,12 @@ var code = 'var socket = null, leavingGame = false, leaveFallback = null, inGame
     + 'var connectButton = document.getElementById("connect-button");\n'
     + 'var sessionButton = document.getElementById("btn-session");\n'
     + 'var sessionConfirm = document.getElementById("sess-confirm");\n'
+    // The screen reader switch (static/js/screenreader.js): the connect
+    // handler reads isOn() for the address, onopen calls loggedOut(), and
+    // onmessage writes server text through write().
+    + 'var screenReader = { isOn: function () { return global.__srOn === true; }, loggedOut: function () {}, write: function (t) { term.write(t); } };\n'
+    // onopen forgets the last account's Char.Info.
+    + 'var GMCPStructs = {};\n'
     + extract('function markInGame() {', "sessionButton.addEventListener('click'")
     + extract("connectButton.addEventListener('click'", "textInput.addEventListener('keydown'");
 (0, eval)(code);
@@ -209,6 +215,16 @@ pendingReconnectToken = 'TOKEN';
 reconnectAttempts = 90;
 s.closed();
 check('music stops when reconnecting gives up', musicStops === 1, 'stops ' + musicStops);
+
+// Screen reader mode (static/js/screenreader.js): the address tells the
+// server before the connect splash, so the splash comes as words only.
+check('with the mode off the address has no sr', !/[?&]sr=/.test(sockets[0].url), 'url ' + sockets[0].url);
+global.__srOn = true;
+connect.disabled = false;
+connect.click();
+s = sockets[sockets.length - 1];
+check('with the mode on the address ends in &sr=1', s.url === 'ws://test/ws?cols=57&sr=1', 'url ' + s.url);
+global.__srOn = false;
 
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);
