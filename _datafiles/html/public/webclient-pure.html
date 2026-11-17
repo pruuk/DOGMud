@@ -2280,7 +2280,7 @@
             var tickRow = e.target.closest(".auto-row[data-auto-type='tick']");
             if (tickRow) {
                 var cmds = tickRow.dataset.autoCmd || "";
-                cmds.split(";").forEach(function(c) { c = c.trim(); if (c) SendData(c); });
+                cmds.split(";").forEach(function(c) { c = c.trim(); if (c) playerSend(c); });
                 return;
             }
 
@@ -2908,7 +2908,7 @@
         // section 12). Automation and the page's own commands use SendData.
         function playerSend(line) {
             var sent = SendData(line);
-            if (sent) screenReader.lineSent(line);
+            if (sent) screenReader.lineSent();
             return sent;
         }
 
@@ -3493,6 +3493,9 @@
             totalBytesSent += dataToSend.length;
             linesSent++;
             socket.send(dataToSend);
+            // The server echoes every line; the screen reader skips the echo
+            // (a password box's echo is masked).
+            screenReader.sent(dataToSend, textInput.type === 'password');
             // Snap the view back to the newest output whenever the player acts.
             // Without this, scrolling up to re-read and then moving (or any
             // command) leaves you stranded in the backlog instead of showing

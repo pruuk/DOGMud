@@ -9,9 +9,9 @@ import (
 )
 
 // ScreenReaderCombatLines tell a player whose screen reader setting just
-// turned on that combat text was set to light, and how to undo it. xterm's
-// screen reader mode stops announcing after 20 lines of one burst, so full
-// combat text would be cut off. Two lines, each under 80 columns, because
+// turned on that combat text was set to light, and how to undo it. Light
+// combat text lets a screen reader keep up with a fight. Two lines, each
+// under 80 columns, because
 // login text reaches telnet unwrapped.
 var ScreenReaderCombatLines = []string{
 	`Combat text is set to light, so your screen reader can keep up.`,

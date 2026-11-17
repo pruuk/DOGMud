@@ -29,7 +29,8 @@ check('the page has the assertive answers region, not atomic',
     /id="sr-answers"[^>]*role="log"[^>]*aria-live="assertive"[^>]*aria-atomic="false"/.test(page), '');
 check('the page passes the answers region to the switch', page.indexOf("answers: document.getElementById('sr-answers')") >= 0, '');
 check('the Enter key sends through playerSend', /var sent = playerSend\(line\);/.test(page), '');
-check('playerSend passes the sent line to the switch', /screenReader\.lineSent\(line\)/.test(page), '');
+check('every send tells the switch, with the password box state', page.indexOf("screenReader.sent(dataToSend, textInput.type === 'password');") >= 0, '');
+check('playerSend marks the line as the player\'s', /if \(sent\) screenReader\.lineSent\(\);/.test(page), '');
 check('the page feeds server text to the log', page.indexOf('screenReader.write(shown);') >= 0, '');
 var moduleSrc = fs.readFileSync(path.join(pub, 'static', 'js', 'screenreader.js'), 'utf8');
 check('the module never reaches into xterm', !/setOption|_accessibilityManager|_clearLiveRegion|screenReaderMode/.test(moduleSrc.replace(/^\s*\/\/.*$/gm, '')), '');
@@ -272,23 +273,117 @@ sr.phrase('on');
 sr.write('Plain text.\r\n');
 check('a line sent while off opens no answer', f.log.texts().slice(-1)[0] === 'Plain text.' && f.answers.childNodes.length === 0, f.answers.texts().join('|'));
 
-// The server echoes the sent line as its own unterminated piece first.
+// The server echoes every sent line as its own unterminated piece. The page
+// calls sent(line) for every line, and lineSent() after it for a player's.
+function playerLine(sr, line) { sr.sent(line); sr.lineSent(); }
+function allTexts(f) { return f.log.texts().concat(f.answers.texts()); }
+
 f = fakes('true');
 sr = SR.create(f.opts);
 sr.load();
 f.inGame = true;
-sr.lineSent('look');
+playerLine(sr, 'look');
 sr.write('look');
 sr.write('\r\r\n');
 sr.write('The Void\r\n');
 check('the echo of the sent line is skipped and does not end the answer', f.answers.texts().join('|') === 'The Void' && f.log.childNodes.length === 0, 'answers ' + f.answers.texts().join('|') + ' log ' + f.log.texts().join('|'));
 sr.write('[HP:unhurt]: ');
 check('the status after an echoed command is read at once', f.log.texts().join('|') === '[HP:unhurt]:', f.log.texts().join('|'));
-// Only the matching echo is skipped: a real prompt right after a line with no output still ends it.
-sr.lineSent('save');
+// A prompt with no echo owed ends the answer.
+sr.lineSent();
 sr.write('[HP:hurt]: ');
 sr.write('A rat arrives.\r\n');
-check('a different unterminated piece still ends the answer', f.log.texts().slice(-1)[0] === 'A rat arrives.', f.log.texts().join('|'));
+check('a prompt ends an answer that owes no echo', f.log.texts().slice(-1)[0] === 'A rat arrives.', f.log.texts().join('|'));
+
+// In a fight: a round line and its prompt are already on the way when the
+// player sends. The prompt before the echo must not end the answer, and the
+// echo that comes after it is not read as the status.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.write('[HP:unhurt]: ');
+f.clock.advance(SR.PROMPT_GAP_MS);
+playerLine(sr, 'look');
+sr.write('The rat bites you.\r\n');
+sr.write('[HP:hurt]: ');
+sr.write('look');
+sr.write('\r\r\n');
+sr.write('The Void\r\n');
+check('an echo after a round prompt is never read', allTexts(f).indexOf('look') < 0, allTexts(f).join('|'));
+check('the answer still interrupts after a round prompt', f.answers.texts().slice(-1)[0] === 'The Void', 'answers ' + f.answers.texts().join('|'));
+sr.write('[HP:hurt]: ');
+sr.write('The rat squeaks.\r\n');
+check('the prompt after the answer ends it', f.log.texts().slice(-1)[0] === 'The rat squeaks.', f.log.texts().join('|'));
+
+// Moving quickly: two lines sent before either answer comes. Both answers
+// interrupt.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+playerLine(sr, 'n');
+playerLine(sr, 'n');
+sr.write('n'); sr.write('\r\r\n'); sr.write('Room One\r\n'); sr.write('[HP:unhurt]: ');
+sr.write('n'); sr.write('\r\r\n'); sr.write('Room Two\r\n'); sr.write('[HP:unhurt]: ');
+check('two quick moves: both rooms interrupt', f.answers.texts().join('|') === 'Room One|Room Two', 'answers ' + f.answers.texts().join('|') + ' log ' + f.log.texts().join('|'));
+check('two quick moves: no echo is read', allTexts(f).indexOf('n') < 0, allTexts(f).join('|'));
+
+// The page's own lines (automation, its own commands) are echoed too: the
+// echo is skipped and does not end an answer, and their answers queue.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+playerLine(sr, 'look');
+sr.write('look');
+sr.sent('kill rat');
+sr.write('kill rat');
+sr.write('The Void\r\n');
+check('an automation echo is skipped and does not end an answer', f.answers.texts().join('|') === 'The Void' && allTexts(f).indexOf('kill rat') < 0, allTexts(f).join('|'));
+sr.write('[HP:unhurt]: ');
+sr.sent('set screenreader on');
+sr.write('set screenreader on');
+sr.write('ScreenReader mode toggled.\r\n');
+check('the page\'s own command echo is skipped; its answer queues', f.log.texts().slice(-1)[0] === 'ScreenReader mode toggled.' && allTexts(f).indexOf('set screenreader on') < 0, f.log.texts().join('|'));
+
+// What the server echoes: * for a password, nothing for an item @handle line.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+sr.sent('Secret-1', true);
+sr.write('********');
+check('a masked echo is skipped', allTexts(f).length === 0, allTexts(f).join('|'));
+sr.write('*');
+check('a lone * is never read', allTexts(f).length === 0, allTexts(f).join('|'));
+f.inGame = true;
+playerLine(sr, 'look @1-000000000000000-01-00000000000000');
+sr.write('A plain knife.\r\n');
+sr.write('[HP:unhurt]: ');
+sr.write('A rat arrives.\r\n');
+check('an item handle line owes no echo; its prompt ends the answer', f.answers.texts().join('|') === 'A plain knife.' && f.log.texts().slice(-1)[0] === 'A rat arrives.', 'answers ' + f.answers.texts().join('|') + ' log ' + f.log.texts().join('|'));
+
+// A lost echo cannot keep the answer open.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+playerLine(sr, 'look');
+f.clock.advance(SR.ECHO_WAIT_MS);
+sr.write('[HP:unhurt]: ');
+sr.write('A rat arrives.\r\n');
+check('an echo owed past the wait is taken as lost', f.log.texts().slice(-1)[0] === 'A rat arrives.', 'answers ' + f.answers.texts().join('|'));
+for (var e = 0; e < SR.MAX_ECHOES + 5; e++) sr.sent('say ' + e);
+f.clock.advance(SR.PROMPT_GAP_MS);
+sr.write('say 0');
+check('echoes owed are capped; the oldest is dropped', f.log.texts().slice(-1)[0] === 'say 0', f.log.texts().join('|'));
+// Mode off: nothing is owed.
+sr.phrase('off');
+sr.sent('look');
+sr.phrase('on');
+f.clock.advance(SR.PROMPT_GAP_MS);
+sr.write('look');
+check('a line sent while off owes no echo', f.log.texts().slice(-1)[0] === 'look', f.log.texts().join('|'));
 
 // No log element: nothing throws, for sighted players too.
 f = fakes('true');

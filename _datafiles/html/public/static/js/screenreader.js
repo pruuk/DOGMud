@@ -86,12 +86,31 @@
             .replace(/^\n+|\n+$/g, '');
     }
 
+    // MAX_ECHOES bounds the echoes waited for, so a lost one cannot pile up.
+    var MAX_ECHOES = 20;
+    // ECHO_WAIT_MS: an echo still owed after this long is taken as lost, so a
+    // line the server never echoed cannot keep an answer open.
+    var ECHO_WAIT_MS = 3000;
+
+    // echoOf is what the server sends back for a line the page sent
+    // (internal/inputhandlers/echo.go): the line itself, one * per character
+    // when the box is a password box, and nothing at all for an item panel
+    // line that names an item by its @handle (lineTargetsItemHandle: an @
+    // token followed by 35 lowercase hex digits and hyphens).
+    function echoOf(line, masked) {
+        if (typeof line !== 'string') return null;
+        if (/(^|\s)@[0-9a-f-]{35}(\s|$)/.test(line)) return null;
+        if (masked) return new Array(Array.from(line).length + 1).join('*');
+        return plainText(line);
+    }
+
     // opts: storage (localStorage, any call may throw); input (the command
     // box); hint (the hidden first paragraph); status (a visually hidden
     // role="status" element, for "off"); log (the visually hidden polite
     // role="log" element); answers (the visually hidden assertive role="log"
-    // element, for the answer to a line the player sent); createEntry(text) (a new element holding text, for the log);
-    // report(on) (sends Client.Display); setCommand(on) (sends "set
+    // element, for the answer to a line the player sent); createEntry(text)
+    // (a new element holding text, for either log); report(on) (sends
+    // Client.Display); setCommand(on) (sends "set
     // screenreader on" or "off", a state and never a toggle, false when it
     // could not); writeLine(text) (writes a local line into the game window);
     // currentLines() (the waiting prompt, as lines); inGame() (true while a
@@ -107,8 +126,21 @@
         var lastPromptAt = null;   // when it was announced
         var pendingPrompt = null;  // a changed prompt held until a round has passed
         var promptTimer = null;
-        var answering = false;     // the player sent a line; its answer has not ended
-        var echoPending = null; // the sent line, until its echo from the server is skipped
+        // answering: the player sent a line and its answer has not ended. It
+        // ends at the first real prompt once no player line's echo is still
+        // owed; the server redraws the prompt after every message, so it does
+        // not stay open.
+        var answering = false;
+        // echoes the server still owes, oldest first: {text, player, at}.
+        // player: the player asked for that line, so its answer interrupts.
+        var echoes = [];
+        var lastSent = null;       // the echo owed for the last line sent, if any
+
+        // answerOwed: a player line's echo is still owed (and not lost).
+        function answerOwed() {
+            var t = now();
+            return echoes.some(function (e) { return e.player && t - e.at < ECHO_WAIT_MS; });
+        }
 
         function remember(value) {
             try { opts.storage.setItem(STORAGE_KEY, JSON.stringify(value)); } catch (e) { /* storage blocked: this visit only */ }
@@ -127,10 +159,16 @@
             while (region.firstChild) region.removeChild(region.firstChild);
         }
 
+        // forgetSends drops any answer in progress and every echo still due.
+        function forgetSends() {
+            answering = false;
+            echoes = [];
+            lastSent = null;
+        }
+
         function clearLog() {
             forgetPrompt();
-            answering = false;
-            echoPending = null;
+            forgetSends();
             empty(opts.log);
             empty(opts.answers);
         }
@@ -184,21 +222,22 @@
             var text = plainText(raw);
             if (!text.trim()) return;
             var unterminated = !/\n\s*$/.test(String(raw).replace(ESCAPES, ''));
-            if (echoPending !== null) {
-                var echo = echoPending;
-                echoPending = null;
-                // The server echoes the line the player sent, as its own piece,
-                // before the answer: not news (the screen reader echoed the
-                // typing), not a prompt, and not the end of the answer.
-                if (unterminated && text === echo) return;
-            }
             if (!unterminated) {
                 // The answer to the player's line interrupts; anything else queues.
                 append(text, answering && opts.answers ? opts.answers : opts.log);
                 return;
             }
-            // A prompt ends the answer to the line the player sent.
-            answering = false;
+            // The server echoes every line the page sends, as its own piece,
+            // possibly after other text already on its way. An echo is not news
+            // (the screen reader echoed the typing), not a prompt, and does not
+            // end an answer. A masked echo (only *) is never read.
+            for (var i = 0; i < echoes.length; i++) {
+                if (echoes[i].text === text) { echoes.splice(i, 1); return; }
+            }
+            if (/^\*+$/.test(text)) return;
+            // A real prompt ends the answer, once every player line's echo has
+            // come (a prompt before an echo belongs to an earlier answer).
+            if (!answerOwed()) answering = false;
             if (text === lastPrompt) { pendingPrompt = null; return; }
             var since = lastPromptAt === null ? Infinity : now() - lastPromptAt;
             if (opts.inGame() && since < PROMPT_GAP_MS) {
@@ -234,15 +273,27 @@
                 if (on) speak(text);
             },
 
-            // The player sent a line (typed, the numpad, a macro key, a chip,
-            // an item menu; never automation): its answer, up to the next
-            // prompt, interrupts whatever is still being read. The server
-            // echoes the sent line as its own piece before the answer; that
-            // echo is skipped.
-            lineSent: function (line) {
+            // The page sent a line to the server (any line: typed, automation,
+            // its own commands). The server will echo it; the echo is skipped
+            // when it comes. masked: the line was typed into a password box.
+            sent: function (line, masked) {
+                lastSent = null;
+                if (!on) return;
+                var echo = echoOf(line, masked);
+                if (echo === null || !echo.trim()) return;
+                lastSent = { text: echo, player: false, at: now() };
+                echoes.push(lastSent);
+                if (echoes.length > MAX_ECHOES) echoes.shift();
+            },
+
+            // The player asked for the line just sent (typed, the numpad, a
+            // macro key, a chip, an item menu, a tick's fire now; never
+            // automation): its answer, up to the first prompt after its echo,
+            // interrupts whatever is still being read. Called after sent().
+            lineSent: function () {
                 if (!on) return;
                 answering = true;
-                echoPending = typeof line === 'string' ? plainText(line) : null;
+                if (lastSent) lastSent.player = true;
             },
 
             // The player typed the phrase: which is 'on' or 'off'.
@@ -291,8 +342,7 @@
             loggedOut: function () {
                 accountSetting = null;
                 lastPushed = null;
-                answering = false;
-                echoPending = null;
+                forgetSends();
                 forgetPrompt();
             }
         };
@@ -300,6 +350,7 @@
 
     return {
         STORAGE_KEY: STORAGE_KEY, MAX_ENTRIES: MAX_ENTRIES, PROMPT_GAP_MS: PROMPT_GAP_MS,
+        MAX_ECHOES: MAX_ECHOES, ECHO_WAIT_MS: ECHO_WAIT_MS,
         LABEL_OFF: LABEL_OFF, LABEL_ON: LABEL_ON,
         HINT_OFF: HINT_OFF, HINT_ON: HINT_ON,
         SAID_ON: SAID_ON, SAID_OFF: SAID_OFF,
