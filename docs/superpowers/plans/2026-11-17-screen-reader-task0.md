@@ -196,14 +196,40 @@ Expected: PASS.
 
 - [ ] **Step 6: `set screenreader` turns on through it**
 
-Replace `cmdSetScreenReader` at `internal/usercommands/set.go:216-230` with:
+`set screenreader` with no word still toggles. `set screenreader on` and `set screenreader off` set a state, so the web client (which sends one for the player, Task 6 `setCommand`) can never flip the account the wrong way when its belief is stale: a line swallowed by an open prompt (`internal/users/userrecord.promptroute.go:49`) is simply repeated correctly by the next phrase.
+
+In `Set`'s switch (`set.go:44`), change `return cmdSetScreenReader(user)` to `return cmdSetScreenReader(user, args)`, and replace `cmdSetScreenReader` at `set.go:216-230` with:
 
 ```go
-// cmdSetScreenReader toggles the account's screen reader setting. Turning it
-// on goes through TurnOnScreenReader, which also sets light combat text;
-// turning it off leaves combat text as it is.
-func cmdSetScreenReader(user *users.UserRecord) (bool, error) {
-	if user.ScreenReader {
+// cmdSetScreenReader sets the account's screen reader setting: "on" or
+// "off" set it, and no word toggles it. Turning it on goes through
+// TurnOnScreenReader, which also sets light combat text; turning it off
+// leaves combat text as it is. Setting it to the state it already has
+// changes nothing and says so.
+func cmdSetScreenReader(user *users.UserRecord, args []string) (bool, error) {
+	want := !user.ScreenReader
+	if len(args) > 0 {
+		switch args[0] {
+		case `on`:
+			want = true
+		case `off`:
+			want = false
+		default:
+			user.SendText(messaging.CategoryRefusal, `Type <ansi fg="command">set screenreader on</ansi> or <ansi fg="command">set screenreader off</ansi>.`)
+			return true, nil
+		}
+	}
+
+	if want == user.ScreenReader {
+		state := `OFF`
+		if want {
+			state = `ON`
+		}
+		user.SendText(messaging.CategorySystem, `ScreenReader mode is already <ansi fg="red">`+state+`</ansi>.`)
+		return true, nil
+	}
+
+	if !want {
 		user.ScreenReader = false
 		user.SendText(messaging.CategorySystem, `ScreenReader mode toggled <ansi fg="red">OFF</ansi>.`)
 		events.AddToQueue(events.UserSettingChanged{
@@ -240,13 +266,23 @@ func TestSetScreenReader_OnSetsLightOffLeavesIt(t *testing.T) {
 	user.ScreenReader = false
 	user.CombatVerbosity = ``
 
-	cmdSetScreenReader(user)
+	cmdSetScreenReader(user, nil)
 	require.True(t, user.ScreenReader)
 	require.Equal(t, `light`, user.CombatVerbosity)
 
-	cmdSetScreenReader(user)
+	cmdSetScreenReader(user, nil)
 	require.False(t, user.ScreenReader)
 	require.Equal(t, `light`, user.CombatVerbosity, "turning off leaves combat text alone")
+
+	// Explicit words set a state: repeating one never flips it back.
+	cmdSetScreenReader(user, []string{`on`})
+	cmdSetScreenReader(user, []string{`on`})
+	require.True(t, user.ScreenReader, "on twice stays on")
+	cmdSetScreenReader(user, []string{`off`})
+	cmdSetScreenReader(user, []string{`off`})
+	require.False(t, user.ScreenReader, "off twice stays off")
+	cmdSetScreenReader(user, []string{`maybe`})
+	require.False(t, user.ScreenReader, "an unknown word changes nothing")
 }
 ```
 
@@ -1329,7 +1365,8 @@ Facts this module is built on (read from `static/js/xterm.4.19.0.js`, verified b
 - `term.write(data, callback)` calls back once `data` is parsed, so a reset between two writes lands between them.
 
 Owner ruling 2026-11-17 (option 1): **an answer to a typed command is read in full; only unprompted output keeps the 20-line limit.**
-- An answer runs from the moment the page sends a line (typed, a macro, a numpad move, automation: every `SendData`) until the server's `Char.Input.Done` for that line or a later one (`modules/gmcp/gmcp.InputDone.go`: queued after that command's text at priority 99, logged-in web players only; both ends number text frames from the socket's open). A lost reply ends the answer after `ANSWER_MAX_MS`.
+- An answer runs from the moment the page sends a line (typed, a macro, a numpad move, automation: every `SendData`) until the server's `Char.Input.Done` for that line or a later one (`modules/gmcp/gmcp.InputDone.go`: queued after that command's text at priority 99, logged-in web players only; both ends number text frames from the socket's open), and then until output has been quiet for `QUIET_MS`: a macro's commands, and anything run through `user.Command()`, are queued for later turns and print after the Done (`world.go:1046-1061`). A lost reply ends the answer after `ANSWER_MAX_MS`.
+- The client asks the server for a state, `set screenreader on` or `off`, never the toggle: a line swallowed by an open prompt then leaves nothing to flip the wrong way later.
 - Before login everything is read in full the same way: the connect splash and the prompts must reach a returning blind player whose device remembers the mode, and there is no `Char.Input.Done` yet.
 - On a Mac (and iPadOS Safari, which reports `MacIntel`), `_clearLiveRegion` also takes the region out of the page, and xterm puts it back only if more text arrives after the render. The page's reset puts it back at once.
 - While an answer runs, server text is written in pieces of at most `CHUNK_LINES` lines, and the spoken region resets after each piece is parsed, so nothing in an answer is cut off.
@@ -1403,7 +1440,7 @@ function clock() {
 function fakes(saved) {
     var c = clock();
     var f = {
-        mode: null, label: null, hint: null, status: '', lines: [], reports: [], setCommands: 0,
+        mode: null, label: null, hint: null, status: '', lines: [], reports: [], setCommands: 0, setValues: [],
         cleared: 0, waiting: ['Username (or "new"): '], setOk: true,
         written: [],        // every piece handed to xterm, in order
         events: [],         // 'w:<piece>' and 'clear', interleaved, in order
@@ -1426,7 +1463,7 @@ function fakes(saved) {
         hint: {},
         status: {},
         report: function (on) { f.reports.push(on); return true; },
-        setCommand: function () { f.setCommands++; return f.setOk; },
+        setCommand: function (value) { f.setCommands++; f.setValues.push(value); return f.setOk; },
         writeLine: function (t) { f.lines.push(t); },
         currentLines: function () { return f.waiting.slice(); },
         clearSpoken: function () { f.cleared++; f.events.push('clear'); },
@@ -1520,7 +1557,9 @@ check('queued: later text waits for the piece being parsed', f.written.join('').
 f.parseAll();
 check('queued: everything written, in order', f.written.join('') === nLines(30, 'A') + 'after\r\n', f.written.join(''));
 
-// The answer ends at Char.Input.Done; later output is written whole.
+// The answer ends QUIET_MS after its Char.Input.Done. Output in that gap is
+// still part of it: a macro's commands and anything run through
+// user.Command() are queued for later turns, so they print after the Done.
 f = fakes('true');
 sr = SR.create(f.opts);
 sr.load();
@@ -1529,9 +1568,24 @@ sr.inputSent(1);
 sr.write('reply\r\n');
 f.parseAll();
 sr.inputDone(1);
+f.written = [];
+sr.write(big);
+f.parseAll();
+check('just after Done (a macro\'s output): still read in full', f.written.length >= 3, f.written.length);
+f.clock.advance(SR.QUIET_MS - 1);
+f.written = [];
+sr.write(big);
+f.parseAll();
+check('output keeps the answer open', f.written.length >= 3, f.written.length);
+f.clock.advance(1); // QUIET_MS since the Done, but output came 1ms ago
+f.written = [];
+sr.write(big);
+f.parseAll();
+check('still open QUIET_MS after the Done, because output kept coming', f.written.length >= 3, f.written.length);
+f.clock.advance(SR.QUIET_MS);
 f.written = []; f.events = [];
 sr.write(big);
-check('after Done: unprompted text written whole', f.written.length === 1 && f.written[0] === big, f.written.length);
+check('quiet after Done: unprompted text written whole', f.written.length === 1 && f.written[0] === big, f.written.length);
 f.parseAll();
 
 // Lines are matched by number: a Done for an earlier line (an automation
@@ -1543,20 +1597,43 @@ f.inGame = true;
 sr.inputSent(1);
 sr.inputSent(2);
 sr.inputDone(1);
+f.clock.advance(SR.QUIET_MS);
 f.written = [];
 sr.write(big);
 f.parseAll();
 check('Done for line 1 while line 2 is out: still answering', f.written.length >= 3, f.written.length);
 sr.inputDone(2);
+f.clock.advance(SR.QUIET_MS);
 f.written = [];
 sr.write(big);
 f.parseAll();
-check('Done for the last line sent: answer over', f.written.length === 1, f.written.length);
-sr.inputDone(3); // a Done for a line this module never saw changes nothing
+check('Done for the last line sent, then quiet: answer over', f.written.length === 1, f.written.length);
+
+// A Done numbered past the last line sent also ends it (the server counted a
+// line this page did not, such as a reconnect token).
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.inputSent(4);
+sr.inputDone(5);
+f.clock.advance(SR.QUIET_MS);
 f.written = [];
 sr.write(big);
 f.parseAll();
-check('a stray Done: still whole', f.written.length === 1, f.written.length);
+check('a later Done ends it', f.written.length === 1, f.written.length);
+
+// A line sent before login opens no answer, even once the player is in.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = false;
+sr.inputSent(1);
+f.inGame = true;
+f.written = [];
+sr.write(big);
+f.parseAll();
+check('a login line opens no answer', f.written.length === 1, f.written.length);
 
 // A lost Done does not leave answers on forever.
 f = fakes('true');
@@ -1622,6 +1699,7 @@ f.inGame = true;
 sr.account(false);
 sr.phrase('on');
 check('in game, account off: set command sent', f.setCommands === 1, '');
+check('in game: the command names the state (on), never a toggle', f.setValues.join() === 'true', f.setValues.join());
 check('in game, account off: no local line', f.lines.length === 0, f.lines.join('|'));
 sr.phrase('on');
 check('in game: a second phrase does not toggle it back', f.setCommands === 1, 'set commands ' + f.setCommands);
@@ -1641,9 +1719,14 @@ sr.phrase('on');
 check('stale push: no second set command', f.setCommands === 1, 'set commands ' + f.setCommands);
 sr.account(true);    // the server's real answer
 check('real push: mode on', f.mode === true, '');
+// The mode goes off on this device only (the set command could not be
+// sent), then a new login pushes the SAME value as before: it must apply.
+f.setOk = false;
+sr.phrase('off');
+check('local off: mode off', f.mode === false, 'mode ' + f.mode);
 sr.loggedOut();
-sr.account(false);   // a new login names the account again, even with an old value
-check('after logout: the same value applies again', f.mode === false, 'mode ' + f.mode);
+sr.account(true);
+check('after logout: the same value applies again', f.mode === true, 'mode ' + f.mode);
 
 // In game, the set command could not be sent: confirm locally instead.
 f = fakes();
@@ -1786,8 +1869,8 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
     // cb once data is parsed); storage (localStorage, any call may throw);
     // input (the command box); hint (the hidden first paragraph); status (a
     // visually hidden role="status" element); report(on) (sends
-    // Client.Display); setCommand() (sends "set screenreader", false when it
-    // could not); writeLine(text) (writes a local line into the game
+    // Client.Display); setCommand(on) (sends "set screenreader on" or "off",
+    // a state and never a toggle, false when it could not); writeLine(text) (writes a local line into the game
     // window); currentLines() (the waiting prompt, as lines); clearSpoken()
     // (resets xterm's spoken region); inGame() (true while a character is
     // logged in); setTimeout/clearTimeout (the window's, or a test clock).
@@ -1800,6 +1883,8 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
         var answering = false; // a sent line's answer is still arriving
         var lastSeq = 0;       // the number of the last line sent
         var answerTimer = null;
+        var settling = false;  // its Done arrived; waiting for output to go quiet
+        var settleTimer = null;
         var queue = [];        // pieces waiting for the one being parsed
         var parsing = false;
 
@@ -1824,7 +1909,16 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
 
         function endAnswer() {
             answering = false;
+            settling = false;
             if (answerTimer) { clearT(answerTimer); answerTimer = null; }
+            if (settleTimer) { clearT(settleTimer); settleTimer = null; }
+        }
+
+        // armSettle (re)starts the quiet wait that ends an answer whose
+        // Char.Input.Done has arrived.
+        function armSettle() {
+            if (settleTimer) clearT(settleTimer);
+            settleTimer = setT(endAnswer, QUIET_MS);
         }
 
         function armQuiet() {
@@ -1869,6 +1963,7 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
                     opts.termWrite(text);
                     return;
                 }
+                if (settling) armSettle();
                 if (on && (answering || !opts.inGame())) {
                     splitLines(text, CHUNK_LINES).forEach(function (piece) {
                         queue.push({ text: piece, resetAfter: true });
@@ -1888,6 +1983,8 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
                 if (!opts.inGame()) return;
                 lastSeq = seq;
                 answering = true;
+                settling = false;
+                if (settleTimer) { clearT(settleTimer); settleTimer = null; }
                 if (answerTimer) clearT(answerTimer);
                 answerTimer = setT(endAnswer, ANSWER_MAX_MS);
             },
@@ -1896,7 +1993,12 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
             // has finished the last line sent. A Done for an earlier line
             // changes nothing.
             inputDone: function (seq) {
-                if (answering && seq >= lastSeq) endAnswer();
+                if (!answering || seq < lastSeq) return;
+                // Not over yet: a macro's commands and anything run through
+                // user.Command() print on later turns, after this Done. The
+                // answer ends once output has been quiet for QUIET_MS.
+                settling = true;
+                armSettle();
             },
 
             // The player typed the phrase: which is 'on' or 'off'.
@@ -1907,7 +2009,7 @@ Create `_datafiles/html/public/static/js/screenreader.js`:
                 show(value);
                 remember(value);
                 opts.report(value);
-                if (opts.inGame() && account !== null && account !== value && opts.setCommand() !== false) {
+                if (opts.inGame() && account !== null && account !== value && opts.setCommand(value) !== false) {
                     // The server's "ScreenReader mode toggled" line confirms it.
                     // Count it as done now, so a second phrase before Char.Info
                     // returns does not toggle it back.
@@ -1986,6 +2088,8 @@ EOF
 - Modify: `_datafiles/html/public/_header.html` (after `<body>` at `:38`)
 - Modify: `_datafiles/html/public/static/css/dashboard.css` (beside `.visually-hidden`, `:1959`)
 - Modify: `_datafiles/html/public/static/css/gomud.css` (add `.visually-hidden`; it has none)
+- Modify: `tools/jstest/roomtitlebold.test.js:33-34` (it pins the exact server-text write line, which Step 10 changes)
+- Modify: `tools/jstest/webclient-connect.test.js` (it evaluates the real connect handler, which now calls `screenReader`)
 
 Anchors are given by line and by the code text; trust the code text if a line moved.
 
@@ -2015,7 +2119,7 @@ Immediately after `<body onLoad="init(); return false;">` (`:244`), add:
 Players reach the game at `/webclient`, which wraps `webclient-pure.html` in an iframe (`webclient.html:172`) under the site header, so a screen reader starts at the header. In `_datafiles/html/public/_header.html`, immediately after `<body>` (`:38`), add:
 
 ```html
-{{ if eq .REQUEST.URL.Path "/webclient" }}<p class="visually-hidden">Screen reader users: the game is below. In its command box, type screen reader on, then press Enter.</p>{{ end }}
+{{ if or (eq .REQUEST.URL.Path "/webclient") (eq .REQUEST.URL.Path "/webclient/") (eq .REQUEST.URL.Path "/webclient.html") }}<p class="visually-hidden">Screen reader users: the game is below. In its command box, type screen reader on, then press Enter.</p>{{ end }}
 ```
 
 Add to `static/css/gomud.css` (it has no such rule):
@@ -2068,7 +2172,7 @@ Replace the `displayReport` creation (`:540-544`) with:
             hint: document.getElementById('sr-hint'),
             status: document.getElementById('sr-status'),
             report: function (on) { return SendGMCP('Client.Display', { screenreader: on }); },
-            setCommand: function () { return SendData('set screenreader'); },
+            setCommand: function (on) { return SendData('set screenreader ' + (on ? 'on' : 'off')); },
             writeLine: function (text) {
                 // Start on a fresh line: a login prompt leaves the cursor after
                 // its text. (cursorX is not read: earlier writes may not be
@@ -2136,6 +2240,10 @@ In `socket.onopen`, beside `if (companionGlue) { companionGlue.disconnected(); }
 
 ```js
                 screenReader.loggedOut();
+                // The last account's Info stays in GMCPStructs, and the generic
+                // Char handler re-reads it for other Char packages: forget it,
+                // so the new login's own Char.Info is the first value seen.
+                if (GMCPStructs.Char) { delete GMCPStructs.Char.Info; }
 ```
 
 - [ ] **Step 10: Server text goes through the switch**
@@ -2182,7 +2290,7 @@ In `function SendData(dataToSend)` (`:3380`), directly after `socket.send(dataTo
 
 Run `node tools/jstest/hotinput.test.js` after this edit; it must still pass unchanged.
 
-In `connect()`, change the websocket address (`:3040`):
+In the connect code (the `connectButton.addEventListener('click', ...)` handler at `:3021`; there is no `connect()` function), change the websocket address (`:3040`):
 
 ```js
             var wsAddress = wsProto + location.host + '/ws?cols=' + encodeURIComponent(term.cols);
@@ -2196,6 +2304,23 @@ to:
             var wsAddress = wsProto + location.host + '/ws?cols=' + encodeURIComponent(term.cols) +
                 (screenReader.isOn() ? '&sr=1' : '');
 ```
+
+- [ ] **Step 11a: The two page-source tests**
+
+`tools/jstest/roomtitlebold.test.js:33-34` checks the exact server-text write. Change its regex to the new line:
+
+```js
+check('server text goes through it on the way to the terminal',
+    /screenReader\.write\(window\.RoomTitleBold \? window\.RoomTitleBold\.apply\(shown\) : shown\);/.test(game), true);
+```
+
+`tools/jstest/webclient-connect.test.js` evaluates the page's real connect handler (`:82-89`) with stand-in globals, and the handler now calls `screenReader.isOn()`, `screenReader.loggedOut()` and `screenReader.write()`. Add a stand-in to the `code` prelude it builds, beside the other `var` lines:
+
+```js
+    + 'var screenReader = { isOn: function () { return global.__srOn === true; }, loggedOut: function () {}, write: function (t) { term.write(t); } };\n'
+```
+
+(use the same name the test already gives its fake terminal if it is not `term`; read the file first). Then add one check, following the file's own pattern for opening a connection and reading the address the fake `WebSocket` was given: with `global.__srOn = true` the address ends in `&sr=1`, and with it false the address has no `sr`. Run both tests: PASS.
 
 - [ ] **Step 12: Run the JS gates**
 
@@ -2212,7 +2337,7 @@ Expected: no `SYNTAX` or `FAIL` lines. (Compare with `.github/workflows/validate
 - [ ] **Step 13: Commit**
 
 ```bash
-git add _datafiles/html/public/webclient-pure.html _datafiles/html/public/_header.html _datafiles/html/public/static/css/dashboard.css _datafiles/html/public/static/css/gomud.css
+git add _datafiles/html/public/webclient-pure.html _datafiles/html/public/_header.html _datafiles/html/public/static/css/dashboard.css _datafiles/html/public/static/css/gomud.css tools/jstest/roomtitlebold.test.js tools/jstest/webclient-connect.test.js
 git commit -F - <<'EOF'
 feat(webclient): spoken opt-in for screen reader mode (#733)
 
@@ -2452,7 +2577,9 @@ async function type(page, text) {
 
     // An answer over 20 lines is read to its end (owner ruling, option 1).
     // help set is over 40 lines at 80 columns; its last line names help submission.
-    const before = (await printed(page)).split('\n').length;
+    // The line the cursor is on, counted from the top of the buffer: rows
+    // below it are empty viewport rows that help text will fill.
+    const before = await page.evaluate(() => { const b = term.buffer.active; return b.baseY + b.cursorY + 1; });
     await page.evaluate(() => { window.__spoken = []; });
     await type(page, 'help set');
     await page.waitForTimeout(4000);
@@ -2529,6 +2656,8 @@ Plus the JS loop from Task 7 Step 12. Kill the test server by its PID.
 - [ ] **Step 5: Owner test (Windows Narrator)**
 
 Hand the owner a short punchlist, player steps only: start Narrator (Ctrl+Win+Enter), open the local web client, hear the instruction, type `screen reader on`, create a character by ear, hear that combat text is light, type `help set` and hear it read to the last line, type `help set` again while standing where other players or creatures are talking or moving, fight the first rat in the Pothole Coulee, then close the tab, open the web client again and hear the name prompt without typing anything, and finally `set screenreader` and hear it stop. Ask specifically: was any part of `help set` cut off or skipped mid-sentence, and did new output arriving during it interrupt the reading? That is the unverified risk: xterm's spoken region is assertive, so new text may interrupt a long read, and the 2 second quiet reset may clear it while the reader is still speaking. Wait for his result.
+
+Add to #834 (Malia's device test), as a comment on the issue: test VoiceOver on a Mac or an iPad with Safari as well as the iPhone. On those, xterm takes its spoken region out of the page at every reset and the page puts it back; the headless Mac pass proves the region is back in the page, not that VoiceOver speaks text added to a region re-inserted while empty. Unverified until then.
 
 - [ ] **Step 6: PR**
 
