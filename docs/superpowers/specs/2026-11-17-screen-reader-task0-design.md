@@ -141,6 +141,30 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - **The tutorial names one command with its level** ("type set combatverbosity and a level: full, medium or light"): "type X, then full" reads as two commands, and `set combatverbosity` alone does not move the step.
 - Two existing page-source tests (`roomtitlebold.test.js`, `webclient-connect.test.js`) change with the page; the last account's `Char.Info` is forgotten on reconnect; `/webclient/` and `/webclient.html` get the outer hint too.
 
+### 11. Our own reading area replaces xterm's screen reader mode (owner ruling 2026-11-17, after the Narrator test)
+
+**What the owner heard (Windows Narrator, Chrome).** First build: every pause in typing made Narrator reread from the top of the opening text. After clearing xterm's region on each keystroke: no game text at all, only Narrator's echo of his typing. In both runs the page state was right (console: mode on, stored, xterm's region present).
+
+**Why, verified against source where it can be:**
+- xterm adds to its live region with `textContent +=` (`_announceCharacters`, `xterm.4.19.0.js`). Chromium reports a non-editable live region's change as the whole text node changing ([Chromium change](https://chromium.googlesource.com/chromium/src.git/+/a32928f26183dce010284f0abcee28508e44a6f8)), so a screen reader rereads everything still in the region.
+- xterm empties the region only on a key in its own hidden input (`_onKey`); players type in `#command-input`, so old text stayed and was reread. Recorded with a headless probe: the login block ("Connected to the server! Welcome to the MUD Delusions of Grandeur…") stayed in the region until Enter.
+- Clearing the region more often (keystrokes, between pieces, after quiet) races Narrator, which waits for its current sentence before reading a live region ([Adrian Roselli, live region support](https://adrianroselli.com/2026/01/live-region-support.html)); the inference, not verified without Narrator, is that it then reads an emptied region. A probe also caught the login burst cut off with "Too much output to announce".
+- Two fixes in the same place each produced a new symptom; the design, not the tuning, is wrong.
+
+**The design now:**
+- xterm's `screenReaderMode` is never turned on. Its row mirror, its live region, the private `_clearLiveRegion` and `_accessibilityManager` calls, the Mac re-append and the 20-line limit all go.
+- A visually hidden `<div id="sr-log" role="log" aria-live="polite" aria-relevant="additions" aria-label="Game text">` receives each piece of server text the page writes, as a new child element, while the mode is on. A screen reader announces each new entry once, polite (queued after what it is saying, as Narrator treats every region anyway).
+- Text is made plain first: escape sequences, carriage returns, trailing spaces and blank lines at the ends removed (`plainText`).
+- Nothing is cleared while the mode is on, so nothing can be emptied before it is read. The oldest entries are removed past 100 (`MAX_ENTRIES`); `aria-relevant="additions"` means a removal is not announced. The kept entries can be read back with the screen reader's own reading keys.
+- A piece with no line break at its end is a prompt. A prompt identical to the last one announced is skipped, because the server redraws the prompt after every message (`internal/hooks/RedrawPrompt_SendRedraw.go`); a changed prompt (a health change) is announced.
+- The page's own lines (the "on" confirmation and the repeated waiting prompt) go into the log too. "Off" is still spoken by the status region, and the log is emptied when the mode goes off.
+- Answers, pieces, quiet gaps and `Char.Input.Done` tracking are no longer needed and go. Section 7a, the xterm parts of sections 8 and 9, and the answer parts of section 10 are superseded by this section. The server side does not change.
+
+**Decisions taken without asking (section 11):**
+- **No flood limit on unprompted text.** The 20-line limit was xterm's; a long burst is now read in full, and the player stops speech with their screen reader's own key (Ctrl in Narrator and NVDA). If wrong: a later change can summarise bursts over some size.
+- **100 entries kept for reading back.** Enough for a fight or a long help page; small enough not to grow the page. If wrong: a different number, one constant.
+- **Polite, not assertive.** New game text waits for the current sentence instead of cutting it off. If wrong: assertive would let urgent text interrupt; nothing marks text as urgent yet (#733).
+
 ## Decisions taken without asking
 
 - **The phrase is `screen reader on`.** Plain words, easy to dictate on a phone, and the space keeps it from ever being a username. If wrong: any other phrase works, but a single word could collide with a name at the first prompt.
