@@ -11,8 +11,9 @@
 // players never see any of it: with the mode off, write() hands text
 // straight to xterm.
 //
-// xterm 4.19 stops speaking after 20 lines until its spoken region is reset,
-// and resets it only on a key in its own hidden input, which players never
+// xterm 4.19 speaks up to 20 lines of a burst; on the 21st it appends "Too
+// much output to announce" and goes silent until its spoken region is reset.
+// It resets it only on a key in its own hidden input, which players never
 // use. So this module resets it (owner ruling 2026-11-17):
 //   - an answer to a line the page sent (from inputSent(seq) until the
 //     server's Char.Input.Done for that seq or a later one), and everything
@@ -20,7 +21,7 @@
 //     pieces of CHUNK_LINES, with a reset after each piece is parsed, so it
 //     is read in full;
 //   - other output is written whole, with a reset after QUIET_MS of quiet,
-//     so each unprompted burst gets its own 20 lines.
+//     so each unprompted burst gets its own 20 spoken lines.
 //
 // tools/jstest/screenreader.test.js is the regression guard.
 
@@ -36,7 +37,7 @@
 
     var STORAGE_KEY = 'screenReader';
     var QUIET_MS = 2000;        // under a 4 second combat round
-    var CHUNK_LINES = 18;       // under xterm's 21-line cut-off
+    var CHUNK_LINES = 18;       // under xterm's 20 spoken lines per burst
     var ANSWER_MAX_MS = 15000;  // a lost Char.Input.Done ends the answer
     var LABEL_OFF = 'Game commands. Screen reader users: type screen reader on, then press Enter.';
     var LABEL_ON = 'Game commands.';
@@ -79,14 +80,15 @@
     // input (the command box); hint (the hidden first paragraph); status (a
     // visually hidden role="status" element); report(on) (sends
     // Client.Display); setCommand(on) (sends "set screenreader on" or "off",
-    // a state and never a toggle, false when it could not); writeLine(text) (writes a local line into the game
-    // window); currentLines() (the waiting prompt, as lines); clearSpoken()
+    // a state and never a toggle, false when it could not); writeLine(text)
+    // (writes a local line into the game window); currentLines() (the
+    // waiting prompt, as lines); clearSpoken()
     // (resets xterm's spoken region); inGame() (true while a character is
     // logged in); setTimeout/clearTimeout (the window's, or a test clock).
     function create(opts) {
         var setT = opts.setTimeout || setTimeout, clearT = opts.clearTimeout || clearTimeout;
         var on = false;
-        var account = null;    // the account's setting as this page believes it
+        var accountSetting = null; // the account's setting as this page believes it
         var lastPushed = null; // the last Char.Info.screenreader value seen
         var quietTimer = null;
         var answering = false; // a sent line's answer is still arriving
@@ -109,8 +111,8 @@
             opts.hint.textContent = value ? HINT_ON : HINT_OFF;
         }
 
-        // say speaks through our own status region: xterm's is gone once the
-        // mode is off.
+        // say writes the line into our own status region: xterm's region is
+        // gone once the mode is off.
         function say(text) {
             opts.status.textContent = '';
             opts.status.textContent = text;
@@ -142,6 +144,10 @@
                 var item = queue.shift();
                 if (item.resetAfter) {
                     parsing = true;
+                    // termWrite must always call its callback (xterm's write
+                    // does, once the data is parsed). If it never did, the
+                    // queue would stall and later text would not reach the
+                    // terminal.
                     opts.termWrite(item.text, function () {
                         parsing = false;
                         if (on) opts.clearSpoken();
@@ -168,11 +174,11 @@
             // write is the page's only way to put server text in the game
             // window.
             write: function (text) {
+                if (settling) armSettle();
                 if (!on && !parsing && !queue.length) {
                     opts.termWrite(text);
                     return;
                 }
-                if (settling) armSettle();
                 if (on && (answering || !opts.inGame())) {
                     splitLines(text, CHUNK_LINES).forEach(function (piece) {
                         queue.push({ text: piece, resetAfter: true });
@@ -218,11 +224,11 @@
                 show(value);
                 remember(value);
                 opts.report(value);
-                if (opts.inGame() && account !== null && account !== value && opts.setCommand(value) !== false) {
+                if (opts.inGame() && accountSetting !== null && accountSetting !== value && opts.setCommand(value) !== false) {
                     // The server's "ScreenReader mode toggled" line confirms it.
                     // Count it as done now, so a second phrase before Char.Info
                     // returns does not toggle it back.
-                    account = value;
+                    accountSetting = value;
                     if (!value) say(SAID_OFF);
                     return;
                 }
@@ -241,7 +247,7 @@
             account: function (value) {
                 if (value === lastPushed) return;
                 lastPushed = value;
-                account = value;
+                accountSetting = value;
                 if (value !== on) {
                     show(value);
                     remember(value);
@@ -251,7 +257,7 @@
             // The connection closed: the next login names the account again,
             // and no answer is still running.
             loggedOut: function () {
-                account = null;
+                accountSetting = null;
                 lastPushed = null;
                 endAnswer();
             }

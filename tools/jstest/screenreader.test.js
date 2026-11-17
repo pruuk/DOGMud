@@ -25,7 +25,7 @@ check('xterm has _clearLiveRegion', xterm.indexOf('_clearLiveRegion=function') >
 // On a Mac (iPadOS Safari reports MacIntel too) a reset takes the region out
 // of the page; the page puts it back through these names.
 check('xterm has _liveRegion and _accessibilityTreeRoot', xterm.indexOf('this._liveRegion') >= 0 && xterm.indexOf('_accessibilityTreeRoot.appendChild(') >= 0, '');
-check('xterm stops at 21 lines (CHUNK_LINES must stay under it)', xterm.indexOf('21===this._liveRegionLineCount') >= 0 && SR.CHUNK_LINES < 21, '');
+check('xterm announces up to 20 lines, then goes silent on the 21st (CHUNK_LINES must stay under 20)', xterm.indexOf('21===this._liveRegionLineCount') >= 0 && SR.CHUNK_LINES < 21, '');
 
 // ---- matchPhrase -----------------------------------------------------------
 
@@ -175,6 +175,23 @@ sr.write('after\r\n');
 check('queued: later text waits for the piece being parsed', f.written.join('').indexOf('after') < 0, f.written.join(''));
 f.parseAll();
 check('queued: everything written, in order', f.written.join('') === nLines(30, 'A') + 'after\r\n', f.written.join(''));
+
+// The mode goes off while pieces are queued: every line is still written, in
+// order, and no reset is made once the mode is off.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.account(true);
+sr.inputSent(1);
+sr.write(big);
+f.setOk = false;
+var clearedBefore = f.cleared;
+sr.phrase('off');
+check('mode off locally while queued', f.mode === false, 'mode ' + f.mode);
+f.parseAll();
+check('mode off mid-queue: every line still written, in order', f.written.join('') === big, f.written.length);
+check('mode off mid-queue: no reset after the mode went off', f.cleared === clearedBefore, 'cleared ' + f.cleared + ' vs ' + clearedBefore);
 
 // The answer ends QUIET_MS after its Char.Input.Done. Output in that gap is
 // still part of it: a macro's commands and anything run through
