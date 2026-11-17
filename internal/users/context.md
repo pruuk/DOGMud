@@ -634,7 +634,8 @@ may not have a user (the goodbye as it leaves): the logged-in user's
   light combat text and reports whether combat text changed.
 - `TurnOnReportedScreenReader` is its form for a connection's report. It
   returns the lines to send: `ScreenReaderOnNotices`, then
-  `ScreenReaderCombatLines` when combat text changed. The caller must own the
+  `ScreenReaderCombatLines` when combat text changed. It returns nothing when
+  the setting is already on. The caller must own the
   record (before login publishes it, or on MainWorker).
 - `StoreAddressScreenReader` records the websocket address's `sr=1` on the
   connection; `StoreReportedScreenReader` writes a web client's report

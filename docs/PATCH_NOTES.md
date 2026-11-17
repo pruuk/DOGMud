@@ -3,7 +3,7 @@
 ## 2026-11-17: Screen readers in the web client
 
 - The web client can now read the game aloud to screen reader users. When the page opens, your screen reader tells you what to do: type `screen reader on` in the command box and press Enter. The web client remembers this on that device. Type `screen reader off` to stop it.
-- Screen reader mode is saved with your character. `set screenreader` turns it on or off wherever you play (`set screenreader on` and `set screenreader off` also work). If you turn it on in the web client, your character keeps it on.
+- Screen reader mode is saved with your character. Type `set screenreader on` or `set screenreader off`. This works wherever you play. If you turn it on in the web client, your character keeps it on.
 - Turning screen reader mode on sets combat text to light, so your screen reader can keep up. `set combatverbosity full` brings every blow back.
 - The combat lesson in Pothole Coulee now names full, medium or light, and suggests light to players who use a screen reader.
 - New characters made in the web client are no longer asked whether they use a screen reader. Telnet clients that report their settings to the game (MTTS) are not asked either.

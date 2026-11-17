@@ -174,7 +174,7 @@ triggers:
     actions:
       - grant: "32-special"
       - actor: "That is a special move. Now choose how much combat detail
-          you see: type set combatverbosity and a level, full, medium or
+          you see: type set combatverbosity and a level: full, medium or
           light."
 
   - event: command
@@ -185,7 +185,7 @@ triggers:
     actions:
       - grant: "32-special"
       - actor: "That is a special move. Now choose how much combat detail
-          you see: type set combatverbosity and a level, full, medium or
+          you see: type set combatverbosity and a level: full, medium or
           light."
 
   # verbosity: set combatverbosity fires a logical "combatverbosity" command
