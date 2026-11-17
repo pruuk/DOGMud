@@ -108,6 +108,7 @@
         var pendingPrompt = null;  // a changed prompt held until a round has passed
         var promptTimer = null;
         var answering = false;     // the player sent a line; its answer has not ended
+        var echoPending = null; // the sent line, until its echo from the server is skipped
 
         function remember(value) {
             try { opts.storage.setItem(STORAGE_KEY, JSON.stringify(value)); } catch (e) { /* storage blocked: this visit only */ }
@@ -129,6 +130,7 @@
         function clearLog() {
             forgetPrompt();
             answering = false;
+            echoPending = null;
             empty(opts.log);
             empty(opts.answers);
         }
@@ -182,6 +184,14 @@
             var text = plainText(raw);
             if (!text.trim()) return;
             var unterminated = !/\n\s*$/.test(String(raw).replace(ESCAPES, ''));
+            if (echoPending !== null) {
+                var echo = echoPending;
+                echoPending = null;
+                // The server echoes the line the player sent, as its own piece,
+                // before the answer: not news (the screen reader echoed the
+                // typing), not a prompt, and not the end of the answer.
+                if (unterminated && text === echo) return;
+            }
             if (!unterminated) {
                 // The answer to the player's line interrupts; anything else queues.
                 append(text, answering && opts.answers ? opts.answers : opts.log);
@@ -226,9 +236,13 @@
 
             // The player sent a line (typed, the numpad, a macro key, a chip,
             // an item menu; never automation): its answer, up to the next
-            // prompt, interrupts whatever is still being read.
-            lineSent: function () {
-                if (on) answering = true;
+            // prompt, interrupts whatever is still being read. The server
+            // echoes the sent line as its own piece before the answer; that
+            // echo is skipped.
+            lineSent: function (line) {
+                if (!on) return;
+                answering = true;
+                echoPending = typeof line === 'string' ? plainText(line) : null;
             },
 
             // The player typed the phrase: which is 'on' or 'off'.
@@ -278,6 +292,7 @@
                 accountSetting = null;
                 lastPushed = null;
                 answering = false;
+                echoPending = null;
                 forgetPrompt();
             }
         };

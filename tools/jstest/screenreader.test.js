@@ -29,6 +29,7 @@ check('the page has the assertive answers region, not atomic',
     /id="sr-answers"[^>]*role="log"[^>]*aria-live="assertive"[^>]*aria-atomic="false"/.test(page), '');
 check('the page passes the answers region to the switch', page.indexOf("answers: document.getElementById('sr-answers')") >= 0, '');
 check('the Enter key sends through playerSend', /var sent = playerSend\(line\);/.test(page), '');
+check('playerSend passes the sent line to the switch', /screenReader\.lineSent\(line\)/.test(page), '');
 check('the page feeds server text to the log', page.indexOf('screenReader.write(shown);') >= 0, '');
 var moduleSrc = fs.readFileSync(path.join(pub, 'static', 'js', 'screenreader.js'), 'utf8');
 check('the module never reaches into xterm', !/setOption|_accessibilityManager|_clearLiveRegion|screenReaderMode/.test(moduleSrc.replace(/^\s*\/\/.*$/gm, '')), '');
@@ -270,6 +271,24 @@ sr.lineSent();
 sr.phrase('on');
 sr.write('Plain text.\r\n');
 check('a line sent while off opens no answer', f.log.texts().slice(-1)[0] === 'Plain text.' && f.answers.childNodes.length === 0, f.answers.texts().join('|'));
+
+// The server echoes the sent line as its own unterminated piece first.
+f = fakes('true');
+sr = SR.create(f.opts);
+sr.load();
+f.inGame = true;
+sr.lineSent('look');
+sr.write('look');
+sr.write('\r\r\n');
+sr.write('The Void\r\n');
+check('the echo of the sent line is skipped and does not end the answer', f.answers.texts().join('|') === 'The Void' && f.log.childNodes.length === 0, 'answers ' + f.answers.texts().join('|') + ' log ' + f.log.texts().join('|'));
+sr.write('[HP:unhurt]: ');
+check('the status after an echoed command is read at once', f.log.texts().join('|') === '[HP:unhurt]:', f.log.texts().join('|'));
+// Only the matching echo is skipped: a real prompt right after a line with no output still ends it.
+sr.lineSent('save');
+sr.write('[HP:hurt]: ');
+sr.write('A rat arrives.\r\n');
+check('a different unterminated piece still ends the answer', f.log.texts().slice(-1)[0] === 'A rat arrives.', f.log.texts().join('|'));
 
 // No log element: nothing throws, for sighted players too.
 f = fakes('true');
