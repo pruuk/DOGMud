@@ -47,6 +47,7 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - A blind player opening the web page hears, before anything else: "Game commands. Screen reader users: type screen reader on, then press Enter." Typing it turns on speech at once, so the login and creation prompts are read aloud, and the device remembers it.
 - A sighted player sees and hears nothing new.
 - A blind player on Mudlet, TinTin++ or another client that declares a screen reader is not asked the question; the account gets screen reader output from the start.
+- Every player is asked about a screen reader at most once, at creation, and only on a telnet client that does not answer MTTS. Web players are never asked.
 
 ## Design
 
@@ -79,8 +80,9 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 
 ### 6. Login and creation (`internal/inputhandlers`)
 
-- Creation: the `screen-reader-new` step is skipped when the connection is a websocket, or when the connection's `ClientSettings.ScreenReader` is true. When skipped, the answer is the connection's `ClientSettings.ScreenReader`.
-- Conditions cannot see the connection (`ConditionFunc` takes only results), so the prompt handler writes the connection's facts into the results map under reserved keys before evaluating each step: `_conn_websocket` and `_conn_screenreader` ("y" or "n"). Keys starting `_conn_` are reserved; no step may use one as its ID (guarded by a test).
+- Creation: the `screen-reader-new` step is skipped when the connection is a websocket, or when the telnet client answered MTTS at all (with bit 64 set or not: an MTTS reply without it is a "no", and asking again would ask twice). When skipped, the answer is the connection's `ClientSettings.ScreenReader`. So every player is asked at most once, at creation, and a web player never.
+- `ClientSettings` also gains `MTTSReported bool`, set when an MTTS reply is parsed.
+- Conditions cannot see the connection (`ConditionFunc` takes only results), so the prompt handler writes the connection's facts into the results map under reserved keys before evaluating each step: `_conn_websocket`, `_conn_mtts` and `_conn_screenreader` ("y" or "n"). Keys starting `_conn_` are reserved; no step may use one as its ID (guarded by a test).
 - Login to an existing account: when the connection reports a screen reader and the account flag is off, the flag is turned on and the player is told: "Screen reader mode is on for this character. Type set screenreader to turn it off." A connection that does not report one never turns the flag off.
 
 ### 7. Telnet MTTS (`internal/term`, `internal/inputhandlers`, `main.go`)
@@ -106,7 +108,7 @@ The rest of #733: comms panels as `role="log"`, connection status as `role="stat
 
 ## Testing
 
-- **Go:** the `Client.Display` handler stores `screenreader` for websockets and ignores it for telnet; a missing field keeps the stored value. MTTS parsing: bit 64 set and unset, non-MTTS replies, a repeating cycle stops, `WONT` changes nothing. Creation skips the question on websocket and on an MTTS screen reader, and takes the right answer. Existing-account login turns the flag on and never off. A guard that no login step ID starts `_conn_`. `Char.Info` always carries `screenreader`, false included.
+- **Go:** the `Client.Display` handler stores `screenreader` for websockets and ignores it for telnet; a missing field keeps the stored value. MTTS parsing: bit 64 set and unset, non-MTTS replies, a repeating cycle stops, `WONT` changes nothing. Creation skips the question on websocket and on any MTTS reply (bit 64 set and unset), takes the right answer, and still asks a telnet client that sent no MTTS. Existing-account login turns the flag on and never off. A guard that no login step ID starts `_conn_`. `Char.Info` always carries `screenreader`, false included.
 - **JS (`tools/jstest`):** the phrase matcher (case, extra spaces, not in password mode, not sent, not in history).
 - **Headless (Playwright):** sighted path: no `.xterm-accessibility` element exists after load and login. Opt-in path: after typing the phrase the element exists, the label has shortened, the phrase never reached the socket, and a reload with the remembered value turns it on before connecting.
 - **Owner:** Windows Narrator (built in) with Chrome: open the page, hear the instruction, type the phrase, create a character by ear. The question must not be asked.
