@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/language"
 	"github.com/GoMudEngine/GoMud/internal/moderation"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -104,7 +105,14 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 				return false
 			}
 
-			loggedInUser, msg, err := users.LoginUser(tmpUser, clientInput.ConnectionId)
+			// The connection's screen reader report turns the account's setting
+			// on (never off): before the user is published, and again on the
+			// link-dead session a reconnect continues (loginWithScreenReader).
+			loggedInUser, msg, srLines, err := loginWithScreenReader(tmpUser,
+				connections.GetClientSettings(clientInput.ConnectionId).ScreenReader,
+				func(u *users.UserRecord) (*users.UserRecord, string, error) {
+					return users.LoginUser(u, clientInput.ConnectionId)
+				})
 			if err != nil {
 				sendLoginText(clientInput.ConnectionId, msg)
 				connections.SendTo(term.CRLF, clientInput.ConnectionId)
@@ -113,6 +121,8 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 			}
 
 			sharedState["UserObject"] = loggedInUser // For main loop
+
+			sendLoginLines(clientInput.ConnectionId, srLines)
 
 			if len(msg) > 0 {
 				sendLoginText(clientInput.ConnectionId, msg)
@@ -157,7 +167,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 
 		newUser := users.NewUserRecord(0, clientInput.ConnectionId)
 		newUser.EmailAddress = results["email-new"]
-		newUser.ScreenReader = results["screen-reader-new"] == `y`
+		srCreationLines := creationScreenReaderLines(newUser, results, connections.GetClientSettings(clientInput.ConnectionId).ScreenReader)
 
 		// Error handling for SetUsername/SetPassword might be redundant if validation passed, but good practice
 		if err := newUser.SetUsername(username); err != nil {
@@ -205,16 +215,17 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 
 		sharedState["UserObject"] = newUser // For main loop
 
+		sendLoginLines(clientInput.ConnectionId, srCreationLines)
+
 		mudlog.Info("New user created", "username", username, "connectionId", clientInput.ConnectionId)
 
 		return true // Indicate success, handler can be removed
 	}
 }
 
-func GetLoginPromptHandler() connections.InputHandler {
-
-	// Define the steps for the login process
-	loginSteps := []*PromptStep{
+// loginSteps are the login and creation prompts in order.
+func loginSteps() []*PromptStep {
+	return []*PromptStep{
 		{
 			ID:             "username",
 			PromptTemplate: "login/username.prompt",
@@ -317,7 +328,12 @@ func GetLoginPromptHandler() connections.InputHandler {
 			},
 			MaskInput: false,
 			Validator: ValidateYesNo,
-			Condition: func(results map[string]string) bool { return results["username"] == `new` }, // Only run if username was "new"
+			// Asked only of a new player on a telnet client that did not answer
+			// MTTS: a web client's answer is "screen reader on", and any MTTS
+			// reply is an answer (spec 2026-11-17, ruling 4).
+			Condition: func(results map[string]string) bool {
+				return results["username"] == `new` && askScreenReader(results)
+			},
 		},
 		{
 			ID:             "confirm_create",
@@ -340,7 +356,88 @@ func GetLoginPromptHandler() connections.InputHandler {
 		// End If a new user signup
 		//////////////////////////////////////////////////
 	}
+}
 
+// GetLoginPromptHandler returns a new login and creation prompt sequence
+// for one connection.
+func GetLoginPromptHandler() connections.InputHandler {
 	// Create and return the handler using the generic factory function
-	return CreatePromptHandler(loginSteps, FinalizeLoginOrCreate)
+	return CreatePromptHandler(loginSteps(), FinalizeLoginOrCreate)
+}
+
+// askScreenReader reports whether the creation question is asked: never on
+// a web client, and never when a telnet client answered MTTS.
+func askScreenReader(results map[string]string) bool {
+	return results[connFactWebsocket] != `y` && results[connFactMTTS] != `y`
+}
+
+// newUserScreenReader is a new account's screen reader setting: the answer
+// when the question was asked, else what the connection reported.
+func newUserScreenReader(results map[string]string, reported bool) bool {
+	if answer, asked := results["screen-reader-new"]; asked {
+		return answer == `y`
+	}
+	return reported
+}
+
+// reportedScreenReaderLines turns u's setting on when its connection
+// reported a screen reader, and returns the lines that tell the player so
+// (none when nothing changed). A connection never turns the setting off.
+// Only for a record no other goroutine can see yet.
+func reportedScreenReaderLines(u *users.UserRecord, reported bool) []string {
+	if !reported {
+		return nil
+	}
+	return u.TurnOnReportedScreenReader()
+}
+
+// loginWithScreenReader logs tmpUser in with login (users.LoginUser in
+// production) and applies the connection's screen reader report. On an
+// ordinary login it turns tmpUser on before login publishes it, so
+// MainWorker never reads the fields mid-write, and returns the lines to
+// tell the player. On a reconnect to a link-dead session login returns the
+// user already in the world (users.go:240-242), which MainWorker reads every
+// round, so this goroutine never writes it: it queues ScreenReaderReported
+// and the hook on MainWorker turns it on and tells the player
+// (hooks.TurnOnReportedScreenReader). tmpUser's change is then discarded.
+func loginWithScreenReader(tmpUser *users.UserRecord, reported bool, login func(*users.UserRecord) (*users.UserRecord, string, error)) (*users.UserRecord, string, []string, error) {
+	lines := reportedScreenReaderLines(tmpUser, reported)
+	loggedIn, msg, err := login(tmpUser)
+	if err != nil {
+		return loggedIn, msg, nil, err
+	}
+	if loggedIn != tmpUser {
+		if reported {
+			events.AddToQueue(events.ScreenReaderReported{UserId: loggedIn.UserId})
+		}
+		return loggedIn, msg, nil, nil
+	}
+	return loggedIn, msg, lines, nil
+}
+
+// creationScreenReaderLines sets a new account's screen reader setting and
+// returns the lines to tell the player. When the question was asked, the
+// answer decides and only the combat lines follow (the player just said
+// yes). When it was skipped, the connection's report decides and the player
+// also hears that the mode is on and how to turn it off.
+func creationScreenReaderLines(u *users.UserRecord, results map[string]string, reported bool) []string {
+	if !newUserScreenReader(results, reported) {
+		return nil
+	}
+	lines := []string{}
+	if _, asked := results["screen-reader-new"]; !asked {
+		lines = append(lines, users.ScreenReaderOnNotices...)
+	}
+	if u.TurnOnScreenReader() {
+		lines = append(lines, users.ScreenReaderCombatLines...)
+	}
+	return lines
+}
+
+// sendLoginLines sends each line as login text, one per line.
+func sendLoginLines(id connections.ConnectionId, lines []string) {
+	for _, line := range lines {
+		sendLoginText(id, line)
+		connections.SendTo(term.CRLF, id)
+	}
 }

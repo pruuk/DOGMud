@@ -242,8 +242,8 @@ func startInAntechamber(user *users.UserRecord) bool {
 	// showing the player's landed auto-swings and their spike/trip, so Dewey's
 	// teaching lines aren't buried in combat noise (2026-07-17 feedback). It's
 	// also a gentler default for a first-timer, who can `set combatverbosity
-	// full` whenever they want the firehose.
-	user.CombatVerbosity = "medium"
+	// full` whenever they want the firehose. A screen reader user keeps light.
+	user.CombatVerbosity = newcomerCombatVerbosity(user.CombatVerbosity, user.ScreenReader)
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="magenta">The grey takes you, gentle as sleep...</ansi>%s`, term.CRLFStr))
 	rooms.MoveToRoom(user.UserId, created[first])
 	if r := rooms.LoadRoom(created[first]); r != nil {
@@ -295,4 +295,14 @@ func autoAwaken(user *users.UserRecord) {
 		QuestToken: "30-end",
 		MarkerOnly: true,
 	})
+}
+
+// newcomerCombatVerbosity is the combat text level the "New to text MUDs"
+// route starts a player at: medium, unless the player uses a screen reader,
+// whose light setting is kept so the reader can keep up.
+func newcomerCombatVerbosity(current string, screenReader bool) string {
+	if screenReader {
+		return current
+	}
+	return `medium`
 }
