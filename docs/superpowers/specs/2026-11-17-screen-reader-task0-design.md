@@ -86,7 +86,7 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 - Creation: the `screen-reader-new` step is skipped when the connection is a websocket, or when the telnet client answered MTTS at all (with bit 64 set or not: an MTTS reply without it is a "no", and asking again would ask twice). When skipped, the answer is the connection's `ClientSettings.ScreenReader`. So every player is asked at most once, at creation, and a web player never.
 - `ClientSettings` also gains `MTTSReported bool`, set when an MTTS reply is parsed.
 - Conditions cannot see the connection (`ConditionFunc` takes only results), so the prompt handler writes the connection's facts into the results map under reserved keys before evaluating each step: `_conn_websocket` and `_conn_mtts` ("y" or "n"). The screen reader report itself is read from `ClientSettings` when the account is made. Keys starting `_conn_` are reserved; no step may use one as its ID (guarded by a test).
-- Login to an existing account: when the connection reports a screen reader and the account flag is off, the flag is turned on and the player is told: "Screen reader mode is on for this character. Type set screenreader to turn it off." A connection that does not report one never turns the flag off.
+- Login to an existing account: when the connection reports a screen reader and the account flag is off, the flag is turned on and the player is told: "Screen reader mode is now on. Type set screenreader off to turn it off." (wording changed in the Task 1 code review: the setting belongs to the account, not one character) A connection that does not report one never turns the flag off.
 
 ### 6a. Combat verbosity follows the screen reader turning on (`internal/users`)
 

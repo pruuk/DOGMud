@@ -185,8 +185,8 @@ var ScreenReaderCombatLines = []string{
 // account's screen reader setting on, and how to turn it off. Two lines,
 // each under 80 columns, because login text reaches telnet unwrapped.
 var ScreenReaderOnNotices = []string{
-	`Screen reader mode is on for this character.`,
-	`Type set screenreader to turn it off.`,
+	`Screen reader mode is now on.`,
+	`Type set screenreader off to turn it off.`,
 }
 
 // TurnOnReportedScreenReader turns u's setting on for a connection that
@@ -2809,7 +2809,7 @@ If a check fails, read the detail it prints. Fix a wrong regex or wait in the ch
 
 - [ ] **Step 3: Telnet check**
 
-With the test server still up, connect a raw telnet session from a scratch script that answers `IAC DO TTYPE` with `IAC WILL TTYPE`, then each `SEND` with `MUDLET`, `ANSI-TRUECOLOR`, `MTTS 73`; create a character; confirm the screen reader question is not asked, that the player hears "Screen reader mode is on for this character.", that `set` shows ScreenReader ON, and that `set combatverbosity` (no argument) says light. Repeat without answering TTYPE and confirm the question is asked. Then the link-dead path: log a character in on plain telnet (no TTYPE) with the setting off, cut the socket without `quit` so the session goes link-dead, reconnect with the MTTS-answering script and log in again: the player must hear "Screen reader mode is on for this character." and the two combat lines, and `set` must show ScreenReader ON. Record the three transcripts in the scratchpad.
+With the test server still up, connect a raw telnet session from a scratch script that answers `IAC DO TTYPE` with `IAC WILL TTYPE`, then each `SEND` with `MUDLET`, `ANSI-TRUECOLOR`, `MTTS 73`; create a character; confirm the screen reader question is not asked, that the player hears "Screen reader mode is now on.", that `set` shows ScreenReader ON, and that `set combatverbosity` (no argument) says light. Repeat without answering TTYPE and confirm the question is asked. Then the link-dead path: log a character in on plain telnet (no TTYPE) with the setting off, cut the socket without `quit` so the session goes link-dead, reconnect with the MTTS-answering script and log in again: the player must hear "Screen reader mode is now on." and the two combat lines, and `set` must show ScreenReader ON. Record the three transcripts in the scratchpad.
 
 - [ ] **Step 4: Gates**
 
