@@ -331,7 +331,7 @@ already known, so no presence leaks.
 #### **Screen reader and newcomer combat text**
 
 `cmdSetScreenReader` (`set.go`) takes `on`, `off` or nothing (toggle); turning
-on goes through `users.TurnOnScreenReader`. `newcomerCombatVerbosity` in
+on goes through `(*users.UserRecord).TurnOnScreenReader`. `newcomerCombatVerbosity` in
 `start.go` picks the combat text level the newcomer route starts at: medium,
 except light for a screen reader user.
 

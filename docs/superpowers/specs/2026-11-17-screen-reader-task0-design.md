@@ -57,7 +57,7 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 ### 1. The spoken label (`WP`)
 
 - `#command-input` gets `aria-label="Game commands. Screen reader users: type screen reader on, then press Enter."` The visible placeholder is unchanged.
-- A `.visually-hidden` paragraph is the first element in `body` with the same sentence. iOS VoiceOver does not always follow programmatic focus on load and starts at the top of the page, so the sentence must be the first thing there too. Sighted players see nothing.
+- A `.visually-hidden` paragraph is the first element in `body` with the instruction sentence without the "Game commands." prefix ("Screen reader users: type screen reader on, then press Enter."). iOS VoiceOver does not always follow programmatic focus on load and starts at the top of the page, so the sentence must be the first thing there too. Sighted players see nothing.
 - Once screen reader mode is on, the label shortens to "Game commands." and the hidden paragraph says "Screen reader mode is on. Type screen reader off to turn it off."
 
 ### 2. The phrase (`WP` Enter handler)
@@ -97,7 +97,7 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 ### 7. Telnet MTTS (`internal/term`, `internal/inputhandlers`, `main.go`)
 
 - Connect sends `IAC DO TTYPE` alongside the existing offers.
-- On `IAC WILL TTYPE` the server sends `IAC SB TTYPE SEND IAC SE` and repeats on each reply, up to three times, stopping early when a reply repeats the previous one (the MTTS cycle).
+- On `IAC WILL TTYPE` the server sends `IAC SB TTYPE SEND IAC SE` and repeats on each reply, up to four times in all (name, terminal type, MTTS, and one spare for a client that repeats late; `internal/inputhandlers/term_iac.go` `maxTermTypeReplies`), stopping early when a reply repeats the previous one (the MTTS cycle).
 - A reply of the form `MTTS <n>` sets `ClientSettings.ScreenReader` from bit 64. Other replies (client name, terminal type) are logged at debug level and otherwise ignored.
 - A client that answers `WONT` or never answers changes nothing, and the creation question is asked as today.
 
@@ -156,7 +156,7 @@ Read 2026-11-17 from master `e3343562b`. `WP` is `_datafiles/html/public/webclie
 
 ## Out of scope
 
-The rest of #733: comms panels as `role="log"`, connection status as `role="status"`, toasts, combat burst handling, prompt repetition, vitals announcements, a re-read key. #734 (Tab trap). The red colour on both ON and OFF in the `set screenreader` message.
+The rest of #733: comms panels as `role="log"`, connection status as `role="status"`, toasts, combat burst handling, prompt repetition, vitals announcements, a re-read key. #734 (Tab trap). The red colour on both ON and OFF in the `set screenreader` message. A telnet player whose client reports a screen reader still gets the art connect splash, because the MTTS answer arrives after the splash has gone out (see the comment at the telnet splash in `main.go`).
 
 ## Testing
 

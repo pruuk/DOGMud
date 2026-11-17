@@ -116,9 +116,10 @@ Documentation structure for system commands.
 - **`screen-reader-new`** is asked only of telnet without MTTS
   (`askScreenReader`); `newUserScreenReader` takes the answer when asked,
   else the connection's report.
-- **Login helpers** (`login.go`): `loginWithScreenReader` runs before
-  `LoginUser` publishes the user; a link-dead session already in the world
-  gets `events.ScreenReaderReported` queued for MainWorker.
+- **Login helpers** (`login.go`): `loginWithScreenReader` wraps `LoginUser`
+  and turns the loaded record on before `LoginUser` publishes it; a link-dead
+  session already in the world goes to MainWorker as
+  `events.ScreenReaderReported`.
   `creationScreenReaderLines` sets a new account's setting and returns the
   lines to tell the player; `sendLoginLines` sends them one per line.
 - **MTTS cycle** (`term_iac.go`): `recordTermType` records each terminal type
