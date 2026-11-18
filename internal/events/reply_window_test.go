@@ -94,6 +94,44 @@ func TestReplyWindow_Counts(t *testing.T) {
 	require.True(t, got["reopened\n"].Reply)
 }
 
+// Owner ruling 8: the login burst is never paged. In the event pass that
+// follows a player entering the world, nothing queued for them is marked,
+// even inside a typed line's window (a line handled in the same pass ahead
+// of the login commands); another player's reply still is, and the next
+// pass marks again.
+func TestEnteringWorld_NothingIsMarkedUntilThePassEnds(t *testing.T) {
+	DrainAllQueuedEventsForTest()
+	defer DrainAllQueuedEventsForTest()
+	restore := SwapListenersForTest()
+	defer restore()
+
+	var delivered []Message
+	RegisterListener(Message{}, func(e Event) ListenerReturn {
+		delivered = append(delivered, e.(Message))
+		return Continue
+	})
+
+	EnteringWorld(7)
+	OpenReply(7)
+	OpenReply(8)
+	AddToQueue(Message{UserId: 7, Text: "the message of the day\n"})
+	AddToQueue(Message{UserId: 8, Text: "another player's reply\n"})
+	CloseReply(8)
+	AddToQueue(InputDone{UserId: 7, Seq: 1}, InputDonePriority)
+	ProcessEvents()
+
+	require.Len(t, delivered, 2)
+	require.False(t, delivered[0].Reply, "the burst is not the typed line's reply")
+	require.True(t, delivered[1].Reply, "only the player entering the world is spared")
+
+	OpenReply(7)
+	AddToQueue(Message{UserId: 7, Text: "the next line's reply\n"})
+	CloseReply(7)
+	got := DrainQueuedMessageEventsForTest(7)
+	require.Len(t, got, 1)
+	require.True(t, got[0].Reply, "the pass ended, so the next line's reply is marked")
+}
+
 // A test that fails between OpenReply and CloseReply must not leave its
 // window open for later tests: the drain clears every window.
 func TestDrainAllQueuedEventsForTest_ClosesEveryReplyWindow(t *testing.T) {

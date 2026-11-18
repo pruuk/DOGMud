@@ -280,6 +280,12 @@ func (w *World) logOutUserByConnectionId(connectionId connections.ConnectionId) 
 
 func (w *World) enterWorld(userId int, roomId int) {
 
+	// The login burst (the login commands with the message of the day, and
+	// the first look) runs in the next event pass and is never paged (#842,
+	// owner ruling 8), even if a typed line handled in that pass ahead of it
+	// has its reply window open.
+	events.EnteringWorld(userId)
+
 	if userInfo := users.GetByUserId(userId); userInfo != nil {
 		// Every login, reconnect and copyover reconnect comes through here on
 		// the world goroutine. A reclaimed session keeps its prompt, and the

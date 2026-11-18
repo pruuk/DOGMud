@@ -93,6 +93,27 @@ func TestProcessInput_OpensTheReplyAfterThePager(t *testing.T) {
 	require.Greater(t, menuAt, openAt, "the window opens before the menu reads the line")
 }
 
+// #842, owner ruling 8: the login burst is never paged. Every login,
+// reconnect and copyover reconnect enters the world through enterWorld, whose
+// PlayerSpawn queues the login commands and the first look for the next
+// event pass. A typed line handled in that pass ahead of them (one that
+// reached the queue before them) has its reply window open while they run;
+// entering the world must keep their text out of that reply.
+func TestEnterWorld_ItsBurstIsNotAReply(t *testing.T) {
+	const userId = 984201
+	events.DrainAllQueuedEventsForTest()
+	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
+
+	(&World{}).enterWorld(userId, 0)
+	events.OpenReply(userId) // the typed line ahead of the login commands
+	events.AddToQueue(events.Message{UserId: userId, Text: "the message of the day\n"})
+	events.CloseReply(userId)
+
+	got := events.DrainQueuedMessageEventsForTest(userId)
+	require.Len(t, got, 1)
+	require.False(t, got[0].Reply, "text queued while entering the world is not a reply")
+}
+
 // Both ends count the same frames: the client counts every string it sends,
 // and its GMCP goes as binary, so only text frames advance the count (R7).
 func TestCountLineFrame_CountsTextFramesOnly(t *testing.T) {
