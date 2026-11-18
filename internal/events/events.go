@@ -23,6 +23,11 @@ var (
 	uniqueMap    = make(map[string]struct{}) // map to enforce uniqueness
 
 	eventDebugging bool
+
+	// replyWindow counts, per user, the typed lines whose reply is being
+	// built (#842): processInput opens one, the line's InputDone closes it.
+	// Guarded by qLock.
+	replyWindow = map[int]int{}
 )
 
 type requeue struct {
@@ -97,6 +102,14 @@ func AddToQueue(e Event, priority ...int) {
 		prio = priority[0]
 	}
 
+	// #842: a message for a player whose typed line is being handled is
+	// part of that line's reply. Marked here, the one place every message
+	// is queued, so no sender has to know.
+	if m, ok := e.(Message); ok && m.UserId > 0 && replyWindow[m.UserId] > 0 {
+		m.Reply = true
+		e = m
+	}
+
 	// Check for uniqueness if the event implements UniqueEvent.
 	if ue, ok := e.(uniqueEvent); ok {
 		uid := ue.UniqueID()
@@ -120,6 +133,27 @@ func AddToQueue(e Event, priority ...int) {
 	}
 
 	heap.Push(&globalQueue, pe)
+}
+
+// OpenReply starts marking every Message queued for userId as the reply to
+// the typed line being handled (#842). world.processInput calls it; the
+// pager's InputDone listener (hooks.Pager_ReplyEnd) calls CloseReply.
+func OpenReply(userId int) {
+	qLock.Lock()
+	defer qLock.Unlock()
+	replyWindow[userId]++
+}
+
+// CloseReply ends one OpenReply for userId. Closing more than was opened
+// does nothing.
+func CloseReply(userId int) {
+	qLock.Lock()
+	defer qLock.Unlock()
+	if replyWindow[userId] <= 1 {
+		delete(replyWindow, userId)
+		return
+	}
+	replyWindow[userId]--
 }
 
 // Same as AddToQueue but avoids a mutex lock for optimization purposes

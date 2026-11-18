@@ -247,6 +247,14 @@ text or opens a menu (highest today 50) and below the prompt redraw at 100.
 fails if anything else queues at or above it. `modules/gmcp` pushes it as
 `Char.Input.Done`. It never carries the line's text (spec 2026-11-14, R7).
 
+### Reply window (#842)
+
+`OpenReply(userId)` and `CloseReply(userId)` keep a per-user count under
+`qLock`. While it is above zero, `AddToQueue` sets `Message.Reply` on every
+`Message` whose `UserId` is that user. `world.processInput` opens it for a
+typed line; the pager's `InputDone` listener closes it. A `Message{RoomId}`
+is never marked. No sender sets `Reply` itself.
+
 ### Menu Events (#375 phase 0)
 
 ```go
