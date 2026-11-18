@@ -113,6 +113,28 @@ func TestEndReply_TelnetCountsRowsAtTheNAWSWidth(t *testing.T) {
 	require.True(t, u.PagesWaiting())
 }
 
+// A telnet client that reported its size by the cursor-position report has a
+// width in Display.ScreenWidth without NAWSReported; that width counts too.
+// Ten 80-column lines fill 2 rows each at 40 columns, so a page holds 6 (the
+// 16-row screen less the stop line's 2 rows and the prompt row leaves 13), where
+// at the 80-column fallback all ten fit.
+func TestEndReply_TelnetCountsRowsAtAnAnsiReportedWidth(t *testing.T) {
+	const connId = 18845
+	connections.RegisterTestConnection(connId)
+	t.Cleanup(func() { connections.UnregisterTestConnection(connId) })
+	connections.UpdateClientSettings(connId, func(cs *connections.ClientSettings) {
+		cs.Display.ScreenWidth = 40
+		cs.Display.ScreenHeight = 16
+	})
+	u := NewTestUser(1, "ansi", "Ansia", connId)
+	for i := 1; i <= 10; i++ {
+		u.HoldReply(fmt.Sprintf("%-79s\n", fmt.Sprintf("row %d", i)))
+	}
+	first := u.EndReply()
+	require.True(t, u.PagesWaiting(), "ten 2-row lines do not fit 16 rows")
+	require.Equal(t, 6, strings.Count(first, "row "), "6 two-row lines fill 13 rows")
+}
+
 // numbered is n lines "line 1" .. "line n", each ending in a line break, as
 // held messages arrive.
 func numbered(n int) []string {

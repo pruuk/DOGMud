@@ -291,8 +291,10 @@ not re-queued as messages, so it is never re-marked or re-collected.
   `enterWorld`, not to the login commands. Every login, reconnect and
   copyover reconnect passes there. A racing typed line's own text in that
   pass is sent at once too. In that race the first `look` waits to the next
-  pass (the per-turn input tracker has the racing line), where it is marked
-  only if another typed line opens a window ahead of it. If wrong: a flag
+  pass (the per-turn input tracker has the racing line). A requeued first
+  look cannot run inside another line's window: a typed line sets the
+  per-turn input tracker in the same handler that opens its window, so the
+  look is requeued again. If wrong: a flag
   carried on the login commands' `Input` events instead.
 - **A reply that fits is sent as one write.** Today each message is its own
   write; joining them changes nothing on screen. If wrong: send them one by
@@ -304,6 +306,9 @@ not re-queued as messages, so it is never re-marked or re-collected.
   wrong: drop them, as an open menu is closed by combat.
 - **An open prompt question beats the pager** (found in code review). A reply that ends with a question open (a yes or no, a stake amount, a password) is sent whole. If a question opens while pages wait, the question is the prompt instead of the stop line, the typed line answers it, and the pages keep waiting while it is open; an answer that prints anything is a new reply and replaces them, as any new reply does. Without this the stop line hid the question and the next command was taken as its answer. If wrong: drop the waiting pages when a question opens.
 - **Connections on the AI port never page** (found in final review). An agent's next command is rarely Enter, so a stop would silently drop the rest of a long reply (help text, room text) for the AI players the port is open to and for the playtest harness. If wrong: page them too and have agents send `set pagesize off`.
+- **Screen reader pages are 20 rows, not 20 lines** (ruling 6 measures every page in rows). On the web nothing changes, because the server wraps to the client's columns; on a telnet client narrower than its line width a listener gets fewer lines per page. If wrong: count screen reader pages in lines.
+- **Only touch screens keep the tallest row count** (found in review of ruling 7). A desktop reports its real rows on every change, so dragging a window shorter or zooming shrinks pages at once. If wrong: desktops keep the tallest too, and pages overrun until a reconnect.
+- **A stop line that wraps leaves its first row behind when another line arrives mid-read** (known, not fixed). The redraw erases only the prompt's last row, as it does for every prompt that wraps today. If wrong: shorten the stop line for narrow screens, or erase every row of a wrapped prompt.
 - **`q` stops the paging even though it is the short alias for `quests`**
   (`_datafiles/world/dogmud/keywords.yaml:345`). Only at a stop: there,
   `quests` in full still drops the rest and shows the list. If wrong: stop

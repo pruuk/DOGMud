@@ -34,7 +34,8 @@ function clock() {
 var c = clock(), sent = [], open = true;
 var r = DisplayReport.create({
     send: function (cols, rows) { if (!open) return false; sent.push(cols + 'x' + rows); return true; },
-    setTimeout: c.setTimeout, clearTimeout: c.clearTimeout
+    setTimeout: c.setTimeout, clearTimeout: c.clearTimeout,
+    keepTallest: true
 });
 
 r.connected(80, 30);
@@ -64,7 +65,8 @@ check('a reconnect sends the size though it was sent before', sent.join() === '8
 var pc = clock(), ps = [];
 var phone = DisplayReport.create({
     send: function (cols, rows) { ps.push(cols + 'x' + rows); return true; },
-    setTimeout: pc.setTimeout, clearTimeout: pc.clearTimeout
+    setTimeout: pc.setTimeout, clearTimeout: pc.clearTimeout,
+    keepTallest: true
 });
 phone.connected(36, 16);
 phone.rows(6); pc.advance(300);
@@ -80,5 +82,28 @@ phone.connected(60, 5);
 check('a reconnect sends the current size', ps.join() === '36x16,60x9,60x5', ps.join());
 phone.rows(9); pc.advance(300);
 check('after a reconnect a grow is sent', ps.join() === '36x16,60x9,60x5,60x9', ps.join());
+
+// A desktop (keepTallest false, the default): the real rows are sent on every
+// change, so a window dragged shorter, zoom or devtools shrinks pages at once.
+var dc = clock(), ds = [];
+var desk = DisplayReport.create({
+    send: function (cols, rows) { ds.push(cols + 'x' + rows); return true; },
+    setTimeout: dc.setTimeout, clearTimeout: dc.clearTimeout,
+    keepTallest: false
+});
+desk.connected(100, 40);
+desk.rows(20); dc.advance(300);
+check('a desktop sends a height-only shrink', ds.join() === '100x40,100x20', ds.join());
+desk.rows(30); dc.advance(300);
+check('a desktop sends a height-only grow', ds.join() === '100x40,100x20,100x30', ds.join());
+desk.columns(90); desk.rows(25); dc.advance(300);
+check('a desktop sends a column and row change', ds.join() === '100x40,100x20,100x30,90x25', ds.join());
+var dd = clock(), dds = [];
+var deflt = DisplayReport.create({
+    send: function (cols, rows) { dds.push(cols + 'x' + rows); return true; },
+    setTimeout: dd.setTimeout, clearTimeout: dd.clearTimeout
+});
+deflt.connected(100, 40); deflt.rows(20); dd.advance(300);
+check('keepTallest defaults to false', dds.join() === '100x40,100x20', dds.join());
 
 process.exit(failures ? 1 : 0);

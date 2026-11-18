@@ -66,11 +66,15 @@ func (u *UserRecord) EndReply() string {
 
 // PagerWidth is the width in columns the reader's screen shows a line at,
 // which the pager counts rows against (owner ruling 6): a web client's
-// reported columns, a telnet client's NAWS width when it sent one, and
-// otherwise WrapWidth, the width the server wraps to.
+// reported columns, a telnet client's reported width (NAWS, or the cursor
+// position report, which sets Display.ScreenWidth without NAWSReported), and
+// otherwise WrapWidth, the width the server wraps to. A connection starts at
+// connections.DefaultScreenWidth, so a telnet width equal to it is taken as
+// not reported.
 func (u *UserRecord) PagerWidth() int {
 	cs := u.ClientSettings()
-	if connections.IsWebsocket(u.connectionId) || cs.NAWSReported {
+	if connections.IsWebsocket(u.connectionId) || cs.NAWSReported ||
+		(cs.Display.ScreenWidth != 0 && cs.Display.ScreenWidth != connections.DefaultScreenWidth) {
 		return cs.Display.GetScreenWidth()
 	}
 	return u.WrapWidth()

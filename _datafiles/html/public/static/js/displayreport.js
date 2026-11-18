@@ -7,9 +7,12 @@
 // the same size is not sent twice; and a new connection gets the size at
 // once, because the server starts every connection at 80 columns.
 //
-// The rows sent are the most seen at the current column count (owner ruling,
-// #842 phone playtest: pages follow the window with the keyboard down). A
-// phone keyboard coming up shrinks only the rows, so it sends nothing and
+// With the keepTallest option (the page passes it on touch screens only, a
+// coarse pointer), the rows sent are the most seen at the current column
+// count (owner ruling, #842 phone playtest: pages follow the window with the
+// keyboard down). Without it, as on a desktop, the real rows are sent on every
+// change, so a window dragged shorter or a zoom shrinks pages at once. With it,
+// a phone keyboard coming up shrinks only the rows, so it sends nothing and
 // pages stay the size of the open window; a height-only grow is sent. A
 // column change (a phone turned, a different window width) or a new
 // connection starts over from the rows the window has then. termfit.js
@@ -29,8 +32,10 @@
     var SETTLE_MS = 250;
 
     // opts: send(cols, rows) (returns false when it could not send), and
-    // setTimeout/clearTimeout (the window's, or a test clock).
+    // setTimeout/clearTimeout (the window's, or a test clock), and keepTallest
+    // (boolean, default false: send the real rows on every change).
     function create(opts) {
+        var keepTallest = opts.keepTallest === true;
         var setT = opts.setTimeout || setTimeout, clearT = opts.clearTimeout || clearTimeout;
         // rows: the window's rows now. most: the most rows seen at these
         // columns, the count sent. restart: the columns changed, so most
@@ -62,7 +67,7 @@
             // The row count changed; a new most is sent once it settles.
             rows: function (n) {
                 rows = n;
-                if (!restart && most !== null && n > most) most = n;
+                if (!keepTallest || (!restart && most !== null && n > most)) most = n;
                 settle();
             },
             // A new connection: start over and send the current size now.
