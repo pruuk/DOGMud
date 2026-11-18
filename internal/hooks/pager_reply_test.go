@@ -90,12 +90,24 @@ func TestPager_AFightSendsTheWaitingPagesFirst(t *testing.T) {
 	require.False(t, u.PagesWaiting())
 }
 
-func TestPager_ReplyEndClosesTheWindow(t *testing.T) {
-	pagerFixture(t)
-	events.OpenReply(1)
+// Enter at a stop opens no reply window (processInput), so another player's
+// line arriving in the same pass goes straight out and the line's InputDone
+// leaves the remaining pages waiting.
+func TestPager_EnterAtAStopKeepsThePagesWhenChatArrives(t *testing.T) {
+	u, screen := pagerFixture(t)
+	replyOf(25)
 	Pager_ReplyEnd(events.InputDone{UserId: 1})
-	events.AddToQueue(events.Message{UserId: 1, Text: "later\n"})
-	got := events.DrainQueuedMessageEventsForTest(1)
-	require.Len(t, got, 1)
-	require.False(t, got[0].Reply)
+	require.True(t, u.PagesWaiting())
+
+	_, consumed := u.RoutePagerInput("")
+	require.True(t, consumed, "Enter at a stop is the pager's")
+	events.AddToQueue(events.Message{UserId: 1, Text: "Bob says hi\n"})
+	for _, m := range events.DrainQueuedMessageEventsForTest(1) {
+		Message_SendMessage(m)
+	}
+	Pager_ReplyEnd(events.InputDone{UserId: 1})
+
+	require.True(t, u.PagesWaiting(), "the rest of the reply still waits")
+	require.Eventually(t, func() bool { return strings.Contains(screen.bytes(), "Bob says hi") },
+		time.Second, 10*time.Millisecond, "screen %q", screen.bytes())
 }

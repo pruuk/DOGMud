@@ -252,8 +252,11 @@ fails if anything else queues at or above it. `modules/gmcp` pushes it as
 `OpenReply(userId)` and `CloseReply(userId)` keep a per-user count under
 `qLock`. While it is above zero, `AddToQueue` sets `Message.Reply` on every
 `Message` whose `UserId` is that user. `world.processInput` opens it for a
-typed line; the pager's `InputDone` listener closes it. A `Message{RoomId}`
-is never marked. No sender sets `Reply` itself.
+typed line the pager did not take (Enter or q at a page stop opens none).
+`ProcessEvents` closes it as it pops the line's `InputDone`, still under
+`qLock` and before any listener runs, through `closeReplyLocked`, so nothing
+queued after the pop is marked. `CloseReply` stays exported for tests. A
+`Message{RoomId}` is never marked. No sender sets `Reply` itself.
 
 ### Menu Events (#375 phase 0)
 

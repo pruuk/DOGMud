@@ -32,6 +32,40 @@ func TestReplyWindow_MarksOnlyThatPlayersMessages(t *testing.T) {
 	require.False(t, DrainQueuedRoomMessagesForTest(3)[0].Reply)
 }
 
+// The queue closes a line's window when it pops the line's InputDone, before
+// any listener runs, so a Message queued by an InputDone listener (or by
+// anything else after the pop) is not the line's reply.
+func TestReplyWindow_ClosesWhenTheQueuePopsInputDone(t *testing.T) {
+	DrainAllQueuedEventsForTest()
+	defer DrainAllQueuedEventsForTest()
+	restore := SwapListenersForTest()
+	defer restore()
+
+	var delivered []Message
+	RegisterListener(InputDone{}, func(e Event) ListenerReturn {
+		AddToQueue(Message{UserId: 7, Text: "queued at the line's end\n"})
+		return Continue
+	})
+	RegisterListener(Message{}, func(e Event) ListenerReturn {
+		delivered = append(delivered, e.(Message))
+		return Continue
+	})
+
+	OpenReply(7)
+	AddToQueue(Message{UserId: 7, Text: "the reply\n"})
+	AddToQueue(InputDone{UserId: 7, Seq: 1}, InputDonePriority)
+	ProcessEvents()
+
+	require.Len(t, delivered, 2)
+	require.True(t, delivered[0].Reply, "the line's own text is its reply")
+	require.False(t, delivered[1].Reply, "the window closed when InputDone popped")
+
+	AddToQueue(Message{UserId: 7, Text: "later\n"})
+	got := DrainQueuedMessageEventsForTest(7)
+	require.Len(t, got, 1)
+	require.False(t, got[0].Reply, "the window stays closed")
+}
+
 // Two typed lines in one pass each open and close their own window.
 func TestReplyWindow_Counts(t *testing.T) {
 	DrainAllQueuedEventsForTest()

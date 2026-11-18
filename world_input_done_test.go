@@ -60,8 +60,8 @@ func TestQueueInputDone_PopsAfterTheCommandsText(t *testing.T) {
 }
 
 // processInput needs a running world, so its wiring is held by its source:
-// every typed line, telnet included, opens the reply window (#842) and defers
-// the done marker at the top, and both callers pass the event's number.
+// every typed line, telnet included, defers the done marker at the top, and
+// both callers pass the event's number.
 func TestProcessInput_DefersTheDoneMarker(t *testing.T) {
 	src, err := os.ReadFile("world.go")
 	require.NoError(t, err)
@@ -71,9 +71,26 @@ func TestProcessInput_DefersTheDoneMarker(t *testing.T) {
 	require.Regexp(t, regexp.MustCompile(
 		`typed := flags\.Has\(events\.CmdTyped\)\s+`+
 			`(//[^\n]*\n\s*)*`+
-			`if typed \{\s+(//[^\n]*\n\s*)*events\.OpenReply\(userId\)\s+defer queueInputDone\(userId, seq\)\s+\}`), s)
+			`if typed \{\s+(//[^\n]*\n\s*)*defer queueInputDone\(userId, seq\)\s+\}`), s)
 	require.Equal(t, 2, len(regexp.MustCompile(`w\.processInput\(input\.UserId, input\.InputText, [^\n]*, input\.Seq\)`).FindAllString(s, -1)),
 		"both callers pass input.Seq")
+}
+
+// #842: a line the pager takes (Enter or q at a stop) opens no reply window,
+// or another player's line to this player in the same pass would be held as
+// its reply and wipe the waiting pages. The window opens once, after the
+// pager has passed the line on, before the menu reads it.
+func TestProcessInput_OpensTheReplyAfterThePager(t *testing.T) {
+	src, err := os.ReadFile("world.go")
+	require.NoError(t, err)
+	s := string(src)
+	require.Equal(t, 1, strings.Count(s, "events.OpenReply(userId)"), "processInput opens the window once")
+	openAt := strings.Index(s, "events.OpenReply(userId)")
+	pagerAt := strings.Index(s, "user.RoutePagerInput(inputText)")
+	menuAt := strings.Index(s, "user.RouteMenuInput(inputText, typed)")
+	require.Greater(t, pagerAt, 0, "processInput routes to the pager")
+	require.Greater(t, openAt, pagerAt, "the window opens after the pager has passed the line on")
+	require.Greater(t, menuAt, openAt, "the window opens before the menu reads the line")
 }
 
 // Both ends count the same frames: the client counts every string it sends,

@@ -1008,9 +1008,8 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 	// Plan 6 (R6, R7): mark this line done, after all its text, on every
 	// return below; the web client gets its number, never its text. #842:
 	// every typed line, telnet included (seq 0), so the pager knows where the
-	// reply ends; everything queued for this player until then is the reply.
+	// reply ends.
 	if typed {
-		events.OpenReply(userId)
 		defer queueInputDone(userId, seq)
 	}
 
@@ -1019,12 +1018,22 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 	// rest of the reply and goes on to the menu or the command below.
 	if typed {
 		if out, consumed := user.RoutePagerInput(inputText); consumed {
+			// q is a typed line that never reaches TryCommand; Enter is not.
+			if strings.TrimSpace(inputText) != `` {
+				user.NoteActivity()
+			}
 			if out != `` {
 				connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+out), user.ConnectionId())
 			}
 			connections.SendTo([]byte(templates.AnsiParse(user.GetCommandPrompt())), user.ConnectionId())
 			return
 		}
+		// #842: everything queued for this player until the line's InputDone
+		// pops is its reply. Opened only here, past the pager, so a line the
+		// pager took holds nothing (another player's chat in the same pass
+		// would otherwise be held and wipe the waiting pages). The queue
+		// closes it when it pops InputDone.
+		events.OpenReply(userId)
 	}
 
 	// A typed line goes to an open game menu first (#375). A line the menu

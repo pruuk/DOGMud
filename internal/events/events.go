@@ -25,7 +25,8 @@ var (
 	eventDebugging bool
 
 	// replyWindow counts, per user, the typed lines whose reply is being
-	// built (#842): processInput opens one, the line's InputDone closes it.
+	// built (#842): processInput opens one, ProcessEvents closes it as the
+	// line's InputDone pops.
 	// Guarded by qLock.
 	replyWindow = map[int]int{}
 )
@@ -136,8 +137,9 @@ func AddToQueue(e Event, priority ...int) {
 }
 
 // OpenReply starts marking every Message queued for userId as the reply to
-// the typed line being handled (#842). world.processInput calls it; the
-// pager's InputDone listener (hooks.Pager_ReplyEnd) calls CloseReply.
+// the typed line being handled (#842). world.processInput calls it for a
+// line the pager did not take; ProcessEvents closes it when it pops that
+// line's InputDone, under qLock, before any listener runs.
 func OpenReply(userId int) {
 	qLock.Lock()
 	defer qLock.Unlock()
@@ -145,10 +147,16 @@ func OpenReply(userId int) {
 }
 
 // CloseReply ends one OpenReply for userId. Closing more than was opened
-// does nothing.
+// does nothing. The game closes windows in ProcessEvents; this is for tests
+// and any caller that opened a window no InputDone will close.
 func CloseReply(userId int) {
 	qLock.Lock()
 	defer qLock.Unlock()
+	closeReplyLocked(userId)
+}
+
+// closeReplyLocked is CloseReply with qLock already held.
+func closeReplyLocked(userId int) {
 	if replyWindow[userId] <= 1 {
 		delete(replyWindow, userId)
 		return
@@ -250,6 +258,13 @@ func ProcessEvents() {
 		// If this is a unique event, remove it from the uniqueMap.
 		if ue, ok := pe.event.(uniqueEvent); ok {
 			delete(uniqueMap, ue.UniqueID())
+		}
+
+		// #842: a typed line's reply ends as its InputDone pops. Closed here,
+		// still under qLock, so nothing queued once it has popped (by its own
+		// listeners included) is marked as the reply.
+		if done, ok := pe.event.(InputDone); ok {
+			closeReplyLocked(done.UserId)
 		}
 
 		qLock.Unlock()

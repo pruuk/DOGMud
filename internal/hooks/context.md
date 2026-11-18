@@ -2638,9 +2638,10 @@ so nothing in `hooks` hides a speaker's name itself.
 - `Message_SendMessage` holds a `Message` with `Reply` set (#842) on the
   user (`HoldReply`) instead of sending it; any other message first sends the
   pages still waiting if the player is in combat (`FlushPagesInCombat`).
-- `Pager_ReplyEnd` (`InputDone`): closes the reply window
-  (`events.CloseReply`) and sends `UserRecord.EndReply()`: the whole reply,
-  or its first page with the stop line as the next prompt.
+- `Pager_ReplyEnd` (`InputDone`): sends `UserRecord.EndReply()`: the whole
+  reply, or its first page with the stop line as the next prompt. It does
+  not close the reply window; `events.ProcessEvents` closed it as it popped
+  the `InputDone`, and a second close would undo another line's open.
 
 `justice_wiring.go`'s `init()` wires `justice.SetGuardSay` to a closure that
 only calls `actions.Say(&actions.MobActor{...}, line)`: a guard's spoken
