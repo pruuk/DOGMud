@@ -249,6 +249,13 @@ func (p *MyPlugin) WebRequest(r *http.Request) (string, map[string]any, bool) {
    admin login clears the count. `adminThrottle` is an `auththrottle.Tracker`;
    the game login keeps its own
 5. **Credential Validation**: Username/password verified against user database
+   (`LoadUser` with skipValidation). An unknown username, and an account
+   whose stored password is plain text or empty (`HasPlaintextPassword`), are
+   refused after `users.SpendPasswordCheck`, so both cost the same bcrypt work
+   as a wrong password; /admin cannot force a password change, so such an
+   account changes it in game first. A legacy SHA-256 hash that matches is
+   saved upgraded with `users.SavePasswordUpgrade`, so the cached grant's hash
+   matches the file at revalidation
 6. **Role Verification**: User must have admin or higher role
 7. **Access Granted**: Request proceeds to handler with mutex protection
 

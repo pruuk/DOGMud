@@ -73,6 +73,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 				return false // Indicate failure, connection removed
 			}
 
+			storedPassword := savedUser.Password
 			if !savedUser.PasswordMatches(password) {
 				sendLoginText(clientInput.ConnectionId, invalidLoginText)
 				connections.SendTo(term.CRLF, clientInput.ConnectionId)
@@ -88,6 +89,13 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 				connections.SendTo(term.CRLF, clientInput.ConnectionId)
 				_ = connections.Remove(clientInput.ConnectionId)
 				return false
+			}
+
+			// A legacy hash the check above upgraded to bcrypt is written now,
+			// before the record to log in with is loaded, so that load and
+			// every later save carry the new hash.
+			if _, err := users.SavePasswordUpgrade(savedUser, storedPassword); err != nil {
+				mudlog.Warn("Login", "username", username, "error", "could not save upgraded password hash: "+err.Error())
 			}
 
 			// Kick only now, after the password is proven: the kick question
@@ -174,7 +182,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 		} else {
 			// An unknown username costs the same bcrypt work and gets the
 			// same answer as a wrong password; its attempt is already counted.
-			spendPasswordCheck(password)
+			users.SpendPasswordCheck(password)
 			sendLoginText(clientInput.ConnectionId, invalidLoginText)
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			connections.Remove(clientInput.ConnectionId)

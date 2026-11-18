@@ -161,6 +161,11 @@ func authCacheStore(key string, uRecord *users.UserRecord, now time.Time) {
 	}
 }
 
+// doBasicAuth wraps an admin route in HTTP Basic auth: only an account with
+// RoleAdmin and a hashed password that matches gets through. A cached grant
+// short-circuits; otherwise the source is throttled, an unknown username or
+// a plain-text stored password is refused after the same bcrypt work as a
+// wrong password, and a legacy hash that matches is saved upgraded.
 func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -221,9 +226,27 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 
 			// Authorize against actual user record
 			uRecord, err := users.LoadUser(username, true)
-			if err == nil {
+			if err != nil {
+				// No account to check: spend the same bcrypt work as a wrong
+				// password, so the timing does not tell which usernames exist.
+				users.SpendPasswordCheck(password)
+				mudlog.Error("ADMIN LOGIN", "username", username, "success", false, "error", err)
+			} else if uRecord.HasPlaintextPassword() {
+				// A plain-text (or empty) stored password is refused here:
+				// only the game can force the owner to change it, so it must
+				// be changed in game before /admin accepts the account.
+				users.SpendPasswordCheck(password)
+				mudlog.Error("ADMIN LOGIN", "username", username, "success", false, "error", `stored password is not hashed; change it in game first`)
+			} else {
 
+				storedPassword := uRecord.Password
 				if uRecord.PasswordMatches(password) {
+
+					// A legacy hash the check upgraded is saved, so the
+					// cached grant's hash matches the file on revalidation.
+					if _, err := users.SavePasswordUpgrade(uRecord, storedPassword); err != nil {
+						mudlog.Warn("ADMIN LOGIN", "username", username, "error", "could not save upgraded password hash: "+err.Error())
+					}
 
 					if uRecord.Role == users.RoleAdmin {
 
@@ -242,9 +265,6 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 
 					}
 				}
-
-			} else {
-				mudlog.Error("ADMIN LOGIN", "username", username, "success", false, "error", err)
 			}
 		}
 
