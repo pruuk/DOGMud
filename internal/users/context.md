@@ -572,6 +572,10 @@ prompt renders from `BuildFightPromptTemplate()` (memoized compile) rather
 than the saved string, so a save compiled by an older template cannot pin
 stale tokens.
 
+### Pager (#842, `userrecord.pager.go`)
+
+A reply is held with `HoldReply`, then `EndReply` returns the text to write now: the whole reply, or page one with the rest kept (`PagesWaiting`). `RoutePagerInput` handles Enter and `q` at a stop; `FlushPagesInCombat` sends waiting pages whole when a fight starts. Two rules: combat and an open prompt question both send a reply whole; an open question shows instead of the stop line (`GetCommandPrompt`) and takes the typed line, while the pages keep waiting. A reply that fits one page after blank page-edge lines are dropped is sent whole.
+
 ## Online User Information
 
 ### Online Status Tracking

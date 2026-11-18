@@ -25,13 +25,17 @@ func (u *UserRecord) HoldReply(text string) {
 }
 
 // EndReply ends the reply being built and returns the text to write now:
-// the whole reply when it fits a page, when paging is off, or while the
-// player is in combat (owner ruling 2026-11-18); otherwise the first page,
-// with the rest kept for RoutePagerInput. "" when nothing was held, which
-// leaves any waiting pages alone. A reply with text replaces waiting pages.
+// the whole reply when it fits a page (counting after blank lines at page
+// edges are dropped, so there is never a "page 1 of 1"), when paging is off,
+// while the player is in combat (owner ruling 2026-11-18), or while a prompt
+// question is open (the question is the prompt and takes the typed line, so a
+// stop line would hide it); otherwise the first page, with the rest kept for
+// RoutePagerInput. "" when nothing was held, which leaves any waiting pages
+// alone. A reply with text replaces waiting pages.
 func (u *UserRecord) EndReply() string {
 	size, on := pager.Size(u.ClientSettings().Display.GetScreenHeight(), u.PageSize, u.ScreenReader)
 	fighting := u.Character != nil && u.Character.IsInCombat()
+	asking := u.questionOpen()
 
 	u.sessionMu.Lock()
 	defer u.sessionMu.Unlock()
@@ -41,16 +45,28 @@ func (u *UserRecord) EndReply() string {
 		return ``
 	}
 	u.pager.pages, u.pager.next = nil, 0
-	if !on || fighting {
+	if !on || fighting || asking {
 		return text
 	}
 	lines := pager.Lines(text)
 	if len(lines) <= size {
 		return text
 	}
-	u.pager.pages = pager.Cut(lines, size)
+	pages := pager.Cut(lines, size)
+	if len(pages) <= 1 {
+		return text
+	}
+	u.pager.pages = pages
 	u.pager.next = 1
-	return pager.Join(u.pager.pages[0])
+	return pager.Join(pages[0])
+}
+
+// questionOpen reports whether a prompt has a question waiting for an answer.
+func (u *UserRecord) questionOpen() bool {
+	u.sessionMu.Lock()
+	p := u.activePrompt
+	u.sessionMu.Unlock()
+	return p != nil && p.GetNextQuestion() != nil
 }
 
 // PagesWaiting reports whether a reply has pages still to show.
@@ -74,8 +90,12 @@ func (u *UserRecord) pagerStopLine() string {
 // 2026-11-18): Enter shows the next page (out) and q drops the rest; both are
 // consumed. Any other line drops the rest and is not consumed, so it reaches
 // the open menu or runs as a command. With no pages waiting nothing is
-// consumed.
+// consumed. While a prompt question is open nothing is consumed and the pages
+// are left as they are, so the line answers the question.
 func (u *UserRecord) RoutePagerInput(line string) (out string, consumed bool) {
+	if u.questionOpen() {
+		return ``, false
+	}
 	u.sessionMu.Lock()
 	defer u.sessionMu.Unlock()
 	if len(u.pager.pages) == 0 {

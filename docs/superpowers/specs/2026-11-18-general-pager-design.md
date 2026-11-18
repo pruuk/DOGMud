@@ -123,6 +123,7 @@ Pure, like `internal/menu`: no I/O, no locks.
   redraw, including the one after a combat line that arrives mid-read,
   puts the stop line back under the text.
 - A new reply replaces any pages still waiting.
+- A reply that fits on one page after blank lines at page edges are dropped is sent whole, so there is never a "page 1 of 1".
 - **Combat (ruling 5).** "In combat" is `Character.IsInCombat()`, the test
   `menuGate` uses (`internal/users/menu_gate.go:23`), so menus and the pager
   cannot disagree. A reply that ends while the player is in combat is sent
@@ -221,6 +222,7 @@ not re-queued as messages, so it is never re-marked or re-collected.
 - **Pages waiting when a fight starts are sent, not dropped.** Ruling 5
   says no paging in combat; sending keeps the text and ends the stop. If
   wrong: drop them, as an open menu is closed by combat.
+- **An open prompt question beats the pager** (found in code review). A reply that ends with a question open (a yes or no, a stake amount, a password) is sent whole. If a question opens while pages wait, the question is the prompt instead of the stop line, the typed line answers it, and the pages keep waiting until it closes. Without this the stop line hid the question and the next command was taken as its answer. If wrong: drop the waiting pages when a question opens.
 - **`q` stops the paging even though it is the short alias for `quests`**
   (`_datafiles/world/dogmud/keywords.yaml:345`). Only at a stop: there,
   `quests` in full still drops the rest and shows the list. If wrong: stop

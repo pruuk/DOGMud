@@ -366,9 +366,13 @@ func (u *UserRecord) GetCommandPrompt() string {
 	}
 
 	// #842: while a reply's pages wait, the stop line is the prompt, so every
-	// redraw (after a combat line, say) puts it back under the text.
-	if stop := u.pagerStopLine(); stop != `` {
-		promptOut = stop
+	// redraw (after a combat line, say) puts it back under the text. An open
+	// question shows instead (the pages keep waiting), since the typed line
+	// answers it.
+	if !u.questionOpen() {
+		if stop := u.pagerStopLine(); stop != `` {
+			promptOut = stop
+		}
 	}
 
 	goAhead := ``

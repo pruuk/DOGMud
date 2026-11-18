@@ -150,6 +150,59 @@ func TestEndReply_AnEmptyReplyKeepsWaitingPages(t *testing.T) {
 	require.True(t, u.PagesWaiting())
 }
 
+func TestEndReply_BlankLinesDroppedToOnePageSendsWhole(t *testing.T) {
+	u := pagerUser(t, 10)
+	for _, l := range numbered(10) {
+		u.HoldReply(l)
+	}
+	u.HoldReply("\n\n\n")
+	want := strings.Join(numbered(10), "") + "\n\n\n"
+	require.Equal(t, want, u.EndReply())
+	require.False(t, u.PagesWaiting(), "one page is never kept as 'page 1 of 1'")
+	require.NotPanics(t, func() {
+		_, consumed := u.RoutePagerInput("")
+		require.False(t, consumed)
+	})
+}
+
+func openQuestion(t *testing.T, u *UserRecord) {
+	t.Helper()
+	p, _ := u.StartPrompt("portalstake", "")
+	p.Ask("How much gold will you stake?", []string{})
+}
+
+func TestPager_AnOpenQuestionBeatsTheStopLine(t *testing.T) {
+	u := pagerUser(t, 10)
+	for _, l := range numbered(25) {
+		u.HoldReply(l)
+	}
+	u.EndReply()
+	require.True(t, u.PagesWaiting())
+
+	openQuestion(t, u)
+	prompt := u.GetCommandPrompt()
+	require.Contains(t, prompt, "How much gold will you stake?")
+	require.NotContains(t, prompt, "More (page")
+
+	out, consumed := u.RoutePagerInput("50")
+	require.False(t, consumed)
+	require.Equal(t, "", out)
+	require.True(t, u.PagesWaiting(), "the pages keep waiting while the question is open")
+
+	u.ClearPrompt()
+	require.Contains(t, u.GetCommandPrompt(), pager.StopLine(1, 3))
+}
+
+func TestEndReply_AnOpenQuestionSendsWhole(t *testing.T) {
+	u := pagerUser(t, 10)
+	openQuestion(t, u)
+	for _, l := range numbered(25) {
+		u.HoldReply(l)
+	}
+	require.Equal(t, strings.Join(numbered(25), ""), u.EndReply())
+	require.False(t, u.PagesWaiting())
+}
+
 func TestGetCommandPrompt_IsTheStopLineWhilePagesWait(t *testing.T) {
 	u := pagerUser(t, 10)
 	for _, l := range numbered(25) {
