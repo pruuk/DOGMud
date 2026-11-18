@@ -8,6 +8,8 @@
 // browser is narrower than that does the panel, and so the column count,
 // follow it. The server wraps to the column count (displayreport.js). A
 // height-only change, such as the on-screen keyboard, changes only the rows.
+// onRows gets the raw row count; displayreport.js decides which counts the
+// server hears (a height-only shrink is not sent, #842).
 
 (function (root, factory) {
     var api = factory();

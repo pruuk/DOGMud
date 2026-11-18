@@ -1,5 +1,7 @@
 // displayreport.test.js: the web client tells the server its columns and rows
 // once it settles (spec section 1: 250ms, only on a change, again on connect).
+// The rows are the most seen at the current columns: a height-only shrink
+// (the phone keyboard) is not sent; a column change or a connect starts over.
 //
 // Run:  node tools/jstest/displayreport.test.js
 'use strict';
@@ -48,11 +50,35 @@ r.columns(42); c.advance(300);
 check('the same size is not sent again', sent.join() === '80x30,42x30', sent.join());
 
 r.rows(18); c.advance(300);
-check('a height change alone is sent', sent.join() === '80x30,42x30,42x18', sent.join());
+check('a height-only shrink is not sent', sent.join() === '80x30,42x30', sent.join());
+r.rows(34); c.advance(300);
+check('a height-only grow is sent', sent.join() === '80x30,42x30,42x34', sent.join());
 
 open = false; r.columns(36); c.advance(300);
-check('a closed socket sends nothing', sent.join() === '80x30,42x30,42x18', sent.join());
+check('a closed socket sends nothing', sent.join() === '80x30,42x30,42x34', sent.join());
 open = true; r.connected(36, 18);
-check('a reconnect sends the size though it was sent before', sent.join() === '80x30,42x30,42x18,36x18', sent.join());
+check('a reconnect sends the size though it was sent before', sent.join() === '80x30,42x30,42x34,36x18', sent.join());
+
+// A phone (owner ruling, #842 playtest): pages follow the window with the
+// keyboard down, so the keyboard coming up (rows only) sends nothing.
+var pc = clock(), ps = [];
+var phone = DisplayReport.create({
+    send: function (cols, rows) { ps.push(cols + 'x' + rows); return true; },
+    setTimeout: pc.setTimeout, clearTimeout: pc.clearTimeout
+});
+phone.connected(36, 16);
+phone.rows(6); pc.advance(300);
+check('the keyboard opening sends nothing new', ps.join() === '36x16', ps.join());
+phone.rows(16); pc.advance(300);
+check('the keyboard closing again sends nothing new', ps.join() === '36x16', ps.join());
+// Turned on its side: termfit reports the columns, then the rows, in one fit.
+phone.columns(60); phone.rows(9); pc.advance(300);
+check('a column change starts over, so fewer rows at the new columns are sent', ps.join() === '36x16,60x9', ps.join());
+phone.rows(5); pc.advance(300);
+check('the keyboard on the side view sends nothing new', ps.join() === '36x16,60x9', ps.join());
+phone.connected(60, 5);
+check('a reconnect sends the current size', ps.join() === '36x16,60x9,60x5', ps.join());
+phone.rows(9); pc.advance(300);
+check('after a reconnect a grow is sent', ps.join() === '36x16,60x9,60x5,60x9', ps.join());
 
 process.exit(failures ? 1 : 0);
