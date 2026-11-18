@@ -37,6 +37,12 @@ printed it.
 | `set linewidth <n>` saves `UserRecord.LineWidth`, range-checks, fires `UserSettingChanged` | `internal/usercommands/set.go:60,550-569` |
 | `RedrawPrompt_SendRedraw` draws `user.GetCommandPrompt()`, deduplicated when a prompt question is open | `internal/hooks/RedrawPrompt_SendRedraw.go:12-45` |
 | Screen reader web client: text answering the player's line goes to an assertive log until `Char.Input.Done` for that line; a line without a line break is a prompt, announced only when it changes | spec `2026-11-17-screen-reader-task0-design.md` sections 11, 12 |
+| Added after the phone playtest (branch `feat/842-pager`, 2026-11-18): | |
+| A web client's columns are stored clamped to 30..80 in `Display.ScreenWidth`; a telnet client's NAWS width lands in the same field and sets `ClientSettings.NAWSReported` | `internal/users/wrapwidth.go:39`, `internal/connections/clientsettings.go:32` |
+| `util.VisibleWidth` measures with `go-runewidth` but strips `<ansi>` tags only; a held reply is already parsed to escape sequences | `internal/util/util.go:232`, `internal/hooks/Message_SendMessages.go` |
+| The last login answer (the kick question included) is taken by `LoginPromptHandler`; `main.go` then calls `SendEnterWorld` and reads the next frame, so that answer never reaches `processInput` | `main.go:959-1011` (telnet), `main.go:1533-1585` (websocket) |
+| `enterWorld` runs on MainWorker between event passes and queues `PlayerSpawn`; its `HandleJoin` queues the login commands (`motd` among them) as untyped `Input` at ready turn 0 and the first `look` (`CmdSecretly`) | `world.go:281`, `internal/hooks/PlayerSpawn_HandleJoin.go:305-340` |
+| Event passes run every millisecond; a typed line is queued by `InputWorker` from another goroutine | `world.go:885`, `world.go:969-987` |
 
 ## Owner rulings (2026-11-18, this brainstorm)
 
@@ -55,6 +61,16 @@ printed it.
    A screen reader account defaults to a fixed size instead of the window.
 5. **No paging in combat** (owner, on the written spec). While the player is
    in combat, every reply is sent whole.
+6. **Pages count screen rows** (owner, after the phone playtest 2026-11-18):
+   a page is measured in rows at the reader's width, so a line the client
+   wraps counts for each row it fills, and the stop line's own rows are
+   reserved. (The owner did not object to fixing this in the branch.)
+7. **On a phone, pages follow the window with the keyboard down** (owner,
+   option C of three): the web client reports its rows with the on-screen
+   keyboard closed; the player closes the keyboard to read a long reply.
+   Contextual buttons later in the touch arc will ease this.
+8. **The login burst is never paged** (owner): the message of the day and
+   the first room description come out whole.
 
 ## Design
 
@@ -87,6 +103,18 @@ printed it.
   `Char.Input.Done {seq: 0}`. The pager listens for it as the end of the
   reply.
 
+- **The login burst (ruling 8).** `enterWorld` calls
+  `events.EnteringWorld(userId)`. Until the event pass that runs that
+  player's `PlayerSpawn`, login commands and first look ends, `AddToQueue`
+  marks nothing for them, even inside an open window. The path that paged it
+  in the playtest: the last login answer never reaches `processInput`
+  (facts table), so the burst is marked only when a typed line from the same
+  player is handled in that pass ahead of the login commands. Such a line
+  reaches the queue after `PlayerSpawn` but before `HandleJoin` queues the
+  login commands (they are queued only when `PlayerSpawn` pops), so its
+  window is open while they run and its `InputDone` (99) pops after them.
+  `ProcessEvents` forgets every entering player as the pass ends.
+
 Text a command causes in a later pass (a mob's queued `emote`, a delayed
 re-run from `go`, a macro's later lines) is outside the window, so it is not
 marked and goes out at once, as it does today. Section 7 says where each is
@@ -96,17 +124,29 @@ checked.
 
 Pure, like `internal/menu`: no I/O, no locks.
 
-- `Cut(lines []string, size int) [][]string`: pages of at most `size` rows.
-  A line counts as one row (text is already wrapped to the reader's width
-  by `RenderForRecipient` or the room sender). A trailing empty line is not
-  carried to the top of the next page.
+- `Rows(line string, width int) int` (ruling 6): the screen rows a line
+  fills at the reader's width: its visible width (escape sequences removed,
+  a wide character two columns, measured with `go-runewidth`) divided by the
+  width, rounded up, at least 1, so a blank line is a row.
+- `Cut(lines []string, size, width int) [][]string`: pages of at most `size`
+  screen rows, each line counting its `Rows`. A line taller than a page gets
+  a page of its own. A trailing empty line is not carried to the top of the
+  next page.
 - `StopLine(page, of int) string`: "More (page 1 of 3): press Enter for the
   next page, or type q to stop." Plain words, no symbols, so a screen reader
   reads it as it is.
-- `Size(reported int, setting int, screenReader bool) (int, bool)`: the page
-  size and whether paging is on. Off when the setting says off. Otherwise
-  the setting when set, else 20 for a screen reader account, else the
-  reported height minus 2 (stop line and prompt), never below a floor of 10.
+- `Size(reported, width, setting int, screenReader bool) (int, bool)`: the
+  page size in rows and whether paging is on. Off when the setting says off.
+  Otherwise the setting when set, else 20 for a screen reader account, else
+  the reported height less the rows the stop line fills at that width, less
+  1 for the prompt (16 rows at 36 columns: 16 - 2 - 1 = 13). Clamped to
+  `MinSize` 10 .. `MaxSize` 200.
+- `Pages(lines, width, reported, setting, screenReader) [][]string`: `Size`
+  and `Cut` together. The stop line names the page count, so when a reply's
+  stop line ("page 10 of 12") fills more rows than "page 1 of 1", the lines
+  are cut again with those rows reserved.
+- The reader's width (`UserRecord.PagerWidth`): a web client's reported
+  columns; a telnet client's NAWS width when it sent one, else `WrapWidth`.
 
 ### 3. Holding and sending (`internal/hooks`, `internal/users`)
 
@@ -153,6 +193,12 @@ not re-queued as messages, so it is never re-marked or re-collected.
   `users.StoreReportedRows` with a clamp (10 to 200).
 - Telnet keeps its NAWS height. A telnet client that reports nothing gets
   24.
+- Pages are counted in screen rows at the reader's width (ruling 6, section
+  2): the height less the stop line's rows less the prompt's row. On a phone
+  the web client reports its rows with the on-screen keyboard closed (ruling
+  7), so a page fills the window the player reads with the keyboard down.
+- `set pagesize <n>` counts rows too, so a setting and the screen agree on
+  what a page holds; the help text's "lines" are the lines on screen.
 - `set pagesize <n>` (10 to 200) and `set pagesize off`, saved on the
   account as `UserRecord.PageSize` (`yaml:"pagesize,omitempty"`; 0 = follow
   the screen, -1 = off), following `set linewidth`. `set pagesize auto`
@@ -161,7 +207,7 @@ not re-queued as messages, so it is never re-marked or re-collected.
 
 ### 6. Screen readers
 
-- A screen reader account pages at 20 lines unless `set pagesize` says
+- A screen reader account pages at 20 rows unless `set pagesize` says
   otherwise. Twenty is long enough for a menu and its NPC's words, short
   enough to reach the choices without a long wait.
 - The stop line is a prompt (no line break), so the web client's log reads
@@ -194,6 +240,13 @@ not re-queued as messages, so it is never re-marked or re-collected.
   telnet queueing; the gmcp handler test gains a `Seq` 0 case. The priority
   guard (`world_input_done_guard_test.go`) is unaffected: nothing new queues
   at or above 99.
+- Rows (ruling 6): a 36-column reader's ANSI-coloured 39-column lines fill 2
+  rows each; the stop line's rows are reserved; a reply that fits in lines
+  but not in rows pages; a telnet reader counts at its NAWS width
+  (`internal/pager`, `userrecord_pager_test.go`).
+- Login burst (ruling 8): nothing is marked for a player entering the world
+  until the pass ends (`internal/events`), and `enterWorld` says so
+  (`world_input_done_test.go`).
 - Playtest: Toke at a small page size, on telnet (33333 inside the
   container) and in the web client, including a fight line arriving at a
   stop.
@@ -215,11 +268,32 @@ not re-queued as messages, so it is never re-marked or re-collected.
 - **Screen reader default of 20 lines.** The original #842 note named 20 as
   xterm's announce limit; that limit is gone, and 20 is kept as a listening
   length. If wrong: one constant.
-- **Floor of 10 lines, minus 2 for stop line and prompt.** A tiny window
-  still shows a usable page. If wrong: constants.
-- **Rows counted after server wrapping.** A telnet client narrower than the
-  wrap width wraps again and shows more rows than counted. If wrong: count
-  against the NAWS width as well.
+- **Floor of 10 lines, minus 2 for stop line and prompt** (superseded by
+  ruling 6). A tiny window still shows a usable page. Now: the height less
+  the rows the stop line fills at the reader's width, less 1 for the prompt;
+  the floor stays 10 rows, which the math does not reach at the playtest's
+  16 rows (13 at 36 columns, 12 at 30). A screen too short for 10 rows plus
+  the stop line and the prompt still gets 10-row pages that overflow it. If
+  wrong: a separate, lower floor for the
+  screen-following size, with `MinSize` kept for `set pagesize`.
+- **Rows counted after server wrapping** (superseded by ruling 6). A telnet
+  client narrower than the wrap width wrapped again and showed more rows
+  than counted, and a web client wrapped menu entries wider than its columns
+  (the phone playtest). Now: every line counts its rows at the reader's
+  width (`PagerWidth`), telnet at its NAWS width when it sent one.
+- **The stop line is measured at its real page count** (`Pages` cuts again
+  when "page 10 of 12" fills more rows than "page 1 of 1"). If wrong: measure
+  "page 1 of 1" only and accept a page that can overflow by a row.
+- **`set pagesize <n>` counts rows**, as the screen does, so the two agree;
+  the help text keeps "lines", read as lines on screen. If wrong: count
+  logical lines for a setting.
+- **The login burst is spared for one event pass** (ruling 8), keyed to
+  `enterWorld`, not to the login commands. Every login, reconnect and
+  copyover reconnect passes there. A racing typed line's own text in that
+  pass is sent at once too. In that race the first `look` waits to the next
+  pass (the per-turn input tracker has the racing line), where it is marked
+  only if another typed line opens a window ahead of it. If wrong: a flag
+  carried on the login commands' `Input` events instead.
 - **A reply that fits is sent as one write.** Today each message is its own
   write; joining them changes nothing on screen. If wrong: send them one by
   one.
