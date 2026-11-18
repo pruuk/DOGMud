@@ -160,6 +160,11 @@ The `internal/rooms` package is the core world management system for GoMud, hand
 - **RoomManager**: Singleton manager for all room operations and caching
 - **Memory management**: Automatic loading/unloading of rooms based on occupancy
 - **Zone management**: Organizing rooms into logical zones with metadata
+- **Zone creation**: `CreateZone` refuses any name `ValidateZoneName` refuses
+  (letters, numbers, spaces and underscores only) before it touches the
+  disk, since the zone's folders are named after it; `build zone` and GMCP
+  `Build.Zone.Create` both reach it. `RenameZone` checks the new name the
+  same way.
 - **File system integration**: Room data persistence and template loading
 - **Cache optimization**: Room file path caching and efficient lookups
 - **Template room zones** (`template_zones.go`, #375 3b): `TemplateRoomZone(id)`

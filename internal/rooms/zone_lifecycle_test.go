@@ -25,6 +25,29 @@ func TestZoneFolderCollision(t *testing.T) {
 	assert.Equal(t, "Stillwater", ZoneFolderCollision("Stillwater", existing))
 }
 
+// CreateZone refuses, before it touches the disk, every name that
+// ValidateZoneName refuses, so each caller (`build zone`, GMCP
+// Build.Zone.Create) is covered. The data root is an empty temp dir, so a
+// name that slipped through would fail on a missing folder instead, with a
+// different error.
+func TestCreateZone_RefusesANameValidateZoneNameRefuses(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.FilePaths.DataFiles = configs.ConfigString(t.TempDir())
+	configs.SetConfigForTest(t, cfg)
+
+	for _, name := range []string{`Bad!Zone`, `../Elsewhere`, `Some/Where`} {
+		want := ValidateZoneName(name)
+		if !assert.Error(t, want, "fixture: ValidateZoneName must refuse %q", name) {
+			continue
+		}
+		roomId, err := CreateZone(name)
+		assert.EqualError(t, err, want.Error(), "CreateZone(%q)", name)
+		assert.Zero(t, roomId)
+		_, made := roomManager.zones[name]
+		assert.False(t, made, "CreateZone(%q) must not register the zone", name)
+	}
+}
+
 func TestZoneDeletionBlockers_ReportsEachKind(t *testing.T) {
 	src := zoneBlockerSources{
 		roomIdsInZone:  func(z string) []int { return []int{100, 101, 102} },

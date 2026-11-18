@@ -14,10 +14,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-/*
-* Role Permissions:
-* command 				(All)
- */
+// Command queues input for a mob or player in the room, which runs it with
+// its own rights. Only an admin may command a player whose role is admin.
+//
+// Role Permissions:
+//   - command  (All)
 func Command(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	// args should look like one of the following:
@@ -47,6 +48,15 @@ func Command(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	playerId := target.GetUserId()
 	mobId := target.GetMobInstanceId()
+
+	// A commanded player runs the input with their own role, so commanding
+	// an admin is itself an admin's act.
+	if playerId > 0 && user.Role != users.RoleAdmin {
+		if targetUser := users.GetByUserId(playerId); targetUser != nil && targetUser.Role == users.RoleAdmin {
+			user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">Only an admin can command an admin.</ansi>`)
+			return true, nil
+		}
+	}
 
 	// Use the index for how many turns to defer the extra commands
 	readyTurn := util.GetTurnCount()

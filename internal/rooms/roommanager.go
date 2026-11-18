@@ -902,14 +902,19 @@ func MoveToZone(roomId int, newZoneName string) error {
 	return nil
 }
 
-// #build zone The Arctic
-// Build a zone, popualtes with an empty boring room
+// CreateZone builds a zone (`build zone The Arctic`, GMCP Build.Zone.Create)
+// and populates it with one empty room. The name must pass ValidateZoneName,
+// because the zone's folders are named after it.
 func CreateZone(zoneName string) (roomId int, err error) {
 
 	zoneName = strings.TrimSpace(zoneName)
 
 	if len(zoneName) < 2 {
 		return 0, errors.New("zone name must be at least 2 characters")
+	}
+
+	if err := ValidateZoneName(zoneName); err != nil {
+		return 0, err
 	}
 
 	if zoneInfo, ok := roomManager.zones[zoneName]; ok {

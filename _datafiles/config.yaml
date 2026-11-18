@@ -2812,6 +2812,9 @@ Validation:
 #   Role sub-commands should be separated by a dot: room.info
 #   Roles are more permissive the more they prefix.
 #   Example: room prefixes room.info so would permit that action as well.
+#   A key permits itself and every key below it on a dot boundary, never a
+#   parent or a sibling: room.info permits neither room nor room.edit.
+#   Moving another player with teleport needs teleport.other.
 #   Role checks must be implemented wherever role-based restriction is desired:
 #   if user.HasRolePermission(`room`) { /* Do something */ }
 #
