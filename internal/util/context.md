@@ -211,7 +211,21 @@ are gitignored must still ship a tracked `.gitkeep` — git cannot store an empt
 directory, and a fresh clone otherwise dies before loading a room.
 
 `GetLockSequence` derives a deterministic lockpicking sequence, so the same lock
-presents the same puzzle until its rotation changes.
+presents the same puzzle until its rotation changes. Game code never calls it
+directly: it calls `LockSequence(lockId, difficulty, rotation)` (`lockseed.go`),
+which uses a secret seed made at random once per process and never written.
+A lock solution is therefore good only until a restart (owner ruling
+2026-11-18), and `BootID()` names the current seed so a character's keyring
+can drop older solutions (`characters.DropStaleLockSolutions`).
+`RebootLocksForTest` simulates a restart. `Server.Seed` is never a lock seed:
+it is in the shipped config and drives the zodiac calendar (guarded in
+`internal/guards`).
+
+```go
+func LockSequence(lockIdentifier string, difficulty int, rotation uint64) string
+func BootID() string
+func RebootLocksForTest() (restore func())
+```
 
 ## Display helpers
 

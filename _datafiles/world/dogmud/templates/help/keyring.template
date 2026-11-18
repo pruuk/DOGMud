@@ -5,9 +5,9 @@ The <ansi fg="command">keyring</ansi> command tracks your current keys and picke
 Whenever you use a key, it is taken from your items and added to your keyring 
 forever. You cannot lose a key once this happens.
 
-Similarly, if you pick a lock, you will always remember the sequence to pick 
-the lock. The lock will be instantaneously picked when you attempt to cross
-through an exit or open a container.
+If you pick a lock, you remember its sequence until the server restarts. Until
+then the lock opens at once when you go through that exit or open that
+container. A restart changes every lock, so you must pick it again.
 
 <ansi fg="yellow">Usage: </ansi>
 

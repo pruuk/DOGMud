@@ -304,7 +304,7 @@ func picklockFixture(t *testing.T) (*users.UserRecord, *rooms.Room, string, stri
 		"chest": {Lock: gamelock.Lock{Difficulty: 6}},
 	}}
 	lockId := fmt.Sprintf(`%d-%s`, room.RoomId, "chest")
-	seq := util.GetLockSequence(lockId, 6, string(configs.GetServerConfig().Seed), 0)
+	seq := util.LockSequence(lockId, 6, 0)
 	require.NotEmpty(t, seq)
 	return u, room, lockId, seq
 }

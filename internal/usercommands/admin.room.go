@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -276,7 +275,7 @@ func room_Edit_Containers(rest string, user *users.UserRecord, room *rooms.Room,
 		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="red">To Create Key -  LockId: <ansi fg="231" bg="5">%s</ansi></ansi>`, lockId))
 
 		var seqString strings.Builder
-		for _, dir := range util.GetLockSequence(lockId, int(currentlyEditing.Container.Lock.Difficulty), string(configs.GetServerConfig().Seed), currentlyEditing.Container.Lock.RotationSeed) {
+		for _, dir := range util.LockSequence(lockId, int(currentlyEditing.Container.Lock.Difficulty), currentlyEditing.Container.Lock.RotationSeed) {
 			seqString.WriteString(string(dir) + " ")
 		}
 		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="red">To pick lock - Sequence: <ansi fg="green">%s</ansi></ansi>`, seqString.String()))

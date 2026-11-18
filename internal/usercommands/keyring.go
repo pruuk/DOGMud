@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -18,6 +17,9 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	headers := []string{`Type`, `Location`, `Where`, `Sequence`}
 	allFormatting := [][]string{}
+
+	// Solutions from before the last restart are not listed as known.
+	user.Character.DropStaleLockSolutions()
 
 	for lockId := range user.Character.KeyRing {
 		if !strings.HasPrefix(lockId, `key-`) {
@@ -59,8 +61,6 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	pickFormatting := [][]string{}
 	pickRowsIncomplete := [][]string{}
 
-	cfgSeed := string(configs.GetServerConfig().Seed)
-
 	for lockId, seq := range user.Character.KeyRing {
 
 		complete := true
@@ -95,7 +95,7 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			exitName, _ := room.FindExitByName(lockId)
 			exitInfo := room.Exits[exitName]
 
-			actualSequence := util.GetLockSequence(lockId, int(exitInfo.Lock.Difficulty), cfgSeed, exitInfo.Lock.RotationSeed)
+			actualSequence := util.LockSequence(lockId, int(exitInfo.Lock.Difficulty), exitInfo.Lock.RotationSeed)
 			diff := len(actualSequence) - len(sequence)/2
 			if diff > 0 {
 				complete = false

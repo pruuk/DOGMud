@@ -75,7 +75,7 @@ func picklockQuestFixture(t *testing.T) (*users.UserRecord, *rooms.Room, string)
 
 func TestPicklock_OpenedLockRaisesTheQuestEvent(t *testing.T) {
 	user, room, lockId := picklockQuestFixture(t)
-	user.Character.SetKey(lockId, util.GetLockSequence(lockId, 3, string(configs.GetServerConfig().Seed), 0))
+	user.Character.SetKey(lockId, util.LockSequence(lockId, 3, 0))
 
 	_, err := Picklock("lockbox", user, room, 0)
 	require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestPicklock_UnfinishedPickRaisesNoQuestEvent(t *testing.T) {
 func TestPicklock_PinGameRaisesTheQuestEventOnTheLastPinOnly(t *testing.T) {
 	user, room, lockId := picklockQuestFixture(t)
 	t.Cleanup(user.ClearPrompt)
-	seq := util.GetLockSequence(lockId, 3, string(configs.GetServerConfig().Seed), 0)
+	seq := util.LockSequence(lockId, 3, 0)
 	require.Len(t, seq, 3)
 	run := func() {
 		_, err := Picklock("lockbox", user, room, 0)
@@ -124,7 +124,7 @@ func TestPicklock_PinGameRaisesTheQuestEventOnTheLastPinOnly(t *testing.T) {
 func TestPicklock_WrongPinRaisesNoQuestEvent(t *testing.T) {
 	user, room, lockId := picklockQuestFixture(t)
 	t.Cleanup(user.ClearPrompt)
-	seq := util.GetLockSequence(lockId, 3, string(configs.GetServerConfig().Seed), 0)
+	seq := util.LockSequence(lockId, 3, 0)
 	wrong := "U"
 	if seq[:1] == "U" {
 		wrong = "D"
@@ -143,7 +143,7 @@ func TestPicklock_WrongPinRaisesNoQuestEvent(t *testing.T) {
 // the event fires once for the opening.
 func TestPicklock_AlreadyOpenLockRaisesNoSecondEvent(t *testing.T) {
 	user, room, lockId := picklockQuestFixture(t)
-	user.Character.SetKey(lockId, util.GetLockSequence(lockId, 3, string(configs.GetServerConfig().Seed), 0))
+	user.Character.SetKey(lockId, util.LockSequence(lockId, 3, 0))
 
 	_, err := Picklock("lockbox", user, room, 0)
 	require.NoError(t, err)
@@ -165,7 +165,7 @@ func TestPicklock_OpenedExitLockCarriesTheExitNameAsItsNoun(t *testing.T) {
 	room.Exits[gate] = exit.RoomExit{RoomId: 1, Lock: gamelock.Lock{Difficulty: 3}}
 	t.Cleanup(func() { delete(room.Exits, gate) })
 	lockId := fmt.Sprintf("%d-%s", room.RoomId, gate)
-	user.Character.SetKey(lockId, util.GetLockSequence(lockId, 3, string(configs.GetServerConfig().Seed), 0))
+	user.Character.SetKey(lockId, util.LockSequence(lockId, 3, 0))
 
 	t.Cleanup(questengine.ResetEngineForTest())
 	questengine.GetEngine().RegisterQuest(&questengine.QuestDef{
