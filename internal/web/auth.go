@@ -56,7 +56,8 @@ var (
 	// not hold the world lock). An unauthenticated flood of /build therefore
 	// raced any admin authenticating elsewhere in the admin UI and killed the
 	// process with "concurrent map read and map write".
-	authMu    sync.Mutex
+	authMu sync.Mutex
+	// authCache holds admin grants by authCacheKey; see authCacheLookup.
 	authCache = map[string]authCacheEntry{}
 )
 

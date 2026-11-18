@@ -12,11 +12,13 @@ import (
 )
 
 const (
-	// MaxFailures failures inside FailureWindow lock a source out for
-	// LockoutDur.
-	MaxFailures   = 5
+	// MaxFailures is how many failures inside FailureWindow lock a source out.
+	MaxFailures = 5
+	// FailureWindow is how far back failures count; a quieter source starts
+	// a fresh count.
 	FailureWindow = 5 * time.Minute
-	LockoutDur    = 1 * time.Minute
+	// LockoutDur is how long a locked-out source is refused.
+	LockoutDur = 1 * time.Minute
 
 	// MaxEntries caps a tracker. Its keys come from attacker-controlled
 	// connection data, so it must never grow without bound: entries are
@@ -25,6 +27,7 @@ const (
 	MaxEntries = 4096
 )
 
+// record is one source's failures in the current window.
 type record struct {
 	count       int
 	windowStart time.Time

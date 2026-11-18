@@ -56,8 +56,11 @@ func clearLoginFailures(id connections.ConnectionId) {
 }
 
 var (
+	// dummyHashOnce makes dummyHash on first use, so boot pays nothing.
 	dummyHashOnce sync.Once
-	dummyHash     []byte
+	// dummyHash is a bcrypt hash at the default cost that no player's
+	// password is checked against; it only spends the same work.
+	dummyHash []byte
 )
 
 // spendPasswordCheck runs one bcrypt comparison against a fixed hash, so a

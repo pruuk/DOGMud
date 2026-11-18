@@ -48,7 +48,9 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 		if loginThrottled(clientInput.ConnectionId) {
 			sendLoginText(clientInput.ConnectionId, throttledLoginText)
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
-			connections.Remove(clientInput.ConnectionId)
+			// Remove fails only when the connection is already gone, which
+			// is the outcome wanted here.
+			_ = connections.Remove(clientInput.ConnectionId)
 			return false
 		}
 
