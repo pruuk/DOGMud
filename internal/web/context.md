@@ -131,9 +131,15 @@ The web system is built around Go's standard `net/http` package with several key
 {{.COMPANION_RELAY_ORIGIN_JSON}}  <!-- relayOriginJSON(): the companion key relay origin
      as a JSON string literal ("" when none). Templates are text/template and escape
      nothing, so it is JSON-encoded in Go and used UNQUOTED inside a script. -->
-<!-- A value that came from the request prints as {{ html .X }}, for that same
-     reason (.PATH in _header.html, .topic and .error in help-details.html).
-     page_values_test.go renders the real templates. -->
+{{.ITEM_ICON_BASE_JSON}}  <!-- itemIconBaseJSON(): FilePaths.WebCDNLocation plus
+     /static/images/items as a JSON string literal, the same way. Both go through
+     jsStringLiteral. No inline script may print a .CONFIG value raw
+     (TestGamePageInlineScriptsPrintNoRawConfig). -->
+<!-- A value that came from the request or from a player prints as
+     {{ html .X }}, for that same reason (.PATH in _header.html, .topic and
+     .error in help-details.html, the name, title and role on online.html, the
+     name and title on the leaderboards module page). page_values_test.go
+     renders the real templates. -->
 
 <!-- Plugin-provided variables -->
 {{.PLUGIN_DATA}}  <!-- Custom data from plugins -->
@@ -233,6 +239,19 @@ func (p *MyPlugin) WebRequest(r *http.Request) (string, map[string]any, bool) {
 ## Security Implementation
 
 ### Authentication Flow
+0. **Before any credential work**, `doBasicAuth` sets
+   `Content-Security-Policy: frame-ancestors 'none'` (`adminFramePolicy`) on
+   every response, refusals and challenges included, so no page can frame an
+   admin page; and `adminCrossOrigin` (`http.NewCrossOriginProtection`)
+   answers `403` to a state-changing request (any method but GET, HEAD,
+   OPTIONS) that a browser sent from another site. A browser re-sends cached
+   Basic credentials by itself, so a valid credential alone does not show the
+   request came from the admin's own page. The dashboards' POSTs are
+   same-origin `fetch` calls and pass; a client that sends neither
+   `Sec-Fetch-Site` nor `Origin` (curl) passes too. Every route behind
+   `doBasicAuth` gets both, so a new admin route needs nothing extra. Admin
+   GET handlers must therefore change nothing. Tests:
+   `TestAdminRefusesCrossSiteStateChanges`, `TestAdminResponsesForbidFraming`
 1. **Request Interception**: Admin routes protected by `doBasicAuth` middleware
 2. **Cache Check**: Grants cached for `authCacheTTL` (30 min), keyed on a
    SHA-256 of the `Authorization` header — never the header itself, which is
@@ -260,8 +279,8 @@ func (p *MyPlugin) WebRequest(r *http.Request) (string, map[string]any, bool) {
 7. **Access Granted**: Request proceeds to handler with mutex protection
 
 **Gotcha — `authCache` is guarded by `authMu` (and the failure counts by the
-tracker's own lock), not by the world lock.** Every `/admin/*` route happens to be wrapped in `RunWithMUDLocked`,
-which serialized these maps *by accident*. `GET /build` and `GET /build-help`
+tracker's own lock), not by the world lock.** Most `/admin/*` routes are wrapped in `RunWithMUDLocked`,
+which once serialized these maps *by accident*. `GET /build` and `GET /build-help`
 deliberately are not (the build page must not hold the world lock), so an
 unauthenticated flood of `/build` used to race an admin authenticating anywhere
 in the admin UI and kill the process with `concurrent map read and map write`.
@@ -348,15 +367,17 @@ behalf — only add one when the client is genuinely served from another domain.
 
 ### Game State Protection
 ```go
-// All admin operations wrapped with mutex
-func RunWithMUDLocked(next http.HandlerFunc) http.HandlerFunc {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        util.LockMud()
-        defer util.UnlockMud()
-        next.ServeHTTP(w, r)
-    })
-}
+// Runs next under the world lock into a buffer; the response is written
+// after the lock is released. doBasicAuth always wraps it, never the reverse.
+func RunWithMUDLocked(next http.HandlerFunc) http.HandlerFunc
 ```
+
+`GET /admin/api/progression/` is registered without it: `progressionAPI`
+reads and parses the offline user saves first with no lock (they are private
+copies), then takes `util.LockMud` itself only to merge with the live
+registry (`collectPlayers`) and aggregate. Its `?days=` window goes through
+`progressionWindowDays`: `progressionDefaultDays` (14) when absent or not a
+positive number, never more than `progressionMaxDays` (90).
 
 ### The companion key relay (own origin) and the game page CSP
 
@@ -435,6 +456,15 @@ file_paths:
 - `GET /admin/races/racedata/` - Race data API
 - `GET /admin/mutators/` - Mutator management interface
 - `GET /admin/mutators/mutatordata/` - Mutator data API
+- `GET /admin/combat-stats/`, `GET /admin/api/combat-stats/` - Combat stats page and data
+- `POST /admin/api/combat-stats/reset`, `POST /admin/api/combat-stats/export` - Clear or flush the combat analytics buffer
+- `GET /admin/progression/`, `GET /admin/api/progression/?days=N` - Progression page and data (N capped, see Game State Protection)
+- `GET /admin/economy/`, `GET /admin/api/economy/` - Economy health page and data
+- `POST /admin/api/economy/snapshot?label=` - Write a manual economy snapshot
+- `GET /build`, `GET /build-help` - The admin room builder and its guide
+
+Every one goes through `doBasicAuth`, so each response forbids framing and
+each POST is refused unless it comes from the site's own pages.
 
 ## Performance Considerations
 
@@ -453,7 +483,7 @@ file_paths:
   start feeling slow.
 
 ### Mutex Protection
-- All admin operations protected by game state mutex
+- Admin operations that read world state run under the game state mutex, for as short a span as the route allows
 - Prevents concurrent modification of game data
 - May cause brief delays during heavy admin usage
 

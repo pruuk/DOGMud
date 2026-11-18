@@ -46,6 +46,11 @@ keeps it only if it beats the current floor. Rebuilding is therefore
   rebuild.
 - **Entries store a name snapshot.** A renamed character shows its old name
   until it is reconsidered.
+- **The web page prints player names through `html`.** The page template
+  (`files/datafiles/html/public/leaderboards.html`) renders with
+  `text/template`, which encodes nothing, and the page is public. Every name
+  and title prints as `{{ html ... }}`; `internal/web/page_values_test.go`
+  renders the real template with a hostile name.
 - **`Consider` takes `characters.Character` by value.** It is a large struct;
   do not add per-entry work inside the loop lightly.
 

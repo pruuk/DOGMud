@@ -19,6 +19,13 @@ The driver side lives outside the repo (`mudagent`, located via
 - **safemode.go** — sandbox containment and death protection.
 - **config.go** — module config, read through the plugin config bag.
 
+The module registers no web pages. `pluginRegistry.WebRequest`
+(`internal/plugins/plugins.go`) serves every module page from the public
+site with no login, so an admin page must never be registered here. The
+upstream Config and About pages were removed: they were registered without a
+leading `/` (so never matched), and the Config page called an admin API that
+DOGMud does not have.
+
 ## Beacons
 
 `onNewRound` emits a `Playtest.Round` GMCP payload carrying **hp/sp/cp with

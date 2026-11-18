@@ -161,13 +161,38 @@ func authCacheStore(key string, uRecord *users.UserRecord, now time.Time) {
 	}
 }
 
-// doBasicAuth wraps an admin route in HTTP Basic auth: only an account with
-// RoleAdmin and a hashed password that matches gets through. A cached grant
-// short-circuits; otherwise the source is throttled, an unknown username or
-// a plain-text stored password is refused after the same bcrypt work as a
-// wrong password, and a legacy hash that matches is saved upgraded.
+// adminFramePolicy is the Content-Security-Policy every response behind
+// doBasicAuth carries: no page on any origin, this one included, may frame an
+// admin page. Nothing in the game frames one; the only frame the site uses is
+// /webclient around the public game page.
+const adminFramePolicy = `frame-ancestors 'none'`
+
+// adminCrossOrigin refuses state-changing admin requests (any method but GET,
+// HEAD and OPTIONS) that a browser sends on behalf of another site. Admin
+// requests must come from the site's own pages: the dashboards' own fetch
+// calls are same-origin and pass. It reads Sec-Fetch-Site, falling back to
+// comparing Origin with Host, so non-browser clients that send neither still
+// pass, as before.
+var adminCrossOrigin = http.NewCrossOriginProtection()
+
+// doBasicAuth gates an admin route: it marks the response unframeable,
+// refuses cross-site state-changing requests, then requires HTTP Basic
+// credentials of a RoleAdmin account with a hashed password before calling
+// next. Both checks run before any credential work, so a refused request
+// costs no bcrypt. A cached grant short-circuits; otherwise the source is
+// throttled, an unknown username or a plain-text stored password is refused
+// after the same bcrypt work as a wrong password, and a legacy hash that
+// matches is saved upgraded.
 func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		w.Header().Set(`Content-Security-Policy`, adminFramePolicy)
+
+		if err := adminCrossOrigin.Check(r); err != nil {
+			mudlog.Warn("ADMIN REQUEST", "refused", "cross-origin", "method", r.Method, "path", r.URL.Path, "error", err)
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
 
 		now := time.Now()
 		authHeader := r.Header.Get("Authorization")

@@ -15,10 +15,10 @@
             {{range $index, $uInfo := .STATS.OnlineUsers}}
             <tr>
                 <td align="right">{{ add $index 1 }}.</td>
-                <td align="center"><b>{{ $uInfo.CharacterName }}</b></td>
-                <td align="center">{{ $uInfo.Title }}</td>
-                <td align="center">{{ $uInfo.OnlineTimeStr }}{{ if $uInfo.IsAFK }} (AFK){{end}}</td>
-                <td align="center">{{ $uInfo.Role }}</td>
+                <td align="center"><b>{{ html $uInfo.CharacterName }}</b></td>
+                <td align="center">{{ html $uInfo.Title }}</td>
+                <td align="center">{{ html $uInfo.OnlineTimeStr }}{{ if $uInfo.IsAFK }} (AFK){{end}}</td>
+                <td align="center">{{ html $uInfo.Role }}</td>
             </tr>
             {{end}}
         </table>

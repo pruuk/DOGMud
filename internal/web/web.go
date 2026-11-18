@@ -181,6 +181,8 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		"ASSET_VERSION": staticAssetVersion(httpRoot),
 		// COMPANION_RELAY_ORIGIN_JSON is a JS string literal, see relayOriginJSON.
 		"COMPANION_RELAY_ORIGIN_JSON": relayOriginJSON(),
+		// ITEM_ICON_BASE_JSON is a JS string literal, see itemIconBaseJSON.
+		"ITEM_ICON_BASE_JSON": itemIconBaseJSON(configs.GetFilePathsConfig().WebCDNLocation.String()),
 		"NAV": []WebNav{
 			{`Home`, `/`},
 			{`Who's Online`, `/online`},
@@ -438,9 +440,9 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string, s
 
 	// Progression Admin
 	http.HandleFunc("GET /admin/progression/", doBasicAuth(progressionIndex))
-	http.HandleFunc("GET /admin/api/progression/", doBasicAuth(
-		RunWithMUDLocked(progressionAPI),
-	))
+	// Not wrapped in RunWithMUDLocked: progressionAPI reads user saves from
+	// disk first and takes the world lock itself only for the live part.
+	http.HandleFunc("GET /admin/api/progression/", doBasicAuth(progressionAPI))
 
 	// Economy Health Admin
 	http.HandleFunc("GET /admin/economy/", doBasicAuth(economyIndex))
@@ -653,7 +655,9 @@ func (b *bufferedResponse) flushTo(w http.ResponseWriter) {
 //
 // Routes that touch no world state at all should not use this wrapper. The
 // pure-template pages (admin index, combat-stats, progression, economy) and the
-// static file server are registered without it.
+// static file server are registered without it. A route that does slow work
+// apart from world state (the progression API's disk reads) takes the lock
+// itself around only the part that needs it.
 func RunWithMUDLocked(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -720,7 +724,22 @@ func relayFirst(next http.Handler) http.Handler {
 // encoded here: json.Marshal escapes quotes, backslashes and < > &, so no
 // origin can end the string or the script element.
 func relayOriginJSON() string {
-	b, err := json.Marshal(companionai.RelayOrigin())
+	return jsStringLiteral(companionai.RelayOrigin())
+}
+
+// itemIconBaseJSON is the web client's item icon folder under the configured
+// CDN location, as a JSON string literal for the game page's script. The CDN
+// location is config, printed inside a script, so it gets the same encoding
+// as relayOriginJSON.
+func itemIconBaseJSON(cdnLocation string) string {
+	return jsStringLiteral(cdnLocation + `/static/images/items`)
+}
+
+// jsStringLiteral encodes s as one JSON string literal that is safe to print
+// unquoted inside a script element: json.Marshal escapes quotes, backslashes
+// and < > &, so no value can end the string or the element.
+func jsStringLiteral(s string) string {
+	b, err := json.Marshal(s)
 	if err != nil {
 		return `""`
 	}

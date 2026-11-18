@@ -31,6 +31,27 @@ func testBalance(t *testing.T) {
 	configs.SetConfigForTest(t, cfg)
 }
 
+// The ?days= window decides how many user saves one request reads and parses,
+// so a caller may narrow or widen it but never past progressionMaxDays.
+func TestProgressionWindowDays_IsCapped(t *testing.T) {
+	cases := map[string]int{
+		"":        progressionDefaultDays,
+		"abc":     progressionDefaultDays,
+		"0":       progressionDefaultDays,
+		"-5":      progressionDefaultDays,
+		"1":       1,
+		"30":      30,
+		"90":      progressionMaxDays,
+		"91":      progressionMaxDays,
+		"1000000": progressionMaxDays,
+	}
+	for raw, want := range cases {
+		if got := progressionWindowDays(raw); got != want {
+			t.Errorf("progressionWindowDays(%q) = %d, want %d", raw, got, want)
+		}
+	}
+}
+
 func TestUsesToReach_IsIncreasingAndConvex(t *testing.T) {
 	testBalance(t)
 	c := characters.New()

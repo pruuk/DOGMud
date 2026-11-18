@@ -238,8 +238,8 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icon-map.js?v={{ .ASSET_VERSION }}"></script>
-    <script>window.ITEM_ICON_BASE = "{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/items";</script>
-    <!-- A JSON string literal encoded by the server (web.go relayOriginJSON), so no quotes here. -->
+    <!-- JSON string literals encoded by the server (web.go itemIconBaseJSON, relayOriginJSON), so no quotes here. -->
+    <script>window.ITEM_ICON_BASE = {{ .ITEM_ICON_BASE_JSON }};</script>
     <script>window.COMPANION_RELAY_ORIGIN = {{ .COMPANION_RELAY_ORIGIN_JSON }};</script>
 </head>
 <body onLoad="init(); return false;">

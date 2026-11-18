@@ -302,3 +302,94 @@ func TestFailedAuthIsThrottledPerSource(t *testing.T) {
 		t.Fatalf("other source: status=%d called=%t, want 200/true", code, called)
 	}
 }
+
+// Admin requests must come from the site's own pages. A browser re-sends cached
+// Basic credentials on its own, so a valid credential proves nothing about
+// which page sent a state-changing request. The dashboards' own POSTs are
+// same-origin fetch calls and must keep working; reads stay allowed from
+// anywhere because they change nothing.
+func TestAdminRefusesCrossSiteStateChanges(t *testing.T) {
+	const password = "correct-password"
+	setupAuthTestUsers(t, password, map[string]string{"adminuser": users.RoleAdmin})
+
+	cases := []struct {
+		name       string
+		method     string
+		headers    map[string]string
+		wantStatus int
+		wantCalled bool
+	}{
+		{"cross-site POST by Sec-Fetch-Site", http.MethodPost,
+			map[string]string{"Sec-Fetch-Site": "cross-site", "Origin": "https://other.example"},
+			http.StatusForbidden, false},
+		{"cross-site POST by Origin alone", http.MethodPost,
+			map[string]string{"Origin": "https://other.example"},
+			http.StatusForbidden, false},
+		{"same-origin POST from a dashboard", http.MethodPost,
+			map[string]string{"Sec-Fetch-Site": "same-origin", "Origin": "http://example.com"},
+			http.StatusOK, true},
+		{"same-origin POST by Origin alone", http.MethodPost,
+			map[string]string{"Origin": "http://example.com"},
+			http.StatusOK, true},
+		{"POST from a non-browser client", http.MethodPost,
+			nil, http.StatusOK, true},
+		{"cross-site GET reads", http.MethodGet,
+			map[string]string{"Sec-Fetch-Site": "cross-site"},
+			http.StatusOK, true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resetAuthStateForTest()
+			called := false
+			h := doBasicAuth(func(w http.ResponseWriter, r *http.Request) {
+				called = true
+				w.WriteHeader(http.StatusOK)
+			})
+
+			// httptest requests carry Host example.com.
+			req := httptest.NewRequest(tc.method, "/admin/api/combat-stats/reset", nil)
+			req.SetBasicAuth("adminuser", password)
+			for k, v := range tc.headers {
+				req.Header.Set(k, v)
+			}
+			rec := httptest.NewRecorder()
+			h(rec, req)
+
+			if rec.Code != tc.wantStatus || called != tc.wantCalled {
+				t.Fatalf("status=%d called=%t, want %d/%t", rec.Code, called, tc.wantStatus, tc.wantCalled)
+			}
+		})
+	}
+}
+
+// No admin response may be framed by another page. The policy is set before
+// anything else, so it rides on a refusal and a challenge as well as on a page,
+// and it survives the world-lock wrapper's buffered response.
+func TestAdminResponsesForbidFraming(t *testing.T) {
+	const password = "correct-password"
+	setupAuthTestUsers(t, password, map[string]string{"adminuser": users.RoleAdmin})
+	resetAuthStateForTest()
+
+	page := doBasicAuth(RunWithMUDLocked(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte("<html></html>"))
+	}))
+
+	authed := httptest.NewRequest(http.MethodGet, "/admin/items/", nil)
+	authed.SetBasicAuth("adminuser", password)
+
+	challenged := httptest.NewRequest(http.MethodGet, "/admin/items/", nil)
+
+	refused := httptest.NewRequest(http.MethodPost, "/admin/api/economy/snapshot", nil)
+	refused.SetBasicAuth("adminuser", password)
+	refused.Header.Set("Sec-Fetch-Site", "cross-site")
+
+	for name, req := range map[string]*http.Request{"page": authed, "challenge": challenged, "refusal": refused} {
+		rec := httptest.NewRecorder()
+		page(rec, req)
+		if got := rec.Header().Get("Content-Security-Policy"); got != `frame-ancestors 'none'` {
+			t.Errorf("%s (status %d): Content-Security-Policy = %q, want frame-ancestors 'none'", name, rec.Code, got)
+		}
+	}
+}

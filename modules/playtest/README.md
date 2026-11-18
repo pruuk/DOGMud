@@ -54,8 +54,9 @@ Keys live under `Modules.playtest.*`:
 > a `Modules:` → `playtest:` block to the server's `config.yaml` /
 > `config-overrides.yaml`: the module's overlay default overrides a hand-edited
 > base `config.yaml`, and a nested `Modules.*` block in `config-overrides.yaml`
-> does not merge (it leaves the value empty). The admin web config UI / config
-> API is the intended long-term path (being finalized). Full operator
+> does not merge (it leaves the value empty). DOGMud ships no web page for
+> these settings: the upstream config page called an admin API DOGMud does not
+> have, and module pages are public, so it was removed. Full operator
 > walkthrough + troubleshooting:
 > <https://github.com/GoMudEngine/GoMud-Module-Playtest-Harness/blob/main/docs/usage/playtest-module.md>
 
