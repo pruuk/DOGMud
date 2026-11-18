@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/auththrottle"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -26,20 +27,13 @@ const (
 	// runs this middleware once per asset, so it is rate-limited rather than
 	// done on every request.
 	authRevalidateEvery = 30 * time.Second
-
-	// Failed-attempt throttling. doBasicAuth runs bcrypt against real player
-	// credentials, which is deliberately expensive; unthrottled it is both a
-	// password-guessing oracle and a cheap CPU-exhaustion vector.
-	authMaxFailures   = 5
-	authFailureWindow = 5 * time.Minute
-	authLockoutDur    = 1 * time.Minute
-
-	// authTrackerMaxEntries caps the failure map. Its key is derived from
-	// attacker-controlled connection data, so it must never grow without
-	// bound: entries are swept on every write and, if the cap is still hit,
-	// the least-recently-failed entry is evicted to make room.
-	authTrackerMaxEntries = 4096
 )
+
+// adminThrottle counts failed admin logins per client IP. doBasicAuth runs
+// bcrypt against real player credentials, which is deliberately expensive;
+// unthrottled it is both a password-guessing oracle and a cheap
+// CPU-exhaustion vector. The game login keeps its own tracker.
+var adminThrottle = auththrottle.New("ADMIN AUTH THROTTLE")
 
 // authCacheEntry records everything needed to re-check a cached grant without
 // paying for bcrypt again. username/role/pwHash are the identity the grant was
@@ -53,25 +47,18 @@ type authCacheEntry struct {
 	pwHash         string
 }
 
-type authFailureRecord struct {
-	count       int
-	windowStart time.Time
-	lastFail    time.Time
-	lockedUntil time.Time
-}
-
 var (
-	// authMu guards BOTH maps below.
+	// authMu guards authCache.
 	//
-	// These were previously unguarded. Every /admin/* route happens to be
+	// It was previously unguarded. Every /admin/* route happens to be
 	// wrapped in RunWithMUDLocked, which serialized them by accident, but
 	// GET /build and GET /build-help are deliberately not (the build page must
 	// not hold the world lock). An unauthenticated flood of /build therefore
 	// raced any admin authenticating elsewhere in the admin UI and killed the
 	// process with "concurrent map read and map write".
-	authMu       sync.Mutex
-	authCache    = map[string]authCacheEntry{}
-	authFailures = map[string]*authFailureRecord{}
+	authMu sync.Mutex
+	// authCache holds admin grants by authCacheKey; see authCacheLookup.
+	authCache = map[string]authCacheEntry{}
 )
 
 func handlerToHandlerFunc(h http.Handler) http.HandlerFunc {
@@ -95,91 +82,6 @@ func authCacheKey(authHeader string) string {
 // and every attacker onto a single bucket.
 func authSourceIP(r *http.Request) string {
 	return ResolveClientIP(r)
-}
-
-// authThrottled reports whether this source is currently locked out. Called
-// before any bcrypt work so that a lockout actually saves the CPU.
-func authThrottled(ip string, now time.Time) (bool, time.Duration) {
-	authMu.Lock()
-	defer authMu.Unlock()
-
-	rec, ok := authFailures[ip]
-	if !ok {
-		return false, 0
-	}
-	if now.Before(rec.lockedUntil) {
-		return true, rec.lockedUntil.Sub(now)
-	}
-	return false, 0
-}
-
-// noteAuthFailure records a failed attempt and locks the source out once it
-// exceeds authMaxFailures inside authFailureWindow.
-func noteAuthFailure(ip string, now time.Time) {
-	authMu.Lock()
-	defer authMu.Unlock()
-
-	sweepAuthFailuresLocked(now)
-
-	rec, ok := authFailures[ip]
-	if !ok {
-		if len(authFailures) >= authTrackerMaxEntries {
-			evictOldestAuthFailureLocked()
-		}
-		rec = &authFailureRecord{windowStart: now}
-		authFailures[ip] = rec
-	}
-
-	// A quiet period longer than the window starts a fresh count.
-	if now.Sub(rec.windowStart) > authFailureWindow {
-		rec.count = 0
-		rec.windowStart = now
-	}
-
-	rec.count++
-	rec.lastFail = now
-
-	if rec.count >= authMaxFailures {
-		rec.lockedUntil = now.Add(authLockoutDur)
-		mudlog.Warn("ADMIN AUTH THROTTLE", "ip", ip, "failures", rec.count, "lockedForSeconds", int(authLockoutDur.Seconds()))
-	}
-}
-
-// clearAuthFailures drops the failure record for a source that just
-// authenticated successfully.
-func clearAuthFailures(ip string) {
-	authMu.Lock()
-	defer authMu.Unlock()
-	delete(authFailures, ip)
-}
-
-// sweepAuthFailuresLocked drops records that are outside the failure window and
-// not currently locked out. Caller must hold authMu.
-func sweepAuthFailuresLocked(now time.Time) {
-	for ip, rec := range authFailures {
-		if now.Before(rec.lockedUntil) {
-			continue
-		}
-		if now.Sub(rec.lastFail) > authFailureWindow {
-			delete(authFailures, ip)
-		}
-	}
-}
-
-// evictOldestAuthFailureLocked makes room when the tracker is at capacity.
-// Caller must hold authMu.
-func evictOldestAuthFailureLocked() {
-	var oldestIP string
-	var oldest time.Time
-	for ip, rec := range authFailures {
-		if oldestIP == `` || rec.lastFail.Before(oldest) {
-			oldestIP = ip
-			oldest = rec.lastFail
-		}
-	}
-	if oldestIP != `` {
-		delete(authFailures, oldestIP)
-	}
 }
 
 // authCacheLookup returns true when a cached grant is still valid. It also
@@ -276,7 +178,8 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 
 		// Everything past here is expensive (bcrypt), so throttle first.
 		sourceIP := authSourceIP(r)
-		if locked, retryIn := authThrottled(sourceIP, now); locked {
+		refuseThrottled := func() {
+			_, retryIn := adminThrottle.Throttled(sourceIP, now)
 			secs := int(retryIn.Seconds()) + 1
 			w.Header().Set("Retry-After", strconv.Itoa(secs))
 			// Send the challenge even while throttled. Without it a browser that
@@ -285,6 +188,9 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 			// window expires -- a self-sustaining outage rather than a lockout.
 			w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
 			http.Error(w, "Too many failed authentication attempts", http.StatusTooManyRequests)
+		}
+		if locked, _ := adminThrottle.Throttled(sourceIP, now); locked {
+			refuseThrottled()
 			return
 		}
 
@@ -293,6 +199,24 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 		// or the header value is invalid, then the 'ok' return value
 		// will be false.
 		username, password, ok := r.BasicAuth()
+
+		// Only a PRESENTED credential is an attempt. It is counted here,
+		// before the bcrypt work and in one step with the lockout check, so
+		// a burst of parallel requests cannot all pass the check above
+		// before any failure is counted. A success clears the count.
+		//
+		// ⚠️ A request with NO Authorization header is not a failure, it is the
+		// first half of the standard HTTP Basic handshake: the client asks, gets
+		// a 401 with a challenge, and only then retries with credentials.
+		// Counting those once made an admin page pulling several resources
+		// trip the five-strike lockout entirely on its own, and the dashboards'
+		// JSON endpoints answered 429 with a plain-text body, surfacing as
+		//   SyntaxError: Unexpected token 'T', "Too many f"... is not valid JSON
+		if ok && !adminThrottle.Attempt(sourceIP, now) {
+			refuseThrottled()
+			return
+		}
+
 		if ok {
 
 			// Authorize against actual user record
@@ -307,7 +231,7 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 
 						// Cache auth for 30 minutes to avoid re-auth every load
 						authCacheStore(authCacheKey(authHeader), uRecord, now)
-						clearAuthFailures(sourceIP)
+						adminThrottle.Clear(sourceIP)
 
 						next.ServeHTTP(w, r)
 						return
@@ -322,26 +246,6 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 			} else {
 				mudlog.Error("ADMIN LOGIN", "username", username, "success", false, "error", err)
 			}
-		}
-
-		// Only a PRESENTED credential can be a failed attempt.
-		//
-		// ⚠️ A request with NO Authorization header is not a failure, it is the
-		// first half of the standard HTTP Basic handshake: the client asks, gets
-		// a 401 with a challenge, and only then retries with credentials. This
-		// used to call noteAuthFailure unconditionally, so ordinary page loads
-		// manufactured "failures" -- and an admin page pulling several resources
-		// tripped the five-strike lockout entirely on its own.
-		//
-		// That is what broke the combat, economy and progression dashboards:
-		// their JSON endpoints answered 429 with a plain-text body, surfacing in
-		// the browser as
-		//   SyntaxError: Unexpected token 'T', "Too many f"... is not valid JSON
-		//
-		// A wrong password, a malformed credential and a non-admin account all
-		// still count, so brute-force protection is unchanged.
-		if ok {
-			noteAuthFailure(sourceIP, now)
 		}
 
 		// If the Authentication header is not present, is invalid, or the

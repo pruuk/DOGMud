@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/auththrottle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,9 +21,7 @@ import (
 // endpoints answered 429 with a plain-text body, which the page reported as
 // `SyntaxError: Unexpected token 'T', "Too many f"... is not valid JSON`.
 func TestNoCredentialIsNotAFailedAttempt(t *testing.T) {
-	authMu.Lock()
-	authFailures = map[string]*authFailureRecord{}
-	authMu.Unlock()
+	adminThrottle.ResetForTest()
 
 	h := doBasicAuth(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -50,9 +49,7 @@ func TestNoCredentialIsNotAFailedAttempt(t *testing.T) {
 func TestThrottledResponseStillCarriesTheChallenge(t *testing.T) {
 	const ip = "203.0.113.9"
 
-	authMu.Lock()
-	authFailures = map[string]*authFailureRecord{}
-	authMu.Unlock()
+	adminThrottle.ResetForTest()
 
 	h := doBasicAuth(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -60,7 +57,7 @@ func TestThrottledResponseStillCarriesTheChallenge(t *testing.T) {
 
 	// Present a WRONG credential enough times to lock the source out. These are
 	// genuine failures and must count.
-	for range authMaxFailures + 1 {
+	for range auththrottle.MaxFailures + 1 {
 		req := httptest.NewRequest(http.MethodGet, "/admin/", nil)
 		req.RemoteAddr = ip + ":5000"
 		req.SetBasicAuth("nosuchuser", "wrongpassword")

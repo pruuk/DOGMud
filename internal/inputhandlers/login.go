@@ -43,10 +43,56 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 	password := results["password"]
 
 	if username != `new` {
+		// Count the attempt before any password work, in one step with the
+		// lockout check, so a lockout saves the CPU and a burst of parallel
+		// connections cannot all slip past it. This is the only password
+		// check in the login: the prompt steps do none.
+		if !loginAttempt(clientInput.ConnectionId) {
+			sendLoginText(clientInput.ConnectionId, throttledLoginText)
+			connections.SendTo(term.CRLF, clientInput.ConnectionId)
+			// Remove fails only when the connection is already gone, which
+			// is the outcome wanted here.
+			_ = connections.Remove(clientInput.ConnectionId)
+			return false
+		}
+
 		userExists := users.Exists(username)
 
 		if userExists {
 
+			// Check the password on a copy loaded WITHOUT validation:
+			// validation re-saves the file, and doing that for anyone who
+			// types a name would cancel or roll back an online player's
+			// pending save.
+			savedUser, err := users.LoadUser(username, true)
+			if err != nil {
+				mudlog.Error("Failed to load existing user during login", "username", username, "error", err)
+				sendLoginText(clientInput.ConnectionId, language.T("Error.LoginFailedGeneric"))
+				connections.SendTo(term.CRLF, clientInput.ConnectionId)
+				_ = connections.Remove(clientInput.ConnectionId)
+				return false // Indicate failure, connection removed
+			}
+
+			if !savedUser.PasswordMatches(password) {
+				sendLoginText(clientInput.ConnectionId, invalidLoginText)
+				connections.SendTo(term.CRLF, clientInput.ConnectionId)
+				_ = connections.Remove(clientInput.ConnectionId)
+				return false // Indicate failure, connection removed
+			}
+
+			// Account ban: reject a banned account after the password is verified
+			// (so it can't be used to probe which accounts exist) and before the
+			// character enters the world, or any session is kicked.
+			if reason, banned := moderation.IsAccountBanned(username); banned {
+				sendLoginText(clientInput.ConnectionId, "This account has been banned. Reason: "+reason)
+				connections.SendTo(term.CRLF, clientInput.ConnectionId)
+				_ = connections.Remove(clientInput.ConnectionId)
+				return false
+			}
+
+			// Kick only now, after the password is proven: the kick question
+			// asks only whether the account is online, so its answer alone
+			// must never end a session.
 			if results["kickuser"] == "y" {
 
 				connDetails := connections.Get(clientInput.ConnectionId)
@@ -87,31 +133,15 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 
 			}
 
-			// Existing User Login Logic (No changes needed)
+			// The password is proven: load the record to log in with, with
+			// validation and its migrations.
 			tmpUser, err := users.LoadUser(username)
 			if err != nil {
 				mudlog.Error("Failed to load existing user during login", "username", username, "error", err)
 				sendLoginText(clientInput.ConnectionId, language.T("Error.LoginFailedGeneric"))
 				connections.SendTo(term.CRLF, clientInput.ConnectionId)
-				connections.Remove(clientInput.ConnectionId)
+				_ = connections.Remove(clientInput.ConnectionId)
 				return false // Indicate failure, connection removed
-			}
-
-			if !tmpUser.PasswordMatches(password) {
-				sendLoginText(clientInput.ConnectionId, `Nope. Bye!`)
-				connections.SendTo(term.CRLF, clientInput.ConnectionId)
-				connections.Remove(clientInput.ConnectionId)
-				return false // Indicate failure, connection removed
-			}
-
-			// Account ban: reject a banned account after the password is verified
-			// (so it can't be used to probe which accounts exist) and before the
-			// character enters the world.
-			if reason, banned := moderation.IsAccountBanned(username); banned {
-				sendLoginText(clientInput.ConnectionId, "This account has been banned. Reason: "+reason)
-				connections.SendTo(term.CRLF, clientInput.ConnectionId)
-				connections.Remove(clientInput.ConnectionId)
-				return false
 			}
 
 			// The connection's screen reader report turns the account's setting
@@ -129,6 +159,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 				return false // Indicate failure, connection removed
 			}
 
+			loginSucceeded(clientInput.ConnectionId)
 			sharedState["UserObject"] = loggedInUser // For main loop
 
 			sendLoginLines(clientInput.ConnectionId, srLines)
@@ -141,7 +172,10 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 			return true // Indicate success, handler can be removed
 
 		} else {
-			sendLoginText(clientInput.ConnectionId, `Invalid login.`)
+			// An unknown username costs the same bcrypt work and gets the
+			// same answer as a wrong password; its attempt is already counted.
+			spendPasswordCheck(password)
+			sendLoginText(clientInput.ConnectionId, invalidLoginText)
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			connections.Remove(clientInput.ConnectionId)
 			return false // Indicate failure, connection removed
@@ -272,13 +306,13 @@ func loginSteps() []*PromptStep {
 				if results["username"] == `new` {
 					return false
 				}
-
-				userid := users.FindUserId(results["username"])
-
-				user := users.GetByUserId(userid)
-
-				return user != nil && user.PasswordMatches(results["password"])
-			}, // Only run if username was not "new", password matches, and user is currently online.
+				// Asked whenever the account is online, WITHOUT checking the
+				// password: a password check here ran before the login's
+				// attempt count, so it told a locked-out or banned source when
+				// a guess was right. FinalizeLoginOrCreate proves the password
+				// before it kicks anyone.
+				return users.GetByUserId(users.FindUserId(results["username"])) != nil
+			}, // Only run if username was not "new" and the account is online.
 		},
 		//////////////////////////////////////////////////
 		// End If NOT a new user signup (Just a login)
