@@ -238,9 +238,32 @@ func loadRecentUserFiles(dir string, maxDays int) []*users.UserRecord {
 	return result
 }
 
-// collectPlayers merges online users with recent offline users, deduping by
-// UserId.  Online records are preferred over disk snapshots.
-func collectPlayers() []*users.UserRecord {
+const (
+	// progressionDefaultDays is how far back the dashboard looks for offline
+	// players when the request names no window.
+	progressionDefaultDays = 14
+
+	// progressionMaxDays caps a requested ?days= window. Every day widens the
+	// set of user saves read and parsed per request; a quarter covers any real
+	// tuning question.
+	progressionMaxDays = 90
+)
+
+// progressionWindowDays turns the raw ?days= value into the offline window:
+// the default when it is absent or not a positive whole number, and never
+// more than progressionMaxDays.
+func progressionWindowDays(raw string) int {
+	days, err := strconv.Atoi(raw)
+	if err != nil || days <= 0 {
+		return progressionDefaultDays
+	}
+	return min(days, progressionMaxDays)
+}
+
+// collectPlayers merges online users with offline records already read from
+// disk, deduping by UserId. Online records are preferred over disk snapshots.
+// It reads the live user registry, so the caller must hold the world lock.
+func collectPlayers(offline []*users.UserRecord) []*users.UserRecord {
 	seen := map[int]bool{}
 	var all []*users.UserRecord
 
@@ -256,9 +279,7 @@ func collectPlayers() []*users.UserRecord {
 		all = append(all, u)
 	}
 
-	// Recent offline users from disk (last 14 days)
-	userDir := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), "/", "users")
-	for _, u := range loadRecentUserFiles(userDir, 14) {
+	for _, u := range offline {
 		if seen[u.UserId] {
 			continue
 		}
@@ -824,48 +845,35 @@ func progressionIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// progressionAPI serves the progression dashboard's JSON. It is registered
+// without RunWithMUDLocked and takes the world lock itself, for the shortest
+// span that touches world state: the offline saves (the ?days= window, see
+// progressionWindowDays) are read and parsed from disk first, with no lock,
+// because they are private copies no game code shares. Only the merge with
+// the live registry and the aggregation run locked; the response is plain
+// numbers and names, encoded after the lock is released.
 func progressionAPI(w http.ResponseWriter, r *http.Request) {
-	playerList := collectPlayers()
+	days := progressionWindowDays(r.URL.Query().Get("days"))
+	userDir := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), "/", "users")
+	offline := loadRecentUserFiles(userDir, days)
 
-	// Allow optional ?days=N to narrow the offline window (ignored for online)
-	if daysStr := r.URL.Query().Get("days"); daysStr != "" {
-		if days, err := strconv.Atoi(daysStr); err == nil && days > 0 {
-			userDir := util.FilePath(
-				string(configs.GetFilePathsConfig().DataFiles), "/", "users",
-			)
-			offline := loadRecentUserFiles(userDir, days)
-			// Rebuild with custom window — still prefer online records
-			seen := map[int]bool{}
-			var merged []*users.UserRecord
-			for _, u := range users.GetAllActiveUsers() {
-				if u.Role == users.RoleAdmin || u.Role == users.RoleGuest {
-					continue
-				}
-				if u.Character == nil {
-					continue
-				}
-				seen[u.UserId] = true
-				merged = append(merged, u)
-			}
-			for _, u := range offline {
-				if seen[u.UserId] {
-					continue
-				}
-				seen[u.UserId] = true
-				merged = append(merged, u)
-			}
-			playerList = merged
+	var resp progressionAPIResponse
+	func() {
+		util.LockMud()
+		defer util.UnlockMud()
+
+		playerList := collectPlayers(offline)
+		resp = progressionAPIResponse{
+			Skills:  buildSkillHealth(playerList),
+			Stats:   buildStatHealth(playerList),
+			Spells:  buildSpellHealth(playerList),
+			Recipes: buildRecipeHealth(playerList),
+			Players: buildPlayerOverview(playerList),
 		}
-	}
-
-	resp := progressionAPIResponse{
-		Skills:  buildSkillHealth(playerList),
-		Stats:   buildStatHealth(playerList),
-		Spells:  buildSpellHealth(playerList),
-		Recipes: buildRecipeHealth(playerList),
-		Players: buildPlayerOverview(playerList),
-	}
+	}()
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		mudlog.Error("progressionAPI", "error", err)
+	}
 }
