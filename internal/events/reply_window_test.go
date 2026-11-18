@@ -20,11 +20,14 @@ func TestReplyWindow_MarksOnlyThatPlayersMessages(t *testing.T) {
 	CloseReply(7)
 	AddToQueue(Message{UserId: 7, Text: "after the reply\n"})
 
-	mine := DrainQueuedMessageEventsForTest(7)
+	mine := map[string]Message{}
+	for _, m := range DrainQueuedMessageEventsForTest(7) {
+		mine[m.Text] = m
+	}
 	require.Len(t, mine, 3)
-	require.True(t, mine[0].Reply)
-	require.True(t, mine[1].Reply)
-	require.False(t, mine[2].Reply, "the window closed")
+	require.True(t, mine["yours\n"].Reply)
+	require.True(t, mine["a menu\n"].Reply)
+	require.False(t, mine["after the reply\n"].Reply, "the window closed")
 	require.False(t, DrainQueuedMessageEventsForTest(8)[0].Reply)
 	require.False(t, DrainQueuedRoomMessagesForTest(3)[0].Reply)
 }
@@ -41,9 +44,18 @@ func TestReplyWindow_Counts(t *testing.T) {
 	CloseReply(7)
 	CloseReply(7) // one too many is harmless
 	AddToQueue(Message{UserId: 7, Text: "not a reply\n"})
+	// The extra close must not leave the count negative: a later window
+	// still opens.
+	OpenReply(7)
+	AddToQueue(Message{UserId: 7, Text: "reopened\n"})
+	CloseReply(7)
 
-	got := DrainQueuedMessageEventsForTest(7)
-	require.Len(t, got, 2)
-	require.True(t, got[0].Reply)
-	require.False(t, got[1].Reply)
+	got := map[string]Message{}
+	for _, m := range DrainQueuedMessageEventsForTest(7) {
+		got[m.Text] = m
+	}
+	require.Len(t, got, 3)
+	require.True(t, got["still a reply\n"].Reply)
+	require.False(t, got["not a reply\n"].Reply)
+	require.True(t, got["reopened\n"].Reply)
 }

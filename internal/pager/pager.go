@@ -30,17 +30,21 @@ const (
 
 // Size is the page size for a reader and whether paging is on. setting is
 // UserRecord.PageSize: SettingOff, 0 to follow the screen, or a size.
-// reported is the screen's height in rows.
+// reported is the screen's height in rows. When paging is on, the size is
+// clamped to MinSize..MaxSize, whichever of the three it came from.
 func Size(reported, setting int, screenReader bool) (int, bool) {
+	var size int
 	switch {
 	case setting == SettingOff:
 		return 0, false
 	case setting > 0:
-		return setting, true
+		size = setting
 	case screenReader:
-		return ScreenReaderSize, true
+		size = ScreenReaderSize
+	default:
+		size = reported - reservedRows
 	}
-	return max(reported-reservedRows, MinSize), true
+	return min(max(size, MinSize), MaxSize), true
 }
 
 // Lines splits sent text into its screen lines. The text's own final line
@@ -54,10 +58,14 @@ func Lines(text string) []string {
 }
 
 // Cut cuts lines into pages of at most size lines. A blank line that would
-// open a page is dropped, so no page starts with empty space.
+// open a page, the first included, is dropped, so no page starts with a
+// blank line.
 func Cut(lines []string, size int) [][]string {
 	size = max(size, 1)
 	var pages [][]string
+	for len(lines) > 0 && lines[0] == "" {
+		lines = lines[1:]
+	}
 	for len(lines) > 0 {
 		n := min(size, len(lines))
 		pages = append(pages, lines[:n])
