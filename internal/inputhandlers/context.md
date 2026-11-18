@@ -9,6 +9,16 @@ The `internal/inputhandlers` package provides comprehensive input processing and
 ### Core Files
 - **login.go**: User authentication and login finalization logic
 - **login_prompt_handler.go**: Multi-step prompt system for interactive user input
+- **login_throttle.go**: the game login's failed-attempt throttle
+  (`gameLoginThrottle`, an `auththrottle.Tracker` keyed by `ClientIP()`).
+  `FinalizeLoginOrCreate` refuses a locked-out source before any password
+  work; a wrong password and an unknown username both count, cost the same
+  bcrypt work (`spendPasswordCheck`) and get the same `invalidLoginText`, so
+  neither the reply nor its timing tells which usernames exist. The prompt
+  handler writes `connFactLoginThrottled`, and the kick question's condition
+  refuses on it, so a locked-out source learns nothing from that question
+  either. That condition checks the password on a copy loaded from disk,
+  never on the live user (`PasswordMatches` rewrites a legacy hash)
 - **systemcommands.go**: System-level command processing (quit, reload, shutdown)
 - **signals.go**: Signal handling and terminal control
 - **term_ansi.go**: ANSI escape sequence processing

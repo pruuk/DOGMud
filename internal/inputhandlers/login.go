@@ -43,6 +43,15 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 	password := results["password"]
 
 	if username != `new` {
+		// Throttle before any password work, so a lockout saves the CPU
+		// and stops the guessing.
+		if loginThrottled(clientInput.ConnectionId) {
+			sendLoginText(clientInput.ConnectionId, throttledLoginText)
+			connections.SendTo(term.CRLF, clientInput.ConnectionId)
+			connections.Remove(clientInput.ConnectionId)
+			return false
+		}
+
 		userExists := users.Exists(username)
 
 		if userExists {
@@ -98,7 +107,8 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 			}
 
 			if !tmpUser.PasswordMatches(password) {
-				sendLoginText(clientInput.ConnectionId, `Nope. Bye!`)
+				noteLoginFailure(clientInput.ConnectionId)
+				sendLoginText(clientInput.ConnectionId, invalidLoginText)
 				connections.SendTo(term.CRLF, clientInput.ConnectionId)
 				connections.Remove(clientInput.ConnectionId)
 				return false // Indicate failure, connection removed
@@ -129,6 +139,7 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 				return false // Indicate failure, connection removed
 			}
 
+			clearLoginFailures(clientInput.ConnectionId)
 			sharedState["UserObject"] = loggedInUser // For main loop
 
 			sendLoginLines(clientInput.ConnectionId, srLines)
@@ -141,7 +152,11 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 			return true // Indicate success, handler can be removed
 
 		} else {
-			sendLoginText(clientInput.ConnectionId, `Invalid login.`)
+			// An unknown username costs the same bcrypt work and gets the
+			// same answer as a wrong password, and counts as a failure.
+			spendPasswordCheck(password)
+			noteLoginFailure(clientInput.ConnectionId)
+			sendLoginText(clientInput.ConnectionId, invalidLoginText)
 			connections.SendTo(term.CRLF, clientInput.ConnectionId)
 			connections.Remove(clientInput.ConnectionId)
 			return false // Indicate failure, connection removed
@@ -272,12 +287,23 @@ func loginSteps() []*PromptStep {
 				if results["username"] == `new` {
 					return false
 				}
+				// A locked-out source gets no password check here: the kick
+				// question would otherwise tell it the password was right.
+				if results[connFactLoginThrottled] == `y` {
+					return false
+				}
 
 				userid := users.FindUserId(results["username"])
+				if users.GetByUserId(userid) == nil {
+					return false
+				}
 
-				user := users.GetByUserId(userid)
-
-				return user != nil && user.PasswordMatches(results["password"])
+				// Check the password on a copy loaded from disk, never on the
+				// live user: PasswordMatches rewrites a legacy hash, and this
+				// runs on the connection goroutine while MainWorker uses the
+				// live user.
+				saved, err := users.LoadUser(results["username"])
+				return err == nil && saved.PasswordMatches(results["password"])
 			}, // Only run if username was not "new", password matches, and user is currently online.
 		},
 		//////////////////////////////////////////////////

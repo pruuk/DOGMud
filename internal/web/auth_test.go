@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/auththrottle"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -165,7 +166,7 @@ func resetAuthStateForTest() {
 	authMu.Lock()
 	defer authMu.Unlock()
 	authCache = map[string]authCacheEntry{}
-	authFailures = map[string]*authFailureRecord{}
+	adminThrottle.ResetForTest()
 }
 
 // rewriteAuthTestUser overwrites an existing test user's YAML in place, which
@@ -280,7 +281,7 @@ func TestFailedAuthIsThrottledPerSource(t *testing.T) {
 
 	const attacker = "198.51.100.7:6000"
 
-	for i := range authMaxFailures {
+	for i := range auththrottle.MaxFailures {
 		if code, _ := doAuthRequest(t, "adminuser", "wrong-password", attacker); code != http.StatusUnauthorized {
 			t.Fatalf("attempt %d: status=%d, want 401", i+1, code)
 		}
@@ -299,25 +300,5 @@ func TestFailedAuthIsThrottledPerSource(t *testing.T) {
 	// ...but a different source is unaffected.
 	if code, called := doAuthRequest(t, "adminuser", password, "198.51.100.8:6000"); code != http.StatusOK || !called {
 		t.Fatalf("other source: status=%d called=%t, want 200/true", code, called)
-	}
-}
-
-// The failure tracker is keyed by attacker-controlled connection data, so it
-// must be bounded rather than growing until the process dies.
-func TestAuthFailureTrackerIsBounded(t *testing.T) {
-	resetAuthStateForTest()
-	defer resetAuthStateForTest()
-
-	now := time.Now()
-	for i := range authTrackerMaxEntries + 500 {
-		noteAuthFailure("10.0."+strconv.Itoa(i/256)+"."+strconv.Itoa(i%256), now)
-	}
-
-	authMu.Lock()
-	got := len(authFailures)
-	authMu.Unlock()
-
-	if got > authTrackerMaxEntries {
-		t.Fatalf("failure tracker grew to %d entries, cap is %d", got, authTrackerMaxEntries)
 	}
 }
