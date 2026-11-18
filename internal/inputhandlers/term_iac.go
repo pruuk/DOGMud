@@ -208,6 +208,7 @@ func TelnetIACHandler(clientInput *connections.ClientInput, sharedState map[stri
 					connections.UpdateClientSettings(clientInput.ConnectionId, func(cs *connections.ClientSettings) {
 						cs.Display.ScreenWidth = uint32(w)
 						cs.Display.ScreenHeight = uint32(h)
+						cs.NAWSReported = true
 					})
 
 				}

@@ -26,6 +26,10 @@ type ClientSettings struct {
 	// TermTypeLast is the latest one; the MTTS cycle stops on a repeat.
 	TermTypeReplies int
 	TermTypeLast    string
+	// NAWSReported is true once a telnet client sent its window size by
+	// NAWS. NAWS then owns the screen size: the one-off ANSI cursor report
+	// asked for at connect fills it only when NAWS has not (#915).
+	NAWSReported bool
 }
 
 func (c ClientSettings) IsMsp() bool {
