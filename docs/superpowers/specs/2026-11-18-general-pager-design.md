@@ -53,6 +53,8 @@ printed it.
 4. **Page size is the reader's screen height, with a setting on top.**
    `set pagesize <n>` overrides it and `set pagesize off` turns paging off.
    A screen reader account defaults to a fixed size instead of the window.
+5. **No paging in combat** (owner, on the written spec). While the player is
+   in combat, every reply is sent whole.
 
 ## Design
 
@@ -112,6 +114,12 @@ Pure, like `internal/menu`: no I/O, no locks.
   redraw, including the one after a combat line that arrives mid-read,
   puts the stop line back under the text.
 - A new reply replaces any pages still waiting.
+- **Combat (ruling 5).** "In combat" is `Character.IsInCombat()`, the test
+  `menuGate` uses (`internal/users/menu_gate.go:23`), so menus and the pager
+  cannot disagree. A reply that ends while the player is in combat is sent
+  whole. If a fight starts while pages are waiting, the next message that
+  reaches the player sends the rest at once, ahead of that message, and the
+  normal prompt returns.
 
 ### 4. Input at a stop (`world.go`, `internal/users`)
 
@@ -160,6 +168,8 @@ not re-queued as messages, so it is never re-marked or re-collected.
   line is redrawn under it; a reply that fits is sent unchanged.
 - Routing test: Enter, `q`, a menu number on an unseen page, and another
   command at a stop.
+- Combat: a long reply ending in combat is sent whole; pages waiting when a
+  fight starts go out in full before the first combat line.
 - `talk` to Toke under test with a page size of 10: every line of his reply
   and menu is marked, and nothing of it arrives before page one.
 - The `InputDone` guard test is updated for the telnet queueing; a guard
@@ -191,6 +201,9 @@ not re-queued as messages, so it is never re-marked or re-collected.
   one.
 - **Stop wording** "More (page 1 of 3): press Enter for the next page, or
   type q to stop." If wrong: one string.
+- **Pages waiting when a fight starts are sent, not dropped.** Ruling 5
+  says no paging in combat; sending keeps the text and ends the stop. If
+  wrong: drop them, as an open menu is closed by combat.
 - **`q` stops the paging even though it is the short alias for `quests`**
   (`_datafiles/world/dogmud/keywords.yaml:345`). Only at a stop: there,
   `quests` in full still drops the rest and shows the list. If wrong: stop
