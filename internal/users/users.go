@@ -254,9 +254,9 @@ func LoginUser(user *UserRecord, connectionId connections.ConnectionId) (*UserRe
 
 				// Apply persisted charset preference to connection (I/O — outside lock)
 				if user.AsciiMode {
-					cs := connections.GetClientSettings(connectionId)
-					cs.AsciiMode = true
-					connections.OverwriteClientSettings(connectionId, cs)
+					connections.UpdateClientSettings(connectionId, func(cs *connections.ClientSettings) {
+						cs.AsciiMode = true
+					})
 				}
 
 				for _, mobInstId := range user.Character.GetCharmIds() {
@@ -293,9 +293,9 @@ func LoginUser(user *UserRecord, connectionId connections.ConnectionId) (*UserRe
 
 	// Apply persisted charset preference to connection (I/O — outside lock)
 	if user.AsciiMode {
-		cs := connections.GetClientSettings(connectionId)
-		cs.AsciiMode = true
-		connections.OverwriteClientSettings(connectionId, cs)
+		connections.UpdateClientSettings(connectionId, func(cs *connections.ClientSettings) {
+			cs.AsciiMode = true
+		})
 	}
 
 	mudlog.Info("LOGIN", "userId", user.UserId)

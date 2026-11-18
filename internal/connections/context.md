@@ -603,15 +603,20 @@ func GetClientSettings(id ConnectionId) ClientSettings {
     return ClientSettings{} // Return defaults
 }
 
-// Update client settings
-func OverwriteClientSettings(id ConnectionId, cs ClientSettings) {
+// Change client settings: the change runs under the connections lock, so
+// two goroutines changing different fields never lose each other's write.
+// change must not call back into this package (the lock is held).
+func UpdateClientSettings(id ConnectionId, change func(*ClientSettings)) {
     lock.Lock()
     defer lock.Unlock()
-    
+
     if cd, ok := netConnections[id]; ok {
-        cd.clientSettings = cs
+        change(&cd.clientSettings)
     }
 }
+
+// Replace the whole settings: TEST SETUP ONLY.
+func OverwriteClientSettings(id ConnectionId, cs ClientSettings)
 
 // Display settings with defaults
 func (c DisplaySettings) GetScreenWidth() int {

@@ -441,9 +441,10 @@ func cmdSetCharset(user *users.UserRecord) (bool, error) {
 	user.AsciiMode = !user.AsciiMode
 
 	// Apply to active connection immediately
-	cs := connections.GetClientSettings(user.ConnectionId())
-	cs.AsciiMode = user.AsciiMode
-	connections.OverwriteClientSettings(user.ConnectionId(), cs)
+	asciiMode := user.AsciiMode
+	connections.UpdateClientSettings(user.ConnectionId(), func(cs *connections.ClientSettings) {
+		cs.AsciiMode = asciiMode
+	})
 
 	if user.AsciiMode {
 		user.SendText(messaging.CategorySystem, "Charset mode set to <ansi fg=\"red\">ASCII</ansi>.")

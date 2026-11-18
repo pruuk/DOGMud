@@ -36,21 +36,24 @@ func recordTermType(id connections.ConnectionId, reply string) bool {
 	if len(reply) > maxTermTypeLen {
 		reply = reply[:maxTermTypeLen]
 	}
-	cs := connections.GetClientSettings(id)
-	cs.TermTypeReplies++
-	last := cs.TermTypeLast
-	cs.TermTypeLast = reply
-
+	bits, isMTTS := term.ParseMTTS(reply)
 	askAgain := false
-	if bits, ok := term.ParseMTTS(reply); ok {
-		cs.MTTSReported = true
-		cs.ScreenReader = bits&term.MTTSScreenReader != 0
+	connections.UpdateClientSettings(id, func(cs *connections.ClientSettings) {
+		cs.TermTypeReplies++
+		last := cs.TermTypeLast
+		cs.TermTypeLast = reply
+		if isMTTS {
+			cs.MTTSReported = true
+			cs.ScreenReader = bits&term.MTTSScreenReader != 0
+		} else {
+			askAgain = reply != last && cs.TermTypeReplies < maxTermTypeReplies
+		}
+	})
+	if isMTTS {
 		mudlog.Debug("Received", "type", "IAC (MTTS)", "bits", bits)
 	} else {
 		mudlog.Debug("Received", "type", "IAC (TTYPE)", "reply", reply)
-		askAgain = reply != last && cs.TermTypeReplies < maxTermTypeReplies
 	}
-	connections.OverwriteClientSettings(id, cs)
 	return askAgain
 }
 
@@ -121,9 +124,9 @@ func TelnetIACHandler(clientInput *connections.ClientInput, sharedState map[stri
 			if ok, payload := term.Matches(iacCmd, term.MspAccept); ok {
 				mudlog.Debug("Received", "type", "IAC (Client-MSP Accept)", "data", term.BytesString(payload))
 
-				cs := connections.GetClientSettings(clientInput.ConnectionId)
-				cs.MSPEnabled = true
-				connections.OverwriteClientSettings(clientInput.ConnectionId, cs)
+				connections.UpdateClientSettings(clientInput.ConnectionId, func(cs *connections.ClientSettings) {
+					cs.MSPEnabled = true
+				})
 
 				connections.SendTo(
 					term.MspCommand.BytesWithPayload([]byte("!!SOUND(Off U="+configs.GetFilePathsConfig().WebCDNLocation.String()+")")),
@@ -136,9 +139,9 @@ func TelnetIACHandler(clientInput *connections.ClientInput, sharedState map[stri
 			if ok, payload := term.Matches(iacCmd, term.MspRefuse); ok {
 				mudlog.Debug("Received", "type", "IAC (Client-MSP Refuse)", "data", term.BytesString(payload))
 
-				cs := connections.GetClientSettings(clientInput.ConnectionId)
-				cs.MSPEnabled = false
-				connections.OverwriteClientSettings(clientInput.ConnectionId, cs)
+				connections.UpdateClientSettings(clientInput.ConnectionId, func(cs *connections.ClientSettings) {
+					cs.MSPEnabled = false
+				})
 
 				continue
 			}
@@ -168,9 +171,9 @@ func TelnetIACHandler(clientInput *connections.ClientInput, sharedState map[stri
 		if ok, _ := term.Matches(iacCmd, term.TelnetDontSuppressGoAhead); ok {
 			mudlog.Debug("Received", "type", "IAC (TelnetDontSuppressGoAhead)")
 
-			cs := connections.GetClientSettings(clientInput.ConnectionId)
-			cs.SendTelnetGoAhead = true
-			connections.OverwriteClientSettings(clientInput.ConnectionId, cs)
+			connections.UpdateClientSettings(clientInput.ConnectionId, func(cs *connections.ClientSettings) {
+				cs.SendTelnetGoAhead = true
+			})
 
 			continue
 		}
@@ -202,10 +205,10 @@ func TelnetIACHandler(clientInput *connections.ClientInput, sharedState map[stri
 
 				if err == nil {
 
-					cs := connections.GetClientSettings(clientInput.ConnectionId)
-					cs.Display.ScreenWidth = uint32(w)
-					cs.Display.ScreenHeight = uint32(h)
-					connections.OverwriteClientSettings(clientInput.ConnectionId, cs)
+					connections.UpdateClientSettings(clientInput.ConnectionId, func(cs *connections.ClientSettings) {
+						cs.Display.ScreenWidth = uint32(w)
+						cs.Display.ScreenHeight = uint32(h)
+					})
 
 				}
 

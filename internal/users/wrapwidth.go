@@ -37,11 +37,11 @@ func ParseReportedCols(s string) (int, bool) {
 // connection is a websocket.
 func StoreReportedCols(id connections.ConnectionId, cols int) int {
 	width := min(max(cols, MinWrapWidth), MaxAutoWrapWidth)
-	cs := connections.GetClientSettings(id)
-	if cs.Display.GetScreenWidth() != width {
-		cs.Display.ScreenWidth = uint32(width)
-		connections.OverwriteClientSettings(id, cs)
-	}
+	connections.UpdateClientSettings(id, func(cs *connections.ClientSettings) {
+		if cs.Display.GetScreenWidth() != width {
+			cs.Display.ScreenWidth = uint32(width)
+		}
+	})
 	return width
 }
 
