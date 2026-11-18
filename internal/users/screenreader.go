@@ -86,9 +86,7 @@ func StoreAddressScreenReader(id connections.ConnectionId, raw string) bool {
 // decides what it means for the account. The caller checks that the
 // connection is a websocket.
 func StoreReportedScreenReader(id connections.ConnectionId, on bool) {
-	cs := connections.GetClientSettings(id)
-	if cs.ScreenReader != on {
+	connections.UpdateClientSettings(id, func(cs *connections.ClientSettings) {
 		cs.ScreenReader = on
-		connections.OverwriteClientSettings(id, cs)
-	}
+	})
 }

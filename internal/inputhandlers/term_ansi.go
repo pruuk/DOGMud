@@ -41,10 +41,10 @@ func AnsiHandler(clientInput *connections.ClientInput, sharedState map[string]an
 
 				if err != nil {
 
-					cs := connections.GetClientSettings(clientInput.ConnectionId)
-					cs.Display.ScreenWidth = uint32(w)
-					cs.Display.ScreenHeight = uint32(h)
-					connections.OverwriteClientSettings(clientInput.ConnectionId, cs)
+					connections.UpdateClientSettings(clientInput.ConnectionId, func(cs *connections.ClientSettings) {
+						cs.Display.ScreenWidth = uint32(w)
+						cs.Display.ScreenHeight = uint32(h)
+					})
 
 				}
 			}

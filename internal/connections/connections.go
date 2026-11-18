@@ -345,6 +345,24 @@ func GetClientSettings(id ConnectionId) ClientSettings {
 	return ClientSettings{}
 }
 
+// UpdateClientSettings applies change to a connection's settings under the
+// connections lock, so a connection goroutine and MainWorker updating
+// different fields never lose each other's write (#910). It does nothing for
+// an unknown connection. The lock is held while change runs, so change must
+// not call back into this package. Production code changes settings only
+// through this; internal/guards keeps OverwriteClientSettings out of it.
+func UpdateClientSettings(id ConnectionId, change func(*ClientSettings)) {
+	lock.Lock()
+	defer lock.Unlock()
+
+	if cd, ok := netConnections[id]; ok {
+		change(&cd.clientSettings)
+	}
+}
+
+// OverwriteClientSettings replaces a connection's whole settings. It is for
+// test setup only: a get, change and overwrite from production code can lose
+// a concurrent write, so production uses UpdateClientSettings (guarded).
 func OverwriteClientSettings(id ConnectionId, cs ClientSettings) {
 	lock.Lock()
 	defer lock.Unlock()
