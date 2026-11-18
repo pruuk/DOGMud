@@ -4,6 +4,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/term"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 func AnsiHandler(clientInput *connections.ClientInput, sharedState map[string]any) (nextHandler bool) {
@@ -38,15 +39,7 @@ func AnsiHandler(clientInput *connections.ClientInput, sharedState map[string]an
 				mudlog.Debug("Received", "type", "ANSI (Screensize)", "data", term.BytesString(payload), "error", err)
 			} else {
 				mudlog.Debug("Received", "type", "ANSI (Screensize)", "width", w, "height", h)
-
-				if err != nil {
-
-					connections.UpdateClientSettings(clientInput.ConnectionId, func(cs *connections.ClientSettings) {
-						cs.Display.ScreenWidth = uint32(w)
-						cs.Display.ScreenHeight = uint32(h)
-					})
-
-				}
+				storeAnsiScreenSize(clientInput.ConnectionId, w, h)
 			}
 
 			continue
@@ -178,4 +171,37 @@ func AnsiHandler(clientInput *connections.ClientInput, sharedState map[string]an
 	}
 
 	return nextHandler
+}
+
+const (
+	// minAnsiScreenRows is the fewest rows an ANSI cursor report may give
+	// to count as a screen size. A modified F3 key (Ctrl+F3 is ESC[1;5R)
+	// arrives in the same shape with row 1, so a small report is a key, not
+	// a terminal.
+	minAnsiScreenRows = 10
+	// maxAnsiScreenSize matches NAWS, which carries 16-bit sizes.
+	maxAnsiScreenSize = 0xFFFF
+)
+
+// storeAnsiScreenSize stores the screen size from the ANSI cursor report a
+// telnet client sends back for term.AnsiRequestResolution at connect (#915).
+// NAWS owns the size once it has reported, in either order: this writes only
+// when NAWS has not, and a later NAWS report overwrites it. A websocket is
+// left alone (its width is the web client's clamped report), and so is a
+// report too narrow or short to be a terminal (users.MinWrapWidth columns,
+// minAnsiScreenRows rows) or larger than NAWS can carry.
+func storeAnsiScreenSize(id connections.ConnectionId, w, h int) {
+	if w < users.MinWrapWidth || h < minAnsiScreenRows || w > maxAnsiScreenSize || h > maxAnsiScreenSize {
+		return
+	}
+	if connections.IsWebsocket(id) {
+		return
+	}
+	connections.UpdateClientSettings(id, func(cs *connections.ClientSettings) {
+		if cs.NAWSReported {
+			return
+		}
+		cs.Display.ScreenWidth = uint32(w)
+		cs.Display.ScreenHeight = uint32(h)
+	})
 }
