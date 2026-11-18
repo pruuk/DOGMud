@@ -30,12 +30,9 @@ func init() {
 		panic(err)
 	}
 
-	// Admin web pages: a Config editor and a static About page. Registered
-	// WITHOUT a nav link (addToNav=false) — these are admin-gated dev pages, and
-	// adding them to the nav leaked "Config"/"About" 404s into the public site
-	// nav. Still reachable by URL (/playtest-config, /playtest-about) for admins.
-	module.plug.Web.WebPage("Config", "playtest-config", "html/admin/playtest-config.html", false, nil)
-	module.plug.Web.WebPage("About", "playtest-about", "html/admin/playtest-about.html", false, nil)
+	// This module registers no web pages. Module pages are served on the
+	// public site with no login, so an admin page cannot be one of them.
+	// Settings live in files/data-overlays/config.yaml (see README.md).
 
 	module.plug.Callbacks.SetOnLoad(module.onLoad)
 }

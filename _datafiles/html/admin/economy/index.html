@@ -193,7 +193,7 @@
         for (var b in sumByBucket) {
             var pct = totalCap > 0 ? (sumByBucket[b] / totalCap * 100) : 0;
             var color = BUCKET_COLORS[b] || "#999";
-            bar += '<div title="' + b + ': ' + sumByBucket[b] + '" ' +
+            bar += '<div title="' + esc(b) + ': ' + esc(sumByBucket[b]) + '" ' +
                 'style="width:' + pct.toFixed(0) + '%;background:' + color + '"></div>';
         }
         bar += '</div>';

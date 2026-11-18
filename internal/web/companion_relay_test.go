@@ -173,6 +173,54 @@ func TestRelayOriginJSON_StaysOneScriptLiteral(t *testing.T) {
 	}
 }
 
+// The item icon folder is config printed inside a script, so it is encoded the
+// same way: a hostile CDN location stays one string literal.
+func TestItemIconBaseJSON_StaysOneScriptLiteral(t *testing.T) {
+	hostile := `https://cdn"</script><script>alert(1)//`
+	got := itemIconBaseJSON(hostile)
+	if strings.ContainsAny(got, `<>`) {
+		t.Fatalf("itemIconBaseJSON let markup through: %s", got)
+	}
+	var back string
+	if err := json.Unmarshal([]byte(got), &back); err != nil || back != hostile+`/static/images/items` {
+		t.Fatalf("itemIconBaseJSON is not one JSON string holding the folder: %s (%v)", got, err)
+	}
+	if got := itemIconBaseJSON(``); got != `"/static/images/items"` {
+		t.Fatalf("with no CDN the folder literal is %s, want \"/static/images/items\"", got)
+	}
+}
+
+// No inline script on the game page may print a config value raw: inside a
+// script the html encoder is the wrong one, so such a value goes through a
+// JSON-encoded template value instead (itemIconBaseJSON, relayOriginJSON).
+func TestGamePageInlineScriptsPrintNoRawConfig(t *testing.T) {
+	page, err := os.ReadFile(filepath.Join(diagramsRepoRoot(t), "_datafiles", "html", "public", "webclient-pure.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := string(page)
+	inline := 0
+	for {
+		start := strings.Index(src, `<script>`)
+		if start < 0 {
+			break
+		}
+		end := strings.Index(src[start:], `</script>`)
+		if end < 0 {
+			t.Fatal("unclosed inline script")
+		}
+		body := src[start : start+end]
+		inline++
+		if strings.Contains(body, `.CONFIG.`) {
+			t.Errorf("an inline script prints a config value raw: %.120s", body)
+		}
+		src = src[start+end:]
+	}
+	if inline == 0 || !strings.Contains(string(page), `window.ITEM_ICON_BASE = {{ .ITEM_ICON_BASE_JSON }};`) {
+		t.Fatalf("found %d inline scripts and no ITEM_ICON_BASE_JSON line, so this test proves nothing", inline)
+	}
+}
+
 // With no relay offered the page gets an empty string, not a missing value.
 func TestRelayOriginJSON_EmptyWhenNoRelay(t *testing.T) {
 	companionai.SetRelayPage(nil)
