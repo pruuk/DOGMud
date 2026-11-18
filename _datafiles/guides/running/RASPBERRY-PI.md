@@ -108,17 +108,20 @@ The server will start on the specified port (default: 33333).
    http://[raspi IP address]/webclient
    ```
    For example http://192.168.50.106:8080/webclient
-2. Log in with the default admin credentials set in `config.yaml`. Example:
-   ```
-   Username: admin
-   Password: password
-   ```
+2. No admin account ships with the server. Type `new` at the username prompt
+   and create your own account with a password of your choosing.
 
 ---
 
-### Changing Your Password from the Default
+### Making Your Account an Admin
 
-1. Once logged in as admin, simply type the command:
+1. Stop the server, so it cannot save over the file while you edit it.
+2. Open your account's file, `users/<your user id>.yaml` under the world folder
+   that `DataFiles` in `config.yaml` names, and change `role: user` to
+   `role: admin`.
+3. Start the server again and log in.
+
+To change your password later, type the command:
    ```
    password
    ```
