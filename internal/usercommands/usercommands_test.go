@@ -2906,11 +2906,11 @@ func TestSetScreenReader_OnSetsLightOffLeavesIt(t *testing.T) {
 	events.DrainQueuedByTypeForTest(`Message`)
 	cmdSetScreenReader(user, []string{`on`})
 	require.True(t, user.ScreenReader, "on twice stays on")
-	said := ``
+	var said strings.Builder
 	for _, e := range events.DrainQueuedByTypeForTest(`Message`) {
-		said += e.(events.Message).Text
+		said.WriteString(e.(events.Message).Text)
 	}
-	require.Contains(t, said, `already`, "on when already on says so")
+	require.Contains(t, said.String(), `already`, "on when already on says so")
 	cmdSetScreenReader(user, []string{`off`})
 	cmdSetScreenReader(user, []string{`off`})
 	require.False(t, user.ScreenReader, "off twice stays off")
