@@ -11,6 +11,17 @@ const (
 	LogMaxAllocation = 1000
 )
 
+// AddConnectionEvent adds an entry to a live user's event log from a
+// connection goroutine. MainWorker reads and writes the log (and the save
+// marshals it) under util.LockMud, so a connection goroutine must hold that
+// lock too, or a disconnect racing a save can corrupt the log. The lock is
+// held only for the append; never call this while holding it.
+func (u *UserRecord) AddConnectionEvent(cat string, message string) {
+	util.LockMud()
+	defer util.UnlockMud()
+	u.EventLog.Add(cat, message)
+}
+
 type UserLogEntry struct {
 	Category  string    // optional category such as "combat" "communication" etc
 	WhenRound uint64    // Game round it occured

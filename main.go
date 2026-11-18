@@ -837,7 +837,7 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 			// If failed to read from the connection, switch to zombie state
 			if userObject != nil {
 
-				userObject.EventLog.Add(`conn`, `Disconnected`)
+				userObject.AddConnectionEvent(`conn`, `Disconnected`)
 
 				if c.Network.ZombieSeconds > 0 {
 
@@ -1175,7 +1175,7 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 
 		n, err := connDetails.Read(inputBuffer)
 		if err != nil {
-			userObject.EventLog.Add(`conn`, `Disconnected`)
+			userObject.AddConnectionEvent(`conn`, `Disconnected`)
 
 			if c.Network.ZombieSeconds > 0 {
 				connDetails.SetState(connections.Zombie)
@@ -1441,7 +1441,7 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string, reportedCo
 			// If failed to read from the connection, switch to zombie state
 			if userObject != nil {
 
-				userObject.EventLog.Add(`conn`, `Disconnected`)
+				userObject.AddConnectionEvent(`conn`, `Disconnected`)
 
 				if c.Network.ZombieSeconds > 0 {
 

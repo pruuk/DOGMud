@@ -222,6 +222,16 @@ func LoginUser(user *UserRecord, connectionId connections.ConnectionId) (*UserRe
 
 	mudlog.Info("LoginUser()", "username", user.Username, "connectionId", connectionId)
 
+	// LoginUser runs on the connection goroutine. On a reconnect it writes the
+	// live user MainWorker reads every round (connection id, event log, idle
+	// round, charm list), and a fresh login publishes the user to MainWorker
+	// before its last writes. Holding the world lock for the whole login
+	// orders all of it against MainWorker, which holds the lock for its work.
+	// Lock order is util.LockMud, then userManager.mu, as on MainWorker. The
+	// caller must not hold the world lock.
+	util.LockMud()
+	defer util.UnlockMud()
+
 	user.Character.SetAdjective(`zombie`, false)
 
 	userManager.mu.Lock()
