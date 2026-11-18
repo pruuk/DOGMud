@@ -15,10 +15,13 @@ The `internal/inputhandlers` package provides comprehensive input processing and
   the attempt (or refuses a locked-out source) before any password work; the
   password is checked on a copy loaded with `skipValidation` (a validating
   load re-saves the file, which would cancel or roll back an online player's
-  pending save); then the account ban; then the kick, if asked; then the
-  validated load to log in with; `loginSucceeded` gives back the attempt. A
-  wrong password and an unknown username get the same `invalidLoginText` and
-  both spend one bcrypt check (`spendPasswordCheck`). This narrows, but does
+  pending save); then the account ban; then `users.SavePasswordUpgrade`
+  saves a legacy SHA-256 hash the check upgraded to bcrypt; then the kick,
+  if asked; then the validated load to log in with; `loginSucceeded` gives
+  back the attempt. An empty stored password never matches; a plain-text one
+  does, so the game can force the change. A wrong password and an unknown
+  username get the same `invalidLoginText` and both spend one bcrypt check
+  (`users.SpendPasswordCheck`, shared with the /admin login). This narrows, but does
   not close, telling which usernames exist: a real name also pays for loading
   its file, and `new` says when a name is taken. The kick question asks only
   whether the account is online and checks no password, so it can tell no

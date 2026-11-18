@@ -1,12 +1,10 @@
 package inputhandlers
 
 import (
-	"sync"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/auththrottle"
 	"github.com/GoMudEngine/GoMud/internal/connections"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // gameLoginThrottle counts failed game logins per client IP: telnet, the AI
@@ -49,22 +47,4 @@ func loginSucceeded(id connections.ConnectionId) {
 	if key := loginThrottleKey(id); key != `` {
 		gameLoginThrottle.Refund(key)
 	}
-}
-
-var (
-	// dummyHashOnce makes dummyHash on first use, so boot pays nothing.
-	dummyHashOnce sync.Once
-	// dummyHash is a bcrypt hash at the default cost that no player's
-	// password is checked against; it only spends the same work.
-	dummyHash []byte
-)
-
-// spendPasswordCheck runs one bcrypt comparison against a fixed hash, so a
-// login for an unknown username takes as long as a wrong password for a
-// real one and the timing does not tell which usernames exist.
-func spendPasswordCheck(password string) {
-	dummyHashOnce.Do(func() {
-		dummyHash, _ = bcrypt.GenerateFromPassword([]byte(`dogmud-unknown-user`), bcrypt.DefaultCost)
-	})
-	_ = bcrypt.CompareHashAndPassword(dummyHash, []byte(password))
 }

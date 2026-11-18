@@ -262,12 +262,21 @@ func NewUserRecord(userId int, connectionId uint64) *UserRecord {
     return u
 }
 
-// PasswordMatches tries three formats in order:
+// PasswordMatches refuses an empty input and an empty stored password
+// outright, then tries three formats in order:
 //   1. bcrypt (current format): compared via bcrypt.CompareHashAndPassword
 //   2. legacy unsalted SHA256 (util.Hash): on match, re-hashes with bcrypt
-//      in place so the next login uses the secure path
+//      on the record IN MEMORY ONLY. A caller that checked the password on a
+//      copy (both logins do) saves it with SavePasswordUpgrade(checked,
+//      storedBefore), which writes the hash to the live user if the account
+//      is in the world, else to a validated load of the file, under the
+//      world lock, and never over a password changed in the meantime
 //   3. plaintext fallback: only allowed when HasPlaintextPassword() is true
-//      (stored value is neither bcrypt nor a 64-char hex SHA256 digest)
+//      (stored value is neither bcrypt nor a 64-char hex SHA256 digest),
+//      compared with subtle.ConstantTimeCompare. Only the game login uses
+//      it: the /admin login (internal/web/auth.go doBasicAuth) refuses an
+//      account with HasPlaintextPassword() before checking, because it
+//      cannot force the change
 //
 // The plaintext branch does NOT migrate the password. u.Password is left
 // as plaintext on disk and PasswordMatches will keep accepting it on every
@@ -1023,6 +1032,7 @@ restores a captured baseline before re-deriving the spec. Copy that. Note
 | `inbox.go` | Player mudmail |
 | `onlineinfo.go` | Who-list / online presence data |
 | `userlog.go` | Per-user log |
+| `password.go` | `SpendPasswordCheck` (one bcrypt compare against a fixed hash, for a login with no account to check; both the game login and /admin call it) and `SavePasswordUpgrade` (persists the bcrypt hash `PasswordMatches` made from a legacy SHA-256 one). `CountSpentPasswordChecksForTest` in `test_helpers.go` counts spends |
 | `autosave_prepare.go` | Two-phase save for autosave (`PrepareUserWrite`, `PrepareAllUserWrites`, `CancelPendingUserWrite`, `SetAutosaveQueue`) |
 | `copyover.go` | Copyover contributor |
 | `memory.go` | Memory reporting |
@@ -1030,6 +1040,10 @@ restores a captured baseline before re-deriving the spec. Copy that. Note
 Saves live at `_datafiles/world/dogmud/users/<id>.yaml`. That directory has its
 contents gitignored but ships a tracked `.gitkeep`. Without it a fresh clone
 fails `ValidateWorldFiles` and the server dies before loading a room.
+`ValidateWorldFiles` requires every folder the default world has, so the
+default world's `users/` ships only a `.gitkeep` too: no account, and so no
+admin credential, ships in any world. An operator makes an admin by creating
+an account in game, then (server stopped) setting `role: admin` in its file.
 
 ### Saving is two-phase (chunk 3.6b-1)
 

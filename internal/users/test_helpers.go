@@ -35,6 +35,16 @@ func CaptureTextMaskForTest(websocket bool) (sent *[]string, restore func()) {
 	return &frames, func() { textMaskIsWebsocket, textMaskSend = oldWS, oldSend }
 }
 
+// CountSpentPasswordChecksForTest counts SpendPasswordCheck calls until the
+// returned restore func runs. Read the count after the code under test has
+// returned; the counter is not synchronised.
+func CountSpentPasswordChecksForTest() (count *int, restore func()) {
+	n := 0
+	prev := passwordCheckSpent
+	passwordCheckSpent = func() { n++ }
+	return &n, func() { passwordCheckSpent = prev }
+}
+
 // SeedUsersForTest replaces the global userManager with a fresh instance
 // populated from the supplied map and returns a cleanup function.
 // Intended for cross-package integration tests (hooks, commands).

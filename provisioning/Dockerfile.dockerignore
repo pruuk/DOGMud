@@ -89,7 +89,7 @@ tools/run_bridge.bat
 **/mobs.instances
 **/mobs.instances/**
 _datafiles/**/users/*
-!_datafiles/world/default/users/1.yaml
+!_datafiles/world/default/users/.gitkeep
 !_datafiles/world/dogmud/users/.gitkeep
 _datafiles/**/plugin-data/*
 !_datafiles/world/default/plugin-data/README.md

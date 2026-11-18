@@ -2,6 +2,7 @@ package users
 
 import (
 	"crypto/md5"
+	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -232,8 +233,7 @@ func (u *UserRecord) ClientSettings() connections.ClientSettings {
 // plaintext credential the user must replace.
 func (u *UserRecord) HasPlaintextPassword() bool {
 	p := u.Password
-	// bcrypt check
-	if strings.HasPrefix(p, "$2a$") || strings.HasPrefix(p, "$2b$") || strings.HasPrefix(p, "$2y$") {
+	if isBcryptHash(p) {
 		return false
 	}
 	// SHA256 hex check: 64 chars of valid hex
@@ -245,7 +245,18 @@ func (u *UserRecord) HasPlaintextPassword() bool {
 	return true
 }
 
+// PasswordMatches reports whether input is this account's password. An empty
+// input and an empty stored password never match. A bcrypt hash is compared
+// as is. A legacy unsalted SHA-256 hash that matches is replaced on u with a
+// bcrypt hash, in memory only: SavePasswordUpgrade writes it. A stored
+// plain-text password matches when equal, so a game login can force the
+// player to change it; the /admin login refuses such an account before it
+// gets here.
 func (u *UserRecord) PasswordMatches(input string) bool {
+
+	if input == `` || u.Password == `` {
+		return false
+	}
 
 	// Try bcrypt first (new format).
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(input)); err == nil {
@@ -261,9 +272,10 @@ func (u *UserRecord) PasswordMatches(input string) bool {
 		return true
 	}
 
-	// Plaintext fallback: allows default/legacy plaintext credentials to
-	// authenticate once so the user can be forced to change their password.
-	if u.HasPlaintextPassword() && u.Password == input {
+	// Plaintext fallback: a legacy plain-text credential authenticates a game
+	// login so the player can be forced to change it. The compare does not
+	// stop at the first differing byte.
+	if u.HasPlaintextPassword() && subtle.ConstantTimeCompare([]byte(u.Password), []byte(input)) == 1 {
 		return true
 	}
 
