@@ -365,6 +365,12 @@ func (u *UserRecord) GetCommandPrompt() string {
 		}
 	}
 
+	// #842: while a reply's pages wait, the stop line is the prompt, so every
+	// redraw (after a combat line, say) puts it back under the text.
+	if stop := u.pagerStopLine(); stop != `` {
+		promptOut = stop
+	}
+
 	goAhead := ``
 	if connections.GetClientSettings(u.ConnectionId()).SendTelnetGoAhead {
 		goAhead = term.TelnetGoAhead.String()
