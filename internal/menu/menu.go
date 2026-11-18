@@ -130,12 +130,34 @@ func labelText(e Entry) string {
 	return fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, lineColor(e), e.Label)
 }
 
+// labelLines splits a label that does not fit in avail columns on word
+// boundaries; a label that fits, or a reader too narrow for any label column,
+// keeps it on one line.
+func labelLines(label string, avail int) []string {
+	if avail <= 0 || utf8.RuneCountInString(label) <= avail {
+		return []string{label}
+	}
+	if lines := wrap(label, avail); len(lines) > 0 {
+		return lines
+	}
+	return []string{label}
+}
+
 func renderEntry(b *strings.Builder, n, numW int, e Entry, width int) {
 	b.WriteString(leftMargin)
 	b.WriteString(numberText(n, numW))
 	b.WriteString(" ")
 	b.WriteString(markerText(e.Marker))
-	b.WriteString(labelText(e))
+	// A label wider than the reader wraps, each further line indented under
+	// the label's first character (#842: a phone client cut labels mid-word).
+	labelStart := len(leftMargin) + numW + 2 + max(markerColumn, utf8.RuneCountInString(e.Marker))
+	for i, line := range labelLines(e.Label, width-labelStart) {
+		if i > 0 {
+			b.WriteString("\n")
+			b.WriteString(strings.Repeat(" ", labelStart))
+		}
+		b.WriteString(labelText(Entry{Label: line, Dim: e.Dim}))
+	}
 	b.WriteString("\n")
 	if e.Detail == "" {
 		return

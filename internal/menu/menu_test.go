@@ -271,6 +271,54 @@ func TestRender_FooterWrapsToTheReadersWidth(t *testing.T) {
 	}
 }
 
+// A label wider than the reader wraps at a word boundary, the rest indented
+// under the label's first character (#842 phone playtest: a 36-column client
+// cut "Drill Yard?" mid-word).
+func TestRender_LongLabelWrapsUnderTheLabelAtTheReadersWidth(t *testing.T) {
+	m := Menu{Entries: []Entry{
+		{Id: "a", Label: "Who are you?"},
+		{Id: "b", Label: "What is this place?"},
+		{Id: "c", Label: "How do I get to the Drill Yard?"},
+	}}
+	got := plain(Render(m, 36))
+	want := strings.Join([]string{
+		`  1.     Who are you?`,
+		`  2.     What is this place?`,
+		`  3.     How do I get to the Drill`,
+		`         Yard?`,
+		``,
+		`Type a number.`,
+	}, "\n")
+	if got != want {
+		t.Fatalf("render mismatch\n got:\n%s\nwant:\n%s", got, want)
+	}
+	for line := range strings.SplitSeq(got, "\n") {
+		if n := utf8.RuneCountInString(line); n > 36 {
+			t.Fatalf("line over 36 columns (%d): %q", n, line)
+		}
+	}
+	// Each label line carries its own colour, so a dim label stays dim on
+	// its continuation line.
+	m.Entries[2].Dim = true
+	if !strings.Contains(Render(m, 36), `         <ansi fg="`+dimColor+`">Yard?</ansi>`) {
+		t.Fatalf("continuation line lost the label colour: %q", Render(m, 36))
+	}
+}
+
+// At 80 a normal menu renders byte for byte as it did before labels wrapped.
+func TestRender_LabelWrapLeavesAWideReaderUnchanged(t *testing.T) {
+	want := "Kael sets down his whittling. \"Ask what you like, I'll answer plain.\"\n\n" +
+		"  <ansi fg=\"command\">1.</ansi> <ansi fg=\"yellow-bold\">[!]</ansi> <ansi fg=\"menu-label\">The Feud at the Well</ansi>\n" +
+		"         <ansi fg=\"menu-label\">Do you want help settling the feud at the well?</ansi>\n" +
+		"  <ansi fg=\"command\">2.</ansi> <ansi fg=\"yellow-bold\">[*]</ansi> <ansi fg=\"menu-label\">How do I reach the high pass?</ansi>\n" +
+		"  <ansi fg=\"command\">3.</ansi>     <ansi fg=\"8\">What do you carve?</ansi>\n" +
+		"  <ansi fg=\"command\">4.</ansi>     <ansi fg=\"menu-label\">Leave</ansi>\n\n" +
+		"Type a number, or press Enter to leave."
+	if got := renderAt80(talkMenu()); got != want {
+		t.Fatalf("render at 80 changed\n got: %q\nwant: %q", got, want)
+	}
+}
+
 func TestRender_NoBodyIsUnchanged(t *testing.T) {
 	m := talkMenu()
 	before := renderAt80(m)

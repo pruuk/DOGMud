@@ -572,6 +572,12 @@ prompt renders from `BuildFightPromptTemplate()` (memoized compile) rather
 than the saved string, so a save compiled by an older template cannot pin
 stale tokens.
 
+### Pager (#842, `userrecord.pager.go`)
+
+A reply is held with `HoldReply`, then `EndReply` returns the text to write now: the whole reply, or page one with the rest kept (`PagesWaiting`). `RoutePagerInput` handles Enter and `q` at a stop; `FlushPagesInCombat` sends waiting pages whole when a fight starts. Two rules: combat and an open prompt question both send a reply whole; an open question shows instead of the stop line (`GetCommandPrompt`) and takes the typed line, while the pages keep waiting. A reply that fits one page after blank page-edge lines are dropped is sent whole.
+
+Pages are counted in screen rows (owner ruling 6, `pager.Pages`) at `PagerWidth() int`: a websocket's reported columns (`Display.GetScreenWidth`), a telnet client's reported width (`NAWSReported`, or a `Display.ScreenWidth` other than the 80 a connection starts at, as the cursor-position report sets), else `WrapWidth`. The stop line's own rows at that width are reserved. `PageRows() int` is the page size in rows the pager uses now (0 when paging is off), which `set pagesize` reports.
+
 ## Online User Information
 
 ### Online Status Tracking
@@ -641,6 +647,10 @@ returns the width. `ParseReportedCols(s)` reads the address's text value:
 whole numbers only, unclamped. `StoreAddressCols(id, raw) int` is the
 address path in one call: parse, store, and return the width to draw the
 splash at (80 when the value is missing or bad).
+
+`StoreReportedRows(id, rows) int` (#842) does the same for the web
+client's row count: clamped to `pager.MinSize`..`pager.MaxSize`, stored in
+`Display.ScreenHeight` only when it differs. Telnet heights come from NAWS.
 
 Before login there is no user, so `LoginWrapWidth(id) int` gives the width
 from the connection: a websocket's stored `Display.ScreenWidth`, clamped to

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/pager"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -59,6 +60,8 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		return cmdSetArrest(user, args)
 	case `linewidth`:
 		return cmdSetLineWidth(user, args)
+	case `pagesize`:
+		return cmdSetPageSize(user, args)
 	case `combatverbosity`:
 		return cmdSetCombatVerbosity(user, args)
 	default:
@@ -565,6 +568,48 @@ func cmdSetLineWidth(user *users.UserRecord, args []string) (bool, error) {
 		Name:   `linewidth`,
 	})
 
+	return true, nil
+}
+
+// cmdSetPageSize sets how many lines a long reply shows before it stops for
+// Enter (#842): a number, "off", or "auto" to follow the screen.
+func cmdSetPageSize(user *users.UserRecord, args []string) (bool, error) {
+	if len(args) < 1 {
+		switch {
+		case user.PageSize == pager.SettingOff:
+			user.SendText(messaging.CategorySystem, "Paging is off.")
+		case user.PageSize > 0:
+			user.SendText(messaging.CategorySystem, fmt.Sprintf("Pages are %d lines.", user.PageSize))
+		default:
+			// The size the pager uses for this player now (20 for a screen
+			// reader account).
+			user.SendText(messaging.CategorySystem, fmt.Sprintf("Pages follow your screen (%d lines).", user.PageRows()))
+		}
+		return true, nil
+	}
+	switch strings.ToLower(args[0]) {
+	case `off`:
+		user.PageSize = pager.SettingOff
+		user.SendText(messaging.CategorySystem, "Paging is off.")
+	case `auto`:
+		user.PageSize = 0
+		user.SendText(messaging.CategorySystem, "Pages follow your screen.")
+	default:
+		n, err := strconv.Atoi(args[0])
+		if err != nil || n < pager.MinSize || n > pager.MaxSize {
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+				`Page size must be a number between %d and %d, or <ansi fg="command">off</ansi> or <ansi fg="command">auto</ansi>.`,
+				pager.MinSize, pager.MaxSize))
+			return true, nil
+		}
+		user.PageSize = n
+		user.SendText(messaging.CategorySystem, fmt.Sprintf("Pages are %d lines.", n))
+	}
+
+	events.AddToQueue(events.UserSettingChanged{
+		UserId: user.UserId,
+		Name:   `pagesize`,
+	})
 	return true, nil
 }
 

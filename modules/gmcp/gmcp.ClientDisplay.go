@@ -36,7 +36,8 @@ func (g GMCPClientDisplay) Type() string { return `GMCPClientDisplay` }
 // it is written only when it differs. A client can change only its own
 // connection, so a phone never changes the player's desktop or saved setting.
 // It also stores the screenreader flag the client sends (the player typed
-// screen reader on or off, or the device remembers it).
+// screen reader on or off, or the device remembers it). It also stores the row
+// count the client sends.
 func clientDisplayHandler(e events.Event) events.ListenerReturn {
 	evt, ok := e.(GMCPClientDisplay)
 	if !ok {
@@ -50,9 +51,13 @@ func clientDisplayHandler(e events.Event) events.ListenerReturn {
 	if hasSR {
 		users.StoreReportedScreenReader(evt.ConnectionId, sr)
 	}
+	rows, hasRows := reportedRows(evt.Payload)
+	if hasRows {
+		users.StoreReportedRows(evt.ConnectionId, rows)
+	}
 	cols, ok := reportedCols(evt.Payload)
 	if !ok {
-		if !hasSR || hasColsKey(evt.Payload) {
+		if (!hasSR && !hasRows) || hasColsKey(evt.Payload) {
 			mudlog.Debug("gmcp.ClientDisplay", "connectionId", evt.ConnectionId, "ignored", "payload is not a whole column count")
 		}
 		return events.Continue
@@ -71,6 +76,17 @@ func reportedCols(payload []byte) (int, bool) {
 		return 0, false
 	}
 	return *decoded.Cols, true
+}
+
+// reportedRows reads {"rows": n} the way reportedCols reads cols (#842).
+func reportedRows(payload []byte) (int, bool) {
+	var decoded struct {
+		Rows *int `json:"rows"`
+	}
+	if err := json.Unmarshal(payload, &decoded); err != nil || decoded.Rows == nil {
+		return 0, false
+	}
+	return *decoded.Rows, true
 }
 
 // reportedScreenReader reads {"screenreader": bool}. A missing key, a null,

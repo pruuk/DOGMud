@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -59,8 +60,8 @@ func TestQueueInputDone_PopsAfterTheCommandsText(t *testing.T) {
 }
 
 // processInput needs a running world, so its wiring is held by its source:
-// the marker is deferred at the top, for typed numbered lines only, and both
-// callers pass the event's number.
+// every typed line, telnet included, defers the done marker at the top, and
+// both callers pass the event's number.
 func TestProcessInput_DefersTheDoneMarker(t *testing.T) {
 	src, err := os.ReadFile("world.go")
 	require.NoError(t, err)
@@ -70,9 +71,47 @@ func TestProcessInput_DefersTheDoneMarker(t *testing.T) {
 	require.Regexp(t, regexp.MustCompile(
 		`typed := flags\.Has\(events\.CmdTyped\)\s+`+
 			`(//[^\n]*\n\s*)*`+
-			`if typed && seq > 0 \{\s+defer queueInputDone\(userId, seq\)\s+\}`), s)
+			`if typed \{\s+(//[^\n]*\n\s*)*defer queueInputDone\(userId, seq\)\s+\}`), s)
 	require.Equal(t, 2, len(regexp.MustCompile(`w\.processInput\(input\.UserId, input\.InputText, [^\n]*, input\.Seq\)`).FindAllString(s, -1)),
 		"both callers pass input.Seq")
+}
+
+// #842: a line the pager takes (Enter or q at a stop) opens no reply window,
+// or another player's line to this player in the same pass would be held as
+// its reply and wipe the waiting pages. The window opens once, after the
+// pager has passed the line on, before the menu reads it.
+func TestProcessInput_OpensTheReplyAfterThePager(t *testing.T) {
+	src, err := os.ReadFile("world.go")
+	require.NoError(t, err)
+	s := string(src)
+	require.Equal(t, 1, strings.Count(s, "events.OpenReply(userId)"), "processInput opens the window once")
+	openAt := strings.Index(s, "events.OpenReply(userId)")
+	pagerAt := strings.Index(s, "user.RoutePagerInput(inputText)")
+	menuAt := strings.Index(s, "user.RouteMenuInput(inputText, typed)")
+	require.Greater(t, pagerAt, 0, "processInput routes to the pager")
+	require.Greater(t, openAt, pagerAt, "the window opens after the pager has passed the line on")
+	require.Greater(t, menuAt, openAt, "the window opens before the menu reads the line")
+}
+
+// #842, owner ruling 8: the login burst is never paged. Every login,
+// reconnect and copyover reconnect enters the world through enterWorld, whose
+// PlayerSpawn queues the login commands and the first look for the next
+// event pass. A typed line handled in that pass ahead of them (one that
+// reached the queue before them) has its reply window open while they run;
+// entering the world must keep their text out of that reply.
+func TestEnterWorld_ItsBurstIsNotAReply(t *testing.T) {
+	const userId = 984201
+	events.DrainAllQueuedEventsForTest()
+	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
+
+	(&World{}).enterWorld(userId, 0)
+	events.OpenReply(userId) // the typed line ahead of the login commands
+	events.AddToQueue(events.Message{UserId: userId, Text: "the message of the day\n"})
+	events.CloseReply(userId)
+
+	got := events.DrainQueuedMessageEventsForTest(userId)
+	require.Len(t, got, 1)
+	require.False(t, got[0].Reply, "text queued while entering the world is not a reply")
 }
 
 // Both ends count the same frames: the client counts every string it sends,
@@ -109,4 +148,16 @@ func TestInputWorker_UsesInputEventFor(t *testing.T) {
 	src, err := os.ReadFile("world.go")
 	require.NoError(t, err)
 	require.Len(t, regexp.MustCompile(`events\.AddToQueue\(inputEventFor\(wi\)\)`).FindAllString(string(src), -1), 1)
+}
+
+// #842: at a page stop the pager reads a typed line before the menu does, so
+// Enter shows the next page instead of picking the menu's default.
+func TestProcessInput_PagerReadsBeforeTheMenu(t *testing.T) {
+	src, err := os.ReadFile("world.go")
+	require.NoError(t, err)
+	s := string(src)
+	pagerAt := strings.Index(s, "user.RoutePagerInput(inputText)")
+	menuAt := strings.Index(s, "user.RouteMenuInput(inputText, typed)")
+	require.Greater(t, pagerAt, 0, "processInput routes to the pager")
+	require.Greater(t, menuAt, pagerAt, "the pager reads the line before the menu")
 }

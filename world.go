@@ -280,6 +280,12 @@ func (w *World) logOutUserByConnectionId(connectionId connections.ConnectionId) 
 
 func (w *World) enterWorld(userId int, roomId int) {
 
+	// The login burst (the login commands with the message of the day, and
+	// the first look) runs in the next event pass and is never paged (#842,
+	// owner ruling 8), even if a typed line handled in that pass ahead of it
+	// has its reply window open.
+	events.EnteringWorld(userId)
+
 	if userInfo := users.GetByUserId(userId); userInfo != nil {
 		// Every login, reconnect and copyover reconnect comes through here on
 		// the world goroutine. A reclaimed session keeps its prompt, and the
@@ -984,8 +990,8 @@ func inputEventFor(wi WorldInput) events.Input {
 	}
 }
 
-// queueInputDone queues the marker that the server has finished one typed web
-// client line (plan 6, R6). events.InputDonePriority puts it after every event
+// queueInputDone queues the marker that the server has finished one typed line
+// (web or telnet) (plan 6, R6). events.InputDonePriority puts it after every event
 // that writes the command's text or opens a menu in the same pass, so the
 // client reads the menu state the command left.
 func queueInputDone(userId int, seq uint64) {
@@ -1005,10 +1011,35 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 	defer user.SyncTextMask()
 
 	typed := flags.Has(events.CmdTyped)
-	// Plan 6 (R6, R7): tell the web client this line is done, after all its
-	// text, on every return below. Its number, never its text.
-	if typed && seq > 0 {
+	// Plan 6 (R6, R7): mark this line done, after all its text, on every
+	// return below; the web client gets its number, never its text. #842:
+	// every typed line, telnet included (seq 0), so the pager knows where the
+	// reply ends.
+	if typed {
 		defer queueInputDone(userId, seq)
+	}
+
+	// A typed line at a page stop goes to the pager first (#842): Enter shows
+	// the next page and q stops; both end here. Any other line has dropped the
+	// rest of the reply and goes on to the menu or the command below.
+	if typed {
+		if out, consumed := user.RoutePagerInput(inputText); consumed {
+			// q is a typed line that never reaches TryCommand; Enter is not.
+			if strings.TrimSpace(inputText) != `` {
+				user.NoteActivity()
+			}
+			if out != `` {
+				connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+out), user.ConnectionId())
+			}
+			connections.SendTo([]byte(templates.AnsiParse(user.GetCommandPrompt())), user.ConnectionId())
+			return
+		}
+		// #842: everything queued for this player until the line's InputDone
+		// pops is its reply. Opened only here, past the pager, so a line the
+		// pager took holds nothing (another player's chat in the same pass
+		// would otherwise be held and wipe the waiting pages). The queue
+		// closes it when it pops InputDone.
+		events.OpenReply(userId)
 	}
 
 	// A typed line goes to an open game menu first (#375). A line the menu

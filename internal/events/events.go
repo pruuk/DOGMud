@@ -23,6 +23,18 @@ var (
 	uniqueMap    = make(map[string]struct{}) // map to enforce uniqueness
 
 	eventDebugging bool
+
+	// replyWindow counts, per user, the typed lines whose reply is being
+	// built (#842): processInput opens one, ProcessEvents closes it as the
+	// line's InputDone pops.
+	// Guarded by qLock.
+	replyWindow = map[int]int{}
+
+	// enteringWorld holds the players who entered the world since the last
+	// event pass ended (owner ruling 8, #842): nothing queued for them is
+	// marked as a reply until the pass that runs their login burst ends.
+	// Guarded by qLock.
+	enteringWorld = map[int]struct{}{}
 )
 
 type requeue struct {
@@ -97,6 +109,15 @@ func AddToQueue(e Event, priority ...int) {
 		prio = priority[0]
 	}
 
+	// #842: a message for a player whose typed line is being handled is
+	// part of that line's reply. Marked here, the one place every message
+	// is queued, so no sender has to know. Never while the player is
+	// entering the world: the login burst is not a reply (owner ruling 8).
+	if m, ok := e.(Message); ok && m.UserId > 0 && replyWindow[m.UserId] > 0 && !isEnteringWorld(m.UserId) {
+		m.Reply = true
+		e = m
+	}
+
 	// Check for uniqueness if the event implements UniqueEvent.
 	if ue, ok := e.(uniqueEvent); ok {
 		uid := ue.UniqueID()
@@ -120,6 +141,54 @@ func AddToQueue(e Event, priority ...int) {
 	}
 
 	heap.Push(&globalQueue, pe)
+}
+
+// OpenReply starts marking every Message queued for userId as the reply to
+// the typed line being handled (#842). world.processInput calls it for a
+// line the pager did not take; ProcessEvents closes it when it pops that
+// line's InputDone, under qLock, before any listener runs.
+func OpenReply(userId int) {
+	qLock.Lock()
+	defer qLock.Unlock()
+	replyWindow[userId]++
+}
+
+// CloseReply ends one OpenReply for userId. Closing more than was opened
+// does nothing. The game closes windows in ProcessEvents; this is for tests
+// and any caller that opened a window no InputDone will close.
+func CloseReply(userId int) {
+	qLock.Lock()
+	defer qLock.Unlock()
+	closeReplyLocked(userId)
+}
+
+// closeReplyLocked is CloseReply with qLock already held.
+func closeReplyLocked(userId int) {
+	if replyWindow[userId] <= 1 {
+		delete(replyWindow, userId)
+		return
+	}
+	replyWindow[userId]--
+}
+
+// EnteringWorld says userId is entering the world (owner ruling 8: the
+// login burst is never paged). Until the end of the next event pass, the one
+// that runs their PlayerSpawn, login commands and first look, no Message for
+// them is marked as a reply, even inside a typed line's window: a line
+// handled in that pass ahead of the login commands would otherwise hold the
+// message of the day and the room as its reply. world.enterWorld calls it,
+// between passes, for every login, reconnect and copyover reconnect.
+func EnteringWorld(userId int) {
+	qLock.Lock()
+	defer qLock.Unlock()
+	enteringWorld[userId] = struct{}{}
+}
+
+// isEnteringWorld reports whether userId entered the world since the last
+// pass ended. qLock must be held.
+func isEnteringWorld(userId int) bool {
+	_, ok := enteringWorld[userId]
+	return ok
 }
 
 // Same as AddToQueue but avoids a mutex lock for optimization purposes
@@ -218,6 +287,13 @@ func ProcessEvents() {
 			delete(uniqueMap, ue.UniqueID())
 		}
 
+		// #842: a typed line's reply ends as its InputDone pops. Closed here,
+		// still under qLock, so nothing queued once it has popped (by its own
+		// listeners included) is marked as the reply.
+		if done, ok := pe.event.(InputDone); ok {
+			closeReplyLocked(done.UserId)
+		}
+
 		qLock.Unlock()
 
 		evtResult = DoListeners(pe.event)
@@ -228,6 +304,9 @@ func ProcessEvents() {
 		qLock.Lock()
 
 	}
+
+	// The pass that ran the login bursts is over (EnteringWorld).
+	clear(enteringWorld)
 
 	qLock.Unlock()
 }
@@ -872,11 +951,16 @@ func DrainQueuedMobConditionsForTest(mobInstanceId int) []Condition {
 // whatever its type, and returns how many were removed. A fixture that
 // seeds rooms via Room.AddMob (which queues a RoomChange as a side effect)
 // should call this in cleanup so no queued event leaks into a later test.
+// It also closes every reply window (#842), so a test that fails between
+// OpenReply and CloseReply cannot leave later tests' messages marked as a
+// reply, and forgets every player entering the world (EnteringWorld).
 //
-// FOR TEST USE ONLY. Mutates the queue.
+// FOR TEST USE ONLY. Mutates the queue and the reply windows.
 func DrainAllQueuedEventsForTest() int {
 	qLock.Lock()
 	defer qLock.Unlock()
+	clear(replyWindow)
+	clear(enteringWorld)
 	n := len(globalQueue)
 	// Free each drained unique event's slot, as ProcessEvents does, or the
 	// next one queued (a player's NpcMarkersChanged, say) is dropped as a

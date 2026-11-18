@@ -1,10 +1,12 @@
 package gmcp
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -90,4 +92,58 @@ func TestInputDone_CarriesNoTypedText(t *testing.T) {
 		keys = append(keys, k)
 	}
 	require.ElementsMatch(t, []string{"seq", "menu"}, keys)
+}
+
+// #842: at a page stop the player is expected to press Enter, so the phone
+// keyboard stays up as it does for a menu.
+func TestInputDone_PagesWaitingReadAsAMenu(t *testing.T) {
+	u := inputDoneUser(t, 9845, 98845, true)
+	u.PageSize = 10
+	for i := 1; i <= 25; i++ {
+		u.HoldReply(fmt.Sprintf("line %d\n", i))
+	}
+	u.EndReply()
+	require.True(t, u.PagesWaiting())
+
+	inputDoneHandler(events.InputDone{UserId: u.UserId, Seq: 6})
+	sent := drainGMCPOut(t)
+	require.Len(t, sent, 1)
+	require.Equal(t, map[string]any{"seq": uint64(6), "menu": true}, sent[0].Payload)
+}
+
+// The pager cuts the reply in its own InputDone listener (hooks.Pager_ReplyEnd),
+// registered after this module's. The frame must read the pages that
+// listener cut in the same pass, so it runs after it whatever the order of
+// registration.
+func TestInputDone_ReadsThePagesCutInTheSamePass(t *testing.T) {
+	u := inputDoneUser(t, 9846, 98846, true)
+	u.PageSize = 10
+	restore := events.SwapListenersForTest()
+	defer restore()
+	// gmcp registers at init; hooks later, from main.go.
+	registerInputDoneListener()
+	events.RegisterListener(events.InputDone{}, hooks.Pager_ReplyEnd)
+
+	for i := 1; i <= 25; i++ {
+		u.HoldReply(fmt.Sprintf("line %d\n", i))
+	}
+	events.DoListeners(events.InputDone{UserId: u.UserId, Seq: 7})
+	require.True(t, u.PagesWaiting(), "the pager cut the reply")
+	var done []GMCPOut
+	for _, g := range drainGMCPOut(t) {
+		if g.Module == `Char.Input.Done` {
+			done = append(done, g)
+		}
+	}
+	require.Len(t, done, 1)
+	require.Equal(t, map[string]any{"seq": uint64(7), "menu": true}, done[0].Payload)
+	events.DrainQueuedByTypeForTest(`RedrawPrompt`)
+}
+
+// #842: telnet lines and a web client's macro lines are typed but carry no
+// number. Their InputDone is the pager's; the web client is not told.
+func TestInputDone_LineWithNoNumberSendsNothing(t *testing.T) {
+	u := inputDoneUser(t, 9849, 98849, true)
+	inputDoneHandler(events.InputDone{UserId: u.UserId, Seq: 0})
+	require.Empty(t, drainGMCPOut(t))
 }

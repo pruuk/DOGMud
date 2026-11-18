@@ -131,6 +131,8 @@ func RegisterListeners() {
 
 	// Messages
 	events.RegisterListener(events.Message{}, Message_SendMessage)
+	// The end of a typed line's reply: send it whole or a page at a time (#842)
+	events.RegisterListener(events.InputDone{}, Pager_ReplyEnd)
 	// Prompt
 	events.RegisterListener(events.RedrawPrompt{}, RedrawPrompt_SendRedraw)
 

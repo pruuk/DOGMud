@@ -217,6 +217,10 @@ type Message struct {
 	Text            string
 	IsQuiet         bool // whether it can only be heard by superior "hearing"
 	IsCommunication bool // If true, this is a communication such as "say" or "emote"
+	// Reply is set by AddToQueue, never by a sender: the message was queued
+	// for UserId while their typed line was being handled, so it is part of
+	// that line's reply and may be paged (#842, OpenReply).
+	Reply bool
 }
 
 func (m Message) Type() string { return `Message` }

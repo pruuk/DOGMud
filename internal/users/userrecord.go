@@ -55,6 +55,7 @@ type UserRecord struct {
 	ScreenReader    bool                  `yaml:"screenreader,omitempty"`    // Are they using a screen reader? (We should remove excess symbols)
 	AsciiMode       bool                  `yaml:"asciimode,omitempty"`       // Convert UTF-8 decorative chars to ASCII for legacy clients
 	LineWidth       int                   `yaml:"linewidth,omitempty"`       // Column width for line wrapping; 0 = default 80
+	PageSize        int                   `yaml:"pagesize,omitempty"`        // Lines per page of a long reply (#842): 0 follows the screen, -1 (pager.SettingOff) is off
 	CombatVerbosity string                `yaml:"combatverbosity,omitempty"` // Combat text level: ""/full, medium (hits only), light (round tally)
 	EmailAddress    string                `yaml:"emailaddress,omitempty"`    // Email address (if provided)
 	TipsComplete    map[string]bool       `yaml:"tipscomplete,omitempty"`    // Tips the user has followed/completed so they can be quiet
@@ -79,7 +80,8 @@ type UserRecord struct {
 	lastInputRound uint64
 	tempDataStore  map[string]any
 	activePrompt   *prompt.Prompt
-	activeMenu     *openMenu // the open game menu (#375); guarded by sessionMu
+	activeMenu     *openMenu  // the open game menu (#375); guarded by sessionMu
+	pager          pagerState // the reply being built and the pages waiting (#842); guarded by sessionMu
 	// menuSignalHold and menuSignalBase defer MenuChanged across a menu
 	// choice (userrecord.menu.go choose); guarded by sessionMu.
 	menuSignalHold int
