@@ -37,9 +37,21 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 			if user.ScreenReader {
 				textOut = util.StripCharsForScreenReaders(textOut)
 			}
-			connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+textOut), user.ConnectionId())
+			if message.Reply {
+				// #842: part of the reply to this player's typed line. Held
+				// until the line's InputDone (Pager_ReplyEnd), which sends it
+				// whole or a page at a time.
+				user.HoldReply(textOut)
+			} else {
+				// No paging in combat (owner ruling 2026-11-18): a fight that
+				// started while pages wait sends them before its first line.
+				if rest := user.FlushPagesInCombat(); rest != `` {
+					connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+rest), user.ConnectionId())
+				}
+				connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+textOut), user.ConnectionId())
 
-			events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
+				events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
+			}
 
 		}
 	}
