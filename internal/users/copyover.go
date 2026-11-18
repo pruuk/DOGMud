@@ -22,6 +22,16 @@ func CopyoverReconnectUser(user *UserRecord, connectionId connections.Connection
 
 	mudlog.Info("CopyoverReconnectUser()", "username", user.Username, "connectionId", connectionId)
 
+	// This runs on a websocket goroutine, and after a copyover every web
+	// client reconnects at about the same moment. It writes the user maps and
+	// the live user MainWorker reads, so it takes the same locks as
+	// LoginUser, in the same order: util.LockMud, then userManager.mu. The
+	// caller must not hold the world lock.
+	util.LockMud()
+	defer util.UnlockMud()
+	userManager.mu.Lock()
+	defer userManager.mu.Unlock()
+
 	user.Character.SetAdjective(`zombie`, false)
 
 	if userId, ok := userManager.Usernames[user.Username]; ok {
