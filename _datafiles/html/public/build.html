@@ -1054,8 +1054,8 @@
       if (e.oneway) flags.push("one-way");
       if (e.lock) flags.push("lock " + e.lock);
       var lbl = ce("span", { "class": "grow", html:
-        "<b>" + escapeHtml(e.name) + "</b> → " + e.toRoomId +
-        " <span class='tag'>" + tag + (flags.length ? " · " + flags.join(", ") : "") + "</span>" });
+        "<b>" + escapeHtml(e.name) + "</b> → " + escapeHtml(e.toRoomId) +
+        " <span class='tag'>" + escapeHtml(tag) + (flags.length ? " · " + escapeHtml(flags.join(", ")) : "") + "</span>" });
       var rm = ce("button", { "class": "mini rm", text: "✕", title: "remove exit" });
       rm.addEventListener("click", function () { refetchRoomId = d.roomId; sendGMCP("Build.Exit.Remove", { roomId: d.roomId, exitName: e.name }); });
       list.appendChild(ce("div", { "class": "exit" }, [lbl, rm]));

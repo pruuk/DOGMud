@@ -7,13 +7,17 @@ import (
 	"log"
 	"log/slog"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
 type LogHandler struct {
 	slog.Handler
-	l                    *log.Logger
-	minimumMessageLength int
+	l *log.Logger
+	// minimumMessageLength is the widest message seen so far, the column
+	// width messages are padded to. Every goroutine logs through one
+	// handler, so it is atomic.
+	minimumMessageLength atomic.Int32
 	lTee                 teeLogger
 	noColorHandler       *slog.TextHandler
 }
@@ -98,11 +102,13 @@ func (h *LogHandler) Handle(ctx context.Context, r slog.Record) error {
 		r.Message = r.Message[:24]
 		msgLen = 24
 	}
-	if msgLen > h.minimumMessageLength {
-		h.minimumMessageLength = len(r.Message)
+	width := h.minimumMessageLength.Load()
+	for int32(msgLen) > width && !h.minimumMessageLength.CompareAndSwap(width, int32(msgLen)) {
+		width = h.minimumMessageLength.Load()
 	}
+	width = max(width, int32(msgLen))
 
-	if padding := h.minimumMessageLength - msgLen; padding > 0 {
+	if padding := int(width) - msgLen; padding > 0 {
 		r.Message += strings.Repeat(` `, padding)
 	}
 
