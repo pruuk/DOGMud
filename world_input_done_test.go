@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -109,4 +110,16 @@ func TestInputWorker_UsesInputEventFor(t *testing.T) {
 	src, err := os.ReadFile("world.go")
 	require.NoError(t, err)
 	require.Len(t, regexp.MustCompile(`events\.AddToQueue\(inputEventFor\(wi\)\)`).FindAllString(string(src), -1), 1)
+}
+
+// #842: at a page stop the pager reads a typed line before the menu does, so
+// Enter shows the next page instead of picking the menu's default.
+func TestProcessInput_PagerReadsBeforeTheMenu(t *testing.T) {
+	src, err := os.ReadFile("world.go")
+	require.NoError(t, err)
+	s := string(src)
+	pagerAt := strings.Index(s, "user.RoutePagerInput(inputText)")
+	menuAt := strings.Index(s, "user.RouteMenuInput(inputText, typed)")
+	require.Greater(t, pagerAt, 0, "processInput routes to the pager")
+	require.Greater(t, menuAt, pagerAt, "the pager reads the line before the menu")
 }

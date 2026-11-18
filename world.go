@@ -1014,6 +1014,19 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 		defer queueInputDone(userId, seq)
 	}
 
+	// A typed line at a page stop goes to the pager first (#842): Enter shows
+	// the next page and q stops; both end here. Any other line has dropped the
+	// rest of the reply and goes on to the menu or the command below.
+	if typed {
+		if out, consumed := user.RoutePagerInput(inputText); consumed {
+			if out != `` {
+				connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+out), user.ConnectionId())
+			}
+			connections.SendTo([]byte(templates.AnsiParse(user.GetCommandPrompt())), user.ConnectionId())
+			return
+		}
+	}
+
 	// A typed line goes to an open game menu first (#375). A line the menu
 	// does not recognise has closed it and runs below as a command.
 	if user.RouteMenuInput(inputText, typed) {
