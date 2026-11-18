@@ -581,7 +581,10 @@ func cmdSetPageSize(user *users.UserRecord, args []string) (bool, error) {
 		case user.PageSize > 0:
 			user.SendText(messaging.CategorySystem, fmt.Sprintf("Pages are %d lines.", user.PageSize))
 		default:
-			user.SendText(messaging.CategorySystem, "Pages follow your screen.")
+			// The size the pager uses for this player now (20 for a screen
+			// reader account).
+			size, _ := pager.Size(user.ClientSettings().Display.GetScreenHeight(), user.PageSize, user.ScreenReader)
+			user.SendText(messaging.CategorySystem, fmt.Sprintf("Pages follow your screen (%d lines).", size))
 		}
 		return true, nil
 	}

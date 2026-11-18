@@ -3,6 +3,7 @@ package users
 import (
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/pager"
 )
 
@@ -27,13 +28,18 @@ func (u *UserRecord) HoldReply(text string) {
 // EndReply ends the reply being built and returns the text to write now:
 // the whole reply when it fits a page (counting after blank lines at page
 // edges are dropped, so there is never a "page 1 of 1"), when paging is off,
-// while the player is in combat (owner ruling 2026-11-18), or while a prompt
+// while the player is in combat (owner ruling 2026-11-18), while a prompt
 // question is open (the question is the prompt and takes the typed line, so a
-// stop line would hide it); otherwise the first page, with the rest kept for
-// RoutePagerInput. "" when nothing was held, which leaves any waiting pages
-// alone. A reply with text replaces waiting pages.
+// stop line would hide it), or on a connection to the AI port (an agent's
+// next command is rarely Enter, so a stop would drop the rest); otherwise the
+// first page, with the rest kept for RoutePagerInput. "" when nothing was
+// held, which leaves any waiting pages alone. A reply with text replaces
+// waiting pages.
 func (u *UserRecord) EndReply() string {
 	size, on := pager.Size(u.ClientSettings().Display.GetScreenHeight(), u.PageSize, u.ScreenReader)
+	if u.onAIPort() {
+		on = false
+	}
 	fighting := u.Character != nil && u.Character.IsInCombat()
 	asking := u.questionOpen()
 
@@ -59,6 +65,15 @@ func (u *UserRecord) EndReply() string {
 	u.pager.pages = pages
 	u.pager.next = 1
 	return pager.Join(pages[0])
+}
+
+// onAIPort reports whether the player's connection came in on the AI port
+// (connections.ConnAI), as AI players and the playtest harness do. The
+// connection decides, not the account's IsAI flag, which only warns at login
+// when the two disagree.
+func (u *UserRecord) onAIPort() bool {
+	cd := connections.Get(u.ConnectionId())
+	return cd != nil && cd.ConnType() == connections.ConnAI
 }
 
 // questionOpen reports whether a prompt has a question waiting for an answer.

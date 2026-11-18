@@ -5,11 +5,38 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/pager"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"github.com/stretchr/testify/require"
 )
+
+// A connection on the AI port (AI players and the playtest harness) never
+// pages: an agent's next command is rarely Enter, so a stop would drop the
+// rest of the reply.
+func TestEndReply_AnAIPortConnectionGetsTheWholeReply(t *testing.T) {
+	const connId = 18842
+	connections.RegisterTestConnection(connId)
+	t.Cleanup(func() { connections.UnregisterTestConnection(connId) })
+	connections.Get(connId).SetConnType(connections.ConnAI)
+
+	u := NewTestUser(1, "agent", "Agentia", connId)
+	u.PageSize = 10
+	for _, l := range numbered(25) {
+		u.HoldReply(l)
+	}
+	require.Equal(t, strings.Join(numbered(25), ""), u.EndReply())
+	require.False(t, u.PagesWaiting())
+
+	// The same reply on a human connection pages, so the test can fail.
+	connections.Get(connId).SetConnType(connections.ConnHuman)
+	for _, l := range numbered(25) {
+		u.HoldReply(l)
+	}
+	u.EndReply()
+	require.True(t, u.PagesWaiting())
+}
 
 // numbered is n lines "line 1" .. "line n", each ending in a line break, as
 // held messages arrive.

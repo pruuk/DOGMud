@@ -93,3 +93,18 @@ func TestReplyWindow_Counts(t *testing.T) {
 	require.False(t, got["not a reply\n"].Reply)
 	require.True(t, got["reopened\n"].Reply)
 }
+
+// A test that fails between OpenReply and CloseReply must not leave its
+// window open for later tests: the drain clears every window.
+func TestDrainAllQueuedEventsForTest_ClosesEveryReplyWindow(t *testing.T) {
+	DrainAllQueuedEventsForTest()
+	defer DrainAllQueuedEventsForTest()
+
+	OpenReply(7)
+	OpenReply(7)
+	DrainAllQueuedEventsForTest()
+	AddToQueue(Message{UserId: 7, Text: "after the drain\n"})
+	got := DrainQueuedMessageEventsForTest(7)
+	require.Len(t, got, 1)
+	require.False(t, got[0].Reply, "the drain closed the window")
+}

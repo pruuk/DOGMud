@@ -921,11 +921,15 @@ func DrainQueuedMobConditionsForTest(mobInstanceId int) []Condition {
 // whatever its type, and returns how many were removed. A fixture that
 // seeds rooms via Room.AddMob (which queues a RoomChange as a side effect)
 // should call this in cleanup so no queued event leaks into a later test.
+// It also closes every reply window (#842), so a test that fails between
+// OpenReply and CloseReply cannot leave later tests' messages marked as a
+// reply.
 //
-// FOR TEST USE ONLY. Mutates the queue.
+// FOR TEST USE ONLY. Mutates the queue and the reply windows.
 func DrainAllQueuedEventsForTest() int {
 	qLock.Lock()
 	defer qLock.Unlock()
+	clear(replyWindow)
 	n := len(globalQueue)
 	// Free each drained unique event's slot, as ProcessEvents does, or the
 	// next one queued (a player's NpcMarkersChanged, say) is dropped as a

@@ -34,4 +34,21 @@ func TestSetPageSize(t *testing.T) {
 		sent := strings.Join(events.DrainQueuedMessagesForTest(8802), "")
 		require.Contains(t, sent, c.says, c.arg)
 	}
+
+	// With no argument it says the size the pager uses now: the connection
+	// reports no height, so the default 24 rows less the stop line and
+	// prompt; a screen reader account pages at 20.
+	user.PageSize = 0
+	_, err := Set("pagesize", user, nil, events.EventFlag(0))
+	require.NoError(t, err)
+	sent := strings.Join(events.DrainQueuedMessagesForTest(8802), "")
+	require.Contains(t, sent, "Pages follow your screen")
+	require.Contains(t, sent, "Pages follow your screen (22 lines).")
+
+	user.ScreenReader = true
+	defer func() { user.ScreenReader = false }()
+	_, err = Set("pagesize", user, nil, events.EventFlag(0))
+	require.NoError(t, err)
+	sent = strings.Join(events.DrainQueuedMessagesForTest(8802), "")
+	require.Contains(t, sent, "Pages follow your screen (20 lines).")
 }
