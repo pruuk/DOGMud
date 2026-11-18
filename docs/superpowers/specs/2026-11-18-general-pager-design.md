@@ -89,8 +89,8 @@ printed it.
 
 Text a command causes in a later pass (a mob's queued `emote`, a delayed
 re-run from `go`, a macro's later lines) is outside the window, so it is not
-marked and goes out at once, as it does today. The test in section 7 checks
-that `talk` to Toke, and accepting an offer, are fully marked.
+marked and goes out at once, as it does today. Section 7 says where each is
+checked.
 
 ### 2. The pager (`internal/pager`, new package)
 
@@ -167,6 +167,10 @@ not re-queued as messages, so it is never re-marked or re-collected.
 - The stop line is a prompt (no line break), so the web client's log reads
   it once and the answer region ends at `Char.Input.Done` as it does now.
   Telnet screen readers (Mudlet, MUSHclient) read it as any prompt.
+- `Char.Input.Done` says `menu: true` while pages wait, so the phone
+  keyboard stays up for Enter. The gmcp listener runs last among the
+  `InputDone` listeners (`events.Last`), after `Pager_ReplyEnd` has cut the
+  reply.
 
 ### 7. Testing
 
@@ -181,8 +185,10 @@ not re-queued as messages, so it is never re-marked or re-collected.
   command at a stop.
 - Combat: a long reply ending in combat is sent whole; pages waiting when a
   fight starts go out in full before the first combat line.
-- `talk` to Toke under test with a page size of 10: every line of his reply
-  and menu is marked, and nothing of it arrives before page one.
+- `talk` with a 20-topic NPC under test: every line of the reply and menu is
+  marked (`conversation_pager_mark_test.go`). Accepting an offer (the `Quest`
+  lines and the `TalkMenuAgain` menu) is checked in the playtest, through the
+  real event chain.
 - `TestProcessInput_DefersTheDoneMarker` (`world_input_done_test.go:64`),
   which pins the `typed && seq > 0` condition in source, is updated for the
   telnet queueing; the gmcp handler test gains a `Seq` 0 case. The priority
@@ -222,7 +228,8 @@ not re-queued as messages, so it is never re-marked or re-collected.
 - **Pages waiting when a fight starts are sent, not dropped.** Ruling 5
   says no paging in combat; sending keeps the text and ends the stop. If
   wrong: drop them, as an open menu is closed by combat.
-- **An open prompt question beats the pager** (found in code review). A reply that ends with a question open (a yes or no, a stake amount, a password) is sent whole. If a question opens while pages wait, the question is the prompt instead of the stop line, the typed line answers it, and the pages keep waiting until it closes. Without this the stop line hid the question and the next command was taken as its answer. If wrong: drop the waiting pages when a question opens.
+- **An open prompt question beats the pager** (found in code review). A reply that ends with a question open (a yes or no, a stake amount, a password) is sent whole. If a question opens while pages wait, the question is the prompt instead of the stop line, the typed line answers it, and the pages keep waiting while it is open; an answer that prints anything is a new reply and replaces them, as any new reply does. Without this the stop line hid the question and the next command was taken as its answer. If wrong: drop the waiting pages when a question opens.
+- **Connections on the AI port never page** (found in final review). An agent's next command is rarely Enter, so a stop would silently drop the rest of a long reply (help text, room text) for the AI players the port is open to and for the playtest harness. If wrong: page them too and have agents send `set pagesize off`.
 - **`q` stops the paging even though it is the short alias for `quests`**
   (`_datafiles/world/dogmud/keywords.yaml:345`). Only at a stop: there,
   `quests` in full still drops the rest and shows the list. If wrong: stop
