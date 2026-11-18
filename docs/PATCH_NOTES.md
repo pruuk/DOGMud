@@ -1,5 +1,16 @@
 # DOGMud Patch Notes
 
+## 2026-11-18: Long answers come a page at a time
+
+- When the answer to a command is longer than your screen, you now see it a page at a time. Press Enter for the next page, or type `q` to stop. Any other command works as usual and skips the rest.
+- This covers everything a command prints, such as a long conversation menu with what the speaker says first, or a long help page.
+- At a page stop you can still pick a menu choice by its number, even one on a page you have not seen yet.
+- Combat and chat are never held back. A fight that starts while you are reading shows you the rest at once, and nothing pages while you are fighting.
+- Pages follow the size of your window. On a phone, close the keyboard to read a long answer. Screen reader users get pages of a comfortable listening length.
+- `set pagesize` shows your page size. `set pagesize off` turns paging off, `set pagesize auto` follows your screen again, and a number picks your own page length.
+- Menus now wrap long choices to fit a narrow screen instead of breaking words in half.
+- Logging in still shows the message of the day and your surroundings in one go.
+
 ## 2026-11-17: Screen readers in the web client
 
 - The web client can now read the game aloud to screen reader users. When the page opens, your screen reader tells you what to do: type `screen reader on` in the command box and press Enter. The web client remembers this on that device. Type `screen reader off` to stop it.
