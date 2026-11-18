@@ -34,12 +34,13 @@ func (u *UserRecord) HoldReply(text string) {
 // next command is rarely Enter, so a stop would drop the rest); otherwise the
 // first page, with the rest kept for RoutePagerInput. "" when nothing was
 // held, which leaves any waiting pages alone. A reply with text replaces
-// waiting pages.
+// waiting pages. A page is measured in screen rows at the reader's width
+// (PagerWidth), so a line the client wraps counts for each row it fills, and
+// the stop line's own rows are reserved (owner ruling 6).
 func (u *UserRecord) EndReply() string {
-	size, on := pager.Size(u.ClientSettings().Display.GetScreenHeight(), u.PageSize, u.ScreenReader)
-	if u.onAIPort() {
-		on = false
-	}
+	height := u.ClientSettings().Display.GetScreenHeight()
+	width := u.PagerWidth()
+	off := u.PageSize == pager.SettingOff || u.onAIPort()
 	fighting := u.Character != nil && u.Character.IsInCombat()
 	asking := u.questionOpen()
 
@@ -51,20 +52,35 @@ func (u *UserRecord) EndReply() string {
 		return ``
 	}
 	u.pager.pages, u.pager.next = nil, 0
-	if !on || fighting || asking {
+	if off || fighting || asking {
 		return text
 	}
-	lines := pager.Lines(text)
-	if len(lines) <= size {
-		return text
-	}
-	pages := pager.Cut(lines, size)
+	pages := pager.Pages(pager.Lines(text), width, height, u.PageSize, u.ScreenReader)
 	if len(pages) <= 1 {
 		return text
 	}
 	u.pager.pages = pages
 	u.pager.next = 1
 	return pager.Join(pages[0])
+}
+
+// PagerWidth is the width in columns the reader's screen shows a line at,
+// which the pager counts rows against (owner ruling 6): a web client's
+// reported columns, a telnet client's NAWS width when it sent one, and
+// otherwise WrapWidth, the width the server wraps to.
+func (u *UserRecord) PagerWidth() int {
+	cs := u.ClientSettings()
+	if connections.IsWebsocket(u.connectionId) || cs.NAWSReported {
+		return cs.Display.GetScreenWidth()
+	}
+	return u.WrapWidth()
+}
+
+// PageRows is the page size in screen rows the pager uses for this reader
+// now, for `set pagesize` to report. 0 when paging is off.
+func (u *UserRecord) PageRows() int {
+	n, _ := pager.Size(u.ClientSettings().Display.GetScreenHeight(), u.PagerWidth(), u.PageSize, u.ScreenReader)
+	return n
 }
 
 // onAIPort reports whether the player's connection came in on the AI port

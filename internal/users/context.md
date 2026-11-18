@@ -576,6 +576,8 @@ stale tokens.
 
 A reply is held with `HoldReply`, then `EndReply` returns the text to write now: the whole reply, or page one with the rest kept (`PagesWaiting`). `RoutePagerInput` handles Enter and `q` at a stop; `FlushPagesInCombat` sends waiting pages whole when a fight starts. Two rules: combat and an open prompt question both send a reply whole; an open question shows instead of the stop line (`GetCommandPrompt`) and takes the typed line, while the pages keep waiting. A reply that fits one page after blank page-edge lines are dropped is sent whole.
 
+Pages are counted in screen rows (owner ruling 6, `pager.Pages`) at `PagerWidth() int`: a websocket's reported columns (`Display.GetScreenWidth`), a telnet client's NAWS width when `NAWSReported`, else `WrapWidth`. The stop line's own rows at that width are reserved. `PageRows() int` is the page size in rows the pager uses now (0 when paging is off), which `set pagesize` reports.
+
 ## Online User Information
 
 ### Online Status Tracking

@@ -38,6 +38,81 @@ func TestEndReply_AnAIPortConnectionGetsTheWholeReply(t *testing.T) {
 	require.True(t, u.PagesWaiting())
 }
 
+// phoneUser is a reader on a web client 36 columns wide and 16 rows high,
+// following the screen: the playtest phone (ruling 6).
+func phoneUser(t *testing.T) *UserRecord {
+	t.Helper()
+	const connId = 18843
+	connections.RegisterTestWebsocketConnection(connId)
+	t.Cleanup(func() { connections.UnregisterTestConnection(connId) })
+	connections.UpdateClientSettings(connId, func(cs *connections.ClientSettings) {
+		cs.Display.ScreenWidth = 36
+		cs.Display.ScreenHeight = 16
+	})
+	return NewTestUser(1, "phone", "Phonia", connId)
+}
+
+// colouredLines is n lines of 39 visible characters in a colour, as held
+// messages carry them after AnsiParse: 2 rows each at 36 columns.
+func colouredLines(n int) []string {
+	out := make([]string, n)
+	for i := range out {
+		out[i] = fmt.Sprintf("\x1b[1;33m%-39s\x1b[0m\n", fmt.Sprintf("entry %d", i+1))
+	}
+	return out
+}
+
+// Ruling 6: a line the client wraps counts for each row it fills. Ten
+// 39-column lines fit a 16-row screen as lines but fill 20 rows at 36
+// columns, so they page, 6 lines (12 rows) to a page.
+func TestEndReply_CountsRowsAtTheReaderWidth(t *testing.T) {
+	u := phoneUser(t)
+	for _, l := range colouredLines(10) {
+		u.HoldReply(l)
+	}
+	first := u.EndReply()
+	require.True(t, u.PagesWaiting(), "a reply that fits in lines but not in rows pages")
+	require.Equal(t, 6, strings.Count(first, "entry "), "13 rows hold 6 two-row lines")
+}
+
+// Ruling 6: the stop line's own rows are reserved. At 36 columns it fills 2
+// rows, so a 16-row screen holds 13 rows of reply (16 less 2 less 1 for the
+// prompt) and 14 one-row lines page.
+func TestEndReply_ReservesTheStopLinesRows(t *testing.T) {
+	u := phoneUser(t)
+	for _, l := range numbered(13) {
+		u.HoldReply(l)
+	}
+	require.Equal(t, strings.Join(numbered(13), ""), u.EndReply(), "13 rows fit")
+	require.False(t, u.PagesWaiting())
+
+	for _, l := range numbered(14) {
+		u.HoldReply(l)
+	}
+	first := u.EndReply()
+	require.True(t, u.PagesWaiting(), "14 rows do not")
+	require.Contains(t, first, "line 13\n")
+	require.NotContains(t, first, "line 14\n")
+}
+
+// A telnet reader is measured at its NAWS width when its client sent one.
+func TestEndReply_TelnetCountsRowsAtTheNAWSWidth(t *testing.T) {
+	const connId = 18844
+	connections.RegisterTestConnection(connId)
+	t.Cleanup(func() { connections.UnregisterTestConnection(connId) })
+	connections.UpdateClientSettings(connId, func(cs *connections.ClientSettings) {
+		cs.NAWSReported = true
+		cs.Display.ScreenWidth = 36
+		cs.Display.ScreenHeight = 16
+	})
+	u := NewTestUser(1, "telly", "Tellia", connId)
+	for _, l := range colouredLines(10) {
+		u.HoldReply(l)
+	}
+	u.EndReply()
+	require.True(t, u.PagesWaiting())
+}
+
 // numbered is n lines "line 1" .. "line n", each ending in a line break, as
 // held messages arrive.
 func numbered(n int) []string {
