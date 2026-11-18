@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/GoMudEngine/GoMud/internal/connections"
+	"github.com/GoMudEngine/GoMud/internal/pager"
 )
 
 const (
@@ -43,6 +44,19 @@ func StoreReportedCols(id connections.ConnectionId, cols int) int {
 		}
 	})
 	return width
+}
+
+// StoreReportedRows stores a web client's reported row count as the
+// connection's screen height, clamped to pager.MinSize..pager.MaxSize, and
+// written only when it differs (#842). Telnet heights come from NAWS instead.
+func StoreReportedRows(id connections.ConnectionId, rows int) int {
+	height := min(max(rows, pager.MinSize), pager.MaxSize)
+	connections.UpdateClientSettings(id, func(cs *connections.ClientSettings) {
+		if cs.Display.GetScreenHeight() != height {
+			cs.Display.ScreenHeight = uint32(height)
+		}
+	})
+	return height
 }
 
 // LoginWrapWidth is the width text sent to a connection before it has a user

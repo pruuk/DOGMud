@@ -555,11 +555,11 @@
             } catch (e) { return 1; }
         })();
 
-        // Tell the server the game window's columns (static/js/displayreport.js),
+        // Tell the server the game window's columns and rows (static/js/displayreport.js),
         // and whether this player asked for screen reader mode. SendGMCP is
         // declared further down this script, so it is hoisted.
         var displayReport = window.DisplayReport.create({
-            send: function (cols) { return SendGMCP('Client.Display', { cols: cols, screenreader: screenReader.isOn() }); }
+            send: function (cols, rows) { return SendGMCP('Client.Display', { cols: cols, rows: rows, screenreader: screenReader.isOn() }); }
         });
         // The screen reader switch (static/js/screenreader.js): off unless the
         // player typed "screen reader on" here before, or their account has it.
@@ -611,6 +611,7 @@
             minFont: browserMinFont,
             fontSize: textSize,
             onCols: function (cols) { displayReport.columns(cols); },
+            onRows: function (rows) { displayReport.rows(rows); },
             // The layout gives the game window this width (dashboard.js).
             // Kept on window too: dashboard.js loads at the end of the page
             // and sets itself up on DOMContentLoaded, so the first reports
@@ -3164,7 +3165,7 @@
                 }
                 // The server starts every connection at 80 columns. After the
                 // token, so a copyover reconnect reads the token first.
-                displayReport.connected(term.cols);
+                displayReport.connected(term.cols, term.rows);
                 reconnectAttempts = 0;
 
                 // A new connection is a new login: the relay glue waits for

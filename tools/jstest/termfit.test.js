@@ -152,6 +152,7 @@ function makePage(W, H, opts) {
         term: term, fitAddon: fitAddon, host: host, minFont: opts.minFont,
         fontSize: opts.fontSize || function () { return page.text; },
         onCols: opts.onCols,
+        onRows: opts.onRows,
         onGameWidth: opts.onGameWidth || function (px) { page.gameWidths.push(px); }
     });
     return page;
@@ -241,6 +242,14 @@ function syncChecks() {
     check('the keyboard keeps the columns', kb.real.cols === cols, 'cols ' + kb.real.cols);
     check('the keyboard reports nothing', reported.length === n, 'reports ' + reported.join(','));
     check('the keyboard still fits the rows', kb.real.rows < rows, 'rows ' + kb.real.rows + ' was ' + rows);
+    var rowsSeen = [];
+    var kbRows = makePage(360, 500, { text: 14, minFont: 1, onRows: function (r) { rowsSeen.push(r); } });
+    kbRows.fitter.fit();
+    var firstRows = kbRows.real.rows;
+    kbRows.panel.clientHeight = 300; kbRows.fitter.fit();
+    check('the first fit reports the rows', rowsSeen[0] === firstRows, 'rows ' + rowsSeen.join(','));
+    check('the keyboard reports the new rows', rowsSeen.length === 2 && rowsSeen[1] === kbRows.real.rows && kbRows.real.rows < firstRows,
+        'rows ' + rowsSeen.join(','));
     check('the keyboard resizes exactly once', kb.resizes === resizes + 1, 'resizes ' + kb.resizes);
     check('the keyboard does not measure the letters', kb.measures === measures, 'measures ' + kb.measures);
     check('the keyboard keeps the font', kb.fontSize === 14, 'font ' + kb.fontSize);

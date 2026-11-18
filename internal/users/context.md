@@ -646,6 +646,10 @@ whole numbers only, unclamped. `StoreAddressCols(id, raw) int` is the
 address path in one call: parse, store, and return the width to draw the
 splash at (80 when the value is missing or bad).
 
+`StoreReportedRows(id, rows) int` (#842) does the same for the web
+client's row count: clamped to `pager.MinSize`..`pager.MaxSize`, stored in
+`Display.ScreenHeight` only when it differs. Telnet heights come from NAWS.
+
 Before login there is no user, so `LoginWrapWidth(id) int` gives the width
 from the connection: a websocket's stored `Display.ScreenWidth`, clamped to
 30..80 again, or 80 when it stored none; every other connection 80, whatever

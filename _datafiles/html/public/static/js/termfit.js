@@ -24,7 +24,8 @@
 
     // opts: term, fitAddon, host (the element xterm opened in), minFont (the
     // smallest size the browser renders), fontSize() (the --text token in px),
-    // onCols(cols) (told when the column count changes), onGameWidth(px)
+    // onCols(cols) (told when the column count changes), onRows(rows) (told
+    // when the row count changes, the keyboard included), onGameWidth(px)
     // (told when the width 80 columns need changes: a font load, zoom,
     // another monitor, an upright phone).
     function create(opts) {
@@ -45,7 +46,7 @@
             // phone on its side with the keyboard up.
             if (!body || body.clientWidth < 160 || body.clientHeight < 1 ||
                 (body.clientHeight < 80 && body.clientWidth !== lastW)) return;
-            var colsChanged = false, cols;
+            var colsChanged = false, rowsChanged = false, cols;
             try {
                 var font = Math.max(opts.fontSize(), opts.minFont);
                 if (!forcePending && body.clientWidth === lastW && body.clientHeight === lastH &&
@@ -101,6 +102,7 @@
                     if (!cols) return;
                 }
                 colsChanged = cols !== term.cols;
+                rowsChanged = d.rows !== term.rows;
                 if (colsChanged || d.rows !== term.rows) {
                     term._core._renderService.clear();
                     term.resize(cols, d.rows);
@@ -112,6 +114,9 @@
             // so it cannot undo the fit by throwing.
             try {
                 if (colsChanged && opts.onCols) opts.onCols(cols);
+            } catch (e) {}
+            try {
+                if (rowsChanged && opts.onRows) opts.onRows(term.rows);
             } catch (e) {}
         }
 

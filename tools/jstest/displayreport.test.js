@@ -1,4 +1,4 @@
-// displayreport.test.js: the web client tells the server its column count
+// displayreport.test.js: the web client tells the server its columns and rows
 // once it settles (spec section 1: 250ms, only on a change, again on connect).
 //
 // Run:  node tools/jstest/displayreport.test.js
@@ -31,25 +31,28 @@ function clock() {
 
 var c = clock(), sent = [], open = true;
 var r = DisplayReport.create({
-    send: function (cols) { if (!open) return false; sent.push(cols); return true; },
+    send: function (cols, rows) { if (!open) return false; sent.push(cols + 'x' + rows); return true; },
     setTimeout: c.setTimeout, clearTimeout: c.clearTimeout
 });
 
-r.connected(80);
-check('connect sends the width at once', sent.join() === '80', sent.join());
+r.connected(80, 30);
+check('connect sends the size at once', sent.join() === '80x30', sent.join());
 
 r.columns(60); c.advance(100); r.columns(50); c.advance(100); r.columns(42);
 c.advance(249);
-check('nothing is sent while the size is still moving', sent.join() === '80', sent.join());
+check('nothing is sent while the size is still moving', sent.join() === '80x30', sent.join());
 c.advance(1);
-check('the settled width is sent once', sent.join() === '80,42', sent.join());
+check('the settled width is sent once', sent.join() === '80x30,42x30', sent.join());
 
 r.columns(42); c.advance(300);
-check('the same width is not sent again', sent.join() === '80,42', sent.join());
+check('the same size is not sent again', sent.join() === '80x30,42x30', sent.join());
+
+r.rows(18); c.advance(300);
+check('a height change alone is sent', sent.join() === '80x30,42x30,42x18', sent.join());
 
 open = false; r.columns(36); c.advance(300);
-check('a closed socket sends nothing', sent.join() === '80,42', sent.join());
-open = true; r.connected(36);
-check('a reconnect sends the width though it was sent before', sent.join() === '80,42,36', sent.join());
+check('a closed socket sends nothing', sent.join() === '80x30,42x30,42x18', sent.join());
+open = true; r.connected(36, 18);
+check('a reconnect sends the size though it was sent before', sent.join() === '80x30,42x30,42x18,36x18', sent.join());
 
 process.exit(failures ? 1 : 0);
