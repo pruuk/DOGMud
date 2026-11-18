@@ -110,8 +110,9 @@ catch what CI cannot see or what wastes a CI round-trip.
 1. **`gofmt -l internal/ modules/`** must print nothing. This has its own CI
    gate and has broken a push before. Cheapest possible check; run it first.
 2. **`go build ./...`** and the tests for every package you touched.
-3. **`golangci-lint run --new-from-merge-base=origin/master`** must report
-   `0 issues`. Takes about 60s.
+3. **`bash tools/lint.sh`** must report `0 issues`. It runs
+   `golangci-lint run --new-from-merge-base=origin/master` at CI's pinned
+   version. Takes about 30 to 60s (the first run builds the binary).
 
    🔑 **This is the only local gate that sees what CI's lint gate sees.** CI
    runs golangci-lint with `--new-from-rev=<PR base>` (since #864), and its linter set is wider than
@@ -119,10 +120,15 @@ catch what CI cannot see or what wastes a CI round-trip.
    it and in neither of those. A push can pass steps 1 and 2 cleanly and still
    redden CI on a linter you never ran.
 
-   The binary is already installed at `~/go/bin/golangci-lint` and is pinned to
-   the same version CI uses. Check with `golangci-lint --version` and match
-   `.github/workflows/` if it has drifted; a different version reports a
-   different set.
+   🪤 **Never run a bare `golangci-lint`.** The one in `~/go/bin` is shared
+   with other projects on this machine and drifted to 2.15.0 while CI pins
+   v2.12.2; it passed PR #909 locally on a line CI failed (#912). The shared
+   analysis cache is a second trap: a v2.12.2 run reusing 2.15.0's cache also
+   said 0 issues. `tools/lint.sh` reads the pin from
+   `.github/workflows/validate.yml`, builds that version into
+   `$(go env GOPATH)/golangci-lint/<version>/` with its own cache, and refuses
+   to run a binary whose version does not match. Extra args replace the
+   default, e.g. `bash tools/lint.sh ./internal/usercommands/...`.
 
    🪤 **A pre-existing issue can enter the "new issues" set without anyone
    touching it.** CI classifies by whether the LINE is in the patch, not by
@@ -337,8 +343,7 @@ asked:
     flag (a healthy run shows `--new-from-patch=/tmp/.../pull.patch`)
   - the findings name files the branch never touched
 
-  Verify locally with `golangci-lint run --new-from-merge-base=origin/master`,
-  which is step 3 of the Pre-Push SOP and reproduces the healthy check exactly.
+  Verify locally with `bash tools/lint.sh`, which is step 3 of the Pre-Push SOP and reproduces the healthy check exactly.
   A green local run plus those three log signals is proof the red is an
   artifact. [[reference-lint-gate-inverts-on-large-prs]]
 

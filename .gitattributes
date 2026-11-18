@@ -20,3 +20,7 @@ go.sum text eol=lf
 # ignore a red golden. That is the one test in the repo that must never be
 # ignored: it is the net under the M3 store migration.
 *.golden text eol=lf
+
+# Shell scripts run under bash, which fails on a CRLF line ("set -o pipefail\r"
+# is an invalid option), so a Windows checkout must keep them LF (#912).
+*.sh text eol=lf
