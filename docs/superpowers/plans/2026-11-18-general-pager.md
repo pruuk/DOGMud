@@ -1720,7 +1720,23 @@ Record each "failed as expected" in the PR description.
 
 - [ ] **Step 3: Playtest (controller, not a subagent)**
 
-Use the `dogmud-playtesting` skill. A local Docker run with a goals file that:
+Owner instruction (2026-11-18): playtest with different simulated screen sizes. Every size below runs `talk toke` on the same character, with no `set pagesize`, so the page follows the reported screen:
+
+| Screen | How it is simulated | Expected page |
+|---|---|---|
+| Telnet, small (80x14) | a Python telnet script on 33333 inside the container that answers DO NAWS with `IAC SB 31 0 80 0 14 IAC SE` | 12 lines (14 less 2) |
+| Telnet, standard (80x24) | the same script, height 24 | 22 lines |
+| Telnet, tall (80x60) | the same script, height 60 | Toke's reply fits: no stop line |
+| Telnet, no NAWS | the same script, refusing NAWS (`IAC WONT 31`) | 22 lines (default 24) |
+| Web, phone upright (360x640) | headless Chromium on the web client at that viewport | the rows xterm fits, less 2; `Client.Display` carries `rows` |
+| Web, phone with keyboard (360x400) | the same page, resized after login | fewer rows; the next `talk` pages shorter |
+| Web, desktop (1280x900) | headless Chromium at that viewport | likely no stop line |
+| Screen reader account | `set screenreader on` on the 80x60 telnet script | 20 lines whatever the height |
+| `set pagesize off` | on the 80x14 script | no stop line |
+
+For each, record the measured page length (lines between the reply's start and the stop line) and the stop line text, in a table in the PR description. The web runs need the web port, which the playtest container does not publish: run them against a local server on a private port started from the branch's worktree (the `dogmud-shipping` skill's detached-worktree boot), killed by PID afterwards.
+
+Then, also with the `dogmud-playtesting` skill, a local Docker run with a goals file that:
 - walks a fresh character to Crier Toke (mob 9106, Pothole Coulee) with `set pagesize 10`, types `talk toke`, and checks: page one and the stop line, Enter for page two, a menu number from an unseen page picks that topic, `q` stops;
 - repeats on the human telnet port inside the container (`docker exec <c> nc localhost 33333`) to see the raw stop line;
 - starts a fight (for example `mob spawn 205` as admin in room 5000) while a stop is up and checks that the remaining pages arrive before the first combat line and the normal prompt returns.
