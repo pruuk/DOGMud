@@ -984,8 +984,8 @@ func inputEventFor(wi WorldInput) events.Input {
 	}
 }
 
-// queueInputDone queues the marker that the server has finished one typed web
-// client line (plan 6, R6). events.InputDonePriority puts it after every event
+// queueInputDone queues the marker that the server has finished one typed line
+// (web or telnet) (plan 6, R6). events.InputDonePriority puts it after every event
 // that writes the command's text or opens a menu in the same pass, so the
 // client reads the menu state the command left.
 func queueInputDone(userId int, seq uint64) {
@@ -1005,9 +1005,12 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 	defer user.SyncTextMask()
 
 	typed := flags.Has(events.CmdTyped)
-	// Plan 6 (R6, R7): tell the web client this line is done, after all its
-	// text, on every return below. Its number, never its text.
-	if typed && seq > 0 {
+	// Plan 6 (R6, R7): mark this line done, after all its text, on every
+	// return below; the web client gets its number, never its text. #842:
+	// every typed line, telnet included (seq 0), so the pager knows where the
+	// reply ends; everything queued for this player until then is the reply.
+	if typed {
+		events.OpenReply(userId)
 		defer queueInputDone(userId, seq)
 	}
 

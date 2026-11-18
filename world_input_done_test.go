@@ -59,8 +59,8 @@ func TestQueueInputDone_PopsAfterTheCommandsText(t *testing.T) {
 }
 
 // processInput needs a running world, so its wiring is held by its source:
-// the marker is deferred at the top, for typed numbered lines only, and both
-// callers pass the event's number.
+// every typed line, telnet included, opens the reply window (#842) and defers
+// the done marker at the top, and both callers pass the event's number.
 func TestProcessInput_DefersTheDoneMarker(t *testing.T) {
 	src, err := os.ReadFile("world.go")
 	require.NoError(t, err)
@@ -70,7 +70,7 @@ func TestProcessInput_DefersTheDoneMarker(t *testing.T) {
 	require.Regexp(t, regexp.MustCompile(
 		`typed := flags\.Has\(events\.CmdTyped\)\s+`+
 			`(//[^\n]*\n\s*)*`+
-			`if typed && seq > 0 \{\s+defer queueInputDone\(userId, seq\)\s+\}`), s)
+			`if typed \{\s+(//[^\n]*\n\s*)*events\.OpenReply\(userId\)\s+defer queueInputDone\(userId, seq\)\s+\}`), s)
 	require.Equal(t, 2, len(regexp.MustCompile(`w\.processInput\(input\.UserId, input\.InputText, [^\n]*, input\.Seq\)`).FindAllString(s, -1)),
 		"both callers pass input.Seq")
 }

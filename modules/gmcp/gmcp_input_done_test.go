@@ -91,3 +91,11 @@ func TestInputDone_CarriesNoTypedText(t *testing.T) {
 	}
 	require.ElementsMatch(t, []string{"seq", "menu"}, keys)
 }
+
+// #842: telnet lines and a web client's macro lines are typed but carry no
+// number. Their InputDone is the pager's; the web client is not told.
+func TestInputDone_LineWithNoNumberSendsNothing(t *testing.T) {
+	u := inputDoneUser(t, 9849, 98849, true)
+	inputDoneHandler(events.InputDone{UserId: u.UserId, Seq: 0})
+	require.Empty(t, drainGMCPOut(t))
+}

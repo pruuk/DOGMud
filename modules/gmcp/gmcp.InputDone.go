@@ -18,7 +18,9 @@ func init() {
 
 func inputDoneHandler(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.InputDone)
-	if !ok || evt.UserId == 0 {
+	// Seq 0: a telnet line or a web client's macro line (#842). Only the
+	// pager needs those; the web client counts only its own lines.
+	if !ok || evt.UserId == 0 || evt.Seq == 0 {
 		return events.Continue
 	}
 	user := users.GetByUserId(evt.UserId)
