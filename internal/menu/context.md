@@ -26,7 +26,8 @@ send the text. Part of the quest-arc phase 0 work (#375).
 - `Marker`: `""` or one of `MarkerQuest` (`[!]`), `MarkerHandIn` (`[?]`),
   `MarkerInfo` (`[*]`), `MarkerChecked` (`[x]`). The symbol carries the
   meaning; colour only reinforces it.
-- `Label`: natural language, one line.
+- `Label`: natural language, written as one line; `Render` wraps it only for
+  a reader too narrow to hold it.
 - `Detail`: optional second line, indented under the label.
 - `Dim`: render grey (heard info, small talk).
 - `Aliases`: extra exact words that pick this entry ("y", "n").
@@ -57,6 +58,11 @@ send the text. Part of the quest-arc phase 0 work (#375).
 
 - Each line is a 2-space margin, the right-aligned number, a 4-wide marker
   column, then the label. Numbers are padded to the width of the largest.
+- A label wider than what is left of the width word-wraps, each further line
+  indented under the label's first character and coloured as the label
+  (#842: a 36-column phone client cut "Drill Yard?" mid-word). A label that
+  fits renders exactly as one line, so an 80-column reader sees no change.
+  `Columns: 2` mode still cuts labels.
 - `Detail` wraps to the width under the label, indented past the marker
   column.
 - `Dim` entries render grey (colour 8); every other label and `Detail` line
