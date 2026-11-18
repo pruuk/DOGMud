@@ -63,6 +63,11 @@ There are a handful of settings you can adjust with this command, including:
                              to hear the game.
 
   <ansi fg="command">set combatverbosity <full|medium|light></ansi>  Controls how much combat text you see. See <ansi fg="command">help combatverbosity</ansi>.
+
+  <ansi fg="command">set pagesize <number|off|auto></ansi>  How many lines a long answer shows before it
+                                  stops and waits for Enter. <ansi fg="command">auto</ansi> follows your
+                                  screen, <ansi fg="command">off</ansi> never stops. While stopped, Enter
+                                  shows more, <ansi fg="command">q</ansi> stops, any other command runs.
 ::
 
 ::rows
