@@ -9,16 +9,20 @@ The `internal/inputhandlers` package provides comprehensive input processing and
 ### Core Files
 - **login.go**: User authentication and login finalization logic
 - **login_prompt_handler.go**: Multi-step prompt system for interactive user input
-- **login_throttle.go**: the game login's failed-attempt throttle
-  (`gameLoginThrottle`, an `auththrottle.Tracker` keyed by `ClientIP()`).
-  `FinalizeLoginOrCreate` refuses a locked-out source before any password
-  work; a wrong password and an unknown username both count, cost the same
-  bcrypt work (`spendPasswordCheck`) and get the same `invalidLoginText`, so
-  neither the reply nor its timing tells which usernames exist. The prompt
-  handler writes `connFactLoginThrottled`, and the kick question's condition
-  refuses on it, so a locked-out source learns nothing from that question
-  either. That condition checks the password on a copy loaded from disk,
-  never on the live user (`PasswordMatches` rewrites a legacy hash)
+- **login_throttle.go**: the game login's throttle (`gameLoginThrottle`, an
+  `auththrottle.Tracker` keyed by `ClientIP()`). `FinalizeLoginOrCreate` is
+  the ONLY password check in the login, in this order: `loginAttempt` counts
+  the attempt (or refuses a locked-out source) before any password work; the
+  password is checked on a copy loaded with `skipValidation` (a validating
+  load re-saves the file, which would cancel or roll back an online player's
+  pending save); then the account ban; then the kick, if asked; then the
+  validated load to log in with; `loginSucceeded` gives back the attempt. A
+  wrong password and an unknown username get the same `invalidLoginText` and
+  both spend one bcrypt check (`spendPasswordCheck`). This narrows, but does
+  not close, telling which usernames exist: a real name also pays for loading
+  its file, and `new` says when a name is taken. The kick question asks only
+  whether the account is online and checks no password, so it can tell no
+  locked-out or banned source that a guess was right
 - **systemcommands.go**: System-level command processing (quit, reload, shutdown)
 - **signals.go**: Signal handling and terminal control
 - **term_ansi.go**: ANSI escape sequence processing

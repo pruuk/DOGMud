@@ -56,9 +56,6 @@ const (
 	connFactPrefix    = `_conn_`
 	connFactWebsocket = `_conn_websocket`
 	connFactMTTS      = `_conn_mtts`
-	// connFactLoginThrottled is "y" while the connection's source is locked
-	// out for failed logins, so no step does password work for it.
-	connFactLoginThrottled = `_conn_login_throttled`
 )
 
 // writeConnFacts stores what the connection's client has said about itself
@@ -67,7 +64,6 @@ const (
 func writeConnFacts(results map[string]string, id connections.ConnectionId) {
 	results[connFactWebsocket] = yesNo(connections.IsWebsocket(id))
 	results[connFactMTTS] = yesNo(connections.GetClientSettings(id).MTTSReported)
-	results[connFactLoginThrottled] = yesNo(loginThrottled(id))
 }
 
 // yesNo is "y" for true and "n" for false, the form prompt results use.

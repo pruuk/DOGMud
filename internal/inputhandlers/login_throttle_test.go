@@ -21,20 +21,18 @@ func kickStep(t *testing.T) *PromptStep {
 	return nil
 }
 
-// A locked-out source is never asked the kick question: asking it would tell
-// the source its password guess was right.
-func TestKickQuestion_NotAskedWhileThrottled(t *testing.T) {
+// The kick question checks no password: a password check there ran before
+// the login's attempt count and told a locked-out or banned source when a
+// guess was right. An account nobody is playing is never asked about.
+func TestKickQuestion_ChecksNoPassword(t *testing.T) {
 	step := kickStep(t)
-	require.False(t, step.Condition(map[string]string{
-		`username`:             `anyone`,
-		`password`:             `anything`,
-		connFactLoginThrottled: `y`,
-	}))
+	require.False(t, step.Condition(map[string]string{`username`: `nobody-online-here`, `password`: `anything`}))
+	require.False(t, step.Condition(map[string]string{`username`: `new`}))
 }
 
-// The throttle fact follows the connection's source: MaxFailures failures
-// from one IP set it, and another IP is unaffected.
-func TestConnFactLoginThrottled_FollowsTheSource(t *testing.T) {
+// Attempts are counted per source before any password work: MaxFailures
+// attempts lock the source out, another source is unaffected.
+func TestLoginAttempt_LocksTheSourceOut(t *testing.T) {
 	const a, b connections.ConnectionId = 97701, 97702
 	connections.RegisterTestWebsocketConnection(a)
 	connections.RegisterTestWebsocketConnection(b)
@@ -47,15 +45,31 @@ func TestConnFactLoginThrottled_FollowsTheSource(t *testing.T) {
 	})
 	gameLoginThrottle.ResetForTest()
 
-	for range auththrottle.MaxFailures {
-		noteLoginFailure(a)
+	for i := range auththrottle.MaxFailures {
+		require.True(t, loginAttempt(a), "attempt %d refused", i+1)
 	}
-	ra, rb := map[string]string{}, map[string]string{}
-	writeConnFacts(ra, a)
-	writeConnFacts(rb, b)
-	require.Equal(t, `y`, ra[connFactLoginThrottled])
-	require.Equal(t, `n`, rb[connFactLoginThrottled])
+	require.False(t, loginAttempt(a), "attempt past the limit allowed")
+	require.True(t, loginAttempt(b), "another source was locked out")
+}
 
-	clearLoginFailures(a)
-	require.False(t, loginThrottled(a))
+// A good login gives back only its own attempt. Logging into an account of
+// one's own between guesses must not reset the count: anyone can make an
+// account, so a reset on success would make the throttle useless.
+func TestLoginSucceeded_DoesNotResetOtherFailures(t *testing.T) {
+	const a connections.ConnectionId = 97703
+	connections.RegisterTestWebsocketConnection(a)
+	connections.Get(a).SetClientIP(`198.51.100.12`)
+	t.Cleanup(func() {
+		connections.UnregisterTestConnection(a)
+		gameLoginThrottle.ResetForTest()
+	})
+	gameLoginThrottle.ResetForTest()
+
+	for range auththrottle.MaxFailures - 1 {
+		require.True(t, loginAttempt(a)) // wrong guesses
+	}
+	require.True(t, loginAttempt(a)) // a login to the guesser's own account...
+	loginSucceeded(a)                // ...gives back only itself
+	require.True(t, loginAttempt(a)) // the next guess is the 5th failure
+	require.False(t, loginAttempt(a), "a success between guesses reset the count")
 }

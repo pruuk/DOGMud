@@ -240,11 +240,14 @@ func (p *MyPlugin) WebRequest(r *http.Request) (string, map[string]any, bool) {
 3. **Revalidation**: at most once per `authRevalidateEvery` (30 s) a cache hit
    re-reads the user record and voids the grant if the stored password hash or
    the role changed, or the account is gone
-4. **Throttle**: past the cache, a source that failed
-   `auththrottle.MaxFailures` (5) times inside `auththrottle.FailureWindow`
-   (5 min) gets `429` + `Retry-After` for `auththrottle.LockoutDur` (1 min),
-   *before* any bcrypt work. The counts live in `adminThrottle`, an
-   `auththrottle.Tracker`; the game login keeps its own tracker
+4. **Throttle**: past the cache, a locked-out source gets `429` +
+   `Retry-After`, *before* any bcrypt work. A presented credential is counted
+   by `adminThrottle.Attempt` in one step with that check, so parallel
+   requests cannot all slip past it: after `auththrottle.MaxFailures` (5)
+   failed attempts inside `auththrottle.FailureWindow` (5 min) the next is
+   refused and locks the source for `auththrottle.LockoutDur` (1 min). An
+   admin login clears the count. `adminThrottle` is an `auththrottle.Tracker`;
+   the game login keeps its own
 5. **Credential Validation**: Username/password verified against user database
 6. **Role Verification**: User must have admin or higher role
 7. **Access Granted**: Request proceeds to handler with mutex protection

@@ -61,9 +61,6 @@ func TestWriteConnFacts(t *testing.T) {
 		connections.UnregisterTestConnection(web)
 		connections.UnregisterTestConnection(tel)
 	})
-	// A real websocket always has a proxy-resolved client IP; the test one
-	// has no socket to read it from.
-	connections.Get(web).SetClientIP(`192.0.2.1`)
 	cs := connections.GetClientSettings(web)
 	cs.ScreenReader = true
 	connections.OverwriteClientSettings(web, cs)
@@ -73,10 +70,10 @@ func TestWriteConnFacts(t *testing.T) {
 
 	r := map[string]string{}
 	writeConnFacts(r, web)
-	require.Equal(t, map[string]string{connFactWebsocket: `y`, connFactMTTS: `n`, connFactLoginThrottled: `n`}, r)
+	require.Equal(t, map[string]string{connFactWebsocket: `y`, connFactMTTS: `n`}, r)
 	r = map[string]string{}
 	writeConnFacts(r, tel)
-	require.Equal(t, map[string]string{connFactWebsocket: `n`, connFactMTTS: `y`, connFactLoginThrottled: `n`}, r)
+	require.Equal(t, map[string]string{connFactWebsocket: `n`, connFactMTTS: `y`}, r)
 }
 
 // The handler really writes the facts before a condition: a telnet client

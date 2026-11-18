@@ -178,7 +178,8 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 
 		// Everything past here is expensive (bcrypt), so throttle first.
 		sourceIP := authSourceIP(r)
-		if locked, retryIn := adminThrottle.Throttled(sourceIP, now); locked {
+		refuseThrottled := func() {
+			_, retryIn := adminThrottle.Throttled(sourceIP, now)
 			secs := int(retryIn.Seconds()) + 1
 			w.Header().Set("Retry-After", strconv.Itoa(secs))
 			// Send the challenge even while throttled. Without it a browser that
@@ -187,6 +188,9 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 			// window expires -- a self-sustaining outage rather than a lockout.
 			w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
 			http.Error(w, "Too many failed authentication attempts", http.StatusTooManyRequests)
+		}
+		if locked, _ := adminThrottle.Throttled(sourceIP, now); locked {
+			refuseThrottled()
 			return
 		}
 
@@ -195,6 +199,24 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 		// or the header value is invalid, then the 'ok' return value
 		// will be false.
 		username, password, ok := r.BasicAuth()
+
+		// Only a PRESENTED credential is an attempt. It is counted here,
+		// before the bcrypt work and in one step with the lockout check, so
+		// a burst of parallel requests cannot all pass the check above
+		// before any failure is counted. A success clears the count.
+		//
+		// ⚠️ A request with NO Authorization header is not a failure, it is the
+		// first half of the standard HTTP Basic handshake: the client asks, gets
+		// a 401 with a challenge, and only then retries with credentials.
+		// Counting those once made an admin page pulling several resources
+		// trip the five-strike lockout entirely on its own, and the dashboards'
+		// JSON endpoints answered 429 with a plain-text body, surfacing as
+		//   SyntaxError: Unexpected token 'T', "Too many f"... is not valid JSON
+		if ok && !adminThrottle.Attempt(sourceIP, now) {
+			refuseThrottled()
+			return
+		}
+
 		if ok {
 
 			// Authorize against actual user record
@@ -224,26 +246,6 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 			} else {
 				mudlog.Error("ADMIN LOGIN", "username", username, "success", false, "error", err)
 			}
-		}
-
-		// Only a PRESENTED credential can be a failed attempt.
-		//
-		// ⚠️ A request with NO Authorization header is not a failure, it is the
-		// first half of the standard HTTP Basic handshake: the client asks, gets
-		// a 401 with a challenge, and only then retries with credentials. This
-		// used to call noteAuthFailure unconditionally, so ordinary page loads
-		// manufactured "failures" -- and an admin page pulling several resources
-		// tripped the five-strike lockout entirely on its own.
-		//
-		// That is what broke the combat, economy and progression dashboards:
-		// their JSON endpoints answered 429 with a plain-text body, surfacing in
-		// the browser as
-		//   SyntaxError: Unexpected token 'T', "Too many f"... is not valid JSON
-		//
-		// A wrong password, a malformed credential and a non-admin account all
-		// still count, so brute-force protection is unchanged.
-		if ok {
-			adminThrottle.NoteFailure(sourceIP, now)
 		}
 
 		// If the Authentication header is not present, is invalid, or the

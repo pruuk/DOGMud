@@ -31,27 +31,23 @@ func loginThrottleKey(id connections.ConnectionId) string {
 	return cd.ClientIP()
 }
 
-// loginThrottled reports whether a connection's source is locked out.
-func loginThrottled(id connections.ConnectionId) bool {
+// loginAttempt counts a login attempt against a connection's source, or
+// refuses it (false) while the source is locked out. Called before any
+// password work.
+func loginAttempt(id connections.ConnectionId) bool {
 	key := loginThrottleKey(id)
 	if key == `` {
-		return false
+		return true
 	}
-	locked, _ := gameLoginThrottle.Throttled(key, time.Now())
-	return locked
+	return gameLoginThrottle.Attempt(key, time.Now())
 }
 
-// noteLoginFailure counts a failed login against a connection's source.
-func noteLoginFailure(id connections.ConnectionId) {
+// loginSucceeded gives back the count of a login that succeeded. It never
+// clears the source's other failures: anyone can make an account, so a
+// clear on success would let a guesser reset the count between guesses.
+func loginSucceeded(id connections.ConnectionId) {
 	if key := loginThrottleKey(id); key != `` {
-		gameLoginThrottle.NoteFailure(key, time.Now())
-	}
-}
-
-// clearLoginFailures forgets a source's failures after a good login.
-func clearLoginFailures(id connections.ConnectionId) {
-	if key := loginThrottleKey(id); key != `` {
-		gameLoginThrottle.Clear(key)
+		gameLoginThrottle.Refund(key)
 	}
 }
 
