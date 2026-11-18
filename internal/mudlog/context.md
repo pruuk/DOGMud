@@ -17,7 +17,7 @@ The `internal/mudlog` package provides a comprehensive structured logging system
 type LogHandler struct {
     slog.Handler
     l                    *log.Logger
-    minimumMessageLength int
+    minimumMessageLength atomic.Int32 // widest message so far; every goroutine logs here
     lTee                 teeLogger
     noColorHandler       *slog.TextHandler
 }
