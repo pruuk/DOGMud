@@ -630,59 +630,68 @@ func (u *UserRecord) TakeTempData(key string) any {
 	return value
 }
 
-func (u *UserRecord) HasRolePermission(permissionId string, simpleMatch ...bool) bool {
+// RoleKeyCovers reports whether a granted role key permits the wanted key:
+// the same key, or a key below it on a dot boundary. `room` covers
+// `room.info` and `room.edit.exits`; `room.info` covers neither `room`, nor
+// a sibling such as `room.edit`, nor `room.infox`. An empty granted key
+// covers nothing.
+func RoleKeyCovers(granted, wanted string) bool {
+	if granted == `` {
+		return false
+	}
+	return wanted == granted || strings.HasPrefix(wanted, granted+`.`)
+}
+
+// roleKeys returns the keys the user's role grants in the Roles config, or
+// nil for the built-in user role and for a role the config does not define.
+// The built-in admin role is not listed here; callers pass it first.
+func (u *UserRecord) roleKeys() []string {
+	if u.Role == RoleUser {
+		return nil
+	}
+	return configs.GetRolesConfig()[u.Role]
+}
+
+// HasRolePermission reports whether the user's role permits permissionId.
+// Admins hold every key and plain users hold none. Any other role permits a
+// key when one of its granted keys covers it (RoleKeyCovers): a granted key
+// permits itself and every key below it, never a parent or a sibling.
+// Passing true as the optional argument only skips the audit log line; it
+// does not widen the match. A command entry point that checks each of its
+// sub-keys itself admits a role holding only some of them through
+// HasRolePermissionBelow instead.
+func (u *UserRecord) HasRolePermission(permissionId string, quiet ...bool) bool {
 
 	if u.Role == RoleAdmin {
 		return true
 	}
 
-	if len(simpleMatch) == 0 {
+	if len(quiet) == 0 {
 		mudlog.Info("RoleCheck", "permissionId", permissionId, "userId", u.UserId, "username", u.Username, "characterName", u.Character.Name)
 	}
 
-	if u.Role == RoleUser {
-		return false
-	}
-
-	roles := configs.GetRolesConfig()
-	commandList, ok := roles[u.Role]
-	if !ok {
-		return false
-	}
-
-	permissionIdLen := len(permissionId)
-	cmdLen := 0
-	for _, cmdAccessId := range commandList {
-
-		mudlog.Info("RoleCheck", "comparing", cmdAccessId, "to", permissionId)
-		// room.info vs room
-		if permissionId == cmdAccessId {
+	for _, granted := range u.roleKeys() {
+		if RoleKeyCovers(granted, permissionId) {
 			return true
 		}
+	}
 
-		cmdLen = len(cmdAccessId)
+	return false
+}
 
-		// For helpfiles we match any portion
-		if len(simpleMatch) > 0 && simpleMatch[0] {
+// HasRolePermissionBelow reports whether the user's role grants some key
+// strictly below permissionId on a dot boundary (`room.info` is below
+// `room`). It never permits permissionId itself: it exists so a command
+// whose handler checks every sub-key with HasRolePermission can be reached
+// by a role that holds only some of them. Admins always pass.
+func (u *UserRecord) HasRolePermissionBelow(permissionId string) bool {
 
-			// room vs room.info
-			if permissionIdLen < cmdLen {
-				if cmdAccessId[0:permissionIdLen] == permissionId {
-					return true
-				}
-			} else if permissionIdLen > cmdLen {
-				if permissionId[0:permissionIdLen] == cmdAccessId {
-					return true
-				}
-			}
-		}
+	if u.Role == RoleAdmin {
+		return true
+	}
 
-		// If the permissionId is shorter than their permission on this, skip it
-		if permissionIdLen < cmdLen {
-			continue
-		}
-
-		if permissionId[0:cmdLen] == cmdAccessId {
+	for _, granted := range u.roleKeys() {
+		if granted != permissionId && RoleKeyCovers(permissionId, granted) {
 			return true
 		}
 	}

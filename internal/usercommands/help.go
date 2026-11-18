@@ -57,7 +57,7 @@ func Help(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			templateFile := `help/` + keywords.TryHelpAlias(command.Command)
 
 			if command.AdminOnly {
-				if user.HasRolePermission(command.Command, true) {
+				if mayRunAdminCommand(user, command.Command) {
 					helpCommandList.Admin[category] = append(
 						helpCommandList.Admin[category],
 						helpCommand{Command: command.Command, Type: "command-admin", Missing: false},
@@ -120,7 +120,7 @@ func adminHelpFor(topic string, user *users.UserRecord) (string, bool) {
 		return ``, false
 	}
 	name := adminHelpNameStrip.ReplaceAllString(args[0], ``)
-	if name == `` || !user.HasRolePermission(name, true) {
+	if name == `` || !mayRunAdminCommand(user, name) {
 		return ``, false
 	}
 	tpl := `admincommands/help/command.` + name

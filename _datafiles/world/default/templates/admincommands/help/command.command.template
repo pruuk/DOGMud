@@ -6,6 +6,7 @@ This would force Bob to say hi.
 <ansi fg="red">Note:</ansi> You can command a mob/player to do anything they could normally do.
 Mobs do not have the full range of commands available to them that
 players do.
+Only an admin can command an admin.
 
 Player Commands:
   Type <ansi fg="command">help</ansi> to get a full list of player commands.

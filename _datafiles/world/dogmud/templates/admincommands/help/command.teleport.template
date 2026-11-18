@@ -10,5 +10,6 @@ Move through walls, across gaps, etc. to the first room found to the direction s
 Move to the room of a player matching the specified name.
 
 You can optionally target an online user instead of yourself by putting their name first.
+Moving another player needs the <ansi fg="command">teleport.other</ansi> permission.
 
 Example: <ansi fg="command">teleport [name] east</ansi>

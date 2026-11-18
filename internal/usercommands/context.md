@@ -222,7 +222,19 @@ already known, so no presence leaks.
 - **State validation**: Checking combat status, conditions, and other restrictions
 
 #### **Permission and Security**
-- **Role-based access**: Admin commands restricted by user permissions
+- **Role-based access**: Admin commands restricted by user permissions.
+  `mayRunAdminCommand` is the one gate: `TryCommand`, `isKnownCommandLine`,
+  the help index and admin help all ask it. A role reaches an admin command
+  through the command's own key or a parent (`users.RoleKeyCovers`), or
+  through a key below it only for a command in `subKeyGatedCommands`
+  (`item`, `mob`, `modify`, `room`, `spell`, `teleport`), whose handlers
+  check a sub-key on every path that acts. Add a command there only after
+  checking that of its handler.
+- **Rank rules**: `teleport <player> ...` needs `teleport.other` to move
+  anyone but the caller (no shipped role holds it); `modify role` goes
+  through `roleChangeRefusal` (only an admin grants admin, an admin's role
+  is never changed there, nobody changes their own role except down to
+  user); `command` refuses an admin target unless the issuer is an admin.
 - **State restrictions**: Commands blocked when downed, in combat, or affected by conditions
 - **Cooldown management**: Time-based restrictions on command usage
 

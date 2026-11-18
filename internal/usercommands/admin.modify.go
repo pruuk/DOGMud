@@ -14,11 +14,31 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-/*
-* Role Permissions:
-* modify 				(All)
-* modify.role			(Change user roles)
- */
+// roleChangeRefusal returns why caller may not set target's role to newRole,
+// or an empty string when the change may go ahead. An admin's role is never
+// changed here, only an admin grants the admin role, and nobody changes
+// their own role except back down to the built-in user role.
+func roleChangeRefusal(caller, target *users.UserRecord, newRole string) string {
+	if target.Role == users.RoleAdmin {
+		return `Admin permissions cannot be removed this way.`
+	}
+	if target.Role == newRole {
+		return `That permission is already set for this user.`
+	}
+	if newRole == users.RoleAdmin && caller.Role != users.RoleAdmin {
+		return `Only an admin can grant the admin role.`
+	}
+	if target.UserId == caller.UserId && newRole != users.RoleUser {
+		return `You cannot raise your own role.`
+	}
+	return ``
+}
+
+// Modify changes player records; today only `modify role <username> <role>`.
+//
+// Role Permissions:
+//   - modify       (All)
+//   - modify.role  (Change user roles, within the limits of roleChangeRefusal)
 func Modify(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	args := util.SplitButRespectQuotes(rest)
@@ -54,13 +74,8 @@ func Modify(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		for _, u := range users.GetAllActiveUsers() {
 			if strings.EqualFold(searchUser, u.Username) {
 
-				if u.Role == users.RoleAdmin {
-					user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">Admin permissions cannot be removed this way.</ansi>`)
-					return true, nil
-				}
-
-				if u.Role == newRole {
-					user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">That permission is already set for this user.</ansi>`)
+				if why := roleChangeRefusal(user, u, newRole); why != `` {
+					user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">`+why+`</ansi>`)
 					return true, nil
 				}
 
@@ -81,13 +96,8 @@ func Modify(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 				if strings.EqualFold(searchUser, u.Username) {
 
-					if u.Role == users.RoleAdmin {
-						user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">Admin permissions cannot be removed this way.</ansi>`)
-						return false
-					}
-
-					if u.Role == newRole {
-						user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">That permission is already set for this user.</ansi>`)
+					if why := roleChangeRefusal(user, u, newRole); why != `` {
+						user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">`+why+`</ansi>`)
 						return false
 					}
 

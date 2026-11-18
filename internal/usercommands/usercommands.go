@@ -518,7 +518,7 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 			}
 		}
 
-		if !cmdInfo.AdminOnly || user.HasRolePermission(cmd, true) {
+		if !cmdInfo.AdminOnly || mayRunAdminCommand(user, cmd) {
 
 			start := time.Now()
 			defer func() {
@@ -670,7 +670,7 @@ func isKnownCommandLine(user *users.UserRecord, room *rooms.Room, line string) b
 	}
 	cmd, _ := actions.ExpandAliases(verb, rest, user.TryCommandAlias)
 	if info, ok := userCommands[cmd]; ok && cmd != behaviortree.PortalStakeCommand {
-		if !info.AdminOnly || user.HasRolePermission(cmd, true) {
+		if !info.AdminOnly || mayRunAdminCommand(user, cmd) {
 			return true
 		}
 	}
@@ -708,6 +708,33 @@ func IsAdminCommand(cmd string) bool {
 		return info.AdminOnly
 	}
 	return false
+}
+
+// subKeyGatedCommands names the admin commands whose handlers check a role
+// sub-key (`room.info`, `teleport.roomid`) on every path that acts, so a
+// role holding only some of those sub-keys may reach the command and be
+// refused inside it. A command belongs here only when every path through
+// its handler that reads or changes game state checks a key at or below the
+// command's own name; any other admin command needs its own key or a parent.
+var subKeyGatedCommands = map[string]bool{
+	`item`:     true,
+	`mob`:      true,
+	`modify`:   true,
+	`room`:     true,
+	`spell`:    true,
+	`teleport`: true,
+}
+
+// mayRunAdminCommand reports whether the user's role reaches the admin
+// command cmd: the role covers cmd itself, or cmd is in subKeyGatedCommands
+// and the role holds a key below it. The command dispatcher, the help index
+// and admin help all ask this, so a player sees help for exactly the admin
+// commands they can reach.
+func mayRunAdminCommand(user *users.UserRecord, cmd string) bool {
+	if user.HasRolePermission(cmd, true) {
+		return true
+	}
+	return subKeyGatedCommands[cmd] && user.HasRolePermissionBelow(cmd)
 }
 
 // GetCommandRegistry returns a snapshot of all registered commands for external use.

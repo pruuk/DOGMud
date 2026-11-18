@@ -38,6 +38,15 @@ The users system is built around several key components:
 ### 1. **Comprehensive User Management**
 - **Authentication**: Password hashing and validation
 - **Role System**: Guest, user, and admin roles with permissions
+- **Role keys**: a custom role (the `Roles` config) grants dotted keys.
+  `RoleKeyCovers(granted, wanted)` is the one match rule: a granted key
+  covers itself and every key below it on a dot boundary (`room` covers
+  `room.info`), never a parent, a sibling or a longer spelling (`room.info`
+  covers neither `room`, `room.edit` nor `room.infox`).
+  `HasRolePermission(key, quiet...)` applies it (admins pass, plain users
+  fail; the optional argument only skips the audit log line).
+  `HasRolePermissionBelow(key)` reports a granted key strictly below `key`,
+  for a command entry point that checks each sub-key itself
 - **Connection Tracking**: Real-time user connection mapping
 - **Zombie Handling**: Graceful disconnection and cleanup
 

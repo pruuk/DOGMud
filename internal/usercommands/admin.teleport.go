@@ -23,6 +23,7 @@ import (
 * teleport.direction	(Teleport through walls in a direction)
 * teleport.playername	(Teleport to a player name)
 * teleport.roomid		(Teleport to a roomId)
+* teleport.other		(Move another player; the keys above still pick the destination)
  */
 func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
@@ -43,6 +44,13 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			rest = strings.Join(args[1:], ` `)
 			targetUser = searchUser
 		}
+	}
+
+	// Moving someone else is its own permission; the direction, playername
+	// and roomid keys below only say where a move may go.
+	if targetUser != user && !user.HasRolePermission(`teleport.other`) {
+		user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">teleport.other</ansi> permission`)
+		return true, nil
 	}
 
 	gotoRoomId, numError := strconv.Atoi(rest)
