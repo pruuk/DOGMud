@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // FinalizeLoginOrCreate is called after all prompts are successfully answered.
@@ -59,12 +60,20 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 				// FindUserId returning 0, since GetByUserId(0) returns nil.
 				if user != nil {
 
+					// The session being kicked is a live user MainWorker reads
+					// and writes under the world lock; this is the connection
+					// goroutine, so it takes that lock for the read and the
+					// zombie switch (never across the network send).
+					util.LockMud()
 					existingConnectionId := user.ConnectionId()
+					util.UnlockMud()
 
 					// Send a goodbye message to the currently connected user.
 					connections.SendTo([]byte(goodbyeFor(existingConnectionId)), existingConnectionId)
 
+					util.LockMud()
 					users.SetZombieUser(userid)
+					util.UnlockMud()
 					// Error deliberately discarded, and made explicit because
 					// the lint gate is only-new-issues and re-indenting this
 					// line into the nil guard above made errcheck treat it as

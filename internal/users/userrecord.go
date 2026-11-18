@@ -63,8 +63,9 @@ type UserRecord struct {
 	connectionId    uint64
 	// sessionMu guards unsentText, suggestText, tempDataStore, activePrompt and activeMenu
 	// — the only UserRecord state written from BOTH the per-connection
-	// goroutine (main.go's read loop, which holds util.LockMud only around the
-	// prompt read, LoginUser and AddConnectionEvent) and the
+	// goroutine (main.go's read loop, which holds util.RLockMud around the
+	// prompt read and util.LockMud only in LoginUser, CopyoverReconnectUser,
+	// AddConnectionEvent and the login kick) and the
 	// tick loop (world.go processInput, hooks/RedrawPrompt_SendRedraw, which
 	// always does). tempDataStore in particular is a map, and a concurrent map
 	// read+write is a hard runtime panic, not a benign race.
