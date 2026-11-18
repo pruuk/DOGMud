@@ -71,17 +71,26 @@ printed it.
   door, the AI companion's `ask`) is never marked: it is not addressed to
   one player.
 - `processInput` opens the window for a typed line (`CmdTyped`, telnet and
-  web alike) and closes it on return (`defer`), next to the existing
-  `InputDone` defer.
+  web alike), next to the existing `InputDone` defer. The window closes when
+  that line's `InputDone` pops (the pager's listener, section 3). The window
+  is a count per user, so two typed lines in one pass each open and close
+  their own.
+- `processInput` itself runs inside an event listener (`HandleInputEvents`,
+  `world.go:143`), so the line, everything its events cascade into at
+  priority below 99 (the `Quest` grant lines, `TalkMenuAgain`'s re-shown
+  menu after an accepted offer), and its `InputDone` all happen in one
+  event pass. Keeping the window open until `InputDone` covers that cascade.
 - `InputDone` is now queued for every typed line, telnet included (`Seq` 0).
-  The gmcp listener already ignores connections that are not web clients, so
-  nothing new is sent on telnet; the pager listens for it as the end of the
+  The gmcp listener already ignores connections that are not web clients; it
+  now also ignores `Seq` 0, because a web client's macro lines are re-queued
+  as typed lines with no number (`world.go:1054-1059`) and must not send
+  `Char.Input.Done {seq: 0}`. The pager listens for it as the end of the
   reply.
 
-Text a command causes later, from another event's listener (a mob's
-queued `emote`, a delayed re-run from `go`), is outside the window, so it is
-not marked and goes out at once, as it does today. The test in section 7
-checks that `talk` to Toke is fully marked.
+Text a command causes in a later pass (a mob's queued `emote`, a delayed
+re-run from `go`, a macro's later lines) is outside the window, so it is not
+marked and goes out at once, as it does today. The test in section 7 checks
+that `talk` to Toke, and accepting an offer, are fully marked.
 
 ### 2. The pager (`internal/pager`, new package)
 
@@ -145,8 +154,9 @@ not re-queued as messages, so it is never re-marked or re-collected.
   24.
 - `set pagesize <n>` (10 to 200) and `set pagesize off`, saved on the
   account as `UserRecord.PageSize` (`yaml:"pagesize,omitempty"`; 0 = follow
-  the screen, -1 = off), following `set linewidth`. `set pagesize` alone
-  says the current size. Help file updated.
+  the screen, -1 = off), following `set linewidth`. `set pagesize auto`
+  goes back to following the screen. `set pagesize` alone says the current
+  size. Help file updated.
 
 ### 6. Screen readers
 
@@ -172,8 +182,11 @@ not re-queued as messages, so it is never re-marked or re-collected.
   fight starts go out in full before the first combat line.
 - `talk` to Toke under test with a page size of 10: every line of his reply
   and menu is marked, and nothing of it arrives before page one.
-- The `InputDone` guard test is updated for the telnet queueing; a guard
-  keeps `AddToQueue` the only place `Reply` is set.
+- `TestProcessInput_DefersTheDoneMarker` (`world_input_done_test.go:64`),
+  which pins the `typed && seq > 0` condition in source, is updated for the
+  telnet queueing; the gmcp handler test gains a `Seq` 0 case. The priority
+  guard (`world_input_done_guard_test.go`) is unaffected: nothing new queues
+  at or above 99.
 - Playtest: Toke at a small page size, on telnet (33333 inside the
   container) and in the web client, including a fight line arriving at a
   stop.
@@ -183,11 +196,15 @@ not re-queued as messages, so it is never re-marked or re-collected.
 - **Marking in `AddToQueue`, not in each sender.** One place covers the 14
   constructors and every future one. If wrong: a sender-side flag, which
   would have to be threaded through `rooms.go`'s fan-out.
-- **Lines a command causes through a later event are not paged.** They go
-  out at once, before the held reply, which can put them above it. If wrong:
-  the window could stay open until `InputDone` pops instead of closing when
-  `processInput` returns, at the risk of catching unrelated text queued in
-  the same pass.
+- **The window stays open until `InputDone` pops** (changed while writing
+  the plan: closing it when `processInput` returns would have let the
+  re-shown menu after an accepted offer, and the quest-start lines, out
+  ahead of the held reply). A listener in the same pass that sends this
+  player unrelated text is marked too and pages with the reply. If wrong:
+  close the window when `processInput` returns, and accept those lines
+  arriving above the reply.
+- **Lines a command causes in a later pass are not paged.** They go out at
+  once. If wrong: nothing simple; they would need their own marker.
 - **Screen reader default of 20 lines.** The original #842 note named 20 as
   xterm's announce limit; that limit is gone, and 20 is kept as a listening
   length. If wrong: one constant.
@@ -209,6 +226,9 @@ not re-queued as messages, so it is never re-marked or re-collected.
   `quests` in full still drops the rest and shows the list. If wrong: stop
   on a different word, or let `q` drop the rest and show the quest list
   (the "anything else" rule), with no stop word at all.
+- **`set pagesize auto`** returns to following the screen (added while
+  writing the plan; the spec had no way back after `set pagesize 30`). If
+  wrong: another word.
 - **No back or jump commands** (CircleMUD's `b`, `r`, page numbers): ruling
   3 chose the short set.
 
