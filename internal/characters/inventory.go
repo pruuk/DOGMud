@@ -129,35 +129,65 @@ func (c *Character) FindKeyInBackpack(lockId string) (items.Item, bool) {
 
 func (c *Character) HasKey(lockId string, difficulty int) (hasKey bool, hasSequence bool) {
 
-	sequence := util.GetLockSequence(lockId, difficulty, string(configs.GetServerConfig().Seed), 0)
+	sequence := util.LockSequence(lockId, difficulty, 0)
 
 	// Check whether they ahve a key for this lock
 	return c.GetKey(`key-`+lockId) != ``, c.GetKey(lockId) == sequence
 }
 
 func (c *Character) KeyCount() int {
-	if c.KeyRing == nil {
-		c.KeyRing = make(map[string]string)
-	}
+	c.DropStaleLockSolutions()
 	return len(c.KeyRing)
 }
 
+// GetKey returns a keyring entry: a physical key's item id for "key-<lockId>",
+// or the lock solution (complete or partial) learned for lockId. A lock
+// solution learned before the server last restarted is gone (owner ruling
+// 2026-11-18: a solution is good only until a restart).
 func (c *Character) GetKey(lockId string) string {
-	if c.KeyRing == nil {
-		c.KeyRing = make(map[string]string)
-	}
+	c.DropStaleLockSolutions()
 	return c.KeyRing[strings.ToLower(lockId)]
 }
 
+// SetKey stores a keyring entry, or removes it when sequence is empty. A
+// lock solution is stamped with this boot, so the next restart drops it.
 func (c *Character) SetKey(lockId string, sequence string) {
+	c.DropStaleLockSolutions()
+	lockId = strings.ToLower(lockId)
+	if len(sequence) == 0 {
+		delete(c.KeyRing, lockId)
+		return
+	}
+	c.KeyRing[lockId] = strings.ToUpper(sequence)
+	if !isPhysicalKeyEntry(lockId) {
+		c.KeyRingBoot = util.BootID()
+	}
+}
+
+// DropStaleLockSolutions removes every lock solution (complete or partial)
+// learned before the server last restarted, keeping physical keys, which do
+// not depend on the lock seed. Locks get a new secret seed at every boot
+// (util.LockSequence), so an old solution no longer opens anything and must
+// not be shown as known.
+func (c *Character) DropStaleLockSolutions() {
 	if c.KeyRing == nil {
 		c.KeyRing = make(map[string]string)
 	}
-	if len(sequence) == 0 {
-		delete(c.KeyRing, strings.ToLower(lockId))
-	} else {
-		c.KeyRing[strings.ToLower(lockId)] = strings.ToUpper(sequence)
+	if c.KeyRingBoot == util.BootID() {
+		return
 	}
+	for lockId := range c.KeyRing {
+		if !isPhysicalKeyEntry(lockId) {
+			delete(c.KeyRing, lockId)
+		}
+	}
+	c.KeyRingBoot = ``
+}
+
+// isPhysicalKeyEntry reports whether a keyring entry records a physical key
+// ("key-<lockId>" holding the key's item id) rather than a lock solution.
+func isPhysicalKeyEntry(entry string) bool {
+	return strings.HasPrefix(entry, `key-`)
 }
 
 // GetRandomStealableItem picks a random carried item a thief may take. A

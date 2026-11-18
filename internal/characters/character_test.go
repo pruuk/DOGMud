@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -402,6 +403,7 @@ func TestCharacter_KeyCount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := New()
 			c.KeyRing = tt.keyRing
+			c.KeyRingBoot = util.BootID() // learned this boot
 			got := c.KeyCount()
 			assert.Equal(t, tt.want, got)
 			// Also check that KeyRing is not nil after call
@@ -470,12 +472,45 @@ func TestCharacter_GetKey(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := New()
 			c.KeyRing = tt.keyRing
+			c.KeyRingBoot = util.BootID() // learned this boot
 			got := c.GetKey(tt.lockId)
 			assert.Equal(t, tt.wantValue, got)
 			assert.NotNil(t, c.KeyRing)
 		})
 	}
 }
+
+// A lock solution is good only until the server restarts (owner ruling
+// 2026-11-18). After a restart, learned and half-finished solutions are gone
+// and a physical key stays; a solution learned after the restart is kept.
+func TestCharacter_LockSolutionsLastUntilARestart(t *testing.T) {
+	c := New()
+	c.SetKey(`lock1`, `UDUD`)
+	c.SetKey(`lock2`, `UD`)
+	c.SetKey(`key-lock3`, `20001`)
+	assert.Equal(t, `UDUD`, c.GetKey(`lock1`))
+
+	restore := util.RebootLocksForTest()
+	defer restore()
+
+	assert.Equal(t, ``, c.GetKey(`lock1`), "a solution survived a restart")
+	assert.Equal(t, ``, c.GetKey(`lock2`), "a half-finished pick survived a restart")
+	assert.Equal(t, `20001`, c.GetKey(`key-lock3`), "a physical key was dropped")
+	assert.Equal(t, 1, c.KeyCount())
+
+	c.SetKey(`lock1`, `DDUU`)
+	assert.Equal(t, `DDUU`, c.GetKey(`lock1`), "a solution learned after the restart was dropped")
+}
+
+// Locks get a new seed at every boot: the same lock's sequence differs
+// across a restart, and nothing reads Server.Seed for it.
+func TestLockSequenceChangesAcrossARestart(t *testing.T) {
+	before := util.LockSequence(`lock1`, 32, 0)
+	restore := util.RebootLocksForTest()
+	defer restore()
+	assert.NotEqual(t, before, util.LockSequence(`lock1`, 32, 0))
+}
+
 func TestCharacter_SetKey(t *testing.T) {
 	tests := []struct {
 		name         string

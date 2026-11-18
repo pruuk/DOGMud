@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/menu"
@@ -116,7 +115,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	//
 	keyring_sequence := user.Character.GetKey(lockId)
 
-	sequence := util.GetLockSequence(lockId, lockStrength, string(configs.GetServerConfig().Seed), lockRotation)
+	sequence := util.LockSequence(lockId, lockStrength, lockRotation)
 
 	// Calculate any presolve from conditions, gear, pet perks, etc.
 	if len(keyring_sequence) == 0 {

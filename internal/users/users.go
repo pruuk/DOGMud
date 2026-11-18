@@ -556,6 +556,9 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 	// switch path, so brand-new logins were the only path that broke.
 	loadedUser.Character.SetUserId(loadedUser.UserId)
 
+	// Lock solutions are good only until a restart (util.LockSequence).
+	loadedUser.Character.DropStaleLockSolutions()
+
 	// One-time migrations
 	loadedUser.Character.MigratePairedSpells()
 	loadedUser.Character.MigrateNeckToBack()

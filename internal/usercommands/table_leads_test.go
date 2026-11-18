@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -174,6 +175,7 @@ func keyringAt(t *testing.T, width int, title string, difficulty uint8) string {
 		"key-60557-lockbox": "",
 		"60557-north":       "UD",
 	}
+	u.Character.KeyRingBoot = util.BootID() // a pick started this boot
 	return tableRun(t, u, width, func() { _, _ = KeyRing("", u, nil, 0) })
 }
 
@@ -381,6 +383,7 @@ func TestKeyringDetailNeverStartsWithADot(t *testing.T) {
 		u.Character.RoomId = roomId
 		id := strconv.Itoa(roomId)
 		u.Character.KeyRing = map[string]string{"key-" + id + "-lockbox": "", id + "-north": "UD"}
+		u.Character.KeyRingBoot = util.BootID() // a pick started this boot
 		for width := 30; width <= 39; width++ {
 			out := tableRun(t, u, width, func() { _, _ = KeyRing("", u, nil, 0) })
 			for _, line := range plainLines(out) {

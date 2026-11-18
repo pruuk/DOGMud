@@ -55,12 +55,10 @@ Server:
     Hostname: "dogmud.org"
     Port: "33333"
   # - Seed -
-  #   The seed used for certain types of content generation
-  #   To prevent certain secrets or content from being spoiled, you can set this
-  #   to a random string.
-  #   Note: Once the Mud has been played and data saved, changing this will
-  #   probably break certain things that get saved to files, such as user KeyRings,
-  #   so only set it before the first time you run the server.
+  #   The seed for the zodiac calendar. Changing it after launch reshuffles the
+  #   calendar. Locks do NOT use it: their sequences come from a secret seed
+  #   the server makes at every boot (util.LockSequence), so a lock solution is
+  #   good only until a restart.
   Seed: "DOGMud-Chrysalis-2026"
   # - MaxCPUCores -
   #   Maximum CPU cores to use. 0 for all available cores.

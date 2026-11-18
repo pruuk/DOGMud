@@ -325,6 +325,7 @@ type Character struct {
 	HeardTopics             []string                       `yaml:"heardtopics,omitempty"`         // heard talk topics, "<mobId>.<key>", sorted (#375)
 	LastQuestId             int                            `yaml:"lastquestid,omitempty"`         // most recently progressed quest
 	KeyRing                 map[string]string              `yaml:"keyring,omitempty"`             // key is the lock id, value is the sequence
+	KeyRingBoot             string                         `yaml:"keyringboot,omitempty"`         // util.BootID when the keyring's lock solutions were learned
 	KD                      KDStats                        `yaml:"kd,omitempty"`                  // Kill/Death stats
 	MiscData                map[string]any                 `yaml:"miscdata,omitempty"`            // Any random other data that needs to be stored
 	Discoveries             map[int][]string               `yaml:"discoveries,omitempty"`         // Per-room hidden object discoveries

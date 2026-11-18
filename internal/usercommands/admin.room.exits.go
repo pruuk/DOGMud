@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/menu"
@@ -244,7 +243,7 @@ func room_Edit_Exits(rest string, user *users.UserRecord, room *rooms.Room, flag
 		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="red">To Create Key -  LockId: <ansi fg="231" bg="5">%s</ansi></ansi>`, lockId))
 
 		var seqString strings.Builder
-		for _, dir := range util.GetLockSequence(lockId, int(currentlyEditing.Exit.Lock.Difficulty), string(configs.GetServerConfig().Seed), currentlyEditing.Exit.Lock.RotationSeed) {
+		for _, dir := range util.LockSequence(lockId, int(currentlyEditing.Exit.Lock.Difficulty), currentlyEditing.Exit.Lock.RotationSeed) {
 			seqString.WriteString(string(dir) + " ")
 		}
 		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="red">To pick lock - Sequence: <ansi fg="green">%s</ansi></ansi>`, seqString.String()))

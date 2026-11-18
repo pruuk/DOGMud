@@ -516,6 +516,18 @@ It survives save, load and restart.
   also moves the focus off it. Idempotent, no marker, so alts are safe
   (#375 phase 7: quest 29 Two Roads).
 
+### The keyring (`inventory.go`)
+
+`KeyRing` maps an entry to a value. `key-<lockId>` holds a physical key's item
+id and lasts forever. A bare `<lockId>` holds a lock solution, complete or
+partial (`picklock` stores the pins entered so far). A lock solution is good
+only until the server restarts (owner ruling 2026-11-18): locks use a secret
+seed made at every boot (`util.LockSequence`), `SetKey` stamps a solution with
+`KeyRingBoot = util.BootID()`, and `DropStaleLockSolutions` removes every
+solution from an older boot. `GetKey`, `SetKey` and `KeyCount` call it, as
+do `users.LoadUser` and the `keyring` command, so a stale solution is never
+read or shown. `HasKey` compares a solution to the current sequence.
+
 ### Character States and Modifiers
 - 🔑 **Timed state is `Character.Conditions` and nothing else.** Read
   `internal/conditions/context.md` before adding, reading or displaying anything
