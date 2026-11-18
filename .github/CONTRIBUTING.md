@@ -64,7 +64,7 @@ gofmt -l internal/ modules/ *.go        # must print nothing
 go vet ./...
 go build ./...
 go test ./... -count=1                  # every package, including the repo root
-golangci-lint run --new-from-merge-base=origin/master   # must report 0 issues
+bash tools/lint.sh                      # CI's pinned golangci-lint; must report 0 issues
 ```
 
 Then boot the server once and confirm it reaches the login prompt with no
