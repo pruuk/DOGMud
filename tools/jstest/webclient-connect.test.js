@@ -78,13 +78,22 @@ global.textInput = element();
 global.window = {};
 global.setTimeout = function () { return 0; };
 global.clearTimeout = function () {};
+global.__srWrites = [];
 
 var code = 'var socket = null, leavingGame = false, leaveFallback = null, inGame = false;\n'
     + 'var pendingReconnectToken = null, reconnectAttempts = 0;\n'
     + 'var connectButton = document.getElementById("connect-button");\n'
     + 'var sessionButton = document.getElementById("btn-session");\n'
     + 'var sessionConfirm = document.getElementById("sess-confirm");\n'
-    + extract('function markInGame() {', "sessionButton.addEventListener('click'")
+    // The screen reader switch (static/js/screenreader.js): the connect
+    // handler reads isOn() for the address, onopen calls loggedOut(), and
+    // onmessage and gameLine pass text to write(), recorded here.
+    + 'var screenReader = { isOn: function () { return global.__srOn === true; }, loggedOut: function () {}, write: function (t) { global.__srWrites.push(t); } };\n'
+    // onopen forgets the last account's Char.Info.
+    + 'var GMCPStructs = {};\n'
+    // From gameLine, which sits just above markInGame, so the page's own
+    // lines (onclose and the rest) reach the screen reader log here too.
+    + extract('function gameLine(text) {', "sessionButton.addEventListener('click'")
     + extract("connectButton.addEventListener('click'", "textInput.addEventListener('keydown'");
 (0, eval)(code);
 
@@ -209,6 +218,42 @@ pendingReconnectToken = 'TOKEN';
 reconnectAttempts = 90;
 s.closed();
 check('music stops when reconnecting gives up', musicStops === 1, 'stops ' + musicStops);
+
+// Screen reader mode (static/js/screenreader.js): the address tells the
+// server before the connect splash, so the splash comes as words only.
+check('with the mode off the address has no sr', !/[?&]sr=/.test(sockets[0].url), 'url ' + sockets[0].url);
+global.__srOn = true;
+connect.disabled = false;
+connect.click();
+s = sockets[sockets.length - 1];
+check('with the mode on the address ends in &sr=1', s.url === 'ws://test/ws?cols=57&sr=1', 'url ' + s.url);
+global.__srOn = false;
+
+// The screen reader log (static/js/screenreader.js, spec section 11): server
+// text reaches it; music and the reconnect token do not; the page's own
+// close messages do, so a blind player hears a dropped connection.
+s.open();
+global.__srWrites = [];
+s.onmessage({ data: 'A rat arrives.\r\n' });
+check('a plain server frame reaches the screen reader log',
+    __srWrites.length === 1 && __srWrites[0] === 'A rat arrives.\r\n', JSON.stringify(__srWrites));
+global.__srWrites = [];
+s.onmessage({ data: '!!MUSIC(Off)' });
+s.onmessage({ data: 'RELOGTKN:abc123\r\n' });
+check('music and reconnect token frames never reach the log', __srWrites.length === 0, JSON.stringify(__srWrites));
+pendingReconnectToken = null;
+global.__srWrites = [];
+s.closed();
+check('a clean close says so in the log',
+    __srWrites.join('|').indexOf('Connection closed cleanly') >= 0, JSON.stringify(__srWrites));
+connect.disabled = false;
+connect.click();
+s = sockets[sockets.length - 1];
+s.open();
+global.__srWrites = [];
+s.readyState = FakeSocket.CLOSED;
+s.onclose({ wasClean: false, code: 1006, reason: '' });
+check('a dropped connection says so in the log', __srWrites.join('|').indexOf('Connection died') >= 0, JSON.stringify(__srWrites));
 
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

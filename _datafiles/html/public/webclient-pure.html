@@ -232,6 +232,7 @@
     </script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/termfit.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/displayreport.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/screenreader.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/layoutpick.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js?v={{ .ASSET_VERSION }}"></script>
@@ -242,6 +243,13 @@
     <script>window.COMPANION_RELAY_ORIGIN = {{ .COMPANION_RELAY_ORIGIN_JSON }};</script>
 </head>
 <body onLoad="init(); return false;">
+    <!-- Read first by a screen reader, seen by no one (touch arc Task 0;
+         static/js/screenreader.js keeps them current). iOS VoiceOver starts at
+         the top of the page rather than at the focused command box. The
+         status region speaks what the game text log cannot, such as "off",
+         since the log is emptied when the mode goes off. -->
+    <p id="sr-hint" class="visually-hidden">Screen reader users: type screen reader on, then press Enter.</p>
+    <div id="sr-status" class="visually-hidden" role="status" aria-live="polite"></div>
 
     <!-- CONNECT BUTTON FLOATED IN CENTER. Starts hidden: the page connects by
          itself on load, and onclose shows it when the player is not connected. -->
@@ -307,7 +315,7 @@
 
         <section class="dash-panel" id="panel-cmd" data-panel="cmd">
           <div class="dash-panel-body">
-            <input type="text" id="command-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Enter command..." style="flex:1">
+            <input type="text" id="command-input" aria-label="Game commands. Screen reader users: type screen reader on, then press Enter." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Enter command..." style="flex:1">
             <!-- Plan 6 (ruling 14): closes the on-screen keyboard; shown only
                  while it is open (dashboard.css). -->
             <button type="button" id="cmd-close-kbd" class="brass" aria-label="Close keyboard" title="Close keyboard"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M4 4l12 12M16 4L4 16"/></svg></button>
@@ -448,6 +456,16 @@
       </div><!-- #dash-panels -->
     </div>
 
+    <!-- Game text for screen readers, one entry per piece, seen by no one
+         (static/js/screenreader.js; spec section 11). aria-atomic="false"
+         is explicit because Narrator reads a region it cannot see as
+         non-atomic as a whole. -->
+    <div id="sr-log" class="visually-hidden" role="log" aria-live="polite" aria-relevant="additions" aria-atomic="false" aria-label="Game text"></div>
+    <!-- The answer to a line the player sent, read at once, cutting off
+         whatever is still being read (static/js/screenreader.js; spec
+         section 12). -->
+    <div id="sr-answers" class="visually-hidden" role="log" aria-live="assertive" aria-relevant="additions" aria-atomic="false" aria-label="Answers"></div>
+
     <script>
 
         /////////////////////////////////////////////
@@ -537,11 +555,53 @@
             } catch (e) { return 1; }
         })();
 
-        // Tell the server the game window's columns (static/js/displayreport.js).
-        // SendGMCP is declared further down this script, so it is hoisted.
+        // Tell the server the game window's columns (static/js/displayreport.js),
+        // and whether this player asked for screen reader mode. SendGMCP is
+        // declared further down this script, so it is hoisted.
         var displayReport = window.DisplayReport.create({
-            send: function (cols) { return SendGMCP('Client.Display', { cols: cols }); }
+            send: function (cols) { return SendGMCP('Client.Display', { cols: cols, screenreader: screenReader.isOn() }); }
         });
+        // The screen reader switch (static/js/screenreader.js): off unless the
+        // player typed "screen reader on" here before, or their account has it.
+        var screenReader = window.ScreenReader.create({
+            storage: (function () { try { return window.localStorage; } catch (e) { return null; } })(),
+            input: document.getElementById('command-input'),
+            hint: document.getElementById('sr-hint'),
+            status: document.getElementById('sr-status'),
+            log: document.getElementById('sr-log'),
+            answers: document.getElementById('sr-answers'),
+            createEntry: function (text) {
+                // One child per line, so line breaks survive in the
+                // accessibility tree (.visually-hidden sets nowrap).
+                var entry = document.createElement('div');
+                text.split('\n').forEach(function (line) {
+                    var row = document.createElement('div');
+                    row.textContent = line;
+                    entry.appendChild(row);
+                });
+                return entry;
+            },
+            report: function (on) { return SendGMCP('Client.Display', { screenreader: on }); },
+            setCommand: function (on) { return SendData('set screenreader ' + (on ? 'on' : 'off')); },
+            writeLine: function (text) {
+                // Start on a fresh line: a login prompt leaves the cursor after
+                // its text. (cursorX is not read: earlier writes may not be
+                // parsed yet.)
+                term.write('\r\n' + text);
+            },
+            currentLines: function () {
+                // The waiting prompt: the last line of the game window with text on it.
+                var buf = term.buffer.active;
+                for (var y = buf.baseY + buf.cursorY; y >= 0; y--) {
+                    var line = buf.getLine(y);
+                    var text = line ? line.translateToString(true) : '';
+                    if (text.trim()) return [text];
+                }
+                return [];
+            },
+            inGame: function () { return inGame; }
+        });
+        screenReader.load();
         // Fit the game window to the panel (static/js/termfit.js). The text
         // stays at the --text size; the columns follow the panel, at most 80.
         var termFitter = window.TermFit.create({
@@ -906,6 +966,12 @@
                     companionGlue.hello(obj.Info.account);
                 }
 
+                // The account's screen reader setting (Char.Info.screenreader):
+                // xterm's mode follows it on every device.
+                if ( obj.Info && typeof obj.Info.screenreader === 'boolean' ) {
+                    screenReader.account(obj.Info.screenreader);
+                }
+
                 markInGame();
 
                 // Populate session strip with character name when available
@@ -1061,6 +1127,8 @@
                 // number and whether a menu or prompt is open. Never its text.
                 var d = ((GMCPStructs["Char"] || {}).Input || {}).Done || {};
                 if (sendWait) sendWait.done(d.seq, d.menu === true);
+                // It also ends the answer the screen reader is reading at once.
+                screenReader.done(d.seq);
             },
             "Char.Mutation": function() {
                 var m = (GMCPStructs["Char"] || {}).Mutation;
@@ -2214,7 +2282,7 @@
             var tickRow = e.target.closest(".auto-row[data-auto-type='tick']");
             if (tickRow) {
                 var cmds = tickRow.dataset.autoCmd || "";
-                cmds.split(";").forEach(function(c) { c = c.trim(); if (c) SendData(c); });
+                cmds.split(";").forEach(function(c) { c = c.trim(); if (c) playerSend(c); });
                 return;
             }
 
@@ -2247,9 +2315,9 @@
             if (type === "macro") {
                 // Strip leading '=' if present, then send '=N'
                 var num = key.replace(/^=/, "");
-                SendData("=" + num);
+                playerSend("=" + num);
             } else if (type === "alias") {
-                SendData(key);
+                playerSend(key);
             }
         });
 
@@ -2758,7 +2826,7 @@
             var req = root.requestFullscreen || root.webkitRequestFullscreen;
             if (!req) return;
             var refused = function (e) {
-                term.writeln('Your browser did not allow full screen' +
+                gameLine('Your browser did not allow full screen' +
                     (e && e.message ? ': ' + e.message : '.'));
             };
             try {
@@ -2828,6 +2896,24 @@
         let leaveFallback = null;
         let inGame = false; // true once the server pushes Char, i.e. after login
 
+        // gameLine writes one of the page's own lines into the game window
+        // and, while screen reader mode is on, into the screen reader log,
+        // so a blind player hears it (a dropped connection above all).
+        function gameLine(text) {
+            term.writeln(text);
+            screenReader.write(text + '\r\n');
+        }
+
+        // playerSend sends a line the player asked for (typed, the numpad, a
+        // macro key, a chip, an item menu) and marks its answer for the
+        // screen reader, so it interrupts what is still being read (spec
+        // section 12). Automation and the page's own commands use SendData.
+        function playerSend(line) {
+            var sent = SendData(line);
+            if (sent) screenReader.lineSent(linesSent);
+            return sent;
+        }
+
         // Called by the Char GMCP handler: the first Char push after connecting
         // means a character is now in the world, so the bar offers Leave Game.
         function markInGame() {
@@ -2854,7 +2940,7 @@
             if (note) { note.textContent = AUTOMATION_LOGIN_MESSAGE; note.hidden = false; }
             // And in the game text, on a line of its own: the login prompt
             // leaves the cursor at the end of "username (or new):".
-            term.write('\r\n' + AUTOMATION_LOGIN_MESSAGE + '\r\n');
+            gameLine('\r\n' + AUTOMATION_LOGIN_MESSAGE);
             return true;
         }
 
@@ -2925,7 +3011,7 @@
             // name, so say so, light up the command box and put the cursor there.
             if (open) {
                 term.writeln("");
-                term.writeln("Type your character name in the box below and press Enter. New here? Type new.");
+                gameLine("Type your character name in the box below and press Enter. New here? Type new.");
                 textInput.classList.add('cmd-nudge');
                 setTimeout(function () { textInput.classList.remove('cmd-nudge'); }, 1500);
                 textInput.focus();
@@ -3037,7 +3123,10 @@
             // The server sends the connect splash as the socket opens, before
             // the Client.Display report below can arrive, so the address
             // carries the game window's columns for the splash.
-            var wsAddress = wsProto + location.host + '/ws?cols=' + encodeURIComponent(term.cols);
+            // sr=1 tells the server before the connect splash that this player
+            // asked for screen reader mode, so the splash comes as words only.
+            var wsAddress = wsProto + location.host + '/ws?cols=' + encodeURIComponent(term.cols) +
+                (screenReader.isOn() ? '&sr=1' : '');
             debugLog("Connecting to: " + wsAddress);
             socket = new WebSocket(wsAddress);
 
@@ -3056,6 +3145,14 @@
                 inGame = false;
                 // Update session strip connection indicator
                 setSessionState('connected');
+
+                // A new connection is a new login: forget the last account, and
+                // let the first prompt be read even if it matches the last one.
+                screenReader.loggedOut();
+                // The last account's Info stays in GMCPStructs, and the generic
+                // Char handler re-reads it for other Char packages: forget it,
+                // so the new login's own Char.Info is the first value seen.
+                if (GMCPStructs.Char) { delete GMCPStructs.Char.Info; }
 
                 // Copyover: if we reconnected after a restart, send the token first
                 // so the server re-attaches our session (skips the login prompt).
@@ -3203,6 +3300,9 @@
                 // The MOTD shows without its box here (static/js/motdrestyle.js).
                 var shown = window.MotdRestyle ? window.MotdRestyle.restyle(event.data) : event.data;
                 term.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);
+                // The same text, as plain words, into the screen reader log
+                // (static/js/screenreader.js); nothing when the mode is off.
+                screenReader.write(shown);
                 // Tap text stream for trigger matching (read-only copy; does not affect terminal output)
                 try {
                     stripAnsi(event.data).split(/\r?\n/).forEach(function(line){ if (line) runTriggers(line, Date.now()); });
@@ -3229,7 +3329,7 @@
                     reconnectAttempts++;
                     if (reconnectAttempts === 1) {
                         term.writeln("");
-                        term.writeln("Server is restarting — you will be reconnected automatically…");
+                        gameLine("Server is restarting. You will be reconnected automatically...");
                     } else {
                         term.write(".");
                     }
@@ -3247,18 +3347,18 @@
                     reconnectAttempts = 0;
                     MusicPlayer.stopAll(); // really disconnected (#838)
                     term.writeln("");
-                    term.writeln("Could not reconnect — the server may still be restarting. Click Enter Game to try again.");
+                    gameLine("Could not reconnect. The server may still be restarting. Click Enter Game to try again.");
                     connectButton.disabled = false;
                     setSessionState('offline');
                     return;
                 }
                 MusicPlayer.stopAll(); // not reconnecting: the last track must not keep looping (#838)
                 if (leavingGame) {
-                    term.writeln("You have left the game.");
+                    gameLine("You have left the game.");
                 } else if (event.wasClean) {
-                    term.writeln(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
+                    gameLine(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
                 } else {
-                    term.writeln("Connection died");
+                    gameLine("Connection died");
                 }
                 // Ready for Enter Game in the session bar to reconnect.
                 connectButton.disabled = false;
@@ -3314,7 +3414,7 @@
             // Macro support: F-keys
             if (event.key.substring(0, 1) === "F" && event.key.length === 2) {
                 let macroNum = event.key.substring(1);
-                SendData("=" + macroNum);
+                playerSend("=" + macroNum);
                 if (event.preventDefault) event.preventDefault();
                 return false;
             }
@@ -3333,13 +3433,21 @@
 
             // If input is empty, check for numeric keypad / arrow key shortcuts
             if ( textInput.value.length === 0 && codeShortcuts[event.code] ) {
-                SendData(codeShortcuts[event.code]);
+                playerSend(codeShortcuts[event.code]);
                 if (event.preventDefault) event.preventDefault();
                 return false;
             }
 
             // ENTER key
             if (event.key === 'Enter') {
+                // "screen reader on" / "off" is the client's own switch
+                // (static/js/screenreader.js): never sent, never in history.
+                var srPhrase = window.ScreenReader.matchPhrase(event.target.value, textInput.type === 'password');
+                if (srPhrase) {
+                    screenReader.phrase(srPhrase);
+                    event.target.value = '';
+                    return;
+                }
                 if (event.target.value !== '') {
                     if (textInput.type !== "password") {
                         commandHistory.push(event.target.value);
@@ -3357,11 +3465,11 @@
                 }
 
                 var line = event.target.value;
-                var sent = SendData(line);
+                var sent = playerSend(line);
                 if ( sent ) {
                     event.target.value = '';
                 } else {
-                    term.writeln("Not connected to the server. Click Enter Game to play.");
+                    gameLine("Not connected to the server. Click Enter Game to play.");
                 }
                 // Phones: chat keeps the keyboard; any other in-game command
                 // waits for the game's answer and keeps it only if a menu or
@@ -3387,6 +3495,9 @@
             totalBytesSent += dataToSend.length;
             linesSent++;
             socket.send(dataToSend);
+            // The server echoes every line; the screen reader skips the echo
+            // (a password box's echo is masked).
+            screenReader.sent(dataToSend, textInput.type === 'password');
             // Snap the view back to the newest output whenever the player acts.
             // Without this, scrolling up to re-read and then moving (or any
             // command) leaves you stranded in the backlog instead of showing
@@ -4139,7 +4250,7 @@
                 }
 
                 function send(verb) {
-                    SendData(verb + " @" + handle);
+                    playerSend(verb + " @" + handle);
                 }
 
                 // Look (always — default/highlighted)
@@ -4185,8 +4296,8 @@
                 menu.appendChild(sepDrop);
                 if (collection === "worn") {
                     menu.appendChild(makeRow("Drop", false, function() {
-                        SendData("remove @" + handle);
-                        SendData("drop @" + handle);
+                        playerSend("remove @" + handle);
+                        playerSend("drop @" + handle);
                     }));
                 } else {
                     menu.appendChild(makeRow("Drop", false, function() { send("drop"); }));

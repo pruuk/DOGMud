@@ -108,6 +108,24 @@ Documentation structure for system commands.
   art is kept wherever it fits and a narrower screen gets "Goodbye.". The
   shutdown goodbye (`main.go`) is `templates.Process` per player.
 
+### Screen reader opt-in (login and MTTS)
+- **Reserved `_conn_` result keys**: `connFactPrefix` (`_conn_`),
+  `connFactWebsocket` and `connFactMTTS`. `writeConnFacts` writes the
+  connection's facts into the prompt results as `y` or `n` (`yesNo`) before
+  each step's condition runs. No step may use an ID starting `_conn_`.
+- **`screen-reader-new`** is asked only of telnet without MTTS
+  (`askScreenReader`); `newUserScreenReader` takes the answer when asked,
+  else the connection's report.
+- **Login helpers** (`login.go`): `loginWithScreenReader` wraps `LoginUser`
+  and turns the loaded record on before `LoginUser` publishes it; a link-dead
+  session already in the world goes to MainWorker as
+  `events.ScreenReaderReported`.
+  `creationScreenReaderLines` sets a new account's setting and returns the
+  lines to tell the player; `sendLoginLines` sends them one per line.
+- **MTTS cycle** (`term_iac.go`): `recordTermType` records each terminal type
+  reply, bounded by `maxTermTypeReplies` and `maxTermTypeLen`; an MTTS reply
+  (`term.ParseMTTS`) records the screen reader bit and ends the cycle.
+
 ### Terminal Protocol Handling
 - **ANSI Processing**: Handles ANSI escape sequences for terminal control
 - **IAC Processing**: Telnet protocol IAC command handling

@@ -494,10 +494,10 @@ payload schema and push triggers — this table is the map, not the schema.
 | File | Package | What it carries |
 |------|---------|-----------------|
 | `gmcp.go` | — | Module registration, `GMCPOut`, shared helpers |
-| `gmcp.Char.go` | `Char` | Vitals, stats, status — the core player feed |
+| `gmcp.Char.go` | `Char` | Vitals, stats, status — the core player feed. `Char.Info` carries `account`, `name`, `class`, `race` and `screenreader` (the account's screen reader setting, always sent, false included, so the web client on every device follows it). `userSettingChangedHandler` re-pushes `Char.Info` on `UserSettingChanged{Name: "screenreader"}` |
 | `gmcp.Automation.go` | `Char.Automation` | Triggers, macros, aliases, the action queue |
 | `gmcp.Room.go` | `Room` | Current room: description, exits, occupants |
-| `gmcp.ClientDisplay.go` | `Client.Display` (inbound) | A web client's `{"cols": n}`. Websocket only, whole numbers only, clamped to `users.MinWrapWidth`..`users.MaxAutoWrapWidth`, written to `Display.ScreenWidth` only when it changes, through `users.StoreReportedCols` (shared with the `/ws?cols=` value read on connect). The web client sends it (`static/js/displayreport.js`) on connect, again on a reconnect, and after a column change has held for 250ms; a height-only change never sends |
+| `gmcp.ClientDisplay.go` | `Client.Display` (inbound) | A web client's `{"cols": n}`. Websocket only, whole numbers only, clamped to `users.MinWrapWidth`..`users.MaxAutoWrapWidth`, written to `Display.ScreenWidth` only when it changes, through `users.StoreReportedCols` (shared with the `/ws?cols=` value read on connect). The web client sends it (`static/js/displayreport.js`) on connect, again on a reconnect, and after a column change has held for 250ms; a height-only change never sends. The payload may also carry `screenreader` (bool), stored on `ClientSettings.ScreenReader` for websockets only through `users.StoreReportedScreenReader`; it is kept as it was when absent or not a bool. The client (`static/js/screenreader.js`) sends it with every width report, and alone when the player types the phrase |
 | `gmcp.Zone.go` | `Zone` | The `Zone.Map` snapshot the web mapper draws, plus `party` and `full`; sent as a diff (see "Zone.Map is sent as a diff") |
 | `gmcp.ZoneDiff.go` | (none) | `zoneDiff`, the pure decision of what `Zone.Map` to send, and `roomFingerprint` |
 | `gmcp.CharVitalsWatch.go` | `Char.Vitals` | The once-a-round on-change check that keeps `Char.Vitals` current (see "When Char.Vitals is sent") |

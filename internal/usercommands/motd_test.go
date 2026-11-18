@@ -32,6 +32,31 @@ func TestMotdBoxIsExactlyTheLineWidth(t *testing.T) {
 	}
 }
 
+// TestMotdForScreenReaderIsPlainWords: a screen reader account gets the text
+// under a spoken heading, with no box characters and no letter-spaced title;
+// everyone else gets motdBox unchanged (#733).
+func TestMotdForScreenReaderIsPlainWords(t *testing.T) {
+	text := "Welcome to Delusions of Grandeur. Read the rules, mind the " +
+		"newbie zone hazards, and ask a mod if anything looks broken."
+	for _, lw := range []int{80, 42} {
+		out := motdFor(text, lw, true)
+		if !strings.Contains(out, "Message of the day") {
+			t.Errorf("lw %d: missing the heading:\n%s", lw, out)
+		}
+		if !strings.Contains(out, "Welcome to Delusions of Grandeur.") {
+			t.Errorf("lw %d: missing the MOTD text:\n%s", lw, out)
+		}
+		for _, bad := range []string{"║", "╠", "╣", "═", "╔", "╗", "╚", "╝", "M E S S A G E"} {
+			if strings.Contains(out, bad) {
+				t.Errorf("lw %d: screen reader MOTD holds %q:\n%s", lw, bad, out)
+			}
+		}
+		if got, want := motdFor(text, lw, false), motdBox(text, lw); got != want {
+			t.Errorf("lw %d: non-screen-reader MOTD is not the box:\n%s", lw, got)
+		}
+	}
+}
+
 // The narrow form: below 80 columns, or with a word wider than the box, the
 // MOTD is the ruled form (rules, the title, the text), with no box to burst
 // and no corners (plan 3b-3, ruling 1).

@@ -19,6 +19,43 @@ func AddIACHandler(h IACHandler) {
 	iacHandlers = append(iacHandlers, h)
 }
 
+// maxTermTypeReplies bounds the MTTS cycle: name, terminal type, MTTS, and
+// one spare for a client that repeats late.
+const maxTermTypeReplies = 4
+
+// maxTermTypeLen is the most of a terminal type reply kept for comparing
+// with the next one; a reply comes from the client.
+const maxTermTypeLen = 64
+
+// recordTermType handles one terminal type reply and reports whether to ask
+// for the next. An MTTS reply records whether the player uses a screen
+// reader and ends the cycle. A reply equal to the last one ends it (the
+// client has cycled back without MTTS). Otherwise the server asks again, at
+// most maxTermTypeReplies times in all.
+func recordTermType(id connections.ConnectionId, reply string) bool {
+	if len(reply) > maxTermTypeLen {
+		reply = reply[:maxTermTypeLen]
+	}
+	cs := connections.GetClientSettings(id)
+	cs.TermTypeReplies++
+	last := cs.TermTypeLast
+	cs.TermTypeLast = reply
+
+	askAgain := false
+	if bits, ok := term.ParseMTTS(reply); ok {
+		cs.MTTSReported = true
+		cs.ScreenReader = bits&term.MTTSScreenReader != 0
+		mudlog.Debug("Received", "type", "IAC (MTTS)", "bits", bits)
+	} else {
+		mudlog.Debug("Received", "type", "IAC (TTYPE)", "reply", reply)
+		askAgain = reply != last && cs.TermTypeReplies < maxTermTypeReplies
+	}
+	connections.OverwriteClientSettings(id, cs)
+	return askAgain
+}
+
+// TelnetIACHandler reads Telnet IAC commands from client input and answers
+// or records them; input with no IAC command passes to the next handler.
 func TelnetIACHandler(clientInput *connections.ClientInput, sharedState map[string]any) (nextHandler bool) {
 
 	// Check for Telnet IAC commands
@@ -135,6 +172,22 @@ func TelnetIACHandler(clientInput *connections.ClientInput, sharedState map[stri
 			cs.SendTelnetGoAhead = true
 			connections.OverwriteClientSettings(clientInput.ConnectionId, cs)
 
+			continue
+		}
+
+		// Terminal type and MTTS: the client may declare a screen reader
+		// before login (connect sends IAC DO TTYPE, main.go).
+		if ok, _ := term.Matches(iacCmd, term.TelnetWillTermType); ok {
+			connections.SendTo(term.TelnetTermTypeSend.BytesWithPayload(nil), clientInput.ConnectionId)
+			continue
+		}
+		if ok, _ := term.Matches(iacCmd, term.TelnetWontTermType); ok {
+			continue
+		}
+		if ok, payload := term.Matches(iacCmd, term.TelnetTermTypeIs); ok {
+			if recordTermType(clientInput.ConnectionId, string(payload)) {
+				connections.SendTo(term.TelnetTermTypeSend.BytesWithPayload(nil), clientInput.ConnectionId)
+			}
 			continue
 		}
 

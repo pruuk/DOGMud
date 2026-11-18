@@ -48,6 +48,32 @@ type ValidationFunc func(input string, results map[string]string) (string, error
 // It takes the accumulated results so far.
 type ConditionFunc func(results map[string]string) bool
 
+// Reserved result keys. A ConditionFunc sees only the results map, so the
+// prompt handler writes the connection's facts there, as "y" or "n", before
+// it checks each step. No step may use an ID starting connFactPrefix
+// (TestLoginSteps_NoStepUsesAConnFactID).
+const (
+	connFactPrefix    = `_conn_`
+	connFactWebsocket = `_conn_websocket`
+	connFactMTTS      = `_conn_mtts`
+)
+
+// writeConnFacts stores what the connection's client has said about itself
+// in results under the reserved keys. (The screen reader report itself is
+// read from ClientSettings when the account is made, not from here.)
+func writeConnFacts(results map[string]string, id connections.ConnectionId) {
+	results[connFactWebsocket] = yesNo(connections.IsWebsocket(id))
+	results[connFactMTTS] = yesNo(connections.GetClientSettings(id).MTTSReported)
+}
+
+// yesNo is "y" for true and "n" for false, the form prompt results use.
+func yesNo(b bool) string {
+	if b {
+		return `y`
+	}
+	return `n`
+}
+
 // InterceptFunc runs on submitted input BEFORE validation. Returning true
 // means the input was fully consumed outside the prompt flow (e.g. a protocol
 // probe like the plaintext mssp-request, which answers and closes the
@@ -261,17 +287,19 @@ func CreatePromptHandler(steps []*PromptStep, onComplete CompletionFunc) connect
 		// Websocket clients don't get per-character echo during typing (the
 		// client only sends data on Enter), so we render the submitted input
 		// here once for visual feedback in the scrollback. For masked steps
-		// (passwords), render the mask template once per byte instead of the
-		// raw buffer — otherwise the password ends up in the main scrollback
+		// (passwords), render the mask template once per character instead of
+		// the raw buffer, otherwise the password ends up in the main scrollback
 		// even though the input field obscured it. (The TEXTMASK protocol
-		// only switches the input field's type, not the output stream.)
+		// only switches the input field's type, not the output stream.) It
+		// goes as one frame, one mask per character, as maskEcho does in game,
+		// so the screen reader can match it as the echo of the line it sent.
 		if connections.IsWebsocket(clientInput.ConnectionId) {
 			if currentStep.MaskInput {
 				if state.maskTemplate == "" {
 					state.maskTemplate = "*"
 				}
-				for range clientInput.Buffer {
-					connections.SendTo([]byte(state.maskTemplate), clientInput.ConnectionId)
+				if n := utf8.RuneCount(clientInput.Buffer); n > 0 {
+					connections.SendTo([]byte(strings.Repeat(state.maskTemplate, n)), clientInput.ConnectionId)
 				}
 			} else {
 				connections.SendTo(clientInput.Buffer, clientInput.ConnectionId)
@@ -464,6 +492,8 @@ func advanceAndSendPrompt(state *PromptHandlerState, clientInput *connections.Cl
 	state.CurrentStepIndex++
 
 	for state.CurrentStepIndex < len(state.Steps) {
+
+		writeConnFacts(state.Results, clientInput.ConnectionId)
 
 		step := state.Steps[state.CurrentStepIndex]
 

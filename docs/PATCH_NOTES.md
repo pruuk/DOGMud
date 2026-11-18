@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-11-17: Screen readers in the web client
+
+- The web client can now read the game aloud to screen reader users. When the page opens, your screen reader tells you what to do: type `screen reader on` in the command box and press Enter. The web client remembers this on that device. Type `screen reader off` to stop it.
+- With screen reader mode on, your status is spoken in words (for example unhurt, tired, steady), at most once a round and only when it changes.
+- When you send a command, its answer is read at once, cutting off anything still being read; other text waits its turn. Press Ctrl to skip what is waiting. The web client reads best with NVDA or JAWS; Windows Narrator may skip or jumble text when a lot arrives at once.
+- Screen reader mode is saved with your account. Type `set screenreader on` or `set screenreader off`. This works wherever you play. If you turn it on in the web client, your account keeps it on.
+- Turning screen reader mode on sets combat text to light, so your screen reader can keep up. `set combatverbosity full` brings every blow back.
+- The combat lesson in Pothole Coulee now names full, medium or light, and suggests light to players who use a screen reader.
+- New characters made in the web client are no longer asked whether they use a screen reader. Telnet clients that report their settings to the game (MTTS) are not asked either.
+
 ## 2026-11-16: Travel runs on stamina
 
 - Action points are gone. Walking from room to room now costs only stamina, and rough ground such as cliffs, swamps and mountains costs more than a road.

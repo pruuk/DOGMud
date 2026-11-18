@@ -300,6 +300,14 @@ unique event's slot, as `ProcessEvents` does, so a later unique event (a
 player's `NpcMarkersChanged`, say) queues again instead of being dropped as a
 duplicate of an event that no longer exists.
 
+### Screen Reader Event
+
+`ScreenReaderReported{UserId}` asks MainWorker to turn on a logged-in user's
+screen reader setting because their new connection reported one. Login queues
+it when it continues a link-dead session already in the world (see
+`inputhandlers.loginWithScreenReader`). Its listener is
+`hooks.TurnOnReportedScreenReader`.
+
 ### Unique Events
 
 **Events with automatic deduplication:**

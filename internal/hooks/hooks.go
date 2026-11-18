@@ -137,6 +137,10 @@ func RegisterListeners() {
 	// User Settings change
 	events.RegisterListener(events.UserSettingChanged{}, ClearSettingCaches)
 
+	// A reconnect continued a link-dead session whose new connection reported
+	// a screen reader: turn it on from here, not from the login goroutine.
+	events.RegisterListener(events.ScreenReaderReported{}, TurnOnReportedScreenReader)
+
 	events.RegisterListener(events.WebClientCommand{}, WebClientCommand_SendWebClientCommand)
 
 	events.RegisterListener(events.CharacterCreated{}, BroadcastNewChar)

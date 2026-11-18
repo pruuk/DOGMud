@@ -626,3 +626,13 @@ h1, h2, h3, h4 { font-family: var(--font-heading); font-size: var(--title); font
 .hero-logo .logo-light { display: none; }
 :root[data-theme="light"]:not([data-client]) .hero-logo .logo-dark { display: none; }
 :root[data-theme="light"]:not([data-client]) .hero-logo .logo-light { display: block; }
+/* Text for screen readers only (same rule as dashboard.css). */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -517,6 +517,17 @@ type UserSettingChanged struct {
 
 func (i UserSettingChanged) Type() string { return `UserSettingChanged` }
 
+// ScreenReaderReported asks MainWorker to turn on a logged-in user's screen
+// reader setting because their new connection reported a screen reader. Login
+// queues it when it continues a link-dead session already in the world, which
+// the connection goroutine must not write (inputhandlers.loginWithScreenReader).
+type ScreenReaderReported struct {
+	UserId int
+}
+
+// Type names the event.
+func (s ScreenReaderReported) Type() string { return `ScreenReaderReported` }
+
 // Health, mana, etc.
 type CharacterVitalsChanged struct {
 	UserId int

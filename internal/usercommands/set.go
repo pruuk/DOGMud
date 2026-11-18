@@ -42,7 +42,7 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	case `tips`, `hints`: // `hints` kept as an alias: the setting was renamed in 0.18.0
 		return cmdSetToggle(user, `tips`, `Tips`, true)
 	case `screenreader`:
-		return cmdSetScreenReader(user)
+		return cmdSetScreenReader(user, args)
 	case `charset`:
 		return cmdSetCharset(user)
 	case `prompt`:
@@ -213,19 +213,54 @@ func cmdSetToggle(user *users.UserRecord, settingName string, displayName string
 	return true, nil
 }
 
-func cmdSetScreenReader(user *users.UserRecord) (bool, error) {
-	if user.ScreenReader {
-		user.SendText(messaging.CategorySystem, `ScreenReader mode toggled <ansi fg="red">OFF</ansi>.`)
-	} else {
-		user.SendText(messaging.CategorySystem, `ScreenReader mode toggled <ansi fg="red">ON</ansi>.`)
+// cmdSetScreenReader sets the account's screen reader setting: "on" or
+// "off" set it, and no word toggles it. Turning it on goes through
+// TurnOnScreenReader, which also sets light combat text; turning it off
+// leaves combat text as it is. Setting it to the state it already has
+// changes nothing and says so.
+func cmdSetScreenReader(user *users.UserRecord, args []string) (bool, error) {
+	want := !user.ScreenReader
+	if len(args) > 0 {
+		switch args[0] {
+		case `on`:
+			want = true
+		case `off`:
+			want = false
+		default:
+			user.SendText(messaging.CategoryRefusal, `Type <ansi fg="command">set screenreader on</ansi> or <ansi fg="command">set screenreader off</ansi>.`)
+			return true, nil
+		}
 	}
-	user.ScreenReader = !user.ScreenReader
 
-	events.AddToQueue(events.UserSettingChanged{
-		UserId: user.UserId,
-		Name:   `screenreader`,
-	})
+	if want == user.ScreenReader {
+		state := `OFF`
+		if want {
+			state = `ON`
+		}
+		user.SendText(messaging.CategorySystem, `ScreenReader mode is already <ansi fg="red">`+state+`</ansi>.`)
+		return true, nil
+	}
 
+	if !want {
+		// The flag goes off before the line is sent, so "OFF" itself is
+		// rendered without screen reader stripping. It has no art, so it reads
+		// the same either way.
+		user.ScreenReader = false
+		user.SendText(messaging.CategorySystem, `ScreenReader mode toggled <ansi fg="red">OFF</ansi>.`)
+		events.AddToQueue(events.UserSettingChanged{
+			UserId: user.UserId,
+			Name:   `screenreader`,
+		})
+		return true, nil
+	}
+
+	combatChanged := user.TurnOnScreenReader()
+	user.SendText(messaging.CategorySystem, `ScreenReader mode toggled <ansi fg="red">ON</ansi>.`)
+	if combatChanged {
+		for _, line := range users.ScreenReaderCombatLines {
+			user.SendText(messaging.CategorySystem, line)
+		}
+	}
 	return true, nil
 }
 

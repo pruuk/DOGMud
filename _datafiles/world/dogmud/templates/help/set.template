@@ -57,6 +57,11 @@ There are a handful of settings you can adjust with this command, including:
   <ansi fg="command">set charset</ansi>  Toggles between UTF-8 and ASCII display modes. If your client
                shows garbled characters in tables and borders, switch to ASCII.
 
+  <ansi fg="command">set screenreader <on|off></ansi>  Turns screen reader mode on or off: plainer text
+                             without art. Turning it on also sets combat text
+                             to light. In the web client, type <ansi fg="command">screen reader on</ansi>
+                             to hear the game.
+
   <ansi fg="command">set combatverbosity <full|medium|light></ansi>  Controls how much combat text you see. See <ansi fg="command">help combatverbosity</ansi>.
 ::
 

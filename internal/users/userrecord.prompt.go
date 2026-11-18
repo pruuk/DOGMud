@@ -94,6 +94,34 @@ func (u *UserRecord) promptTank() (*characters.Character, string) {
 	return nil, ``
 }
 
+// vitalWords are the four words a screen reader account hears for a pool in
+// place of its bar, best first, for 75% and up, 50 to 74, 25 to 49 and below
+// 25 (owner, 2026-11-17).
+var vitalWords = map[string][4]string{
+	`hp`: {`unhurt`, `hurt`, `badly hurt`, `near death`},
+	`sp`: {`fresh`, `tired`, `very tired`, `exhausted`},
+	`cp`: {`strong`, `steady`, `shaken`, `broken`},
+}
+
+// vitalWord is a pool's bucket word, measured against the reachable pool
+// (maxValue less reserved) as renderVitalBar measures its colour.
+func vitalWord(pool string, current, maxValue, reserved int) string {
+	words := vitalWords[pool]
+	effectiveMax := max(maxValue-max(reserved, 0), 1)
+	current = min(max(current, 0), effectiveMax)
+	pct := float64(current) / float64(effectiveMax) * 100.0
+	switch {
+	case pct >= 75:
+		return words[0]
+	case pct >= 50:
+		return words[1]
+	case pct >= 25:
+		return words[2]
+	default:
+		return words[3]
+	}
+}
+
 // RenderVitalBar is the exported version of renderVitalBar.
 func RenderVitalBar(current, max, reserved int) string {
 	return renderVitalBar(current, max, reserved)
@@ -554,16 +582,28 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 				promptOut.WriteString(strconv.Itoa(u.Character.ConvictionMax.Value))
 
 			case `{hpbar}`:
-				promptOut.WriteString(renderVitalBar(u.Character.Health, u.Character.HealthMax.Value,
-					u.Character.GetPoolReservation("health", u.Character.HealthMax.Value)))
+				reservedHP := u.Character.GetPoolReservation("health", u.Character.HealthMax.Value)
+				if u.ScreenReader {
+					promptOut.WriteString(vitalWord(`hp`, u.Character.Health, u.Character.HealthMax.Value, reservedHP))
+				} else {
+					promptOut.WriteString(renderVitalBar(u.Character.Health, u.Character.HealthMax.Value, reservedHP))
+				}
 
 			case `{stbar}`:
-				promptOut.WriteString(renderVitalBar(u.Character.Stamina, u.Character.StaminaMax.Value,
-					u.Character.GetPoolReservation("stamina", u.Character.StaminaMax.Value)))
+				reservedSP := u.Character.GetPoolReservation("stamina", u.Character.StaminaMax.Value)
+				if u.ScreenReader {
+					promptOut.WriteString(vitalWord(`sp`, u.Character.Stamina, u.Character.StaminaMax.Value, reservedSP))
+				} else {
+					promptOut.WriteString(renderVitalBar(u.Character.Stamina, u.Character.StaminaMax.Value, reservedSP))
+				}
 
 			case `{cvbar}`:
-				promptOut.WriteString(renderVitalBar(u.Character.Conviction, u.Character.ConvictionMax.Value,
-					u.Character.GetPoolReservation("conviction", u.Character.ConvictionMax.Value)))
+				reservedCP := u.Character.GetPoolReservation("conviction", u.Character.ConvictionMax.Value)
+				if u.ScreenReader {
+					promptOut.WriteString(vitalWord(`cp`, u.Character.Conviction, u.Character.ConvictionMax.Value, reservedCP))
+				} else {
+					promptOut.WriteString(renderVitalBar(u.Character.Conviction, u.Character.ConvictionMax.Value, reservedCP))
+				}
 
 			case `{pet_hp}`:
 				if len(u.Character.Companions) > 0 && u.Character.Companions[0].InstanceId > 0 {
@@ -685,8 +725,12 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 			case `{tankbar}`:
 				if tank, _ := tankOf(); tank != nil {
 					promptOut.WriteString(` <ansi fg="255">Thp:</ansi>`)
-					promptOut.WriteString(renderVitalBar(tank.Health, tank.HealthMax.Value,
-						tank.GetPoolReservation("health", tank.HealthMax.Value)))
+					reservedTank := tank.GetPoolReservation("health", tank.HealthMax.Value)
+					if u.ScreenReader {
+						promptOut.WriteString(vitalWord(`hp`, tank.Health, tank.HealthMax.Value, reservedTank))
+					} else {
+						promptOut.WriteString(renderVitalBar(tank.Health, tank.HealthMax.Value, reservedTank))
+					}
 				}
 
 			case `{ap}`:

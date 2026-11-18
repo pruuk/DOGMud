@@ -35,6 +35,8 @@ func (g GMCPClientDisplay) Type() string { return `GMCPClientDisplay` }
 // only a whole number counts, the value is clamped before it is stored, and
 // it is written only when it differs. A client can change only its own
 // connection, so a phone never changes the player's desktop or saved setting.
+// It also stores the screenreader flag the client sends (the player typed
+// screen reader on or off, or the device remembers it).
 func clientDisplayHandler(e events.Event) events.ListenerReturn {
 	evt, ok := e.(GMCPClientDisplay)
 	if !ok {
@@ -44,9 +46,15 @@ func clientDisplayHandler(e events.Event) events.ListenerReturn {
 	if !connections.IsWebsocket(evt.ConnectionId) {
 		return events.Continue
 	}
+	sr, hasSR := reportedScreenReader(evt.Payload)
+	if hasSR {
+		users.StoreReportedScreenReader(evt.ConnectionId, sr)
+	}
 	cols, ok := reportedCols(evt.Payload)
 	if !ok {
-		mudlog.Debug("gmcp.ClientDisplay", "connectionId", evt.ConnectionId, "ignored", "payload is not a whole column count")
+		if !hasSR || hasColsKey(evt.Payload) {
+			mudlog.Debug("gmcp.ClientDisplay", "connectionId", evt.ConnectionId, "ignored", "payload is not a whole column count")
+		}
 		return events.Continue
 	}
 	users.StoreReportedCols(evt.ConnectionId, cols)
@@ -63,4 +71,26 @@ func reportedCols(payload []byte) (int, bool) {
 		return 0, false
 	}
 	return *decoded.Cols, true
+}
+
+// reportedScreenReader reads {"screenreader": bool}. A missing key, a null,
+// any other type and malformed JSON report false for ok, and the stored
+// value is kept.
+func reportedScreenReader(payload []byte) (on bool, ok bool) {
+	var decoded struct {
+		ScreenReader *bool `json:"screenreader"`
+	}
+	if err := json.Unmarshal(payload, &decoded); err != nil || decoded.ScreenReader == nil {
+		return false, false
+	}
+	return *decoded.ScreenReader, true
+}
+
+// hasColsKey reports whether the payload is a JSON object with a cols key,
+// whatever its value, so a bad width is logged even beside a screenreader flag.
+func hasColsKey(payload []byte) bool {
+	var decoded struct {
+		Cols json.RawMessage `json:"cols"`
+	}
+	return json.Unmarshal(payload, &decoded) == nil && decoded.Cols != nil
 }

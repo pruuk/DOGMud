@@ -544,6 +544,11 @@ colours and abbreviations as `{pos}`), `{tankbar}` ` Thp:` and a health bar.
 Each carries its own leading space and label because each renders nothing
 when nobody else is tanking or the player can't see the fight.
 
+For a screen reader account `{hpbar}`, `{stbar}`, `{cvbar}` and `{tankbar}`
+draw a word instead of the bar glyphs: `vitalWord` picks one of the four
+words in `vitalWords` (`userrecord.prompt.go`) at 75, 50 and 25 percent of
+the reachable pool.
+
 A player with any toggle set has `fprompt-default-compiled` saved, but the
 prompt renders from `BuildFightPromptTemplate()` (memoized compile) rather
 than the saved string, so a save compiled by an older template cannot pin
@@ -627,6 +632,19 @@ their errors out to it for a web client, and sends telnet's unchanged.
 `ConnectionWrapWidth(id) int` is for text sent to a connection that may or
 may not have a user (the goodbye as it leaves): the logged-in user's
 `WrapWidth` when there is one, else `LoginWrapWidth`.
+
+### Screen reader setting (`screenreader.go`)
+
+- `TurnOnScreenReader` is the only way the setting turns on. It also saves
+  light combat text and reports whether combat text changed.
+- `TurnOnReportedScreenReader` is its form for a connection's report. It
+  returns the lines to send: `ScreenReaderOnNotices`, then
+  `ScreenReaderCombatLines` when combat text changed. It returns nothing when
+  the setting is already on. The caller must own the
+  record (before login publishes it, or on MainWorker).
+- `StoreAddressScreenReader` records the websocket address's `sr=1` on the
+  connection; `StoreReportedScreenReader` writes a web client's report
+  (shared with `Client.Display` in `modules/gmcp`).
 
 ### Game menu session (#375 phase 0)
 
