@@ -18,9 +18,10 @@ otherwise): `docs/roadmaps/touch-arc-mocks/`.
 | `s21-submenus.html` | Three-level contextual menus, Cast and Craft, in the brass look |
 | `tablets-v2.html` | Upright tablet, open foldable, sideways tablet, sideways phone (half size) |
 
-Reference screenshots of production on real phones (untracked, repo root):
-`Phone_screenshots_prod/Samsung_Galaxy_S21_5G/` (Malia) and
-`Phone_screenshots_prod/Pixel8/` (owner).
+Reference screenshots of production on real phones (kept locally, not in
+git: `_archive/` is ignored):
+`_archive/screenshots/phones-2026-11-19/Samsung_Galaxy_S21_5G/` (Malia) and
+`_archive/screenshots/phones-2026-11-19/Pixel8/` (owner).
 
 ## Facts verified against source and screenshots
 

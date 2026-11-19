@@ -105,9 +105,15 @@
     // has no visual viewport. Zooming in shrinks the visual viewport by its scale,
     // so that is multiplied back out: phone players zoom to read, and that must
     // not squash the game. A keyboard still counts while zoomed.
+    // Zoomed OUT (scale under 1) the visual viewport already shows the whole
+    // page in page pixels, so its height is used as it is (#927). Chrome's
+    // Desktop site mode lays the page out about 980px wide and zooms out to
+    // about 0.42 on a phone (measured: height 2176 at scale 0.42 on a
+    // 412 x 915 Pixel 8); multiplying shrank the game to 40% of the screen.
+    // Android tablets use Desktop site by default.
     function visibleHeight(vv) {
         if (!vv) return undefined;
-        return vv.height * (vv.scale || 1);
+        return vv.height * Math.max(1, vv.scale || 1);
     }
 
     // True when the visible area is well short of the page: more than an address
