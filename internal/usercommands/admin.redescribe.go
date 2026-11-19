@@ -46,7 +46,7 @@ func Redescribe(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 		matchItem.Validate()
 
-		user.Character.StoreItem(matchItem)
+		user.Character.ReturnToPack(matchItem) // never refuses: it was carried a moment ago
 
 		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf(`You chant softly and wave your hand over the <ansi fg="item">%s</ansi>. Success! It now has a new description!`, oldNameSimple),

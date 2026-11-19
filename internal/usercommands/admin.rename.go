@@ -48,7 +48,7 @@ func Rename(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		matchItem.Validate()
 
-		user.Character.StoreItem(matchItem)
+		user.Character.ReturnToPack(matchItem) // never refuses: it was carried a moment ago
 
 		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf(`You chant softly and wave your hand over the <ansi fg="item">%s</ansi>. Success! It's now a <ansi fg="item">%s</ansi>`, oldNameSimple, matchItem.DisplayName()),

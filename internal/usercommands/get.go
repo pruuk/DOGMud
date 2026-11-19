@@ -468,7 +468,11 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 			if user.Character.Pet.RemoveItem(matchItem) {
 				if !acquire.AcquireItem(user, matchItem, acquire.AcquireGet) {
-					user.Character.Pet.StoreItem(matchItem)
+					// Back to the pet; should it refuse too, the item falls
+					// at the player's feet rather than vanishing (#696).
+					if !user.Character.Pet.StoreItem(matchItem) {
+						room.AddItem(matchItem, false)
+					}
 					user.SendText(messaging.CategoryRefusal,
 						fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
 					)

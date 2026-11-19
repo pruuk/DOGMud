@@ -12,9 +12,11 @@ import (
 	"testing"
 )
 
-// refusableAcquires are the acquire functions that can refuse an item (too
-// much to carry) and report it in their result.
-var refusableAcquires = map[string]bool{"AcquireItem": true, "AcquireItemForChar": true}
+// refusableAcquires are the calls that can refuse an item (too much to
+// carry) and report it in their result: the acquire seam, and StoreItem
+// (Character's and Pet's) beneath it. Character.ReturnToPack is the store
+// that never refuses, for an item the character held a moment ago.
+var refusableAcquires = map[string]bool{"AcquireItem": true, "AcquireItemForChar": true, "StoreItem": true}
 
 // discardedAcquires lists every production call to a refusable acquire
 // whose result is thrown away: a bare call statement, or one assigned only
@@ -113,9 +115,11 @@ func TestNoAcquisitionIgnoresARefusal_CanFail(t *testing.T) {
 		"blank.go":   "package p\nfunc f() { _ = acquire.AcquireItemForChar(c, 1, 0, i, r) }\n",
 		"checked.go": "package p\nfunc f() { if !acquire.AcquireItem(u, i, r) { g() } }\n",
 		"dropped.go": "package p\nfunc f() { acquire.AcquireOrDrop(c, 1, 0, i, r) }\n",
+		"store.go":   "package p\nfunc f() { c.StoreItem(i) }\n",
+		"back.go":    "package p\nfunc f() { c.ReturnToPack(i) }\n",
 	}
 	got := discardedAcquires(t, src)
-	want := []string{"bare.go:2", "blank.go:2"}
+	want := []string{"bare.go:2", "blank.go:2", "store.go:2"}
 	if strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Fatalf("got %v, want %v", got, want)
 	}

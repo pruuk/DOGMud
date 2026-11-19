@@ -51,6 +51,24 @@ func TestAcquireOrDrop_CarriedWhenItFits(t *testing.T) {
 	require.Empty(t, events.DrainQueuedMessagesForTest(6962))
 }
 
+// An item with no definition (a reward naming a retired id) is refused for
+// that, not its weight: nothing falls and nothing is said (#925 review).
+func TestAcquireOrDrop_AnUndefinedItemDropsNothing(t *testing.T) {
+	events.DrainAllQueuedEventsForTest()
+	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
+	room := &rooms.Room{RoomId: 6964}
+	defer rooms.SeedRoomsForTest(map[int]*rooms.Room{6964: room}, nil)()
+
+	char := characters.New()
+	char.RoomId = 6964
+	user := &users.UserRecord{UserId: 6964, Character: char}
+	defer users.SeedUsersForTest(map[int]*users.UserRecord{6964: user})()
+
+	require.False(t, AcquireItemOrDrop(user, newTestItem(0), AcquireReward))
+	require.Empty(t, room.Items)
+	require.Empty(t, events.DrainQueuedMessagesForTest(6964))
+}
+
 // A creature's item falls the same way; there is no player to tell.
 func TestAcquireOrDrop_ACreatureDropsItToo(t *testing.T) {
 	events.DrainAllQueuedEventsForTest()

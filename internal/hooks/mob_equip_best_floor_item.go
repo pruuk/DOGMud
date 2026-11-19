@@ -63,7 +63,11 @@ func EquipBestFloorItem(mob *mobs.Mob, room *rooms.Room) bool {
 
 	// Remove from floor and into backpack so EquipItem can find it.
 	room.RemoveItem(bestItem, false)
-	mob.Character.StoreItem(bestItem)
+	if !mob.Character.StoreItem(bestItem) {
+		// Too much to carry: it stays on the floor (#696).
+		room.AddItem(bestItem, false)
+		return false
+	}
 
 	actor := &actions.MobActor{Mob: mob, Room: room}
 	result := actions.EquipItem(actor, bestItem.Name())

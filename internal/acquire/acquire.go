@@ -88,6 +88,11 @@ const TooMuchToCarryLine = `Too much to carry: <ansi fg="itemname">%s</ansi> fal
 // itself instead; no route may ignore a refusal
 // (internal/guards/acquire_result_guard_test.go).
 func AcquireOrDrop(char *characters.Character, userId int, mobInstanceId int, itm items.Item, reason AcquireReason) bool {
+	// An item with no definition (a reward naming a retired id) is refused
+	// for that, not its weight: nothing falls (#925 review).
+	if itm.ItemId < 1 {
+		return false
+	}
 	if AcquireItemForChar(char, userId, mobInstanceId, itm, reason) {
 		return true
 	}
