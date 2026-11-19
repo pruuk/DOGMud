@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -400,6 +401,61 @@ func TestLoginUser(t *testing.T) {
 		// New connection should be active
 		assert.NotNil(t, GetByConnectionId(4000))
 	})
+}
+
+// TestLoginUser_WaitsForWorldLock pins the #911 fix. LoginUser runs on the
+// connection goroutine and, on a reconnect, writes the live user MainWorker
+// reads every round (connection id, idle round, event log, charm list). It
+// must hold util.LockMud for those writes, so while MainWorker holds the
+// lock a reconnect waits and the live user is untouched.
+func TestLoginUser_WaitsForWorldLock(t *testing.T) {
+	cleanup := seedRegistry()
+	defer cleanup()
+
+	live := GetByUserId(3) // charlie, link-dead on connection 1003
+	require.NotNil(t, live)
+	eventsBefore := len(live.EventLog)
+
+	util.LockMud() // stands in for MainWorker's round
+	locked := true
+	defer func() {
+		if locked {
+			util.UnlockMud()
+		}
+	}()
+
+	done := make(chan *UserRecord, 1)
+	go func() {
+		u, _, _ := LoginUser(&UserRecord{
+			UserId:    3,
+			Username:  "charlie",
+			Role:      RoleUser,
+			Character: &characters.Character{Name: "Charlton"},
+		}, 4000)
+		done <- u
+	}()
+
+	select {
+	case <-done:
+		t.Fatal("LoginUser finished a reconnect while the world lock was held: it writes the live user without util.LockMud")
+	case <-time.After(200 * time.Millisecond):
+	}
+	assert.Equal(t, uint64(1003), live.ConnectionId(),
+		"the live user's connection id changed while the world lock was held")
+	assert.Equal(t, eventsBefore, len(live.EventLog),
+		"the live user's event log grew while the world lock was held")
+
+	util.UnlockMud()
+	locked = false
+
+	select {
+	case u := <-done:
+		require.Same(t, live, u, "a reconnect continues the live user")
+		assert.Equal(t, uint64(4000), u.ConnectionId())
+		assert.Len(t, live.EventLog, eventsBefore+1, "the reconnect logs once, after the lock is released")
+	case <-time.After(5 * time.Second):
+		t.Fatal("LoginUser did not finish after the world lock was released")
+	}
 }
 
 // ─── UserRecord Methods ────────────────────────────────────────────────────
