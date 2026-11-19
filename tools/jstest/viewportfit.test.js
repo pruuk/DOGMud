@@ -125,6 +125,11 @@ check('no visual viewport has no visible height', VF.visibleHeight(null), undefi
 check('at normal zoom the visible height counts', VF.visibleHeight({ height: 400, scale: 1 }), 400);
 check('zoomed in with no keyboard, the page is still all visible', VF.visibleHeight({ height: 370, scale: 2 }), 740);
 check('zoomed in with the keyboard, the keyboard still counts', VF.visibleHeight({ height: 220, scale: 2 }), 440);
+// #927: Chrome's Desktop site mode on a Pixel 8 (measured in headless Edge,
+// a 412 x 915 mobile screen laid out 980 wide): the whole page is visible.
+check('zoomed out (Desktop site), the whole visible page counts', VF.visibleHeight({ height: 2176, scale: 0.42 }), 2176);
+check('zoomed out, the frame fills the page below the header',
+    VF.frameHeight(2000, VF.visibleHeight({ height: 2176, scale: 0.42 }), 176), 2000);
 
 check('no visual viewport: no keyboard', VF.keyboardOpen(740, undefined, true), false);
 check('an address bar hiding is not a keyboard', VF.keyboardOpen(740, 680, true), false);

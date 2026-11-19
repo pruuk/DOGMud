@@ -1,5 +1,9 @@
 # DOGMud Patch Notes
 
+## 2026-11-19: The web client fills the screen in desktop mode
+
+- On an Android tablet, or a phone with Chrome's "Desktop site" turned on, the web client used only the top third of the screen. It now fills the screen.
+
 ## 2026-11-19: Fewer people share a name
 
 Some people in different towns shared a first name, so a hint or a piece of gossip could point you at the wrong one. Five have new names:
