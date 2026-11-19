@@ -189,6 +189,12 @@ type ConnectionDetails struct {
 	// otherwise push the read deadline back out.
 	closeMu    sync.Mutex
 	readClosed bool
+
+	// promptMu orders every write against the prompt record (prompt.go,
+	// #922): the record must describe the last thing written, so it is set
+	// and read under the same lock as the write that queues the bytes.
+	promptMu sync.Mutex
+	prompt   promptRecord
 }
 
 // SetClientIP records the proxy-resolved source address. Only the websocket
@@ -317,6 +323,26 @@ func (cd *ConnectionDetails) AddInputHandler(name string, newInputHandler InputH
 // During a copyover handoff (outputFrozen) output is dropped and Write
 // returns (0, nil).
 func (cd *ConnectionDetails) Write(p []byte) (n int, err error) {
+	cd.promptMu.Lock()
+	defer cd.promptMu.Unlock()
+
+	n, err = cd.writeNLocked(p)
+	// Anything that shows on screen leaves no prompt behind it (#922).
+	if !outOfBand(p, cd.IsWebSocket()) {
+		cd.prompt = promptRecord{}
+	}
+	return n, err
+}
+
+// writeLocked is Write without the prompt record, for prompt.go's senders,
+// which set the record themselves. The caller holds promptMu.
+func (cd *ConnectionDetails) writeLocked(p []byte) error {
+	_, err := cd.writeNLocked(p)
+	return err
+}
+
+// writeNLocked prepares p and queues it. The caller holds promptMu.
+func (cd *ConnectionDetails) writeNLocked(p []byte) (n int, err error) {
 
 	// A connection removed between snapshot and write (see ErrNoConnection).
 	if cd.wsConn == nil && cd.conn == nil {

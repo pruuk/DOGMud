@@ -5,7 +5,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/templates"
-	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -48,10 +47,7 @@ func Broadcast_SendToAll(e events.Event) events.ListenerReturn {
 						u.ConnectionId(),
 					)
 				} else {
-					connections.SendTo(
-						[]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+textOutSR),
-						u.ConnectionId(),
-					)
+					connections.SendReplacingPrompt(u.ConnectionId(), []byte(textOutSR))
 				}
 
 				continue
@@ -65,10 +61,7 @@ func Broadcast_SendToAll(e events.Event) events.ListenerReturn {
 				u.ConnectionId(),
 			)
 		} else {
-			connections.SendTo(
-				[]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+textOut),
-				u.ConnectionId(),
-			)
+			connections.SendReplacingPrompt(u.ConnectionId(), []byte(textOut))
 		}
 	}
 

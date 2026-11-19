@@ -499,6 +499,47 @@ output back. Windows `CopyoverSave` never freezes (copyover is refused there).
 `sendQueue.flush(timeout)` is the general "wait until everything queued so far
 is written" primitive.
 
+### Prompt record (`prompt.go`, #922)
+
+A prompt that wraps fills several screen rows, and the text that replaces it
+must clear all of them. Only the connection knows what it last wrote, so it
+keeps a record of the prompt on screen (its visible columns and the reported
+width when drawn), set and read under `promptMu`, the lock every write takes:
+
+- `SendPrompt(id, b, cols)` clears the recorded prompt, writes `b` and records
+  it: only when the client reported a width, the bytes were written (a frozen
+  queue during copyover writes nothing), and the connection is not in ASCII
+  mode (its substitutions change the width after it was measured).
+- `SendReplacingPrompt(id, b)` clears the recorded prompt and writes `b`; the
+  prompt is gone afterwards.
+- `SendEcho(id, b)` writes a typed echo. Written printable text extends the
+  record; anything else (Enter, a backspace, a control byte, a dropped write)
+  ends it.
+- `Write` (every other send, `SendTo` included) ends the record unless the
+  bytes are out of band (`outOfBand`: telnet IAC on any connection; on a
+  websocket only, `!!GMCP(` and other `!!` payloads and an eight-capital web
+  client command such as `TEXTMASK:`, which a telnet client shows as text).
+- Widths are measured with `MinCols(text)`: escape sequences take nothing and
+  every other visible character one column, even one a terminal draws two
+  wide (emoji and ambiguous-width bars differ between terminals). Too few
+  rows leave a stray row; too many would erase game text.
+
+The clear (`eraseFor`) is column 1 and erase line, then up and erase line per
+extra row. Every doubt falls back to one row: no record, an unknown width, or
+a width that changed since (the smaller of the row counts at the two widths,
+so a reflowed or unreflowed prompt is never over-cleared). A stray row left
+behind is harmless; climbing too far erases game text.
+`ReportedScreenWidth(id) (int, bool)` is the single rule for whether a client
+reported its width (websocket, NAWS, or a cursor-position report other than
+the default 80); `internal/users` uses it for the pager and the wrap width.
+The web client cuts the server's next climbing clear back to one row after
+any write of its own (it wraps `term.write` and `term.writeln`; server text
+goes through `term.writeFromServer`) and after a change of width, which may
+reflow a wrapped prompt before its report reaches the server
+(`webclient-pure.html`). Known gap: a telnet client that widens and reflows
+before its NAWS report arrives could lose one line of text in that moment;
+the server cannot see the resize until the report comes.
+
 ### Protocol-Specific I/O
 ```go
 // Queue p; never waits on the socket. Errors: ErrNoConnection (socketless),

@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/ansitags"
 )
 
 //
@@ -354,7 +355,27 @@ func compiledFightTemplate(tmpl string) string {
 	return compiled
 }
 
-func (u *UserRecord) GetCommandPrompt() string {
+// SendCommandPrompt draws prompt (a CommandPromptBody, tags still in it) as
+// sent, already parsed or not as the connection takes it, over the prompt
+// on screen (connections.SendPrompt). For callers outside the world lock,
+// who build the body under it and send after.
+func SendCommandPrompt(connId uint64, prompt string, sent string) {
+	connections.SendPrompt(connId, []byte(sent), PromptCols(prompt))
+}
+
+// PromptCols is the fewest columns prompt (a CommandPromptBody) can fill on
+// one unbroken line (connections.MinCols): its tags, escape sequences and
+// telnet go-ahead take none.
+func PromptCols(prompt string) int {
+	visible := ansitags.Parse(strings.TrimSuffix(prompt, term.TelnetGoAhead.String()), ansitags.StripTags)
+	return connections.MinCols(visible)
+}
+
+// CommandPromptBody is the prompt to draw now: an open question, else the
+// pager's stop line, else the player's prompt, then what they have typed
+// and a telnet go-ahead when the client asks for one. It clears nothing;
+// the sender clears the old prompt.
+func (u *UserRecord) CommandPromptBody() string {
 
 	promptOut := ``
 
@@ -441,7 +462,7 @@ func (u *UserRecord) GetCommandPrompt() string {
 	if len(suggested) > 0 {
 		suggested = `<ansi fg="suggested-text">` + suggested + `</ansi>`
 	}
-	return term.AnsiMoveCursorColumn.String() + term.AnsiEraseLine.String() + promptOut + unsent + suggested + goAhead
+	return promptOut + unsent + suggested + goAhead
 
 }
 

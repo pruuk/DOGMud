@@ -72,12 +72,17 @@ func (u *UserRecord) EndReply() string {
 // connections.DefaultScreenWidth, so a telnet width equal to it is taken as
 // not reported.
 func (u *UserRecord) PagerWidth() int {
-	cs := u.ClientSettings()
-	if connections.IsWebsocket(u.connectionId) || cs.NAWSReported ||
-		(cs.Display.ScreenWidth != 0 && cs.Display.ScreenWidth != connections.DefaultScreenWidth) {
-		return cs.Display.GetScreenWidth()
+	if cols, ok := u.reportedScreenWidth(); ok {
+		return cols
 	}
 	return u.WrapWidth()
+}
+
+// reportedScreenWidth is the width in columns the reader's client reported
+// and whether it reported one (connections.ReportedScreenWidth, the one rule
+// the pager, the wrap width and the prompt record share).
+func (u *UserRecord) reportedScreenWidth() (int, bool) {
+	return connections.ReportedScreenWidth(u.connectionId)
 }
 
 // PageRows is the page size in screen rows the pager uses for this reader

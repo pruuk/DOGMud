@@ -990,6 +990,13 @@ func inputEventFor(wi WorldInput) events.Input {
 	}
 }
 
+// sendPrompt draws the player's prompt over the one on screen, clearing
+// every row it fills (#922). MainWorker holds the world lock.
+func sendPrompt(user *users.UserRecord) {
+	body := user.CommandPromptBody()
+	users.SendCommandPrompt(user.ConnectionId(), body, templates.AnsiParse(body))
+}
+
 // queueInputDone queues the marker that the server has finished one typed line
 // (web or telnet) (plan 6, R6). events.InputDonePriority puts it after every event
 // that writes the command's text or opens a menu in the same pass, so the
@@ -1029,9 +1036,9 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 				user.NoteActivity()
 			}
 			if out != `` {
-				connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+out), user.ConnectionId())
+				connections.SendReplacingPrompt(user.ConnectionId(), []byte(out))
 			}
-			connections.SendTo([]byte(templates.AnsiParse(user.GetCommandPrompt())), user.ConnectionId())
+			sendPrompt(user)
 			return
 		}
 		// #842: everything queued for this player until the line's InputDone
@@ -1051,7 +1058,7 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 		if strings.TrimSpace(inputText) != `` {
 			user.NoteActivity()
 		}
-		connections.SendTo([]byte(templates.AnsiParse(user.GetCommandPrompt())), user.ConnectionId())
+		sendPrompt(user)
 		return
 	}
 
@@ -1108,8 +1115,7 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 		}
 
 	} else {
-		connId := user.ConnectionId()
-		connections.SendTo([]byte(templates.AnsiParse(user.GetCommandPrompt())), connId)
+		sendPrompt(user)
 	}
 
 	if !handled {
@@ -1128,8 +1134,7 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 
 	// If they had an input prompt, but now they don't, lets make sure to resend a status prompt
 	if hadPrompt || (!hadPrompt && user.GetPrompt() != nil) {
-		connId := user.ConnectionId()
-		connections.SendTo([]byte(templates.AnsiParse(user.GetCommandPrompt())), connId)
+		sendPrompt(user)
 	}
 	// Removing this as possibly redundant.
 	// Leaving in case I need to remember that I did it...

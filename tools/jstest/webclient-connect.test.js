@@ -255,5 +255,38 @@ s.readyState = FakeSocket.CLOSED;
 s.onclose({ wasClean: false, code: 1006, reason: '' });
 check('a dropped connection says so in the log', __srWrites.join('|').indexOf('Connection died') >= 0, JSON.stringify(__srWrites));
 
+// #922: the server clears a wrapped prompt by climbing its rows. A line the
+// page wrote itself (gameLine) sits where the server does not know, so the
+// next climbing clear is cut back to one row; later ones climb again.
+connect.disabled = false;
+connect.click();
+s = sockets[sockets.length - 1];
+s.open();
+var termWrites = [];
+var oldWrite = term.write;
+term.write = function (t) { termWrites.push(t); };
+var CLIMB = '\x1b[G\x1b[2K\x1b[A\x1b[2K';
+var ONE = '\x1b[G\x1b[2K';
+// The close messages above were the page's own lines; a server clear ends that.
+s.onmessage({ data: ONE + 'Welcome back.\r\n' });
+s.onmessage({ data: CLIMB + 'A rat arrives.\r\n' });
+check('a wrapped prompt clear climbs its rows', termWrites[1] === CLIMB + 'A rat arrives.\r\n', JSON.stringify(termWrites[1]));
+gameLine('Your browser did not allow full screen.');
+s.onmessage({ data: CLIMB + 'A bat arrives.\r\n' });
+check('after a line the page wrote, the clear is one row', termWrites[2] === ONE + 'A bat arrives.\r\n', JSON.stringify(termWrites[2]));
+s.onmessage({ data: CLIMB + 'A cat arrives.\r\n' });
+check('the next clear climbs again', termWrites[3] === CLIMB + 'A cat arrives.\r\n', JSON.stringify(termWrites[3]));
+term.write = oldWrite;
+// Every local write marks it, not only gameLine: the page wraps term.write and
+// term.writeln where term is made, server text bypasses the wrapper, and a
+// change of width marks it too (a reflowed prompt, second review of #924).
+check('the page wraps term.write and term.writeln to mark local writes',
+    /term\.write = function \(data, cb\) \{ localLineSincePrompt = true;/.test(html) &&
+    /term\.writeln = function \(data, cb\) \{ localLineSincePrompt = true;/.test(html), 'wrapper not found');
+check('server text bypasses the wrapper',
+    /\(term\.writeFromServer \|\| term\.write\)\.call\(term,/.test(html), 'server write not found');
+check('a change of width marks it',
+    /onCols: function \(cols\) \{ localLineSincePrompt = true;/.test(html), 'onCols not found');
+
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);
