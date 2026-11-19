@@ -59,9 +59,10 @@ is two rows of six 48px buttons (328 of the S21's 344px).
   it (shown only when the room has diagonal or named exits; its slot is kept
   when empty so nothing moves), and commands on the right.
 - **In combat (default X):** the movement buttons and the other-exits slot
-  collapse into one **Flee** (two slots, top-left, farthest from the input
-  bar), and the freed slots hold combat commands. Movement is refused in
-  combat anyway.
+  collapse into one **Flee**, an ordinary button in one slot in the top row
+  (owner and Malia, 2026-11-19: consistency over making Flee prominent),
+  and the freed slots hold combat commands. Movement is refused in combat
+  anyway.
 - **In combat with Health open (Y):** if the player opens the Health tab
   during a fight, the tab carries Flee and the combat buttons beside the
   bars, and that becomes the player's combat default; closing Health during
@@ -162,7 +163,8 @@ Conform to `docs/guides/BRAND_STANDARDS.md`:
   open or selected (and a button's brief pressed state).
 - **Kinds are told apart by shape and edge, never by colour alone:**
   movement square; contextual commands rounded; other exits dashed edge;
-  Back and More heavy square edge; Flee heavy double edge. A small ◢ in the
+  Back and More heavy square edge. Flee looks like any other command (no
+  special edge or size). A small ◢ in the
   corner marks a button that opens a deeper level or does more on a long
   press.
 - **Sizes:** 48px targets with 8px gaps; the 30px phone sub-tab and title
@@ -178,9 +180,15 @@ Conform to `docs/guides/BRAND_STANDARDS.md`:
 ## How we test
 
 **Headless (Claude).** `tools/webshot/live-shot.js` against a local server
-(never the owner's), at a fixed size matrix: S21 360 x 800, Pixel 8
-412 x 915, sideways phone 800 x 360, iPad 820 x 1180 both ways, open
-foldable about 690 x 840, laptop 1366 x 768. Touch emulation must be turned
+(never the owner's), at a fixed size matrix: **small iPhone 375 x 667**
+(Chrome's "iPhone SE" device, the shortest), S21 360 x 800 (the narrowest),
+Pixel 8 412 x 915, sideways phone 800 x 360, iPad 820 x 1180 both ways,
+open foldable about 690 x 840, laptop 1366 x 768. **The minimum phone the
+design must fit is pinned at 360 wide by 667 tall** (the narrowest and the
+shortest together, owner 2026-11-19). Nobody has a small iPhone to test by
+hand, so it is checked in Chrome's device mode only, and iPhones in Safari
+cannot use full screen (Safari has no full-screen mode for pages on
+iPhone), so they keep the address bar. Touch emulation must be turned
 on explicitly (headless Chrome is not `pointer: coarse` without it). There
 is no on-screen keyboard headless, so keyboard states are approximated by a
 shorter viewport and always confirmed on a real phone.
@@ -193,7 +201,9 @@ headless only and say so.
 **Acceptance criteria (every touch plan).**
 - Every touch target at least 48px with 8px gaps (30px sub-tab exception).
 - On the S21 in full screen: about 20 game rows with the deck, about 9 with
-  the Map open; nothing the player needs is covered with the keyboard up.
+  the Map open. At the pinned minimum (360 x 667): the deck and input bar
+  fit with no scrolling and the game keeps at least about 14 rows with the
+  deck. Nothing the player needs is covered with the keyboard up.
 - No sideways page scroll; text contrast at least 4.5:1, icons and focus
   rings at least 3:1; green against blue never carries meaning.
 - Tap and long press do what this roadmap says; a stale tap is refused; a
@@ -242,8 +252,8 @@ guards, `tools/jstest`, `tools/webclient-tests`.
    moves); **Cast** (spell schools plus **Rhetoric** treated as one more
    school: taunt, rally and the other conviction moves); **More** (Craft,
    status, help and other common commands; anything more esoteric is
-   typed). In combat, Flee takes two slots and the rest of the combat top
-   level is for the command bar spec to settle (Target, Interact, Attack,
+   typed). In combat, Flee takes one ordinary slot and the rest of the
+   combat top level is for the command bar spec to settle (Target, Interact, Attack,
    Cast and More keep their places where they can, plus contextual combat
    slots such as a buff to renew).
 2. **The Map's movement buttons:** the inverted T (same as the deck, about
@@ -260,6 +270,11 @@ guards, `tools/jstest`, `tools/webclient-tests`.
    in Desktop site need anything more.
 7. **What a tap on Talk does when several NPCs are present**, and similar
    one-of-many choices inside the three-level limit.
+8. **Narrower than 360px.** WCAG's reflow check is 320px wide (the
+   templates already go down to 30 columns). Two rows of six 48px buttons
+   need 328px plus the deck's padding, so they do not fit at 320. Options:
+   44px buttons with 5px gaps there (289px, still above the WCAG 24px
+   minimum), or fewer columns and a third row.
 
 ## Work breakdown
 
@@ -279,6 +294,12 @@ plan ends with the headless size matrix and Malia's device check (#834).
 Each spec is written, reviewed and approved before its plan; each plan opens
 in VS Code for review before it is built (project rule).
 
+**Any spec that has a menu needs a detailed mockup that Malia approves**
+(owner, 2026-11-19), before the spec is approved: every level, Back and
+More, at the pinned minimum phone and the S21, in the brass look, with real
+labels from the game data. This covers the command bar (3), Target (3e),
+Cast and Craft (3f), and every panel spec (4).
+
 ## Decisions taken without asking
 
 | Decision | Why | If wrong |
@@ -286,11 +307,10 @@ in VS Code for review before it is built (project rule).
 | A short tap on Craft repeats the last craft; with no previous cast or craft, a tap opens the list | By analogy with the owner's Cast ruling | Craft taps always open the list |
 | The combat default is keyed by account name in browser storage | Two accounts on one phone should not share it | Key by device only |
 | A contextual level replaces the whole deck, movement included | More slots per level; Back returns | Keep movement visible and shrink levels to the command side |
-| Flee takes two slots, top-left | Farthest from the input bar, hard to miss | One slot |
 | The other-exits slot stays reserved when empty | Fixed slots: nothing moves between rooms | Give the slot to a command when empty |
 | Cooldowns shown by dimming, not red | Brand: red only for warnings | A different cooldown mark |
 | Broadcasts cannot be replied to | They are system messages | Reply to the sender where there is one |
 | An open foldable is treated as an upright tablet | Similar size and shape | Its own layout |
 | Headless keyboard states approximated by a shorter viewport | No on-screen keyboard headless | Device check only |
-| The size matrix and the S21 row counts as acceptance numbers | Measured from real screenshots | Re-measure per plan |
-| Mocks before the brass rule (`s21-layouts-v2`, `s21-deck-v3`, `s21-combat`) show dark movement tiles | Drawn before the owner's brass ruling; layouts still hold | Redraw them in brass |
+| The size matrix, and the row counts (S21 measured from screenshots; about 14 at 360 x 667 estimated) as acceptance numbers | The S21 is measured; the small iPhone is estimated from the same strip heights | Re-measure per plan |
+| Mocks before the brass rule (`s21-layouts-v2`, `s21-deck-v3`, `s21-combat`) show dark movement tiles, and `s21-combat` shows Flee in two slots | Drawn before the brass and one-slot Flee rulings; the layouts still hold | Redraw them; the menu specs' approved mockups replace them anyway |
