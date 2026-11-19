@@ -261,6 +261,8 @@ func reAddToQueue(e Event, prio int, fromTick bool) {
 	heap.Push(&globalQueue, pe)
 }
 
+// addToRequeue defers e to the next ProcessEvents pass, keeping whether a
+// tick queued it (#696).
 func addToRequeue(e Event, prio int, fromTick bool) {
 	qLock.Lock()
 	defer qLock.Unlock()
