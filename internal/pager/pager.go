@@ -45,8 +45,14 @@ func Rows(line string, width int) int {
 	if width < 1 {
 		return 1
 	}
-	cols := runewidth.StringWidth(escapeSeq.ReplaceAllString(line, ``))
+	cols := Cols(line)
 	return max(1, (cols+width-1)/width)
+}
+
+// Cols is the columns line takes on one unbroken row: escape sequences
+// removed, a wide character counted as two (#922 measures prompts with it).
+func Cols(line string) int {
+	return runewidth.StringWidth(escapeSeq.ReplaceAllString(line, ``))
 }
 
 // Size is the page size in screen rows for a reader and whether paging is

@@ -23,7 +23,7 @@ func Pager_ReplyEnd(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 	if out := user.EndReply(); out != `` {
-		connections.SendTo([]byte(user.PromptErase()+out), user.ConnectionId())
+		connections.SendReplacingPrompt(user.ConnectionId(), []byte(out))
 		events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
 	}
 	return events.Continue

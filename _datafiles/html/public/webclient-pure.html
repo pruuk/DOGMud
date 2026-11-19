@@ -2904,7 +2904,16 @@
         function gameLine(text) {
             term.writeln(text);
             screenReader.write(text + '\r\n');
+            localLineSincePrompt = true;
         }
+
+        // #922: the server clears a prompt that wrapped by moving up over its
+        // rows (column 1, erase line, then up and erase per extra row). It
+        // cannot see lines this page writes itself (gameLine), so after one
+        // the next such clear is cut back to its first row (see the websocket
+        // writer).
+        var WRAPPED_PROMPT_CLEAR = /^\x1b\[G\x1b\[2K(?:\x1b\[A\x1b\[2K)+/;
+        var localLineSincePrompt = false;
 
         // playerSend sends a line the player asked for (typed, the numpad, a
         // macro key, a chip, an item menu) and marks its answer for the
@@ -3301,6 +3310,15 @@
                 // Otherwise, just write to terminal
                 // The MOTD shows without its box here (static/js/motdrestyle.js).
                 var shown = window.MotdRestyle ? window.MotdRestyle.restyle(event.data) : event.data;
+                // #922: a line this page wrote itself (gameLine) sits below a
+                // prompt the server does not know moved, so the server's next
+                // clear must not climb the prompt's rows: keep its one-row clear.
+                if (localLineSincePrompt && WRAPPED_PROMPT_CLEAR.test(shown)) {
+                    shown = shown.replace(WRAPPED_PROMPT_CLEAR, '\x1b[G\x1b[2K');
+                }
+                if (/^\x1b\[G\x1b\[2K/.test(shown)) {
+                    localLineSincePrompt = false;
+                }
                 term.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);
                 // The same text, as plain words, into the screen reader log
                 // (static/js/screenreader.js); nothing when the mode is off.

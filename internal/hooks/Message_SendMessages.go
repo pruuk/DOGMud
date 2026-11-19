@@ -45,9 +45,9 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 				// No paging in combat (owner ruling 2026-11-18): a fight that
 				// started while pages wait sends them before its first line.
 				if rest := user.FlushPagesInCombat(); rest != `` {
-					connections.SendTo([]byte(user.PromptErase()+rest), user.ConnectionId())
+					connections.SendReplacingPrompt(user.ConnectionId(), []byte(rest))
 				}
-				connections.SendTo([]byte(user.PromptErase()+textOut), user.ConnectionId())
+				connections.SendReplacingPrompt(user.ConnectionId(), []byte(textOut))
 
 				events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
 			}
@@ -109,7 +109,7 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 					textOut = util.StripCharsForScreenReaders(textOut)
 				}
 
-				connections.SendTo([]byte(user.PromptErase()+textOut), user.ConnectionId())
+				connections.SendReplacingPrompt(user.ConnectionId(), []byte(textOut))
 
 				events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
 

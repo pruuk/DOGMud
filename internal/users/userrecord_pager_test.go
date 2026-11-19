@@ -304,7 +304,7 @@ func TestPager_AnOpenQuestionBeatsTheStopLine(t *testing.T) {
 	require.True(t, u.PagesWaiting())
 
 	openQuestion(t, u)
-	prompt := u.GetCommandPrompt()
+	prompt := u.CommandPromptBody()
 	require.Contains(t, prompt, "How much gold will you stake?")
 	require.NotContains(t, prompt, "More (page")
 
@@ -314,7 +314,7 @@ func TestPager_AnOpenQuestionBeatsTheStopLine(t *testing.T) {
 	require.True(t, u.PagesWaiting(), "the pages keep waiting while the question is open")
 
 	u.ClearPrompt()
-	require.Contains(t, u.GetCommandPrompt(), pager.StopLine(1, 3))
+	require.Contains(t, u.CommandPromptBody(), pager.StopLine(1, 3))
 }
 
 func TestEndReply_AnOpenQuestionSendsWhole(t *testing.T) {
@@ -327,13 +327,13 @@ func TestEndReply_AnOpenQuestionSendsWhole(t *testing.T) {
 	require.False(t, u.PagesWaiting())
 }
 
-func TestGetCommandPrompt_IsTheStopLineWhilePagesWait(t *testing.T) {
+func TestCommandPromptBody_IsTheStopLineWhilePagesWait(t *testing.T) {
 	u := pagerUser(t, 10)
 	for _, l := range numbered(25) {
 		u.HoldReply(l)
 	}
 	u.EndReply()
-	require.Contains(t, u.GetCommandPrompt(), pager.StopLine(1, 3))
+	require.Contains(t, u.CommandPromptBody(), pager.StopLine(1, 3))
 	u.RoutePagerInput("q")
-	require.NotContains(t, u.GetCommandPrompt(), "More (page")
+	require.NotContains(t, u.CommandPromptBody(), "More (page")
 }

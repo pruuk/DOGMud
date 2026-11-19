@@ -234,7 +234,7 @@ func TestPromptTankStaleToggleCache(t *testing.T) {
 	if !fx.player.Character.IsInCombat() {
 		t.Fatal("fixture player is not in combat")
 	}
-	got := promptVisible(fx.player.GetCommandPrompt())
+	got := promptVisible(fx.player.CommandPromptBody())
 	if !strings.Contains(got, ` T:Tanker Thp:`) {
 		t.Errorf("stale toggle cache: prompt = %q, want the tank bar", got)
 	}

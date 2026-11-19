@@ -316,7 +316,7 @@ func validateEmail(input string, results map[string]string) (string, error) {
 | `login.go` | The login/create flow, including `FinalizeLoginOrCreate` |
 | `login_prompt_handler.go` | Login prompt state machine |
 | `cleanser.go` | Input sanitising |
-| `echo.go` | Echo control (password entry). While `inputMasked(connectionId)` is true (the player's next line answers a secret prompt question, #868) the echo is one `*` per printable character (a multi-byte letter shows one) and other bytes pass through; seams `inputMasked` (default: `users.GetByConnectionId(id).InputMasked()`) and `echoSend` (default `connections.SendTo`) |
+| `echo.go` | Echo control (password entry). While `inputMasked(connectionId)` is true (the player's next line answers a secret prompt question, #868) the echo is one `*` per printable character (a multi-byte letter shows one) and other bytes pass through; seams `inputMasked` (default: `users.GetByConnectionId(id).InputMasked()`) and `echoSend` (default `connections.SendEcho` per connection, so typed characters extend the connection's prompt record and Enter ends it, #922) |
 | `inputhistory.go` | Per-connection command history; a line typed while `inputMasked` is true is not added, so the up arrow cannot recall it (#868) |
 | `term_iac.go` | Telnet IAC negotiation |
 | `term_ansi.go` | ANSI sequence handling |

@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -19,10 +18,7 @@ func RedrawPrompt_SendRedraw(e events.Event) events.ListenerReturn {
 
 	if user := users.GetByUserId(evt.UserId); user != nil {
 
-		// Building the prompt counts the old one as erased (#922); a skipped
-		// redraw below changes nothing on screen, so it restores the count.
-		rowsOnScreen := user.PromptRows()
-		newCmdPrompt := user.GetCommandPrompt()
+		newCmdPrompt := user.CommandPromptBody()
 
 		// When an interactive question is pending (character creation, confirm
 		// prompts, password entry), the command prompt IS the full question text.
@@ -43,20 +39,17 @@ func RedrawPrompt_SendRedraw(e events.Event) events.ListenerReturn {
 			oldCmdPrompt := user.GetTempData(users.PromptDrawnTempKey)
 
 			// If the prompt hasn't changed, skip redrawing
-			// (compared without its leading erase, which depends on what the
-			// screen showed before, #922)
-			if s, ok := oldCmdPrompt.(string); ok && s == users.WithoutPromptErase(newCmdPrompt) {
-				user.RestorePromptRows(rowsOnScreen)
+			if s, ok := oldCmdPrompt.(string); ok && s == newCmdPrompt {
 				return events.Continue
 			}
 
 			// save the new prompt for next time we want to check
-			user.SetTempData(users.PromptDrawnTempKey, users.WithoutPromptErase(newCmdPrompt))
+			user.SetTempData(users.PromptDrawnTempKey, newCmdPrompt)
 
 		}
 
-		pTxt := templates.AnsiParse(newCmdPrompt)
-		connections.SendTo([]byte(pTxt), user.ConnectionId())
+		// Drawn over the prompt on screen, every row of it (#922).
+		users.SendCommandPrompt(user.ConnectionId(), newCmdPrompt, templates.AnsiParse(newCmdPrompt))
 
 	}
 

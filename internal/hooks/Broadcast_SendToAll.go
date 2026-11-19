@@ -47,10 +47,7 @@ func Broadcast_SendToAll(e events.Event) events.ListenerReturn {
 						u.ConnectionId(),
 					)
 				} else {
-					connections.SendTo(
-						[]byte(u.PromptErase()+textOutSR),
-						u.ConnectionId(),
-					)
+					connections.SendReplacingPrompt(u.ConnectionId(), []byte(textOutSR))
 				}
 
 				continue
@@ -64,10 +61,7 @@ func Broadcast_SendToAll(e events.Event) events.ListenerReturn {
 				u.ConnectionId(),
 			)
 		} else {
-			connections.SendTo(
-				[]byte(u.PromptErase()+textOut),
-				u.ConnectionId(),
-			)
+			connections.SendReplacingPrompt(u.ConnectionId(), []byte(textOut))
 		}
 	}
 
