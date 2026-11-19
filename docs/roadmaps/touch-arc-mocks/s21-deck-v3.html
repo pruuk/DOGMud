@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; padding:16px; background:#e9e4dc; font-family: system-ui, sans-serif; color:#222; }
+  h2 { margin:0 0 4px; font-size:20px; }
+  .sub { margin:0 0 14px; font-size:14px; color:#444; max-width:1150px; line-height:1.45; }
+  .row { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:366px; }
+  .cap { font-size:13px; line-height:1.45; margin-top:8px; }
+  .phone { width:360px; height:800px; border:3px solid #333; border-radius:22px; overflow:hidden; background:#0d0b09; font-family:"JetBrains Mono", monospace; display:flex; flex-direction:column; }
+  .sess { height:58px; flex:none; box-sizing:border-box; margin:6px 6px 0; border-radius:6px; background:#e2cf9a; display:flex; align-items:center; gap:8px; padding:0 8px; }
+  .sess .u { font-size:14px; color:#2a2016; flex:1; }
+  .gb { height:44px; display:flex; align-items:center; justify-content:center; padding:0 12px; border-radius:6px; background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; font-size:14px; color:#2a2016; box-shadow:0 2px 0 #6b5428; }
+  .gb.sq { width:44px; padding:0; }
+  .game { flex:1 1 auto; min-height:0; overflow:hidden; margin:6px 6px 0; border:1px solid #6b5428; border-radius:6px 6px 0 0; border-bottom:0; padding:4px 8px; font-size:14px; line-height:22.4px; color:#e6dccb; display:flex; flex-direction:column; justify-content:flex-end; }
+  .game p { margin:0; white-space:pre; overflow:hidden; }
+  .y { color:#d8a64a; } .g { color:#b9b06a; } .w { color:#e6dccb; } .r { color:#e08a6a; }
+  .bars i { display:inline-block; height:18px; vertical-align:-3px; background:#5aa864; }
+  .deck { flex:none; margin:0 6px; padding:8px; box-sizing:border-box; background:#1f1912; border:1px solid #6b5428; border-top:2px solid #b08a4e; display:grid; grid-template-columns:repeat(6,48px); grid-template-rows:repeat(2,48px); gap:8px; }
+  .b { position:relative; border-radius:6px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:13px; line-height:14px; box-sizing:border-box; }
+  /* movement: dark tile, gold edge */
+  .mv { background:#3a2c1d; border:1px solid #c9a35a; color:#f1e4cc; font-size:18px; }
+  .mv.off { opacity:.22; }
+  /* other exits: movement family, dashed edge */
+  .ex { background:#3a2c1d; border:2px dashed #c9a35a; color:#f1e4cc; font-size:12px; line-height:13px; }
+  .ex.none { opacity:.0; }
+  /* fixed command: light gold, square corners */
+  .fx { background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; color:#2a2016; border-radius:3px; box-shadow:0 2px 0 #6b5428; }
+  /* contextual command: light gold, round corners, inner rule */
+  .ctx { background:linear-gradient(#f2e3b8,#d8bd78); border:1px solid #8a6f3a; color:#2a2016; border-radius:14px; box-shadow:0 2px 0 #6b5428, inset 0 0 0 2px #fff4d6; }
+  .more { background:#2a2017; border:1px solid #8a6f3a; color:#e8d3a0; border-radius:3px; }
+  /* long-press mark */
+  .lp:after { content:""; position:absolute; right:3px; bottom:3px; width:0; height:0; border-left:7px solid transparent; border-bottom:7px solid #6b4a1a; }
+  .mv.lp:after, .more.lp:after { border-bottom-color:#e8d3a0; }
+  .ico { display:block; font-size:15px; line-height:16px; }
+  .divider { height:12px; flex:none; margin:0 6px; border-left:1px solid #6b5428; border-right:1px solid #6b5428; position:relative; }
+  .divider:after { content:""; position:absolute; left:20px; right:20px; top:5px; height:2px; background:#6b5428; }
+  .cmd { height:62px; flex:none; margin:0 6px; box-sizing:border-box; padding:6px; background:#e2cf9a; border-radius:0 0 6px 6px; }
+  .cmd .box { height:50px; box-sizing:border-box; background:#16110c; border:2px solid #2f5f3e; border-radius:4px; color:#8a7b66; font-size:16px; line-height:46px; padding-left:12px; }
+  .tabs { height:56px; flex:none; margin:4px 6px 6px; border:2px solid #2f6f63; border-radius:28px; display:flex; align-items:center; justify-content:space-around; padding:0 4px; }
+  .tabs i { width:42px; height:42px; border-radius:50%; background:radial-gradient(#ecd79c,#b8923e); font-style:normal; display:flex; align-items:center; justify-content:center; color:#3a2a14; font-size:15px; }
+  .key { display:flex; gap:14px; flex-wrap:wrap; font-size:13px; margin:0 0 14px; align-items:center; }
+  .key .b { width:48px; height:48px; flex:none; }
+  .key span.t { margin-right:10px; }
+  table.press { border-collapse:collapse; font-size:13px; margin-top:6px; }
+  table.press td { border-top:1px solid #ccc; padding:4px 6px; vertical-align:top; }
+</style></head><body>
+<h2>Inverted-T deck, revised (Galaxy S21, 1:1, full screen)</h2>
+<p class="sub">Two rows of six 48px buttons is all the S21's width holds (328 of 344px). The T takes six, the exits button one, leaving five: two fixed commands, two contextual, and More (more commands only). Kinds are told apart by shape and edge, never by colour alone.</p>
+<div class="key">
+  <div class="b mv">↑</div><span class="t">Movement: dark, square, gold edge</span>
+  <div class="b ex">⋯<br>exits</div><span class="t">Other exits: movement family, dashed edge; only shown when the room has them</span>
+  <div class="b fx">Look</div><span class="t">Fixed command: light, square</span>
+  <div class="b ctx">Talk<br>Toke</div><span class="t">Contextual command: rounded, inner rim</span>
+  <div class="b fx lp">Look</div><span class="t">◢ corner mark: a long press does more</span>
+</div>
+<div class="row">
+
+<div class="col">
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p class="y">The Old Ford</p>
+<p class="w">The river runs shallow over flat stone</p>
+<p class="w">here. A rope ladder hangs from the</p>
+<p class="w">bluff above, and a dark culvert opens</p>
+<p class="w">under the bank to the southeast.</p>
+<p class="w">Also here: [*] <span class="y">Crier Toke</span>, <span class="r">a sewer rat</span></p>
+<p class="y">Exits: <span class="g">north, south, west, up, southeast</span></p>
+<p class="bars">[HP:<i style="width:80px"></i> SP:<i style="width:80px"></i> CP:<i style="width:30px"></i>]</p>
+<p class="w">Your rally fades; the old resolve</p>
+<p class="w">slips back into weariness.</p>
+<p class="bars">[HP:<i style="width:80px"></i> SP:<i style="width:80px"></i> CP:<i style="width:30px"></i>]:</p>
+  </div>
+  <div class="deck">
+    <div class="b mv">⤒</div><div class="b mv">↑</div><div class="b mv off">⤓</div>
+    <div class="b ex">⋯<br>exits</div>
+    <div class="b ctx lp"><span><span class="ico">⚔</span>rat</span></div>
+    <div class="b ctx lp"><span><span class="ico">⟳</span>Rally</span></div>
+    <div class="b mv">←</div><div class="b mv">↓</div><div class="b mv off">→</div>
+    <div class="b fx lp">Look</div>
+    <div class="b fx">Score</div>
+    <div class="b more">More</div>
+  </div>
+  <div class="divider"></div>
+  <div class="cmd"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i>▤</i><i>☰</i><i>♥</i><i>▣</i><i>✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>A room with an extra exit, a hostile rat, and a buff that just dropped.</b> The exits button is live (southeast). The two contextual slots go to what matters most right now: attack the rat, and renew Rally. Talk Toke and Consider rat wait under More.</div>
+</div>
+
+<div class="col">
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p class="w">spoken aloud. Ways run off in every</p>
+<p class="w">direction: north toward the pool,</p>
+<p class="w">south to the market, west along the</p>
+<p class="w">stilt-walk, east to the squat</p>
+<p class="w">strongbox-house.</p>
+<p class="w">Also here: [*] <span class="y">Crier Toke</span> (lit)</p>
+<p class="y">Exits: <span class="g">east, north, south, west</span></p>
+<p class="bars">[HP:<i style="width:80px"></i> SP:<i style="width:80px"></i> CP:<i style="width:30px"></i>]:</p>
+  </div>
+  <div class="deck">
+    <div class="b mv off">⤒</div><div class="b mv">↑</div><div class="b mv off">⤓</div>
+    <div class="b ex none"></div>
+    <div class="b ctx lp"><span>Talk<br>Toke</span></div>
+    <div class="b ctx lp"><span><span class="ico">◎</span>Quest</span></div>
+    <div class="b mv">←</div><div class="b mv">↓</div><div class="b mv">→</div>
+    <div class="b fx lp">Look</div>
+    <div class="b fx">Score</div>
+    <div class="b more">More</div>
+  </div>
+  <div class="divider"></div>
+  <div class="cmd"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i>▤</i><i>☰</i><i>♥</i><i>▣</i><i>✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>A quiet square, no extra exits.</b> The exits slot is empty but kept, so nothing moves. Contextual slots: talk to Toke, and the focused quest's next step. Look, Score and More stay where they were.</div>
+</div>
+
+<div class="col" style="width:380px">
+<h3 style="margin:0 0 6px;font-size:15px">Tap and long press (first ideas)</h3>
+<table class="press">
+<tr><td><b>Look</b></td><td>Tap: look at the room. Long press: a list of what is here to look at (people, creatures, items, things named in the room), visible ones only.</td></tr>
+<tr><td><b>⚔ rat</b></td><td>Tap: attack the rat. Long press: the other moves against it (trip, bash, and so on), with ones on cooldown dimmed.</td></tr>
+<tr><td><b>⟳ Rally</b></td><td>Tap: renew it now. Long press: renew it automatically every time it drops (builds a trigger you can see and remove in Automation).</td></tr>
+<tr><td><b>Talk Toke</b></td><td>Tap: talk. Long press: consider, look at, or give to Toke.</td></tr>
+<tr><td><b>⋯ exits</b></td><td>Tap: a short list of the room's other exits (southeast, a portal, "in").</td></tr>
+<tr><td><b>Score</b></td><td>Tap: your status sheet.</td></tr>
+<tr><td><b>More</b></td><td>Tap: the rest of the contextual commands that did not fit (Consider rat, Talk Toke, a second buff), in a short list.</td></tr>
+</table>
+<p class="cap"><b>The squeeze:</b> five command slots is tight for Talk, Look, Score, Consider, an attack, and one or more buffs at once. Options: fewer fixed (Look only), or a third deck row only during combat (about 2 rows of game text). This is the command bar's own design (#779); the layout just reserves the space.</p>
+</div>
+
+</div>
+</body></html>

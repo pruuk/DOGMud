@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; padding:16px; background:#e9e4dc; font-family: system-ui, sans-serif; color:#222; }
+  h2 { margin:0 0 4px; font-size:20px; }
+  .sub { margin:0 0 14px; font-size:14px; color:#444; max-width:1150px; line-height:1.45; }
+  .row { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:366px; }
+  .cap { font-size:13px; line-height:1.45; margin-top:8px; }
+  .phone { width:360px; height:800px; border:3px solid #333; border-radius:22px; overflow:hidden; background:#0d0b09; font-family:"JetBrains Mono", monospace; display:flex; flex-direction:column; }
+  .sess { height:58px; flex:none; box-sizing:border-box; margin:6px 6px 0; border-radius:6px; background:#e2cf9a; display:flex; align-items:center; gap:8px; padding:0 8px; }
+  .sess .u { font-size:14px; color:#2a2016; flex:1; }
+  .gb { height:44px; display:flex; align-items:center; justify-content:center; padding:0 12px; border-radius:6px; background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; font-size:14px; color:#2a2016; box-shadow:0 2px 0 #6b5428; }
+  .gb.sq { width:44px; padding:0; }
+  .game { flex:1 1 auto; min-height:0; overflow:hidden; margin:6px 6px 0; border:1px solid #6b5428; border-radius:6px 6px 0 0; border-bottom:0; padding:4px 8px; font-size:14px; line-height:22.4px; color:#e6dccb; display:flex; flex-direction:column; justify-content:flex-end; }
+  .game.full { border-radius:6px; border-bottom:1px solid #6b5428; margin-bottom:0; }
+  .game p { margin:0; white-space:pre; overflow:hidden; }
+  .y { color:#d8a64a; } .w { color:#e6dccb; } .r { color:#e08a6a; } .hit { color:#f0c070; }
+  .bars i { display:inline-block; height:18px; vertical-align:-3px; background:#5aa864; }
+  .deck { flex:none; margin:0 6px; padding:8px; box-sizing:border-box; background:#1f1912; border:1px solid #6b5428; border-top:2px solid #b08a4e; display:grid; grid-template-columns:repeat(6,48px); grid-template-rows:repeat(2,48px); gap:8px; }
+  .b { position:relative; border-radius:6px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:13px; line-height:14px; box-sizing:border-box; }
+  .fx { background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; color:#2a2016; border-radius:3px; box-shadow:0 2px 0 #6b5428; }
+  .ctx { background:linear-gradient(#f2e3b8,#d8bd78); border:1px solid #8a6f3a; color:#2a2016; border-radius:14px; box-shadow:0 2px 0 #6b5428, inset 0 0 0 2px #fff4d6; }
+  .ctx.cd { opacity:.45; }
+  .more { background:#2a2017; border:1px solid #8a6f3a; color:#e8d3a0; border-radius:3px; }
+  /* flee: movement family (dark), heavy double edge, spans two slots */
+  .flee { background:#3a2c1d; border:3px double #e0a64a; color:#f6e2b8; font-size:15px; font-weight:600; letter-spacing:.5px; }
+  .lp:after { content:""; position:absolute; right:3px; bottom:3px; width:0; height:0; border-left:7px solid transparent; border-bottom:7px solid #6b4a1a; }
+  .more.lp:after, .flee.lp:after { border-bottom-color:#e8d3a0; }
+  .ico { display:block; font-size:15px; line-height:16px; }
+  .divider { height:12px; flex:none; margin:0 6px; border-left:1px solid #6b5428; border-right:1px solid #6b5428; position:relative; }
+  .divider:after { content:""; position:absolute; left:20px; right:20px; top:5px; height:2px; background:#6b5428; }
+  .cmd { height:62px; flex:none; margin:0 6px; box-sizing:border-box; padding:6px; background:#e2cf9a; border-radius:0 0 6px 6px; }
+  .cmd.alone { border-radius:6px; margin-top:6px; }
+  .cmd .box { height:50px; box-sizing:border-box; background:#16110c; border:2px solid #2f5f3e; border-radius:4px; color:#8a7b66; font-size:16px; line-height:46px; padding-left:12px; }
+  .pill { height:30px; flex:none; display:flex; align-items:center; padding-left:94px; }
+  .pill span { padding:3px 12px; border-radius:14px; background:#ecdcb0; color:#2a2016; font-size:14px; }
+  .tabs { height:56px; flex:none; margin:4px 6px 6px; border:2px solid #2f6f63; border-radius:28px; display:flex; align-items:center; justify-content:space-around; padding:0 4px; }
+  .tabs i { width:42px; height:42px; border-radius:50%; background:radial-gradient(#ecd79c,#b8923e); font-style:normal; display:flex; align-items:center; justify-content:center; color:#3a2a14; font-size:15px; }
+  .tabs i.on { background:radial-gradient(#5a4428,#3a2a16); color:#e8d3a0; }
+  .drawer { flex:none; border-top:2px solid #b08a4e; background:#1f1912; display:flex; flex-direction:column; }
+  .ph { height:46px; flex:none; display:flex; align-items:center; padding:0 6px 0 10px; border-bottom:2px solid #2f6f63; background:#2a2017; }
+  .ph .tt { flex:1; font-size:18px; color:#e8d3a0; }
+  .ph .hb { width:36px; height:32px; margin-left:6px; border-radius:5px; background:linear-gradient(#ead9a6,#cfb46c); color:#2a2016; font-size:12px; display:flex; align-items:center; justify-content:center; }
+  .vit { display:flex; align-items:center; gap:6px; padding:6px 8px; background:#e2cf9a; }
+  .vit .nm { font-size:14px; color:#2a2016; width:64px; }
+  .vit .bar { flex:1; height:26px; display:flex; border-radius:4px; overflow:hidden; font-size:13px; color:#fff; }
+  .vit .bar span { display:flex; align-items:center; justify-content:center; }
+  .foe { display:flex; align-items:center; gap:8px; padding:6px 10px; font-size:14px; color:#e6dccb; border-bottom:1px solid #3d3126; }
+  .foe .wd { color:#f0c070; }
+  .grid2 { display:grid; grid-template-columns:repeat(6,48px); grid-template-rows:repeat(2,48px); gap:8px; padding:8px; }
+</style></head><body>
+<h2>In combat: two ways to swap the deck (Galaxy S21, 1:1, full screen)</h2>
+<p class="sub">You cannot walk in combat (only flee, and flee picks its own exit), so the movement buttons have nothing to do. Flee keeps the movement family's dark tile but gets a heavy double edge and two slots, top-left, as far from the input bar as the deck allows. Rounded buttons are contextual combat moves; dimmed is on cooldown; ◢ means a long press does more.</p>
+<div class="row">
+
+<div class="col">
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p class="w">You swing at <span class="r">the sewer rat</span> and</p>
+<p class="hit">connect solidly.</p>
+<p class="r">The sewer rat bites your ankle.</p>
+<p class="w">You bash <span class="r">the sewer rat</span>, and it</p>
+<p class="w">tumbles against the wall.</p>
+<p class="r">The sewer rat scrabbles to its feet.</p>
+<p class="bars">[HP:<i style="width:62px"></i> SP:<i style="width:70px"></i> CP:<i style="width:30px"></i>] rat: hurt</p>
+  </div>
+  <div class="deck">
+    <div class="b flee lp" style="grid-column:span 2">FLEE</div>
+    <div class="b ctx lp"><span><span class="ico">⚔</span>rat</span></div>
+    <div class="b ctx cd lp"><span><span class="ico">✊</span>Bash</span></div>
+    <div class="b ctx lp"><span><span class="ico">↯</span>Trip</span></div>
+    <div class="b ctx lp"><span><span class="ico">⟳</span>Rally</span></div>
+    <div class="b ctx lp"><span><span class="ico">✚</span>Mend</span></div>
+    <div class="b ctx"><span><span class="ico">◐</span>Con-<br>sider</span></div>
+    <div class="b ctx"><span><span class="ico">⚑</span>Warcry</span></div>
+    <div class="b fx lp">Look</div>
+    <div class="b fx">Score</div>
+    <div class="b more">More</div>
+  </div>
+  <div class="divider"></div>
+  <div class="cmd"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i>▤</i><i>☰</i><i>♥</i><i>▣</i><i>✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>X. The deck swaps in place.</b> Same 120px, same <b>20 rows</b>. The six movement slots and the exits slot become Flee (two slots) plus five more combat moves, so eight contextual slots instead of two. Look, Score and More keep their places. Health stays in the prompt line as today.</div>
+</div>
+
+<div class="col">
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p class="w">You swing at <span class="r">the sewer rat</span> and</p>
+<p class="hit">connect solidly.</p>
+<p class="r">The sewer rat bites your ankle.</p>
+<p class="w">You bash <span class="r">the sewer rat</span>, and it</p>
+<p class="w">tumbles against the wall.</p>
+<p class="r">The sewer rat scrabbles to its feet.</p>
+  </div>
+  <div class="drawer">
+    <div class="ph"><span class="tt">Health</span><span class="hb">▾</span><span class="hb">✕</span></div>
+    <div class="vit"><span class="nm">testa4</span><div class="bar"><span style="flex:6;background:linear-gradient(90deg,#d9534f,#e0a050,#9ab07a)">HP</span><span style="flex:3;background:#c06a2a">SP</span><span style="flex:2;background:#e0a050">CP</span></div></div>
+    <div class="foe"><span>Fighting: <span style="color:#e08a6a">the sewer rat</span></span><span class="wd">hurt</span></div>
+    <div class="grid2">
+      <div class="b flee lp" style="grid-column:span 2">FLEE</div>
+      <div class="b ctx lp"><span><span class="ico">⚔</span>rat</span></div>
+      <div class="b ctx cd lp"><span><span class="ico">✊</span>Bash</span></div>
+      <div class="b ctx lp"><span><span class="ico">↯</span>Trip</span></div>
+      <div class="b ctx lp"><span><span class="ico">⟳</span>Rally</span></div>
+      <div class="b ctx lp"><span><span class="ico">✚</span>Mend</span></div>
+      <div class="b ctx"><span><span class="ico">◐</span>Con-<br>sider</span></div>
+      <div class="b ctx"><span><span class="ico">⚑</span>Warcry</span></div>
+      <div class="b fx lp">Look</div>
+      <div class="b fx">Score</div>
+      <div class="b more">More</div>
+    </div>
+  </div>
+  <div class="pill"><span>Health</span></div>
+  <div class="cmd alone"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i>▤</i><i>☰</i><i class="on">♥</i><i>▣</i><i>✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>Y. The Health tab opens itself for the fight</b> and carries the combat buttons, as the Map tab carries the compass. You see your bars and the foe's state in words, not only the prompt. The game keeps about <b>14 rows</b>. It closes when the fight ends (or stays if you opened it yourself). Any other tab still opens over it.</div>
+</div>
+
+</div>
+</body></html>

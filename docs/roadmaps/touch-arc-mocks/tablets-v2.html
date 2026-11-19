@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; padding:16px; background:#e9e4dc; font-family: system-ui, sans-serif; color:#222; }
+  h2 { margin:0 0 4px; font-size:20px; }
+  .sub { margin:0 0 14px; font-size:14px; color:#444; max-width:1200px; line-height:1.45; }
+  .row { display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .cap { font-size:13px; line-height:1.45; margin-top:8px; }
+  /* Every device is drawn at half its CSS size: 1 drawn px = 2 CSS px. */
+  .dev { border:3px solid #333; border-radius:16px; overflow:hidden; background:#0d0b09; font-family:"JetBrains Mono", monospace; display:flex; flex-direction:column; }
+  .sess { height:29px; flex:none; margin:3px 3px 0; border-radius:4px; background:#e2cf9a; display:flex; align-items:center; gap:4px; padding:0 4px; font-size:7px; color:#2a2016; }
+  .sess .u { flex:1; }
+  .sess .gb { height:22px; padding:0 6px; border-radius:3px; background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; display:flex; align-items:center; }
+  .game { flex:1 1 auto; min-height:0; overflow:hidden; border:1px solid #6b5428; border-radius:4px; padding:2px 4px; font-size:8px; line-height:11.5px; color:#e6dccb; display:flex; flex-direction:column; justify-content:flex-end; }
+  .game p { margin:0; white-space:pre; overflow:hidden; }
+  .y { color:#d8a64a; } .g { color:#b9b06a; }
+  .deck { flex:none; padding:4px; background:#1f1912; border:1px solid #6b5428; border-top:2px solid #b08a4e; display:grid; grid-template-rows:repeat(2,24px); grid-auto-flow:column; grid-auto-columns:24px; gap:4px; }
+  .deck1 { grid-template-rows:24px; }
+  .b { border-radius:3px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:6px; line-height:7px; box-sizing:border-box; }
+  .mv { background:#3a2c1d; border:1px solid #c9a35a; color:#f1e4cc; font-size:9px; }
+  .mv.off { opacity:.22; }
+  .ex { background:#3a2c1d; border:1px dashed #c9a35a; color:#f1e4cc; }
+  .fx { background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; color:#2a2016; }
+  .ctx { background:linear-gradient(#f2e3b8,#d8bd78); border:1px solid #8a6f3a; color:#2a2016; border-radius:7px; }
+  .more { background:#2a2017; border:1px solid #8a6f3a; color:#e8d3a0; }
+  .cmd { height:31px; flex:none; box-sizing:border-box; padding:3px; background:#e2cf9a; border-radius:0 0 4px 4px; }
+  .cmd div { height:25px; box-sizing:border-box; background:#16110c; border:1px solid #2f5f3e; border-radius:2px; color:#8a7b66; font-size:8px; line-height:23px; padding-left:5px; }
+  .tabs { height:28px; flex:none; margin:2px 3px 3px; border:1px solid #2f6f63; border-radius:14px; display:flex; align-items:center; justify-content:space-around; }
+  .tabs i { width:21px; height:21px; border-radius:50%; background:radial-gradient(#ecd79c,#b8923e); }
+  .panel { border:1px solid #6b5428; border-radius:4px; background:#1f1912; display:flex; flex-direction:column; overflow:hidden; }
+  .panel .h { height:16px; flex:none; font-size:8px; color:#e8d3a0; padding:2px 5px; border-bottom:1px solid #2f6f63; background:#2a2017; }
+  .panel .body { flex:1; padding:4px; font-size:7px; color:#cdbf9f; }
+  .map { background:radial-gradient(circle at 50% 45%, #4a3a28, #2a2017 75%); border:3px solid #3a2c1d; outline:1px solid #8a6f3a; outline-offset:-5px; }
+  .rose3 { display:grid; grid-template-columns:repeat(3,24px); grid-template-rows:repeat(2,24px); gap:4px; }
+  .bar { height:12px; border-radius:2px; background:linear-gradient(90deg,#d9534f,#e0a050,#9ab07a); margin:3px 0; }
+  .col { display:flex; flex-direction:column; }
+</style></head><body>
+<h2>Tablets, a foldable, and a phone on its side</h2>
+<p class="sub">All drawn at half size (one drawn pixel is two CSS pixels), with the same 48px buttons and 8px gaps. Same parts as the phone: inverted-T movement (dark), the dashed other-exits button, fixed commands (square), contextual commands (rounded), More. In combat the movement collapses to Flee exactly as on the phone. Labels are placeholders.</p>
+<div class="row">
+
+<!-- iPad portrait 820 x 1180 -->
+<div>
+<div class="dev" style="width:410px;height:590px">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb">⚙</span><span class="gb">⛶</span></div>
+  <div style="flex:1;display:flex;flex-direction:column;margin:3px 3px 0;min-height:0">
+  <div class="game">
+<p>The town's heart opens out here across flat basalt slabs, worn smooth by</p>
+<p>more feet than anyone has bothered to count. A weathered notice post</p>
+<p>stands square in the middle, its boards layered thick with the crier's</p>
+<p>latest word and a hundred older ones gone soft beneath.</p>
+<p class="y">Exits: <span class="g">east, north, south, west</span></p>
+  </div>
+  <div class="deck">
+    <div class="b mv off">⤒</div><div class="b mv">←</div><div class="b mv">↑</div><div class="b mv">↓</div><div class="b mv off">⤓</div><div class="b mv">→</div>
+    <div class="b ex"></div><div class="b ex" style="opacity:0"></div>
+    <div class="b ctx">Talk<br>Toke</div><div class="b ctx">◎<br>Quest</div>
+    <div class="b ctx">⟳<br>Rally</div><div class="b ctx">◐<br>Con</div>
+    <div class="b ctx">Give</div><div class="b ctx">Buy</div>
+    <div class="b ctx">Read</div><div class="b ctx">Get</div>
+    <div class="b fx">Look</div><div class="b fx">Score</div>
+    <div class="b fx">Inv</div><div class="b more">More</div>
+  </div>
+  <div class="cmd"><div>Enter command...</div></div>
+  </div>
+  <div class="tabs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+<div class="cap" style="width:416px"><b>Upright tablet (iPad 820 × 1180).</b> Same arrangement as the phone, wider: two rows, 14 columns. The T on the left, then the exits slot, then about ten contextual slots, then the fixed ones and More on the right. Panels stay behind the tab bar as today. Game about 34 rows (16px text).</div>
+</div>
+
+<!-- Foldable open ~ 690 x 840 -->
+<div>
+<div class="dev" style="width:345px;height:420px">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb">⚙</span><span class="gb">⛶</span></div>
+  <div style="flex:1;display:flex;flex-direction:column;margin:3px 3px 0;min-height:0">
+  <div class="game">
+<p>The town's heart opens out here across flat basalt</p>
+<p>slabs, worn smooth by more feet than anyone has</p>
+<p>bothered to count.</p>
+<p class="y">Exits: <span class="g">east, north, south, west</span></p>
+  </div>
+  <div class="deck">
+    <div class="b mv off">⤒</div><div class="b mv">←</div><div class="b mv">↑</div><div class="b mv">↓</div><div class="b mv off">⤓</div><div class="b mv">→</div>
+    <div class="b ex"></div><div class="b ex" style="opacity:0"></div>
+    <div class="b ctx">Talk<br>Toke</div><div class="b ctx">◎<br>Quest</div>
+    <div class="b ctx">⟳<br>Rally</div><div class="b ctx">◐<br>Con</div>
+    <div class="b ctx">Give</div><div class="b ctx">Buy</div>
+    <div class="b fx">Look</div><div class="b fx">Score</div>
+    <div class="b more">More</div>
+  </div>
+  <div class="cmd"><div>Enter command...</div></div>
+  </div>
+  <div class="tabs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+<div class="cap" style="width:351px"><b>Foldable, open (about 690 × 840).</b> The upright-tablet arrangement with fewer columns (12). Folded, the cover screen is a narrow phone and gets the phone deck. Game about 20 rows.</div>
+</div>
+
+<!-- iPad landscape 1180 x 820 -->
+<div>
+<div class="dev" style="width:590px;height:410px">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb">⚙</span><span class="gb">⛶</span></div>
+  <div style="flex:1;display:flex;gap:3px;margin:3px 3px 0;min-height:0">
+    <div class="col" style="width:385px;min-height:0">
+      <div class="game">
+<p>The town's heart opens out here across flat basalt slabs, worn smooth by more feet</p>
+<p>than anyone has bothered to count. A weathered notice post stands square in the</p>
+<p>middle, its boards layered thick with the crier's latest word.</p>
+<p class="y">Exits: <span class="g">east, north, south, west</span></p>
+      </div>
+      <div class="deck deck1">
+        <div class="b ctx">Talk<br>Toke</div><div class="b ctx">◎<br>Quest</div><div class="b ctx">⟳<br>Rally</div><div class="b ctx">◐<br>Con</div><div class="b ctx">Give</div><div class="b ctx">Buy</div><div class="b ctx">Read</div><div class="b ctx">Get</div><div class="b fx">Look</div><div class="b fx">Score</div><div class="b fx">Inv</div><div class="b more">More</div>
+      </div>
+      <div class="cmd"><div>Enter command...</div></div>
+    </div>
+    <div class="col" style="flex:1;gap:3px;min-height:0">
+      <div class="panel" style="height:178px"><div class="h">Map (Pothole Coulee, Level 0)</div>
+        <div class="body" style="display:flex;gap:4px"><div class="map" style="flex:1"></div>
+          <div class="col" style="gap:4px"><div class="rose3"><div class="b mv off">⤒</div><div class="b mv">↑</div><div class="b mv off">⤓</div><div class="b mv">←</div><div class="b mv">↓</div><div class="b mv">→</div></div><div class="b ex" style="height:24px">⋯ exits</div></div>
+        </div></div>
+      <div class="panel" style="flex:none"><div class="h">Health</div><div class="body"><div class="bar"></div></div></div>
+      <div class="panel" style="flex:1"><div class="h">Conditions</div><div class="body">No active effects.</div></div>
+    </div>
+  </div>
+  <div class="tabs" style="margin-left:395px"><i></i><i></i><i></i><i></i></div>
+</div>
+<div class="cap" style="width:596px"><b>Sideways tablet (iPad 1180 × 820).</b> As today, Map, Health and Conditions stay open beside the game; Comms, Quests, Inventory and Automation sit behind the icon bar. The compass lives on the Map (there is room beside it), so under the game is one row of twelve commands. In combat, Flee takes the compass's place on the Map panel. Game about 22 rows.</div>
+</div>
+
+<!-- Phone landscape 800 x 360 -->
+<div>
+<div class="dev" style="width:400px;height:180px">
+  <div style="flex:1;display:flex;gap:3px;margin:3px;min-height:0">
+    <div class="col" style="flex:1;min-height:0">
+      <div class="game">
+<p>The town's heart opens out here across flat basalt slabs,</p>
+<p>worn smooth by more feet than anyone has bothered to count.</p>
+<p class="y">Exits: <span class="g">east, north, south, west</span></p>
+      </div>
+      <div class="cmd" style="border-radius:0 0 4px 4px"><div>Enter command...</div></div>
+    </div>
+    <div class="col" style="gap:4px;padding:4px;background:#1f1912;border:1px solid #6b5428;border-radius:4px">
+      <div class="rose3"><div class="b mv off">⤒</div><div class="b mv">↑</div><div class="b mv off">⤓</div><div class="b mv">←</div><div class="b mv">↓</div><div class="b mv">→</div></div>
+      <div class="rose3"><div class="b ctx">Talk</div><div class="b ctx">⟳</div><div class="b ex"></div><div class="b fx">Look</div><div class="b fx">Score</div><div class="b more">More</div></div>
+    </div>
+  </div>
+</div>
+<div class="cap" style="width:406px"><b>Phone on its side (800 × 360).</b> The minimum: the session bar and tab bar fold away, the deck turns into a side column (the T over the commands), and the "play upright" note still shows once per visit. About 12 rows of game text.</div>
+</div>
+
+</div>
+</body></html>

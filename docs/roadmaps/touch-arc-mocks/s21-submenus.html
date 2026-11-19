@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; padding:16px; background:#e9e4dc; font-family: system-ui, sans-serif; color:#222; }
+  h2 { margin:0 0 4px; font-size:20px; } h3 { margin:18px 0 8px; font-size:16px; }
+  .sub { margin:0 0 12px; font-size:14px; color:#444; max-width:1180px; line-height:1.45; }
+  .row { display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; }
+  .step { width:366px; }
+  .arrow { align-self:center; font-size:26px; color:#6b5428; }
+  .cap { font-size:13px; line-height:1.45; margin-top:6px; }
+  /* A crop of the S21 screen at 1:1: the bottom of the game text, the deck, the divider and the command box. */
+  .crop { width:360px; border:3px solid #333; border-radius:14px; overflow:hidden; background:#0d0b09; font-family:"JetBrains Mono", monospace; }
+  .game { margin:6px 6px 0; border:1px solid #6b5428; border-bottom:0; border-radius:6px 6px 0 0; padding:4px 8px; font-size:14px; line-height:22.4px; color:#e6dccb; height:68px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end; }
+  .game p { margin:0; white-space:pre; overflow:hidden; }
+  .y { color:#d8a64a; } .g { color:#b9b06a; }
+  .crumb { margin:0 6px; height:0; }
+  .deck { margin:0 6px; padding:8px; background:#1f1912; border:1px solid #6b5428; border-top:2px solid #b08a4e; display:grid; grid-template-columns:repeat(6,48px); grid-template-rows:repeat(2,48px); gap:8px; }
+  /* every button is brass (brand: brass marks anything pressable) */
+  .b { position:relative; box-sizing:border-box; display:flex; align-items:center; justify-content:center; text-align:center; font-size:12px; line-height:13px; color:#1a1206; background:linear-gradient(#f4dd92,#c9a34e 70%,#aa8636); border:1px solid #736133; box-shadow:0 2px 0 #4d3f1f; }
+  .mv { border-radius:3px; font-size:18px; }          /* movement: square */
+  .ex { border-radius:3px; border:2px dashed #4d3f1f; font-size:11px; } /* other exits: dashed */
+  .ctx { border-radius:14px; }                         /* contextual: round */
+  .fx { border-radius:3px; }                           /* fixed: square */
+  .nav { border-radius:3px; border:2px solid #4d3f1f; font-size:11px; line-height:12px; } /* Back / More: heavy square */
+  .off { opacity:.35; }
+  .none { visibility:hidden; }
+  .lp:after { content:""; position:absolute; right:3px; bottom:3px; border-left:7px solid transparent; border-bottom:7px solid #4d3f1f; }
+  .ico { display:block; font-size:14px; line-height:15px; }
+  .divider { height:12px; margin:0 6px; border-left:1px solid #6b5428; border-right:1px solid #6b5428; position:relative; }
+  .divider:after { content:""; position:absolute; left:20px; right:20px; top:5px; height:2px; background:#6b5428; }
+  .cmd { margin:0 6px 6px; padding:6px; background:#e2cf9a; border-radius:0 0 6px 6px; }
+  .cmd div { height:50px; box-sizing:border-box; background:#16110c; border:2px solid #2f5f3e; border-radius:4px; color:#8a7b66; font-size:16px; line-height:46px; padding-left:12px; }
+  .key { display:flex; gap:12px; flex-wrap:wrap; font-size:13px; align-items:center; margin:0 0 6px; }
+  .key .b { width:48px; height:48px; flex:none; }
+</style></head><body>
+<h2>Contextual menus three levels deep (Galaxy S21 deck, 1:1)</h2>
+<p class="sub">Each step is a crop of the S21 screen: the last lines of game text, the deck, and the command box. Every button is brass (brand rule); kinds differ by shape and edge. A level replaces the whole deck. <b>Back</b> is always top-left and names where it goes; <b>More</b> is always bottom-right and only appears when the list does not fit. Inside a level, the same item keeps the same slot every time. The ◢ mark means the button opens a deeper level (or does more on a long press). Lists show only what you know, real names from the game data.</p>
+<div class="key">
+  <div class="b mv">↑</div><span>movement (square)</span>
+  <div class="b ctx">Talk</div><span>contextual (round)</span>
+  <div class="b fx">Look</div><span>fixed (square)</span>
+  <div class="b nav">◀ Back</div><span>Back / More (heavy square)</span>
+  <div class="b ctx lp">Cast</div><span>◢ opens a deeper level</span>
+</div>
+
+<h3>Cast: spell schools, then spells</h3>
+<div class="row">
+  <div class="step">
+    <div class="crop">
+      <div class="game"><p>Also here: [*] <span class="y">Crier Toke</span></p><p class="y">Exits: <span class="g">east, north, south, west</span></p><p>[HP:■■■■ SP:■■■■ CP:■■]:</p></div>
+      <div class="deck">
+        <div class="b mv off">⤒</div><div class="b mv">↑</div><div class="b mv off">⤓</div>
+        <div class="b ex none"></div>
+        <div class="b ctx lp"><span><span class="ico">✦</span>Cast</span></div>
+        <div class="b ctx lp"><span><span class="ico">⚒</span>Craft</span></div>
+        <div class="b mv">←</div><div class="b mv">↓</div><div class="b mv">→</div>
+        <div class="b fx lp">Look</div><div class="b fx">Score</div><div class="b nav">More</div>
+      </div>
+      <div class="divider"></div><div class="cmd"><div>Enter command...</div></div>
+    </div>
+    <div class="cap"><b>Level 1, the deck.</b> Cast is always there (in and out of combat); Craft only out of combat. Tap Cast.</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="step">
+    <div class="crop">
+      <div class="game"><p>Also here: [*] <span class="y">Crier Toke</span></p><p class="y">Exits: <span class="g">east, north, south, west</span></p><p>[HP:■■■■ SP:■■■■ CP:■■]:</p></div>
+      <div class="deck">
+        <div class="b nav">◀ Back</div>
+        <div class="b ctx lp">Vital</div><div class="b ctx lp">Mental</div><div class="b ctx lp">Manifest-<br>ation</div><div class="b ctx lp">Elemental</div><div class="b ctx lp">Enhance-<br>ment</div>
+        <div class="b none"></div><div class="b none"></div><div class="b none"></div><div class="b none"></div><div class="b none"></div><div class="b nav none">More</div>
+      </div>
+      <div class="divider"></div><div class="cmd"><div>Enter command...</div></div>
+    </div>
+    <div class="cap"><b>Level 2, schools.</b> The five schools, always in this order, so Vital is always second. A school you know no spells in is not shown, and the rest keep their order. Tap Vital.</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="step">
+    <div class="crop">
+      <div class="game"><p>Also here: [*] <span class="y">Crier Toke</span></p><p class="y">Exits: <span class="g">east, north, south, west</span></p><p>[HP:■■■■ SP:■■■■ CP:■■]:</p></div>
+      <div class="deck">
+        <div class="b nav">◀ Cast</div>
+        <div class="b ctx">Mend<br>Flesh</div><div class="b ctx">Mass<br>Mend</div><div class="b ctx">Cleanse<br>Wave</div><div class="b ctx off">Blood<br>Boil</div><div class="b ctx">Core<br>Drain</div>
+        <div class="b ctx">Hem.<br>Wave</div><div class="b ctx">Chrys.<br>Regen</div><div class="b ctx">Commun-<br>ion</div><div class="b none"></div><div class="b none"></div><div class="b nav">More</div>
+      </div>
+      <div class="divider"></div><div class="cmd"><div>Enter command...</div></div>
+    </div>
+    <div class="cap"><b>Level 3, spells.</b> Your Vital spells in a fixed order (dimmed: too costly right now). Tap one to cast it at your current target, or yourself. Back reads "◀ Cast". More shows the next page of spells, not a fourth level.</div>
+  </div>
+</div>
+
+<h3>Craft: disciplines, then recipes (out of combat)</h3>
+<div class="row">
+  <div class="step">
+    <div class="crop">
+      <div class="game"><p>A forge glows against the north wall.</p><p class="y">Exits: <span class="g">north, south</span></p><p>[HP:■■■■ SP:■■■■ CP:■■]:</p></div>
+      <div class="deck">
+        <div class="b mv off">⤒</div><div class="b mv">↑</div><div class="b mv off">⤓</div>
+        <div class="b ex none"></div>
+        <div class="b ctx lp"><span><span class="ico">✦</span>Cast</span></div>
+        <div class="b ctx lp"><span><span class="ico">⚒</span>Craft</span></div>
+        <div class="b mv off">←</div><div class="b mv">↓</div><div class="b mv off">→</div>
+        <div class="b fx lp">Look</div><div class="b fx">Score</div><div class="b nav">More</div>
+      </div>
+      <div class="divider"></div><div class="cmd"><div>Enter command...</div></div>
+    </div>
+    <div class="cap"><b>Level 1.</b> Tap Craft.</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="step">
+    <div class="crop">
+      <div class="game"><p>A forge glows against the north wall.</p><p class="y">Exits: <span class="g">north, south</span></p><p>[HP:■■■■ SP:■■■■ CP:■■]:</p></div>
+      <div class="deck">
+        <div class="b nav">◀ Back</div>
+        <div class="b ctx lp">Alchemy</div><div class="b ctx lp">Black-<br>smith</div><div class="b ctx lp">Enchant</div><div class="b ctx lp">Tailor</div><div class="b ctx lp">Jewel-<br>craft</div>
+        <div class="b ctx lp">Cooking</div><div class="b none"></div><div class="b none"></div><div class="b none"></div><div class="b none"></div><div class="b nav none">More</div>
+      </div>
+      <div class="divider"></div><div class="cmd"><div>Enter command...</div></div>
+    </div>
+    <div class="cap"><b>Level 2, disciplines.</b> The six disciplines, in a fixed order, only those you know a recipe in. Tap Blacksmith.</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="step">
+    <div class="crop">
+      <div class="game"><p>A forge glows against the north wall.</p><p class="y">Exits: <span class="g">north, south</span></p><p>[HP:■■■■ SP:■■■■ CP:■■]:</p></div>
+      <div class="deck">
+        <div class="b nav">◀ Craft</div>
+        <div class="b ctx">Iron<br>Dagger</div><div class="b ctx off">Iron<br>Sword</div><div class="b ctx">Nails</div><div class="b ctx off">Helm</div><div class="b ctx">Hinge</div>
+        <div class="b ctx off">Shield<br>Boss</div><div class="b ctx">Horse-<br>shoe</div><div class="b none"></div><div class="b none"></div><div class="b none"></div><div class="b nav">More</div>
+      </div>
+      <div class="divider"></div><div class="cmd"><div>Enter command...</div></div>
+    </div>
+    <div class="cap"><b>Level 3, recipes.</b> Your Blacksmithing recipes (dimmed: missing materials or not at a forge). Tap one to craft it. Back reads "◀ Craft". Recipe names here are placeholders except Iron Dagger.</div>
+  </div>
+</div>
+</body></html>
