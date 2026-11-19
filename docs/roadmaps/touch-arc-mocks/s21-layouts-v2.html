@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; padding:16px; background:#e9e4dc; font-family: system-ui, sans-serif; color:#222; }
+  h2 { margin:0 0 4px; font-size:20px; }
+  .sub { margin:0 0 14px; font-size:14px; color:#444; max-width:1150px; line-height:1.45; }
+  .row { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:366px; }
+  .cap { font-size:13px; line-height:1.45; margin-top:8px; }
+  /* Galaxy S21 in full screen, 1:1 CSS pixels: 360 x 800. */
+  .phone { width:360px; height:800px; border:3px solid #333; border-radius:22px; overflow:hidden; background:#0d0b09; font-family:"JetBrains Mono", monospace; display:flex; flex-direction:column; }
+  .sess { height:58px; flex:none; box-sizing:border-box; margin:6px 6px 0; border-radius:6px; background:#e2cf9a; display:flex; align-items:center; gap:8px; padding:0 8px; }
+  .sess .u { font-size:14px; color:#2a2016; flex:1; }
+  .gb { height:44px; display:flex; align-items:center; justify-content:center; padding:0 12px; border-radius:6px; background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; font-size:14px; color:#2a2016; box-shadow:0 2px 0 #6b5428; }
+  .gb.sq { width:44px; padding:0; }
+  .game { flex:1 1 auto; min-height:0; overflow:hidden; margin:6px 6px 0; border:1px solid #6b5428; border-radius:6px 6px 0 0; border-bottom:0; padding:4px 8px; font-size:14px; line-height:22.4px; color:#e6dccb; background:#0d0b09; }
+  .game p { margin:0; white-space:pre; overflow:hidden; }
+  .y { color:#d8a64a; } .g { color:#b9b06a; } .w { color:#e6dccb; }
+  .bars { color:#e6dccb; } .bars i { display:inline-block; height:18px; vertical-align:-3px; background:#5aa864; }
+  .drawer { flex:none; margin:0; border-top:2px solid #b08a4e; background:#1f1912; display:flex; flex-direction:column; }
+  .ph { height:46px; flex:none; display:flex; align-items:center; padding:0 6px 0 10px; border-bottom:2px solid #2f6f63; background:#2a2017; }
+  .ph .tt { flex:1; font-size:18px; color:#e8d3a0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ph .hb { width:36px; height:32px; margin-left:6px; border-radius:5px; background:linear-gradient(#ead9a6,#cfb46c); color:#2a2016; font-size:12px; display:flex; align-items:center; justify-content:center; }
+  .mrow { display:flex; gap:8px; padding:8px; }
+  .map { width:232px; height:232px; flex:none; box-sizing:border-box; border:6px solid #3a2c1d; outline:2px solid #8a6f3a; outline-offset:-10px; background:radial-gradient(circle at 50% 45%, #4a3a28, #2a2017 75%); position:relative; }
+  .map .me { position:absolute; left:50%; top:52%; width:16px; height:16px; margin:-8px; border:2px solid #d9b46a; border-radius:50%; }
+  .map .arrow { position:absolute; left:50%; top:40%; margin-left:-6px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:16px solid #e0a64a; }
+  .map .rose { position:absolute; right:10px; top:10px; width:26px; height:26px; border:1.5px solid #b08a4e; border-radius:50%; }
+  .c2 { display:grid; grid-template-columns:repeat(2,48px); grid-auto-rows:48px; gap:8px; flex:none; }
+  .mv, .act { border-radius:6px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:14px; line-height:15px; }
+  .mv { background:#3a2c1d; border:1px solid #c9a35a; color:#f1e4cc; font-size:18px; }
+  .mv.off { opacity:.25; }
+  .mv.more { font-size:14px; border-style:dashed; grid-column:span 2; }
+  .act { background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; color:#2a2016; box-shadow:0 2px 0 #6b5428; }
+  .where { padding:0 10px 8px; font-size:14px; line-height:22px; }
+  .where .k { color:#c9a35a; } .where .v { color:#e8d3a0; } .where .d { color:#e8b75a; }
+  .deck { flex:none; margin:0 6px; padding:8px; box-sizing:border-box; background:#1f1912; border:1px solid #6b5428; border-top:2px solid #b08a4e; display:flex; flex-direction:column; gap:8px; }
+  .strip { display:flex; gap:8px; }
+  .strip > div { width:48px; height:48px; flex:none; }
+  .deck2 { flex-direction:row; gap:8px; }
+  .it { display:grid; grid-template-columns:repeat(3,48px); grid-template-rows:repeat(2,48px); gap:8px; flex:none; }
+  .acts3 { display:grid; grid-template-columns:repeat(3,48px); grid-template-rows:repeat(2,48px); gap:8px; margin-left:auto; }
+  .divider { height:12px; flex:none; margin:0 6px; background:#0d0b09; border-left:1px solid #6b5428; border-right:1px solid #6b5428; position:relative; }
+  .divider:after { content:""; position:absolute; left:20px; right:20px; top:5px; height:2px; background:#6b5428; }
+  .cmd { height:62px; flex:none; margin:0 6px; box-sizing:border-box; padding:6px; background:#e2cf9a; border-radius:0 0 6px 6px; }
+  .cmd.alone { border-radius:6px; margin-top:6px; }
+  .cmd .box { height:50px; box-sizing:border-box; background:#16110c; border:2px solid #2f5f3e; border-radius:4px; color:#8a7b66; font-size:16px; line-height:46px; padding-left:12px; }
+  .pill { height:30px; flex:none; display:flex; align-items:center; padding-left:14px; }
+  .pill span { padding:3px 12px; border-radius:14px; background:#ecdcb0; color:#2a2016; font-size:14px; }
+  .tabs { height:56px; flex:none; margin:4px 6px 6px; border:2px solid #2f6f63; border-radius:28px; display:flex; align-items:center; justify-content:space-around; padding:0 4px; }
+  .tabs i { width:42px; height:42px; border-radius:50%; background:radial-gradient(#ecd79c,#b8923e); font-style:normal; display:flex; align-items:center; justify-content:center; color:#3a2a14; font-size:15px; }
+  .tabs i.on { background:radial-gradient(#5a4428,#3a2a16); color:#e8d3a0; }
+</style></head><body>
+<h2>Galaxy S21, full screen, 1:1 (360 × 800 CSS px)</h2>
+<p class="sub">Measured from Malia's screenshots: session bar 58px, command box 62px, tab bar 56px, text rows 22.4px. The "Game" title bar is left out on all three (it does nothing on a phone; +1 to +2 rows). Movement and command buttons are 48px with 8px gaps. Command buttons are the light gold of today's client buttons; movement is dark with a gold edge, a first try at telling the two kinds apart without colour carrying the meaning (shape and position also differ). Labels are placeholders.</p>
+<div class="row">
+
+<!-- 1: Map tab, map pushed left, 2-column compass -->
+<div class="col">
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p class="w">themselves settles over you here.</p>
+<p class="w">Wounds close more easily and breath</p>
+<p class="w">comes more deeply.</p>
+<p class="y">Autumn has turned the land to rust and</p>
+<p class="y">amber; the air carries a chill edge.</p>
+<p class="w">Also here: [*] <span class="y">Crier Toke</span> (lit)</p>
+<p class="y">Exits: <span class="g">east, north, south, west</span></p>
+<p class="bars">[HP:<i style="width:80px"></i> SP:<i style="width:80px"></i> CP:<i style="width:30px"></i>]</p>
+  </div>
+  <div class="drawer">
+    <div class="ph"><span class="tt">Map (Pothole Coulee, …</span><span class="hb">☷</span><span class="hb">▾</span><span class="hb">✕</span></div>
+    <div class="mrow">
+      <div class="map"><div class="arrow"></div><div class="me"></div><div class="rose"></div></div>
+      <div class="c2">
+        <div class="mv">↑</div><div class="mv off">⤒</div>
+        <div class="mv">←</div><div class="mv">→</div>
+        <div class="mv">↓</div><div class="mv off">⤓</div>
+        <div class="mv more off">⋯ exits</div>
+      </div>
+    </div>
+    <div class="where"><div><span class="k">Location:</span> <span class="v">Hub Square</span></div><div><span class="k">Destination:</span> <span class="d">Find Your Footing</span></div></div>
+  </div>
+  <div class="pill"><span>Map</span></div>
+  <div class="cmd alone"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i class="on">▤</i><i>☰</i><i>♥</i><i>▣</i><i>✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>1. Map tab, map pushed left.</b> The map is 232px square (today about 264 with its frame, so it loses about 12%; at 44px buttons with 4px gaps it could stay 244). Beside it, a 2-column compass: north and up, west and east, south and down, and "⋯ exits" for the 22 diagonal and 13 named exits in the whole world. The game keeps about <b>9 rows</b> while the Map is open (Malia's screenshot today shows about 7, with the Game title bar).</div>
+</div>
+
+<!-- 2: D1, strip deck -->
+<div class="col">
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p class="w">spoken aloud. Ways run off in every</p>
+<p class="w">direction: north toward the pool,</p>
+<p class="w">south to the market, west along the</p>
+<p class="w">stilt-walk, east to the squat</p>
+<p class="w">strongbox-house. Stand here a spell</p>
+<p class="w">and the town will find you on its own.</p>
+<p class="w">A peace older than the stones</p>
+<p class="w">themselves settles over you here.</p>
+<p class="w">Wounds close more easily and breath</p>
+<p class="w">comes more deeply.</p>
+<p class="y">Autumn has turned the land to rust and</p>
+<p class="y">amber; the air carries a chill edge.</p>
+<p class="w">Also here: [*] <span class="y">Crier Toke</span> (lit)</p>
+<p class="y">Exits: <span class="g">east, north, south, west</span></p>
+<p class="bars">[HP:<i style="width:80px"></i> SP:<i style="width:80px"></i> CP:<i style="width:30px"></i>]</p>
+<p class="w">Footsteps cross the square somewhere</p>
+<p class="w">behind you and fade off into a side</p>
+<p class="w">lane.</p>
+<p class="bars">[HP:<i style="width:80px"></i> SP:<i style="width:80px"></i> CP:<i style="width:30px"></i>]:</p>
+  </div>
+  <div class="deck">
+    <div class="strip"><div class="mv">←</div><div class="mv">↑</div><div class="mv">↓</div><div class="mv">→</div><div class="mv off">⤒</div><div class="mv off">⤓</div></div>
+    <div class="strip"><div class="act">Talk<br>Toke</div><div class="act">Look</div><div class="act">Quest</div><div class="act">Map</div><div class="act">Rest</div><div class="act">More</div></div>
+  </div>
+  <div class="divider"></div>
+  <div class="cmd"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i>▤</i><i>☰</i><i>♥</i><i>▣</i><i>✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>2. Strip deck.</b> One row of movement in keyboard-arrow order (← ↑ ↓ →, then up and down), one row of six command buttons. The deck is 120px; a 12px divider sits above the input bar. The game keeps about <b>20 rows</b>. Diagonal and named exits go under More. Movement is in a line, not a cross, so north is not above south.</div>
+</div>
+
+<!-- 3: D2, inverted T -->
+<div class="col">
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p class="w">spoken aloud. Ways run off in every</p>
+<p class="w">direction: north toward the pool,</p>
+<p class="w">south to the market, west along the</p>
+<p class="w">stilt-walk, east to the squat</p>
+<p class="w">strongbox-house. Stand here a spell</p>
+<p class="w">and the town will find you on its own.</p>
+<p class="w">A peace older than the stones</p>
+<p class="w">themselves settles over you here.</p>
+<p class="w">Wounds close more easily and breath</p>
+<p class="w">comes more deeply.</p>
+<p class="y">Autumn has turned the land to rust and</p>
+<p class="y">amber; the air carries a chill edge.</p>
+<p class="w">Also here: [*] <span class="y">Crier Toke</span> (lit)</p>
+<p class="y">Exits: <span class="g">east, north, south, west</span></p>
+<p class="bars">[HP:<i style="width:80px"></i> SP:<i style="width:80px"></i> CP:<i style="width:30px"></i>]</p>
+<p class="w">Footsteps cross the square somewhere</p>
+<p class="w">behind you and fade off into a side</p>
+<p class="w">lane.</p>
+<p class="bars">[HP:<i style="width:80px"></i> SP:<i style="width:80px"></i> CP:<i style="width:30px"></i>]:</p>
+  </div>
+  <div class="deck deck2">
+    <div class="it"><div class="mv off">⤒</div><div class="mv">↑</div><div class="mv off">⤓</div><div class="mv">←</div><div class="mv">↓</div><div class="mv">→</div></div>
+    <div class="acts3"><div class="act">Talk<br>Toke</div><div class="act">Look</div><div class="act">Quest</div><div class="act">Rest</div><div class="act">Map</div><div class="act">More</div></div>
+  </div>
+  <div class="divider"></div>
+  <div class="cmd"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i>▤</i><i>☰</i><i>♥</i><i>▣</i><i>✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>3. Inverted-T deck.</b> Movement as the arrow keys sit on a keyboard, with up and down on either side of north; six command buttons beside it. Same 120px deck and about <b>20 rows</b>. North is above south as on a map. Both thumbs have a side: movement on the left, actions on the right (mirrored for left-handed players by a setting).</div>
+</div>
+
+</div>
+</body></html>

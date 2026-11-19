@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; padding:16px; background:#e9e4dc; font-family: system-ui, sans-serif; color:#222; }
+  h2 { margin:0 0 4px; font-size:20px; }
+  .sub { margin:0 0 14px; font-size:14px; color:#444; max-width:1150px; line-height:1.45; }
+  .row { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:366px; }
+  .cap { font-size:13px; line-height:1.45; margin-top:8px; }
+  .phone { width:360px; height:800px; border:3px solid #333; border-radius:22px; overflow:hidden; background:#0d0b09; font-family:"JetBrains Mono", monospace; display:flex; flex-direction:column; position:relative; }
+  .sess { height:58px; flex:none; box-sizing:border-box; margin:6px 6px 0; border-radius:6px; background:#e2cf9a; display:flex; align-items:center; gap:8px; padding:0 8px; }
+  .sess .u { font-size:14px; color:#2a2016; flex:1; }
+  .gb { height:44px; display:flex; align-items:center; justify-content:center; padding:0 12px; border-radius:6px; background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; font-size:14px; color:#2a2016; box-shadow:0 2px 0 #6b5428; }
+  .gb.sq { width:44px; padding:0; }
+  .game { flex:1 1 auto; min-height:0; overflow:hidden; margin:6px 6px 0; border:1px solid #6b5428; border-radius:6px; padding:4px 8px; font-size:14px; line-height:22.4px; color:#e6dccb; display:flex; flex-direction:column; justify-content:flex-end; }
+  .game p { margin:0; white-space:pre; overflow:hidden; }
+  .y { color:#d8a64a; } .g { color:#b9b06a; } .c { color:#8fc7bd; }
+  .drawer { flex:none; border-top:2px solid #b08a4e; background:#1f1912; display:flex; flex-direction:column; }
+  .ph { height:46px; flex:none; display:flex; align-items:center; padding:0 6px 0 10px; border-bottom:2px solid #2f6f63; background:#2a2017; }
+  .ph .tt { flex:1; font-size:18px; color:#e8d3a0; }
+  .ph .hb { width:36px; height:32px; margin-left:6px; border-radius:5px; background:linear-gradient(#ead9a6,#cfb46c); color:#2a2016; font-size:12px; display:flex; align-items:center; justify-content:center; }
+  .chans { flex:none; display:flex; gap:8px; padding:6px 8px; overflow:hidden; white-space:nowrap; border-bottom:1px solid #3d3126; position:relative; }
+  .chans span { flex:none; height:36px; padding:0 12px; display:flex; align-items:center; border-radius:5px; background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; font-size:14px; color:#2a2016; }
+  .chans span.on { background:#3a2c1d; color:#e8d3a0; border-color:#c9a35a; }
+  .chans:after { content:"›"; position:absolute; right:0; top:0; bottom:0; width:26px; background:linear-gradient(90deg,transparent,#1f1912 60%); color:#e8d3a0; font-size:20px; display:flex; align-items:center; justify-content:flex-end; padding-right:4px; }
+  .msgs { padding:4px 8px; font-size:14px; line-height:20px; color:#d8cbb4; }
+  .msg { padding:5px 6px; border-radius:4px; }
+  .msg .who { color:#e8b75a; }
+  .msg.sel { background:#3a2c1d; outline:1px solid #c9a35a; }
+  .acts { display:flex; gap:8px; padding:6px 6px 8px; }
+  .act { height:48px; flex:1; border-radius:14px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:13px; line-height:15px; background:linear-gradient(#f2e3b8,#d8bd78); border:1px solid #8a6f3a; color:#2a2016; box-shadow:0 2px 0 #6b5428, inset 0 0 0 2px #fff4d6; position:relative; }
+  .act.lp:after { content:""; position:absolute; right:4px; bottom:4px; border-left:7px solid transparent; border-bottom:7px solid #6b4a1a; }
+  .pill { height:30px; flex:none; display:flex; align-items:center; padding-left:180px; }
+  .pill span { padding:3px 12px; border-radius:14px; background:#ecdcb0; color:#2a2016; font-size:14px; }
+  .cmd { height:62px; flex:none; margin:6px 6px 0; box-sizing:border-box; padding:6px; background:#e2cf9a; border-radius:6px; display:flex; gap:6px; }
+  .cmd .box { flex:1; height:50px; box-sizing:border-box; background:#16110c; border:2px solid #2f5f3e; border-radius:4px; color:#8a7b66; font-size:16px; line-height:46px; padding-left:12px; white-space:nowrap; overflow:hidden; }
+  .cmd .box.typed { color:#f1e4cc; }
+  .cmd .x { width:50px; height:50px; flex:none; border-radius:5px; background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; display:flex; align-items:center; justify-content:center; font-size:22px; color:#2a2016; }
+  .tabs { height:56px; flex:none; margin:4px 6px 6px; border:2px solid #2f6f63; border-radius:28px; display:flex; align-items:center; justify-content:space-around; padding:0 4px; }
+  .tabs i { width:42px; height:42px; border-radius:50%; background:radial-gradient(#ecd79c,#b8923e); font-style:normal; display:flex; align-items:center; justify-content:center; color:#3a2a14; font-size:15px; }
+  .tabs i.on { background:radial-gradient(#5a4428,#3a2a16); color:#e8d3a0; }
+  .kbd { height:360px; flex:none; background:#1c1c1c; display:flex; flex-direction:column; }
+  .kbd .tb { height:46px; flex:none; display:flex; align-items:center; justify-content:space-around; color:#aaa; font-size:18px; font-family:system-ui; }
+  .kbd .keys { flex:1; display:grid; grid-template-columns:repeat(10,1fr); gap:5px; padding:6px 4px 10px; }
+  .kbd .keys span { background:#3a3a3a; border-radius:5px; color:#eee; font-size:15px; font-family:system-ui; display:flex; align-items:center; justify-content:center; }
+  .reply { flex:none; display:flex; gap:6px; padding:6px 8px 8px; border-top:1px solid #3d3126; align-items:center; }
+  .reply .to { font-size:13px; color:#c9a35a; flex:none; }
+  .reply .box { flex:1; height:48px; box-sizing:border-box; background:#16110c; border:2px solid #c9a35a; border-radius:4px; color:#f1e4cc; font-size:16px; line-height:44px; padding-left:10px; white-space:nowrap; overflow:hidden; }
+  .reply .send { width:64px; height:48px; flex:none; border-radius:5px; background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; display:flex; align-items:center; justify-content:center; font-size:14px; color:#2a2016; }
+  .reply .x { width:44px; height:48px; flex:none; border-radius:5px; background:#2a2017; border:1px solid #8a6f3a; color:#e8d3a0; display:flex; align-items:center; justify-content:center; font-size:18px; }
+</style></head><body>
+<h2>Comms on a phone: tap a message, then reply (Galaxy S21, 1:1, full screen)</h2>
+<p class="sub">Left: the Comms tab with channels in one row that scrolls sideways (the › shows there is more), and a message tapped to show its buttons. Middle and right: what happens on Reply, the two ways. The keyboard is drawn at its real size, about 45% of the screen.</p>
+<div class="row">
+
+<div class="col">
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p>The town's heart opens out here across</p>
+<p>flat basalt slabs, worn smooth by more</p>
+<p>feet than anyone has bothered to count.</p>
+<p class="y">Exits: <span class="g">east, north, south, west</span></p>
+  </div>
+  <div class="drawer">
+    <div class="ph"><span class="tt">Comms</span><span class="hb">▾</span><span class="hb">✕</span></div>
+    <div class="chans"><span>Say</span><span class="on">Whisper (1)</span><span>Party</span><span>Broadcasts</span><span>Chat</span><span>Newbie</span><span>Trade</span></div>
+    <div class="msgs">
+      <div class="msg"><span class="who">Wren</span> whispers: got any rope?</div>
+      <div class="msg sel"><span class="who">Crier Toke</span> whispers: Meet me by the pool before the bell.</div>
+    </div>
+    <div class="acts"><div class="act">Reply</div><div class="act lp">Look at<br>Toke</div><div class="act lp">More</div></div>
+  </div>
+  <div class="pill"><span>Comms</span></div>
+  <div class="cmd"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i>▤</i><i>☰</i><i>♥</i><i>▣</i><i class="on">✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>1. Tap a message.</b> It lights up and its buttons appear under the list: Reply (same person, same channel), Look at the speaker, More (whisper instead, ignore, copy). Channels sit in one row that scrolls sideways, saving the second row the S21 wraps to today.</div>
+</div>
+
+<div class="col">
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p>The town's heart opens out here across</p>
+<p>flat basalt slabs, worn smooth by more</p>
+<p>feet than anyone has bothered to count.</p>
+<p class="y">Exits: <span class="g">east, north, south, west</span></p>
+<p class="c">Crier Toke whispers to you: Meet me by</p>
+<p class="c">the pool before the bell.</p>
+  </div>
+  <div class="cmd"><div class="box typed">whisper toke |</div><div class="x">✕</div></div>
+  <div class="kbd"><div class="tb">☺ &nbsp; 📋 &nbsp; ⚙ &nbsp; …</div><div class="keys"><span>q</span><span>w</span><span>e</span><span>r</span><span>t</span><span>y</span><span>u</span><span>i</span><span>o</span><span>p</span><span>a</span><span>s</span><span>d</span><span>f</span><span>g</span><span>h</span><span>j</span><span>k</span><span>l</span><span>⏎</span><span>⇧</span><span>z</span><span>x</span><span>c</span><span>v</span><span>b</span><span>n</span><span>m</span><span>,</span><span>⌫</span></div></div>
+</div>
+<div class="cap"><b>2. Reply in the command box.</b> Reply fills <code>whisper toke </code> into the command box and opens the keyboard. That is typing in the command box, so the Comms tab steps aside (today's rule). The whisper is still in the game text above, as every whisper is, but you leave the Comms list to reply. Nothing new to build beyond the button.</div>
+</div>
+
+<div class="col">
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game" style="flex:0 0 46px">
+<p class="y">Exits: <span class="g">east, north, south, west</span></p>
+  </div>
+  <div class="drawer" style="flex:1;min-height:0">
+    <div class="ph"><span class="tt">Comms</span><span class="hb">▾</span><span class="hb">✕</span></div>
+    <div class="msgs" style="flex:1;overflow:hidden">
+      <div class="msg"><span class="who">Wren</span> whispers: got any rope?</div>
+      <div class="msg sel"><span class="who">Crier Toke</span> whispers: Meet me by the pool before the bell.</div>
+    </div>
+    <div class="reply"><span class="to">to Toke</span><div class="box">On my way|</div><div class="send">Send</div></div>
+  </div>
+  <div class="kbd"><div class="tb">☺ &nbsp; 📋 &nbsp; ⚙ &nbsp; …</div><div class="keys"><span>q</span><span>w</span><span>e</span><span>r</span><span>t</span><span>y</span><span>u</span><span>i</span><span>o</span><span>p</span><span>a</span><span>s</span><span>d</span><span>f</span><span>g</span><span>h</span><span>j</span><span>k</span><span>l</span><span>⏎</span><span>⇧</span><span>z</span><span>x</span><span>c</span><span>v</span><span>b</span><span>n</span><span>m</span><span>,</span><span>⌫</span></div></div>
+</div>
+<div class="cap"><b>3. Reply in a box inside Comms.</b> Reply opens a reply box at the bottom of the Comms tab, under the message you are answering, and the keyboard. The tab stays (typing inside a tab keeps it, today's rule); the game text shrinks to a line. Send, or Enter, sends it on the same channel; closing the keyboard drops the box. The command box and tab bar are under the keyboard. A little more to build, and you never lose sight of what you are answering.</div>
+</div>
+
+</div>
+</body></html>
