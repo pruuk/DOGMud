@@ -88,12 +88,21 @@ level). A level replaces the whole deck. **Back is always top-left** and
 names where it goes; **More is always bottom-right** and appears only when
 the list does not fit. Each level keeps its items in fixed slots as far as
 possible. Flee lives only on the top level: to flee from a submenu, go Back.
+- **The phone's top level out of combat** (owner, 2026-11-19): movement
+  and other exits take seven slots; the other five are Target, Interact,
+  Attack, Cast and More, in that order. More holds Craft, status, help and
+  other common commands; anything more esoteric is typed. Wider screens add
+  contextual slots.
 - **Cast** is always on the top level. A short tap repeats the last cast
-  (spell and target). A long press opens the five schools, then the spells
-  of that school the player knows (too costly ones dimmed).
-- **Craft** is on the top level out of combat. A short tap repeats the last
-  craft; a long press opens the disciplines the player knows a recipe in,
-  then the recipes (dimmed when materials or the station are missing).
+  (spell and target). A long press opens the five schools and **Rhetoric**
+  (treated as one more school: taunt, rally and the other conviction
+  moves), then what the player knows in it (too costly ones dimmed).
+- **Interact:** talk, look, consider, search, open, lockpick, assess and the
+  like, as a submenu of the things here and what can be done to them.
+- **Craft** lives under More on a phone (on the top level where there is
+  room). A short tap repeats the last craft; a long press opens the
+  disciplines the player knows a recipe in, then the recipes (dimmed when
+  materials or the station are missing).
 - **Target** is a top-level button: kind (Item, Slot, Room, Creature), then
   what can be targeted of that kind, visible things only. The target is
   saved until changed; Cast and Craft use it by default; area effects
@@ -102,7 +111,8 @@ possible. Flee lives only on the top level: to flee from a submenu, go Back.
   existing combat `target` command. The Slot kind lists only what an enchant
   can need: rings, weapons and wrists the player wears, and only when there
   is more than one (`ring#2`, `weapon#1`, `wrist#2`).
-- **Look:** tap looks at the room; long press lists what is here to look at.
+- **Look** (inside Interact on a phone): tap looks at the room; long press
+  lists what is here to look at.
 - **Attack moves:** tap attacks; long press offers the other moves against
   that target (trip, bash and the rest), cooldowns dimmed.
 - **Buff renew:** tap renews it now; long press makes it renew itself
@@ -225,11 +235,17 @@ guards, `tools/jstest`, `tools/webclient-tests`.
 
 ## Open questions for the specs
 
-1. **The top level is overfull on a phone.** Twelve slots less six movement
-   and one exits leaves five; Look, Cast, Craft, Target and More fill them,
-   leaving nothing for Talk or an attack out of combat. Options: Target as
-   a long press on Look; Craft shown only at a station (or under More
-   elsewhere); fewer fixed slots. To settle first in the command bar spec.
+1. **Settled (owner, 2026-11-19): the phone's top level out of combat.**
+   Movement and other exits take seven slots, leaving five, in this order:
+   **Target**; **Interact** (talk, look, consider, search, open, lockpick,
+   assess and the like); **Attack** (tap attacks, long press opens special
+   moves); **Cast** (spell schools plus **Rhetoric** treated as one more
+   school: taunt, rally and the other conviction moves); **More** (Craft,
+   status, help and other common commands; anything more esoteric is
+   typed). In combat, Flee takes two slots and the rest of the combat top
+   level is for the command bar spec to settle (Target, Interact, Attack,
+   Cast and More keep their places where they can, plus contextual combat
+   slots such as a buff to renew).
 2. **The Map's movement buttons:** the inverted T (same as the deck, about
    160px wide, map shrinks) or a two-column compass (about 104px, map loses
    about 12%). Consistency favours the T.
