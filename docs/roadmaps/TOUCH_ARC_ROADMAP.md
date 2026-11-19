@@ -181,15 +181,18 @@ Conform to `docs/guides/BRAND_STANDARDS.md`:
 ## How we test
 
 **Headless (Claude).** `tools/webshot/live-shot.js` against a local server
-(never the owner's), at a fixed size matrix: **small iPhone 375 x 667**
-(Chrome's "iPhone SE" device, the shortest), S21 360 x 800 (the narrowest),
+(never the owner's), at a fixed size matrix: **small iPhone in Safari
+375 x 548** (the shortest; see below), S21 360 x 800 (the narrowest),
 Pixel 8 412 x 915, sideways phone 800 x 360, iPad 820 x 1180 both ways,
 open foldable about 690 x 840, laptop 1366 x 768. **The minimum phone the
-design must fit is pinned at 360 wide by 667 tall** (the narrowest and the
-shortest together, owner 2026-11-19). Nobody has a small iPhone to test by
-hand, so it is checked in Chrome's device mode only, and iPhones in Safari
-cannot use full screen (Safari has no full-screen mode for pages on
-iPhone), so they keep the address bar. Touch emulation must be turned
+design must fit is pinned at 360 wide by about 550 tall** (the narrowest
+and the shortest together, owner 2026-11-19). iPhones in Safari cannot use
+full screen (Safari has no full-screen mode for pages on iPhone), so they
+always keep Safari's bars: an iPhone SE's 375 x 667 screen leaves about
+375 x 548 for the page (the commonly reported figure, not measured here).
+Chrome's built-in "iPhone SE" device is the whole screen, so this size is
+set as a custom device. Nobody has a small iPhone to test by hand, so it is
+checked in device mode only. Touch emulation must be turned
 on explicitly (headless Chrome is not `pointer: coarse` without it). There
 is no on-screen keyboard headless, so keyboard states are approximated by a
 shorter viewport and always confirmed on a real phone.
@@ -202,9 +205,10 @@ headless only and say so.
 **Acceptance criteria (every touch plan).**
 - Every touch target at least 48px with 8px gaps (30px sub-tab exception).
 - On the S21 in full screen: about 20 game rows with the deck, about 9 with
-  the Map open. At the pinned minimum (360 x 667): the deck and input bar
-  fit with no scrolling and the game keeps at least about 14 rows with the
-  deck. Nothing the player needs is covered with the keyboard up.
+  the Map open. At the pinned minimum (360 x about 550): the deck and input
+  bar fit with no scrolling and the game keeps at least about 9 rows with
+  the deck (tight; the less-text work matters most here). Nothing the
+  player needs is covered with the keyboard up.
 - No sideways page scroll; text contrast at least 4.5:1, icons and focus
   rings at least 3:1; green against blue never carries meaning.
 - Tap and long press do what this roadmap says; a stale tap is refused; a
@@ -313,5 +317,5 @@ Cast and Craft (3f), and every panel spec (4).
 | Broadcasts cannot be replied to | They are system messages | Reply to the sender where there is one |
 | An open foldable is treated as an upright tablet | Similar size and shape | Its own layout |
 | Headless keyboard states approximated by a shorter viewport | No on-screen keyboard headless | Device check only |
-| The size matrix, and the row counts (S21 measured from screenshots; about 14 at 360 x 667 estimated) as acceptance numbers | The S21 is measured; the small iPhone is estimated from the same strip heights | Re-measure per plan |
+| The size matrix, and the row counts (S21 measured from screenshots; about 9 at 360 x 550 estimated) as acceptance numbers | The S21 is measured; the small iPhone in Safari (375 x 548) is the commonly reported figure and its rows are estimated from the S21's strip heights | Measure on a real small iPhone if one becomes available; re-measure per plan |
 | Mocks before the brass rule (`s21-layouts-v2`, `s21-deck-v3`, `s21-combat`) show dark movement tiles, and `s21-combat` shows Flee in two slots | Drawn before the brass and one-slot Flee rulings; the layouts still hold | Redraw them; the menu specs' approved mockups replace them anyway |
