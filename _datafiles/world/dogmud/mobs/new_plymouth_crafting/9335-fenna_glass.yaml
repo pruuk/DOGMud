@@ -1,6 +1,6 @@
 mobid: 9335
 zone: New Plymouth Crafting
-schedule_id: np_crafting_edda
+schedule_id: np_crafting_fenna
 craft_support: general
 behavior_archetype: noncombat_shopkeeper
 non_combatant: true
@@ -25,9 +25,9 @@ idlecommands:
     has had this conversation with the fire for years.'
 activitylevel: 10
 character:
-  name: Edda Glass
+  name: Fenna Glass
   description: |
-    Edda Glass tends the Glass Kiln as though the work itself is the
+    Fenna Glass tends the Glass Kiln as though the work itself is the
     only thing keeping the place from going quiet the way next door
     has gone quiet. She is a lean woman with the deliberate patience
     of someone who has spent years working with things that break,

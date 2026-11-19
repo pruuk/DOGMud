@@ -2,7 +2,7 @@ mobid: 9170
 zone: North Road North
 defaultMood: neutral
 opener:
-  text: I am Garrick, toller on the north line, and short a courier this week, which
+  text: I am Bennick, toller on the north line, and short a courier this week, which
     is my trouble and may be your fortune. I have a dispatch that should be in the
     capital and no honest hand to carry it.
   hints: Choose a line below if you would like to hear about the dispatch he
@@ -46,7 +46,7 @@ opener:
     questExcluded:
     - 60-end
     text: Where is my dispatch? Do not tell me the road has had it off you already.
-    hints: If you lost the sealed dispatch, Garrick keeps a copy. Choose to tell
+    hints: If you lost the sealed dispatch, Bennick keeps a copy. Choose to tell
       him below.
 topics:
 - key: quest_start
@@ -59,7 +59,7 @@ topics:
     is Severin Pell, the ferry agent at Hartcharn. He counter-signs it and makes out
     the manifest for the next leg. Hand it to him and the road will carry it the rest
     of the way, you with it. The capital pays its couriers well.
-  hints: Garrick wants his sealed dispatch carried north to Severin Pell, the ferry
+  hints: Bennick wants his sealed dispatch carried north to Severin Pell, the ferry
     agent at Hartcharn.
   questExcluded:
   - 60-start

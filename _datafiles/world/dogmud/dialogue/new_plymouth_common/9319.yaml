@@ -29,7 +29,7 @@ topics:
     it is stays off my stairs and is settled before it arrives at my door. Payment
     by the week, in advance. Don't borrow the lamp oil. That is the whole of the
     arrangement.
-  hints: Tova runs her house with care and has clear terms.
+  hints: Margery runs her house with care and has clear terms.
   moodChange: friendly
 - key: seminary
   kind: info
@@ -58,6 +58,6 @@ topics:
     one left. I don't know what it means, and I have not removed it. I've been
     waiting, I think, to see if someone comes who would know it. So far no one
     has.
-  hints: Tova remembers her lodgers more than she lets show. The mark on the
+  hints: Margery remembers her lodgers more than she lets show. The mark on the
     windowsill might mean something to someone who knew them.
   moodChange: cautious

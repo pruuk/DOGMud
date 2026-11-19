@@ -1,5 +1,5 @@
-id: np_crafting_corwin
-description: "Corwin the Tanner: works the Tannery from morning through evening
+id: np_crafting_tobin
+description: "Tobin the Tanner: works the Tannery from morning through evening
   without comment about the smell, sleeps in the loft above."
 segments:
   - start: 6
