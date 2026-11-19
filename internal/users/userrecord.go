@@ -94,7 +94,12 @@ type UserRecord struct {
 	// inputMasked is what InputMasked returns: the masked state SyncTextMask
 	// last computed on the world goroutine, so the connection goroutine reads
 	// one locked bool and never the prompt; guarded by sessionMu.
-	inputMasked  bool
+	inputMasked bool
+	// promptRows is the screen rows the prompt last drawn for this reader
+	// fills (userrecord.prompt.go PromptErase, #922); 1 when it fits one row,
+	// when it was erased, or when the reader's width is unknown. Guarded by
+	// sessionMu.
+	promptRows   int
 	isZombie     bool // are they a zombie currently?
 	inputBlocked bool // Whether input is currently intentionally turned off (for a certain category of commands)
 }

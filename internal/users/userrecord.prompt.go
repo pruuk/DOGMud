@@ -14,10 +14,12 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/pager"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/ansitags"
 )
 
 //
@@ -441,8 +443,77 @@ func (u *UserRecord) GetCommandPrompt() string {
 	if len(suggested) > 0 {
 		suggested = `<ansi fg="suggested-text">` + suggested + `</ansi>`
 	}
-	return term.AnsiMoveCursorColumn.String() + term.AnsiEraseLine.String() + promptOut + unsent + suggested + goAhead
+	erase := u.PromptErase()
+	u.notePromptDrawn(promptOut + unsent + suggested)
+	return erase + promptOut + unsent + suggested + goAhead
 
+}
+
+// PromptErase is the sequence that clears the prompt now on the reader's
+// screen and leaves the cursor at the start of its first row, so the text
+// sent after it replaces the prompt (#922). A prompt that wrapped fills
+// several rows; erasing only the last one left the rest above the next line.
+// Whatever follows replaces the prompt, so it is counted as gone: the next
+// erase clears one row until a prompt is drawn again. Every send that puts
+// text where the prompt stood starts with it.
+func (u *UserRecord) PromptErase() string {
+	u.sessionMu.Lock()
+	rows := u.promptRows
+	u.promptRows = 1
+	u.sessionMu.Unlock()
+
+	var b strings.Builder
+	b.WriteString(term.AnsiMoveCursorColumn.String())
+	b.WriteString(term.AnsiEraseLine.String())
+	for ; rows > 1; rows-- {
+		b.WriteString(term.AnsiMoveCursorUp.String())
+		b.WriteString(term.AnsiEraseLine.String())
+	}
+	return b.String()
+}
+
+// WithoutPromptErase is a prompt GetCommandPrompt built, less the erase it
+// starts with. The erase depends on what was on screen before, so two
+// builds of the same prompt compare equal only without it
+// (RedrawPrompt_SendRedraw).
+func WithoutPromptErase(prompt string) string {
+	prompt = strings.TrimPrefix(prompt, term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String())
+	for up := term.AnsiMoveCursorUp.String() + term.AnsiEraseLine.String(); strings.HasPrefix(prompt, up); {
+		prompt = strings.TrimPrefix(prompt, up)
+	}
+	return prompt
+}
+
+// PromptRows is the rows the prompt last drawn fills, as PromptErase will
+// clear them. A caller that builds a prompt with GetCommandPrompt and then
+// does not send it (RedrawPrompt_SendRedraw when the prompt is unchanged)
+// reads it first and puts it back with RestorePromptRows, since the screen
+// did not change.
+func (u *UserRecord) PromptRows() int {
+	u.sessionMu.Lock()
+	defer u.sessionMu.Unlock()
+	return u.promptRows
+}
+
+// RestorePromptRows puts back a count PromptRows read (see there).
+func (u *UserRecord) RestorePromptRows(rows int) {
+	u.sessionMu.Lock()
+	u.promptRows = rows
+	u.sessionMu.Unlock()
+}
+
+// notePromptDrawn records the rows prompt (its tags not yet parsed) fills on
+// the reader's screen, for the next PromptErase. Only a reported width is
+// trusted: guessing rows on a screen of unknown width could erase a line of
+// game text above a prompt that did not wrap.
+func (u *UserRecord) notePromptDrawn(prompt string) {
+	rows := 1
+	if cols, ok := u.reportedScreenWidth(); ok {
+		rows = pager.Rows(ansitags.Parse(prompt, ansitags.StripTags), cols)
+	}
+	u.sessionMu.Lock()
+	u.promptRows = rows
+	u.sessionMu.Unlock()
 }
 
 func (u *UserRecord) ProcessPromptString(promptStr string) string {

@@ -10,7 +10,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
-	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -46,9 +45,9 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 				// No paging in combat (owner ruling 2026-11-18): a fight that
 				// started while pages wait sends them before its first line.
 				if rest := user.FlushPagesInCombat(); rest != `` {
-					connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+rest), user.ConnectionId())
+					connections.SendTo([]byte(user.PromptErase()+rest), user.ConnectionId())
 				}
-				connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+textOut), user.ConnectionId())
+				connections.SendTo([]byte(user.PromptErase()+textOut), user.ConnectionId())
 
 				events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
 			}
@@ -110,7 +109,7 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 					textOut = util.StripCharsForScreenReaders(textOut)
 				}
 
-				connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+textOut), user.ConnectionId())
+				connections.SendTo([]byte(user.PromptErase()+textOut), user.ConnectionId())
 
 				events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
 

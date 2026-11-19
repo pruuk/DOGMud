@@ -1029,7 +1029,7 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 				user.NoteActivity()
 			}
 			if out != `` {
-				connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+out), user.ConnectionId())
+				connections.SendTo([]byte(user.PromptErase()+out), user.ConnectionId())
 			}
 			connections.SendTo([]byte(templates.AnsiParse(user.GetCommandPrompt())), user.ConnectionId())
 			return

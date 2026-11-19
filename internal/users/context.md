@@ -576,7 +576,7 @@ stale tokens.
 
 A reply is held with `HoldReply`, then `EndReply` returns the text to write now: the whole reply, or page one with the rest kept (`PagesWaiting`). `RoutePagerInput` handles Enter and `q` at a stop; `FlushPagesInCombat` sends waiting pages whole when a fight starts. Two rules: combat and an open prompt question both send a reply whole; an open question shows instead of the stop line (`GetCommandPrompt`) and takes the typed line, while the pages keep waiting. A reply that fits one page after blank page-edge lines are dropped is sent whole.
 
-Pages are counted in screen rows (owner ruling 6, `pager.Pages`) at `PagerWidth() int`: a websocket's reported columns (`Display.GetScreenWidth`), a telnet client's reported width (`NAWSReported`, or a `Display.ScreenWidth` other than the 80 a connection starts at, as the cursor-position report sets), else `WrapWidth`. The stop line's own rows at that width are reserved. `PageRows() int` is the page size in rows the pager uses now (0 when paging is off), which `set pagesize` reports.
+Pages are counted in screen rows (owner ruling 6, `pager.Pages`) at `PagerWidth() int`: the width the client reported (`reportedScreenWidth`: a websocket's columns from `Display.GetScreenWidth`, a telnet client's `NAWSReported` width, or a `Display.ScreenWidth` other than the 80 a connection starts at, as the cursor-position report sets), else `WrapWidth`. The stop line's own rows at that width are reserved. `PageRows() int` is the page size in rows the pager uses now (0 when paging is off), which `set pagesize` reports.
 
 ## Online User Information
 
@@ -624,10 +624,32 @@ if present).
 `func (u *UserRecord) WrapWidth() int` is the only source of a wrap width.
 A websocket session wraps at the smallest of `Display.GetScreenWidth()`,
 `MaxAutoWrapWidth` (80) and `LineWidth` when set, never below `MinWrapWidth`
-(30). Everything else, and a nil receiver, gets `GetLineWidth()`, so
-`set linewidth` above 80 still works on telnet and can only narrow a web
-session. `TestOnlyWrapWidthReadsTheSavedLineWidth` in `internal/guards` keeps
-it the only reader of `GetLineWidth` that wraps.
+(30). Every other session gets `GetLineWidth()`, narrowed to the width its
+client reported when that is narrower (#922, owner 2026-11-19: all server
+wrapped text, menus included, never only menus), and never below
+`MinWrapWidth` for a report; a wider report never widens it. A nil receiver
+gets `GetLineWidth()`. So `set linewidth` above 80 still works on telnet and
+can only narrow a web session. "Reported" is the rule `PagerWidth` uses
+(`reportedScreenWidth`, `userrecord.pager.go`): a websocket's columns, a
+telnet NAWS width, or a cursor-position report.
+`TestOnlyWrapWidthReadsTheSavedLineWidth` in `internal/guards` keeps it the
+only reader of `GetLineWidth` that wraps.
+
+### Prompt erase (#922, `userrecord.prompt.go`)
+
+A prompt that wraps fills several screen rows. `PromptErase() string` is the
+sequence that clears all of them (column 1 and erase line, then cursor up and
+erase line once per extra row) and counts the prompt as gone, so the next
+erase clears one row. Every send that writes text where the prompt stood
+starts with it (`Message_SendMessage`, `Broadcast_SendToAll`,
+`Pager_ReplyEnd`, the pager branch of `world.processInput`), and
+`GetCommandPrompt` starts with it and then records the new prompt's rows
+(`promptRows`, guarded by `sessionMu`). Rows are counted only at a reported
+width; at an unknown width a guess could erase game text, so one row is
+cleared. A caller that builds a prompt and does not send it reads
+`PromptRows()` first and puts it back with `RestorePromptRows(rows)`
+(`RedrawPrompt_SendRedraw` when its dedup skips), and compares prompts with
+`WithoutPromptErase(prompt)`, since the erase depends on the screen before.
 
 The narrow forms of the Go-built screens (plan 3b-3) pick their width from a
 wrap width with two pure functions here, so `internal/usercommands` and the
