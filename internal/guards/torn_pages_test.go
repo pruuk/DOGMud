@@ -59,7 +59,7 @@ func TestEveryTornPageIsCountedAndHasOneHome(t *testing.T) {
 	shop := regexp.MustCompile(`(?m)^\s*- itemid: (\d+)\s*$`)
 	mobFiles := []string{
 		`mobs/greenford/9509-aldith_the_bookseller.yaml`,
-		`mobs/the_confluence/9444-drunn_the_bookseller.yaml`,
+		`mobs/the_confluence/9444-ossery_the_bookseller.yaml`,
 		`mobs/new_plymouth_crafting/9332-orin_the_bookseller.yaml`,
 		`mobs/marches_spur_road/250-peddler_malk.yaml`,
 	}

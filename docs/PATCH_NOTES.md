@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-11-19: Fewer people share a name
+
+Some people in different towns shared a first name, so a hint or a piece of gossip could point you at the wrong one. Five have new names:
+
+- The toller at the north tollgate, who starts The Long Road, is now Toller Bennick.
+- The glassblower at the Glass Kiln in New Plymouth is now Fenna Glass.
+- The tanner in the New Plymouth Crafting Quarter is now Tobin the Tanner.
+- The keeper of the rooming house on the Row in New Plymouth is now Margery.
+- The bookseller at the Confluence is now Ossery the Bookseller.
+
 ## 2026-11-19: Nothing you make or earn vanishes
 
 - If you finish crafting something, buy it, forage it, salvage it or earn it as a reward while you are carrying too much, it now falls at your feet and you are told so. It used to disappear.

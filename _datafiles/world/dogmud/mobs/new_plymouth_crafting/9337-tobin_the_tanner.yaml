@@ -1,6 +1,6 @@
 mobid: 9337
 zone: New Plymouth Crafting
-schedule_id: np_crafting_corwin
+schedule_id: np_crafting_tobin
 craft_support: tailoring
 behavior_archetype: noncombat_shopkeeper
 non_combatant: true
@@ -24,9 +24,9 @@ idlecommands:
     things.'
 activitylevel: 10
 character:
-  name: Corwin the Tanner
+  name: Tobin the Tanner
   description: |
-    Corwin the Tanner runs the Tannery at the east edge of the Crafting
+    Tobin the Tanner runs the Tannery at the east edge of the Crafting
     Quarter, where the district bleeds into the tannery lanes that run
     south into the Common. He is a solid, unhurried man with leather-
     tough skin, the Chrysalis-change that the work practically asked

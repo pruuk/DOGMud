@@ -118,7 +118,7 @@ func TestOfferCardFirstStepDoesNotClaimTheItem_GuardCanFail(t *testing.T) {
 		"Toll collector Harn at the tollhouse has given you a maintenance report.",
 		"Tavern keeper Marek at the Drowning Post gave you a protection notice.",
 		"Falv has handed you a firebomb and set you loose in the marsh.",
-		"Toller Garrick has entrusted you with a sealed dispatch.",
+		"Toller Bennick has entrusted you with a sealed dispatch.",
 		"They pressed a spent wax wrapper\n into your hands.",
 		"You carry the report to Pell.",
 	}

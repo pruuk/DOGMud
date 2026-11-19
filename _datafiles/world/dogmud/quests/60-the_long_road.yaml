@@ -9,7 +9,7 @@ steps:
   - id: start
     destination:
       room: 5409
-    description: "Toller Garrick hands you a sealed dispatch bound for New
+    description: "Toller Bennick hands you a sealed dispatch bound for New
       Plymouth when you take this on. Carry it north to Severin Pell, the ferry
       agent at Hartcharn, who handles the first stage of the post relay."
     hint: "Follow the road north from the Tollgate through the Empty
