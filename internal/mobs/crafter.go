@@ -388,8 +388,9 @@ func TickMobCraft(mob *Mob, room messaging.RoomVisibility) *CraftResult {
 	if !b.IsCaravanServedZone(mob.Zone) {
 		for _, itemId := range mob.CrafterRestockMaterials {
 			itm := items.New(itemId)
-			if itm.ItemId > 0 {
-				mob.Character.StoreItem(itm)
+			// A new restock the crafter cannot carry is simply not made.
+			if itm.ItemId > 0 && !mob.Character.StoreItem(itm) {
+				break
 			}
 		}
 	}

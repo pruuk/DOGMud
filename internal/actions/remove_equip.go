@@ -75,8 +75,10 @@ func equipItem(actor Actor, itemName string, wear func(*characters.Character, it
 
 	displaced, newItemWorn, failureReason := wear(char, matchItem)
 	if !newItemWorn {
-		// Put it back: equip failed.
-		char.StoreItem(matchItem)
+		// Put it back: equip failed. ReturnToPack never refuses: the item
+		// was carried a moment ago, and a store refused for weight would
+		// lose it (#696).
+		char.ReturnToPack(matchItem)
 		return EquipItemResult{
 			Item:          matchItem,
 			Found:         true,

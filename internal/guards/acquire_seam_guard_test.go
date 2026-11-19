@@ -30,8 +30,6 @@ var storeItemAllowlist = map[string]string{
 	"internal/actions/transfer.go":                "rollback to the giver when the receiver refuses",
 	"internal/actions/steal_pocket.go":            "a bauble moved into the mark's own pocket",
 	"internal/characters/inventory.go":            "ReturnToPack: an own-container move",
-	"internal/usercommands/admin.rename.go":       "admin re-store of an item after an edit",
-	"internal/usercommands/admin.redescribe.go":   "admin re-store of an item after an edit",
 	"internal/usercommands/get.go":                "Pet.StoreItem: a companion's inventory, not a player's",
 	"internal/usercommands/give.go":               "Pet.StoreItem: a companion's inventory, not a player's",
 	"internal/playtestprofiles/overlay.go":        "playtest harness setup",

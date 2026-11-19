@@ -28,7 +28,10 @@ func TestCountedSourceKindsRaiseTheGainEvent(t *testing.T) {
 		src, err := os.ReadFile(r.file)
 		require.NoError(t, err, r.kind)
 		text := string(src)
-		require.Contains(t, text, "acquire.AcquireItem(", "%s route %s must acquire through the seam", r.kind, r.file)
+		// AcquireItemOrDrop goes through the seam too, and drops an item
+		// too much to carry at the player's feet (#696).
+		require.True(t, strings.Contains(text, "acquire.AcquireItem(") || strings.Contains(text, "acquire.AcquireItemOrDrop("),
+			"%s route %s must acquire through the seam", r.kind, r.file)
 		require.Contains(t, text, r.reason, "%s route %s must acquire with reason %s", r.kind, r.file, r.reason)
 		require.False(t, strings.Contains(text, ".StoreItem("), "%s route %s must not store directly", r.kind, r.file)
 	}

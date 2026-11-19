@@ -630,7 +630,9 @@ func tickUserCrafting(user *users.UserRecord, room *rooms.Room) {
 					if crafting.ShouldStampMakerName(newItem.CraftSkill, newSpec) {
 						newItem.MakerName = user.Character.Name
 					}
-					acquire.AcquireItem(user, newItem, acquire.AcquireCraft)
+					// A new item too heavy to carry falls at the crafter's
+					// feet rather than vanishing (#696).
+					acquire.AcquireItemOrDrop(user, newItem, acquire.AcquireCraft)
 				}
 				successRoles := recipe.Narrate(crafting.PhaseSuccess, textutil.TokenContext{
 					ActorName:      user.Character.GetCharacterName(true),

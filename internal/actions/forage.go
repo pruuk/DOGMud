@@ -150,11 +150,12 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 		return result
 	}
 
-	acquire.AcquireItemForChar(char, actor.GetUserId(), actor.GetMobInstanceId(), newItem, acquire.AcquireForage)
 	if actor.IsPlayer() {
 		actor.SendText(messaging.CategorySystem,
 			fmt.Sprintf(`You find %s<ansi fg="itemname">%s</ansi>.`, items.ArticleFor(newItem.ItemId, newItem.DisplayName()), items.MidSentenceName(newItem.DisplayName())))
 	}
+	// After the find, so a find too heavy to carry reads in order (#696).
+	acquire.AcquireOrDrop(char, actor.GetUserId(), actor.GetMobInstanceId(), newItem, acquire.AcquireForage)
 
 	result.Found = true
 	result.ItemId = coreResult.ItemId

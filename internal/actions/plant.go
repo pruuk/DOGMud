@@ -115,6 +115,10 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 	return plantInContainer(actor, opts.ContainerNoun, plantItem, t)
 }
 
+// plantTooFullLine tells a thief the target cannot carry the item, so the
+// thief keeps it (#696). The target's name arrives already tagged.
+const plantTooFullLine = `%s has no room to carry <ansi fg="itemname">%s</ansi>, so you keep it.`
+
 // plantOnMob handles slipping an item into a creature's inventory.
 // t.score() carries the planter's sight ramp already; do not apply
 // SightMult again.
@@ -146,7 +150,13 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item, t theftAtt
 	room := actor.GetRoom()
 
 	if success {
-		acquire.AcquireItemForChar(&m.Character, 0, m.InstanceId, plantItem, acquire.AcquirePlant)
+		// The target must take it before the thief lets go: a target that
+		// cannot carry it leaves it with the thief (#696).
+		if !acquire.AcquireItemForChar(&m.Character, 0, m.InstanceId, plantItem, acquire.AcquirePlant) {
+			actor.SendText(messaging.CategoryRefusal, messaging.CapitalizeStart(fmt.Sprintf(plantTooFullLine,
+				`<ansi fg="mobname">`+m.Character.Name+`</ansi>`, plantItem.DisplayName())))
+			return PlantResult{Reason: "target full"}
+		}
 		actor.GetCharacter().RemoveItem(plantItem)
 
 		if actor.IsPlayer() {
@@ -298,9 +308,15 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item, t theftA
 		}
 	}
 
-	// Success — transfer item to target player.
+	// Success — transfer item to target player. The target must take it
+	// before the thief lets go: one who cannot carry it leaves it with the
+	// thief (#696).
+	if !acquire.AcquireItem(targetUser, plantItem, acquire.AcquirePlant) {
+		actor.SendText(messaging.CategoryRefusal, fmt.Sprintf(plantTooFullLine,
+			`<ansi fg="username">`+targetUser.Character.Name+`</ansi>`, plantItem.DisplayName()))
+		return PlantResult{Reason: "target full", DefenderName: targetUser.Character.Name}
+	}
 	actor.GetCharacter().RemoveItem(plantItem)
-	acquire.AcquireItem(targetUser, plantItem, acquire.AcquirePlant)
 
 	if actor.IsPlayer() {
 		events.AddToQueue(events.ItemOwnership{

@@ -35,11 +35,21 @@ var (
 	// marked as a reply until the pass that runs their login burst ends.
 	// Guarded by qLock.
 	enteringWorld = map[int]struct{}{}
+
+	// tickRunning is true while the listeners of a tick event run: a
+	// NewRound or NewTurn, or any event a tick's listeners queued, however
+	// deep (#696, owner 2026-11-19: round and turn ticks never join a typed
+	// line's reply). What they queue is not marked as a reply, so a craft's
+	// outcome, a fight line or a hunger notice goes out at once and is never
+	// paged behind a reply or dropped with its unread pages.
+	// Guarded by qLock.
+	tickRunning bool
 )
 
 type requeue struct {
 	evt      Event
 	priority int
+	fromTick bool
 }
 
 // Event is the common interface for events.
@@ -58,6 +68,32 @@ type prioritizedEvent struct {
 	event    Event
 	priority int    // Lower numbers indicate higher priority. Default is 0.
 	order    uint64 // Used to preserve FIFO order among events with the same priority.
+	fromTick bool   // queued by a tick's listeners (tickRunning)
+}
+
+// isTick reports whether e is a round or turn tick (#696).
+func isTick(e Event) bool {
+	switch e.(type) {
+	case NewRound, NewTurn:
+		return true
+	}
+	return false
+}
+
+// queuedFromTick reports whether an event queued now comes from a tick:
+// a tick's listeners are running. A player's typed line never does, though
+// a connection goroutine may queue one while a tick runs on MainWorker.
+// Any other event queued off MainWorker in that moment is taken as the
+// tick's, which only means its lines are not paged: the safe direction.
+// The caller holds qLock.
+func queuedFromTick(e Event) bool {
+	if !tickRunning {
+		return false
+	}
+	if in, ok := e.(Input); ok && in.Flags.Has(CmdTyped) {
+		return false
+	}
+	return true
 }
 
 // UniqueEvent is implemented by events that should be unique in the queue.
@@ -113,7 +149,9 @@ func AddToQueue(e Event, priority ...int) {
 	// part of that line's reply. Marked here, the one place every message
 	// is queued, so no sender has to know. Never while the player is
 	// entering the world: the login burst is not a reply (owner ruling 8).
-	if m, ok := e.(Message); ok && m.UserId > 0 && replyWindow[m.UserId] > 0 && !isEnteringWorld(m.UserId) {
+	// Never from a round or turn tick either (#696).
+	fromTick := queuedFromTick(e)
+	if m, ok := e.(Message); ok && m.UserId > 0 && replyWindow[m.UserId] > 0 && !isEnteringWorld(m.UserId) && !fromTick {
 		m.Reply = true
 		e = m
 	}
@@ -134,6 +172,7 @@ func AddToQueue(e Event, priority ...int) {
 		event:    e,
 		priority: prio,
 		order:    orderCounter,
+		fromTick: fromTick,
 	}
 
 	if eventDebugging {
@@ -193,12 +232,8 @@ func isEnteringWorld(userId int) bool {
 
 // Same as AddToQueue but avoids a mutex lock for optimization purposes
 // Should only be used when a mutex lock is already held
-func reAddToQueue(e Event, priority ...int) {
-
-	prio := 0
-	if len(priority) > 0 {
-		prio = priority[0]
-	}
+// fromTick carries over from the event's first queueing (#696).
+func reAddToQueue(e Event, prio int, fromTick bool) {
 
 	// Check for uniqueness if the event implements UniqueEvent.
 	if ue, ok := e.(uniqueEvent); ok {
@@ -216,6 +251,7 @@ func reAddToQueue(e Event, priority ...int) {
 		event:    e,
 		priority: prio,
 		order:    orderCounter,
+		fromTick: fromTick,
 	}
 
 	if eventDebugging {
@@ -225,17 +261,16 @@ func reAddToQueue(e Event, priority ...int) {
 	heap.Push(&globalQueue, pe)
 }
 
-func addToRequeue(e Event, priority ...int) {
+// addToRequeue defers e to the next ProcessEvents pass, keeping whether a
+// tick queued it (#696).
+func addToRequeue(e Event, prio int, fromTick bool) {
 	qLock.Lock()
 	defer qLock.Unlock()
 
-	prio := 0
-	if len(priority) > 0 {
-		prio = priority[0]
-	}
 	requeues = append(requeues, requeue{
 		evt:      e,
 		priority: prio,
+		fromTick: fromTick,
 	})
 }
 
@@ -264,7 +299,7 @@ func ProcessEvents() {
 	// Requeues are a special group that has been deferred to the next processevents loop
 	// They are added back into the event queue at the top of the process events function
 	for _, itm := range requeues {
-		reAddToQueue(itm.evt, itm.priority)
+		reAddToQueue(itm.evt, itm.priority, itm.fromTick)
 	}
 	requeues = requeues[:0]
 
@@ -294,14 +329,19 @@ func ProcessEvents() {
 			closeReplyLocked(done.UserId)
 		}
 
+		// #696: a tick, and everything a tick queued, runs as a tick, so
+		// nothing it queues joins a typed line's reply.
+		tickRunning = pe.fromTick || isTick(pe.event)
+
 		qLock.Unlock()
 
 		evtResult = DoListeners(pe.event)
 		if evtResult == CancelAndRequeue {
-			addToRequeue(pe.event, pe.priority)
+			addToRequeue(pe.event, pe.priority, pe.fromTick)
 		}
 
 		qLock.Lock()
+		tickRunning = false
 
 	}
 

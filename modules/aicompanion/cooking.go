@@ -169,7 +169,7 @@ func equipStartingKit(mob *mobs.Mob, p *Profile) {
 			if returned, worn, _ := mob.Character.Wear(it); worn {
 				mob.Character.RemoveItem(it)
 				for _, back := range returned {
-					mob.Character.StoreItem(back)
+					mob.Character.ReturnToPack(back) // never refuses: it was worn a moment ago
 				}
 			}
 		}

@@ -627,7 +627,13 @@ func tickMobCrafting(mob *mobs.Mob) {
 				mob.Character.ComponentItems,
 				recipe)
 		newItem := items.New(recipe.Output.ItemId)
-		mob.Character.StoreItem(newItem)
+		if !mob.Character.StoreItem(newItem) && newItem.ItemId > 0 {
+			// Too much to carry: the made item falls at the crafter's
+			// feet rather than vanishing (#696).
+			if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+				room.AddItem(newItem, false)
+			}
+		}
 		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
 			actions.NarrateCraftPhase(actions.NewMobActorInRoom(mob, room), recipe, crafting.PhaseSuccess, room)
 		}

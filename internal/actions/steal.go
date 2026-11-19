@@ -619,7 +619,7 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 		stolen := container.Items[idx]
 		container.RemoveItem(stolen)
 		room.Containers[containerName] = container
-		acquire.AcquireItemForChar(actor.GetCharacter(), actor.GetUserId(), actor.GetMobInstanceId(), stolen, acquire.AcquireSteal)
+		acquire.AcquireOrDrop(actor.GetCharacter(), actor.GetUserId(), actor.GetMobInstanceId(), stolen, acquire.AcquireSteal)
 		result.StoleItemId = stolen.ItemId
 		result.StoleItemName = stolen.DisplayName()
 

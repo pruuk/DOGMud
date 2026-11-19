@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-11-19: Nothing you make or earn vanishes
+
+- If you finish crafting something, buy it, forage it, salvage it or earn it as a reward while you are carrying too much, it now falls at your feet and you are told so. It used to disappear.
+- The end of a craft, and other lines that arrive with the passing of time, are no longer held inside a long answer you are reading a page at a time. They show at once, so typing a new command can no longer skip them.
+- A thief who tries to slip an item to someone with no room left now keeps it.
+
 ## 2026-11-19: Narrow telnet screens
 
 - If your telnet client tells the game its screen is narrower than your line width, as many phone clients do, all game text now wraps to fit that screen instead of breaking words in half. Wider screens and clients that report no size see no change, and `set linewidth` still works as before.

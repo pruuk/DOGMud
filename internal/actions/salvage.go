@@ -421,7 +421,7 @@ func storeRecovered(actor Actor, recovered []crafting.RecipeIngredient, result *
 				continue
 			}
 			newItem := items.New(matSpec.ItemId)
-			acquire.AcquireItemForChar(char, actor.GetUserId(), actor.GetMobInstanceId(), newItem, acquire.AcquireSalvage)
+			acquire.AcquireOrDrop(char, actor.GetUserId(), actor.GetMobInstanceId(), newItem, acquire.AcquireSalvage)
 			result.MaterialIds = append(result.MaterialIds, matSpec.ItemId)
 		}
 	}
