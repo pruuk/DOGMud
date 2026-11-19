@@ -4,9 +4,13 @@
 package acquire
 
 import (
+	"fmt"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -69,4 +73,40 @@ func AcquireItemForChar(char *characters.Character, userId int, mobInstanceId in
 		Reason:        string(reason),
 	})
 	return true
+}
+
+// TooMuchToCarryLine is what a player reads when a new item falls at their
+// feet because they cannot carry it (AcquireOrDrop).
+const TooMuchToCarryLine = `Too much to carry: <ansi fg="itemname">%s</ansi> falls at your feet.`
+
+// AcquireOrDrop acquires an item that already exists for the receiver (made,
+// bought, foraged, salvaged, earned or given): when it is too much to carry,
+// it falls at the receiver's feet instead of vanishing (#696), as a stolen
+// bauble does (actions/steal.go). A player is told so (TooMuchToCarryLine).
+// It reports whether the receiver carries it. A route that can still refuse
+// cleanly (a pickup, a purchase it can roll back) checks AcquireItemForChar
+// itself instead; no route may ignore a refusal
+// (internal/guards/acquire_result_guard_test.go).
+func AcquireOrDrop(char *characters.Character, userId int, mobInstanceId int, itm items.Item, reason AcquireReason) bool {
+	if AcquireItemForChar(char, userId, mobInstanceId, itm, reason) {
+		return true
+	}
+	if char == nil {
+		return false
+	}
+	if room := rooms.LoadRoom(char.RoomId); room != nil {
+		room.AddItem(itm, false)
+	}
+	if user := users.GetByUserId(userId); userId > 0 && user != nil {
+		user.SendText(messaging.CategoryWarning, fmt.Sprintf(TooMuchToCarryLine, itm.DisplayName()))
+	}
+	return false
+}
+
+// AcquireItemOrDrop is AcquireOrDrop for a player.
+func AcquireItemOrDrop(user *users.UserRecord, itm items.Item, reason AcquireReason) bool {
+	if user == nil {
+		return false
+	}
+	return AcquireOrDrop(user.Character, user.UserId, 0, itm, reason)
 }

@@ -795,10 +795,10 @@ func executePurchaseItem(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRec
 		}
 	}
 
-	// The seam raises the buyer's gain only when the item lands. A refused
-	// store is still not refused here (the encumbrance gate in Buy refuses
-	// first), as before; it no longer raises a gain for an item never held.
-	acquire.AcquireItemForChar(buyer.GetCharacter(), buyer.GetUserId(), buyer.GetMobInstanceId(), newItm, acquire.AcquireBuy)
+	// The seam raises the buyer's gain only when the item lands. The
+	// encumbrance gate in Buy refuses first; should the store still refuse,
+	// the paid-for item falls at the buyer's feet rather than vanishing (#696).
+	acquire.AcquireOrDrop(buyer.GetCharacter(), buyer.GetUserId(), buyer.GetMobInstanceId(), newItm, acquire.AcquireBuy)
 }
 
 // executePurchaseCondition applies the bought condition to the buyer and

@@ -309,7 +309,7 @@ func actGiveItemMultiple(params map[string]any, ctx *EvalContext) Result {
 	}
 	for i := 0; i < count; i++ {
 		item := items.New(itemId)
-		acquire.AcquireItem(user, item, acquire.AcquireTreeGive)
+		acquire.AcquireItemOrDrop(user, item, acquire.AcquireTreeGive)
 	}
 	return Success
 }

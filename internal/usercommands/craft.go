@@ -721,7 +721,7 @@ func storageCompletable(user *users.UserRecord, r *crafting.RecipeSpec) bool {
 func completeCraft(user *users.UserRecord, room *rooms.Room, recipe *crafting.RecipeSpec) {
 	user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
 	newItem := items.New(recipe.Output.ItemId)
-	acquire.AcquireItem(user, newItem, acquire.AcquireCraft)
+	acquire.AcquireItemOrDrop(user, newItem, acquire.AcquireCraft)
 	roles := recipe.Narrate(crafting.PhaseSuccess, textutil.TokenContext{
 		ActorName:      user.Character.GetCharacterName(true),
 		ActorPlainName: user.Character.GetCharacterName(false),

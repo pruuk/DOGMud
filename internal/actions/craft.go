@@ -239,7 +239,7 @@ func InitiateCraft(actor Actor, recipeName string) CraftResult {
 		if crafting.ShouldStampMakerName(newItem.CraftSkill, newItem.GetSpec()) {
 			newItem.MakerName = char.Name
 		}
-		acquire.AcquireItemForChar(char, actor.GetUserId(), actor.GetMobInstanceId(), newItem, acquire.AcquireCraft)
+		acquire.AcquireOrDrop(char, actor.GetUserId(), actor.GetMobInstanceId(), newItem, acquire.AcquireCraft)
 		res.OutputName = newItem.DisplayName()
 		res.ImmediateComplete = true
 		return res

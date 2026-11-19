@@ -228,7 +228,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			// grants the item's QuestToken from it, so the token is not
 			// hand-fired here (it used to be, when this site raised no
 			// event; firing both would grant it twice).
-			acquire.AcquireItem(questUser, newItm, acquire.AcquireReward)
+			acquire.AcquireItemOrDrop(questUser, newItm, acquire.AcquireReward)
 		}
 		// Item-stockpile reward? Grants N of each listed item (see
 		// quests.ParseItemGrants). Routes through the acquire seam (StoreItem
@@ -246,7 +246,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 				}
 				firstName = newItm.DisplayName()
 				firstId = newItm.ItemId
-				acquire.AcquireItem(questUser, newItm, acquire.AcquireReward)
+				acquire.AcquireItemOrDrop(questUser, newItm, acquire.AcquireReward)
 				granted++
 			}
 			if granted == 0 {

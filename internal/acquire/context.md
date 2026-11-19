@@ -41,13 +41,24 @@ rather than part of `internal/actions` because `actions` imports
   character, or an `actions.Actor` (pass `GetUserId()` and
   `GetMobInstanceId()`). It serves mob receivers too; the event keeps
   whichever id the caller passed.
+- `AcquireOrDrop(char, userId, mobInstanceId, itm, reason) bool` and
+  `AcquireItemOrDrop(user, itm, reason) bool` (#696): for an item that already
+  exists for the receiver (made, bought, foraged, salvaged, earned, given by a
+  tree). When it is too much to carry it falls in the receiver's room
+  (`Room.AddItem`, as a drop does) and a player reads `TooMuchToCarryLine`;
+  no gain event, since it was never held.
 
 ## Using it correctly
 
 - A false return means `StoreItem` refused (carried weight past twice carry
   capacity, or an invalid item). Nothing was stored and nothing was queued;
   the caller keeps its own refusal handling (a message, a rollback, a drop to
-  the floor).
+  the floor). **No route may ignore it** (#696: a crafted dagger vanished
+  after its materials were spent): a route with nothing to roll back uses
+  `AcquireOrDrop`. `internal/guards/acquire_result_guard_test.go` fails on a
+  bare or `_ =` call to `AcquireItem` or `AcquireItemForChar`. A plant checks
+  the target takes the item before the thief lets go, and the thief keeps it
+  otherwise.
 - Do not also queue an `ItemOwnership{Gained: true}` at the call site: the
   seam already did, and a second one fires quest triggers twice.
 - Do not hand-fire an item's `QuestToken` after acquiring it:
@@ -73,7 +84,8 @@ craft, `hooks` quest rewards, timed craft and the offhand-break replacement,
 
 ## Tests
 
-`acquire_test.go` (the seam itself), `actions/transfer_gain_test.go` (the
+`acquire_test.go` (the seam itself), `acquire_or_drop_test.go` (an item too
+much to carry falls, #696), `actions/transfer_gain_test.go` (the
 transfer helpers), and one test per formerly silent route:
 `questengine/bridge_acquire_test.go`, `hooks/quest_reward_acquire_test.go`,
 `hooks/shield_swap_acquire_test.go`,
