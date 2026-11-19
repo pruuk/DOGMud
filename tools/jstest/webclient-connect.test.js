@@ -277,6 +277,16 @@ check('after a line the page wrote, the clear is one row', termWrites[2] === ONE
 s.onmessage({ data: CLIMB + 'A cat arrives.\r\n' });
 check('the next clear climbs again', termWrites[3] === CLIMB + 'A cat arrives.\r\n', JSON.stringify(termWrites[3]));
 term.write = oldWrite;
+// Every local write marks it, not only gameLine: the page wraps term.write and
+// term.writeln where term is made, server text bypasses the wrapper, and a
+// change of width marks it too (a reflowed prompt, second review of #924).
+check('the page wraps term.write and term.writeln to mark local writes',
+    /term\.write = function \(data, cb\) \{ localLineSincePrompt = true;/.test(html) &&
+    /term\.writeln = function \(data, cb\) \{ localLineSincePrompt = true;/.test(html), 'wrapper not found');
+check('server text bypasses the wrapper',
+    /\(term\.writeFromServer \|\| term\.write\)\.call\(term,/.test(html), 'server write not found');
+check('a change of width marks it',
+    /onCols: function \(cols\) \{ localLineSincePrompt = true;/.test(html), 'onCols not found');
 
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

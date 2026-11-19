@@ -525,6 +525,18 @@
         term.loadAddon(fitAddon);
         term.open(document.getElementById('terminal'));
 
+        // #922: the server clears a prompt that wrapped by moving up over its
+        // rows. It cannot see what this page writes itself, so every local
+        // write marks that the next such clear is cut back to one row (see the
+        // websocket writer). Server text goes through term.writeFromServer,
+        // which marks nothing.
+        (function () {
+            var write = term.write.bind(term), writeln = term.writeln.bind(term);
+            term.writeFromServer = write;
+            term.write = function (data, cb) { localLineSincePrompt = true; return write(data, cb); };
+            term.writeln = function (data, cb) { localLineSincePrompt = true; return writeln(data, cb); };
+        })();
+
         // Keep the feed's text from sliding out of view sideways (playtest
         // 2026-10-17). See static/js/feedscroll.js for the causes it covers.
         if (window.FeedScroll) {
@@ -611,7 +623,9 @@
             host: document.getElementById('terminal'),
             minFont: browserMinFont,
             fontSize: textSize,
-            onCols: function (cols) { displayReport.columns(cols); },
+            // A new width may reflow a wrapped prompt before the server hears
+            // of it (#922): its next clear is cut back to one row.
+            onCols: function (cols) { localLineSincePrompt = true; displayReport.columns(cols); },
             onRows: function (rows) { displayReport.rows(rows); },
             // The layout gives the game window this width (dashboard.js).
             // Kept on window too: dashboard.js loads at the end of the page
@@ -2909,11 +2923,13 @@
 
         // #922: the server clears a prompt that wrapped by moving up over its
         // rows (column 1, erase line, then up and erase per extra row). It
-        // cannot see lines this page writes itself (gameLine), so after one
-        // the next such clear is cut back to its first row (see the websocket
-        // writer).
+        // cannot see what this page writes itself (every term.write and
+        // term.writeln, wrapped where term is made, and a change of width), so
+        // after one the next such clear is cut back to its first row (see the
+        // websocket writer). The wrapper may set the flag before this line
+        // runs, so it is kept, not reset.
         var WRAPPED_PROMPT_CLEAR = /^\x1b\[G\x1b\[2K(?:\x1b\[A\x1b\[2K)+/;
-        var localLineSincePrompt = false;
+        var localLineSincePrompt = localLineSincePrompt || false;
 
         // playerSend sends a line the player asked for (typed, the numpad, a
         // macro key, a chip, an item menu) and marks its answer for the
@@ -3319,7 +3335,8 @@
                 if (/^\x1b\[G\x1b\[2K/.test(shown)) {
                     localLineSincePrompt = false;
                 }
-                term.write(window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);
+                // Server text: it must not mark a local write (#922).
+                (term.writeFromServer || term.write).call(term, window.RoomTitleBold ? window.RoomTitleBold.apply(shown) : shown);
                 // The same text, as plain words, into the screen reader log
                 // (static/js/screenreader.js); nothing when the mode is off.
                 screenReader.write(shown);

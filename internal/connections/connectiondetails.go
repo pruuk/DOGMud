@@ -328,7 +328,7 @@ func (cd *ConnectionDetails) Write(p []byte) (n int, err error) {
 
 	n, err = cd.writeNLocked(p)
 	// Anything that shows on screen leaves no prompt behind it (#922).
-	if !outOfBand(p) {
+	if !outOfBand(p, cd.IsWebSocket()) {
 		cd.prompt = promptRecord{}
 	}
 	return n, err

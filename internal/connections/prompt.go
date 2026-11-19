@@ -1,6 +1,7 @@
 package connections
 
 import (
+	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -37,6 +38,25 @@ var eraseOneRow = term.AnsiMoveCursorColumn.String() + term.AnsiEraseLine.String
 
 // eraseRowAbove moves up a row and clears it.
 var eraseRowAbove = term.AnsiMoveCursorUp.String() + term.AnsiEraseLine.String()
+
+// escapeSeqRe matches one ANSI control sequence, which takes no column.
+var escapeSeqRe = regexp.MustCompile("\x1b\\[[0-?]*[ -/]*[@-~]")
+
+// MinCols is the fewest columns text can take on one unbroken row: escape
+// sequences take none, and every other character that shows takes one, even
+// one a terminal may draw two wide (an emoji, an ambiguous-width bar).
+// Terminals disagree on those widths, so the prompt record measures with
+// this lower bound: counting too few rows leaves a stray row, counting too
+// many would erase game text (#922 second review).
+func MinCols(text string) int {
+	cols := 0
+	for _, r := range escapeSeqRe.ReplaceAllString(text, ``) {
+		if runewidth.RuneWidth(r) > 0 {
+			cols++
+		}
+	}
+	return cols
+}
 
 // promptRows is the rows cols visible columns fill on a screen width columns
 // wide: at least 1.
@@ -84,18 +104,21 @@ func ReportedScreenWidth(id ConnectionId) (int, bool) {
 }
 
 // SendPrompt writes a prompt over the one on screen: the erase for the
-// recorded prompt, then b. cols is b's visible width in columns (escape
-// sequences and markup not counted), which the caller measures. The new
-// prompt is recorded only when the client reported a width.
+// recorded prompt, then b. cols is b's visible width in columns, measured by
+// the caller with MinCols (markup removed first). The new prompt is recorded
+// only when the client reported a width, the bytes were written (a frozen
+// queue during copyover writes nothing), and the connection is not in ASCII
+// mode, whose substitutions change the width after it was measured.
 func SendPrompt(id ConnectionId, b []byte, cols int) {
 	width, _ := ReportedScreenWidth(id)
+	ascii := GetClientSettings(id).AsciiMode // read before promptMu: no lock is taken under it
 	cd := lookup(id)
 	if cd == nil {
 		return
 	}
 	cd.promptMu.Lock()
-	err := cd.writeLocked(append([]byte(eraseFor(cd.prompt, width)), b...))
-	cd.prompt = promptRecord{on: width > 0, cols: cols, width: width}
+	n, err := cd.writeNLocked(append([]byte(eraseFor(cd.prompt, width)), b...))
+	cd.prompt = promptRecord{on: width > 0 && n > 0 && !ascii, cols: cols, width: width}
 	cd.promptMu.Unlock()
 	afterWrite(id, cd, err, "SendPrompt()")
 }
@@ -124,9 +147,9 @@ func SendEcho(id ConnectionId, b []byte) {
 		return
 	}
 	cd.promptMu.Lock()
-	err := cd.writeLocked(b)
-	if cd.prompt.on && printable(b) {
-		cd.prompt.cols += runewidth.StringWidth(string(b))
+	n, err := cd.writeNLocked(b)
+	if cd.prompt.on && n > 0 && printable(b) {
+		cd.prompt.cols += MinCols(string(b))
 	} else {
 		cd.prompt = promptRecord{}
 	}
@@ -149,15 +172,20 @@ func printable(b []byte) bool {
 }
 
 // outOfBand reports whether p is a write that shows nothing on screen: a
-// telnet command (IAC), an MSP or web client payload (!!GMCP(, !!SOUND(,
-// !!MUSIC(), or a web client command (eight capital letters and a colon, as
-// TEXTMASK:), matched as the web client itself matches them.
-func outOfBand(p []byte) bool {
+// telnet command (IAC), or on a websocket a web client payload (!!GMCP(,
+// !!SOUND(, !!MUSIC() or command (eight capital letters and a colon, as
+// TEXTMASK:), matched as the web client itself matches them. A telnet
+// client shows those two forms as text, so for telnet only IAC counts: a
+// mistake here may only ever end the record, never keep it.
+func outOfBand(p []byte, websocket bool) bool {
 	if len(p) == 0 {
 		return true
 	}
 	if p[0] == term.TELNET_IAC {
 		return true
+	}
+	if !websocket {
+		return false
 	}
 	if len(p) > 9 && p[0] == '!' && p[1] == '!' {
 		return true

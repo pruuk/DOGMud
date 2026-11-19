@@ -643,7 +643,8 @@ the pager's stop line, else the player's prompt, then what they typed and a
 telnet go-ahead). It clears nothing. Every sender draws it with
 `SendCommandPrompt(connId, prompt, sent)`, which hands it to
 `connections.SendPrompt` with its width from `PromptCols(prompt)` (tags,
-escapes and the go-ahead take no columns); the connection clears every row of
+escapes and the go-ahead take no columns, every other character one:
+`connections.MinCols`, a lower bound); the connection clears every row of
 the prompt on screen and records the new one (`internal/connections`
 `prompt.go`). Text that replaces the prompt goes through
 `connections.SendReplacingPrompt`. There is no `GetCommandPrompt`: a sender

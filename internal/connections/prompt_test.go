@@ -37,19 +37,45 @@ func TestOutOfBand(t *testing.T) {
 	for _, tt := range []struct {
 		name string
 		p    string
+		ws   bool
 		want bool
 	}{
-		{"telnet command", string([]byte{term.TELNET_IAC, 250, 201}), true},
-		{"web GMCP", `!!GMCP(Char.Vitals {"hp":1})`, true},
-		{"sound", `!!SOUND(hit.mp3 T=combat V=50)`, true},
-		{"web client command", `TEXTMASK:on`, true},
-		{"game text", "A cold wind blows.\r\n", false},
-		{"a colon at nine is not a command", `Sable sa: hello there`, false},
-		{"lower case is not a command", `textmask:on`, false},
-		{"an enter echo", "\r\n", false},
+		{"telnet command", string([]byte{term.TELNET_IAC, 250, 201}), false, true},
+		{"web GMCP", `!!GMCP(Char.Vitals {"hp":1})`, true, true},
+		{"web sound", `!!SOUND(hit.mp3 T=combat V=50)`, true, true},
+		{"web client command", `TEXTMASK:on`, true, true},
+		{"game text", "A cold wind blows.\r\n", true, false},
+		{"a colon at nine is not a command", `Sable sa: hello there`, true, false},
+		{"lower case is not a command", `textmask:on`, true, false},
+		{"an enter echo", "\r\n", false, false},
+		// A telnet client shows these as text (second review of #924).
+		{"!! on telnet is text", `!!Wow, a dragon!!`, false, false},
+		{"a command form on telnet is text", `WARNING!: the bridge is out`, false, false},
+		{"capitals and a colon on telnet are text", `ATTENTION: the gates close`, false, false},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, outOfBand([]byte(tt.p)))
+			require.Equal(t, tt.want, outOfBand([]byte(tt.p), tt.ws))
+		})
+	}
+}
+
+// MinCols counts every visible character as one column, so a prompt is
+// never measured wider than any terminal draws it (second review of #924).
+func TestMinCols(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		text string
+		want int
+	}{
+		{"plain", "HP:100", 6},
+		{"escapes take nothing", "\x1b[1;31mHP\x1b[0m:100", 6},
+		{"an emoji is one", "\U0001F6E1 HP", 4},
+		{"a wide letter is one", "日本", 2},
+		{"bars are one each", "██░░", 4},
+		{"a combining mark is none", "é", 1},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, MinCols(tt.text))
 		})
 	}
 }
@@ -166,6 +192,38 @@ func TestPrompt_AWidenedScreenClearsTheReflowedRows(t *testing.T) {
 	id, r := promptScreen(t, 36)
 	SendPrompt(id, []byte(wrapped), 60)
 	UpdateClientSettings(id, func(cs *ClientSettings) { cs.Display.ScreenWidth = 100 })
+	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
+	require.Equal(t, 1, rowsClearedBefore(t, r, "<M1>"))
+}
+
+// A prompt dropped while output is frozen (copyover) never reached the
+// screen, so it is not recorded; after a failed copyover thaws output, the
+// next line must not climb rows that were never drawn (second review).
+func TestPrompt_ADroppedPromptIsNotRecorded(t *testing.T) {
+	t.Cleanup(ThawOutputAfterFailedCopyover)
+	id, r := promptScreen(t, 36)
+	freezeOutput()
+	SendPrompt(id, []byte(wrapped), 60)
+	ThawOutputAfterFailedCopyover()
+	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
+	require.Equal(t, 1, rowsClearedBefore(t, r, "<M1>"), "a dropped prompt")
+
+	// A dropped echo does not extend the prompt: 30 columns drawn, 10 typed
+	// but never shown, so one row is cleared, not two.
+	SendPrompt(id, []byte(strings.Repeat("p", 30)), 30)
+	freezeOutput()
+	SendEcho(id, []byte("look north"))
+	ThawOutputAfterFailedCopyover()
+	SendReplacingPrompt(id, []byte("<M2>A line.\n"))
+	require.Equal(t, 1, rowsClearedBefore(t, r, "<M2>"), "a dropped echo")
+}
+
+// ASCII mode swaps or drops characters after the prompt was measured, so a
+// prompt there is not recorded (second review).
+func TestPrompt_AsciiModeIsNotRecorded(t *testing.T) {
+	id, r := promptScreen(t, 36)
+	UpdateClientSettings(id, func(cs *ClientSettings) { cs.AsciiMode = true })
+	SendPrompt(id, []byte(wrapped), 60)
 	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
 	require.Equal(t, 1, rowsClearedBefore(t, r, "<M1>"))
 }

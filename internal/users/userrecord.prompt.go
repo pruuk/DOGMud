@@ -14,7 +14,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/pager"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -364,11 +363,12 @@ func SendCommandPrompt(connId uint64, prompt string, sent string) {
 	connections.SendPrompt(connId, []byte(sent), PromptCols(prompt))
 }
 
-// PromptCols is the columns prompt (a CommandPromptBody) fills on one
-// unbroken line: its tags, escape sequences and telnet go-ahead take none.
+// PromptCols is the fewest columns prompt (a CommandPromptBody) can fill on
+// one unbroken line (connections.MinCols): its tags, escape sequences and
+// telnet go-ahead take none.
 func PromptCols(prompt string) int {
 	visible := ansitags.Parse(strings.TrimSuffix(prompt, term.TelnetGoAhead.String()), ansitags.StripTags)
-	return pager.Cols(visible)
+	return connections.MinCols(visible)
 }
 
 // CommandPromptBody is the prompt to draw now: an open question, else the

@@ -990,10 +990,6 @@ func inputEventFor(wi WorldInput) events.Input {
 	}
 }
 
-// queueInputDone queues the marker that the server has finished one typed line
-// (web or telnet) (plan 6, R6). events.InputDonePriority puts it after every event
-// that writes the command's text or opens a menu in the same pass, so the
-// client reads the menu state the command left.
 // sendPrompt draws the player's prompt over the one on screen, clearing
 // every row it fills (#922). MainWorker holds the world lock.
 func sendPrompt(user *users.UserRecord) {
@@ -1001,6 +997,10 @@ func sendPrompt(user *users.UserRecord) {
 	users.SendCommandPrompt(user.ConnectionId(), body, templates.AnsiParse(body))
 }
 
+// queueInputDone queues the marker that the server has finished one typed line
+// (web or telnet) (plan 6, R6). events.InputDonePriority puts it after every event
+// that writes the command's text or opens a menu in the same pass, so the
+// client reads the menu state the command left.
 func queueInputDone(userId int, seq uint64) {
 	events.AddToQueue(events.InputDone{UserId: userId, Seq: seq}, events.InputDonePriority)
 }
