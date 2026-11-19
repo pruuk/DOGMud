@@ -6,6 +6,11 @@
 - The end of a craft, and other lines that arrive with the passing of time, are no longer held inside a long answer you are reading a page at a time. They show at once, so typing a new command can no longer skip them.
 - A thief who tries to slip an item to someone with no room left now keeps it.
 
+## 2026-11-19: Narrow telnet screens
+
+- If your telnet client tells the game its screen is narrower than your line width, as many phone clients do, all game text now wraps to fit that screen instead of breaking words in half. Wider screens and clients that report no size see no change, and `set linewidth` still works as before.
+- A long prompt that wraps onto a second row, such as the "More" line when you read a long answer a page at a time, no longer leaves part of itself behind when new text arrives.
+
 ## 2026-11-18: Long answers come a page at a time
 
 - When the answer to a command is longer than your screen, you now see it a page at a time. Press Enter for the next page, or type `q` to stop. Any other command works as usual and skips the rest.

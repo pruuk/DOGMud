@@ -4,7 +4,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
-	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -24,7 +23,7 @@ func Pager_ReplyEnd(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 	if out := user.EndReply(); out != `` {
-		connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+out), user.ConnectionId())
+		connections.SendReplacingPrompt(user.ConnectionId(), []byte(out))
 		events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
 	}
 	return events.Continue

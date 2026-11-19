@@ -664,6 +664,18 @@ func main() {
 	time.Sleep(1 * time.Second)
 }
 
+// sendPromptFromConnection draws a prompt body (CommandPromptBody, built
+// under the world read lock) over the prompt on screen, clearing every row
+// it fills (#922). A web client takes it with its tags; telnet parsed. Sent
+// outside the world lock: the write may block on a slow client.
+func sendPromptFromConnection(connId connections.ConnectionId, body string) {
+	sent := body
+	if !connections.IsWebsocket(connId) {
+		sent = templates.AnsiParse(body)
+	}
+	users.SendCommandPrompt(connId, body, sent)
+}
+
 func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync.WaitGroup) {
 	defer func() {
 		// This goroutine processes untrusted network input through the whole
@@ -933,7 +945,7 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 			}
 
 			if redrawPrompt {
-				// GetCommandPrompt walks shared game state (prompt tokens reach
+				// CommandPromptBody walks shared game state (prompt tokens reach
 				// rooms.LoadRoom, which reads AND writes the room manager's
 				// plain maps). This runs on the connection goroutine, so it must
 				// be read-locked against MainWorker's tick.
@@ -941,13 +953,9 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 				// does a blocking network write, and holding a world lock across
 				// it would let one stalled client freeze the game loop.
 				util.RLockMud()
-				pTxt := userObject.GetCommandPrompt()
+				pTxt := userObject.CommandPromptBody()
 				util.RUnlockMud()
-				if connections.IsWebsocket(clientInput.ConnectionId) {
-					connections.SendTo([]byte(pTxt), clientInput.ConnectionId)
-				} else {
-					connections.SendTo([]byte(templates.AnsiParse(pTxt)), clientInput.ConnectionId)
-				}
+				sendPromptFromConnection(clientInput.ConnectionId, pTxt)
 			}
 
 			continue
@@ -1079,14 +1087,10 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 					// Read-locked for the same reason as the redraw above; the
 					// lock is released before the blocking SendTo.
 					util.RLockMud()
-					pTxt := userObject.GetCommandPrompt()
+					pTxt := userObject.CommandPromptBody()
 					util.RUnlockMud()
 
-					if connections.IsWebsocket(clientInput.ConnectionId) {
-						connections.SendTo([]byte(pTxt), clientInput.ConnectionId)
-					} else {
-						connections.SendTo([]byte(templates.AnsiParse(pTxt)), clientInput.ConnectionId)
-					}
+					sendPromptFromConnection(clientInput.ConnectionId, pTxt)
 
 				}
 
@@ -1243,9 +1247,9 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 			if redrawPrompt {
 				// Read-locked against the world tick; released before SendTo.
 				util.RLockMud()
-				pTxt := userObject.GetCommandPrompt()
+				pTxt := userObject.CommandPromptBody()
 				util.RUnlockMud()
-				connections.SendTo([]byte(templates.AnsiParse(pTxt)), clientInput.ConnectionId)
+				sendPromptFromConnection(clientInput.ConnectionId, pTxt)
 			}
 
 			continue
@@ -1265,9 +1269,9 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 					userObject.SetUnsentText(string(clientInput.Buffer), ``)
 					// Read-locked against the world tick; released before SendTo.
 					util.RLockMud()
-					pTxt := userObject.GetCommandPrompt()
+					pTxt := userObject.CommandPromptBody()
 					util.RUnlockMud()
-					connections.SendTo([]byte(templates.AnsiParse(pTxt)), clientInput.ConnectionId)
+					sendPromptFromConnection(clientInput.ConnectionId, pTxt)
 				}
 
 				wi := WorldInput{

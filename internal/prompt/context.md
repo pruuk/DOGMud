@@ -17,7 +17,7 @@ The prompt system consists of two main components:
 **Integration Points:**
 - `UserRecord.StartPrompt()` - Initiates or retrieves existing prompt sessions
 - `UserRecord.ClearPrompt()` - Cleans up completed or aborted prompt sessions
-- `UserRecord.GetCommandPrompt()` - Integrates with main command prompt display
+- `UserRecord.CommandPromptBody()` - Integrates with main command prompt display (an open question is the prompt)
 - `world.go` input loop - Processes prompt responses before regular commands
 
 ### 2. Advanced Login Prompt Handler (`internal/inputhandlers/`)

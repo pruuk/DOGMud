@@ -16,7 +16,13 @@ var (
 		u := users.GetByConnectionId(id)
 		return u != nil && u.InputMasked()
 	}
-	echoSend = connections.SendTo
+	// The echo goes through connections.SendEcho: typed characters extend
+	// the prompt they are drawn after, and Enter ends it (#922).
+	echoSend = func(b []byte, ids ...connections.ConnectionId) {
+		for _, id := range ids {
+			connections.SendEcho(id, b)
+		}
+	}
 )
 
 // maskEcho returns what to echo for data while the answer is a secret (#868):

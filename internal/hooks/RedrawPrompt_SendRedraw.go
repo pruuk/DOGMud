@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -19,7 +18,7 @@ func RedrawPrompt_SendRedraw(e events.Event) events.ListenerReturn {
 
 	if user := users.GetByUserId(evt.UserId); user != nil {
 
-		newCmdPrompt := user.GetCommandPrompt()
+		newCmdPrompt := user.CommandPromptBody()
 
 		// When an interactive question is pending (character creation, confirm
 		// prompts, password entry), the command prompt IS the full question text.
@@ -49,8 +48,8 @@ func RedrawPrompt_SendRedraw(e events.Event) events.ListenerReturn {
 
 		}
 
-		pTxt := templates.AnsiParse(newCmdPrompt)
-		connections.SendTo([]byte(pTxt), user.ConnectionId())
+		// Drawn over the prompt on screen, every row of it (#922).
+		users.SendCommandPrompt(user.ConnectionId(), newCmdPrompt, templates.AnsiParse(newCmdPrompt))
 
 	}
 

@@ -131,11 +131,23 @@ func RedrawnFormWidth(width int) int {
 // and the saved LineWidth when one is set, and never below MinWrapWidth, so
 // `set linewidth` can only narrow it. The reported value is clamped again
 // here, not only where it arrives, because nothing else stops a websocket
-// client sending a raw telnet screen-size report. Every other session, and a
-// nil receiver, gets GetLineWidth.
+// client sending a raw telnet screen-size report.
+//
+// Every other session wraps at GetLineWidth (80, or the saved LineWidth,
+// which may be wider on telnet), narrowed to the width its client reported
+// when that is narrower, and never below MinWrapWidth for a report (#922: a
+// 36-column phone client otherwise broke words mid-line). A wider report
+// never widens it. A nil receiver gets GetLineWidth.
 func (u *UserRecord) WrapWidth() int {
-	if u == nil || !connections.IsWebsocket(u.connectionId) {
+	if u == nil {
 		return u.GetLineWidth()
+	}
+	if !connections.IsWebsocket(u.connectionId) {
+		width := u.GetLineWidth()
+		if cols, ok := u.reportedScreenWidth(); ok {
+			width = min(width, max(cols, MinWrapWidth))
+		}
+		return width
 	}
 	width := min(u.ClientSettings().Display.GetScreenWidth(), MaxAutoWrapWidth)
 	if u.LineWidth > 0 {
