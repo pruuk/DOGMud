@@ -3,7 +3,7 @@
 ## Purpose
 
 `internal/pager` cuts a long reply into pages that fit the reader's screen
-(#842, spec `docs/superpowers/specs/2026-11-18-general-pager-design.md`). It
+(#842, spec `docs/superpowers/specs/completed/2026-11-18-general-pager-design.md`). It
 is pure: no I/O, no locks, no state. `internal/users` keeps a player's
 pages (`userrecord.pager.go`) and `internal/hooks` sends them.
 
