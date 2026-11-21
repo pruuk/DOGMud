@@ -1,5 +1,10 @@
 # DOGMud Patch Notes
 
+## 2026-11-21: Typing on a phone gives the game text the room
+
+- On a phone, when you tap the command box to type, an open tab such as Comms steps aside, so you can read the game above the keyboard. Close the keyboard and the tab comes back where you left it, with Comms at its newest message.
+- The Automation editors (macros, triggers, ticks and aliases) now fit above a phone's keyboard, so Save stays in reach. Their fields no longer start with a capital letter.
+
 ## 2026-11-21: Prompts fit narrow screens
 
 - The line that shows when a long answer comes a page at a time is now short: "Page 1 of 3: Enter, q to stop".

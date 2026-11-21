@@ -11,6 +11,7 @@
 //   deckOn                whether the deck shows
 //   shape                 rows, columns and sizes for the room it has
 //   slotShows             what the slot under the game text holds
+//   fieldOf               where the player is typing (plan 1b)
 // Tested by tools/jstest/touchdeck.test.js and touch-targets.test.js.
 
 (function (root, factory) {
@@ -88,18 +89,32 @@
     // What the slot under the game text holds: 'tab', 'deck' or 'empty'.
     // o.phone: the phone layout, where an open tab lives in the slot.
     // o.tabOpen, o.deckOn, o.keyboard: the on-screen keyboard is up.
-    // Plan 1b changes the keyboard case: typing in the command box will make
-    // the tab step aside too.
+    // o.field: where the player is typing (fieldOf). Typing in the command
+    // box sets the tab aside so the game text gets the room (plan 1b, ruled
+    // 2026-11-19); typing in another field (the Automation dialog) moves
+    // nothing. The keyboard covers the deck either way.
     function slotShows(o) {
-        if (o.phone && o.tabOpen) return 'tab';
+        if (o.phone && o.tabOpen) {
+            return o.keyboard && o.field === 'command' ? 'empty' : 'tab';
+        }
         if (o.deckOn && !o.keyboard) return 'deck';
         return 'empty';
+    }
+
+    // Where the player is typing: 'command' for the command box, 'other' for
+    // any other text field, null when nothing that takes text has focus.
+    // activeId: document.activeElement's id. editable: ViewportFit.
+    // editableFocused(document), the page's one test for a text field.
+    var COMMAND_ID = 'command-input';
+    function fieldOf(activeId, editable) {
+        if (!editable) return null;
+        return activeId === COMMAND_ID ? 'command' : 'other';
     }
 
     return {
         KEY: KEY, AUTOMATIC_SHOWS: AUTOMATIC_SHOWS,
         readPref: readPref, writePref: writePref, deckOn: deckOn,
-        shape: shape, slotShows: slotShows,
+        shape: shape, slotShows: slotShows, fieldOf: fieldOf,
         BTN: BTN, GAP: GAP, SMALL_BTN: SMALL_BTN, SMALL_GAP: SMALL_GAP, PAD: PAD
     };
 }));

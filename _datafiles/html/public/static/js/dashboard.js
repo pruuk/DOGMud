@@ -231,6 +231,15 @@
           self.applyDeck();
         }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
       }
+      // Plan 1b: what steps aside depends on which field is being typed in,
+      // and focus can move between fields (the command box, the Automation
+      // dialog) while the keyboard stays up, which the class watch above
+      // does not see.
+      var onFocusMove = function () {
+        if (document.documentElement.classList.contains("keyboard-open")) self.applyDeck();
+      };
+      document.addEventListener("focusin", onFocusMove);
+      document.addEventListener("focusout", onFocusMove);
 
       // Folding, pop-out and the saved layout
       this.initCollapse   && this.initCollapse();
@@ -553,14 +562,25 @@
       try { store = window.localStorage; } catch (e) { /* blocked */ }
       var on = TD.deckOn(TD.readPref(store), coarse);
       var keyboard = document.documentElement.classList.contains("keyboard-open");
+      var active = document.activeElement;
+      var field = TD.fieldOf(active ? active.id : "", !!(VF && VF.editableFocused(document)));
       var shows = TD.slotShows({
         phone: this.mode === "phone",
         tabOpen: !!this._drawerActive,
         deckOn: on,
-        keyboard: keyboard
+        keyboard: keyboard,
+        field: field
       });
+      var was = slot.dataset.shows;
       if (slot.dataset.shows !== shows) slot.dataset.shows = shows;
       slot.hidden = shows === "empty";
+      // Back in the slot (plan 1b): a tab that stepped aside for the keyboard
+      // keeps its own scroll place, since hiding the slot does not reset it
+      // (measured 2026-11-21); Comms goes to its newest message, as when a
+      // tab opens, so a line just sent shows.
+      if (shows === "tab" && was !== "tab") {
+        this._scrollChatToNewest(document.getElementById("panel-" + this._drawerActive));
+      }
       slot.classList.toggle("deck-on", on);
       if (!on) return;
 
