@@ -61,7 +61,9 @@ check(/applyDeck: function/.test(dash), 'dashboard.js applies the deck');
 // Plan 1b: the keyboard rule.
 check(/slotShows\(\{[\s\S]{0,300}field:/.test(dash), 'applyDeck passes the field being typed in to slotShows');
 check(/TD\.fieldOf\(/.test(dash) && /editableFocused\(document\)/.test(dash), 'the field comes from fieldOf and ViewportFit.editableFocused');
-check(/addEventListener\("focusin"/.test(dash) && /addEventListener\("focusout"/.test(dash), 'a focus watch reruns applyDeck when focus moves');
+// The page-wide watch: the tab bar's own focusin/focusout listeners (the
+// roving tab stop) must not satisfy this check.
+check(/document\.addEventListener\("focusin", onFocusMove\)/.test(dash) && /document\.addEventListener\("focusout", onFocusMove\)/.test(dash), 'a focus watch reruns applyDeck when focus moves');
 check(/TD\.rememberScroll\(this\._drawerBody\)/.test(dash) && /TD\.restoreScroll\(/.test(dash), 'a stepped-aside tab keeps its scroll place');
 check(/_closeDrawer: function \(\) \{[\s\S]{0,700}this\._aside = null/.test(dash), 'closing a tab forgets a kept scroll place');
 
