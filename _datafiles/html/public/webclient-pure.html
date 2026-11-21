@@ -234,6 +234,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/displayreport.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/screenreader.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/layoutpick.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/touchdeck.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js?v={{ .ASSET_VERSION }}"></script>
@@ -296,6 +297,16 @@
             <label class="theme-choice"><input type="radio" name="site-theme" value="light"> Light</label>
             <label class="theme-choice"><input type="radio" name="site-theme" value="device"> Match my device</label>
           </fieldset>
+          <!-- Touch controls (touch frame plan 1a): buttons above the command
+               box, on this device. Automatic stays off until the deck has
+               buttons (owner, 2026-11-21); Always shows the empty frame now. -->
+          <fieldset id="settings-touch" aria-describedby="touch-note">
+            <legend>Touch controls</legend>
+            <p class="settings-note" id="touch-note">Buttons above the command box for moving and acting. Automatic turns them on for phones and tablets once they have buttons. Always shows them now.</p>
+            <label class="theme-choice"><input type="radio" name="touch-controls" value="auto"> Automatic</label>
+            <label class="theme-choice"><input type="radio" name="touch-controls" value="always"> Always</label>
+            <label class="theme-choice"><input type="radio" name="touch-controls" value="never"> Never</label>
+          </fieldset>
         </div>
         <button type="button" class="brass" id="btn-companion-key" style="display:none" title="Run your companion on your own model key">Companion key</button>
         <!-- Full screen (Calabe 2026-11-03, #774): hidden until the outer page offers it.
@@ -312,6 +323,13 @@
             <span class="ph-btns"><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body"><div id="terminal"></div></div>
         </section>
+
+        <!-- Touch frame (plan 1a): the slot under the game text holds the
+             controls deck, or on a phone the open tab (dashboard.js moves
+             #dash-drawer in). Hidden while it holds neither. -->
+        <div id="touch-slot" hidden>
+          <div id="touch-deck" aria-hidden="true"></div>
+        </div>
 
         <section class="dash-panel" id="panel-cmd" data-panel="cmd">
           <div class="dash-panel-body">
@@ -3825,6 +3843,32 @@
             if (e.key === 'siteTheme') showThemeChoice();
         });
         showThemeChoice();
+
+        // Touch controls: Automatic / Always / Never, on this device
+        // (touchdeck.js). A change applies at once (dashboard.js applyDeck).
+        function touchStore() {
+            try { return window.localStorage; } catch (e) { return null; }
+        }
+        function showTouchChoice() {
+            const choice = window.TouchDeck ? TouchDeck.readPref(touchStore()) : 'auto';
+            document.querySelectorAll('input[name="touch-controls"]').forEach(function (r) {
+                r.checked = (r.value === choice);
+            });
+        }
+        document.querySelectorAll('input[name="touch-controls"]').forEach(function (r) {
+            r.addEventListener('change', function () {
+                if (!r.checked || !window.TouchDeck) return;
+                TouchDeck.writePref(touchStore(), r.value);
+                if (window.Dashboard && Dashboard.applyDeck) Dashboard.applyDeck();
+            });
+        });
+        // Another tab changed it.
+        window.addEventListener('storage', function (e) {
+            if (!window.TouchDeck || e.key !== TouchDeck.KEY) return;
+            showTouchChoice();
+            if (window.Dashboard && Dashboard.applyDeck) Dashboard.applyDeck();
+        });
+        showTouchChoice();
 
         /////////////////////////////////////////////
         //
