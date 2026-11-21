@@ -73,5 +73,22 @@ check(/\.auto-modal \{[^}]*max-height: calc\(100% - 16px\)/.test(css), 'the Auto
 check(/\.auto-modal-body \{[^}]*overflow-y: auto/.test(css) && /\.auto-modal-body \{[^}]*min-height: 0/.test(css), 'the Automation dialog body scrolls, so Cancel and Save stay on screen');
 check(/window\.openAutoModal\s*=\s*function[\s\S]{0,900}setAttribute\("autocapitalize", "off"\)/.test(html), 'the Automation dialog turns off automatic capitals on its fields');
 
+// Plan 1c: phone polish.
+const outer = fs.readFileSync(path.join(root, 'webclient.html'), 'utf8');
+// Phones only: the rule must sit inside the phone media query, because an
+// upright tablet is in phone mode too and keeps its title bar.
+const phoneBlock = (css.match(/@media \(pointer: coarse\) and \(max-width: 599px\), \(pointer: coarse\) and \(max-height: 500px\) \{[\s\S]*?\n\}/) || [''])[0];
+check(/#dashboard\[data-mode="phone"\] #panel-feed > \.dash-panel-head \{ display: none; \}/.test(phoneBlock), 'no Game title bar on a phone, inside the phone media query');
+check(!/^#dashboard\[data-mode="phone"\] #panel-feed > \.dash-panel-head/m.test(css), 'the title bar rule is not outside the phone media query (tablets keep it)');
+check(/\.subtabs \{[^}]*flex-wrap: nowrap;[^}]*overflow-x: auto;/.test(css), 'a phone keeps sub-tabs in one sideways-scrolling row');
+check(/\.subtabs\.fade-left/.test(css) && /\.subtabs\.fade-right/.test(css), 'the row fades at the edge with more to scroll');
+check(/TD\.rowFade\(/.test(dash) && /TD\.scrollLeftToShow\(/.test(dash), 'dashboard.js wires the row fades and scrolls the open sub-tab into view');
+check(/maybePhoneTip: function/.test(dash) && /VF\.takeOnce\(/.test(dash) && /VF\.phoneTip\(/.test(dash), 'dashboard.js shows a phone tip once per device');
+check(/Dashboard\.maybePhoneTip\(\)/.test(html), 'entering the world asks for the phone tip');
+check(/ViewportFit\.isDesktopSite\(/.test(outer) && /setAttribute\('content', 'width=' \+ screen\.width/.test(outer), 'the outer page undoes Desktop site where it can');
+check(/if \(!ViewportFit\.isPhone\(screen\.width, screen\.height\)\) return;\s*if \(!ViewportFit\.isDesktopSite\(/.test(outer), 'only a phone undoes Desktop site (tablets keep today\'s layout)');
+check(/desktopSite: function/.test(outer) && /turnedOff: function/.test(outer) && /canFullScreen: browserCan/.test(outer), 'the outer page tells the game what the tip needs');
+check(!/so every\s+Chat channel stays in sight on a phone/.test(css), 'the 2026-11-07 wrap comment is rewritten');
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails === 0 ? 0 : 1);
