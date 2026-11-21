@@ -14,6 +14,12 @@
 //                    {"tail": 20}, {"eval": "document.title"},
 //                    {"shot": "C:/.../a.png"} ] } ] }
 //
+// A session may carry "emulate": {"width": 360, "height": 800, "dpr": 3,
+// "mobile": true, "touch": true}. It sets the page's size, the screen's size
+// (what ViewportFit.isPhone reads) and touch input before the page loads.
+// Check "matchMedia('(pointer: coarse)').matches" with an "eval" step: the
+// touch layout depends on it.
+//
 // "tail" prints the last N lines of the game terminal. After the password, a
 // "Kick them?" prompt (the character is still linked from an earlier session)
 // is answered yes. Edge picks its own debug port (written to
@@ -151,6 +157,17 @@ async function main() {
     await dt.ready;
     await dt.send('Page.enable');
     for (const s of cfg.sessions) {
+      if (s.emulate) {
+        const e = s.emulate;
+        await dt.send('Emulation.setDeviceMetricsOverride', {
+          width: e.width, height: e.height, deviceScaleFactor: e.dpr || 1,
+          mobile: !!e.mobile, screenWidth: e.width, screenHeight: e.height,
+        });
+        await dt.send('Emulation.setTouchEmulationEnabled', { enabled: !!e.touch, maxTouchPoints: e.touch ? 5 : 0 });
+      } else {
+        await dt.send('Emulation.clearDeviceMetricsOverride');
+        await dt.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+      }
       await dt.send('Page.navigate', { url: cfg.url });
       await sleep(2500);
       await connect(dt);
