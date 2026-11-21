@@ -19,7 +19,9 @@ fragments, since both ride on the same telnet subnegotiation framing.
 - **telnet.go** — telnet option bytes (`TELNET_IAC`, `TELNET_DO`, …) and the
   `TelnetWILL`/`WONT`/`DO`/`DONT` sequence builders.
 - **ansi.go** — ANSI byte constants and payload parsers for mouse clicks,
-  scroll wheel, and screen-size reports.
+  scroll wheel, and screen-size reports. Also `EscapeSeqRe`, the one regexp
+  for an ANSI control sequence (which takes no column), shared by every
+  column counter: `pager.Rows` and `connections.MinCols`.
 - **msp.go** — MSP (MUD Sound Protocol) command bytes and `IsMSPCommand`.
 - **mssp.go** — MSSP field encoding for MUD-listing crawlers.
 - **mtts.go**: terminal type subnegotiation and MTTS: `ParseMTTS` (reads

@@ -1,7 +1,7 @@
 package connections
 
 import (
-	"regexp"
+	"bytes"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -15,21 +15,28 @@ import (
 // on screen above the new line. Only the connection knows what it last wrote,
 // so it keeps the record, set and read under the same lock as the write:
 //
-//   - SendPrompt replaces the prompt on screen and records the new one: its
-//     visible columns and the width the client reported when it was drawn.
+//   - SendPrompt replaces the prompt on screen and records the new one: the
+//     lines before its last (a prompt the game wrapped), its last line's
+//     visible columns, and the width the client reported when it was drawn.
 //   - SendEcho writes the characters a player types at the prompt, which
-//     extend it; anything but printable characters ends the record.
+//     extend its last line; anything but printable characters ends the
+//     record.
 //   - SendReplacingPrompt writes text over the prompt and ends the record.
 //   - Every other write that shows on screen ends the record. Out-of-band
 //     writes (telnet negotiation, GMCP, sound, web client commands) do not.
 //
-// The erase clears every row the recorded prompt fills; with no record, or
-// at an unknown width, it clears one row, as the game always did. Every doubt
-// falls back to one row: a stray row left behind is harmless, while climbing
-// too far would erase game text.
+// The erase clears every row the recorded prompt fills. The lines above the
+// prompt's last line are the game's own line breaks (it wraps the prompt at
+// the player's line width), so they are cleared at any width, even one never
+// reported. The last line's own rows need the width it was drawn at and the
+// width now; without both it counts one row. With no record the erase clears
+// one row, as the game always did. Every doubt falls back to fewer rows: a
+// stray row left behind is harmless, while climbing too far would erase game
+// text.
 type promptRecord struct {
 	on    bool
-	cols  int // visible columns of the prompt and what was typed after it
+	above int // lines of the prompt before its last line
+	cols  int // visible columns of the prompt's last line and what was typed after it
 	width int // the reported screen width when the prompt was drawn
 }
 
@@ -39,18 +46,15 @@ var eraseOneRow = term.AnsiMoveCursorColumn.String() + term.AnsiEraseLine.String
 // eraseRowAbove moves up a row and clears it.
 var eraseRowAbove = term.AnsiMoveCursorUp.String() + term.AnsiEraseLine.String()
 
-// escapeSeqRe matches one ANSI control sequence, which takes no column.
-var escapeSeqRe = regexp.MustCompile("\x1b\\[[0-?]*[ -/]*[@-~]")
-
 // MinCols is the fewest columns text can take on one unbroken row: escape
-// sequences take none, and every other character that shows takes one, even
+// sequences (term.EscapeSeqRe) take none, and every other character that shows takes one, even
 // one a terminal may draw two wide (an emoji, an ambiguous-width bar).
 // Terminals disagree on those widths, so the prompt record measures with
 // this lower bound: counting too few rows leaves a stray row, counting too
 // many would erase game text (#922 second review).
 func MinCols(text string) int {
 	cols := 0
-	for _, r := range escapeSeqRe.ReplaceAllString(text, ``) {
+	for _, r := range term.EscapeSeqRe.ReplaceAllString(text, ``) {
 		if runewidth.RuneWidth(r) > 0 {
 			cols++
 		}
@@ -71,11 +75,23 @@ func promptRows(cols, width int) int {
 // now reporting curWidth (0 when unknown). A screen whose width changed since
 // the prompt was drawn may or may not have reflowed it, so the smaller row
 // count is used: it is never more than the rows actually on screen.
+//
+// A prompt the game wrapped onto several lines clears each line above its
+// last as one row (a line break is a row on any width, and a line the game
+// wrapped fits it, so one row is never more than is there), then the rows of
+// its last line by the rule above.
 func eraseFor(rec promptRecord, curWidth int) string {
-	if !rec.on || rec.width < 1 || curWidth < 1 {
+	if !rec.on {
 		return eraseOneRow
 	}
-	rows := min(promptRows(rec.cols, rec.width), promptRows(rec.cols, curWidth))
+	// The lines above the last are the game's own line breaks, certain at
+	// any width. The last line's rows need the width it was drawn at and the
+	// width now; without both it counts one row.
+	last := 1
+	if rec.width > 0 && curWidth > 0 {
+		last = min(promptRows(rec.cols, rec.width), promptRows(rec.cols, curWidth))
+	}
+	rows := rec.above + last
 	return eraseOneRow + strings.Repeat(eraseRowAbove, rows-1)
 }
 
@@ -104,21 +120,31 @@ func ReportedScreenWidth(id ConnectionId) (int, bool) {
 }
 
 // SendPrompt writes a prompt over the one on screen: the erase for the
-// recorded prompt, then b. cols is b's visible width in columns, measured by
-// the caller with MinCols (markup removed first). The new prompt is recorded
-// only when the client reported a width, the bytes were written (a frozen
-// queue during copyover writes nothing), and the connection is not in ASCII
-// mode, whose substitutions change the width after it was measured.
+// recorded prompt, then b. b may be several lines (a prompt the game wrapped);
+// the connection counts its line breaks itself. cols is the visible width in
+// columns of b's last line, measured by the caller with MinCols (markup
+// removed first). The new prompt is recorded when the bytes were written (a
+// frozen queue during copyover writes nothing). Its width is recorded only
+// when the client reported one and the connection is not in ASCII mode,
+// whose substitutions change the width after it was measured; without a
+// width the prompt's line breaks still count, and its last line counts one
+// row.
 func SendPrompt(id ConnectionId, b []byte, cols int) {
 	width, _ := ReportedScreenWidth(id)
 	ascii := GetClientSettings(id).AsciiMode // read before promptMu: no lock is taken under it
+	above := bytes.Count(b, []byte{'\n'})
 	cd := lookup(id)
 	if cd == nil {
 		return
 	}
 	cd.promptMu.Lock()
 	n, err := cd.writeNLocked(append([]byte(eraseFor(cd.prompt, width)), b...))
-	cd.prompt = promptRecord{on: width > 0 && n > 0 && !ascii, cols: cols, width: width}
+	// ASCII mode changes characters after cols was measured, so its width is
+	// not trusted; its line breaks still are.
+	if ascii {
+		width = 0
+	}
+	cd.prompt = promptRecord{on: n > 0, above: above, cols: cols, width: width}
 	cd.promptMu.Unlock()
 	afterWrite(id, cd, err, "SendPrompt()")
 }
@@ -139,8 +165,10 @@ func SendReplacingPrompt(id ConnectionId, b []byte) {
 }
 
 // SendEcho writes characters a player typed back to them. Printable text
-// extends the recorded prompt, since it is drawn on the prompt's line; any
-// other byte (Enter, a backspace, a control sequence) ends the record.
+// extends the recorded prompt, since it is drawn on the prompt's line. A
+// backspace (term.BACKSPACE_SEQUENCE) keeps the lines above the prompt's last
+// line and counts the last line as one row. Any other byte (Enter, a control
+// sequence) ends the record.
 func SendEcho(id ConnectionId, b []byte) {
 	cd := lookup(id)
 	if cd == nil {
@@ -148,9 +176,15 @@ func SendEcho(id ConnectionId, b []byte) {
 	}
 	cd.promptMu.Lock()
 	n, err := cd.writeNLocked(b)
-	if cd.prompt.on && n > 0 && printable(b) {
+	switch {
+	case cd.prompt.on && n > 0 && printable(b):
 		cd.prompt.cols += MinCols(string(b))
-	} else {
+	case cd.prompt.on && n > 0 && bytes.Equal(b, term.BACKSPACE_SEQUENCE):
+		// The cursor stays on the prompt's last line, so the lines above it
+		// are still the game's own; what is typed on it is no longer
+		// measured, so the last line counts one row.
+		cd.prompt.width = 0
+	default:
 		cd.prompt = promptRecord{}
 	}
 	cd.promptMu.Unlock()

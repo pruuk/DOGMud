@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 )
 
 // Markers carried in the 4-wide marker column. The symbol carries the
@@ -76,12 +78,12 @@ func (m Menu) all() []Entry {
 func Render(m Menu, width int) string {
 	var b strings.Builder
 	if m.Heading != "" {
-		b.WriteString(m.Heading)
+		b.WriteString(strings.Join(wrapLines(m.Heading, width), "\n"))
 		b.WriteString("\n\n")
 	}
 	if len(m.Body) > 0 {
 		for _, para := range m.Body {
-			for _, line := range wrap(para, width) {
+			for _, line := range wrapLines(para, width) {
 				b.WriteString(line)
 				b.WriteString("\n")
 			}
@@ -100,7 +102,7 @@ func Render(m Menu, width int) string {
 		}
 		b.WriteString("\n")
 	}
-	b.WriteString(strings.Join(wrap(footer(m), width), "\n"))
+	b.WriteString(strings.Join(wrapLines(footer(m), width), "\n"))
 	return b.String()
 }
 
@@ -137,7 +139,7 @@ func labelLines(label string, avail int) []string {
 	if avail <= 0 || utf8.RuneCountInString(label) <= avail {
 		return []string{label}
 	}
-	if lines := wrap(label, avail); len(lines) > 0 {
+	if lines := wrapLines(label, avail); len(lines) > 0 {
 		return lines
 	}
 	return []string{label}
@@ -163,7 +165,7 @@ func renderEntry(b *strings.Builder, n, numW int, e Entry, width int) {
 		return
 	}
 	indent := strings.Repeat(" ", len(leftMargin)+numW+2+markerColumn)
-	for _, line := range wrap(e.Detail, width-len(indent)) {
+	for _, line := range wrapLines(e.Detail, width-len(indent)) {
 		b.WriteString(indent)
 		fmt.Fprintf(b, `<ansi fg="%s">%s</ansi>`, lineColor(e), line)
 		b.WriteString("\n")
@@ -210,28 +212,11 @@ func footer(m Menu) string {
 	return "Type a number."
 }
 
-// wrap splits text into lines of at most width visible characters on word
-// boundaries. A single word longer than width gets a line of its own.
-func wrap(text string, width int) []string {
-	var lines []string
-	var cur strings.Builder
-	curLen := 0 // runes in cur
-	for word := range strings.FieldsSeq(text) {
-		wl := utf8.RuneCountInString(word)
-		if curLen > 0 && curLen+1+wl > width {
-			lines = append(lines, cur.String())
-			cur.Reset()
-			curLen = 0
-		}
-		if curLen > 0 {
-			cur.WriteString(" ")
-			curLen++
-		}
-		cur.WriteString(word)
-		curLen += wl
+// wrapLines splits text into lines with the game's one word wrapper,
+// messaging.WrapAnsi. Empty text gives no lines.
+func wrapLines(text string, width int) []string {
+	if text == "" {
+		return nil
 	}
-	if cur.Len() > 0 {
-		lines = append(lines, cur.String())
-	}
-	return lines
+	return strings.Split(messaging.WrapAnsi(text, width), "\n")
 }

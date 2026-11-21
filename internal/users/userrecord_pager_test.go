@@ -64,7 +64,7 @@ func colouredLines(n int) []string {
 
 // Ruling 6: a line the client wraps counts for each row it fills. Ten
 // 39-column lines fit a 16-row screen as lines but fill 20 rows at 36
-// columns, so they page, 6 lines (12 rows) to a page.
+// columns, so they page, 7 lines (14 rows) to a page.
 func TestEndReply_CountsRowsAtTheReaderWidth(t *testing.T) {
 	u := phoneUser(t)
 	for _, l := range colouredLines(10) {
@@ -72,25 +72,49 @@ func TestEndReply_CountsRowsAtTheReaderWidth(t *testing.T) {
 	}
 	first := u.EndReply()
 	require.True(t, u.PagesWaiting(), "a reply that fits in lines but not in rows pages")
-	require.Equal(t, 6, strings.Count(first, "entry "), "13 rows hold 6 two-row lines")
+	require.Equal(t, 7, strings.Count(first, "entry "), "14 rows hold 7 two-row lines")
 }
 
-// Ruling 6: the stop line's own rows are reserved. At 36 columns it fills 2
-// rows, so a 16-row screen holds 13 rows of reply (16 less 2 less 1 for the
-// prompt) and 14 one-row lines page.
+// Ruling 6: the stop line's own rows are reserved. At 36 columns it fits one
+// row, so a 16-row screen holds 14 rows of reply (16 less 1 less 1 for the
+// prompt) and 15 one-row lines page.
 func TestEndReply_ReservesTheStopLinesRows(t *testing.T) {
 	u := phoneUser(t)
-	for _, l := range numbered(13) {
+	for _, l := range numbered(14) {
 		u.HoldReply(l)
 	}
-	require.Equal(t, strings.Join(numbered(13), ""), u.EndReply(), "13 rows fit")
+	require.Equal(t, strings.Join(numbered(14), ""), u.EndReply(), "14 rows fit")
 	require.False(t, u.PagesWaiting())
 
+	for _, l := range numbered(15) {
+		u.HoldReply(l)
+	}
+	first := u.EndReply()
+	require.True(t, u.PagesWaiting(), "15 rows do not")
+	require.Contains(t, first, "line 14\n")
+	require.NotContains(t, first, "line 15\n")
+}
+
+// The stop line is drawn wrapped at WrapWidth, so `set linewidth 20` on an
+// 80-column telnet screen makes it two lines, and both are reserved: a 16-row
+// screen holds 13 one-row lines, not 14.
+func TestEndReply_ReservesTheStopLineWrappedAtTheLineWidth(t *testing.T) {
+	const connId = 18846
+	connections.RegisterTestConnection(connId)
+	t.Cleanup(func() { connections.UnregisterTestConnection(connId) })
+	connections.UpdateClientSettings(connId, func(cs *connections.ClientSettings) {
+		cs.Display.ScreenWidth = 80
+		cs.Display.ScreenHeight = 16
+	})
+	u := NewTestUser(1, "narrow", "Narrowia", connId)
+	u.LineWidth = 20
+	require.Equal(t, 20, u.WrapWidth())
+	require.Equal(t, 13, u.PageRows())
 	for _, l := range numbered(14) {
 		u.HoldReply(l)
 	}
 	first := u.EndReply()
-	require.True(t, u.PagesWaiting(), "14 rows do not")
+	require.True(t, u.PagesWaiting(), "14 rows do not fit beside a two-line stop line")
 	require.Contains(t, first, "line 13\n")
 	require.NotContains(t, first, "line 14\n")
 }
@@ -116,7 +140,7 @@ func TestEndReply_TelnetCountsRowsAtTheNAWSWidth(t *testing.T) {
 // A telnet client that reported its size by the cursor-position report has a
 // width in Display.ScreenWidth without NAWSReported; that width counts too.
 // Ten 80-column lines fill 2 rows each at 40 columns, so a page holds 6 (the
-// 16-row screen less the stop line's 2 rows and the prompt row leaves 13), where
+// 16-row screen less the stop line's row and the prompt row leaves 14), where
 // at the 80-column fallback all ten fit.
 func TestEndReply_TelnetCountsRowsAtAnAnsiReportedWidth(t *testing.T) {
 	const connId = 18845
@@ -132,7 +156,7 @@ func TestEndReply_TelnetCountsRowsAtAnAnsiReportedWidth(t *testing.T) {
 	}
 	first := u.EndReply()
 	require.True(t, u.PagesWaiting(), "ten 2-row lines do not fit 16 rows")
-	require.Equal(t, 6, strings.Count(first, "row "), "6 two-row lines fill 13 rows")
+	require.Equal(t, 7, strings.Count(first, "row "), "7 two-row lines fill 14 rows")
 }
 
 // numbered is n lines "line 1" .. "line n", each ending in a line break, as
@@ -306,7 +330,7 @@ func TestPager_AnOpenQuestionBeatsTheStopLine(t *testing.T) {
 	openQuestion(t, u)
 	prompt := u.CommandPromptBody()
 	require.Contains(t, prompt, "How much gold will you stake?")
-	require.NotContains(t, prompt, "More (page")
+	require.NotContains(t, prompt, "q to stop")
 
 	out, consumed := u.RoutePagerInput("50")
 	require.False(t, consumed)
@@ -335,5 +359,5 @@ func TestCommandPromptBody_IsTheStopLineWhilePagesWait(t *testing.T) {
 	u.EndReply()
 	require.Contains(t, u.CommandPromptBody(), pager.StopLine(1, 3))
 	u.RoutePagerInput("q")
-	require.NotContains(t, u.CommandPromptBody(), "More (page")
+	require.NotContains(t, u.CommandPromptBody(), "q to stop")
 }

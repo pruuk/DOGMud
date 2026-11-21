@@ -576,7 +576,7 @@ stale tokens.
 
 A reply is held with `HoldReply`, then `EndReply` returns the text to write now: the whole reply, or page one with the rest kept (`PagesWaiting`). `RoutePagerInput` handles Enter and `q` at a stop; `FlushPagesInCombat` sends waiting pages whole when a fight starts. Two rules: combat and an open prompt question both send a reply whole; an open question shows instead of the stop line (`CommandPromptBody`) and takes the typed line, while the pages keep waiting. A reply that fits one page after blank page-edge lines are dropped is sent whole.
 
-Pages are counted in screen rows (owner ruling 6, `pager.Pages`) at `PagerWidth() int`: the width the client reported (`reportedScreenWidth`, which is `connections.ReportedScreenWidth`: a websocket's columns from `Display.GetScreenWidth`, a telnet client's `NAWSReported` width, or a `Display.ScreenWidth` other than the 80 a connection starts at, as the cursor-position report sets), else `WrapWidth`. The stop line's own rows at that width are reserved. `PageRows() int` is the page size in rows the pager uses now (0 when paging is off), which `set pagesize` reports.
+Pages are counted in screen rows (owner ruling 6, `pager.Pages`) at `PagerWidth() int`: the width the client reported (`reportedScreenWidth`, which is `connections.ReportedScreenWidth`: a websocket's columns from `Display.GetScreenWidth`, a telnet client's `NAWSReported` width, or a `Display.ScreenWidth` other than the 80 a connection starts at, as the cursor-position report sets), else `WrapWidth`. The stop line's own rows are reserved as it is drawn: word wrapped at `WrapWidth` (as `CommandPromptBody` wraps it), each line counted at `PagerWidth`. `PageRows() int` is the page size in rows the pager uses now (0 when paging is off), which `set pagesize` reports.
 
 ## Online User Information
 
@@ -639,12 +639,15 @@ only reader of `GetLineWidth` that wraps.
 ### Drawing the prompt (#922, `userrecord.prompt.go`)
 
 `CommandPromptBody() string` is the prompt to draw (an open question, else
-the pager's stop line, else the player's prompt, then what they typed and a
-telnet go-ahead). It clears nothing. Every sender draws it with
+the pager's stop line, else the player's prompt, word wrapped to
+`WrapWidth()` by `messaging.WrapPrompt`, then what they typed and a telnet
+go-ahead). A prompt that fits is unchanged byte for byte; a longer one breaks
+between words, never mid-bar. It clears nothing. Every sender draws it with
 `SendCommandPrompt(connId, prompt, sent)`, which hands it to
-`connections.SendPrompt` with its width from `PromptCols(prompt)` (tags,
-escapes and the go-ahead take no columns, every other character one:
-`connections.MinCols`, a lower bound); the connection clears every row of
+`connections.SendPrompt` with its last line's width from `PromptCols(prompt)`
+(tags, escapes and the go-ahead take no columns, every other character one:
+`connections.MinCols`, a lower bound; the connection counts the lines above
+from the line breaks it writes); the connection clears every row of
 the prompt on screen and records the new one (`internal/connections`
 `prompt.go`). Text that replaces the prompt goes through
 `connections.SendReplacingPrompt`. There is no `GetCommandPrompt`: a sender

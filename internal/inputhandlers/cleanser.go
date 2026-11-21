@@ -28,7 +28,8 @@ func CleanserInputHandler(clientInput *connections.ClientInput, sharedState map[
 		//connections.SendTo([]byte(term.AnsiMoveCursorBackward.String()+" "+term.AnsiMoveCursorBackward.String()), connDetails.UniqueId())
 		// send backspace, space, backspace
 		if len(clientInput.Buffer) > 0 {
-			connections.SendTo([]byte{term.ASCII_BACKSPACE, term.ASCII_SPACE, term.ASCII_BACKSPACE}, clientInput.ConnectionId)
+			// An echo, so the prompt record keeps the prompt's lines (#922).
+			connections.SendEcho(clientInput.ConnectionId, term.BACKSPACE_SEQUENCE)
 
 			// Handle UTF-8 properly by removing the last complete character (rune)
 			bufferStr := string(clientInput.Buffer)

@@ -26,6 +26,17 @@ func TestEraseFor(t *testing.T) {
 		{"narrowed since: the rows as drawn", promptRecord{on: true, cols: 60, width: 36}, 20, eraseOneRow + up},
 		{"width unknown now", promptRecord{on: true, cols: 60, width: 36}, 0, eraseOneRow},
 		{"width unknown when drawn", promptRecord{on: true, cols: 60, width: 0}, 36, eraseOneRow},
+		// A prompt of several lines (wrapped by the game, messaging.WrapPrompt):
+		// each line above the last is one row, then the last line's rows.
+		{"two lines", promptRecord{on: true, above: 1, cols: 20, width: 36}, 36, eraseOneRow + up},
+		{"three lines", promptRecord{on: true, above: 2, cols: 20, width: 36}, 36, eraseOneRow + up + up},
+		{"a line above and a last line of two rows", promptRecord{on: true, above: 1, cols: 60, width: 36}, 36, eraseOneRow + up + up},
+		{"two lines, widened since", promptRecord{on: true, above: 1, cols: 60, width: 36}, 100, eraseOneRow + up},
+		// The game wrote the line breaks itself, so the lines above the last
+		// are certain at any width; only the last line's own rows need one.
+		{"two lines, width unknown now", promptRecord{on: true, above: 1, cols: 20, width: 36}, 0, eraseOneRow + up},
+		{"two lines, width unknown when drawn (telnet without NAWS)", promptRecord{on: true, above: 1, cols: 60, width: 0}, 36, eraseOneRow + up},
+		{"three lines, width never known", promptRecord{on: true, above: 2, cols: 60, width: 0}, 0, eraseOneRow + up + up},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, eraseFor(tt.rec, tt.curWidth))
@@ -158,8 +169,9 @@ func TestPrompt_TypingExtendsThePrompt(t *testing.T) {
 	require.Equal(t, 2, rowsClearedBefore(t, r, "<M1>"))
 }
 
-// A backspace or any control byte ends the record: one row, never too many.
-func TestPrompt_ABackspaceEndsTheRecord(t *testing.T) {
+// After a backspace a one-line prompt the terminal wrapped clears one row:
+// only the game's own line breaks are counted, never too many.
+func TestPrompt_ABackspaceClearsOneRowOfATerminalWrappedPrompt(t *testing.T) {
 	id, r := promptScreen(t, 36)
 	SendPrompt(id, []byte(wrapped), 60)
 	SendEcho(id, []byte("\b \b"))
@@ -219,13 +231,43 @@ func TestPrompt_ADroppedPromptIsNotRecorded(t *testing.T) {
 }
 
 // ASCII mode swaps or drops characters after the prompt was measured, so a
-// prompt there is not recorded (second review).
-func TestPrompt_AsciiModeIsNotRecorded(t *testing.T) {
+// prompt's width is not trusted there (second review): a one-line prompt
+// clears one row.
+func TestPrompt_AsciiModeClearsOneRowOfAOneLinePrompt(t *testing.T) {
 	id, r := promptScreen(t, 36)
 	UpdateClientSettings(id, func(cs *ClientSettings) { cs.AsciiMode = true })
 	SendPrompt(id, []byte(wrapped), 60)
 	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
 	require.Equal(t, 1, rowsClearedBefore(t, r, "<M1>"))
+}
+
+// twoLines is a prompt the game wrapped onto two lines; its last line is 20
+// columns.
+var twoLines = strings.Repeat("a", 30) + "\n" + strings.Repeat("b", 20)
+
+// A prompt of two lines is cleared whole by the text that replaces it and by
+// the prompt drawn over it.
+func TestPrompt_ATwoLinePromptIsClearedWhole(t *testing.T) {
+	id, r := promptScreen(t, 36)
+	SendPrompt(id, []byte(twoLines), 20)
+	SendReplacingPrompt(id, []byte("<M1>A cold wind blows.\n"))
+	require.Equal(t, 2, rowsClearedBefore(t, r, "<M1>"), "replacing text")
+
+	SendPrompt(id, []byte(twoLines), 20)
+	SendPrompt(id, []byte("<M2>"+twoLines), 20)
+	require.Equal(t, 2, rowsClearedBefore(t, r, "<M2>"), "a redraw")
+	SendReplacingPrompt(id, []byte("<M3>A line.\n"))
+	require.Equal(t, 2, rowsClearedBefore(t, r, "<M3>"), "the redrawn prompt is two lines too")
+}
+
+// What the player types after a wrapped prompt extends its last line: 20
+// columns drawn and 20 typed fill two rows at 36, under the line above.
+func TestPrompt_TypingAfterAWrappedPromptExtendsTheLastLine(t *testing.T) {
+	id, r := promptScreen(t, 36)
+	SendPrompt(id, []byte(twoLines), 20)
+	SendEcho(id, []byte(strings.Repeat("t", 20)))
+	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
+	require.Equal(t, 3, rowsClearedBefore(t, r, "<M1>"))
 }
 
 // With no width reported the rows are unknown: one row, as always.
@@ -234,4 +276,41 @@ func TestPrompt_UnknownWidthClearsOneRow(t *testing.T) {
 	SendPrompt(id, []byte(strings.Repeat("p", 200)), 200)
 	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
 	require.Equal(t, 1, rowsClearedBefore(t, r, "<M1>"))
+}
+
+// The line breaks in a prompt are the game's own (it wrapped the prompt at
+// the player's line width), so they are certain even when the client never
+// reported a width (telnet without NAWS, `set linewidth 40`): every line
+// above the last is cleared, and the last line counts one row. Without
+// this the first line stayed on screen above any text that arrived.
+func TestPrompt_UnknownWidthStillClearsTheGamesOwnLines(t *testing.T) {
+	id, r := promptScreen(t, 0)
+	SendPrompt(id, []byte(twoLines), 20)
+	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
+	require.Equal(t, 2, rowsClearedBefore(t, r, "<M1>"))
+}
+
+// A backspace echo leaves the cursor on the prompt's last line, so the lines
+// above it are still the game's own and still cleared; the last line counts
+// one row, since what was typed on it is no longer measured (review of the
+// prompt wrap, 2026-11-21: a backspace then a round tick showed the first
+// line twice).
+func TestPrompt_ABackspaceKeepsTheLinesAbove(t *testing.T) {
+	id, r := promptScreen(t, 36)
+	SendPrompt(id, []byte(twoLines), 20)
+	SendEcho(id, []byte("x"))
+	SendEcho(id, []byte{8, ' ', 8})
+	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
+	require.Equal(t, 2, rowsClearedBefore(t, r, "<M1>"))
+}
+
+// ASCII mode changes characters, never line breaks: a two-line prompt there
+// clears both lines (its last line counts one row, since its width is not
+// trusted).
+func TestPrompt_AsciiModeStillClearsTheGamesOwnLines(t *testing.T) {
+	id, r := promptScreen(t, 36)
+	UpdateClientSettings(id, func(cs *ClientSettings) { cs.AsciiMode = true })
+	SendPrompt(id, []byte(twoLines), 20)
+	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
+	require.Equal(t, 2, rowsClearedBefore(t, r, "<M1>"))
 }

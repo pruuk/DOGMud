@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-11-21: Prompts fit narrow screens
+
+- The line that shows when a long answer comes a page at a time is now short: "Page 1 of 3: Enter, q to stop".
+- On a narrow screen, such as a phone, your prompt, that line and questions now break between words instead of in the middle of one.
+- Menu headings now wrap to fit your screen.
+
 ## 2026-11-21: Open tabs no longer hide the newest game text on phones
 
 - On a phone, opening a tab such as Comms or the Map now moves the game text up to make room, so the newest line, including what you just said, stays in view above the tab. It used to sit hidden behind the tab.

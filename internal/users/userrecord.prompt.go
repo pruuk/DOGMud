@@ -355,6 +355,19 @@ func compiledFightTemplate(tmpl string) string {
 	return compiled
 }
 
+// SendReplacingPrompt writes b (ready to send) over the prompt on screen
+// (connections.SendReplacingPrompt), which erases every row of it, an open
+// question included. So it also forgets the question the redraw last drew
+// (PromptDrawnTempKey): the redraw that follows must draw it again, not skip
+// it as unchanged. Every write of text over a player's prompt goes through
+// here.
+func (u *UserRecord) SendReplacingPrompt(b []byte) {
+	connections.SendReplacingPrompt(u.connectionId, b)
+	u.sessionMu.Lock()
+	delete(u.tempDataStore, PromptDrawnTempKey)
+	u.sessionMu.Unlock()
+}
+
 // SendCommandPrompt draws prompt (a CommandPromptBody, tags still in it) as
 // sent, already parsed or not as the connection takes it, over the prompt
 // on screen (connections.SendPrompt). For callers outside the world lock,
@@ -363,18 +376,20 @@ func SendCommandPrompt(connId uint64, prompt string, sent string) {
 	connections.SendPrompt(connId, []byte(sent), PromptCols(prompt))
 }
 
-// PromptCols is the fewest columns prompt (a CommandPromptBody) can fill on
-// one unbroken line (connections.MinCols): its tags, escape sequences and
-// telnet go-ahead take none.
+// PromptCols is the fewest columns the last line of prompt (a
+// CommandPromptBody, which may be wrapped onto several lines) can fill
+// (connections.MinCols): its tags, escape sequences and telnet go-ahead take
+// none. connections.SendPrompt counts the lines above it from the line
+// breaks it writes.
 func PromptCols(prompt string) int {
 	visible := ansitags.Parse(strings.TrimSuffix(prompt, term.TelnetGoAhead.String()), ansitags.StripTags)
-	return connections.MinCols(visible)
+	return connections.MinCols(visible[strings.LastIndexByte(visible, '\n')+1:])
 }
 
 // CommandPromptBody is the prompt to draw now: an open question, else the
-// pager's stop line, else the player's prompt, then what they have typed
-// and a telnet go-ahead when the client asks for one. It clears nothing;
-// the sender clears the old prompt.
+// pager's stop line, else the player's prompt, word wrapped to WrapWidth,
+// then what they have typed and a telnet go-ahead when the client asks for
+// one. It clears nothing; the sender clears the old prompt.
 func (u *UserRecord) CommandPromptBody() string {
 
 	promptOut := ``
@@ -456,6 +471,19 @@ func (u *UserRecord) CommandPromptBody() string {
 			promptOut = u.ProcessPromptString(promptDefaultCompiled)
 		}
 
+	}
+
+	// Every prompt is word wrapped here, at the width game text uses, by the
+	// one prompt wrapper (messaging.WrapPrompt): a long one breaks between
+	// words, not mid-word or mid-bar, and a prompt that fits is unchanged.
+	// What the player has typed follows on the last line. Two readers get the
+	// prompt whole, as before prompts wrapped: a connection on the AI port
+	// (no screen; an agent reads the prompt as one line, as the pager leaves
+	// its replies whole), and a client that asked for the telnet go-ahead (a
+	// MUD client finds the prompt by that signal, wraps the line itself, and
+	// its triggers and gauges read it as one line; owner, 2026-11-21).
+	if !u.onAIPort() && goAhead == `` {
+		promptOut = messaging.WrapPrompt(promptOut, u.WrapWidth())
 	}
 
 	unsent, suggested := u.GetUnsentText()

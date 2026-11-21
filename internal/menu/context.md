@@ -12,7 +12,7 @@ send the text. Part of the quest-arc phase 0 work (#375).
 
 | File | What it holds |
 |---|---|
-| `menu.go` | `Entry`, `Menu`, the `Marker*` constants, `Render`, column layout, word wrap |
+| `menu.go` | `Entry`, `Menu`, the `Marker*` constants, `Render`, column layout; all word wrapping (heading, body, labels, details, footer) goes through `messaging.WrapAnsi` |
 | `resolve.go` | `ResultKind`, `Result`, `Resolve`, `Confirm` |
 | `lines.go` | `CloseReason`, `InterruptLine`, `FollowLines` |
 | `lint.go` | `LintLabels` |
