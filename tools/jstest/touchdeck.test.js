@@ -76,16 +76,51 @@ check('a phone on its side with 220px: 44px and it fits', [sideShort.button, sid
 check('an upright deck is not a side column', p360.side, false);
 
 // What the slot under the game text shows.
-function shows(phone, tabOpen, deckOn, keyboard) {
-    return TD.slotShows({ phone: phone, tabOpen: tabOpen, deckOn: deckOn, keyboard: keyboard });
+function shows(phone, tabOpen, deckOn, keyboard, field) {
+    return TD.slotShows({ phone: phone, tabOpen: tabOpen, deckOn: deckOn, keyboard: keyboard, field: field });
 }
-check('phone, a tab open: the tab', shows(true, true, true, false), 'tab');
-check('phone, a tab open, deck off: the tab', shows(true, true, false, false), 'tab');
-check('phone, a tab open, keyboard up: the tab stays (plan 1b changes this)', shows(true, true, true, true), 'tab');
-check('deck on, nothing open: the deck', shows(true, false, true, false), 'deck');
-check('deck on, keyboard up: empty (the keyboard covers the deck)', shows(true, false, true, true), 'empty');
-check('deck off, nothing open: empty', shows(true, false, false, false), 'empty');
-check('not a phone: a tab is a card elsewhere, the slot keeps the deck', shows(false, true, true, false), 'deck');
-check('not a phone, deck off: empty', shows(false, true, false, false), 'empty');
+check('phone, a tab open: the tab', shows(true, true, true, false, null), 'tab');
+check('phone, a tab open, deck off: the tab', shows(true, true, false, false, null), 'tab');
+// Plan 1b: typing in the command box sets the tab aside; the game text gets the room.
+check('phone, a tab open, typing in the command box: empty', shows(true, true, true, true, 'command'), 'empty');
+check('phone, a tab open, deck off, typing in the command box: empty', shows(true, true, false, true, 'command'), 'empty');
+check('phone, a tab open, typing in another field: the tab stays', shows(true, true, true, true, 'other'), 'tab');
+check('phone, a tab open, command box focused but no keyboard (a hardware keyboard): the tab', shows(true, true, true, false, 'command'), 'tab');
+check('deck on, nothing open: the deck', shows(true, false, true, false, null), 'deck');
+check('deck on, keyboard up: empty (the keyboard covers the deck)', shows(true, false, true, true, 'command'), 'empty');
+check('deck on, keyboard up for another field: empty', shows(true, false, true, true, 'other'), 'empty');
+check('deck off, nothing open: empty', shows(true, false, false, false, null), 'empty');
+check('not a phone: a tab is a card elsewhere, the slot keeps the deck', shows(false, true, true, false, null), 'deck');
+check('not a phone, typing in the command box: empty (the keyboard covers the deck)', shows(false, true, true, true, 'command'), 'empty');
+check('not a phone, deck off: empty', shows(false, true, false, false, null), 'empty');
+
+// Which field the player is typing in (plan 1b).
+check('nothing editable has focus: no field', TD.fieldOf('command-input', false), null);
+check('the command box', TD.fieldOf('command-input', true), 'command');
+check('another text field', TD.fieldOf('auto-modal-name', true), 'other');
+check('a text field with no id', TD.fieldOf('', true), 'other');
+
+// The scroll place of a tab that steps aside (plan 1b).
+function el(top) { return { scrollTop: top }; }
+function box(own, kids) {
+    return { scrollTop: own, querySelectorAll: function (sel) { return sel === '*' ? kids : []; } };
+}
+var a = el(120), b = el(0), c = el(37);
+var root = box(0, [a, b, c]);
+var saved = TD.rememberScroll(root);
+check('only scrolled elements are kept', saved.length, 2);
+a.scrollTop = 0; c.scrollTop = 0;
+TD.restoreScroll(saved);
+check('a scrolled element comes back to its place', a.scrollTop, 120);
+check('a second one too', c.scrollTop, 37);
+check('an unscrolled one stays at the top', b.scrollTop, 0);
+var scrolledRoot = box(55, []);
+var savedRoot = TD.rememberScroll(scrolledRoot);
+scrolledRoot.scrollTop = 0;
+TD.restoreScroll(savedRoot);
+check('the root itself is kept', scrolledRoot.scrollTop, 55);
+check('no root: nothing kept', TD.rememberScroll(null).length, 0);
+TD.restoreScroll(null);
+check('restoring nothing does nothing', true, true);
 
 process.exit(failures ? 1 : 0);
