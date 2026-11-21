@@ -6,6 +6,11 @@
 - On a narrow screen, such as a phone, your prompt, that line and questions now break between words instead of in the middle of one.
 - Menu headings now wrap to fit your screen.
 
+## 2026-11-21: Open tabs no longer hide the newest game text on phones
+
+- On a phone, opening a tab such as Comms or the Map now moves the game text up to make room, so the newest line, including what you just said, stays in view above the tab. It used to sit hidden behind the tab.
+- Settings has a new Touch controls section. Its buttons arrive in a later update; for now, Always shows where they will go.
+
 ## 2026-11-19: The web client fills the screen in desktop mode
 
 - On an Android tablet, or a phone with Chrome's "Desktop site" turned on, the web client used only the top third of the screen. It now fills the screen.

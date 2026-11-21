@@ -177,7 +177,8 @@
    moves into its WinBox, so the border follows it there. Faces is today's
    antique gold, so a client without Char.Sight looks as it always did. */
 #panel-feed,
-#panel-feed + #panel-cmd {
+#panel-feed ~ #touch-slot,
+#panel-feed ~ #panel-cmd {
   --sight-dark:    #3a2d17;   /* near black, a darkened antique gold */
   --sight-shapes:  #7a6232;   /* dim, a muted gold */
   --sight-faces:   var(--antique-gold);
@@ -188,10 +189,17 @@
 #panel-feed.sight-shapes  { border-color: var(--sight-shapes); }
 #panel-feed.sight-faces   { border-color: var(--sight-faces); }
 #panel-feed.sight-dazzled { border-color: var(--sight-dazzled); box-shadow: 0 0 6px var(--sight-dazzled); }
-#panel-feed.sight-dark    + #panel-cmd { border-color: var(--sight-dark); }
-#panel-feed.sight-shapes  + #panel-cmd { border-color: var(--sight-shapes); }
-#panel-feed.sight-faces   + #panel-cmd { border-color: var(--sight-faces); }
-#panel-feed.sight-dazzled + #panel-cmd { border-color: var(--sight-dazzled); }
+/* The touch slot (plan 1a) may sit between the game window and the command
+   box, so these reach them with ~, not +. A popped-out game window leaves
+   the column, and then none of them match, as before. */
+#panel-feed.sight-dark    ~ #touch-slot { border-color: var(--sight-dark); }
+#panel-feed.sight-shapes  ~ #touch-slot { border-color: var(--sight-shapes); }
+#panel-feed.sight-faces   ~ #touch-slot { border-color: var(--sight-faces); }
+#panel-feed.sight-dazzled ~ #touch-slot { border-color: var(--sight-dazzled); }
+#panel-feed.sight-dark    ~ #panel-cmd { border-color: var(--sight-dark); }
+#panel-feed.sight-shapes  ~ #panel-cmd { border-color: var(--sight-shapes); }
+#panel-feed.sight-faces   ~ #panel-cmd { border-color: var(--sight-faces); }
+#panel-feed.sight-dazzled ~ #panel-cmd { border-color: var(--sight-dazzled); }
 /* Terminal MUST be a bounded box, else xterm can't virtualize scrollback and
    re-renders every accumulated line on each write (progressive sluggishness). */
 #panel-feed #terminal { width: 100%; height: 100%; }
@@ -226,15 +234,60 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 /* The command box is the Game window's bottom strip: one frame, no gap, so
    the prompt sits right above where the player types. Only while the two are
    neighbours; a popped-out Game window leaves the box as its own card. */
-#panel-feed:has(+ #panel-cmd) {
+#panel-feed:has(~ #panel-cmd) {
   border-bottom-width: 0;
   border-bottom-left-radius: 0; border-bottom-right-radius: 0;
 }
-#panel-feed + #panel-cmd {
+#panel-feed ~ #panel-cmd {
   margin-top: calc(-1 * var(--dash-gap, 6px));
   border-color: var(--sight-faces);
   border-top-left-radius: 0; border-top-right-radius: 0;
   transition: border-color 0.4s ease;
+}
+
+/* Touch frame (spec 2026-11-21, plan 1a). The slot between the game text
+   and the command box holds the controls deck, or on a phone the open tab
+   (dashboard.js moves #dash-drawer in), so an open tab pushes the game text
+   up instead of covering its newest lines. It is part of the game window's
+   frame: side borders in the sight colour, no gap above or below. Hidden
+   while it holds neither. touchdeck.js picks what it shows (data-shows) and
+   the deck's shape; dashboard.js sets the --deck-* variables. */
+#touch-slot {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: calc(-1 * var(--dash-gap, 6px));
+  border: 0 solid var(--sight-faces);
+  border-left-width: 1px;
+  border-right-width: 1px;
+  background: var(--panel-bg);
+  transition: border-color 0.4s ease;
+}
+#touch-slot[hidden] { display: none; }
+#touch-deck {
+  display: grid;
+  grid-template-columns: repeat(var(--deck-cols, 6), var(--deck-btn, 48px));
+  grid-auto-rows: var(--deck-btn, 48px);
+  gap: var(--deck-gap, 8px);
+  padding: var(--deck-pad, 8px);
+  justify-content: center;
+  background: var(--ink-deep);
+  border-top: 2px solid var(--gold-rule);
+}
+#touch-slot[data-shows="tab"] #touch-deck { display: none; }
+#touch-slot[data-shows="empty"] #touch-deck { display: none; }
+/* An empty slot until the server sends buttons (spec 2 onward). */
+.deck-slot {
+  border: 1px dashed var(--brass-border);
+  border-radius: 6px;
+}
+/* The divider between the deck and the command box: a wider gap and a line
+   (roadmap fat-finger rules), only while the deck is on. */
+#touch-slot.deck-on::after {
+  content: "";
+  flex: 0 0 12px;
+  background: linear-gradient(var(--gold-rule), var(--gold-rule)) center / calc(100% - 40px) 2px no-repeat;
 }
 
 /* Per-panel stack proportions (flex-basis 0 → grow ratios set the heights;
@@ -1103,6 +1156,26 @@ html.layout-column.keyboard-open #dash-drawer {
 #dashboard:not([data-mode="wide"]) .ph-popout,
 #dash-drawer .ph-popout { display: none; }
 
+/* On a phone the tab card lives in the touch slot (dashboard.js
+   _placeDrawer), so it is part of the game column's stack: the game text
+   above it shrinks and stays on its newest line. It keeps its caps
+   (--drawer-cap: 30%, the Map 45%, 30% of what is visible with the keyboard
+   up) and every #dash-drawer rule inside it. Column and slim keep the
+   floating card above. */
+#touch-slot #dash-drawer {
+  position: static;
+  left: auto; right: auto; bottom: auto;
+  z-index: auto;
+  transform: none;
+  visibility: visible;
+  transition: none;
+  border-top: 2px solid var(--gold-rule);
+}
+#touch-slot #dash-drawer:not(.open) { display: none; }
+/* A tab shorter than the deck keeps the deck's height, so opening Health or
+   Quests does not make the game text jump. */
+#touch-slot.deck-on #dash-drawer.open { min-height: var(--deck-h); }
+
 /* ------------------------------------------------------------------ */
 /* Sub-tabs: Chat channels, Inventory, Automation (Malia 2026-11-01)   */
 /* ------------------------------------------------------------------ */
@@ -1221,6 +1294,29 @@ html.layout-column.keyboard-open #dash-drawer {
   #dash-tabbar,
   #dash-drawer { --tabname-h: 0px; }
   html:not(.fullscreen-on) .chat-fs-hint { display: block; }
+}
+/* A phone on its side with the deck on: the deck is a side column beside
+   the game text and the command box (roadmap, Devices; four rows of three,
+   touchdeck.js shape). No divider beside it. A tab still opens under the
+   game text. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  #dashboard[data-mode="phone"] #dash-col-center:has(> #touch-slot[data-shows="deck"]) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
+    column-gap: var(--dash-gap, 6px);
+    row-gap: 0;
+  }
+  #dashboard[data-mode="phone"] #dash-col-center:has(> #touch-slot[data-shows="deck"]) > #panel-feed { grid-column: 1; grid-row: 1; }
+  #dashboard[data-mode="phone"] #dash-col-center:has(> #touch-slot[data-shows="deck"]) > #panel-cmd { grid-column: 1; grid-row: 2; margin-top: 0; }
+  #dashboard[data-mode="phone"] #dash-col-center:has(> #touch-slot[data-shows="deck"]) > #touch-slot {
+    grid-column: 2; grid-row: 1 / span 2;
+    align-self: start;
+    margin-top: 0;
+    border-width: 1px;
+    border-radius: 6px;
+  }
+  #dashboard[data-mode="phone"] #touch-slot[data-shows="deck"]::after { display: none; }
 }
 @media (display-mode: standalone) {
   html:not(.fullscreen-on) .chat-fs-hint { display: none; }
