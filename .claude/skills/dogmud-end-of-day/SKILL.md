@@ -182,6 +182,25 @@ removed, and every item left with its reason.
 
 ## 4. Handoff
 
+**First, settle every issue today's merges named** (owner, 2026-11-21). PRs
+say "Part of #N", so nothing closes on its own; on 2026-11-21 an audit of 185
+open issues found finished work still open. List the issues named by PRs
+merged today that are still open:
+
+```bash
+for pr in $(gh pr list --repo pruuk/DOGMud --state merged --search "merged:>=$(date +%F)" --json number --jq '.[].number'); do
+  gh pr view $pr --repo pruuk/DOGMud --json title,body --jq '.title+"\n"+.body' | grep -o '#[0-9]\+' | tr -d '#'
+done | sort -un | while read n; do
+  gh issue view $n --repo pruuk/DOGMud --json number,state,title --jq 'select(.state=="OPEN") | "#\(.number) \(.title)"' 2>/dev/null
+done
+```
+
+Check each against master (its asks, checkboxes and widening comments). If
+it is finished, close it with a line naming the PR. If it moved, comment what
+landed and what is left. If it was only mentioned, do nothing (the
+`dogmud-shipping` skill, "After every merge", has the commands). Name the
+issues closed and commented in the handoff.
+
 Write or update the day's `project-session-handoff-YYYY-MM-DD` memory:
 what merged, what is open and on which branch, what is waiting on someone
 else, the issues filed or closed today, and every trap the day found.
@@ -196,8 +215,7 @@ The memory index is pointers only, so it stops overflowing:
   2026-10-05). Every defect or idea found today that is not already an issue
   gets filed (`gh issue create --repo pruuk/DOGMud`, `bug` or `enhancement`
   plus an `area:*` label; `owner-decision` when it needs a ruling; milestone
-  `1.0` when it blocks 1.0). Close issues that today's merges fixed, with the
-  PR number. `status.md` and the handoff cite issue numbers instead of
+  `1.0` when it blocks 1.0). `status.md` and the handoff cite issue numbers instead of
   restating bugs. Exploit-class defects live on master stay out of public
   issues: tell the owner and use a private security advisory.
 - In `MEMORY.md`, update only the one "Start here" line so it links the new
