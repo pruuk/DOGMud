@@ -490,7 +490,7 @@ check('the fold handler lives in initCollapse, which init calls',
     /initCollapse: function \(\) \{[\s\S]*?panel\.classList\.toggle\("collapsed"\)/.test(SRC) &&
     /this\.initCollapse\s*&& this\.initCollapse\(\);/.test(SRC), true);
 check('opening the phone card uses the same helper',
-    /this\._scrollChatToNewest\(panel\);\s*(this\._showOpenSubtab\(panel\);\s*)?this\._updateTabbarActive\(name\);/.test(SRC), true);
+    /this\._scrollChatToNewest\(panel\);\s*this\._updateTabbarActive\(name\);/.test(SRC), true);
 
 // --- init seeds the game width the page gives it (plan 5, Task 8) ------------
 //

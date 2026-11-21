@@ -811,10 +811,12 @@
       // would show the oldest messages, so once the card is open, jump back
       // to the newest one.
       this._scrollChatToNewest(panel);
-      this._showOpenSubtab(panel);
 
       this._updateTabbarActive(name);
       this.applyDeck();
+      // After applyDeck: on a phone the card is in the slot, which is hidden
+      // until applyDeck shows it, and a hidden row measures 0 wide (plan 1c).
+      this._showOpenSubtab(panel);
     },
 
     // Show the newest Chat messages. Hiding a panel's body (a fold, a move
