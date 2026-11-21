@@ -548,7 +548,7 @@ check('the arrangement follows Health and the panel area',
     /new ResizeObserver\([\s\S]*?_arrangeColumn\(\)[\s\S]*?observe\(document\.getElementById\("vitals-bars"\)\)/.test(SRC)
     && /observe\(document\.getElementById\("dash-panels"\)\)/.test(SRC), true);
 check('_apply arranges the column even when the mode is unchanged',
-    /if \(newMode === this\.mode\) \{ this\._arrangeColumn\(\); return; \}/.test(SRC), true);
+    /if \(newMode === this\.mode\) \{ this\._arrangeColumn\(\); this\.applyDeck\(\); return; \}/.test(SRC), true);
 check('the keyboard keeps the arrangement',
     /_arrangeColumn: function[\s\S]*?keyboard-open[\s\S]*?LayoutPick\.columnMap\(/.test(SRC), true);
 
