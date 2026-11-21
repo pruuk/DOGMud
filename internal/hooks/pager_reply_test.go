@@ -49,7 +49,7 @@ func TestPager_ALongReplyShowsPageOneAndTheStopLine(t *testing.T) {
 	require.Eventually(t, func() bool {
 		s := lf(screen)
 		return strings.Contains(s, "reply 10\n") && !strings.Contains(s, "reply 11\n") &&
-			strings.Contains(visibleLastLine(s), "More (page 1 of 3)")
+			strings.Contains(visibleLastLine(s), "Page 1 of 3: Enter, q to stop")
 	}, time.Second, 10*time.Millisecond, "screen %q", screen.bytes())
 }
 
@@ -60,7 +60,7 @@ func TestPager_AShortReplyIsSentUnchanged(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return strings.Contains(lf(screen), "reply 1\nreply 2\nreply 3\n")
 	}, time.Second, 10*time.Millisecond, "screen %q", screen.bytes())
-	require.NotContains(t, screen.bytes(), "More (page")
+	require.NotContains(t, screen.bytes(), "q to stop")
 }
 
 func TestPager_AnUnmarkedLineGoesOutDuringAStop(t *testing.T) {
@@ -71,7 +71,7 @@ func TestPager_AnUnmarkedLineGoesOutDuringAStop(t *testing.T) {
 	RedrawPrompt_SendRedraw(events.RedrawPrompt{UserId: 1})
 	require.Eventually(t, func() bool {
 		s := screen.bytes()
-		return strings.Contains(s, "A wolf bites you!") && strings.Contains(visibleLastLine(s), "More (page 1 of 3)")
+		return strings.Contains(s, "A wolf bites you!") && strings.Contains(visibleLastLine(s), "Page 1 of 3: Enter, q to stop")
 	}, time.Second, 10*time.Millisecond, "screen %q", screen.bytes())
 }
 

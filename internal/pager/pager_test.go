@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,9 +21,11 @@ func TestSize(t *testing.T) {
 		{"a setting wins for a screen reader too", 50, 80, 80, 30, true, 30, true},
 		{"a screen reader without a setting gets the fixed size", 50, 80, 80, 0, true, ScreenReaderSize, true},
 		{"the screen less a one-row stop line and the prompt", 24, 80, 80, 0, false, 22, true},
-		{"a 36-column phone: the stop line fills 2 rows", 16, 36, 36, 0, false, 13, true},
-		{"a 30-column phone: the stop line fills 3 rows", 16, 30, 30, 0, false, 12, true},
-		{"an 80-column screen wrapping at 38 (set linewidth): the stop line is 2 lines", 16, 80, 38, 0, false, 13, true},
+		{"a 36-column phone: the stop line fits 1 row", 16, 36, 36, 0, false, 14, true},
+		{"a 30-column phone: the stop line fits 1 row", 16, 30, 30, 0, false, 14, true},
+		{"a 20-column screen: the stop line fills 2 rows", 16, 20, 20, 0, false, 13, true},
+		{"a 12-column screen: the stop line fills 3 rows", 16, 12, 12, 0, false, 12, true},
+		{"an 80-column screen wrapping at 20 (set linewidth): the stop line is 2 lines", 16, 80, 20, 0, false, 13, true},
 		{"never below the floor", 6, 80, 80, 0, false, MinSize, true},
 		{"a setting is clamped to the ceiling", 50, 80, 80, 500, false, MaxSize, true},
 		{"a setting below the floor is raised", 50, 80, 80, 3, false, MinSize, true},
@@ -75,17 +78,17 @@ func TestCut_ATallLineGetsItsOwnPage(t *testing.T) {
 	require.Equal(t, [][]string{{"a"}, {tall}, {"b"}}, pages)
 }
 
-// The stop line grows with the page count: at 70 columns "page 1 of 1" fits
-// one row and "page 10 of 10" needs two, so the pages are cut again for the
+// The stop line grows with the page count: at 30 columns "Page 1 of 1" fits
+// one row and "Page 10 of 10" needs two, so the pages are cut again for the
 // longer stop line.
 func TestPages_ReservesTheStopLineForThePageCount(t *testing.T) {
-	require.Equal(t, 1, Rows(StopLine(1, 1), 70))
-	require.Equal(t, 2, Rows(StopLine(10, 10), 70))
+	require.Equal(t, 1, Rows(StopLine(1, 1), 30))
+	require.Equal(t, 2, Rows(StopLine(10, 10), 30))
 	lines := make([]string, 180)
 	for i := range lines {
 		lines[i] = "x"
 	}
-	pages := Pages(lines, 70, 70, 20, 0, false)
+	pages := Pages(lines, 30, 30, 20, 0, false)
 	require.Len(t, pages, 11, "17 rows a page once the stop line takes two")
 	for _, p := range pages {
 		require.LessOrEqual(t, len(p), 17)
@@ -103,33 +106,34 @@ func TestStopRows_CountsTheWrappedStopLine(t *testing.T) {
 		width, wrapWidth int
 		want             int
 	}{
-		{"a 38-column phone: two lines", 38, 38, 2},
-		{"a 33-column phone: three lines", 33, 33, 3},
+		{"a 38-column phone: one line", 38, 38, 1},
+		{"a 33-column phone: one line", 33, 33, 1},
 		{"80 columns: one line", 80, 80, 1},
-		// 70 columns over 24 is 3 rows, but no word is split, so it takes 4.
-		{"word wrapping needs a row more than the columns", 24, 24, 4},
-		// set linewidth 38 on an 80-column screen: wrapped to 2 lines of 1 row.
-		{"wrapped narrower than the screen", 80, 38, 2},
-		// Wrapped at the 30-column floor on a 20-column telnet screen: lines
-		// of 25, 27 and 16 columns fill 2, 2 and 1 rows.
-		{"wrapped wider than the screen", 20, 30, 5},
+		{"a 20-column screen: two lines", 20, 20, 2},
+		// 30 columns over 16 is 2 rows, but no word is split, so it takes 3.
+		{"word wrapping needs a row more than the columns", 16, 16, 3},
+		// set linewidth 20 on an 80-column screen: wrapped to 2 lines of 1 row.
+		{"wrapped narrower than the screen", 80, 20, 2},
+		// Wrapped at the 30-column floor on a 20-column telnet screen: the
+		// one 30-column line fills 2 rows.
+		{"wrapped wider than the screen", 20, 30, 2},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, stopRows(StopLine(1, 1), tt.width, tt.wrapWidth))
 		})
 	}
-	require.Equal(t, 3, Rows(StopLine(1, 1), 24), "the column count alone says 3 at 24")
+	require.Equal(t, 2, Rows(StopLine(1, 1), 16), "the column count alone says 2 at 16")
 }
 
-// A page on a 38-column reader leaves the wrapped stop line its two rows and
+// A page on a 20-column reader leaves the wrapped stop line its two rows and
 // the prompt its row: a 16-row screen holds 13 one-row lines.
 func TestPages_ReservesTheWrappedStopLine(t *testing.T) {
 	lines := make([]string, 30)
 	for i := range lines {
 		lines[i] = "x"
 	}
-	pages := Pages(lines, 80, 38, 16, 0, false)
-	require.Len(t, pages[0], 13, "16 rows less 2 for the stop line wrapped at 38, less the prompt row")
+	pages := Pages(lines, 80, 20, 16, 0, false)
+	require.Len(t, pages[0], 13, "16 rows less 2 for the stop line wrapped at 20, less the prompt row")
 }
 
 func TestLines(t *testing.T) {
@@ -156,6 +160,13 @@ func TestJoin(t *testing.T) {
 
 func TestStopLine(t *testing.T) {
 	s := StopLine(1, 3)
-	require.Equal(t, "More (page 1 of 3): press Enter for the next page, or type q to stop. ", s)
+	require.Equal(t, "Page 1 of 3: Enter, q to stop ", s)
 	require.False(t, strings.HasSuffix(s, "\n"), "the stop line is a prompt, with no line break")
+}
+
+// The stop line fits one row on the 33-column phone, even at page 10 of 12.
+func TestStopLine_FitsOneRowAt33Columns(t *testing.T) {
+	wrapped := messaging.WrapPrompt(StopLine(10, 12), 33)
+	require.NotContains(t, wrapped, "\n")
+	require.Equal(t, 1, stopRows(StopLine(10, 12), 33, 33))
 }

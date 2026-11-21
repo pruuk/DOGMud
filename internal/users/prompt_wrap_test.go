@@ -63,11 +63,11 @@ func TestCommandPromptBody_WrapsTheFightPromptBetweenWords(t *testing.T) {
 // are counted by the connection from the line breaks it writes.
 func TestPromptCols_MeasuresTheLastLine(t *testing.T) {
 	require.Equal(t, 6, PromptCols(`<ansi fg="red">HP:100</ansi>`))
-	require.Equal(t, 9, PromptCols("More (page 1 of 3): press Enter for\n<ansi fg=\"red\">the next </ansi>"))
+	require.Equal(t, 10, PromptCols("Page 1 of 3: Enter,\n<ansi fg=\"red\">q to stop </ansi>"))
 	require.Equal(t, 2, PromptCols("first line\r\nab"+term.TelnetGoAhead.String()))
 }
 
-// The pager's stop line at 38 columns breaks between words, and keeps its
+// The pager's stop line at 20 columns breaks between words, and keeps its
 // trailing space on its last line so the cursor sits after it.
 func TestCommandPromptBody_WrapsTheStopLineBetweenWords(t *testing.T) {
 	u := pagerUser(t, 10)
@@ -77,8 +77,8 @@ func TestCommandPromptBody_WrapsTheStopLineBetweenWords(t *testing.T) {
 	u.EndReply()
 	require.True(t, u.PagesWaiting())
 
-	u.LineWidth = 38
+	u.LineWidth = 20
 	prompt := u.CommandPromptBody()
-	requireWrappedBetweenWords(t, prompt, pager.StopLine(1, 3), 38)
-	require.True(t, strings.HasSuffix(prompt, ". "), "the cursor stays after the stop line: %q", prompt)
+	requireWrappedBetweenWords(t, prompt, pager.StopLine(1, 3), 20)
+	require.True(t, strings.HasSuffix(prompt, "stop "), "the cursor stays after the stop line: %q", prompt)
 }

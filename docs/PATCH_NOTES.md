@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-11-21: Prompts fit narrow screens
+
+- The line that shows when a long answer comes a page at a time is now short: "Page 1 of 3: Enter, q to stop".
+- On a narrow screen, such as a phone, your prompt, that line and questions now break between words instead of in the middle of one.
+- Menu headings now wrap to fit your screen.
+
 ## 2026-11-19: The web client fills the screen in desktop mode
 
 - On an Android tablet, or a phone with Chrome's "Desktop site" turned on, the web client used only the top third of the screen. It now fills the screen.

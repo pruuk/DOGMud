@@ -155,8 +155,10 @@ func Join(page []string) string {
 }
 
 // StopLine is the prompt shown while pages wait: page is the page just
-// shown (from 1), of the number of pages. Plain words, so a screen reader
-// reads it as it is.
+// shown (from 1), of the number of pages. Plain words ("1 of 3", never
+// "1/3"), so a screen reader reads it as it is, and short enough (32 columns
+// at page 10 of 12) to fit one row on a 33-column phone. The single trailing
+// space is where the cursor sits.
 func StopLine(page, of int) string {
-	return fmt.Sprintf("More (page %d of %d): press Enter for the next page, or type q to stop. ", page, of)
+	return fmt.Sprintf("Page %d of %d: Enter, q to stop ", page, of)
 }

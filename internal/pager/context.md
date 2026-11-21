@@ -42,8 +42,9 @@ a line the client wraps counts for each row it fills.
   included).
 - `Join(page) string`: the text to send for a page, ending with a colour
   reset so a colour left open does not reach the stop line.
-- `StopLine(page, of) string`: the prompt while pages wait, "More (page 1
-  of 3): press Enter for the next page, or type q to stop." No line break of
+- `StopLine(page, of) string`: the prompt while pages wait, "Page 1 of 3:
+  Enter, q to stop " (one trailing space, where the cursor sits; 32 columns
+  at page 10 of 12, so one row down to a 33-column phone). No line break of
   its own, so clients treat it as a prompt; `users.CommandPromptBody` word
   wraps it like any prompt.
 
