@@ -82,3 +82,15 @@ func TestCommandPromptBody_WrapsTheStopLineBetweenWords(t *testing.T) {
 	requireWrappedBetweenWords(t, prompt, pager.StopLine(1, 3), 20)
 	require.True(t, strings.HasSuffix(prompt, "stop "), "the cursor stays after the stop line: %q", prompt)
 }
+
+// Text written over the prompt erases every row of it, an open question
+// included, so the question the redraw last drew is forgotten: the redraw
+// that follows draws it again instead of skipping it as unchanged (review of
+// the prompt wrap, 2026-11-21: a chat line left a deletecharacter question
+// erased and never redrawn).
+func TestSendReplacingPrompt_ForgetsTheDrawnQuestion(t *testing.T) {
+	u := NewTestUser(7301, "asker", "Asker", 0)
+	u.SetTempData(PromptDrawnTempKey, "a question body")
+	u.SendReplacingPrompt([]byte("A line.\n"))
+	require.Nil(t, u.GetTempData(PromptDrawnTempKey))
+}

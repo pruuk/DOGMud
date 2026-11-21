@@ -4,7 +4,6 @@ import (
 	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
-	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -45,9 +44,9 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 				// No paging in combat (owner ruling 2026-11-18): a fight that
 				// started while pages wait sends them before its first line.
 				if rest := user.FlushPagesInCombat(); rest != `` {
-					connections.SendReplacingPrompt(user.ConnectionId(), []byte(rest))
+					user.SendReplacingPrompt([]byte(rest))
 				}
-				connections.SendReplacingPrompt(user.ConnectionId(), []byte(textOut))
+				user.SendReplacingPrompt([]byte(textOut))
 
 				events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
 			}
@@ -109,7 +108,7 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 					textOut = util.StripCharsForScreenReaders(textOut)
 				}
 
-				connections.SendReplacingPrompt(user.ConnectionId(), []byte(textOut))
+				user.SendReplacingPrompt([]byte(textOut))
 
 				events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
 

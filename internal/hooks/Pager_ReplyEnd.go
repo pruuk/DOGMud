@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -23,7 +22,7 @@ func Pager_ReplyEnd(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 	if out := user.EndReply(); out != `` {
-		connections.SendReplacingPrompt(user.ConnectionId(), []byte(out))
+		user.SendReplacingPrompt([]byte(out))
 		events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
 	}
 	return events.Continue

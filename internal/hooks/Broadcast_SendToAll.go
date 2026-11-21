@@ -47,7 +47,7 @@ func Broadcast_SendToAll(e events.Event) events.ListenerReturn {
 						u.ConnectionId(),
 					)
 				} else {
-					connections.SendReplacingPrompt(u.ConnectionId(), []byte(textOutSR))
+					u.SendReplacingPrompt([]byte(textOutSR))
 				}
 
 				continue
@@ -61,7 +61,7 @@ func Broadcast_SendToAll(e events.Event) events.ListenerReturn {
 				u.ConnectionId(),
 			)
 		} else {
-			connections.SendReplacingPrompt(u.ConnectionId(), []byte(textOut))
+			u.SendReplacingPrompt([]byte(textOut))
 		}
 	}
 

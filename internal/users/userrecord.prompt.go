@@ -355,6 +355,19 @@ func compiledFightTemplate(tmpl string) string {
 	return compiled
 }
 
+// SendReplacingPrompt writes b (ready to send) over the prompt on screen
+// (connections.SendReplacingPrompt), which erases every row of it, an open
+// question included. So it also forgets the question the redraw last drew
+// (PromptDrawnTempKey): the redraw that follows must draw it again, not skip
+// it as unchanged. Every write of text over a player's prompt goes through
+// here.
+func (u *UserRecord) SendReplacingPrompt(b []byte) {
+	connections.SendReplacingPrompt(u.connectionId, b)
+	u.sessionMu.Lock()
+	delete(u.tempDataStore, PromptDrawnTempKey)
+	u.sessionMu.Unlock()
+}
+
 // SendCommandPrompt draws prompt (a CommandPromptBody, tags still in it) as
 // sent, already parsed or not as the connection takes it, over the prompt
 // on screen (connections.SendPrompt). For callers outside the world lock,
