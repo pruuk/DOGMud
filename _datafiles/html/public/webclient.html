@@ -115,6 +115,13 @@
             },
             setFullScreen: setFullScreen,
             isFullScreen: shown,
+            // For the game's phone tips (touch frame plan 1c).
+            canFullScreen: browserCan,
+            turnedOff: function () { return readPref() === '0'; },
+            desktopSite: function () {
+                const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+                return ViewportFit.isDesktopSite(document.documentElement.clientWidth, screen.width, coarse);
+            },
             // Asked by the frame on an Enter Game tap: should this tap also
             // go full screen?
             wantsFullScreenOnConnect: function () {
@@ -123,6 +130,21 @@
             },
             onChange: function (fn) { listener = fn; fn(shown()); }
         };
+    })();
+
+    // Desktop site (touch frame plan 1c, D): a phone laid out much wider
+    // than itself asks for the screen's real width. Where the browser
+    // honours it the page fits again; where it does not, the game shows the
+    // Desktop site tip (A) once per device, since desktopSite() stays true.
+    // Phones only: Android tablets use Desktop site by default
+    // (viewportfit.js visibleHeight) and keep today's wide layout.
+    (function () {
+        const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+        if (!coarse) return;
+        if (!ViewportFit.isPhone(screen.width, screen.height)) return;
+        if (!ViewportFit.isDesktopSite(document.documentElement.clientWidth, screen.width, coarse)) return;
+        const meta = document.querySelector('meta[name="viewport"]');
+        if (meta) meta.setAttribute('content', 'width=' + screen.width + ', initial-scale=1');
     })();
 
     // Size the frame as soon as this page's layout exists; "load" alone waits

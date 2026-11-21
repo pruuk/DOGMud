@@ -339,5 +339,45 @@ check('the sideways toast is lifted above the command box and shown 4s',
 check('a lifted toast sits above the command box and tab bar',
     /\.dash-toast\.lifted \{ bottom: calc\(var\(--cmdbox-h, 64px\) \+ var\(--tabbar-h, 64px\) \+ 12px\); \}/.test(dashCss), true);
 
+// Plan 1c: one rule for every once-only note.
+(function () {
+    var store = {};
+    var ls = { getItem: function (k) { return k in store ? store[k] : null; }, setItem: function (k, v) { store[k] = String(v); } };
+    var memo = {};
+    check('takeOnce: first time for a key', VF.takeOnce(ls, 'dogmud.tip.fullscreen', memo), true);
+    check('takeOnce: not again on this page', VF.takeOnce(ls, 'dogmud.tip.fullscreen', memo), false);
+    check('takeOnce: not again on a later visit', VF.takeOnce(ls, 'dogmud.tip.fullscreen', {}), false);
+    check('takeOnce: another key is its own', VF.takeOnce(ls, 'dogmud.tip.desktopsite', memo), true);
+    check('takeOnce: no storage, once per page', VF.takeOnce(null, 'k', {}), true);
+    var m3 = {};
+    VF.takeOnce(null, 'k', m3);
+    check('takeOnce: no storage, not twice on one page', VF.takeOnce(null, 'k', m3), false);
+    check('the sideways note keeps its own key', store['dogmud.sidewaysToast'], undefined);
+})();
+
+// Plan 1c: Desktop site is a touch screen laid out at least 15% wider than the screen.
+check('Desktop site on a Pixel 8 (980 laid out, 412 screen)', VF.isDesktopSite(980, 412, true), true);
+check('an ordinary phone page is not Desktop site', VF.isDesktopSite(412, 412, true), false);
+check('a scrollbar or rounding is not Desktop site (14% wider)', VF.isDesktopSite(469, 412, true), false);
+check('exactly 15% wider is Desktop site', VF.isDesktopSite(473.8, 412, true), true);
+check('a mouse screen is never Desktop site', VF.isDesktopSite(1600, 1366, false), false);
+check('no screen width: not Desktop site', VF.isDesktopSite(980, 0, true), false);
+
+// Plan 1c: which tip a phone gets.
+function tip(o) { return VF.phoneTip(o); }
+var android = { phone: true, desktopSite: false, standalone: false, turnedOff: false, canFullScreen: true, fullScreenOn: false };
+check('Android, not in full screen: the full screen tip', tip(android), 'fullscreen');
+check('Android, in full screen: no tip', tip(Object.assign({}, android, { fullScreenOn: true })), null);
+check('Android, full screen turned off in the game: no tip', tip(Object.assign({}, android, { turnedOff: true })), null);
+check('iPhone Safari (no full screen): the Home Screen tip', tip(Object.assign({}, android, { canFullScreen: false })), 'homescreen');
+check('opened from the Home Screen: no tip', tip(Object.assign({}, android, { canFullScreen: false, standalone: true })), null);
+check('Desktop site comes first', tip(Object.assign({}, android, { desktopSite: true })), 'desktopsite');
+check('Desktop site even with full screen turned off', tip(Object.assign({}, android, { desktopSite: true, turnedOff: true })), 'desktopsite');
+check('not a phone: no tip', tip(Object.assign({}, android, { phone: false })), null);
+check('the full screen words', VF.TIPS.fullscreen, 'Tap ⛶ for more room to play.');
+check('the Home Screen words', VF.TIPS.homescreen, 'For more room, add this page to your Home Screen: tap Share, then Add to Home Screen.');
+check('the Desktop site words', VF.TIPS.desktopsite, "This page is showing as a desktop site, so everything is small. Turn off Desktop site in your browser's menu.");
+check('the tip keys', VF.TIP_KEY_PREFIX, 'dogmud.tip.');
+
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

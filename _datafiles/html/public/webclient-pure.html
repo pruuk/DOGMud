@@ -2965,6 +2965,8 @@
             if (inGame) return;
             inGame = true;
             if (!leavingGame) setSessionState('connected');
+            // The phone tips (touch frame plan 1c), once per device.
+            if (window.Dashboard && Dashboard.maybePhoneTip) Dashboard.maybePhoneTip();
         }
 
         // Automation (Ticks, Triggers, Macros, Aliases) is saved to the

@@ -107,12 +107,24 @@ All colours come from the palette spec. The roles that define the brand:
   brass circles on a dark umber bar with a teal rim, one sliding name pill.
 - **Panels:** gold outline on every card, one teal line under every panel
   title. Pop-out windows are a wide-screen feature only.
-- **Touch:** at least 44px tall targets on touch screens. One exception
-  (Calabe and Malia, 2026-11-07, tested on her phone): on a phone (touch,
-  under 600px wide or under 500px tall, either way up) 44px sub-tabs took
-  most of an open Comms tab, so there the sub-tabs and the panel title
-  buttons are 30px, still above the 24px minimum target (WCAG 2.5.8). Held
-  sideways, the tab name pill is also hidden.
+- **Touch:** 48px targets with 8px gaps on touch screens (touch arc,
+  2026-11-21; was 44px). Below 360px wide the deck's buttons are 44px with
+  5px gaps, so every button keeps its slot on every phone. One exception
+  (Calabe and Malia, 2026-11-07, tested on her phone; kept 2026-11-19): on a
+  phone (touch, under 600px wide or under 500px tall, either way up) the
+  sub-tabs and the panel title buttons are 30px, still above the 24px
+  minimum target (WCAG 2.5.8). On a phone the sub-tabs sit in one row that
+  scrolls sideways and fades at the edge with more. Held sideways, the tab
+  name pill is also hidden.
+- **The touch deck** (touch arc spec 1): a block of buttons above the
+  command box, in the slot under the game text; an open tab takes its place.
+  A divider line sits between it and the command box. Every button is
+  brass. **Kinds are told apart by shape and edge, never by colour alone:**
+  movement square; contextual commands rounded; other exits dashed edge;
+  Back and More heavy square edge. Flee looks like any other command. A
+  small **◢** in the corner marks a button that opens a deeper level or does
+  more on a long press. Labels at the client's text size, JetBrains Mono,
+  regular weight. Red only for warnings; green and blue never carry meaning.
 - **The Map on touch screens** (Calabe, 2026-11-15): no Fit, Center, zoom
   or Legend row on any touch screen, phone or tablet, either way up. The
   map follows the player's room on every step, and the row took most of a

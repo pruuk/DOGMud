@@ -100,4 +100,17 @@ check('the command box', TD.fieldOf('command-input', true), 'command');
 check('another text field', TD.fieldOf('auto-modal-name', true), 'other');
 check('a text field with no id', TD.fieldOf('', true), 'other');
 
+// Plan 1c: a sub-tab row that scrolls sideways fades at the edge with more.
+check('all in view: no fade', TD.rowFade(0, 300, 300), { left: false, right: false });
+check('more to the right', TD.rowFade(0, 300, 520), { left: false, right: true });
+check('scrolled to the end: more to the left', TD.rowFade(220, 300, 520), { left: true, right: false });
+check('in the middle: both', TD.rowFade(100, 300, 520), { left: true, right: true });
+check('a pixel of rounding is not more', TD.rowFade(219.5, 300, 520), { left: true, right: false });
+
+// Plan 1c: the open sub-tab scrolls into view.
+check('already in view: no scroll', TD.scrollLeftToShow(50, 60, 0, 300), 0);
+check('off to the right: scroll until its right edge shows', TD.scrollLeftToShow(400, 80, 0, 300), 180);
+check('off to the left: scroll to its left edge', TD.scrollLeftToShow(20, 80, 150, 300), 20);
+check('wider than the row: show its start', TD.scrollLeftToShow(400, 350, 0, 300), 400);
+
 process.exit(failures ? 1 : 0);

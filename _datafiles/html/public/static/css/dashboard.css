@@ -1183,8 +1183,10 @@ html.layout-column.keyboard-open #dash-drawer {
 /* ------------------------------------------------------------------ */
 /* One look for every tab strip inside a panel: brass buttons that look
    tappable, Comms's reading size, nothing dimmed. The open tab is pressed in.
-   Buttons fill the row and wrap to a second row rather than scroll, so every
-   Chat channel stays in sight on a phone.
+   On a mouse screen or a tablet the buttons fill the row and wrap to more
+   rows. On a phone they sit in one row that scrolls sideways (roadmap
+   2026-11-19, touch frame plan 1c), which replaces the 2026-11-07 wrapping
+   there: two or three rows of channels took most of an open Comms.
    Measured on the shiny brass with the darker text #1a1206 (#774): label 13.77
    on the light spot, 5.45 mid, 3.08 at the dark edge; the bigger text carries it. */
 .subtabs {
@@ -1260,6 +1262,30 @@ html.layout-column.keyboard-open #dash-drawer {
 @media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .subtabs { gap: 4px; padding: 4px 4px 5px; }
   .subtab { min-height: 30px; padding: 2px 8px; font-size: var(--text); }
+  /* One row that scrolls sideways (plan 1c). The fade shows which edge has
+     more (dashboard.js sets fade-left / fade-right from touchdeck.js
+     rowFade); the scrollbar is hidden, the fade stands in for it. */
+  .subtabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .subtabs::-webkit-scrollbar { display: none; }
+  .subtabs::after { display: none; }
+  .subtabs.fade-right {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+            mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+  .subtabs.fade-left {
+    -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent);
+            mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent);
+  }
+  .subtabs.fade-left.fade-right {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+            mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+  }
+  /* Phones (touch frame plan 1c): no Game title bar. It holds only the
+     pop-out button, which does nothing outside wide, and costs about 1.4
+     rows of game text. The sight colour is on the game window's border, so
+     it stays. Inside this phone media query on purpose: an upright tablet
+     is in phone mode too (no room beside the game), and keeps its bar. */
+  #dashboard[data-mode="phone"] #panel-feed > .dash-panel-head { display: none; }
   .dash-panel-head .ph-btn { width: 32px; height: 30px; line-height: 28px; font-size: var(--text); margin: 0; }
   .drawer-close { min-width: 32px; min-height: 30px; margin: 0; padding: 2px 8px; }
   #dash-drawer .dash-panel-head .ph-collapse { width: 32px; height: 30px; }

@@ -12,6 +12,7 @@
 //   shape                 rows, columns and sizes for the room it has
 //   slotShows             what the slot under the game text holds
 //   fieldOf               where the player is typing (plan 1b)
+//   rowFade / scrollLeftToShow  a phone's sideways-scrolling sub-tab row (plan 1c)
 // Tested by tools/jstest/touchdeck.test.js and touch-targets.test.js.
 
 (function (root, factory) {
@@ -111,10 +112,30 @@
         return activeId === COMMAND_ID ? 'command' : 'other';
     }
 
+    // A sub-tab row that scrolls sideways on a phone (plan 1c) fades at each
+    // edge with more to scroll. Measures from the row element; a pixel of
+    // rounding is not more.
+    function rowFade(scrollLeft, clientWidth, scrollWidth) {
+        return {
+            left: scrollLeft > 1,
+            right: scrollLeft + clientWidth < scrollWidth - 1
+        };
+    }
+
+    // The row's scrollLeft that shows an item: itemLeft and itemWidth in the
+    // row's scroll coordinates. Unchanged when it is already in view; an item
+    // wider than the row shows its start.
+    function scrollLeftToShow(itemLeft, itemWidth, scrollLeft, rowWidth) {
+        if (itemLeft < scrollLeft || itemWidth >= rowWidth) return itemLeft;
+        if (itemLeft + itemWidth > scrollLeft + rowWidth) return itemLeft + itemWidth - rowWidth;
+        return scrollLeft;
+    }
+
     return {
         KEY: KEY, AUTOMATIC_SHOWS: AUTOMATIC_SHOWS,
         readPref: readPref, writePref: writePref, deckOn: deckOn,
         shape: shape, slotShows: slotShows, fieldOf: fieldOf,
+        rowFade: rowFade, scrollLeftToShow: scrollLeftToShow,
         BTN: BTN, GAP: GAP, SMALL_BTN: SMALL_BTN, SMALL_GAP: SMALL_GAP, PAD: PAD
     };
 }));

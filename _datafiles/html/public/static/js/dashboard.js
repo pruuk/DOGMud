@@ -247,6 +247,7 @@
       this.restoreLayout  && this.restoreLayout();
       // The sideways phone note (plan 6).
       this._watchSideways && this._watchSideways();
+      this._watchSubtabRows();
     },
 
     // The game window's width at 80 columns (termfit.js widthFor80), or
@@ -358,6 +359,74 @@
       check();
       window.addEventListener("orientationchange", check);
       window.addEventListener("resize", check);
+    },
+
+    // A phone's sub-tab rows scroll sideways (plan 1c): each fades at the
+    // edge with more (touchdeck.js rowFade). Off a phone the classes are set
+    // too but the stylesheet only draws them on a phone.
+    _fadeRow: function (row) {
+      var TD = window.TouchDeck;
+      if (!TD || !row) return;
+      var f = TD.rowFade(row.scrollLeft, row.clientWidth, row.scrollWidth);
+      row.classList.toggle("fade-left", f.left);
+      row.classList.toggle("fade-right", f.right);
+    },
+    _watchSubtabRows: function () {
+      var self = this;
+      var rows = document.querySelectorAll(".subtabs");
+      rows.forEach(function (row) {
+        row.addEventListener("scroll", function () { self._fadeRow(row); }, { passive: true });
+        self._fadeRow(row);
+      });
+      window.addEventListener("resize", function () { rows.forEach(function (r) { self._fadeRow(r); }); });
+    },
+    // The open sub-tab in a panel's row scrolls into view (plan 1c).
+    _showOpenSubtab: function (panel) {
+      var TD = window.TouchDeck;
+      var row = panel ? panel.querySelector(".subtabs") : null;
+      var item = row ? row.querySelector(".subtab.active") : null;
+      if (!TD || !row) return;
+      if (item) {
+        var left = item.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft;
+        row.scrollLeft = TD.scrollLeftToShow(left, item.offsetWidth, row.scrollLeft, row.clientWidth);
+      }
+      this._fadeRow(row);
+    },
+
+    // The phone tips (plan 1c): once per device each, a few seconds after a
+    // character enters the world, so the Enter Game tap's full screen has
+    // taken hold first. Called by webclient-pure.html markInGame. The outer
+    // page (webclient.html WebclientFrame) knows full screen and Desktop
+    // site; opened on its own this page shows no tip.
+    _tipMemo: {},
+    maybePhoneTip: function () {
+      var self = this;
+      var VF = window.ViewportFit;
+      if (!VF) return;
+      setTimeout(function () {
+        var outer = null, win = null;
+        try {
+          win = window.parent !== window ? window.parent : null;
+          outer = win ? win.WebclientFrame : null;
+        } catch (e) { return; }
+        if (!outer || !outer.desktopSite) return;
+        var coarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+        var standalone = !!((win.matchMedia && win.matchMedia("(display-mode: standalone)").matches) ||
+                            win.navigator.standalone === true);
+        var kind = VF.phoneTip({
+          phone: VF.isPhone(screen.width, screen.height) && coarse,
+          desktopSite: outer.desktopSite(),
+          standalone: standalone,
+          turnedOff: outer.turnedOff(),
+          canFullScreen: outer.canFullScreen(),
+          fullScreenOn: outer.isFullScreen()
+        });
+        if (!kind) return;
+        var store = null;
+        try { store = window.localStorage; } catch (e) { /* blocked: memo alone */ }
+        if (!VF.takeOnce(store, VF.TIP_KEY_PREFIX + kind, self._tipMemo)) return;
+        self._toast(VF.TIPS[kind], { ms: 6000, lifted: true });
+      }, 3000);
     },
 
     // ---------------------------------------------------------------
@@ -745,6 +814,9 @@
 
       this._updateTabbarActive(name);
       this.applyDeck();
+      // After applyDeck: on a phone the card is in the slot, which is hidden
+      // until applyDeck shows it, and a hidden row measures 0 wide (plan 1c).
+      this._showOpenSubtab(panel);
     },
 
     // Show the newest Chat messages. Hiding a panel's body (a fold, a move
