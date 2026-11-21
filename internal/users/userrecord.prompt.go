@@ -476,10 +476,13 @@ func (u *UserRecord) CommandPromptBody() string {
 	// Every prompt is word wrapped here, at the width game text uses, by the
 	// one prompt wrapper (messaging.WrapPrompt): a long one breaks between
 	// words, not mid-word or mid-bar, and a prompt that fits is unchanged.
-	// What the player has typed follows on the last line. A connection on the
-	// AI port has no screen, and an agent reads the prompt as one line, so
-	// its prompt is left whole (as the pager leaves its replies whole).
-	if !u.onAIPort() {
+	// What the player has typed follows on the last line. Two readers get the
+	// prompt whole, as before prompts wrapped: a connection on the AI port
+	// (no screen; an agent reads the prompt as one line, as the pager leaves
+	// its replies whole), and a client that asked for the telnet go-ahead (a
+	// MUD client finds the prompt by that signal, wraps the line itself, and
+	// its triggers and gauges read it as one line; owner, 2026-11-21).
+	if !u.onAIPort() && goAhead == `` {
 		promptOut = messaging.WrapPrompt(promptOut, u.WrapWidth())
 	}
 

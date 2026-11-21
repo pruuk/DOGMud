@@ -76,6 +76,17 @@ companion, auctions). `templates.wrapText` already notes it breaks brackets that
 and needs snapshot review, so it is a separate change. The guard allowlists it with that
 reason until then.
 
+## Owner rulings (2026-11-21, after review)
+
+- **MUD clients that ask for the telnet go-ahead get the prompt unwrapped.** They find the
+  prompt by that signal, wrap the line themselves, and their triggers and gauges read it as
+  one line. Same for the AI port. (`CommandPromptBody`; test
+  `TestCommandPromptBody_AGoAheadClientIsNotWrapped`.)
+- **Screen reader players get the wrapped prompt like everyone else**, consistent with game
+  text, which is already wrapped for them.
+- **The More line wording is A**: "Page 1 of 3: Enter, q to stop" (step 4b).
+- **Phones without full screen are not a usability target**; keep encouraging full screen.
+
 ## Decisions taken without asking
 
 | Decision | Why | If wrong |

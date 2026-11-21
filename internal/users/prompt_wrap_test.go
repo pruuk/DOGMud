@@ -104,6 +104,29 @@ func TestCommandPromptBody_AnAIPortConnectionIsNotWrapped(t *testing.T) {
 	require.Contains(t, u.CommandPromptBody(), "\n")
 }
 
+// A client that asked for the telnet go-ahead (a MUD client such as Mudlet)
+// finds the prompt by that signal and wraps the line itself; its triggers
+// and gauges read the prompt as one line. So its prompt is left whole, as
+// before prompts wrapped (owner, 2026-11-21).
+func TestCommandPromptBody_AGoAheadClientIsNotWrapped(t *testing.T) {
+	const connId = 18844
+	connections.RegisterTestConnection(connId)
+	t.Cleanup(func() { connections.UnregisterTestConnection(connId) })
+	connections.UpdateClientSettings(connId, func(cs *connections.ClientSettings) { cs.SendTelnetGoAhead = true })
+
+	u := NewTestUser(7303, "mudlet", "Mudletta", connId)
+	u.LineWidth = 20
+	u.pager.pages = [][]string{{"a"}, {"b"}, {"c"}}
+	u.pager.next = 1
+	body := u.CommandPromptBody()
+	require.NotContains(t, body, "\n")
+	require.True(t, strings.HasSuffix(body, term.TelnetGoAhead.String()), "the go-ahead still ends the prompt")
+
+	// The same prompt without the go-ahead wraps, so the test can fail.
+	connections.UpdateClientSettings(connId, func(cs *connections.ClientSettings) { cs.SendTelnetGoAhead = false })
+	require.Contains(t, u.CommandPromptBody(), "\n")
+}
+
 // Text written over the prompt erases every row of it, an open question
 // included, so the question the redraw last drew is forgotten: the redraw
 // that follows draws it again instead of skipping it as unchanged (review of
