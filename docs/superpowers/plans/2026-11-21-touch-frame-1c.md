@@ -303,13 +303,18 @@ In `tools/webclient-tests/touch-frame.js`, directly before the summary line `con
 ```js
 // Plan 1c: phone polish.
 const outer = fs.readFileSync(path.join(root, 'webclient.html'), 'utf8');
-check(/#dashboard\[data-mode="phone"\] #panel-feed > \.dash-panel-head \{ display: none; \}/.test(css), 'no Game title bar on a phone');
+// Phones only: the rule must sit inside the phone media query, because an
+// upright tablet is in phone mode too and keeps its title bar.
+const phoneBlock = (css.match(/@media \(pointer: coarse\) and \(max-width: 599px\), \(pointer: coarse\) and \(max-height: 500px\) \{[\s\S]*?\n\}/) || [''])[0];
+check(/#dashboard\[data-mode="phone"\] #panel-feed > \.dash-panel-head \{ display: none; \}/.test(phoneBlock), 'no Game title bar on a phone, inside the phone media query');
+check(!/^#dashboard\[data-mode="phone"\] #panel-feed > \.dash-panel-head/m.test(css), 'the title bar rule is not outside the phone media query (tablets keep it)');
 check(/\.subtabs \{[^}]*flex-wrap: nowrap;[^}]*overflow-x: auto;/.test(css), 'a phone keeps sub-tabs in one sideways-scrolling row');
 check(/\.subtabs\.fade-left/.test(css) && /\.subtabs\.fade-right/.test(css), 'the row fades at the edge with more to scroll');
 check(/TD\.rowFade\(/.test(dash) && /TD\.scrollLeftToShow\(/.test(dash), 'dashboard.js wires the row fades and scrolls the open sub-tab into view');
 check(/maybePhoneTip: function/.test(dash) && /VF\.takeOnce\(/.test(dash) && /VF\.phoneTip\(/.test(dash), 'dashboard.js shows a phone tip once per device');
 check(/Dashboard\.maybePhoneTip\(\)/.test(html), 'entering the world asks for the phone tip');
 check(/ViewportFit\.isDesktopSite\(/.test(outer) && /setAttribute\('content', 'width=' \+ screen\.width/.test(outer), 'the outer page undoes Desktop site where it can');
+check(/if \(!ViewportFit\.isPhone\(screen\.width, screen\.height\)\) return;\s*if \(!ViewportFit\.isDesktopSite\(/.test(outer), 'only a phone undoes Desktop site (tablets keep today\'s layout)');
 check(/desktopSite: function/.test(outer) && /turnedOff: function/.test(outer) && /canFullScreen: browserCan/.test(outer), 'the outer page tells the game what the tip needs');
 check(!/so every\s+Chat channel stays in sight on a phone/.test(css), 'the 2026-11-07 wrap comment is rewritten');
 ```
@@ -317,7 +322,7 @@ check(!/so every\s+Chat channel stays in sight on a phone/.test(css), 'the 2026-
 - [ ] **Step 2: Run and see them fail**
 
 Run: `node tools/webclient-tests/touch-frame.js`
-Expected: nine `FAIL` lines, exit 1.
+Expected: ten `FAIL` lines, exit 1. One of the eleven new checks passes already: "the title bar rule is not outside the phone media query", since no such rule exists yet; it guards against the rule being placed outside the phone block.
 
 - [ ] **Step 3: The stylesheet**
 
@@ -357,14 +362,15 @@ Inside the phone media block that starts `@media (pointer: coarse) and (max-widt
   }
 ```
 
-After that media block's closing `}`, add:
+Still inside that media block, after the fade rules above, add:
 
 ```css
-/* Phones (touch frame plan 1c): no Game title bar. It holds only the
-   pop-out button, which does nothing outside wide, and costs about 1.4 rows
-   of game text. The sight colour is on the game window's border, so it
-   stays. */
-#dashboard[data-mode="phone"] #panel-feed > .dash-panel-head { display: none; }
+  /* Phones (touch frame plan 1c): no Game title bar. It holds only the
+     pop-out button, which does nothing outside wide, and costs about 1.4
+     rows of game text. The sight colour is on the game window's border, so
+     it stays. Inside this phone media query on purpose: an upright tablet
+     is in phone mode too (no room beside the game), and keeps its bar. */
+  #dashboard[data-mode="phone"] #panel-feed > .dash-panel-head { display: none; }
 ```
 
 - [ ] **Step 4: `dashboard.js`, the sub-tab rows**
@@ -485,12 +491,15 @@ In `webclient.html`, in the `WebclientFrame` returned object (`:118-126`), after
 Directly before `document.addEventListener("DOMContentLoaded", function () { WebclientFrame.start(); });` (`:131`), add:
 
 ```js
-    // Desktop site (touch frame plan 1c, D): a touch screen laid out much
-    // wider than itself asks for the screen's real width. Where the browser
+    // Desktop site (touch frame plan 1c, D): a phone laid out much wider
+    // than itself asks for the screen's real width. Where the browser
     // honours it the page fits again; where it does not, the game shows the
     // Desktop site tip (A) once per device, since desktopSite() stays true.
+    // Phones only: Android tablets use Desktop site by default
+    // (viewportfit.js visibleHeight) and keep today's wide layout.
     (function () {
         const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+        if (!ViewportFit.isPhone(screen.width, screen.height)) return;
         if (!ViewportFit.isDesktopSite(document.documentElement.clientWidth, screen.width, coarse)) return;
         const meta = document.querySelector('meta[name="viewport"]');
         if (meta) meta.setAttribute('content', 'width=' + screen.width + ', initial-scale=1');
@@ -574,6 +583,7 @@ EOF
 - [ ] **Step 2: Title bar.** S21 (`{"width":360,"height":800,"dpr":3,"mobile":true,"touch":true}`), deck Automatic, no tab: `term.rows` on this branch is more than master's (expected about 1 more row; spec estimate 1.4), and `getComputedStyle(document.querySelector('#panel-feed > .dash-panel-head')).display` is `none`. Sideways (800x360): also `none`. 1366x768: the bar shows, as on master.
 - [ ] **Step 3: Sub-tab row.** S21, Comms open: the row's height equals one sub-tab's height plus its padding (one row), `scrollWidth > clientWidth`, the row has `fade-right`; scroll it to the end, it has `fade-left` and not `fade-right`. Click Trade, close Comms, open Comms: Trade's rectangle lies inside the row's. A tablet (820x1180) and 1366x768: the row still wraps (`flex-wrap: wrap`), as on master.
 - [ ] **Step 4: Desktop unchanged.** 1366x768 and 1920x1080, branch against master: frames match apart from game text.
+- [ ] **Step 4b: Tablets unchanged** (owner, 2026-11-21). Upright iPad 820x1180 (phone mode), sideways iPad 1180x820 (column), open foldable 690x840 and a small Android tablet 600x960, all touch, branch against master with Comms open: the Game title bar shows (`display` is not `none`), the sub-tab row wraps (`flex-wrap: wrap`, no `fade-*` drawn), `term.rows` and the frame match master apart from game text, and the outer page's viewport tag is still `width=device-width, initial-scale=1.0` (read it from `/webclient` with a plain fetch: the game page runs on its own in headless).
 - [ ] **Step 5: The tips.** Headless runs the game page on its own (no outer page), so the tip cannot show there; it is covered by the jstests (Task 1) and the owner's check. Confirm only that `Dashboard.maybePhoneTip` exists and that nothing throws when it runs on its own page.
 - [ ] **Step 6: Stop the servers by PID; remove the worktrees.**
 
@@ -620,6 +630,7 @@ EOF
 | Decision | Why | If wrong |
 |---|---|---|
 | `takeSidewaysToast` becomes a call to a general `takeOnce`, used by the tips too | One once-only rule instead of a second copy (owner rule, 2026-11-21) | Keep the sideways note's own code |
+| **Tablets keep today's experience** (owner asked, 2026-11-21): the title bar rule sits inside the phone media query (an upright tablet is in phone mode and keeps its bar), Desktop site is undone only on a phone (Android tablets use Desktop site by default and keep today's wide layout), the sub-tab row and the tips were already phone-only | The spec's polish is for phones; a tablet change nobody asked for is a regression | Extend any of the four to tablets in a later plan |
 | D and A ship together: the viewport rewrite runs, and the Desktop site tip shows only while the page is still laid out wide | One PR covers both outcomes of the Pixel test; A never shows where D works | Ship D alone and add A after the device test |
 | The Desktop site device check is on the S21 | The owner's Pixel 8 cannot reach a local test server (2026-11-21) | Test on the Pixel after deploy |
 | All four sub-tab rows (Comms, Inventory, Quests, Automation) scroll on a phone, not only Comms and Inventory | They share `.subtabs`; one rule for one control | Scope the rule to `#inv-tabs` and the Comms row |
