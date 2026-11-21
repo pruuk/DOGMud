@@ -25,10 +25,14 @@ import (
 //   - Every other write that shows on screen ends the record. Out-of-band
 //     writes (telnet negotiation, GMCP, sound, web client commands) do not.
 //
-// The erase clears every row the recorded prompt fills; with no record, or
-// at an unknown width, it clears one row, as the game always did. Every doubt
-// falls back to one row: a stray row left behind is harmless, while climbing
-// too far would erase game text.
+// The erase clears every row the recorded prompt fills. The lines above the
+// prompt's last line are the game's own line breaks (it wraps the prompt at
+// the player's line width), so they are cleared at any width, even one never
+// reported. The last line's own rows need the width it was drawn at and the
+// width now; without both it counts one row. With no record the erase clears
+// one row, as the game always did. Every doubt falls back to fewer rows: a
+// stray row left behind is harmless, while climbing too far would erase game
+// text.
 type promptRecord struct {
 	on    bool
 	above int // lines of the prompt before its last line
@@ -77,10 +81,17 @@ func promptRows(cols, width int) int {
 // wrapped fits it, so one row is never more than is there), then the rows of
 // its last line by the rule above.
 func eraseFor(rec promptRecord, curWidth int) string {
-	if !rec.on || rec.width < 1 || curWidth < 1 {
+	if !rec.on {
 		return eraseOneRow
 	}
-	rows := rec.above + min(promptRows(rec.cols, rec.width), promptRows(rec.cols, curWidth))
+	// The lines above the last are the game's own line breaks, certain at
+	// any width. The last line's rows need the width it was drawn at and the
+	// width now; without both it counts one row.
+	last := 1
+	if rec.width > 0 && curWidth > 0 {
+		last = min(promptRows(rec.cols, rec.width), promptRows(rec.cols, curWidth))
+	}
+	rows := rec.above + last
 	return eraseOneRow + strings.Repeat(eraseRowAbove, rows-1)
 }
 
@@ -126,7 +137,12 @@ func SendPrompt(id ConnectionId, b []byte, cols int) {
 	}
 	cd.promptMu.Lock()
 	n, err := cd.writeNLocked(append([]byte(eraseFor(cd.prompt, width)), b...))
-	cd.prompt = promptRecord{on: width > 0 && n > 0 && !ascii, above: above, cols: cols, width: width}
+	// ASCII mode changes characters after cols was measured, so its width is
+	// not trusted; its line breaks still are.
+	if ascii {
+		width = 0
+	}
+	cd.prompt = promptRecord{on: n > 0, above: above, cols: cols, width: width}
 	cd.promptMu.Unlock()
 	afterWrite(id, cd, err, "SendPrompt()")
 }

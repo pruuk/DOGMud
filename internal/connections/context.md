@@ -530,10 +530,13 @@ line's visible columns, and the reported width when drawn), set and read under
 The clear (`eraseFor`) is column 1 and erase line, then up and erase line per
 extra row. A prompt of several lines clears one row for each line above its
 last (a lower bound: such a line fills at least one row), then its last line's
-rows. Every doubt falls back to one row: no record, an unknown width, or
-a width that changed since (the smaller of the row counts at the two widths,
-so a reflowed or unreflowed prompt is never over-cleared). A stray row left
-behind is harmless; climbing too far erases game text.
+rows. Those lines are the game's own line breaks, so they are cleared even
+when no width was ever reported (telnet without NAWS) and in ASCII mode. The
+last line's rows fall back to one on any doubt: an unknown width, ASCII mode,
+or a width that changed since (the smaller of the row counts at the two
+widths, so a reflowed or unreflowed prompt is never over-cleared). With no
+record the clear is one row. A stray row left behind is harmless; climbing
+too far erases game text.
 `ReportedScreenWidth(id) (int, bool)` is the single rule for whether a client
 reported its width (websocket, NAWS, or a cursor-position report other than
 the default 80); `internal/users` uses it for the pager and the wrap width.

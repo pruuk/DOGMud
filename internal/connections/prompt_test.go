@@ -32,7 +32,11 @@ func TestEraseFor(t *testing.T) {
 		{"three lines", promptRecord{on: true, above: 2, cols: 20, width: 36}, 36, eraseOneRow + up + up},
 		{"a line above and a last line of two rows", promptRecord{on: true, above: 1, cols: 60, width: 36}, 36, eraseOneRow + up + up},
 		{"two lines, widened since", promptRecord{on: true, above: 1, cols: 60, width: 36}, 100, eraseOneRow + up},
-		{"two lines, width unknown now", promptRecord{on: true, above: 1, cols: 20, width: 36}, 0, eraseOneRow},
+		// The game wrote the line breaks itself, so the lines above the last
+		// are certain at any width; only the last line's own rows need one.
+		{"two lines, width unknown now", promptRecord{on: true, above: 1, cols: 20, width: 36}, 0, eraseOneRow + up},
+		{"two lines, width unknown when drawn (telnet without NAWS)", promptRecord{on: true, above: 1, cols: 60, width: 0}, 36, eraseOneRow + up},
+		{"three lines, width never known", promptRecord{on: true, above: 2, cols: 60, width: 0}, 0, eraseOneRow + up + up},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, eraseFor(tt.rec, tt.curWidth))
@@ -270,4 +274,27 @@ func TestPrompt_UnknownWidthClearsOneRow(t *testing.T) {
 	SendPrompt(id, []byte(strings.Repeat("p", 200)), 200)
 	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
 	require.Equal(t, 1, rowsClearedBefore(t, r, "<M1>"))
+}
+
+// The line breaks in a prompt are the game's own (it wrapped the prompt at
+// the player's line width), so they are certain even when the client never
+// reported a width (telnet without NAWS, `set linewidth 40`): every line
+// above the last is cleared, and the last line counts one row. Without
+// this the first line stayed on screen above any text that arrived.
+func TestPrompt_UnknownWidthStillClearsTheGamesOwnLines(t *testing.T) {
+	id, r := promptScreen(t, 0)
+	SendPrompt(id, []byte(twoLines), 20)
+	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
+	require.Equal(t, 2, rowsClearedBefore(t, r, "<M1>"))
+}
+
+// ASCII mode changes characters, never line breaks: a two-line prompt there
+// clears both lines (its last line counts one row, since its width is not
+// trusted).
+func TestPrompt_AsciiModeStillClearsTheGamesOwnLines(t *testing.T) {
+	id, r := promptScreen(t, 36)
+	UpdateClientSettings(id, func(cs *ClientSettings) { cs.AsciiMode = true })
+	SendPrompt(id, []byte(twoLines), 20)
+	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
+	require.Equal(t, 2, rowsClearedBefore(t, r, "<M1>"))
 }
