@@ -59,6 +59,32 @@ gh pr checks <n> --repo pruuk/DOGMud --watch
 gh pr merge  <n> --repo pruuk/DOGMud --merge --delete-branch
 ```
 
+### After every merge: settle the issues the PR names (owner, 2026-11-21)
+
+PR bodies say "Part of #N", never "Closes #N" (a closing keyword closes the
+issue at merge even inside prose about future work; #222 was closed that
+way). So nothing closes an issue on its own, and on 2026-11-21 an audit found
+finished work still open (#882, the new logo, open six days after PR #883
+shipped it). Right after `gh pr merge`, for every issue the PR names:
+
+- **The PR finished it** (every ask in the issue, including its checkboxes and
+  any comment that widened it, is on master): close it with one plain line
+  naming the PR.
+
+  ```bash
+  gh issue close <n> --repo pruuk/DOGMud --reason completed --comment "Done in PR #<pr>: <what landed>."
+  ```
+- **The PR advanced it:** comment what landed (PR, files) and what is left,
+  concretely. Leave it open. If what is left is small and separate, offer the
+  owner to move it to its own issue and close this one.
+- **The PR only mentioned it** (filed during the work, a related fix): nothing.
+
+List the issues a PR names with:
+
+```bash
+gh pr view <pr> --repo pruuk/DOGMud --json title,body --jq '.title+"\n"+.body' | grep -o '#[0-9]\+' | sort -u
+```
+
 Use `--merge` (a `--no-ff` merge commit), **not** `--squash`. The project
 convention is `--no-ff`, and per-commit messages carry the finding evidence and
 verification notes that a squash would flatten into one blob.
