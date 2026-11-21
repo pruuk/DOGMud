@@ -1,5 +1,5 @@
 // touchdeck.js: the touch controls deck (touch arc spec 1, plan 1a;
-// docs/superpowers/specs/2026-11-21-touch-frame-design.md).
+// docs/superpowers/specs/completed/2026-11-21-touch-frame-design.md).
 //
 // The deck is a block of buttons above the command box. On a phone it sits
 // in the slot under the game text, which holds the deck or the open tab

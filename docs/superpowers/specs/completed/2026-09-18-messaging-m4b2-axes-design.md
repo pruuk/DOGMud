@@ -1,7 +1,7 @@
 # Messaging M4b-2: the four axes
 
 Date: 2026-09-18
-Arc: [messaging unification](../2026-08-31-messaging-unification-design.md), M4b-2
+Arc: [messaging unification](2026-08-31-messaging-unification-design.md), M4b-2
 Status: designed, awaiting owner review
 Supersedes: [the M4b-2 axes notes](2026-09-17-messaging-m4b2-axes-notes.md)
 in full, and within [the M4 flip spec](2026-09-17-messaging-m4-flip-design.md)

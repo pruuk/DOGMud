@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * Guards the touch frame's page wiring and stylesheet (touch frame plan 1a,
- * docs/superpowers/specs/2026-11-21-touch-frame-design.md).
+ * docs/superpowers/specs/completed/2026-11-21-touch-frame-design.md).
  *
  *   node tools/webclient-tests/touch-frame.js
  *

@@ -414,5 +414,5 @@ eye:
 
 [tool]: ../../../tools/messaging_surface_audit.py
 [guard]: ../../../messaging_surface_guard_test.go
-[design]: ../specs/2026-08-31-messaging-unification-design.md
+[design]: ../specs/completed/2026-08-31-messaging-unification-design.md
 [plan]: ../plans/completed/2026-08-31-messaging-m0-sweep.md

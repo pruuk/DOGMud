@@ -1,7 +1,7 @@
 # Messaging M4: the flip
 
 Date: 2026-09-17
-Arc: [messaging unification](../2026-08-31-messaging-unification-design.md), M4
+Arc: [messaging unification](2026-08-31-messaging-unification-design.md), M4
 Status: designed, not implemented
 
 M3 moved every store onto `internal/narration` while keeping each store's own

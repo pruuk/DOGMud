@@ -3,7 +3,7 @@
 Stage M5 of the messaging unification arc. Written 2026-09-22 against master
 `a5613be95`, after M4e PR 1a (#152) and PR 1b (#153) merged.
 
-Arc spec: [`2026-08-31-messaging-unification-design.md`](../2026-08-31-messaging-unification-design.md),
+Arc spec: [`2026-08-31-messaging-unification-design.md`](2026-08-31-messaging-unification-design.md),
 section "M5 Quality pass" (`:610`).
 
 M5 is the arc's first stage since M0 whose items are mostly unrelated to each

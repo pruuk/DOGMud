@@ -1,5 +1,5 @@
 // touchdeck.test.js: the touch controls deck's pure functions (touch frame
-// plan 1a, docs/superpowers/specs/2026-11-21-touch-frame-design.md).
+// plan 1a, docs/superpowers/specs/completed/2026-11-21-touch-frame-design.md).
 //
 // Run:  node tools/jstest/touchdeck.test.js
 'use strict';

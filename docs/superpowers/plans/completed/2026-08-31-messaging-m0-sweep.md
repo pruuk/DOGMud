@@ -18,7 +18,7 @@ output, not from memory.
 **Tech Stack:** Python 3 (stdlib only, matching `tools/id_inventory.py` and
 `tools/context_md_audit.py`), Go 1.x `testing` + `go/ast` + `io/fs`.
 
-**Spec:** [`2026-08-31-messaging-unification-design.md`](../../specs/2026-08-31-messaging-unification-design.md)
+**Spec:** [`2026-08-31-messaging-unification-design.md`](../../specs/completed/2026-08-31-messaging-unification-design.md)
 
 **No production behavior changes in M0.** Nothing under `internal/` or `modules/`
 is modified. The only Go file added is a test.

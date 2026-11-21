@@ -1,7 +1,7 @@
 # Messaging M3.1 + M3.2: Store Core Extraction, Defence, itemvoices, casting
 
 Design for the next slice of the messaging unification arc
-([`2026-08-31-messaging-unification-design.md`](../2026-08-31-messaging-unification-design.md)),
+([`2026-08-31-messaging-unification-design.md`](2026-08-31-messaging-unification-design.md)),
 covering items 1 and 2 of that spec's M3 order.
 
 Preceded by a standalone taunt bug-fix PR, which has since SHIPPED (#115, master

@@ -2,7 +2,7 @@
 
 **Created:** 2026-09-08
 **Status:** Design approved by owner 2026-09-08. No plan written yet.
-**Parent arc:** [Messaging Unification Arc](../2026-08-31-messaging-unification-design.md),
+**Parent arc:** [Messaging Unification Arc](2026-08-31-messaging-unification-design.md),
 slice M2. Predecessor slices M0, M0b and M1 are merged.
 **Inputs:** [M1 viewpoint audit](../../audits/2026-09-07-narration-viewpoint-audit.md),
 [M1 plan](../../plans/completed/2026-09-07-messaging-m1-viewpoint-audit-and-harness.md).
