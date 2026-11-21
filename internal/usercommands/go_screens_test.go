@@ -396,18 +396,18 @@ func TestMotdIsTheDrawing(t *testing.T) {
 		{42, r42 + `
   .:  M E S S A G E   O F   T H E   D A Y
 ` + r42 + `
-  PLAY ON YOUR PHONE. The web client fits
-  a phone screen, the keyboard stays up
-  while you chat, and the X closes it.
-  A BIGGER MAP. Laptops open full screen,
-  a line under the map names where you are
-  and where your quest leads, and Legend
-  shows the key.
-  QUESTS IN THREE TABS. Active, Repeat and
-  Completed, with a count of the work that
-  is ready again.
-  SOUND STARTS OFF. Open Settings and tick
-  Sound on when you want music.
+  MORE ROOM ON A PHONE. No title bar over
+  the game, Comms channels in one row you
+  swipe, and an open tab steps aside while
+  you type.
+  LONG ANSWERS COME A PAGE AT A TIME.
+  Press Enter for the next page, or type q
+  to stop.
+  PROMPTS FIT NARROW SCREENS. Your prompt
+  and questions now break between words.
+  NOTHING YOU MAKE VANISHES. If you cannot
+  carry what you craft, buy or earn, it
+  falls at your feet.
   The novel: https://dogmud.org/novel
   Full patch notes:
   https://dogmud.org/patch-notes
@@ -415,23 +415,21 @@ func TestMotdIsTheDrawing(t *testing.T) {
 		{30, r30 + `
   .:  MESSAGE OF THE DAY
 ` + r30 + `
- PLAY ON YOUR PHONE. The web
- client fits a phone screen,
- the keyboard stays up while
- you chat, and the X closes
- it.
- A BIGGER MAP. Laptops open
- full screen, a line under the
- map names where you are and
- where your quest leads, and
- Legend shows the key.
- QUESTS IN THREE TABS. Active,
- Repeat and Completed, with a
- count of the work that is
- ready again.
- SOUND STARTS OFF. Open
- Settings and tick Sound on
- when you want music.
+ MORE ROOM ON A PHONE. No
+ title bar over the game,
+ Comms channels in one row you
+ swipe, and an open tab steps
+ aside while you type.
+ LONG ANSWERS COME A PAGE AT A
+ TIME. Press Enter for the
+ next page, or type q to stop.
+ PROMPTS FIT NARROW SCREENS.
+ Your prompt and questions now
+ break between words.
+ NOTHING YOU MAKE VANISHES. If
+ you cannot carry what you
+ craft, buy or earn, it falls
+ at your feet.
  The novel:
  https://dogmud.org/novel
  Full patch notes:

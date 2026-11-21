@@ -81,7 +81,7 @@ Server:
   - checkclient
   # - Motd -
   #   Message of the day. This is displayed when the motd command is run.
-  Motd: '{{ t "PLAY ON YOUR PHONE. The web client fits a phone screen, the keyboard stays up while you chat, and the X closes it.\nA BIGGER MAP. Laptops open full screen, a line under the map names where you are and where your quest leads, and Legend shows the key.\nQUESTS IN THREE TABS. Active, Repeat and Completed, with a count of the work that is ready again.\nSOUND STARTS OFF. Open Settings and tick Sound on when you want music.\nThe novel: https://dogmud.org/novel\nFull patch notes: https://dogmud.org/patch-notes" }}'
+  Motd: '{{ t "MORE ROOM ON A PHONE. No title bar over the game, Comms channels in one row you swipe, and an open tab steps aside while you type.\nLONG ANSWERS COME A PAGE AT A TIME. Press Enter for the next page, or type q to stop.\nPROMPTS FIT NARROW SCREENS. Your prompt and questions now break between words.\nNOTHING YOU MAKE VANISHES. If you cannot carry what you craft, buy or earn, it falls at your feet.\nThe novel: https://dogmud.org/novel\nFull patch notes: https://dogmud.org/patch-notes" }}'
   # - NextRoomID -
   # This number is auto-updated to the highest number of rooms in the game.
   #   If creating your own rooms but don't want to risk an update conflicting,
