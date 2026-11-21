@@ -231,6 +231,15 @@
           self.applyDeck();
         }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
       }
+      // Plan 1b: what steps aside depends on which field is being typed in,
+      // and focus can move between fields (the command box, the Automation
+      // dialog) while the keyboard stays up, which the class watch above
+      // does not see.
+      var onFocusMove = function () {
+        if (document.documentElement.classList.contains("keyboard-open")) self.applyDeck();
+      };
+      document.addEventListener("focusin", onFocusMove);
+      document.addEventListener("focusout", onFocusMove);
 
       // Folding, pop-out and the saved layout
       this.initCollapse   && this.initCollapse();
@@ -553,14 +562,32 @@
       try { store = window.localStorage; } catch (e) { /* blocked */ }
       var on = TD.deckOn(TD.readPref(store), coarse);
       var keyboard = document.documentElement.classList.contains("keyboard-open");
+      var active = document.activeElement;
+      var field = TD.fieldOf(active ? active.id : "", !!(VF && VF.editableFocused(document)));
       var shows = TD.slotShows({
         phone: this.mode === "phone",
         tabOpen: !!this._drawerActive,
         deckOn: on,
-        keyboard: keyboard
+        keyboard: keyboard,
+        field: field
       });
+      var was = slot.dataset.shows;
+      // Plan 1b: a tab that steps aside for the keyboard keeps its scroll
+      // place, since a hidden box loses it.
+      if (was === "tab" && shows !== "tab" && this._drawerActive) {
+        this._aside = { name: this._drawerActive, scroll: TD.rememberScroll(this._drawerBody) };
+      }
       if (slot.dataset.shows !== shows) slot.dataset.shows = shows;
       slot.hidden = shows === "empty";
+      // Back in the slot: the same tab returns to its place, and Comms to its
+      // newest message, as when a tab opens.
+      if (shows === "tab" && was !== "tab" && this._aside) {
+        if (this._aside.name === this._drawerActive) {
+          TD.restoreScroll(this._aside.scroll);
+          this._scrollChatToNewest(document.getElementById("panel-" + this._drawerActive));
+        }
+        this._aside = null;
+      }
       slot.classList.toggle("deck-on", on);
       if (!on) return;
 
@@ -750,6 +777,7 @@
       }
 
       this._drawerActive = null;
+      this._aside = null;   // a later open starts fresh (plan 1b)
       if (this._drawer) {
         this._drawer.classList.remove("open");
       }

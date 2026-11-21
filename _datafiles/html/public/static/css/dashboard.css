@@ -925,11 +925,13 @@ html.keyboard-open #dashboard[data-mode="column"] #dash-panels { padding-bottom:
 html.layout-column.keyboard-open #dash-drawer { bottom: 6px; }
 /* With the keyboard up, an open tab sits just above the command box. The tab
    bar and name strip are hidden then. Phone and slim: 30% of what is visible
-   above the keyboard (plan 6 R3). --visible-h is set by the keyboard watch
+   above the keyboard (plan 6 R3). On a phone, typing in the command box sets
+   the tab aside instead (touch frame plan 1b, touchdeck.js slotShows), so
+   there this cap only holds while another field (the Automation dialog) has
+   the keyboard. --visible-h is set by the keyboard watch
    (webclient.html fitFrameHeight, or this page's own when opened alone);
    vh cannot be used, because opened alone the page keeps vh at the full
-   layout height. Never under 60px, so a Comms being typed into keeps its
-   newest lines. */
+   layout height. Never under 60px. */
 html.keyboard-open #dash-drawer {
   bottom: var(--cmdbox-h);
   --drawer-cap: max(60px, calc(0.3 * var(--visible-h, 100dvh)));

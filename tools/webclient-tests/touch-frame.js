@@ -58,5 +58,12 @@ check(/#touch-slot\.deck-on #dash-drawer\.open \{ min-height: var\(--deck-h\); \
 check(/_placeDrawer\(true\)/.test(dash) && /_placeDrawer\(false\)/.test(dash), 'a phone moves its tab card into the slot and back out');
 check(/applyDeck: function/.test(dash), 'dashboard.js applies the deck');
 
+// Plan 1b: the keyboard rule.
+check(/slotShows\(\{[\s\S]{0,300}field:/.test(dash), 'applyDeck passes the field being typed in to slotShows');
+check(/TD\.fieldOf\(/.test(dash) && /editableFocused\(document\)/.test(dash), 'the field comes from fieldOf and ViewportFit.editableFocused');
+check(/addEventListener\("focusin"/.test(dash) && /addEventListener\("focusout"/.test(dash), 'a focus watch reruns applyDeck when focus moves');
+check(/TD\.rememberScroll\(this\._drawerBody\)/.test(dash) && /TD\.restoreScroll\(/.test(dash), 'a stepped-aside tab keeps its scroll place');
+check(/_closeDrawer: function \(\) \{[\s\S]{0,700}this\._aside = null/.test(dash), 'closing a tab forgets a kept scroll place');
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails === 0 ? 0 : 1);
