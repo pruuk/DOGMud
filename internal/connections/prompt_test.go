@@ -169,8 +169,9 @@ func TestPrompt_TypingExtendsThePrompt(t *testing.T) {
 	require.Equal(t, 2, rowsClearedBefore(t, r, "<M1>"))
 }
 
-// A backspace or any control byte ends the record: one row, never too many.
-func TestPrompt_ABackspaceEndsTheRecord(t *testing.T) {
+// After a backspace a one-line prompt the terminal wrapped clears one row:
+// only the game's own line breaks are counted, never too many.
+func TestPrompt_ABackspaceClearsOneRowOfATerminalWrappedPrompt(t *testing.T) {
 	id, r := promptScreen(t, 36)
 	SendPrompt(id, []byte(wrapped), 60)
 	SendEcho(id, []byte("\b \b"))
@@ -230,8 +231,9 @@ func TestPrompt_ADroppedPromptIsNotRecorded(t *testing.T) {
 }
 
 // ASCII mode swaps or drops characters after the prompt was measured, so a
-// prompt there is not recorded (second review).
-func TestPrompt_AsciiModeIsNotRecorded(t *testing.T) {
+// prompt's width is not trusted there (second review): a one-line prompt
+// clears one row.
+func TestPrompt_AsciiModeClearsOneRowOfAOneLinePrompt(t *testing.T) {
 	id, r := promptScreen(t, 36)
 	UpdateClientSettings(id, func(cs *ClientSettings) { cs.AsciiMode = true })
 	SendPrompt(id, []byte(wrapped), 60)
@@ -284,6 +286,20 @@ func TestPrompt_UnknownWidthClearsOneRow(t *testing.T) {
 func TestPrompt_UnknownWidthStillClearsTheGamesOwnLines(t *testing.T) {
 	id, r := promptScreen(t, 0)
 	SendPrompt(id, []byte(twoLines), 20)
+	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
+	require.Equal(t, 2, rowsClearedBefore(t, r, "<M1>"))
+}
+
+// A backspace echo leaves the cursor on the prompt's last line, so the lines
+// above it are still the game's own and still cleared; the last line counts
+// one row, since what was typed on it is no longer measured (review of the
+// prompt wrap, 2026-11-21: a backspace then a round tick showed the first
+// line twice).
+func TestPrompt_ABackspaceKeepsTheLinesAbove(t *testing.T) {
+	id, r := promptScreen(t, 36)
+	SendPrompt(id, []byte(twoLines), 20)
+	SendEcho(id, []byte("x"))
+	SendEcho(id, []byte{8, ' ', 8})
 	SendReplacingPrompt(id, []byte("<M1>A line.\n"))
 	require.Equal(t, 2, rowsClearedBefore(t, r, "<M1>"))
 }

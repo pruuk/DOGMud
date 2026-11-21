@@ -123,10 +123,12 @@ func ReportedScreenWidth(id ConnectionId) (int, bool) {
 // recorded prompt, then b. b may be several lines (a prompt the game wrapped);
 // the connection counts its line breaks itself. cols is the visible width in
 // columns of b's last line, measured by the caller with MinCols (markup
-// removed first). The new prompt is recorded only when the client reported a
-// width, the bytes were written (a frozen queue during copyover writes
-// nothing), and the connection is not in ASCII mode, whose substitutions
-// change the width after it was measured.
+// removed first). The new prompt is recorded when the bytes were written (a
+// frozen queue during copyover writes nothing). Its width is recorded only
+// when the client reported one and the connection is not in ASCII mode,
+// whose substitutions change the width after it was measured; without a
+// width the prompt's line breaks still count, and its last line counts one
+// row.
 func SendPrompt(id ConnectionId, b []byte, cols int) {
 	width, _ := ReportedScreenWidth(id)
 	ascii := GetClientSettings(id).AsciiMode // read before promptMu: no lock is taken under it
@@ -163,8 +165,10 @@ func SendReplacingPrompt(id ConnectionId, b []byte) {
 }
 
 // SendEcho writes characters a player typed back to them. Printable text
-// extends the recorded prompt, since it is drawn on the prompt's line; any
-// other byte (Enter, a backspace, a control sequence) ends the record.
+// extends the recorded prompt, since it is drawn on the prompt's line. A
+// backspace (term.BACKSPACE_SEQUENCE) keeps the lines above the prompt's last
+// line and counts the last line as one row. Any other byte (Enter, a control
+// sequence) ends the record.
 func SendEcho(id ConnectionId, b []byte) {
 	cd := lookup(id)
 	if cd == nil {
@@ -172,9 +176,15 @@ func SendEcho(id ConnectionId, b []byte) {
 	}
 	cd.promptMu.Lock()
 	n, err := cd.writeNLocked(b)
-	if cd.prompt.on && n > 0 && printable(b) {
+	switch {
+	case cd.prompt.on && n > 0 && printable(b):
 		cd.prompt.cols += MinCols(string(b))
-	} else {
+	case cd.prompt.on && n > 0 && bytes.Equal(b, term.BACKSPACE_SEQUENCE):
+		// The cursor stays on the prompt's last line, so the lines above it
+		// are still the game's own; what is typed on it is no longer
+		// measured, so the last line counts one row.
+		cd.prompt.width = 0
+	default:
 		cd.prompt = promptRecord{}
 	}
 	cd.promptMu.Unlock()
