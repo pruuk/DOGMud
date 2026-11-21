@@ -1725,10 +1725,18 @@ html.layout-column.keyboard-open #dash-drawer {
   min-width: 280px;
   max-width: 420px;
   width: 90vw;
+  /* Never taller than the page (#auto-modal is fixed to it, and the page
+     shrinks to what is visible above a phone's keyboard): the body scrolls
+     and the title and Cancel/Save stay on screen (touch frame plan 1b; the
+     Save button was under the keyboard, 2026-11-21). */
+  max-height: calc(100% - 16px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+.auto-modal-head,
+.auto-modal-foot,
+.auto-modal-msg { flex-shrink: 0; }
 
 .auto-modal-head {
   display: flex;
@@ -1759,6 +1767,9 @@ html.layout-column.keyboard-open #dash-drawer {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* Field groups inside the modal */

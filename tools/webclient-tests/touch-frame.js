@@ -66,5 +66,12 @@ check(/TD\.fieldOf\(/.test(dash) && /editableFocused\(document\)/.test(dash), 't
 check(/document\.addEventListener\("focusin", onFocusMove\)/.test(dash) && /document\.addEventListener\("focusout", onFocusMove\)/.test(dash), 'a focus watch reruns applyDeck when focus moves');
 check(/if \(shows === "tab" && was !== "tab"\) \{\s*this\._scrollChatToNewest\(/.test(dash), 'a tab back in the slot puts Comms at its newest message');
 
+// The Automation dialog with a phone keyboard up (found in the plan 1b
+// device check, 2026-11-21): it never grows past the page, its body scrolls,
+// so Save stays on screen; and its fields take commands, so no capitals.
+check(/\.auto-modal \{[^}]*max-height: calc\(100% - 16px\)/.test(css), 'the Automation dialog is never taller than the page');
+check(/\.auto-modal-body \{[^}]*overflow-y: auto/.test(css) && /\.auto-modal-body \{[^}]*min-height: 0/.test(css), 'the Automation dialog body scrolls, so Cancel and Save stay on screen');
+check(/window\.openAutoModal\s*=\s*function[\s\S]{0,900}setAttribute\("autocapitalize", "off"\)/.test(html), 'the Automation dialog turns off automatic capitals on its fields');
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails === 0 ? 0 : 1);

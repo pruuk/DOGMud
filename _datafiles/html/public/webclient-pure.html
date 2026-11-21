@@ -4477,6 +4477,14 @@
                 titleEl.textContent = title;
                 while (bodySlot.firstChild) bodySlot.removeChild(bodySlot.firstChild);
                 bodySlot.appendChild(bodyEl);
+                // Its fields take commands, not prose: no automatic capitals,
+                // corrections or spelling marks on a phone keyboard, the same
+                // as the command box (owner and Malia, 2026-11-21).
+                bodyEl.querySelectorAll("input,textarea").forEach(function (f) {
+                    f.setAttribute("autocapitalize", "off");
+                    f.setAttribute("autocorrect", "off");
+                    f.spellcheck = false;
+                });
                 _onSave = onSave;
                 modal.style.display = "flex";
                 // Focus first input/textarea if present
