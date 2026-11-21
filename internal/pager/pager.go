@@ -67,7 +67,7 @@ func Size(reported, width, wrapWidth, setting int, screenReader bool) (int, bool
 // telnet screen) are all counted as drawn.
 func stopRows(stop string, width, wrapWidth int) int {
 	rows := 0
-	for _, line := range strings.Split(messaging.WrapPrompt(stop, wrapWidth), "\n") {
+	for line := range strings.SplitSeq(messaging.WrapPrompt(stop, wrapWidth), "\n") {
 		rows += Rows(line, width)
 	}
 	return rows

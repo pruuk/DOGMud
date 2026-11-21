@@ -11,11 +11,11 @@ func TestRenderWrapsLongHeading(t *testing.T) {
 	const heading = `Kael sets down his whittling. "Ask what you like, I'll answer plain."`
 	out := Render(Menu{Heading: heading, Entries: []Entry{{Id: "a", Label: "Hello"}}}, 38)
 	words := map[string]bool{}
-	for _, w := range strings.Fields(heading) {
+	for w := range strings.FieldsSeq(heading) {
 		words[w] = true
 	}
 	headingLines := 0
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		p := plain(line)
 		if n := utf8.RuneCountInString(p); n > 38 {
 			t.Errorf("line over 38 columns (%d): %q", n, p)
@@ -23,7 +23,7 @@ func TestRenderWrapsLongHeading(t *testing.T) {
 		if strings.HasPrefix(p, "  1.") {
 			break
 		}
-		for _, w := range strings.Fields(p) {
+		for w := range strings.FieldsSeq(p) {
 			if strings.Contains(heading, w) && !words[w] {
 				t.Errorf("word split: %q in line %q", w, p)
 			}
