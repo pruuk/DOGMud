@@ -1,5 +1,13 @@
 # DOGMud Patch Notes
 
+## 2026-11-21: More room on a phone
+
+- On a phone the Game window no longer has a title bar, so you see more of the game.
+- Comms, Inventory, Quests and Automation keep their buttons in one row that you swipe sideways. The row fades at the edge that has more.
+- A phone gets one tip, once: tap the full screen button on Android, or add the game to your Home Screen on an iPhone.
+- If your browser shows the game as a desktop site, the game asks for your phone's real width, and tells you how to turn Desktop site off if that does not work.
+- Tablets and computers are unchanged.
+
 ## 2026-11-21: Typing on a phone gives the game text the room
 
 - On a phone, when you tap the command box to type, an open tab such as Comms steps aside, so you can read the game above the keyboard. Close the keyboard and the tab comes back where you left it, with Comms at its newest message.
