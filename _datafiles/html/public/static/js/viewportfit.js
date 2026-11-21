@@ -63,19 +63,56 @@
             isUprightPhone(s.width, s.height, orientationType(win), coarse));
     }
 
-    // The sideways note (layout spec ruling 15), once per browser tab:
-    // sessionStorage survives a reload but not a new tab. memo stops a repeat
-    // on this page where storage is missing or blocked.
+    // One rule for every once-only note (plan 1c): true the first time key is
+    // taken, false after. storage is sessionStorage (once per browser tab: it
+    // survives a reload but not a new tab) or localStorage (once per device).
+    // memo stops a repeat on this page where storage is missing or blocked.
+    function takeOnce(storage, key, memo) {
+        if (memo[key]) return false;
+        memo[key] = true;
+        try {
+            if (storage.getItem(key) === '1') return false;
+            storage.setItem(key, '1');
+        } catch (e) { /* missing or blocked storage: memo alone */ }
+        return true;
+    }
+
+    // The sideways note (layout spec ruling 15), once per browser tab.
     var SIDEWAYS_TOAST = 'This game is easier to play with your phone held upright.';
     var SIDEWAYS_KEY = 'dogmud.sidewaysToast';
     function takeSidewaysToast(storage, memo) {
-        if (memo.shown) return false;
-        memo.shown = true;
-        try {
-            if (storage.getItem(SIDEWAYS_KEY) === '1') return false;
-            storage.setItem(SIDEWAYS_KEY, '1');
-        } catch (e) { /* missing or blocked storage: memo alone */ }
-        return true;
+        return takeOnce(storage, SIDEWAYS_KEY, memo);
+    }
+
+    // Desktop site (touch frame plan 1c): a touch screen whose page is laid
+    // out at least 15% wider than the screen, clear of scrollbars and
+    // rounding and far below the 2.4x seen on a Pixel 8. layoutW: the page's
+    // layout width (documentElement.clientWidth); screenW: screen.width.
+    function isDesktopSite(layoutW, screenW, coarse) {
+        return !!coarse && screenW > 0 && layoutW >= screenW * 1.15;
+    }
+
+    // The phone tips (plan 1c), once per device each. TIP_KEY_PREFIX plus the
+    // kind is the localStorage key.
+    var TIP_KEY_PREFIX = 'dogmud.tip.';
+    var TIPS = {
+        fullscreen: 'Tap ⛶ for more room to play.',
+        homescreen: 'For more room, add this page to your Home Screen: tap Share, then Add to Home Screen.',
+        desktopsite: "This page is showing as a desktop site, so everything is small. Turn off Desktop site in your browser's menu."
+    };
+
+    // Which tip a phone gets: 'desktopsite', 'fullscreen', 'homescreen' or
+    // null. Desktop site comes first (full screen cannot help a zoomed-out
+    // page). No full screen or Home Screen tip from the Home Screen, or for a
+    // player who turned full screen off in the game. o: { phone, desktopSite,
+    // standalone (opened from the Home Screen), turnedOff, canFullScreen
+    // (false on iPhone Safari), fullScreenOn }.
+    function phoneTip(o) {
+        if (!o.phone) return null;
+        if (o.desktopSite) return 'desktopsite';
+        if (o.standalone || o.turnedOff) return null;
+        if (o.canFullScreen) return o.fullScreenOn ? null : 'fullscreen';
+        return 'homescreen';
     }
 
     function watchUprightPhone(win) {
@@ -164,6 +201,11 @@
         isSidewaysPhone: isSidewaysPhone,
         orientationType: orientationType,
         takeSidewaysToast: takeSidewaysToast,
+        takeOnce: takeOnce,
+        isDesktopSite: isDesktopSite,
+        phoneTip: phoneTip,
+        TIPS: TIPS,
+        TIP_KEY_PREFIX: TIP_KEY_PREFIX,
         SIDEWAYS_TOAST: SIDEWAYS_TOAST,
         watchUprightPhone: watchUprightPhone,
         wantFullScreen: wantFullScreen,
