@@ -36,10 +36,12 @@ func (u *UserRecord) HoldReply(text string) {
 // held, which leaves any waiting pages alone. A reply with text replaces
 // waiting pages. A page is measured in screen rows at the reader's width
 // (PagerWidth), so a line the client wraps counts for each row it fills, and
-// the stop line's own rows are reserved (owner ruling 6).
+// the stop line's own rows are reserved (owner ruling 6), as it is drawn:
+// word wrapped at WrapWidth like every prompt (CommandPromptBody).
 func (u *UserRecord) EndReply() string {
 	height := u.ClientSettings().Display.GetScreenHeight()
 	width := u.PagerWidth()
+	wrapWidth := u.WrapWidth()
 	off := u.PageSize == pager.SettingOff || u.onAIPort()
 	fighting := u.Character != nil && u.Character.IsInCombat()
 	asking := u.questionOpen()
@@ -55,7 +57,7 @@ func (u *UserRecord) EndReply() string {
 	if off || fighting || asking {
 		return text
 	}
-	pages := pager.Pages(pager.Lines(text), width, height, u.PageSize, u.ScreenReader)
+	pages := pager.Pages(pager.Lines(text), width, wrapWidth, height, u.PageSize, u.ScreenReader)
 	if len(pages) <= 1 {
 		return text
 	}
@@ -88,7 +90,7 @@ func (u *UserRecord) reportedScreenWidth() (int, bool) {
 // PageRows is the page size in screen rows the pager uses for this reader
 // now, for `set pagesize` to report. 0 when paging is off.
 func (u *UserRecord) PageRows() int {
-	n, _ := pager.Size(u.ClientSettings().Display.GetScreenHeight(), u.PagerWidth(), u.PageSize, u.ScreenReader)
+	n, _ := pager.Size(u.ClientSettings().Display.GetScreenHeight(), u.PagerWidth(), u.WrapWidth(), u.PageSize, u.ScreenReader)
 	return n
 }
 

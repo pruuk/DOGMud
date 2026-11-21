@@ -5,9 +5,10 @@ package pager
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -32,32 +33,44 @@ const (
 	resetColour = "\x1b[0m"
 )
 
-// escapeSeq matches one ANSI control sequence (a colour, a cursor move, an
-// erase), which takes no column on screen.
-var escapeSeq = regexp.MustCompile("\x1b\\[[0-?]*[ -/]*[@-~]")
-
 // Rows is the number of screen rows line fills on a reader width columns
-// wide (owner ruling 6): its visible width (escape sequences removed, a wide
-// character counted as two columns) divided by the width, rounded up, and at
-// least 1, so a blank line is a row. A width below 1 counts every line as
-// one row.
+// wide (owner ruling 6): its visible width (escape sequences removed with
+// term.EscapeSeqRe, a wide character counted as two columns) divided by the
+// width, rounded up, and at least 1, so a blank line is a row. A width below
+// 1 counts every line as one row.
 func Rows(line string, width int) int {
 	if width < 1 {
 		return 1
 	}
-	cols := runewidth.StringWidth(escapeSeq.ReplaceAllString(line, ``))
+	cols := runewidth.StringWidth(term.EscapeSeqRe.ReplaceAllString(line, ``))
 	return max(1, (cols+width-1)/width)
 }
 
 // Size is the page size in screen rows for a reader and whether paging is
 // on. setting is UserRecord.PageSize: SettingOff, 0 to follow the screen, or
-// a size. reported is the screen's height in rows and width its width in
-// columns. Following the screen, a page is the height less the rows a stop
-// line fills at that width (as "page 1 of 1"; Pages reserves a longer one)
-// and less the prompt's row. When paging is on, the size is clamped to
+// a size. reported is the screen's height in rows, width its width in
+// columns, and wrapWidth the width prompts are word wrapped at
+// (UserRecord.WrapWidth). Following the screen, a page is the height less the
+// rows the wrapped stop line fills (stopRows, as "page 1 of 1"; Pages
+// reserves a longer one) and less the prompt's row. When paging is on, the size is clamped to
 // MinSize..MaxSize, whichever of the three it came from.
-func Size(reported, width, setting int, screenReader bool) (int, bool) {
-	return sizeFor(reported, Rows(StopLine(1, 1), width), setting, screenReader)
+func Size(reported, width, wrapWidth, setting int, screenReader bool) (int, bool) {
+	return sizeFor(reported, stopRows(StopLine(1, 1), width, wrapWidth), setting, screenReader)
+}
+
+// stopRows is the screen rows the stop line stop fills as the player sees it:
+// word wrapped at wrapWidth by messaging.WrapPrompt, as
+// users.CommandPromptBody wraps every prompt, on a reader width columns wide.
+// Each wrapped line counts its own Rows, so a word wrap that needs a row more
+// than the columns alone would, a wrap narrower than the screen (set
+// linewidth) and a wrap wider than it (the 30-column floor on a narrower
+// telnet screen) are all counted as drawn.
+func stopRows(stop string, width, wrapWidth int) int {
+	rows := 0
+	for _, line := range strings.Split(messaging.WrapPrompt(stop, wrapWidth), "\n") {
+		rows += Rows(line, width)
+	}
+	return rows
 }
 
 // sizeFor is Size with the stop line's rows given.
@@ -76,24 +89,24 @@ func sizeFor(reported, stopRows, setting int, screenReader bool) (int, bool) {
 	return min(max(n, MinSize), MaxSize), true
 }
 
-// Pages cuts lines into pages for a reader width columns wide whose screen
-// is reported rows high (Size and Cut). The stop line names the page count,
+// Pages cuts lines into pages for a reader width columns wide, whose prompts
+// wrap at wrapWidth, and whose screen is reported rows high (Size and Cut). The stop line names the page count,
 // so a reply of many pages can need a longer stop line than "page 1 of 1";
 // when it fills more rows, the lines are cut again with those rows
 // reserved. nil when paging is off.
-func Pages(lines []string, width, reported, setting int, screenReader bool) [][]string {
-	stopRows := Rows(StopLine(1, 1), width)
+func Pages(lines []string, width, wrapWidth, reported, setting int, screenReader bool) [][]string {
+	reserved := stopRows(StopLine(1, 1), width, wrapWidth)
 	for {
-		n, on := sizeFor(reported, stopRows, setting, screenReader)
+		n, on := sizeFor(reported, reserved, setting, screenReader)
 		if !on {
 			return nil
 		}
 		pages := Cut(lines, n, width)
-		need := Rows(StopLine(len(pages), len(pages)), width)
-		if need <= stopRows {
+		need := stopRows(StopLine(len(pages), len(pages)), width, wrapWidth)
+		if need <= reserved {
 			return pages
 		}
-		stopRows = need
+		reserved = need
 	}
 }
 

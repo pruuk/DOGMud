@@ -9,28 +9,29 @@ import (
 
 func TestSize(t *testing.T) {
 	cases := []struct {
-		name                     string
-		reported, width, setting int
-		screenReader             bool
-		wantSize                 int
-		wantOn                   bool
+		name                                string
+		reported, width, wrapWidth, setting int
+		screenReader                        bool
+		wantSize                            int
+		wantOn                              bool
 	}{
-		{"off wins over everything", 50, 80, SettingOff, true, 0, false},
-		{"a setting wins over the screen", 50, 80, 30, false, 30, true},
-		{"a setting wins for a screen reader too", 50, 80, 30, true, 30, true},
-		{"a screen reader without a setting gets the fixed size", 50, 80, 0, true, ScreenReaderSize, true},
-		{"the screen less a one-row stop line and the prompt", 24, 80, 0, false, 22, true},
-		{"a 36-column phone: the stop line fills 2 rows", 16, 36, 0, false, 13, true},
-		{"a 30-column phone: the stop line fills 3 rows", 16, 30, 0, false, 12, true},
-		{"never below the floor", 6, 80, 0, false, MinSize, true},
-		{"a setting is clamped to the ceiling", 50, 80, 500, false, MaxSize, true},
-		{"a setting below the floor is raised", 50, 80, 3, false, MinSize, true},
-		{"a huge report is clamped to the ceiling", 999, 80, 0, false, MaxSize, true},
-		{"a huge report is clamped for a screen reader's setting too", 0, 80, 999, false, MaxSize, true},
+		{"off wins over everything", 50, 80, 80, SettingOff, true, 0, false},
+		{"a setting wins over the screen", 50, 80, 80, 30, false, 30, true},
+		{"a setting wins for a screen reader too", 50, 80, 80, 30, true, 30, true},
+		{"a screen reader without a setting gets the fixed size", 50, 80, 80, 0, true, ScreenReaderSize, true},
+		{"the screen less a one-row stop line and the prompt", 24, 80, 80, 0, false, 22, true},
+		{"a 36-column phone: the stop line fills 2 rows", 16, 36, 36, 0, false, 13, true},
+		{"a 30-column phone: the stop line fills 3 rows", 16, 30, 30, 0, false, 12, true},
+		{"an 80-column screen wrapping at 38 (set linewidth): the stop line is 2 lines", 16, 80, 38, 0, false, 13, true},
+		{"never below the floor", 6, 80, 80, 0, false, MinSize, true},
+		{"a setting is clamped to the ceiling", 50, 80, 80, 500, false, MaxSize, true},
+		{"a setting below the floor is raised", 50, 80, 80, 3, false, MinSize, true},
+		{"a huge report is clamped to the ceiling", 999, 80, 80, 0, false, MaxSize, true},
+		{"a huge report is clamped for a screen reader's setting too", 0, 80, 80, 999, false, MaxSize, true},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			size, on := Size(c.reported, c.width, c.setting, c.screenReader)
+			size, on := Size(c.reported, c.width, c.wrapWidth, c.setting, c.screenReader)
 			require.Equal(t, c.wantOn, on)
 			require.Equal(t, c.wantSize, size)
 		})
@@ -84,12 +85,51 @@ func TestPages_ReservesTheStopLineForThePageCount(t *testing.T) {
 	for i := range lines {
 		lines[i] = "x"
 	}
-	pages := Pages(lines, 70, 20, 0, false)
+	pages := Pages(lines, 70, 70, 20, 0, false)
 	require.Len(t, pages, 11, "17 rows a page once the stop line takes two")
 	for _, p := range pages {
 		require.LessOrEqual(t, len(p), 17)
 	}
-	require.Nil(t, Pages(lines, 70, 20, SettingOff, false), "paging off cuts nothing")
+	require.Nil(t, Pages(lines, 70, 70, 20, SettingOff, false), "paging off cuts nothing")
+}
+
+// The stop line is shown word wrapped (messaging.WrapPrompt, as
+// users.CommandPromptBody wraps every prompt), so the rows reserved for it are
+// the rows of its wrapped lines, which word wrapping can make more than its
+// columns divided by the width.
+func TestStopRows_CountsTheWrappedStopLine(t *testing.T) {
+	for _, tt := range []struct {
+		name             string
+		width, wrapWidth int
+		want             int
+	}{
+		{"a 38-column phone: two lines", 38, 38, 2},
+		{"a 33-column phone: three lines", 33, 33, 3},
+		{"80 columns: one line", 80, 80, 1},
+		// 70 columns over 24 is 3 rows, but no word is split, so it takes 4.
+		{"word wrapping needs a row more than the columns", 24, 24, 4},
+		// set linewidth 38 on an 80-column screen: wrapped to 2 lines of 1 row.
+		{"wrapped narrower than the screen", 80, 38, 2},
+		// Wrapped at the 30-column floor on a 20-column telnet screen: lines
+		// of 25, 27 and 16 columns fill 2, 2 and 1 rows.
+		{"wrapped wider than the screen", 20, 30, 5},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, stopRows(StopLine(1, 1), tt.width, tt.wrapWidth))
+		})
+	}
+	require.Equal(t, 3, Rows(StopLine(1, 1), 24), "the column count alone says 3 at 24")
+}
+
+// A page on a 38-column reader leaves the wrapped stop line its two rows and
+// the prompt its row: a 16-row screen holds 13 one-row lines.
+func TestPages_ReservesTheWrappedStopLine(t *testing.T) {
+	lines := make([]string, 30)
+	for i := range lines {
+		lines[i] = "x"
+	}
+	pages := Pages(lines, 80, 38, 16, 0, false)
+	require.Len(t, pages[0], 13, "16 rows less 2 for the stop line wrapped at 38, less the prompt row")
 }
 
 func TestLines(t *testing.T) {

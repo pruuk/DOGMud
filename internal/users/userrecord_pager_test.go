@@ -95,6 +95,29 @@ func TestEndReply_ReservesTheStopLinesRows(t *testing.T) {
 	require.NotContains(t, first, "line 14\n")
 }
 
+// The stop line is drawn wrapped at WrapWidth, so `set linewidth 38` on an
+// 80-column screen makes it two lines, and both are reserved: a 16-row screen
+// holds 13 one-row lines, not 14.
+func TestEndReply_ReservesTheStopLineWrappedAtTheLineWidth(t *testing.T) {
+	const connId = 18846
+	connections.RegisterTestWebsocketConnection(connId)
+	t.Cleanup(func() { connections.UnregisterTestConnection(connId) })
+	connections.UpdateClientSettings(connId, func(cs *connections.ClientSettings) {
+		cs.Display.ScreenWidth = 80
+		cs.Display.ScreenHeight = 16
+	})
+	u := NewTestUser(1, "narrow", "Narrowia", connId)
+	u.LineWidth = 38
+	require.Equal(t, 13, u.PageRows())
+	for _, l := range numbered(14) {
+		u.HoldReply(l)
+	}
+	first := u.EndReply()
+	require.True(t, u.PagesWaiting(), "14 rows do not fit beside a two-line stop line")
+	require.Contains(t, first, "line 13\n")
+	require.NotContains(t, first, "line 14\n")
+}
+
 // A telnet reader is measured at its NAWS width when its client sent one.
 func TestEndReply_TelnetCountsRowsAtTheNAWSWidth(t *testing.T) {
 	const connId = 18844

@@ -2,6 +2,7 @@ package term
 
 import (
 	"errors"
+	"regexp"
 	"strconv"
 )
 
@@ -11,6 +12,13 @@ var (
 	ANSI_ESC  byte = 27 // \033
 	ANSI_BEEP byte = 7  // When sent to client, causes beep (or windows chime, or whatever)
 )
+
+// EscapeSeqRe matches one ANSI control sequence (a colour, a cursor move, an
+// erase: ESC [, parameter bytes, intermediate bytes, a final byte), which
+// takes no column on screen. The one pattern every column counter shares:
+// the pager's row count (internal/pager Rows) and the prompt record's
+// column count (internal/connections MinCols).
+var EscapeSeqRe = regexp.MustCompile("\x1b\\[[0-?]*[ -/]*[@-~]")
 
 // ESC [  <  0  ;  1  ;  1  m
 // [27 91 60 48 59 49 59 49 109]

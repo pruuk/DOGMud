@@ -2,7 +2,6 @@ package connections
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -43,18 +42,15 @@ var eraseOneRow = term.AnsiMoveCursorColumn.String() + term.AnsiEraseLine.String
 // eraseRowAbove moves up a row and clears it.
 var eraseRowAbove = term.AnsiMoveCursorUp.String() + term.AnsiEraseLine.String()
 
-// escapeSeqRe matches one ANSI control sequence, which takes no column.
-var escapeSeqRe = regexp.MustCompile("\x1b\\[[0-?]*[ -/]*[@-~]")
-
 // MinCols is the fewest columns text can take on one unbroken row: escape
-// sequences take none, and every other character that shows takes one, even
+// sequences (term.EscapeSeqRe) take none, and every other character that shows takes one, even
 // one a terminal may draw two wide (an emoji, an ambiguous-width bar).
 // Terminals disagree on those widths, so the prompt record measures with
 // this lower bound: counting too few rows leaves a stray row, counting too
 // many would erase game text (#922 second review).
 func MinCols(text string) int {
 	cols := 0
-	for _, r := range escapeSeqRe.ReplaceAllString(text, ``) {
+	for _, r := range term.EscapeSeqRe.ReplaceAllString(text, ``) {
 		if runewidth.RuneWidth(r) > 0 {
 			cols++
 		}
