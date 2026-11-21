@@ -11,6 +11,12 @@
  * One tab bar and slide-up drawer serve column, slim and phone; the CSS
  * hides the buttons of the panels a mode keeps open. Pop-out windows are a
  * wide-only feature.
+ *
+ * Touch frame (plan 1a, 2026-11-21): on a phone the tab card moves into the
+ * touch slot under the game text (_placeDrawer), so an open tab pushes the
+ * game up instead of covering its newest lines. applyDeck shows the controls
+ * deck in the same slot when the Touch controls setting turns it on
+ * (touchdeck.js).
  */
 "use strict";
 
@@ -159,6 +165,8 @@
     _drawer: null,
     _drawerBody: null,
     _drawerClose: null, // the phone card's ✕ button
+    _slot: null,        // #touch-slot, under the game text (touch frame plan 1a)
+    _deck: null,        // #touch-deck, inside the slot
 
     // ---------------------------------------------------------------
     // Public entry point
@@ -177,6 +185,10 @@
       // Build tab-bar and drawer (OUTSIDE #dashboard, appended to body
       // parent so position:fixed is not clipped by the grid container)
       this._buildPhone();
+
+      // The touch slot and its deck (plan 1a). Absent in a page without them.
+      this._slot = document.getElementById("touch-slot");
+      this._deck = document.getElementById("touch-deck");
 
       // Apply the first mode, from the page's game width (pageGameWidth).
       this.setGameWidth(this.pageGameWidth());
@@ -205,6 +217,19 @@
       // The name pill is measured in pixels: measure again once the web font lands.
       if (document.fonts && document.fonts.ready) {
         document.fonts.ready.then(function () { self._relayoutTabs(); });
+      }
+
+      // The on-screen keyboard covers the deck (webclient.html sets
+      // keyboard-open on this page's root). Act only on a change of that
+      // class; applyDeck never touches the root's classes, so this cannot loop.
+      if (window.MutationObserver) {
+        var kbd = document.documentElement.classList.contains("keyboard-open");
+        new MutationObserver(function () {
+          var now = document.documentElement.classList.contains("keyboard-open");
+          if (now === kbd) return;
+          kbd = now;
+          self.applyDeck();
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
       }
 
       // Folding, pop-out and the saved layout
@@ -359,7 +384,7 @@
       this._measurePanels();
       var newMode = this._computeMode();
       // Unchanged mode: a resize within column still changes its room.
-      if (newMode === this.mode) { this._arrangeColumn(); return; }
+      if (newMode === this.mode) { this._arrangeColumn(); this.applyDeck(); return; }
 
       var prev = this.mode;
       this.mode = newMode;
@@ -385,6 +410,7 @@
 
       if (newMode === "wide") this._repopAfterNarrow();
       this._arrangeColumn();
+      this.applyDeck();
     },
 
     // The laptop column (plan 7c): Conditions beside a larger Map with
@@ -499,8 +525,68 @@
     _exitColumn:  function () { this._exitTabbed(); },
     _enterSlim:   function () { this._enterTabbed(); },
     _exitSlim:    function () { this._exitTabbed(); },
-    _enterPhone:  function () { this._enterTabbed(); },
-    _exitPhone:   function () { this._exitTabbed(); },
+    _enterPhone:  function () { this._enterTabbed(); this._placeDrawer(true); },
+    _exitPhone:   function () { this._exitTabbed(); this._placeDrawer(false); },
+
+    // The phone's tab card lives in the touch slot, under the game text, so
+    // it pushes the game up (plan 1a); column and slim float it from the
+    // page's body as before. Moving the element keeps every #dash-drawer
+    // rule and the panel inside it.
+    _placeDrawer: function (inSlot) {
+      var drawer = this._drawer;
+      if (!drawer) return;
+      var dash = document.getElementById("dashboard");
+      var home = inSlot && this._slot ? this._slot : (dash && dash.parentNode);
+      if (home && drawer.parentNode !== home) home.appendChild(drawer);
+    },
+
+    // What the touch slot shows and the deck's shape (touchdeck.js). Runs on
+    // every layout pass, tab open or close, keyboard change and Settings
+    // change. Never touches the root element's classes (the keyboard watch
+    // in init observes them).
+    applyDeck: function () {
+      var TD = window.TouchDeck, VF = window.ViewportFit;
+      var slot = this._slot, deck = this._deck;
+      if (!TD || !slot || !deck) return;
+      var coarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+      var store = null;
+      try { store = window.localStorage; } catch (e) { /* blocked */ }
+      var on = TD.deckOn(TD.readPref(store), coarse);
+      var keyboard = document.documentElement.classList.contains("keyboard-open");
+      var shows = TD.slotShows({
+        phone: this.mode === "phone",
+        tabOpen: !!this._drawerActive,
+        deckOn: on,
+        keyboard: keyboard
+      });
+      if (slot.dataset.shows !== shows) slot.dataset.shows = shows;
+      slot.hidden = shows === "empty";
+      slot.classList.toggle("deck-on", on);
+      if (!on) return;
+
+      var sw = window.screen ? screen.width : 0, sh = window.screen ? screen.height : 0;
+      var phone = !!(VF && VF.isPhone(sw, sh)) && coarse;
+      var sideways = !!(VF && VF.isSidewaysPhone(sw, sh, VF.orientationType(window), coarse));
+      var col = document.getElementById("dash-col-center");
+      var boxW = (col ? col.clientWidth : window.innerWidth) - 2;   // the slot's side borders
+      var boxH = col ? col.clientHeight : window.innerHeight;
+      var s = TD.shape(boxW, boxH, phone && !sideways, sideways);
+      deck.style.setProperty("--deck-cols", String(s.cols));
+      deck.style.setProperty("--deck-btn", s.button + "px");
+      deck.style.setProperty("--deck-gap", s.gap + "px");
+      deck.style.setProperty("--deck-pad", s.pad + "px");
+      // The deck's height with its 2px top rule: a short tab keeps it.
+      slot.style.setProperty("--deck-h", (s.height + 2) + "px");
+      var want = s.rows * s.cols;
+      if (deck.childElementCount !== want) {
+        while (deck.firstChild) deck.removeChild(deck.firstChild);
+        for (var i = 0; i < want; i++) {
+          var cell = document.createElement("span");
+          cell.className = "deck-slot";
+          deck.appendChild(cell);
+        }
+      }
+    },
 
     _buildPhone: function () {
       var self = this;
@@ -638,6 +724,7 @@
       this._scrollChatToNewest(panel);
 
       this._updateTabbarActive(name);
+      this.applyDeck();
     },
 
     // Show the newest Chat messages. Hiding a panel's body (a fold, a move
@@ -667,6 +754,7 @@
         this._drawer.classList.remove("open");
       }
       this._updateTabbarActive(null);
+      this.applyDeck();
     },
 
     _updateTabbarActive: function (activeName) {
