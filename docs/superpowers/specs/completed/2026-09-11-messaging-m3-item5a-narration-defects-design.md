@@ -1,7 +1,7 @@
 # Messaging M3 Item 5a: Buff, Spell and Quest Narration Defects
 
 Design for the first half of M3 item 5 in the messaging unification arc
-([`2026-08-31-messaging-unification-design.md`](../2026-08-31-messaging-unification-design.md)).
+([`2026-08-31-messaging-unification-design.md`](2026-08-31-messaging-unification-design.md)).
 The arc spec lists item 5 as "buffs, spells, quests: the Actee slot appears
 here". Reading the source showed that item 5 is really a cluster of live
 defects that share one cause, so the owner split it:

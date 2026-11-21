@@ -1,7 +1,7 @@
 # Messaging M3 item 9: weather emotes
 
 Date: 2026-09-16
-Arc: [messaging unification](../2026-08-31-messaging-unification-design.md), M3 item 9
+Arc: [messaging unification](2026-08-31-messaging-unification-design.md), M3 item 9
 Status: designed, not implemented
 
 The last store in M3. The arc spec's row for it reads: *"Adjacent: joins

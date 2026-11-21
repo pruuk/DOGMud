@@ -4,9 +4,9 @@
 **Status:** Design approved by owner 2026-08-31. M0, M0b and M1 are merged
 (PRs #104, #106, #111). M2 is designed as of 2026-09-08 in its own spec and
 **supersedes the M2 section below in two places** — see the banner there.
-**Predecessor:** [Unified Resolution Roadmap](../../roadmaps/UNIFIED_RESOLUTION_ROADMAP.md)
+**Predecessor:** [Unified Resolution Roadmap](../../../roadmaps/UNIFIED_RESOLUTION_ROADMAP.md)
 (closed) — this arc borrows its refactor-first / flip-once shape.
-**Backlog entry:** [`CURRENT_BACKLOG.md`](../../roadmaps/CURRENT_BACKLOG.md),
+**Backlog entry:** [`CURRENT_BACKLOG.md`](../../../roadmaps/CURRENT_BACKLOG.md),
 queued arc 2.
 
 ---
@@ -518,7 +518,7 @@ beside it. Snapshots green throughout.
 >
 > M2 was designed out on 2026-09-08 and two sentences above did not survive
 > contact with the tree. Full design:
-> [`2026-09-08-messaging-m2-shared-narration-seam-design.md`](completed/2026-09-08-messaging-m2-shared-narration-seam-design.md).
+> [`2026-09-08-messaging-m2-shared-narration-seam-design.md`](2026-09-08-messaging-m2-shared-narration-seam-design.md).
 > Read that, not this, when planning M2 or anything downstream of it.
 >
 > **1. "Snapshots green throughout" is not available, and is replaced by a
@@ -573,7 +573,7 @@ Order — cheapest proof first, hardest last:
 | 4 | grapple_outcomes | Role *and* audience aliasing, and it forces the second randomness source to die |
 | 5 | buffs, spells, quests | The `*_user_text`/`*_room_text` and `playermessage`/`roommessage` families. The Actee **slot** appears here |
 | 6 | crafting, progression | The two that need *new* behavior. Crafting gains the Actee and Observer **slots** (authoring their text is M6); progression comes inside the pipeline and gains a `Category` |
-| 7 | conversations, gossip_templates, hints | The non-combat narration tail. Conversations already have a speaker-A/speaker-B split that maps to Actor/Actee with no Observer; `hints` is reached from 15 files and needs a single owner before it can migrate at all. **Ruled 2026-09-15:** conversations are not migrated (speakers of a sequence through say, not audiences of one moment); gossip joins the core; hints becomes tips. See [the item 7 spec](completed/2026-09-15-messaging-m3-item7-gossip-tips-design.md). |
+| 7 | conversations, gossip_templates, hints | The non-combat narration tail. Conversations already have a speaker-A/speaker-B split that maps to Actor/Actee with no Observer; `hints` is reached from 15 files and needs a single owner before it can migrate at all. **Ruled 2026-09-15:** conversations are not migrated (speakers of a sequence through say, not audiences of one moment); gossip joins the core; hints becomes tips. See [the item 7 spec](2026-09-15-messaging-m3-item7-gossip-tips-design.md). |
 | 8 | combat-messages | Largest, and the only `together`/`separate` split. Done on a core proven seven times over |
 | 9 | weather emotes | Adjacent: joins renderer, tokens and pipeline, keeps its actorless shape |
 
@@ -590,7 +590,7 @@ something is wrong.
 > ### 🔴 SUPERSEDED, 2026-09-17
 >
 > M4 was designed out on 2026-09-17:
-> [`2026-09-17-messaging-m4-flip-design.md`](completed/2026-09-17-messaging-m4-flip-design.md).
+> [`2026-09-17-messaging-m4-flip-design.md`](2026-09-17-messaging-m4-flip-design.md).
 > Read that, not this, when planning M4 or anything downstream.
 >
 > 1. **Not one commit.** Five slices, M4a to M4e, each its own PR (owner).

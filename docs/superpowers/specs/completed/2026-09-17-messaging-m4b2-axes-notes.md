@@ -10,7 +10,7 @@ spell cast at a mob is contested today. Open questions 1 to 4 are ruled in the
 spec.
 Originally: working notes, not a spec, written at the end of the session so the
 next one starts here.
-Arc: [messaging unification](../2026-08-31-messaging-unification-design.md), M4b-2
+Arc: [messaging unification](2026-08-31-messaging-unification-design.md), M4b-2
 Supersedes, within M4: the M4 spec's "one `DefenseType`" wording.
 
 ---

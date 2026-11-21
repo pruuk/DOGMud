@@ -15,7 +15,7 @@ M2/M4 remains straightforward.
 
 **Tech Stack:** Go, standard `testing`.
 
-**Spec:** [`2026-08-31-messaging-unification-design.md`](../../specs/2026-08-31-messaging-unification-design.md), stage M0b.
+**Spec:** [`2026-08-31-messaging-unification-design.md`](../../specs/completed/2026-08-31-messaging-unification-design.md), stage M0b.
 
 ---
 
