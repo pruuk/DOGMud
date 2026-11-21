@@ -90,6 +90,15 @@ level). A level replaces the whole deck. **Back is always top-left** and
 names where it goes; **More is always bottom-right** and appears only when
 the list does not fit. Each level keeps its items in fixed slots as far as
 possible. Flee lives only on the top level: to flee from a submenu, go Back.
+- **Game menus on the deck** (owner, 2026-11-21; plan 3h): while a game
+  menu is open (a talk menu, a quest offer, a yes or no question, anything
+  drawn by the one menu primitive `internal/menu` and announced to the web
+  client as `Char.Menu`), the deck shows its choices instead of the usual
+  buttons: Back top-left, then 1, 2, 3 and so on, and More bottom-right when
+  they do not fit. The server builds them like every other button (3a). To
+  settle in its spec: whether Back is the menu's own Leave entry, or steps
+  out of a sub-level (a quest offer back to the talk list) while Leave stays
+  a numbered choice. Needs a mockup Malia approves, like every menu spec.
 - **The phone's top level out of combat** (owner, 2026-11-19): movement
   and other exits take seven slots; the other five are Target, Interact,
   Attack, Cast and More, in that order. More holds Craft, status, help and
@@ -292,7 +301,7 @@ plan ends with the headless size matrix and Malia's device check (#834).
 | 0 | none (bug) | #927: Desktop site frame height | none | client |
 | 1 | **Touch frame** (#783) | 1a deck container and input bar per device and orientation (empty slots, sizes, setting, main-input detection); 1b keyboard rule and tabs stepping aside; 1c phone polish: no Game title bar, scrolling sub-tabs, full-screen nudge, brand doc update | 0 | client |
 | 2 | **Moving by touch** (#781) | 2a server: exits for the player's room, sight-gated, pushed on change; 2b deck movement (inverted T, other-exits list); 2c the Map tab's movement buttons | 1 | both |
-| 3 | **Command bar and contextual menus** (#779) | 3a button model and protocol: ids, levels, Back/More, stale refusal, double tap, and guards 1, 2, 4, 5 skeleton; 3b client renderer: slots, long press, levels; 3c first providers: Look, Talk, Score, Consider, attack moves; 3d combat swap X (Flee) and Y (Health), combat default on the device; 3e Target selection; 3f Cast and Craft menus (guard 3); 3g buff renew and auto-renew | 1, 2 | both |
+| 3 | **Command bar and contextual menus** (#779) | 3a button model and protocol: ids, levels, Back/More, stale refusal, double tap, and guards 1, 2, 4, 5 skeleton; 3b client renderer: slots, long press, levels; 3c first providers: Look, Talk, Score, Consider, attack moves; 3d combat swap X (Flee) and Y (Health), combat default on the device; 3e Target selection; 3f Cast and Craft menus (guard 3); 3g buff renew and auto-renew; 3h game menus on the deck (an open talk menu, quest offer or question shows its choices as buttons) | 1, 2 | both |
 | 4 | **Panels by touch** (#780), one short spec per panel | 4a Comms reply (server-sent prefix); 4b Inventory and Equipment item actions; 4c Quests; 4d Conditions buttons; 4e Automation button-forward with Advanced (closes #730) | 3 (3g for 4d and 4e) | both |
 | 5 | **Less text** (#777, then #782) | 5a measure a phone session; 5b brief room text, combat verbosity, and a shorter prompt on small screens (owner 2026-11-21: shorter bars and labels, so the prompt fits one line on a phone instead of wrapping to two or three); 5c the rest, ranked by the measurement | 1 | server |
 
