@@ -162,8 +162,11 @@ async function main() {
         await dt.send('Emulation.setDeviceMetricsOverride', {
           width: e.width, height: e.height, deviceScaleFactor: e.dpr || 1,
           mobile: !!e.mobile, screenWidth: e.width, screenHeight: e.height,
+          // Without this the emulated screen reports landscape whatever its
+          // size, and an upright phone reads as sideways (ViewportFit).
+          screenOrientation: e.width > e.height ? { type: 'landscapePrimary', angle: 90 } : { type: 'portraitPrimary', angle: 0 },
         });
-        await dt.send('Emulation.setTouchEmulationEnabled', { enabled: !!e.touch, maxTouchPoints: e.touch ? 5 : 0 });
+        await dt.send('Emulation.setTouchEmulationEnabled', e.touch ? { enabled: true, maxTouchPoints: 5 } : { enabled: false });
       } else {
         await dt.send('Emulation.clearDeviceMetricsOverride');
         await dt.send('Emulation.setTouchEmulationEnabled', { enabled: false });
