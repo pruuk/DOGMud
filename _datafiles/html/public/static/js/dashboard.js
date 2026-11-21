@@ -572,21 +572,14 @@
         field: field
       });
       var was = slot.dataset.shows;
-      // Plan 1b: a tab that steps aside for the keyboard keeps its scroll
-      // place, since a hidden box loses it.
-      if (was === "tab" && shows !== "tab" && this._drawerActive) {
-        this._aside = { name: this._drawerActive, scroll: TD.rememberScroll(this._drawerBody) };
-      }
       if (slot.dataset.shows !== shows) slot.dataset.shows = shows;
       slot.hidden = shows === "empty";
-      // Back in the slot: the same tab returns to its place, and Comms to its
-      // newest message, as when a tab opens.
-      if (shows === "tab" && was !== "tab" && this._aside) {
-        if (this._aside.name === this._drawerActive) {
-          TD.restoreScroll(this._aside.scroll);
-          this._scrollChatToNewest(document.getElementById("panel-" + this._drawerActive));
-        }
-        this._aside = null;
+      // Back in the slot (plan 1b): a tab that stepped aside for the keyboard
+      // keeps its own scroll place, since hiding the slot does not reset it
+      // (measured 2026-11-21); Comms goes to its newest message, as when a
+      // tab opens, so a line just sent shows.
+      if (shows === "tab" && was !== "tab") {
+        this._scrollChatToNewest(document.getElementById("panel-" + this._drawerActive));
       }
       slot.classList.toggle("deck-on", on);
       if (!on) return;
@@ -777,7 +770,6 @@
       }
 
       this._drawerActive = null;
-      this._aside = null;   // a later open starts fresh (plan 1b)
       if (this._drawer) {
         this._drawer.classList.remove("open");
       }

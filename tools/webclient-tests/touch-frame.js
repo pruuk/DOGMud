@@ -64,8 +64,7 @@ check(/TD\.fieldOf\(/.test(dash) && /editableFocused\(document\)/.test(dash), 't
 // The page-wide watch: the tab bar's own focusin/focusout listeners (the
 // roving tab stop) must not satisfy this check.
 check(/document\.addEventListener\("focusin", onFocusMove\)/.test(dash) && /document\.addEventListener\("focusout", onFocusMove\)/.test(dash), 'a focus watch reruns applyDeck when focus moves');
-check(/TD\.rememberScroll\(this\._drawerBody\)/.test(dash) && /TD\.restoreScroll\(/.test(dash), 'a stepped-aside tab keeps its scroll place');
-check(/_closeDrawer: function \(\) \{[\s\S]{0,700}this\._aside = null/.test(dash), 'closing a tab forgets a kept scroll place');
+check(/if \(shows === "tab" && was !== "tab"\) \{\s*this\._scrollChatToNewest\(/.test(dash), 'a tab back in the slot puts Comms at its newest message');
 
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails === 0 ? 0 : 1);

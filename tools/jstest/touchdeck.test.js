@@ -100,27 +100,4 @@ check('the command box', TD.fieldOf('command-input', true), 'command');
 check('another text field', TD.fieldOf('auto-modal-name', true), 'other');
 check('a text field with no id', TD.fieldOf('', true), 'other');
 
-// The scroll place of a tab that steps aside (plan 1b).
-function el(top) { return { scrollTop: top }; }
-function box(own, kids) {
-    return { scrollTop: own, querySelectorAll: function (sel) { return sel === '*' ? kids : []; } };
-}
-var a = el(120), b = el(0), c = el(37);
-var root = box(0, [a, b, c]);
-var saved = TD.rememberScroll(root);
-check('only scrolled elements are kept', saved.length, 2);
-a.scrollTop = 0; c.scrollTop = 0;
-TD.restoreScroll(saved);
-check('a scrolled element comes back to its place', a.scrollTop, 120);
-check('a second one too', c.scrollTop, 37);
-check('an unscrolled one stays at the top', b.scrollTop, 0);
-var scrolledRoot = box(55, []);
-var savedRoot = TD.rememberScroll(scrolledRoot);
-scrolledRoot.scrollTop = 0;
-TD.restoreScroll(savedRoot);
-check('the root itself is kept', scrolledRoot.scrollTop, 55);
-check('no root: nothing kept', TD.rememberScroll(null).length, 0);
-TD.restoreScroll(null);
-check('restoring nothing does nothing', true, true);
-
 process.exit(failures ? 1 : 0);

@@ -12,7 +12,6 @@
 //   shape                 rows, columns and sizes for the room it has
 //   slotShows             what the slot under the game text holds
 //   fieldOf               where the player is typing (plan 1b)
-//   rememberScroll / restoreScroll  a stepped-aside tab's scroll place
 // Tested by tools/jstest/touchdeck.test.js and touch-targets.test.js.
 
 (function (root, factory) {
@@ -112,31 +111,10 @@
         return activeId === COMMAND_ID ? 'command' : 'other';
     }
 
-    // A tab that steps aside is hidden, and a hidden box loses its scroll
-    // place (dashboard.js _scrollChatToNewest). rememberScroll lists root and
-    // every element under it that is scrolled down; restoreScroll puts each
-    // back. root: anything with scrollTop and querySelectorAll.
-    function rememberScroll(root) {
-        var saved = [];
-        if (!root) return saved;
-        if (root.scrollTop > 0) saved.push({ el: root, top: root.scrollTop });
-        var all = root.querySelectorAll ? root.querySelectorAll('*') : [];
-        for (var i = 0; i < all.length; i++) {
-            if (all[i].scrollTop > 0) saved.push({ el: all[i], top: all[i].scrollTop });
-        }
-        return saved;
-    }
-
-    function restoreScroll(saved) {
-        if (!saved) return;
-        for (var i = 0; i < saved.length; i++) saved[i].el.scrollTop = saved[i].top;
-    }
-
     return {
         KEY: KEY, AUTOMATIC_SHOWS: AUTOMATIC_SHOWS,
         readPref: readPref, writePref: writePref, deckOn: deckOn,
         shape: shape, slotShows: slotShows, fieldOf: fieldOf,
-        rememberScroll: rememberScroll, restoreScroll: restoreScroll,
         BTN: BTN, GAP: GAP, SMALL_BTN: SMALL_BTN, SMALL_GAP: SMALL_GAP, PAD: PAD
     };
 }));
