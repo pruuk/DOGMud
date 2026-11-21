@@ -476,8 +476,12 @@ func (u *UserRecord) CommandPromptBody() string {
 	// Every prompt is word wrapped here, at the width game text uses, by the
 	// one prompt wrapper (messaging.WrapPrompt): a long one breaks between
 	// words, not mid-word or mid-bar, and a prompt that fits is unchanged.
-	// What the player has typed follows on the last line.
-	promptOut = messaging.WrapPrompt(promptOut, u.WrapWidth())
+	// What the player has typed follows on the last line. A connection on the
+	// AI port has no screen, and an agent reads the prompt as one line, so
+	// its prompt is left whole (as the pager leaves its replies whole).
+	if !u.onAIPort() {
+		promptOut = messaging.WrapPrompt(promptOut, u.WrapWidth())
+	}
 
 	unsent, suggested := u.GetUnsentText()
 	if len(suggested) > 0 {

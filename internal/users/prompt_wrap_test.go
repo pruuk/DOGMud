@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/pager"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -81,6 +82,26 @@ func TestCommandPromptBody_WrapsTheStopLineBetweenWords(t *testing.T) {
 	prompt := u.CommandPromptBody()
 	requireWrappedBetweenWords(t, prompt, pager.StopLine(1, 3), 20)
 	require.True(t, strings.HasSuffix(prompt, "stop "), "the cursor stays after the stop line: %q", prompt)
+}
+
+// A connection on the AI port (AI players and the playtest harness) has no
+// screen: its prompt stays on one line, as it was before prompts wrapped, so
+// an agent reading HP from the prompt line still finds the whole of it.
+func TestCommandPromptBody_AnAIPortConnectionIsNotWrapped(t *testing.T) {
+	const connId = 18843
+	connections.RegisterTestConnection(connId)
+	t.Cleanup(func() { connections.UnregisterTestConnection(connId) })
+	connections.Get(connId).SetConnType(connections.ConnAI)
+
+	u := NewTestUser(7302, "agent2", "Agentia", connId)
+	u.LineWidth = 20
+	u.pager.pages = [][]string{{"a"}, {"b"}, {"c"}}
+	u.pager.next = 1
+	require.NotContains(t, u.CommandPromptBody(), "\n")
+
+	// The same prompt on a human connection wraps, so the test can fail.
+	connections.Get(connId).SetConnType(connections.ConnHuman)
+	require.Contains(t, u.CommandPromptBody(), "\n")
 }
 
 // Text written over the prompt erases every row of it, an open question
