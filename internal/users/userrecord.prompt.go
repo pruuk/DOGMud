@@ -372,9 +372,9 @@ func PromptCols(prompt string) int {
 }
 
 // CommandPromptBody is the prompt to draw now: an open question, else the
-// pager's stop line, else the player's prompt, then what they have typed
-// and a telnet go-ahead when the client asks for one. It clears nothing;
-// the sender clears the old prompt.
+// pager's stop line, else the player's prompt, word wrapped to WrapWidth,
+// then what they have typed and a telnet go-ahead when the client asks for
+// one. It clears nothing; the sender clears the old prompt.
 func (u *UserRecord) CommandPromptBody() string {
 
 	promptOut := ``
@@ -457,6 +457,12 @@ func (u *UserRecord) CommandPromptBody() string {
 		}
 
 	}
+
+	// Every prompt is word wrapped here, at the width game text uses, by the
+	// one prompt wrapper (messaging.WrapPrompt): a long one breaks between
+	// words, not mid-word or mid-bar, and a prompt that fits is unchanged.
+	// What the player has typed follows on the last line.
+	promptOut = messaging.WrapPrompt(promptOut, u.WrapWidth())
 
 	unsent, suggested := u.GetUnsentText()
 	if len(suggested) > 0 {

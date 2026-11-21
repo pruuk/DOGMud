@@ -639,8 +639,10 @@ only reader of `GetLineWidth` that wraps.
 ### Drawing the prompt (#922, `userrecord.prompt.go`)
 
 `CommandPromptBody() string` is the prompt to draw (an open question, else
-the pager's stop line, else the player's prompt, then what they typed and a
-telnet go-ahead). It clears nothing. Every sender draws it with
+the pager's stop line, else the player's prompt, word wrapped to
+`WrapWidth()` by `messaging.WrapPrompt`, then what they typed and a telnet
+go-ahead). A prompt that fits is unchanged byte for byte; a longer one breaks
+between words, never mid-bar. It clears nothing. Every sender draws it with
 `SendCommandPrompt(connId, prompt, sent)`, which hands it to
 `connections.SendPrompt` with its width from `PromptCols(prompt)` (tags,
 escapes and the go-ahead take no columns, every other character one:
