@@ -644,9 +644,10 @@ the pager's stop line, else the player's prompt, word wrapped to
 go-ahead). A prompt that fits is unchanged byte for byte; a longer one breaks
 between words, never mid-bar. It clears nothing. Every sender draws it with
 `SendCommandPrompt(connId, prompt, sent)`, which hands it to
-`connections.SendPrompt` with its width from `PromptCols(prompt)` (tags,
-escapes and the go-ahead take no columns, every other character one:
-`connections.MinCols`, a lower bound); the connection clears every row of
+`connections.SendPrompt` with its last line's width from `PromptCols(prompt)`
+(tags, escapes and the go-ahead take no columns, every other character one:
+`connections.MinCols`, a lower bound; the connection counts the lines above
+from the line breaks it writes); the connection clears every row of
 the prompt on screen and records the new one (`internal/connections`
 `prompt.go`). Text that replaces the prompt goes through
 `connections.SendReplacingPrompt`. There is no `GetCommandPrompt`: a sender

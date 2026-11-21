@@ -363,12 +363,14 @@ func SendCommandPrompt(connId uint64, prompt string, sent string) {
 	connections.SendPrompt(connId, []byte(sent), PromptCols(prompt))
 }
 
-// PromptCols is the fewest columns prompt (a CommandPromptBody) can fill on
-// one unbroken line (connections.MinCols): its tags, escape sequences and
-// telnet go-ahead take none.
+// PromptCols is the fewest columns the last line of prompt (a
+// CommandPromptBody, which may be wrapped onto several lines) can fill
+// (connections.MinCols): its tags, escape sequences and telnet go-ahead take
+// none. connections.SendPrompt counts the lines above it from the line
+// breaks it writes.
 func PromptCols(prompt string) int {
 	visible := ansitags.Parse(strings.TrimSuffix(prompt, term.TelnetGoAhead.String()), ansitags.StripTags)
-	return connections.MinCols(visible)
+	return connections.MinCols(visible[strings.LastIndexByte(visible, '\n')+1:])
 }
 
 // CommandPromptBody is the prompt to draw now: an open question, else the

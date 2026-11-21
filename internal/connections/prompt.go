@@ -1,6 +1,7 @@
 package connections
 
 import (
+	"bytes"
 	"regexp"
 	"strings"
 	"unicode"
@@ -15,10 +16,12 @@ import (
 // on screen above the new line. Only the connection knows what it last wrote,
 // so it keeps the record, set and read under the same lock as the write:
 //
-//   - SendPrompt replaces the prompt on screen and records the new one: its
-//     visible columns and the width the client reported when it was drawn.
+//   - SendPrompt replaces the prompt on screen and records the new one: the
+//     lines before its last (a prompt the game wrapped), its last line's
+//     visible columns, and the width the client reported when it was drawn.
 //   - SendEcho writes the characters a player types at the prompt, which
-//     extend it; anything but printable characters ends the record.
+//     extend its last line; anything but printable characters ends the
+//     record.
 //   - SendReplacingPrompt writes text over the prompt and ends the record.
 //   - Every other write that shows on screen ends the record. Out-of-band
 //     writes (telnet negotiation, GMCP, sound, web client commands) do not.
@@ -29,7 +32,8 @@ import (
 // too far would erase game text.
 type promptRecord struct {
 	on    bool
-	cols  int // visible columns of the prompt and what was typed after it
+	above int // lines of the prompt before its last line
+	cols  int // visible columns of the prompt's last line and what was typed after it
 	width int // the reported screen width when the prompt was drawn
 }
 
@@ -71,11 +75,16 @@ func promptRows(cols, width int) int {
 // now reporting curWidth (0 when unknown). A screen whose width changed since
 // the prompt was drawn may or may not have reflowed it, so the smaller row
 // count is used: it is never more than the rows actually on screen.
+//
+// A prompt the game wrapped onto several lines clears each line above its
+// last as one row (a line break is a row on any width, and a line the game
+// wrapped fits it, so one row is never more than is there), then the rows of
+// its last line by the rule above.
 func eraseFor(rec promptRecord, curWidth int) string {
 	if !rec.on || rec.width < 1 || curWidth < 1 {
 		return eraseOneRow
 	}
-	rows := min(promptRows(rec.cols, rec.width), promptRows(rec.cols, curWidth))
+	rows := rec.above + min(promptRows(rec.cols, rec.width), promptRows(rec.cols, curWidth))
 	return eraseOneRow + strings.Repeat(eraseRowAbove, rows-1)
 }
 
@@ -104,21 +113,24 @@ func ReportedScreenWidth(id ConnectionId) (int, bool) {
 }
 
 // SendPrompt writes a prompt over the one on screen: the erase for the
-// recorded prompt, then b. cols is b's visible width in columns, measured by
-// the caller with MinCols (markup removed first). The new prompt is recorded
-// only when the client reported a width, the bytes were written (a frozen
-// queue during copyover writes nothing), and the connection is not in ASCII
-// mode, whose substitutions change the width after it was measured.
+// recorded prompt, then b. b may be several lines (a prompt the game wrapped);
+// the connection counts its line breaks itself. cols is the visible width in
+// columns of b's last line, measured by the caller with MinCols (markup
+// removed first). The new prompt is recorded only when the client reported a
+// width, the bytes were written (a frozen queue during copyover writes
+// nothing), and the connection is not in ASCII mode, whose substitutions
+// change the width after it was measured.
 func SendPrompt(id ConnectionId, b []byte, cols int) {
 	width, _ := ReportedScreenWidth(id)
 	ascii := GetClientSettings(id).AsciiMode // read before promptMu: no lock is taken under it
+	above := bytes.Count(b, []byte{'\n'})
 	cd := lookup(id)
 	if cd == nil {
 		return
 	}
 	cd.promptMu.Lock()
 	n, err := cd.writeNLocked(append([]byte(eraseFor(cd.prompt, width)), b...))
-	cd.prompt = promptRecord{on: width > 0 && n > 0 && !ascii, cols: cols, width: width}
+	cd.prompt = promptRecord{on: width > 0 && n > 0 && !ascii, above: above, cols: cols, width: width}
 	cd.promptMu.Unlock()
 	afterWrite(id, cd, err, "SendPrompt()")
 }

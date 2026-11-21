@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/pager"
+	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 )
@@ -56,6 +57,14 @@ func TestCommandPromptBody_WrapsTheFightPromptBetweenWords(t *testing.T) {
 
 	fx.player.LineWidth = 38
 	requireWrappedBetweenWords(t, fx.player.CommandPromptBody(), unwrapped, 38)
+}
+
+// PromptCols measures the last line of a wrapped prompt: the lines above it
+// are counted by the connection from the line breaks it writes.
+func TestPromptCols_MeasuresTheLastLine(t *testing.T) {
+	require.Equal(t, 6, PromptCols(`<ansi fg="red">HP:100</ansi>`))
+	require.Equal(t, 9, PromptCols("More (page 1 of 3): press Enter for\n<ansi fg=\"red\">the next </ansi>"))
+	require.Equal(t, 2, PromptCols("first line\r\nab"+term.TelnetGoAhead.String()))
 }
 
 // The pager's stop line at 38 columns breaks between words, and keeps its

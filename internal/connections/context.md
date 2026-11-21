@@ -503,13 +503,16 @@ is written" primitive.
 
 A prompt that wraps fills several screen rows, and the text that replaces it
 must clear all of them. Only the connection knows what it last wrote, so it
-keeps a record of the prompt on screen (its visible columns and the reported
-width when drawn), set and read under `promptMu`, the lock every write takes:
+keeps a record of the prompt on screen (the lines before its last, its last
+line's visible columns, and the reported width when drawn), set and read under
+`promptMu`, the lock every write takes:
 
 - `SendPrompt(id, b, cols)` clears the recorded prompt, writes `b` and records
   it: only when the client reported a width, the bytes were written (a frozen
   queue during copyover writes nothing), and the connection is not in ASCII
-  mode (its substitutions change the width after it was measured).
+  mode (its substitutions change the width after it was measured). `b` may be
+  several lines (the game wraps prompts with `messaging.WrapPrompt`); the
+  connection counts its line breaks, and `cols` is its last line's columns.
 - `SendReplacingPrompt(id, b)` clears the recorded prompt and writes `b`; the
   prompt is gone afterwards.
 - `SendEcho(id, b)` writes a typed echo. Written printable text extends the
@@ -525,7 +528,9 @@ width when drawn), set and read under `promptMu`, the lock every write takes:
   rows leave a stray row; too many would erase game text.
 
 The clear (`eraseFor`) is column 1 and erase line, then up and erase line per
-extra row. Every doubt falls back to one row: no record, an unknown width, or
+extra row. A prompt of several lines clears one row for each line above its
+last (a lower bound: such a line fills at least one row), then its last line's
+rows. Every doubt falls back to one row: no record, an unknown width, or
 a width that changed since (the smaller of the row counts at the two widths,
 so a reflowed or unreflowed prompt is never over-cleared). A stray row left
 behind is harmless; climbing too far erases game text.
