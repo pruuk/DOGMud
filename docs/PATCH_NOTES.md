@@ -1,5 +1,10 @@
 # DOGMud Patch Notes
 
+## 2026-11-22: Comms shows the newest message, and paging has a help page
+
+- In the Comms panel, choosing a channel now shows its newest message. A small Comms panel used to show the oldest one. If you make the panel smaller, the newest message stays in view, unless you had scrolled up to read older ones.
+- New help page: `help pagination` (or `help page`) explains the "Page 1 of 3" line and how to change it or turn it off with `set pagesize`. `help set` links to it.
+
 ## 2026-11-21: More room on a phone
 
 - On a phone the Game window no longer has a title bar, so you see more of the game.
