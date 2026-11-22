@@ -34,6 +34,26 @@ func TestChain_NextOfferElsewhereIsRefused(t *testing.T) {
 	require.Contains(t, rules(Validate(chainWorld(9200))), "chain mob 9200 topic next_offer")
 }
 
+// A second door (#940): quest 54 is offered on the hand-in NPC 9112 and again
+// on NPC 9200, both gated on 53-end.
+func secondDoorWorld(handInMobOffers bool) World {
+	w := chainWorld(9200)
+	if handInMobOffers {
+		offer := dialogue.Topic{Key: "next_offer", Kind: dialogue.KindOffer, Quest: 54, Label: "Next", Text: "t",
+			Gates: dialogue.Gates{QuestRequired: []string{"53-end"}}, Effects: dialogue.Effects{GrantsQuest: "54-start"}}
+		w.Dialogue[0].Topics = append(w.Dialogue[0].Topics, offer)
+	}
+	return w
+}
+
+func TestChain_SecondDoorBesideTheHandInOfferPasses(t *testing.T) {
+	require.Empty(t, Validate(secondDoorWorld(true)))
+}
+
+func TestChain_SecondDoorWithNoHandInOfferIsRefused(t *testing.T) {
+	require.Contains(t, rules(Validate(secondDoorWorld(false))), "chain mob 9200 topic next_offer")
+}
+
 func TestRepeat_Rules(t *testing.T) {
 	w := goodWorld()
 	w.Quests[0].Repeatable = true

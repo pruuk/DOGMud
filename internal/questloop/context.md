@@ -32,7 +32,7 @@ the world from the live registries, and three doors run it.
 | `hint-length` | No step's `hint` is over `HintMaxRunes` (200, owner ruling P8): whitespace runs collapse to one space, then runes are counted. Where is `step <id>`. A step with no hint is the `hint` rule's finding. The web quest panel's "more" toggle uses the same 200 |
 | `one-action` | Every non-start step has at least one way in; each way is one trigger or one topic that requires the previous step's token, with no item, flag or gold condition and no `sequence`; a trigger grants at most one step of its own quest |
 | `talk-on-quest` | No dialogue topic grants a step between a quest's first and final (#375 phase 3b slice 1): a mid-quest talk step is a `topic_heard` trigger in the quest file. Where is the topic's way (`mob <id> topic <key>`). The 32 shipped cases moved |
-| `chain` | An offer gated on quest N's final token sits on a mob that has a `handin` topic for N |
+| `chain` | An offer gated on quest N's final token sits on a mob that has a `handin` topic for N, or is a second door: the same quest is also offered, gated on the same token, on a mob that has that hand-in (#940, owner ruling 2026-11-22) |
 | `repeat` | A repeatable has `cooldown_rounds` above zero; `repeat_limit` is refused on a non-repeatable and when negative |
 | `reward` | An authored `rewards.summary` names every item, recipe and spell paid, unless `rewards.surprise` is set; `surprise` with no summary to show is also a finding |
 | `refs` | Every refusal from `quests.ValidateQuestRefs`; its warnings stay warnings |
