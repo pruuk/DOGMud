@@ -50,6 +50,13 @@ func TestFindToLetGoPrefersAnOrdinaryCopy(t *testing.T) {
 		t.Fatal("a handle names the quest copy itself")
 	}
 
+	// An explicit count, 1 included, is the player's own pick.
+	for _, typed := range []string{"1.salt", "salt#1"} {
+		if got, _ := c.FindInBackpackToLetGo(typed); got.UUID != quest.UUID {
+			t.Fatalf("%s: picked %+v, want the first copy as typed", typed, got)
+		}
+	}
+
 	// Never another item the name also fits.
 	c.Items = []items.Item{quest, items.New(otherId)}
 	if got, _ := c.FindInBackpackToLetGo("pouch of salt"); got.ItemId != saltId {

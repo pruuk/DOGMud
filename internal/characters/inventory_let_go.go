@@ -1,6 +1,8 @@
 package characters
 
 import (
+	"strings"
+
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -10,8 +12,8 @@ import (
 // that lets an item go (drop, give, put, stash, storage, mail, auction,
 // plant, guild donate, sell, a trade-in) and is named by a word that fits
 // both a quest copy and an ordinary copy of the same item takes the ordinary
-// one. A handle (@uuid) or an explicit N. count is the player's own pick and
-// is kept as typed. Only a copy of the same item is ever swapped in, so the
+// one. A handle (@uuid) or an explicit count the player typed (`N.item` or
+// `item#N`, 1 included) is the player's own pick and is kept as typed. Only a copy of the same item is ever swapped in, so the
 // narrower search never lands on some other item the name also fits.
 
 // FindInBackpackToLetGo is FindInBackpack for a command that lets the item go.
@@ -69,6 +71,13 @@ func (c *Character) FindInComponentsWhere(itemName string, keep func(items.Item)
 	return items.Item{}, false
 }
 
+// typedCount reports whether the player typed an explicit count, `N.item`
+// or `item#N`, any N including 1. "all.item" is not a count.
+func typedCount(itemName string) bool {
+	name, n := util.GetMatchNumber(itemName)
+	return n >= 1 && name != strings.TrimSpace(strings.ToLower(itemName))
+}
+
 // preferLettable runs find, and when it lands on a quest copy that the
 // player did not pick out by handle or count, looks for an ordinary copy of
 // the same item with where.
@@ -83,7 +92,7 @@ func preferLettable(itemName string,
 	if _, isHandle := isItemHandle(itemName); isHandle {
 		return itm, found
 	}
-	if _, n := util.GetMatchNumber(itemName); n > 1 {
+	if typedCount(itemName) {
 		return itm, found
 	}
 	if other, ok := where(itemName, func(o items.Item) bool {
