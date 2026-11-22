@@ -17,8 +17,8 @@ steps:
       mob: 9106  # follow Crier Toke (schedule pothole_toke)
       room: 5203  # fallback when Crier Toke is not spawned
     description: >-
-      The alpha is dead and the pack is broken. Crier Toke, who sent you to
-      Scout Tarn, waits in Hub Square for the news.
+      The alpha is dead and the pack is broken. Crier Toke waits in Hub
+      Square for the news.
     hint: >-
       Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk
       toke.
