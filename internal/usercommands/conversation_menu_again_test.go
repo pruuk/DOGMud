@@ -12,7 +12,7 @@ import (
 // #375 phase 7 tier 1, hook 3: accepting an offer for an item the player
 // already holds (a carriesItem offer) queues TalkMenuAgain instead of opening
 // the menu at once, so the grant and the step start run before the menu is
-// built. An ordinary offer re-shows the menu at once, as before.
+// built. Since #940 an ordinary offer does the same.
 const menuAgainCarriesYAML = `mobid: 1
 zone: TestZone
 topics:
@@ -62,32 +62,24 @@ func acceptHunt(t *testing.T, src string) (userHasMenu bool, queued []string, do
 	}
 }
 
-func TestOffer_AcceptingAHeldItemsOfferQueuesTheMenuInsteadOfOpeningIt(t *testing.T) {
-	open, queued, done := acceptHunt(t, menuAgainCarriesYAML)
-	defer done()
-	require.False(t, open, "the menu waits for the quest chain")
-	var relevant []string
-	for _, ty := range queued {
-		if ty == "Quest" || ty == "TalkMenuAgain" {
-			relevant = append(relevant, ty)
-		}
+// Every accepted offer queues the menu behind the grant: an offer for an item
+// the player holds (the step start counts it) and an ordinary one alike
+// (#940: a quest_granted trigger may move the step).
+func TestOffer_AcceptingAnOfferQueuesTheMenuBehindTheGrant(t *testing.T) {
+	for name, src := range map[string]string{"held item": menuAgainCarriesYAML, "ordinary": menuAgainPlainYAML} {
+		t.Run(name, func(t *testing.T) {
+			open, queued, done := acceptHunt(t, src)
+			defer done()
+			require.False(t, open, "the menu waits for the quest chain")
+			var relevant []string
+			for _, ty := range queued {
+				if ty == "Quest" || ty == "TalkMenuAgain" {
+					relevant = append(relevant, ty)
+				}
+			}
+			require.Equal(t, []string{"Quest", "TalkMenuAgain"}, relevant, "the grant runs before the menu")
+		})
 	}
-	require.Equal(t, []string{"Quest", "TalkMenuAgain"}, relevant, "the grant runs before the menu")
-}
-
-// Every accepted offer queues the menu, not only one for a held item (#940):
-// a quest_granted trigger may move the step, and the menu must be drawn after.
-func TestOffer_AcceptingAnOrdinaryOfferQueuesTheMenuToo(t *testing.T) {
-	open, queued, done := acceptHunt(t, menuAgainPlainYAML)
-	defer done()
-	require.False(t, open, "the menu waits for the quest chain")
-	var relevant []string
-	for _, ty := range queued {
-		if ty == "Quest" || ty == "TalkMenuAgain" {
-			relevant = append(relevant, ty)
-		}
-	}
-	require.Equal(t, []string{"Quest", "TalkMenuAgain"}, relevant, "the grant runs before the menu")
 }
 
 func TestHandleTalkMenuAgain_OpensTheTalkMenu(t *testing.T) {

@@ -41,11 +41,22 @@ topics:
 
 const reshowBanner = "QUEST BANNER for "
 
-// deliveredInOrder runs the event queue the way the game loop does, with a
-// stand-in quest engine that prints a banner and a reward line for each
-// granted token (as HandleQuestUpdate does) and records every line user 1
-// receives, in delivery order.
+// deliveredInOrder runs the event queue the way the game loop does and
+// returns every line user 1 receives, in delivery order (runTalkQueue).
 func deliveredInOrder(t *testing.T) []string {
+	t.Helper()
+	return runTalkQueue(t, nil)
+}
+
+// runTalkQueue runs the event queue the way the game loop does, with the real
+// talk listeners (TalkMenuAgain, TalkNextOffer) and a stand-in quest engine
+// that lands each granted token, then prints a banner and a reward line for
+// it, as HandleQuestUpdate does; then calls also, when set, for any chain the
+// test needs. It records every line user 1 receives, in delivery order.
+// HandleQuestUpdate itself cannot run here: package hooks imports
+// usercommands, so this package's tests cannot import hooks (the root
+// package's coulee spine walk runs it for real).
+func runTalkQueue(t *testing.T, also func(events.Quest)) []string {
 	t.Helper()
 	restore := events.SwapListenersForTest()
 	defer restore()
@@ -57,11 +68,16 @@ func deliveredInOrder(t *testing.T) []string {
 		return events.Continue
 	})
 	events.RegisterListener(events.TalkMenuAgain{}, conversation.HandleTalkMenuAgain)
+	events.RegisterListener(events.TalkNextOffer{}, conversation.HandleTalkNextOffer)
 	events.RegisterListener(events.Quest{}, func(e events.Event) events.ListenerReturn {
 		q := e.(events.Quest)
 		if u := users.GetByUserId(q.UserId); u != nil {
+			u.Character.GiveQuestToken(q.QuestToken)
 			u.SendText(messaging.CategorySystem, reshowBanner+q.QuestToken)
 			u.SendText(messaging.CategoryLoot, "You receive 10 gold!")
+			if also != nil {
+				also(q)
+			}
 		}
 		return events.Continue
 	})

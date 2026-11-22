@@ -207,33 +207,54 @@ func TestOffer_PitchThenCardLeaveGrantsNothing(t *testing.T) {
 	require.Contains(t, drained(1), "Talking with Skeleton")
 }
 
-func TestOffer_AcceptGrantsOnce(t *testing.T) {
-	user, mob, done := offerFixture(t)
-	defer done()
-	conversation.Talk(user, mustRoom(t, user), mob)
-	require.True(t, user.RouteMenuInput("1", true))
-	require.True(t, user.RouteMenuInput("1", true), "1 is Accept")
-	require.Equal(t, []string{"7-start"}, questTokensFor(1))
-	require.False(t, user.HasOpenMenu(), "the only other topic wants an item the player lacks, so no menu is left to re-show")
+// countLines is how many of lines contain sub.
+func countLines(lines []string, sub string) int {
+	n := 0
+	for _, l := range lines {
+		if strings.Contains(l, sub) {
+			n++
+		}
+	}
+	return n
+}
 
-	user.Character.QuestProgress = map[int]string{7: "start"}
+// Accept grants the quest once, and once the queue has run the talk menu is
+// back (the bones topic keeps it from being empty).
+func TestOffer_AcceptGrantsOnce(t *testing.T) {
+	user, mob, done := fixtureWith(t, reshowFixtureYAML)
+	defer done()
+	defer events.DrainAllQueuedEventsForTest()
+	conversation.Talk(user, mustRoom(t, user), mob)
+	require.True(t, user.RouteMenuInput("1", true), "1 is the offer")
+	require.True(t, user.RouteMenuInput("1", true), "1 is Accept")
+	drained(1) // the pitch and the card, so a menu below is the redrawn one
+
+	got := runTalkQueue(t, nil)
+	require.Equal(t, 1, countLines(got, reshowBanner+"7-start"), "one grant: %q", got)
+	require.True(t, user.Character.HasQuest("7-start"))
+	require.True(t, user.HasOpenMenu(), "the talk menu is back once the queue has run")
+	require.GreaterOrEqual(t, indexOf(got, "Talking with Skeleton"), 0, "%q", got)
+
 	drained(1)
 	conversation.Talk(user, mustRoom(t, user), mob)
 	require.NotContains(t, drained(1), "The Wolf Hunt")
 }
 
 // GiveQuest only queues the token; the quest engine records it on a later
-// event pass. The menu re-shown straight after Accept must still treat the
+// turn of the event pass. The menu that comes back after Accept must treat the
 // quest as taken, or it offers the quest the player just accepted.
 func TestOffer_ReshowAfterAcceptHidesTheOffer(t *testing.T) {
-	user, mob, done := offerFixture(t)
+	user, mob, done := fixtureWith(t, reshowFixtureYAML)
 	defer done()
+	defer events.DrainAllQueuedEventsForTest()
 	conversation.Talk(user, mustRoom(t, user), mob)
-	require.True(t, user.RouteMenuInput("1", true))
+	require.True(t, user.RouteMenuInput("1", true), "1 is the offer")
 	drained(1)
 	require.True(t, user.RouteMenuInput("1", true), "1 is Accept")
-	require.False(t, user.Character.HasQuest("7-start"), "precondition: the grant is still queued")
-	require.NotContains(t, drained(1), "The Wolf Hunt")
+
+	out := strings.Join(append([]string{drained(1)}, runTalkQueue(t, nil)...), "\n")
+	require.Contains(t, out, "Why do your bones rattle?", "control: the talk menu was redrawn")
+	require.NotContains(t, out, "The Wolf Hunt", "the redrawn menu still offers the accepted quest")
 }
 
 func TestOffer_AcceptAfterEligibilityLostGrantsNothing(t *testing.T) {
