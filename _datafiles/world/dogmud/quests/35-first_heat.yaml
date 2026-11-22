@@ -115,7 +115,7 @@ triggers:
       missing: ["35-met"]
     actions:
       - grant: "35-met"
-      - actor: "Rusk has shown you the shape of it. Start with her stall:
+      - actor: "Rusk is ready to teach you now. Start with her stall:
           type list."
 
   # met: hearing Rusk's heat_arrive topic.
@@ -127,7 +127,7 @@ triggers:
       missing: ["35-met"]
     actions:
       - grant: "35-met"
-      - actor: "Rusk has shown you the shape of it. Start with her stall:
+      - actor: "Rusk is ready to teach you now. Start with her stall:
           type list."
 
   # list: Rusk's goods (she trades in the smithy, room 5245).

@@ -150,8 +150,8 @@ triggers:
     actions:
       - grant: "50-met"
       - actor: >-
-          Iden has your measure. Ready the sling: type equip sling. If it is
-          already in your hand, first use remove sling.
+          Iden is ready to teach you now. Ready the sling: type equip sling.
+          If it is already in your hand, first use remove sling.
 
   # MET: hearing Iden's lesson.
   - event: topic_heard
@@ -163,8 +163,8 @@ triggers:
     actions:
       - grant: "50-met"
       - actor: >-
-          Iden has your measure. Ready the sling: type equip sling. If it is
-          already in your hand, first use remove sling.
+          Iden is ready to teach you now. Ready the sling: type equip sling.
+          If it is already in your hand, first use remove sling.
 
   # EQUIP: ready the sling (only the sling, item 10038, counts).
   - event: command

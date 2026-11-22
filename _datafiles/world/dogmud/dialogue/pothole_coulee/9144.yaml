@@ -24,8 +24,8 @@ opener:
     questExcluded:
     - 44-start
     - 44-end
-    text: The rite is on you, and you have walked the town. Good. Then there is
-      something to teach. You may ask me to teach you to cast.
+    text: The rite is on you, and you have walked the town. Good. There is
+      something here to teach. You may ask me to teach you to cast.
     hints: Choose First Casting below to learn to cast from Grieve.
   - questRequired:
     - 30-end
@@ -116,8 +116,8 @@ topics:
     and let it go. The mote may flicker back at you, weakly, and a second casting
     can scatter it. I will fold another. Then come back to me.
   hints: Accept, then go north into the Star Chamber and type cast spike mote.
-  objective: Learn to cast from Grieve. Go north into the Star Chamber and cast
-    spike mote at the practice mote.
+  objective: Learn to cast from Grieve. Go north into the Star Chamber and type
+    cast spike mote.
   questRequired:
   - 31-end
   questExcluded:

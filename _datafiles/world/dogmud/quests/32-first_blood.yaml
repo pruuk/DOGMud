@@ -130,7 +130,7 @@ triggers:
       missing: ["32-met"]
     actions:
       - grant: "32-met"
-      - actor: "Vorn has your measure now. Take up the cudgel: type wield
+      - actor: "Vorn is ready to teach you now. Take up the cudgel: type wield
           cudgel. If it is already in your hand, first use remove cudgel."
 
   # met: hearing Vorn's drill_arrive topic.
@@ -142,7 +142,7 @@ triggers:
       missing: ["32-met"]
     actions:
       - grant: "32-met"
-      - actor: "Vorn has your measure now. Take up the cudgel: type wield
+      - actor: "Vorn is ready to teach you now. Take up the cudgel: type wield
           cudgel. If it is already in your hand, first use remove cudgel."
 
   # wield: the cudgel (10043); the equip event names its item. Nothing checks
