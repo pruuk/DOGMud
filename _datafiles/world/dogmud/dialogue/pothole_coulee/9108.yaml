@@ -132,7 +132,7 @@ topics:
   questExcluded:
   - 32-end
   grantsQuest: 32-end
-- key: drill_offer
+- key: drill_start
   kind: offer
   quest: 32
   label: First Blood

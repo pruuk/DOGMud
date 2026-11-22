@@ -1,7 +1,7 @@
 # Quest 32, First Blood (Pothole Coulee, fighting line, quest 1).
 #
 # Crier Toke (topic send_drill, dialogue 9106) or Drillmaster Vorn (topic
-# drill_offer, dialogue 9108) offers it, and either one hands over the
+# drill_start, dialogue 9108) offers it, and either one hands over the
 # Drillyard Cudgel (10043). A Vorn start skips the met step, because the
 # player is already in the yard (a quest_granted trigger below). Vorn
 # takes the hand-in (train_turnin) and then offers Hold the Wash (33).

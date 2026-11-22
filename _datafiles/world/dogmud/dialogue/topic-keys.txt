@@ -463,7 +463,7 @@
 9108.cudgel_replace
 9108.defence_help
 9108.drill_arrive
-9108.drill_offer
+9108.drill_start
 9108.grapple_help
 9108.kick_help
 9108.progress_sized_up

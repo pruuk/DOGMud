@@ -554,9 +554,9 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 		offer   string
 		quest   int
 		teacher int
-		door    string // the teacher's own offer topic, when it has one
+		door    string // the teacher's own offer topic
 	}{
-		{"send_drill", 32, 9108, "drill_offer"}, {"send_forge", 35, 9116, "heat_start"},
+		{"send_drill", 32, 9108, "drill_start"}, {"send_forge", 35, 9116, "heat_start"},
 		{"send_brew", 38, 9128, "brew_start"}, {"send_steppe", 41, 9136, "sign_start"},
 		{"send_folding", 44, 9144, "cast_start"}, {"send_folk", 47, 9153, "words_start"},
 		{"send_range", 50, 9161, "shoot_start"},
@@ -576,12 +576,10 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 				t.Errorf("mob %d topic %s grants %s: only Toke and the door %q may start it", tr.teacher, tp.Key, start, tr.door)
 			}
 		}
-		if text, _ := w.df(tr.teacher).OpenerFor(w.ps()); tr.door == "" && !strings.Contains(text, "Toke") {
-			t.Errorf("mob %d's opener for an Opened newcomer does not send them to Toke: %q", tr.teacher, text)
-		} else if tr.door != "" && !strings.Contains(text, "ask me") {
+		if text, _ := w.df(tr.teacher).OpenerFor(w.ps()); !strings.Contains(text, "ask me") {
 			t.Errorf("mob %d's opener for an Opened newcomer does not invite them to ask: %q", tr.teacher, text)
 		}
-		if tr.door != "" && !w.onMenu(tr.teacher, tr.door) {
+		if !w.onMenu(tr.teacher, tr.door) {
 			t.Errorf("mob %d's door %s is not on the menu after footing", tr.teacher, tr.door)
 		}
 		if !w.onMenu(spineToke, tr.offer) {
@@ -610,7 +608,7 @@ func TestSmoke_TrainerDoorsSkipTheArrivalTalk(t *testing.T) {
 		second  string
 		items   []int
 	}{
-		{"Vorn", 32, 9108, 5227, "drill_offer", "drill_arrive", "met", []int{10043}},
+		{"Vorn", 32, 9108, 5227, "drill_start", "drill_arrive", "met", []int{10043}},
 		{"Rusk", 35, 9116, 5245, "heat_start", "heat_arrive", "met", nil},
 		{"Birna", 38, 9128, 5265, "brew_start", "brew_arrive", "met", nil},
 		{"Tarn", 41, 9136, 5283, "sign_start", "sign_arrive", "met", nil},

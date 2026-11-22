@@ -137,7 +137,7 @@ opener:
     - 93-start
     - 93-end
     text: You broke the pack. I have hunted this fringe for years and never managed
-      that. Toke sent you to Tarn, and Tarn to me. He will want this news from you.
+      that. Tarn sent you to me. Toke will want this news from you.
     hints: Choose Report to Toke (Tracking) below to carry the news to Toke.
   - questRequired:
     - 93-start
@@ -366,7 +366,7 @@ topics:
   quest: 93
   label: Report to Toke (Tracking)
   playerLine: Should I take the news of the pack to Toke?
-  text: Do that. Toke sent you to Tarn, and Tarn sent you to me. He keeps to Hub
+  text: Do that. Tarn sent you to me, and Toke wants the news. He keeps to Hub
     Square, south of the Awakening Pool. Tell him the pack is broken.
   hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk toke.
   questRequired:

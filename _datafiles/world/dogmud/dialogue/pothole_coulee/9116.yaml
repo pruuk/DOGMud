@@ -162,7 +162,7 @@ topics:
     and a blade appears. That is the whole trick the first time. Once you have a
     feel for it, type craft list to see everything you know how to make. Show me
     what you made when you are done. Start with the list.
-  hints: Accept, then here beside Rusk, type list.
+  hints: Accept, then type list here beside Rusk.
   objective: Learn the forge from Rusk. Start by seeing what she sells. Type list.
   questRequired:
   - 31-end

@@ -115,7 +115,7 @@ opener:
     - 92-start
     - 92-end
     text: You broke it. The water runs clean off the spring now, first time in a long
-      time. Toke sent you down this road. He will want the news from you.
+      time. Toke will want the news from you.
     hints: Choose Report to Toke (Brewing) below to carry the news to Toke.
   - questRequired:
     - 92-start
@@ -299,7 +299,7 @@ topics:
   quest: 92
   label: Report to Toke (Brewing)
   playerLine: Should I take the news of the mire to Toke?
-  text: Go on, then. Toke sent you to Birna, and Birna sent you to me. He keeps to
+  text: Go on, then. Birna sent you to me, and Toke wants the news. He keeps to
     Hub Square, south of the Awakening Pool. Tell him the mire runs clean.
   hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk toke.
   questRequired:
