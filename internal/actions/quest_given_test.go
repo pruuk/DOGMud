@@ -249,7 +249,7 @@ func TestQuestGear_Plant(t *testing.T) {
 		mobs.SetInstanceForTest(testPlantMobInstId, target)
 		t.Cleanup(func() { mobs.SetInstanceForTest(testPlantMobInstId, nil) })
 		actor := newPlantPlayerActor(dex, rank)
-		actor.char.StoreItem(itm)
+		actor.char.Items = append(actor.char.Items, itm) // carried, whatever it weighs
 		return Plant(actor, PlantOptions{TargetMobInstanceId: testPlantMobInstId, ItemNoun: "!1"}), actor, target
 	}
 
@@ -277,6 +277,23 @@ func TestQuestGear_Plant(t *testing.T) {
 			}
 		}
 		assert.Greater(t, caught, 10, "a weak thief is caught")
+	})
+	t.Run("a target that cannot carry it leaves it with the thief", func(t *testing.T) {
+		t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+			plantTestItemId: {ItemId: plantTestItemId, Name: "Anvil", Type: items.Object, Weight: 500},
+		}))
+		kept := 0
+		for range 20 {
+			res, actor, target := attempt(t, 1, 200, 8, questItem())
+			assert.NotEqual(t, "quest gear faded", res.Reason, "a full target never takes it, so it never leaves")
+			assert.Empty(t, target.Character.Items)
+			if res.Reason == "target full" {
+				kept++
+				require.Len(t, actor.char.Items, 1, "the thief keeps it (#696)")
+				assert.True(t, actor.char.Items[0].IsQuestGiven())
+			}
+		}
+		assert.Greater(t, kept, 10)
 	})
 	t.Run("a bought copy is planted", func(t *testing.T) {
 		planted := 0

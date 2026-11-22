@@ -221,12 +221,7 @@ func (c *Character) StoreItem(i items.Item) bool {
 	// when the store below refuses: the tick drops a holder with nothing.
 	c.IndexTreedItem(i)
 
-	// Check if adding this item would exceed carry capacity
-	newWeight := c.GetCarriedWeight() + i.GetSpec().GetWeight()
-	capacity := c.CarryCapacity()
-
-	// Allow up to 2x capacity (overloaded, but possible)
-	if newWeight > capacity*2.0 {
+	if !c.CanCarry(i) {
 		return false
 	}
 
@@ -259,6 +254,14 @@ func (c *Character) StoreItem(i items.Item) bool {
 	c.Items = append(c.Items, i)
 
 	return true
+}
+
+// CanCarry reports whether StoreItem's weight limit admits i: carried weight
+// may reach twice carry capacity (overloaded, but possible). A plant asks it
+// before quest gear fades, so a target that could not take the item leaves
+// it with the thief as it leaves any item (#696, #940).
+func (c *Character) CanCarry(i items.Item) bool {
+	return c.GetCarriedWeight()+i.GetSpec().GetWeight() <= c.CarryCapacity()*2.0
 }
 
 // ReturnToPack puts an item the character was already carrying (one just
