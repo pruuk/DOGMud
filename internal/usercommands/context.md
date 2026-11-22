@@ -392,6 +392,16 @@ except light for a screen reader user.
   first, by sight or by not being there, so a held potion reads the refusal a
   backpack item reads (`bandolierItemForGive`). An ordinary give to a player, a
   pet or an NPC wanting nothing stays backpack only.
+- **Quest gear** (#940, owner ruling 2026-11-22): a quest-given copy
+  (`items.Item.IsQuestGiven`) fades through `actions.VanishQuestGiven` on
+  every way out here: drop, give to another player or another player's pet
+  (or to the giver's own pet when it has no room), put, stash, `storage add`,
+  `stow`, mail (the mail goes without it) and guild donate. Given to an NPC
+  that no topic and no `player_give` tree handler took, it comes back
+  (`handBackQuestGear`: the usual "considers" emote, then "X hands back the
+  Y."), and the NPC never keeps or equips it; a mob the giver charmed is a
+  companion and takes it as usual, as does the giver's own pet. `look` adds
+  `actions.QuestGearLookLine` under it.
 - **PlayerState**: `conversation.PlayerState(user)` builds the
   `dialogue.PlayerState` callbacks (`HasQuest`, `HasItem`, `RemoveItem`,
   `GiveQuest`, `GiveItem`, ...). `GiveItem` returns whether the item
