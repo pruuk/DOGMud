@@ -94,6 +94,9 @@ triggers:
       missing: ["41-met"]
     actions:
       - grant: "41-met"
+      - actor: >-
+          Tarn has told you what to look for. Go south to the Open Steppe
+          and type track hare.
 
   # met: hearing Tarn's sign_arrive topic.
   - event: topic_heard

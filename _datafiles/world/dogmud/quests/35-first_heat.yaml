@@ -115,6 +115,8 @@ triggers:
       missing: ["35-met"]
     actions:
       - grant: "35-met"
+      - actor: "Rusk has shown you the shape of it. Start with her stall:
+          type list."
 
   # met: hearing Rusk's heat_arrive topic.
   - event: topic_heard

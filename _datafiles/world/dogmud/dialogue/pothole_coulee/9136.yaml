@@ -22,8 +22,8 @@ opener:
     questExcluded:
     - 41-start
     - 41-end
-    text: You have the rite on you and you have walked the town. Good. I teach
-      the ground, and you may ask me to teach you. Say the word and we start.
+    text: You have the rite on you, and I watched you walk the town. Good. I
+      teach the ground. If you want it, ask me, and we start.
     hints: Choose First Sign below to learn the ground from Tarn.
   - questRequired:
     - 30-end
@@ -116,6 +116,8 @@ topics:
     read what passed and where it went. When you have, I will show you what the
     scrub can feed you.
   hints: Accept, then go south to the Open Steppe and type track hare.
+  objective: Learn to read the ground from Tarn. Start with the tracks. Go south to
+    the Open Steppe and type track hare.
   questRequired:
   - 31-end
   questExcluded:

@@ -22,9 +22,9 @@ opener:
     questExcluded:
     - 98-start
     - 98-end
-    text: You have been through the rite and walked the town. Good. I teach
-      what a light is for, and you may ask me to teach you. Say the word and we
-      start with a lamp.
+    text: You have been through the rite and walked the town. Good. You are ready
+      for the dark, or near enough. I teach what a light is for. If you want to
+      learn, ask me, and we start with a lantern.
     hints: Choose First Light below to learn about the dark from Gethin.
   - questExcluded:
     - 98-start
@@ -82,6 +82,8 @@ topics:
     has a hood, which is the part that matters down here. Put it on, walk west
     into the drift, and close the hood. Then come and tell me what you saw.
   hints: Accept, and Gethin hands you a hooded lantern. Type equip hooded lantern.
+  objective: Put the hooded lantern in your light slot. Type equip hooded lantern.
+    If a lantern is already there, use remove lantern first.
   questRequired:
   - 31-end
   questExcluded:

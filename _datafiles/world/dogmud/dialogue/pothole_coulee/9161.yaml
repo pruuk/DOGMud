@@ -24,8 +24,8 @@ opener:
     - 50-start
     - 50-end
     text: Opened, and you have walked the town. Good. The terraces are where the
-      coulee learns to reach past arm's length, and you may ask me to teach you
-      to shoot. Say the word.
+      coulee learns to reach past arm's length. If you want the eye, ask me to
+      teach you to shoot.
     hints: Choose First Shot below to learn to shoot from Iden.
   - questRequired:
     - 30-end
@@ -140,15 +140,17 @@ topics:
   quest: 50
   label: First Shot
   playerLine: Will you teach me to shoot?
-  text: I will. Here, take this sling, plaited cord and a leather cradle, cheap
-    and honest, and a pouch of shot to feed it. Both are yours to keep. Ready the
-    sling first. The cradle fills itself while your eye is still on the mark, so
+  text: I will. Here, take this sling. It is plaited cord and a leather cradle,
+    cheap and honest. A pouch of shot comes with it. Both are yours to keep. Ready
+    the sling first. The cradle fills itself while your eye is still on the mark, so
     there is no second motion to learn. I will walk you through the rest one
     thing at a time. If the sling is already in your hand, take it off and ready
     it again, so I can see you do it.
   hints: Accept, and Iden hands you a sling. Type equip sling. If it is already in
     your hand, that will not work, so first use remove sling to put it back in
     your pack.
+  objective: Get the sling ready in your hand. Type equip sling. If it is already in
+    your hand, use remove sling first.
   questRequired:
   - 31-end
   questExcluded:

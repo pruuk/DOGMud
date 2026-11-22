@@ -14,17 +14,17 @@ opener:
     hints: Find Cleric Hadwen at the Awakening Pool, north of Hub Square, and type
       talk hadwen. Complete the Awakening before returning to Smith Rusk.
   # Crier Toke or Rusk offers First Heat (owner ruling 2026-11-22, #940).
-  # Rusk's offer is gated on Find Your Footing (31-end), like Toke's. The "find Toke" variant after this one now shows only before Find
-  # Your Footing, where it is still true.
+  # Rusk's offer is gated on Find Your Footing (31-end), like Toke's. The
+  # "find Toke" variant after this one now shows only before Find Your
+  # Footing, where it is still true.
   - questRequired:
     - 30-end
     - 31-end
     questExcluded:
     - 35-start
     - 35-end
-    text: You have been through the rite and walked the town. Good. I teach the
-      forge, and you may ask me to teach you. Say the word and we begin at the
-      iron.
+    text: Rite done, town walked. Good. I teach the iron. If you want it, ask me,
+      and we start at the stall.
     hints: Choose First Heat below to learn the forge from Rusk.
   - questRequired:
     - 30-end
@@ -163,6 +163,7 @@ topics:
     feel for it, type craft list to see everything you know how to make. Show me
     what you made when you are done. Start with the list.
   hints: Accept, then here beside Rusk, type list.
+  objective: Learn the forge from Rusk. Start by seeing what she sells. Type list.
   questRequired:
   - 31-end
   questExcluded:

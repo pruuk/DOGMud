@@ -126,6 +126,9 @@ triggers:
       missing: ["38-met"]
     actions:
       - grant: "38-met"
+      - actor: >-
+          Birna has shown you the shape of it. Start with her racks. Type
+          list.
 
   # met: hearing Birna's brew_arrive topic.
   - event: topic_heard

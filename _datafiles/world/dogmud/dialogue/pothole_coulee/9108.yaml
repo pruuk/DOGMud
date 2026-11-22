@@ -24,8 +24,8 @@ opener:
     - 32-start
     - 32-end
     text: You have been through the rite and walked the town. Good. I train
-      fighters, and you may ask me to train you. Say the word and we begin.
-    hints: Choose First Blood below to ask Vorn to teach you to fight.
+      fighters. If you want training, ask me, and we begin.
+    hints: Choose First Blood below to learn to fight from Vorn.
   - questRequired:
     - 30-end
     questExcluded:
@@ -147,6 +147,8 @@ topics:
   hints: Accept, and Vorn hands you a cudgel. Type wield cudgel. If it is already
     in your hand, that will not work, so first use remove cudgel to put it back
     in your pack.
+  objective: Take the cudgel in your hand. Type wield cudgel. If it is already in
+    your hand, use remove cudgel first.
   questRequired:
   - 31-end
   questExcluded:

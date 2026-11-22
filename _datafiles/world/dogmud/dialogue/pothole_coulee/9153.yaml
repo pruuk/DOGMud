@@ -26,8 +26,8 @@ opener:
     - 47-start
     - 47-end
     text: The rite is on you, and you have walked the town. Good. There is
-      something here worth your while, the way of the folk, and you may ask me
-      to teach it. Sit, and say the word.
+      something here worth your while, the way of the folk. Sit, and ask me to
+      teach it.
     hints: Choose First Words below to learn the way of the folk from Wenna.
   - questRequired:
     - 30-end
@@ -111,6 +111,8 @@ topics:
     It is more patient than I am and always to hand. Open it now, then come back
     to me.
   hints: Accept, then type help.
+  objective: Learn the way of the folk from Wenna. Start with the in-game help.
+    Type help.
   questRequired:
   - 31-end
   questExcluded:
