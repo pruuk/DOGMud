@@ -370,6 +370,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 								}
 								actions.BreakOffMenuToFollow(partyUser, user.Character, user.UserId, room)
 								partyUser.SendText(messaging.CategoryRoomExit, `You follow the party leader.`)
+								// A member walking behind the leader through a
+								// secret exit learns it (#781, owner ruling 2),
+								// so their own step passes the known-exit rule.
+								actions.LearnSecretExitFollowing(partyUser.Character, room, exitName)
 								// CmdFollowStep: the room they leave has just
 								// lost the leader's light, which they walk on
 								// with, so it must not be announced (#620).
@@ -394,6 +398,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 					// Companions interrupt casting to follow owner — Activity
 					// cascade (Activity_Cascades.go movement interrupt) handles
 					// the machine transition; no direct field manipulation needed.
+					// A companion moving with its owner through a secret
+					// exit learns it (#781, owner ruling 13).
+					actions.LearnSecretExitFollowing(&mob.Character, room, exitName)
 					mob.Command(rest)
 				}
 			}

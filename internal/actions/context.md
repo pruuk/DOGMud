@@ -427,6 +427,11 @@ in `usercommands`), so an unfound secret exit is not looked, shot or walked
 through. Mob moves keep `FindExit` (`QuoteMobStep`, `mobcommands.Go`), since
 a scripted route takes its secret exits; `internal/guards/exit_lookup_guard_test.go`
 registers every unfiltered lookup with its reason.
+`LearnSecretExitFollowing(c, room, exitName)` (`follow_secret.go`): a
+follower moving behind its leader through a secret exit learns it (#781
+rulings 2 and 13), called when the follow step is issued so the step passes
+the follower's own rule. Called by the party follow and companion loops in
+`usercommands.Go` and by `modules/follow`.
 
 **Cost:**
 

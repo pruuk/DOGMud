@@ -86,6 +86,16 @@ walk them twice or end their follow. Known edge: a member following
 another member who walks alone into the room where the leader already
 stands is not moved.
 
+## Secret exits (#781)
+
+A player follower learns a secret exit the one they follow takes
+(`actions.LearnSecretExitFollowing`, owner ruling 2), after the sight check
+and before their own step, which answers to their own known-exit rule. An
+NPC follower takes a secret exit only if it found it
+(`Room.ExitKnownTo`); one charmed by the moving player learns it and
+follows, any other stops following (`follow stop`, ruling 13). Tests:
+`follow_secret_test.go`.
+
 `help follow` ships here (`files/datafiles/templates/help/follow.template`)
 and is indexed under `parties` by `files/data-overlays/keywords.yaml`; it
 and `help party` link to each other.

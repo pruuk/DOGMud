@@ -4,8 +4,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
@@ -135,4 +138,35 @@ func TestTyped_AnUnfoundSecretNameIsNotRecognized(t *testing.T) {
 
 	user.Character.LearnSecretExit(1, "crack")
 	require.Equal(t, routeGo, fallbackRoute(user, room, "crack"))
+}
+
+// Ruling 2: a party member who moves through a secret exit behind the leader
+// learns it. Ruling 13: a companion moving with its owner learns it too.
+func TestGo_FollowersLearnTheSecretExitTheLeaderTakes(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	user, room := getTestUserAndRoom(t)
+	secretExit(t, room, "north")
+	user.Character.LearnSecretExit(1, "north")
+
+	member := users.GetByUserId(2)
+	p := parties.New(1)
+	require.NotNil(t, p)
+	t.Cleanup(p.Disband)
+	require.True(t, p.InvitePlayer(2))
+	require.True(t, p.AcceptInvite(2))
+	companion := mobs.GetInstance(100)
+	require.NotNil(t, companion)
+	companion.Character.Charmed = characters.NewCharm(1, -1, "")
+	require.False(t, member.Character.KnowsSecretExit(1, "north"), "premise")
+	require.False(t, companion.Character.KnowsSecretExit(1, "north"), "premise")
+	events.DrainQueuedUserInputsForTest(2)
+
+	handled, err := Go("north", user, room, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+	require.Equal(t, 2, user.Character.RoomId)
+	require.True(t, member.Character.KnowsSecretExit(1, "north"), "the party member walked behind the leader")
+	require.Contains(t, events.DrainQueuedUserInputsForTest(2), "north", "the member's follow step is queued")
+	require.True(t, companion.Character.KnowsSecretExit(1, "north"), "the companion walked behind its owner")
 }

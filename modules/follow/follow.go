@@ -391,6 +391,18 @@ func (f *FollowModule) roomChangeHandler(e events.Event) events.ListenerReturn {
 
 				if mob := mobs.GetInstance(fId.mobInstanceId); mob != nil {
 					if fromRoom.RoomId == mob.Character.RoomId {
+						// #781, owner ruling 13: an NPC following a player
+						// takes a secret exit only if it found it; a
+						// companion or charmed NPC moving with its leader
+						// learns it. Any other follower stops here.
+						if !fromRoom.ExitKnownTo(&mob.Character, followExitName) {
+							if evt.UserId == 0 || !mob.Character.IsCharmed(evt.UserId) {
+								mob.Command(`follow stop`)
+								f.stopFollowing(fId)
+								continue
+							}
+							actions.LearnSecretExitFollowing(&mob.Character, fromRoom, followExitName)
+						}
 						mob.Command(followExitName, .25)
 						// Count follows as wandering
 						// This way if following ends, many/most mobs will head home.
@@ -423,6 +435,9 @@ func (f *FollowModule) roomChangeHandler(e events.Event) events.ListenerReturn {
 							continue
 						}
 						actions.BreakOffMenuToFollow(user, moverCharacter(evt), evt.UserId, fromRoom)
+						// A follower who saw the one they follow go through
+						// a secret exit learns it (#781, owner ruling 2).
+						actions.LearnSecretExitFollowing(user.Character, fromRoom, followExitName)
 						user.Command(followExitName, .25)
 						continue
 					}
