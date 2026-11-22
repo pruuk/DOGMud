@@ -23,9 +23,9 @@ opener:
     questExcluded:
     - 50-start
     - 50-end
-    text: Opened, and you have walked the town. Good. The terraces are where the
-      coulee learns to reach past arm's length. If you want the eye, ask me to
-      teach you to shoot.
+    text: You have been through the rite, and you have walked the town. Good. The
+      terraces are where the coulee learns to reach past arm's length. If you
+      want the eye, ask me to teach you to shoot.
     hints: Choose First Shot below to learn to shoot from Iden.
   - questRequired:
     - 30-end
