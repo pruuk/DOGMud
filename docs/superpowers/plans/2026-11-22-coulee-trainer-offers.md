@@ -40,21 +40,20 @@ No spec: the rulings above are the design. This plan is the build.
 In the quest file `quests/NN-*.yaml`:
 
 ```yaml
-flags:
-  - key: NN-door
-    values: [trainer]
-    description: The player took this quest from the trainer, not Toke.
-
 triggers:
   # A trainer start skips the arrival talk (owner ruling 2026-11-22).
   - event: quest_granted
     quest_token: NN-start
     conditions:
-      has_flag: {"NN-door": "trainer"}
+      in_room: <trainer's room>
+      has: ["NN-start"]
       missing: ["NN-<second step>"]
     actions:
       - grant: "NN-<second step>"
 ```
+
+(Amended in Task 1: the flag version is refused by the `one-action` loop
+rule. See the decisions table.)
 
 In the trainer's dialogue file, a new offer:
 
@@ -68,7 +67,6 @@ In the trainer's dialogue file, a new offer:
   questRequired: [31-end]
   questExcluded: [NN-start, NN-end]
   grantsQuest: NN-start
-  setsQuestFlag: {key: NN-door, value: trainer}
   givesItem: <10043 for Vorn, 10038 for Iden, 20097 for Gethin; none otherwise>
 ```
 
@@ -119,8 +117,8 @@ Blood is no longer on his menu, the other trades still are.
 
 | Decision | Why | If wrong |
 |---|---|---|
-| Skip uses a flag plus `quest_granted`, not a `topic_heard` on the offer | `topic_heard` fires before the queued grant lands, so it would never match; Take the Tower already uses this pattern | Only the mechanism changes; player effect is the same |
+| Skip uses a `quest_granted` trigger gated `in_room: <trainer's room>`, not a `topic_heard` on the offer and not a flag (amended during Task 1) | `topic_heard` fires before the queued grant lands; the `one-action` loop rule refuses a flag condition on a step grant (`internal/questloop/rule_oneaction.go:45`). Toke's schedule keeps him in 5203 at every hour and each trainer has `maxwander: 0` in their own room, so the room tells the doors apart | If a trainer or Toke ever moves rooms, the trigger's room needs updating |
+| `chain` loop rule accepts a second door (amended during Task 1) | The rule refused any offer gated on `31-end` off Toke, who takes 31's hand-in. It stands for requirement 65 ("Every chain offers its next quest at hand-in", `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`), which still holds while Toke offers every trade. Now an offer also passes when another offer for the same quest, behind the same gate, sits on the hand-in NPC | Revert the rule change and give each trainer a bridge quest instead |
 | The trainer's offer text carries the arrival lesson | The skipped arrival topic is where the lesson lives; without it the player gets only the next-step opener | Drop the lesson from the pitch and keep it short |
-| No flag value for Toke's door | A stale `trainer` flag only matters on a resume at `start`, which the grant chain leaves no time for | Add `setsQuestFlag: {NN-door: toke}` to Toke's eight offers |
 | `start` step text that says Toke sent the player stays | A trainer-started player skips `start` and never reads it | Reword the eight `start` descriptions too |
 | Arrival topic labels ("Crier Toke sent me...") stay | They show only on the Toke path, where they are true | Reword them neutral |
