@@ -70,6 +70,19 @@ const skeletonKeepsGifts = `tree:
           text: "The skeleton clutches it."
 `
 
+// skeletonReturnsGifts is a player_give handler that hands every gift back
+// with return_item, as the shopkeeper, questgiver and guard captain
+// archetypes do.
+const skeletonReturnsGifts = `tree:
+  type: selector
+  children:
+    - type: sequence
+      event: player_give
+      children:
+        - type: action
+          do: return_item
+`
+
 // giftsAccepted drains the queued GiftAccepted events, which feed the
 // gift-to-opinion seeder.
 func giftsAccepted() int { return len(events.DrainQueuedByTypeForTest("GiftAccepted")) }
@@ -86,6 +99,7 @@ func skeletonForGive(t *testing.T, room *rooms.Room) *mobs.Mob {
 	loadSkeletonTree(t, skeletonIgnoresGives)
 	events.DrainQueuedInputsForTest(m.InstanceId)
 	giftsAccepted()
+	events.DrainQueuedByTypeForTest("GiftOffered")
 	events.DrainQueuedItemOwnershipForTest(1)
 	return m
 }
@@ -138,6 +152,21 @@ func TestQuestGear_GiveToNPC(t *testing.T) {
 		assert.Equal(t, 0, carriesSword(user.Character.Items))
 		assert.Equal(t, 1, carriesSword(m.Character.Items))
 		assert.Equal(t, 1, giftsAccepted(), "an ordinary give's events")
+	})
+	t.Run("a tree that returns it raises no gift", func(t *testing.T) {
+		user, room := questGearHolder(t, questGearCopy())
+		m := skeletonForGive(t, room)
+		loadSkeletonTree(t, skeletonReturnsGifts)
+		_, err := Give("iron sword skeleton", user, room, 0)
+		require.NoError(t, err)
+		assert.Contains(t, sentTo(user), "hands back the")
+		require.Equal(t, 1, carriesSword(user.Character.Items), "the tree handed it back")
+		assert.Equal(t, 0, carriesSword(m.Character.Items))
+		assert.Equal(t, 0, giftsAccepted(), "no opinion for a gift handed back")
+		assert.Empty(t, events.DrainQueuedByTypeForTest("GiftOffered"))
+		for _, e := range events.DrainQueuedItemOwnershipForTest(user.UserId) {
+			assert.True(t, e.Gained && e.Reason == "tree_give", "only the return's own gain, got %+v", e)
+		}
 	})
 	t.Run("the giver's own companion takes quest gear", func(t *testing.T) {
 		user, room := questGearHolder(t, questGearCopy())

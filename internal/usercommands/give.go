@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -418,8 +419,10 @@ const questGearHandBackRoomLine = `hands the <ansi fg="itemname">%s</ansi> back.
 // giver's companion, once no topic and no quest step took it (#940, owner
 // ruling 2026-11-22). A player_give behaviour-tree handler still sees the
 // give as it sees any gift, with the item in the NPC's hands; if the tree
-// takes the give, it is an ordinary give and raises what one raises (the
-// giver's loss, the NPC's gain, the gift events). Otherwise the NPC considers
+// keeps the item, it is an ordinary give and raises what one raises (the
+// giver's loss, the NPC's gain, the gift events); if its return_item handed
+// the item back, it is a hand-back and raises nothing more. Otherwise the NPC
+// considers
 // the item and hands it back, and it never keeps or equips it: the item goes
 // back to the giver's pack, and since it never really left, no ownership,
 // gain or gift event is raised, so no item_gain trigger fires and no NPC's
@@ -453,7 +456,12 @@ func giveQuestGearToNPC(user *users.UserRecord, room *rooms.Room, m *mobs.Mob, g
 		ItemUUID:  giveItem.UUID,
 		RoomId:    room.RoomId,
 	}) {
-		// The tree owns the give, as it owns any gift's.
+		// A tree that ran return_item has already handed it back (with its
+		// own tree_give gain): that is a hand-back, and raises nothing more.
+		if carriesCopy(user.Character, giveItem) {
+			return
+		}
+		// The tree kept it: it owns the give, as it owns any gift's.
 		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: giveItem, Gained: false})
 		events.AddToQueue(events.ItemOwnership{MobInstanceId: m.InstanceId, Item: giveItem, Gained: true, Reason: string(acquire.AcquireGive)})
 		actions.StolenBaubleGiven(&actions.UserActor{User: user, Room: room}, m, giveItem)
@@ -475,6 +483,19 @@ func giveQuestGearToNPC(user *users.UserRecord, room *rooms.Room, m *mobs.Mob, g
 	// line; the giver has their own line above.
 	actions.SendSeen(&actions.MobActor{Mob: m, Room: room, Skip: []int{user.UserId}}, messaging.CategoryMobEmote,
 		actions.FormatMobEmoteText(m.Character.Name, fmt.Sprintf(questGearHandBackRoomLine, giveItem.DisplayName())), false)
+}
+
+// carriesCopy reports whether c carries this exact copy (by UUID) in any of
+// its carry lists: the backpack, the bandolier or the component bag.
+func carriesCopy(c *characters.Character, itm items.Item) bool {
+	for _, list := range [][]items.Item{c.Items, c.PotionItems, c.ComponentItems} {
+		for _, held := range list {
+			if held.Equals(itm) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // giveToPet hands giveItem to petUser's pet. Gold a pet has no use for.

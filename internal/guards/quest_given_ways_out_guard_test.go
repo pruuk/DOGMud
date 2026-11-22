@@ -106,7 +106,7 @@ var removeItemSites = map[string]removeSite{
 	"internal/usercommands/admin.rename.go|Rename":         {removeReplaced, 1, "admin rename returns the same copy to the pack"},
 	"internal/usercommands/admin.redescribe.go|Redescribe": {removeReplaced, 1, "admin redescribe returns the same copy to the pack"},
 	"internal/usercommands/guild.go|guildTake":             {removeReplaced, 1, "rollback of a vault take that failed"},
-	"internal/usercommands/give.go|giveQuestGearToNPC":     {removeReplaced, 2, "quest gear into an NPC's hands for its tree, and back to the giver when the tree declines"},
+	"internal/usercommands/give.go|giveQuestGearToNPC":     {removeQuestChecked, 2, "quest gear into a non-companion NPC's hands for its player_give tree, which may keep it as it may keep any gift (owner ruling); back to the giver when the tree declines"},
 	"modules/aicompanion/cooking.go|equipStartingKit":      {removeReplaced, 1, "a companion wears its own starting kit"},
 
 	// Not a character's hands.
