@@ -95,6 +95,7 @@ var removeItemSites = map[string]removeSite{
 	"internal/dialogue/engine.go|applyQuestEffects":             {removeConsumed, 1, "a topic's requiresItem takes the item"},
 	"internal/questengine/bridge.go|GameBridge.ConsumeItem":     {removeConsumed, 2, "a quest step consumes the item"},
 	"internal/usercommands/give.go|Give":                        {removeConsumed, 1, "the quest engine consumed a give"},
+	"internal/usercommands/salvage.go|Salvage":                  {removeConsumed, 1, "a quest copy salvaged crumbles at once to nothing (owner ruling 2026-11-22)"},
 	"internal/usercommands/go.go|Go":                            {removeConsumed, 1, "a key is absorbed into the keyring"},
 	"internal/usercommands/lock.go|Lock":                        {removeConsumed, 2, "a key is absorbed into the keyring"},
 	"internal/usercommands/unlock.go|Unlock":                    {removeConsumed, 2, "a key is absorbed into the keyring"},

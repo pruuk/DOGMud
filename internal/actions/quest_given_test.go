@@ -440,7 +440,7 @@ func TestQuestGear_SalvageYieldsNothing(t *testing.T) {
 			assert.Empty(t, res.MaterialIds, "nothing recovered")
 			assert.Empty(t, actor.awards, "no skill award")
 			assert.Empty(t, routeGains(actor.userId), "nothing acquired")
-			assert.Equal(t, []string{fmt.Sprintf(questGearSalvageLine, "Drillyard Cudgel")}, actor.said)
+			assert.Equal(t, []string{fmt.Sprintf(QuestGearSalvageLine, "Drillyard Cudgel")}, actor.said)
 		} else {
 			assert.True(t, res.Succeeded)
 			assert.True(t, res.RollHappened)

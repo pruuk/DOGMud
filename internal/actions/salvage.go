@@ -341,7 +341,7 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) Sa
 	if targetItem.IsQuestGiven() {
 		char.RemoveItem(targetItem)
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategoryCraft, fmt.Sprintf(questGearSalvageLine, targetItem.DisplayName()))
+			actor.SendText(messaging.CategoryCraft, fmt.Sprintf(QuestGearSalvageLine, targetItem.DisplayName()))
 		}
 		result.Reason = "quest gear"
 		return result

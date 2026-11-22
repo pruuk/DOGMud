@@ -31,9 +31,10 @@ const QuestGearFadesLine = `The <ansi fg="itemname">%s</ansi> fades away. Quest 
 // and the item's name.
 const questGearFadesRoomLine = `%s's <ansi fg="itemname">%s</ansi> fades away.`
 
-// questGearSalvageLine is what the salvager reads when the item salvaged is
-// quest gear: it is destroyed and yields nothing (salvageItem).
-const questGearSalvageLine = `The <ansi fg="itemname">%s</ansi> crumbles to nothing. Quest gear holds nothing worth salvaging.`
+// QuestGearSalvageLine is what the salvager reads when the item salvaged is
+// quest gear: it is destroyed and yields nothing (salvageItem, and the
+// salvage command, which does it at once).
+const QuestGearSalvageLine = `The <ansi fg="itemname">%s</ansi> crumbles to nothing. Quest gear holds nothing worth salvaging.`
 
 // QuestGearListTag is the short mark an inventory row puts after a quest's
 // copy, in brackets: "Firebomb (quest gear)".
