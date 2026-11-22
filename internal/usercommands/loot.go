@@ -114,7 +114,7 @@ func lootCorpseAll(user *users.UserRecord, room *rooms.Room, corpseIdx int) {
 			tookSomething = true
 		} else {
 			user.SendText(messaging.CategoryRefusal,
-				fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, it.DisplayName()),
+				fmt.Sprintf(overloadedCarryLine, it.DisplayName()),
 			)
 			break
 		}

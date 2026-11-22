@@ -143,6 +143,9 @@ func TestQuestGear_TakeFromPetWhileOverloaded(t *testing.T) {
 		assert.Empty(t, user.Character.Pet.Items, "quest=%v: a pet with no room cannot hold it", quest)
 		if quest {
 			assert.Contains(t, out, fmt.Sprintf(actions.QuestGearFadesLine, "Anvil"))
+			refusalAt := strings.Index(out, "You're already overloaded!")
+			require.GreaterOrEqual(t, refusalAt, 0, "the overload refusal is sent")
+			assert.Less(t, refusalAt, strings.Index(out, "fades away"), "the refusal explains the fade, so it comes first")
 			assert.Empty(t, room.Items, "quest gear never reaches the floor")
 		} else {
 			assert.Len(t, room.Items, 1, "a bought anvil falls at the player's feet")
