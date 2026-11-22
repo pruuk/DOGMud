@@ -405,6 +405,12 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 		}
 
+		// Quest gear says so, so no one loses it by surprise (#940).
+		if lookItem.IsQuestGiven() {
+			user.SendText(messaging.CategoryRoomDescription,
+				util.SplitStringNL(actions.QuestGearLookLine, user.WrapWidth()))
+		}
+
 		user.SendBlankLine(messaging.CategoryRoomDescription)
 
 		return true, nil
