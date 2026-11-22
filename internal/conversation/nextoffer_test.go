@@ -53,7 +53,7 @@ func TestTalkNextOffer_RunsAfterCompletionLines(t *testing.T) {
 func TestTalkNextOffer_DrainsAfterALaterPriorityZeroLine(t *testing.T) {
 	events.DrainAllQueuedEventsForTest()
 	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
-	events.AddToQueue(events.TalkNextOffer{UserId: 1, MobInstanceId: 2, TopicKey: "k"}, events.TalkNextOfferPriority)
+	events.AddToQueue(events.TalkNextOffer{UserId: 1, MobInstanceId: 2, FinalToken: "1-end"}, events.TalkNextOfferPriority)
 	events.AddToQueue(events.Message{UserId: 1, Text: "done"})
 	require.Equal(t, []string{"Message", "TalkNextOffer"}, events.QueuedTypesInOrderForTest())
 }

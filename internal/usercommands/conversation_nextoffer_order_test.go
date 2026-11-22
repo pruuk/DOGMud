@@ -8,9 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/menu"
-	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/quests"
-	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,41 +43,17 @@ topics:
     text: "Old age."
 `
 
-// deliveredWithNextOffer is deliveredInOrder with the two production pieces
-// the next offer needs: the quest stand-in also lands the token (as
-// HandleQuestUpdate does before it prints, so the offer gated on it is
-// eligible when its pitch runs), and the real TalkNextOffer listener.
-// HandleQuestUpdate itself cannot run here: package hooks imports
-// usercommands, so this package's tests cannot import hooks.
+// deliveredWithNextOffer is runTalkQueue with quest 9's reward quest: 9-end
+// queues 13-start from inside the handler, as HandleQuestUpdate does for
+// Rewards.QuestId, so its banner lands on a later turn of the same pass and
+// the pitch must wait for it.
 func deliveredWithNextOffer(t *testing.T) []string {
 	t.Helper()
-	restore := events.SwapListenersForTest()
-	defer restore()
-	var got []string
-	events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
-		if m, ok := e.(events.Message); ok && m.UserId == 1 {
-			got = append(got, m.Text)
+	return runTalkQueue(t, func(q events.Quest) {
+		if q.QuestToken == "9-end" {
+			events.AddToQueue(events.Quest{UserId: q.UserId, QuestToken: "13-start"})
 		}
-		return events.Continue
 	})
-	events.RegisterListener(events.Quest{}, func(e events.Event) events.ListenerReturn {
-		q := e.(events.Quest)
-		if u := users.GetByUserId(q.UserId); u != nil {
-			u.Character.GiveQuestToken(q.QuestToken)
-			u.SendText(messaging.CategorySystem, reshowBanner+q.QuestToken)
-			u.SendText(messaging.CategoryLoot, "You receive 10 gold!")
-			if q.QuestToken == "9-end" {
-				// A reward quest (Rewards.QuestId), queued from inside the
-				// handler as HandleQuestUpdate does: its banner lands on a
-				// later turn of the same pass, and the pitch must wait for it.
-				events.AddToQueue(events.Quest{UserId: q.UserId, QuestToken: "13-start"})
-			}
-		}
-		return events.Continue
-	})
-	events.RegisterListener(events.TalkNextOffer{}, conversation.HandleTalkNextOffer)
-	events.ProcessEvents()
-	return got
 }
 
 // #375 P1: the hand-in's completion banner and reward print first, then the
@@ -181,7 +155,7 @@ func TestHandIn_NextOfferAfterTheNpcLeftPitchesNothing(t *testing.T) {
 	defer events.DrainAllQueuedEventsForTest()
 	require.True(t, user.Character.GiveQuestToken("9-start"))
 	require.True(t, user.Character.GiveQuestToken("9-end"))
-	events.AddToQueue(events.TalkNextOffer{UserId: user.UserId, MobInstanceId: mob.InstanceId, TopicKey: "ledger"}, events.TalkNextOfferPriority)
+	events.AddToQueue(events.TalkNextOffer{UserId: user.UserId, MobInstanceId: mob.InstanceId, FinalToken: "9-end"}, events.TalkNextOfferPriority)
 	home := mob.Character.RoomId
 	mob.Character.RoomId = home + 1000
 	defer func() { mob.Character.RoomId = home }()
@@ -289,7 +263,7 @@ func TestHandIn_NextOfferWhileGatedPitchesNothing(t *testing.T) {
 	defer events.DrainAllQueuedEventsForTest()
 	require.True(t, user.Character.GiveQuestToken("9-start"))
 	user.Character.GiveQuestToken("9-end")
-	events.AddToQueue(events.TalkNextOffer{UserId: user.UserId, MobInstanceId: mob.InstanceId, TopicKey: "ledger"}, events.TalkNextOfferPriority)
+	events.AddToQueue(events.TalkNextOffer{UserId: user.UserId, MobInstanceId: mob.InstanceId, FinalToken: "9-end"}, events.TalkNextOfferPriority)
 	const sleepId = 9457
 	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
 		sleepId: {ConditionId: sleepId, Name: "Test Sleep", RoundInterval: 1, TriggerCount: 100,

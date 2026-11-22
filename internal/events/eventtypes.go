@@ -125,14 +125,15 @@ type Quest struct {
 
 func (q Quest) Type() string { return `Quest` }
 
-// TalkNextOffer asks the talk flow to pitch an NPC's next quest offer after
-// a hand-in (#375 phase 2). It is queued at TalkNextOfferPriority, so it runs
-// after the hand-in's completion banner and reward lines (priority 0) and
-// before a menu shown last (priority 50).
+// TalkNextOffer brings the talk back after a hand-in that granted FinalToken
+// (#375 phase 2): the handler pitches the one next offer that token opened on
+// the NPC, or re-shows the talk menu. It is queued at TalkNextOfferPriority, so
+// it runs after the token has landed with its completion banner and reward
+// lines (priority 0) and before a menu shown last (priority 50).
 type TalkNextOffer struct {
 	UserId        int
 	MobInstanceId int
-	TopicKey      string
+	FinalToken    string
 }
 
 func (t TalkNextOffer) Type() string { return `TalkNextOffer` }
@@ -140,8 +141,9 @@ func (t TalkNextOffer) Type() string { return `TalkNextOffer` }
 // TalkNextOfferPriority is the queue priority of TalkNextOffer.
 const TalkNextOfferPriority = 45
 
-// TalkMenuAgain re-shows an NPC's talk menu after any accepted offer (it first
-// served an offer for an item the player already holds, #375 phase 7 tier 1).
+// TalkMenuAgain re-shows an NPC's talk menu after a choice that granted a quest
+// token other than a hand-in, such as an accepted offer (it first served an
+// offer for an item the player already holds, #375 phase 7 tier 1).
 // It is queued at TalkNextOfferPriority so the grant and the step start have run
 // first: the hand-in they opened is on the menu, and a quest_granted trigger
 // that moves the step (a trainer's own offer skips the arrival talk, #940) has

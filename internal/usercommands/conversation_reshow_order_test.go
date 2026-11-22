@@ -122,8 +122,10 @@ func TestTalk_ReshownMenuComesAfterTheQuestBanner(t *testing.T) {
 		conversation.Talk(user, mustRoom(t, user), mob)
 		drained(1)
 		require.True(t, user.RouteMenuInput("2", true), "2 is the hand-in")
+		require.False(t, user.HasOpenMenu(), "the menu is queued behind the grant")
 
 		got := deliveredInOrder(t)
+		require.True(t, user.HasOpenMenu(), "the menu is re-shown for input once the queue has run")
 		banner, menuAt := indexOf(got, reshowBanner+"9-end"), indexOf(got, "Talking with")
 		require.GreaterOrEqual(t, banner, 0, "%q", got)
 		require.Greater(t, menuAt, indexOf(got, "You receive 10 gold!"), "the menu printed before the banner and rewards: %q", got)

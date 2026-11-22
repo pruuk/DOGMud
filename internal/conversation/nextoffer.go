@@ -29,62 +29,77 @@ func nextOffers(df *dialogue.DialogueFile, finalToken string, ps *dialogue.Playe
 	return out
 }
 
-// queueNextOffer runs after a hand-in that granted finalToken: when exactly
-// one next offer opened on this NPC, it queues that offer's pitch to run
-// after the completion lines. It reports whether it queued one; when it did
-// not, the caller re-shows the menu as before.
-func queueNextOffer(user *users.UserRecord, mobInstanceId int, df *dialogue.DialogueFile, finalToken string) bool {
-	keys := nextOffers(df, finalToken, heldAlso(PlayerState(user), finalToken))
-	if len(keys) != 1 {
-		return false
+// queueRedraw brings the talk back after a choice that granted token, on the
+// event queue at TalkNextOfferPriority. GiveQuest only queues the token: the
+// quest engine lands it, prints the banner and rewards and runs any
+// quest_granted trigger (a trainer's own offer skips the arrival talk, #940)
+// at priority 0 in the same pass, so what follows is built from the state
+// those leave. A hand-in queues TalkNextOffer, which pitches the one next
+// offer its final token opened or re-shows the menu; any other grant queues
+// TalkMenuAgain.
+func queueRedraw(user *users.UserRecord, mobInstanceId int, token string, handIn bool) {
+	if handIn {
+		events.AddToQueue(events.TalkNextOffer{
+			UserId:        user.UserId,
+			MobInstanceId: mobInstanceId,
+			FinalToken:    token,
+		}, events.TalkNextOfferPriority)
+		return
 	}
-	events.AddToQueue(events.TalkNextOffer{
-		UserId:        user.UserId,
-		MobInstanceId: mobInstanceId,
-		TopicKey:      keys[0],
-	}, events.TalkNextOfferPriority)
-	return true
+	events.AddToQueue(events.TalkMenuAgain{UserId: user.UserId, MobInstanceId: mobInstanceId}, events.TalkNextOfferPriority)
 }
 
-// HandleTalkNextOffer pitches the queued next offer as if the player had
-// chosen it: their line, the pitch, then the card. If the NPC is gone or the
-// offer no longer applies, the talk menu is re-shown (or nothing, as
-// openMenu decides). While a menu gate holds or a prompt is open the card
-// could not open, so nothing is said at all: the player never speaks a line
-// they did not choose, and the offer waits in the talk menu with its [!].
+// talkBlocked reports whether a menu gate holds or a prompt is open, when a
+// queued redraw opens nothing.
+func talkBlocked(user *users.UserRecord) bool {
+	reason, promptOpen := user.MenuBlockedReason()
+	return reason != menu.CloseNone || promptOpen
+}
+
+// HandleTalkNextOffer runs after a hand-in, once its final token has landed.
+// When exactly one offer on the NPC is gated on that token and eligible, it
+// pitches it as if the player had chosen it: their line, the pitch, then the
+// card. Several next offers, or none, re-show the talk menu (the offers wait
+// with their [!]); nothing opens when the NPC is gone. While a menu gate holds
+// or a prompt is open the card could not open, so nothing is said at all: the
+// player never speaks a line they did not choose, and the offer waits in the
+// talk menu with its [!].
 func HandleTalkNextOffer(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.TalkNextOffer)
 	if !ok {
 		return events.Continue
 	}
 	user := users.GetByUserId(evt.UserId)
-	if user == nil {
+	if user == nil || talkBlocked(user) {
 		return events.Continue
 	}
-	if reason, promptOpen := user.MenuBlockedReason(); reason != menu.CloseNone || promptOpen {
+	mob, _, ok := present(user, evt.MobInstanceId)
+	if !ok {
 		return events.Continue
 	}
-	choose(user, evt.MobInstanceId, evt.TopicKey)
+	df := dialogue.Load(int(mob.MobId), mob.Zone)
+	if keys := nextOffers(df, evt.FinalToken, PlayerState(user)); len(keys) == 1 {
+		choose(user, evt.MobInstanceId, keys[0])
+		return events.Continue
+	}
+	openMenu(user, evt.MobInstanceId)
 	return events.Continue
 }
 
-// HandleTalkMenuAgain re-shows the talk menu queued by every accepted offer,
-// after the grant and its step-start chain have run (#940: a quest_granted
-// trigger may move the step before the menu should be drawn). While a menu gate
-// holds or a prompt is open nothing opens, and the hand-in waits in the talk
-// menu with its [?].
+// HandleTalkMenuAgain re-shows the talk menu queued by a choice that granted
+// a quest token (an accepted offer), after the grant and its step-start chain
+// have run (#940: a quest_granted trigger may move the step before the menu
+// should be drawn). While a menu gate holds or a prompt is open nothing opens,
+// and the hand-in waits in the talk menu with its [?].
 func HandleTalkMenuAgain(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.TalkMenuAgain)
 	if !ok {
 		return events.Continue
 	}
 	user := users.GetByUserId(evt.UserId)
-	if user == nil {
+	if user == nil || talkBlocked(user) {
 		return events.Continue
 	}
-	if reason, promptOpen := user.MenuBlockedReason(); reason != menu.CloseNone || promptOpen {
-		return events.Continue
-	}
-	openMenu(user, evt.MobInstanceId, "")
+	openMenu(user, evt.MobInstanceId)
 	return events.Continue
 }
