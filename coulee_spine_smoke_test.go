@@ -70,6 +70,7 @@ func newSpineWalk(t *testing.T) *spineWalk {
 	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
 	events.RegisterListener(events.Quest{}, hooks.HandleQuestUpdate)
 	events.RegisterListener(events.TalkNextOffer{}, conversation.HandleTalkNextOffer)
+	events.RegisterListener(events.TalkMenuAgain{}, conversation.HandleTalkMenuAgain)
 	events.RegisterListener(events.RoomChange{}, hooks.QuestRoomEnter)
 	events.RegisterListener(events.RoomChange{}, hooks.MenuCloseOnRoomChange)
 	events.RegisterListener(events.ItemOwnership{}, hooks.CheckItemQuests)
@@ -428,7 +429,7 @@ func TestSmoke_FleeElsewhereCountsForNothing(t *testing.T) {
 // TestSmoke_NewCharacterSpine walks a brand-new character through the Pothole
 // Coulee opening on shipped data (#375 phase 7, plan 2): every quest is offered
 // by the NPC who took the previous hand-in, nothing is granted by itself, and
-// Crier Toke ends up the only starter of the seven trades. No token is written
+// Crier Toke and each trade's trainer start the seven trades. No token is written
 // by the test: each one lands through the talk menu, a quest trigger or a
 // behavior tree, and the newcomer flag is set the way the new-to-MUDs route sets it.
 func TestSmoke_NewCharacterSpine(t *testing.T) {
@@ -545,16 +546,20 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 	w.step(31, "lantern", "The Drowned Lantern")
 	w.walkTo(spineSquare)
 
-	// The seven trades: Toke offers each first quest and starts it; its first
-	// teacher offers none and points back to Toke.
+	// The seven trades: Toke offers each first quest and starts it. A trade's
+	// first teacher either offers none and points back to Toke, or (door set)
+	// is a second door that offers it too (owner ruling 2026-11-22, #940; all
+	// seven trades have a door now).
 	trades := []struct {
 		offer   string
 		quest   int
 		teacher int
+		door    string // the teacher's own offer topic
 	}{
-		{"send_drill", 32, 9108}, {"send_forge", 35, 9116}, {"send_brew", 38, 9128},
-		{"send_steppe", 41, 9136}, {"send_folding", 44, 9144}, {"send_folk", 47, 9153},
-		{"send_range", 50, 9161},
+		{"send_drill", 32, 9108, "drill_start"}, {"send_forge", 35, 9116, "heat_start"},
+		{"send_brew", 38, 9128, "brew_start"}, {"send_steppe", 41, 9136, "sign_start"},
+		{"send_folding", 44, 9144, "cast_start"}, {"send_folk", 47, 9153, "words_start"},
+		{"send_range", 50, 9161, "shoot_start"},
 	}
 	for _, tr := range trades {
 		if w.onMenu(spineToke, tr.offer) {
@@ -567,16 +572,96 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 	for _, tr := range trades {
 		start := fmt.Sprintf("%d-start", tr.quest)
 		for _, tp := range w.df(tr.teacher).Topics {
-			if tp.GrantsQuest == start {
-				t.Errorf("mob %d topic %s still grants %s: Toke is the only starter", tr.teacher, tp.Key, start)
+			if tp.GrantsQuest == start && tp.Key != tr.door {
+				t.Errorf("mob %d topic %s grants %s: only Toke and the door %q may start it", tr.teacher, tp.Key, start, tr.door)
 			}
 		}
-		if text, _ := w.df(tr.teacher).OpenerFor(w.ps()); !strings.Contains(text, "Toke") {
-			t.Errorf("mob %d's opener for an Opened newcomer does not send them to Toke: %q", tr.teacher, text)
+		if text, _ := w.df(tr.teacher).OpenerFor(w.ps()); !strings.Contains(text, "ask me") {
+			t.Errorf("mob %d's opener for an Opened newcomer does not invite them to ask: %q", tr.teacher, text)
+		}
+		if !w.onMenu(tr.teacher, tr.door) {
+			t.Errorf("mob %d's door %s is not on the menu after footing", tr.teacher, tr.door)
 		}
 		if !w.onMenu(spineToke, tr.offer) {
 			t.Fatalf("Toke's %s is not open after footing", tr.offer)
 		}
 		w.offer(spineToke, tr.offer, start)
+		// Toke's door is in Hub Square: it does not skip the arrival talk.
+		w.step(tr.quest, "start", "Toke's "+tr.offer)
+	}
+}
+
+// TestSmoke_TrainerDoorsSkipTheArrivalTalk takes each trade's first quest from
+// its trainer in the trainer's room (owner ruling 2026-11-22, #940): the quest
+// starts on its second step, and every item the offer carries is in the pack.
+// The two earlier quests are marked done directly, because the offer reads
+// only their end tokens. First Light (98) is not one of the seven trades Toke
+// offers in the spine, so it is here only.
+func TestSmoke_TrainerDoorsSkipTheArrivalTalk(t *testing.T) {
+	doors := []struct {
+		name    string
+		quest   int
+		trainer int
+		room    int
+		door    string
+		arrive  string // the arrival topic the skip makes untrue
+		second  string
+		items   []int
+	}{
+		{"Vorn", 32, 9108, 5227, "drill_start", "drill_arrive", "met", []int{10043}},
+		{"Rusk", 35, 9116, 5245, "heat_start", "heat_arrive", "met", nil},
+		{"Birna", 38, 9128, 5265, "brew_start", "brew_arrive", "met", nil},
+		{"Tarn", 41, 9136, 5283, "sign_start", "sign_arrive", "met", nil},
+		{"Grieve", 44, 9144, 5303, "cast_start", "cast_lesson", "met", nil},
+		{"Wenna", 47, 9153, 5324, "words_start", "words_lesson", "met", nil},
+		{"Iden", 50, 9161, 5350, "shoot_start", "shoot_lesson", "met", []int{10038, 30064}},
+		{"Gethin", 98, 9125, 5255, "light_start", "first_light_lantern", "lantern", []int{20097}},
+	}
+	for _, d := range doors {
+		t.Run(d.name, func(t *testing.T) {
+			w := newSpineWalk(t)
+			for _, tok := range []string{"30-start", "30-end", "31-start", "31-end"} {
+				if !w.user.Character.GiveQuestToken(tok) {
+					t.Fatalf("could not hold %s", tok)
+				}
+			}
+			w.walkTo(d.room)
+			w.npc(d.trainer)
+			if !w.onMenu(d.trainer, d.door) {
+				t.Fatalf("%s is not on the menu after Find Your Footing", d.door)
+			}
+			arrive := w.df(d.trainer).FindTopic(d.arrive)
+			if arrive == nil {
+				t.Fatalf("mob %d has no arrival topic %s", d.trainer, d.arrive)
+			}
+			start := fmt.Sprintf("%d-start", d.quest)
+			w.talk(d.trainer)
+			w.choose(d.door)
+			w.pump()
+			if w.user.Character.HasQuest(start) {
+				t.Fatalf("topic %s granted %s before Accept", d.door, start)
+			}
+			w.choose("yes")
+			w.pump()
+			w.requireHeld(start)
+			// The talk menu is open again once the queue has drained. It is
+			// drawn after the quest_granted trigger has moved the step, so it
+			// must not offer the arrival talk. The menu has no reader, so the
+			// test types the arrival topic's label: a label on the menu is
+			// chosen (true), and one that is not closes the menu as another
+			// command (false).
+			if !w.user.HasOpenMenu() {
+				t.Fatal("the talk menu was not redrawn after Accept")
+			}
+			if w.user.RouteMenuInput(arrive.Label, true) {
+				t.Errorf("the menu after Accept still offers the arrival topic %s (%q)", d.arrive, arrive.Label)
+			}
+			w.step(d.quest, d.second, d.name+"'s "+d.door)
+			for _, id := range d.items {
+				if !w.user.Character.CarriesItem(id) {
+					t.Errorf("%s did not hand over item %d", d.name, id)
+				}
+			}
+		})
 	}
 }

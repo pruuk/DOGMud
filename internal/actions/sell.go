@@ -182,6 +182,14 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 		}
 		return SellResult{Reason: SellStopRejected}
 	}
+	// sellFindItemInChar prefers a copy that is not quest gear, so the probe
+	// is quest gear only when every match is (#940).
+	if probe.IsQuestGiven() {
+		if seller.IsPlayer() {
+			seller.SendText(messaging.CategoryRefusal, SellTellQuestGiven)
+		}
+		return SellResult{Reason: SellStopRejected}
+	}
 	// No WILLING merchant still routes through sellOneToMerchant when a
 	// merchant is present (SaleMerchant), so the merchant says why it won't
 	// buy and we return SellStopRejected / SellStopMerchantBroke rather than
@@ -201,6 +209,11 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 		soldId := probe.ItemId
 		soldBauble := probe.IsBauble()
 		if next, ok := sellFindItemInChar(char, itemName); ok {
+			// Only quest gear left (#940): `sell all cudgel` sold every
+			// other copy and keeps this one, as a completed sale.
+			if next.IsQuestGiven() && out.Sold > 0 {
+				break
+			}
 			soldBauble = next.IsBauble()
 			soldName = next.GetSpec().Name
 			soldId = next.ItemId
@@ -250,7 +263,8 @@ func sellSweep(seller Actor, room *rooms.Room) SellResult {
 	soldAny := false
 	for _, itm := range snapshot {
 		spec := itm.GetSpec()
-		if spec.ItemId < 1 || spec.QuestToken != "" || spec.Value <= 0 || spec.IsComponent {
+		// Quest gear stays with its holder (#940): sell all skips it.
+		if spec.ItemId < 1 || spec.QuestToken != "" || itm.IsQuestGiven() || spec.Value <= 0 || spec.IsComponent {
 			continue
 		}
 		mob, shopInv := resolveMerchant(room, itm, seller.IsPlayer())
@@ -436,13 +450,17 @@ func notifySaleToQuests(seller Actor, item items.Item, mob *mobs.Mob) {
 }
 
 // sellFindItemInChar searches backpack → potions → components for a match.
+// Each search prefers a copy that is not quest gear (#940,
+// characters.FindInBackpackToLetGo): `sell cudgel` with a bought cudgel and
+// the one a quest gave sells the bought one. Only when every copy is quest
+// gear does it come back, for QuoteSale to refuse.
 func sellFindItemInChar(char *characters.Character, name string) (items.Item, bool) {
-	item, found := char.FindInBackpack(name)
+	item, found := char.FindInBackpackToLetGo(name)
 	if !found {
-		item, found = char.FindInPotions(name)
+		item, found = char.FindInPotionsToLetGo(name)
 	}
 	if !found {
-		item, found = char.FindInComponents(name)
+		item, found = char.FindInComponentsToLetGo(name)
 	}
 	return item, found
 }

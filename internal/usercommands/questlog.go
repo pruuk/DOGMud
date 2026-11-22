@@ -39,20 +39,25 @@ func setGiverNameForTest(names map[int]string) func() {
 	return func() { giverName = prev }
 }
 
-// QuestGiver is the name of the first NPC whose offer can take questId back
-// off the shelf (else the first that offers it), or a plain stand-in phrase
-// when none is known.
+// QuestGiver names every NPC whose offer can take questId back off the shelf
+// (else every NPC that offers it), in mob id order, as plain English
+// alternatives ("A", "A or B", "A, B or C"). It is a plain stand-in phrase
+// when no name is known.
 func QuestGiver(questId int) string {
 	ids := dialogue.Resumers(questId)
 	if len(ids) == 0 {
 		ids = dialogue.Offerers(questId)
 	}
-	if len(ids) > 0 {
-		if name := giverName(ids[0]); name != `` {
-			return name
+	var names []string
+	for _, id := range ids {
+		if name := giverName(id); name != `` && !slices.Contains(names, name) {
+			names = append(names, name)
 		}
 	}
-	return questGiverFallback
+	if len(names) == 0 {
+		return questGiverFallback
+	}
+	return util.JoinOr(names)
 }
 
 // autoStarted is the quests whose -start a quest trigger or a behaviour tree

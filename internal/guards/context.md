@@ -23,6 +23,9 @@ package main.
   width in production Go, and `WrapWidth` the only wrap reader of the saved
   `LineWidth`), `one_word_wrapper_guard_test.go` (no word wrapper outside
   `internal/messaging` unless allowlisted with its reason),
+  `quest_given_ways_out_guard_test.go` (#940: every `RemoveItem` call site is
+  classified as consumed, replaced-in-place, quest-given-checked or
+  not-a-leave, so a new way out cannot skip `actions.VanishQuestGiven`),
   `client_type_guard_test.go` (the web client's and site's fonts,
   sizes and weights read the tokens in `gomud.css`), the
   `*_wrapper_guard_test.go` files

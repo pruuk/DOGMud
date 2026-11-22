@@ -13,8 +13,19 @@ opener:
       Complete the rite and come back.
     hints: Find Cleric Hadwen at the Awakening Pool, north of Hub Square, and type
       talk hadwen. Complete the Awakening before returning to Smith Rusk.
-  # Crier Toke starts every trade (#375 phase 7): Rusk takes First Heat's
-  # hand-in but no longer offers it.
+  # Crier Toke or Rusk offers First Heat (owner ruling 2026-11-22, #940).
+  # Rusk's offer is gated on Find Your Footing (31-end), like Toke's. The
+  # "find Toke" variant after this one now shows only before Find Your
+  # Footing, where it is still true.
+  - questRequired:
+    - 30-end
+    - 31-end
+    questExcluded:
+    - 35-start
+    - 35-end
+    text: Rite done, town walked. Good. I teach the iron. If you want it, ask me,
+      and we start at the stall.
+    hints: Choose First Heat below to learn the forge from Rusk.
   - questRequired:
     - 30-end
     questExcluded:
@@ -139,6 +150,26 @@ topics:
   - 35-end
   itemExcluded: 10009
   grantsQuest: 35-end
+- key: heat_start
+  kind: offer
+  quest: 35
+  label: First Heat
+  playerLine: Will you teach me the forge?
+  text: I will. The forge teaches faster than I do, but here is the shape of it.
+    Buy an iron ingot and a leather strip off my stall. Type list here beside me
+    and you see what I stock and what it costs. Take them to the forge here in
+    the smithy and type craft iron dagger. The iron and the leather disappear
+    and a blade appears. That is the whole trick the first time. Once you have a
+    feel for it, type craft list to see everything you know how to make. Show me
+    what you made when you are done. Start with the list.
+  hints: Accept, then type list here beside Rusk.
+  objective: Learn the forge from Rusk. Start by seeing what she sells. Type list.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 35-start
+  - 35-end
+  grantsQuest: 35-start
 - key: heat_arrive
   kind: info
   label: Crier Toke sent me to learn the forge.

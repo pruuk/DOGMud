@@ -1479,3 +1479,26 @@ func SetServerStart(t time.Time) { serverStartTime = t }
 
 // GetServerStartUnix returns the unix timestamp the server started (0 if unset).
 func GetServerStartUnix() int64 { return serverStartTime.Unix() }
+
+// JoinAnd renders a list as plain English: "a", "a and b", "a, b and c".
+func JoinAnd(parts []string) string {
+	return joinWith(parts, ` and `)
+}
+
+// JoinOr is JoinAnd for a list of alternatives: "a", "a or b", "a, b or c".
+func JoinOr(parts []string) string {
+	return joinWith(parts, ` or `)
+}
+
+// joinWith is the shared body of JoinAnd and JoinOr.
+func joinWith(parts []string, conjunction string) string {
+	switch len(parts) {
+	case 0:
+		return ``
+	case 1:
+		return parts[0]
+	case 2:
+		return parts[0] + conjunction + parts[1]
+	}
+	return strings.Join(parts[:len(parts)-1], `, `) + conjunction + parts[len(parts)-1]
+}

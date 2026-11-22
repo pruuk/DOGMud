@@ -528,6 +528,18 @@ solution from an older boot. `GetKey`, `SetKey` and `KeyCount` call it, as
 do `users.LoadUser` and the `keyring` command, so a stale solution is never
 read or shown. `HasKey` compares a solution to the current sequence.
 
+### The let-go lookups (`inventory_let_go.go`, #940)
+
+A copy a quest handed out (`items.Item.IsQuestGiven`) fades when it leaves
+its holder, so every command that lets an item go finds it with
+`FindInBackpackToLetGo`, `FindInBackpackToLetGoWhere` (with a filter of its
+own, as storage's), `FindInPotionsToLetGo` or `FindInComponentsToLetGo`:
+when the word fits a quest copy and an ordinary copy of the same item, the
+ordinary one is taken. A handle (`@uuid`) or an explicit N. count is the
+player's own pick and is kept as typed, and only a copy of the same item is
+ever swapped in. `FindInComponentsWhere` is the component bag's twin of
+`FindInBackpackWhere`.
+
 ### Character States and Modifiers
 - 🔑 **Timed state is `Character.Conditions` and nothing else.** Read
   `internal/conditions/context.md` before adding, reading or displaying anything

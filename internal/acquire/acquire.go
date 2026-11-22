@@ -61,7 +61,15 @@ func AcquireItem(user *users.UserRecord, itm items.Item, reason AcquireReason) b
 // (actions/transfer.go) are the reason it exists: they take a character plus userId and
 // mobInstanceId, and they serve mob receivers (a player giving to a mob) as
 // well as players, so the gain event keeps whichever id the caller passed.
+//
+// It is also the one place a copy is marked quest-given (#940, owner ruling
+// 2026-11-22): a copy a quest hands out (AcquireTopic, AcquireQuestGive)
+// fades away whenever it leaves its holder (items.Item.IsQuestGiven). A quest
+// reward (AcquireReward) is paid once and is not marked.
 func AcquireItemForChar(char *characters.Character, userId int, mobInstanceId int, itm items.Item, reason AcquireReason) bool {
+	if MarksQuestGiven(reason) {
+		itm.QuestGiven = true
+	}
 	if char == nil || !char.StoreItem(itm) {
 		return false
 	}
@@ -73,6 +81,13 @@ func AcquireItemForChar(char *characters.Character, userId int, mobInstanceId in
 		Reason:        string(reason),
 	})
 	return true
+}
+
+// MarksQuestGiven reports whether an item acquired for reason is a quest's
+// hand-out, which AcquireItemForChar marks quest-given: a dialogue topic's
+// givesItem and a quest trigger's give_item. Nothing else is marked.
+func MarksQuestGiven(reason AcquireReason) bool {
+	return reason == AcquireTopic || reason == AcquireQuestGive
 }
 
 // TooMuchToCarryLine is what a player reads when a new item falls at their
@@ -92,6 +107,11 @@ func AcquireOrDrop(char *characters.Character, userId int, mobInstanceId int, it
 	// for that, not its weight: nothing falls (#925 review).
 	if itm.ItemId < 1 {
 		return false
+	}
+	// A quest's hand-out is marked whether it lands or falls (#940), so the
+	// copy at the receiver's feet is the same quest gear they would carry.
+	if MarksQuestGiven(reason) {
+		itm.QuestGiven = true
 	}
 	if AcquireItemForChar(char, userId, mobInstanceId, itm, reason) {
 		return true

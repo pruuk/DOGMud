@@ -14,6 +14,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestJoinAndJoinOr(t *testing.T) {
+	cases := []struct {
+		parts   []string
+		and, or string
+	}{
+		{nil, ``, ``},
+		{[]string{`a`}, `a`, `a`},
+		{[]string{`a`, `b`}, `a and b`, `a or b`},
+		{[]string{`a`, `b`, `c`}, `a, b and c`, `a, b or c`},
+	}
+	for _, c := range cases {
+		assert.Equal(t, c.and, JoinAnd(c.parts))
+		assert.Equal(t, c.or, JoinOr(c.parts))
+	}
+}
+
 // Because turnCount, roundCount and timeTrackers are package-level globals,
 // it can be good practice to reset them in a TestMain or individually in tests.
 // But for simplicity, each test that needs a reset can just do so in the test body.

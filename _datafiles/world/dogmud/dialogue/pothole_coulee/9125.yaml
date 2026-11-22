@@ -12,6 +12,20 @@ opener:
     measure it.
   hints: Choose a line below to hear about the night, the dark, or lights.
   variants:
+  # Crier Toke or Gethin offers First Light (owner ruling 2026-11-22, #940).
+  # Gethin's offer is gated on Find Your Footing (31-end), like Toke's. The
+  # "find Toke" variant after this one now shows only before Find Your
+  # Footing, where it is still true.
+  - questRequired:
+    - 30-end
+    - 31-end
+    questExcluded:
+    - 98-start
+    - 98-end
+    text: You have been through the rite and walked the town. Good. You are ready
+      for the dark, or near enough. I teach what a light is for. If you want to
+      learn, ask me, and we start with a lantern.
+    hints: Choose First Light below to learn about the dark from Gethin.
   - questExcluded:
     - 98-start
     text: Toke sends new folk my way, when they are ready for the dark. Go and
@@ -58,6 +72,25 @@ opener:
       I know who teaches it.
     hints: Choose Quiet Hands, the line marked [!] below, to hear who it is.
 topics:
+- key: light_start
+  kind: offer
+  quest: 98
+  label: First Light
+  playerLine: Will you teach me about the dark?
+  text: I will. We start with a light. Here, a hooded lantern. It trims itself to
+    your eyes each time you walk somewhere new, so it never dazzles you. And it
+    has a hood, which is the part that matters down here. Put it on, walk west
+    into the drift, and close the hood. Then come and tell me what you saw.
+  hints: Accept, and Gethin hands you a hooded lantern. Type equip hooded lantern.
+  objective: Put the hooded lantern in your light slot. Type equip hooded lantern.
+    If a lantern is already there, use remove lantern first.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 98-start
+  - 98-end
+  grantsQuest: 98-start
+  givesItem: 20097
 - key: first_light_lantern
   kind: info
   label: Toke sent me to learn about the dark.

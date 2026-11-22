@@ -12,7 +12,10 @@ import (
 )
 
 // ruleChain: an offer gated on quest N's final token sits on an NPC that
-// takes N's hand-in (P1), so the hand-in can pitch it.
+// takes N's hand-in (P1), so the hand-in can pitch it. A second door passes
+// too: the offer may sit on another NPC when an offer for the same quest, also
+// gated on N's final token, sits on a mob that takes N's hand-in, so the
+// hand-in still pitches it (#940, owner ruling 2026-11-22, two doors).
 func ruleChain(w World) []Finding {
 	finals := map[string]int{} // final token -> quest id
 	for _, q := range w.Quests {
@@ -31,6 +34,21 @@ func ruleChain(w World) []Finding {
 			}
 		}
 	}
+	// pitched reports whether an offer for quest q, gated on req, sits on a
+	// mob that takes the prior quest's hand-in.
+	pitched := func(q int, req string, prior int) bool {
+		for _, df := range w.Dialogue {
+			if df == nil || !slices.Contains(handinMobs[prior], df.MobId) {
+				continue
+			}
+			for _, t := range df.Topics {
+				if t.Kind == dialogue.KindOffer && t.Quest == q && slices.Contains(t.QuestRequired, req) {
+					return true
+				}
+			}
+		}
+		return false
+	}
 	var out []Finding
 	for _, df := range w.Dialogue {
 		if df == nil {
@@ -42,7 +60,7 @@ func ruleChain(w World) []Finding {
 			}
 			for _, req := range t.QuestRequired {
 				prior, ok := finals[req]
-				if !ok || prior == t.Quest || slices.Contains(handinMobs[prior], df.MobId) {
+				if !ok || prior == t.Quest || slices.Contains(handinMobs[prior], df.MobId) || pitched(t.Quest, req, prior) {
 					continue
 				}
 				out = append(out, Finding{Rule: "chain", QuestId: prior,

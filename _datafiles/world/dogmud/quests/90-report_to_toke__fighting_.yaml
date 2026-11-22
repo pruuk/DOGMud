@@ -19,8 +19,8 @@ steps:
       mob: 9106  # follow Crier Toke (schedule pothole_toke)
       room: 5203  # fallback when Crier Toke is not spawned
     description: >-
-      The wash is held and the bandit tower has fallen. Crier Toke, who sent
-      you to Drillmaster Vorn, waits in Hub Square for the news.
+      The wash is held and the bandit tower has fallen. Crier Toke waits in
+      Hub Square for the news.
     hint: >-
       Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk
       toke.

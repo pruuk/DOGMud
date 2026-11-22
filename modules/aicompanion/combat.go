@@ -75,6 +75,7 @@ type fightState struct {
 	LastLine     uint64
 	AmmoAtStart  int    // arrows in hand when it began, for gathering them afterwards
 	AmmoItemId   int    // which bundle they came out of, in case it emptied
+	AmmoQuest    bool   // that bundle was quest gear (#940): a fresh one keeps the mark
 	Move         string // a special move the model called for, used once
 	SaidHurt     bool
 	SaidOwnerHrt bool
@@ -313,6 +314,7 @@ func (m *AICompanionModule) combatTick(c *controller, u *users.UserRecord, round
 		c.travel = nil
 		c.bumpWorld()
 		f.AmmoAtStart, f.AmmoItemId = ammoOnHand(mob)
+		f.AmmoQuest = ammoBundleIsQuestGear(mob, f.AmmoItemId)
 		m.closeConversation(c, `a fight started`)
 		// Sizing up what it is facing, as anyone would: hopeless odds make
 		// it readier to run before the model has said anything.
@@ -955,6 +957,17 @@ func ammoOnHand(mob *mobs.Mob) (count int, itemId int) {
 	return count, itemId
 }
 
+// ammoBundleIsQuestGear reports whether the bundle ammoOnHand counts from
+// (its first carried bundle of itemId with arrows left) is quest gear.
+func ammoBundleIsQuestGear(mob *mobs.Mob, itemId int) bool {
+	for _, itm := range mob.Character.Items {
+		if itm.ItemId == itemId && itm.Uses > 0 {
+			return itm.IsQuestGiven()
+		}
+	}
+	return false
+}
+
 // gatherArrows puts some of what was loosed back in the quiver when the
 // fighting stops. Returns how many were found.
 func (m *AICompanionModule) gatherArrows(c *controller, mob *mobs.Mob, f *fightState) int {
@@ -977,7 +990,7 @@ func (m *AICompanionModule) gatherArrows(c *controller, mob *mobs.Mob, f *fightS
 
 	// Back into the bundle they came from, or a fresh one if it emptied.
 	for i := range mob.Character.Items {
-		if mob.Character.Items[i].ItemId == f.AmmoItemId {
+		if mob.Character.Items[i].ItemId == f.AmmoItemId && mob.Character.Items[i].IsQuestGiven() == f.AmmoQuest {
 			mob.Character.Items[i].Uses += found
 			m.noteGathered(c, mob, found)
 			return found
@@ -988,6 +1001,9 @@ func (m *AICompanionModule) gatherArrows(c *controller, mob *mobs.Mob, f *fightS
 		return 0
 	}
 	bundle.Uses = found
+	// Arrows gathered from a quest's pouch are still that quest's gear
+	// (#940): a fresh bundle keeps the mark, so it still cannot be sold.
+	bundle.QuestGiven = f.AmmoQuest
 	if !mob.Character.StoreItem(bundle) {
 		return 0
 	}

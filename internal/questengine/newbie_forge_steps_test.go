@@ -73,6 +73,19 @@ func TestQuest35FirstHeat_OneCommandPerStep(t *testing.T) {
 	require.Equal(t, []string{"35-craft"}, turnIn, "the turn-in gates on the last step's token")
 	heard := EventDetails{MobId: forgeSmithRusk, Topic: "heat_arrive", RoomId: forgeSmithy}
 
+	// Rusk's own offer (owner ruling 2026-11-22, #940) starts in the smithy
+	// and skips the arrival talk; Toke's offer, made in Hub Square, does not.
+	t.Run("the grant in the smithy skips met", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "35-start", RoomId: forgeSmithy})
+		require.Equal(t, "met", w.p.current)
+	})
+	t.Run("the grant in Hub Square does not", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "35-start", RoomId: 5203})
+		require.Equal(t, "start", w.p.current)
+	})
+
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
 		w.notify("command", EventDetails{Command: "list", RoomId: forgeSmithy})

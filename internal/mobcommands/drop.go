@@ -66,7 +66,9 @@ func Drop(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	actor := &actions.MobActor{Mob: mob, Room: room}
 	result := actions.DropItem(actor, rest)
 
-	if result.Found {
+	// A quest-given copy (a companion's) fades instead of dropping; the
+	// fade line already reached the room (actions.VanishQuestGiven).
+	if result.Found && result.Err == nil {
 		room.SendTextVisual(messaging.CategoryLoot,
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> drops their <ansi fg="item">%s</ansi>...`, mob.Character.Name, result.Item.DisplayName()))
 	}

@@ -45,7 +45,8 @@ func Give(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		var found bool = false
 
 		// Check whether the user has an item in their inventory that matches
-		giveItem, found = mob.Character.FindInBackpack(giveWhat)
+		// The let-go lookup: an ordinary copy before quest gear (#940).
+		giveItem, found = mob.Character.FindInBackpackToLetGo(giveWhat)
 
 		if !found {
 			return true, nil

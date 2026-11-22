@@ -1,0 +1,33 @@
+# BREAKER seat: you went through the rite and met Crier Toke, but you have
+# NOT finished his walk around the town (Find Your Footing): your last step
+# is to report back to him. You stand in the Drill Yard with Drillmaster
+# Vorn. Your job is to break the new rule that trainers offer their own
+# trade. Quote every game line VERBATIM.
+ephemeral:
+  profile: early
+  start_room: 5227
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end", "88-start", "88-end", "31-start", "31-lantern"]
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Type `look` and `talk vorn` and quote the whole menu and his words. Say
+    whether Vorn offers First Blood, and where he tells you to go.
+  - >-
+    Walk to Crier Toke: from the Drill Yard go west four times, then south.
+    Type `talk toke`, quote the menu, and finish Find Your Footing.
+  - >-
+    Walk back to Vorn (north, then east four times). Take First Blood from
+    him. Then drop the cudgel and leave it (`drop cudgel`, then walk out and
+    back in, `get` nothing). Type `talk vorn`, quote the menu, and get a new
+    cudgel if he offers one.
+  - >-
+    Type `quests abandon` for First Blood (type `help quests` if you need the
+    form). Type `talk vorn` and quote the menu. Take First Blood again from
+    Vorn and say which step you are on (`quests`). Then walk to Toke and say
+    whether he offers First Blood.
+  - >-
+    Try anything else that might get a trade's first quest twice, or skip a
+    step you should not skip. Report exactly what you typed and what printed.

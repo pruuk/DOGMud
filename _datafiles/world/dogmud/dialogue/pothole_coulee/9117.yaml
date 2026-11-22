@@ -137,8 +137,8 @@ opener:
     - 91-start
     - 91-end
     text: You took the mine. This eye reads more than dark, and the deep has gone
-      quiet. Crier Toke sent you to Rusk, and Rusk sent you to me. Toke will want
-      to hear the end of it from you.
+      quiet. Rusk sent you to me, and Toke will want to hear the end of it from
+      you.
     hints: Choose Report to Toke (Smithing) below to carry the news to Toke.
   - questRequired:
     - 91-start
@@ -246,8 +246,7 @@ topics:
   quest: 91
   label: Report to Toke (Smithing)
   playerLine: Should I take the news of the mine to Toke?
-  text: Do. Toke sent you to Rusk, and Rusk sent you to me, and the man likes his
-    news firsthand. He keeps to Hub Square, south of the Awakening Pool. Tell him
+  text: Do. Toke likes his news firsthand. He keeps to Hub Square, south of the Awakening Pool. Tell him
     the deep vein is open.
   hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk toke.
   questRequired:

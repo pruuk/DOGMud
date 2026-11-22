@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -138,6 +140,9 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			if giveItem.ItemId > 0 {
 				userActor := &actions.UserActor{User: user, Room: room}
 				result := actions.GiveItemToChar(userActor, giveWhat, targetUser.Character, targetUser.UserId, 0)
+				if errors.Is(result.Err, actions.ErrQuestGivenVanished) {
+					return true, nil // quest gear fades instead (#940); the giver and room were told
+				}
 				if errors.Is(result.Err, actions.ErrInventoryFull) {
 					refusal.RecipientFull(user)
 					return true, nil
@@ -250,6 +255,14 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 						Gained: false,
 					})
 
+					return true, nil
+				}
+
+				// Quest gear to an NPC that is not the giver's companion goes
+				// its own way (#940): a tree handler may take it, else the
+				// NPC hands it back.
+				if giveItem.IsQuestGiven() && !m.Character.IsCharmed(user.UserId) {
+					giveQuestGearToNPC(user, room, m, giveItem, giverSight)
 					return true, nil
 				}
 
@@ -390,10 +403,123 @@ func giveGoldToUser(user, targetUser *users.UserRecord, room *rooms.Room, amount
 		targetUser.UserId)
 }
 
+// questGearConsidersLine is the room emote (the existing "considers" line of
+// any gift) when an NPC or a pet is handed quest gear it will give back.
+const questGearConsidersLine = `considers the <ansi fg="itemname">%s</ansi> for a moment.`
+
+// questGearHandBackLine is what the giver reads when quest gear comes back:
+// the behaviour tree's return_item wording. The NPC's or pet's name arrives
+// tagged.
+const questGearHandBackLine = `%s hands back the <ansi fg="itemname">%s</ansi>.`
+
+// questGearHandBackRoomLine is what everyone else in the room sees then.
+const questGearHandBackRoomLine = `hands the <ansi fg="itemname">%s</ansi> back.`
+
+// giveQuestGearToNPC is a give of quest gear to an NPC that is not the
+// giver's companion, once no topic and no quest step took it (#940, owner
+// ruling 2026-11-22). A player_give behaviour-tree handler still sees the
+// give as it sees any gift, with the item in the NPC's hands; if the tree
+// keeps the item, it is an ordinary give and raises what one raises (the
+// giver's loss, the NPC's gain, the gift events); if its return_item handed
+// the item back, it is a hand-back and raises nothing more. Otherwise the NPC
+// considers
+// the item and hands it back, and it never keeps or equips it: the item goes
+// back to the giver's pack, and since it never really left, no ownership,
+// gain or gift event is raised, so no item_gain trigger fires and no NPC's
+// opinion of the giver rises for a gift it handed back.
+func giveQuestGearToNPC(user *users.UserRecord, room *rooms.Room, m *mobs.Mob, giveItem items.Item, giverSight messaging.SightDecision) {
+	if !user.Character.RemoveItem(giveItem) {
+		refusal.NotCarrying(user, giveItem.Name())
+		return
+	}
+	// Into the NPC's hands quietly, for the tree to find (return_item looks
+	// there): not an acquisition until the tree keeps it.
+	if !m.Character.StoreItem(giveItem) {
+		user.Character.ReturnToPack(giveItem)
+		refusal.RecipientFull(user)
+		return
+	}
+
+	user.SendText(messaging.CategorySystem, messaging.HideNames(
+		fmt.Sprintf(`You give the <ansi fg="item">%s</ansi> to <ansi fg="mobname">%s</ansi>.`, giveItem.DisplayName(), m.Character.Name),
+		[]string{m.Character.Name}, giverSight),
+	)
+	room.SendTextVisual(messaging.CategoryLoot,
+		fmt.Sprintf(`<ansi fg="username">%s</ansi> gave their <ansi fg="item">%s</ansi> to <ansi fg="mobname">%s</ansi>.`, user.Character.Name, giveItem.DisplayName(), m.Character.Name),
+		user.UserId,
+	)
+
+	if behaviortree.TryMobBehavior(m.InstanceId, behaviortree.EventContext{
+		EventType: "player_give",
+		UserId:    user.UserId,
+		ItemId:    giveItem.ItemId,
+		ItemUUID:  giveItem.UUID,
+		RoomId:    room.RoomId,
+	}) {
+		// A tree that ran return_item has already handed it back (with its
+		// own tree_give gain): that is a hand-back, and raises nothing more.
+		if carriesCopy(user.Character, giveItem) {
+			return
+		}
+		// The tree kept it: it owns the give, as it owns any gift's.
+		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: giveItem, Gained: false})
+		events.AddToQueue(events.ItemOwnership{MobInstanceId: m.InstanceId, Item: giveItem, Gained: true, Reason: string(acquire.AcquireGive)})
+		actions.StolenBaubleGiven(&actions.UserActor{User: user, Room: room}, m, giveItem)
+		events.AddToQueue(events.GiftOffered{UserId: user.UserId, MobInstanceId: m.InstanceId, ItemId: giveItem.ItemId})
+		events.AddToQueue(events.GiftAccepted{UserId: user.UserId, MobInstanceId: m.InstanceId, ItemId: giveItem.ItemId})
+		return
+	}
+
+	if m.Character.RemoveItem(giveItem) {
+		user.Character.ReturnToPack(giveItem)
+	}
+	mobActor := &actions.MobActor{Mob: m, Room: room}
+	actions.SendSeen(mobActor, messaging.CategoryMobEmote, actions.FormatMobEmoteText(m.Character.Name,
+		fmt.Sprintf(questGearConsidersLine, giveItem.DisplayName())), false)
+	user.SendText(messaging.CategoryMobEmote, messaging.HideNames(
+		fmt.Sprintf(questGearHandBackLine, `<ansi fg="mobname">`+m.Character.Name+`</ansi>`, giveItem.DisplayName()),
+		[]string{m.Character.Name}, giverSight))
+	// The room sees it come back with the sight handling of the considers
+	// line; the giver has their own line above.
+	actions.SendSeen(&actions.MobActor{Mob: m, Room: room, Skip: []int{user.UserId}}, messaging.CategoryMobEmote,
+		actions.FormatMobEmoteText(m.Character.Name, fmt.Sprintf(questGearHandBackRoomLine, giveItem.DisplayName())), false)
+}
+
+// carriesCopy reports whether c carries this exact copy (by UUID) in any of
+// its carry lists: the backpack, the bandolier or the component bag.
+func carriesCopy(c *characters.Character, itm items.Item) bool {
+	for _, list := range [][]items.Item{c.Items, c.PotionItems, c.ComponentItems} {
+		for _, held := range list {
+			if held.Equals(itm) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // giveToPet hands giveItem to petUser's pet. Gold a pet has no use for.
+//
+// Quest gear (#940): the giver's own pet is a companion and takes it as
+// usual. Another player's pet is not the giver's companion, so, like any NPC,
+// it considers the gear and hands it back; so does the giver's own pet when
+// it has no room. Nothing moves and nothing fades.
 func giveToPet(user, petUser *users.UserRecord, room *rooms.Room, giveItem items.Item, giveGoldAmount int) {
 	if giveGoldAmount > 0 {
 		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`What would %s do with <ansi fg="gold">%s gold</ansi>?`, petUser.Character.Pet.DisplayName(), util.FormatNumber(giveGoldAmount)))
+		return
+	}
+
+	pet := petUser.Character.Pet
+	petHasRoom := pet.Capacity >= 1 && len(pet.Items) < pet.Capacity
+	if giveItem.IsQuestGiven() && (petUser.UserId != user.UserId || !petHasRoom) {
+		petName := petUser.Character.Pet.DisplayName()
+		considers := petName + ` ` + fmt.Sprintf(questGearConsidersLine, giveItem.DisplayName())
+		user.SendText(messaging.CategoryMobEmote, considers)
+		user.SendText(messaging.CategoryMobEmote, fmt.Sprintf(questGearHandBackLine, petName, giveItem.DisplayName()))
+		room.SendTextVisual(messaging.CategoryMobEmote, considers, user.UserId)
+		room.SendTextVisual(messaging.CategoryMobEmote,
+			petName+` `+fmt.Sprintf(questGearHandBackRoomLine, giveItem.DisplayName()), user.UserId)
 		return
 	}
 
@@ -548,7 +674,8 @@ func backpackItemForGive(what, who string, user *users.UserRecord, room *rooms.R
 			return itm, true
 		}
 	}
-	return user.Character.FindInBackpack(what)
+	// The let-go lookup: an ordinary copy before quest gear (#940).
+	return user.Character.FindInBackpackToLetGo(what)
 }
 
 // giveMobNamed is the NPC a give's recipient phrase resolves to at the giver's

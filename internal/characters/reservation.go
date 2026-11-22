@@ -2,7 +2,6 @@ package characters
 
 import (
 	"math"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
@@ -10,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // ── The ceiling ──────────────────────────────────────────────────────────────
@@ -296,7 +296,7 @@ func (s reserveSources) subject() string {
 	if len(held) == 0 {
 		return `What you carry`
 	}
-	return `Your ` + joinWithAnd(held)
+	return `Your ` + util.JoinAnd(held)
 }
 
 // verb is the present-tense form of "hold" that agrees with subject(). Kept
@@ -333,7 +333,7 @@ func (s reserveSources) remedies() string {
 	if s.companion || !s.any() {
 		parts = append(parts, `dismiss a companion`)
 	}
-	return joinWithOr(parts)
+	return util.JoinOr(parts)
 }
 
 // mutationReserveWithMax is what the body sets aside on Conviction (#680):
@@ -583,7 +583,7 @@ func (c *Character) ReservationIncreaseNotice(before ReservationTotals) string {
 		return ``
 	}
 	return `Putting that on sets part of you aside. ` + sources.subject() + ` now ` +
-		sources.verb() + ` ` + joinWithAnd(parts) + ` in reserve.`
+		sources.verb() + ` ` + util.JoinAnd(parts) + ` in reserve.`
 }
 
 // ReservationDecreaseNotice is the mirror image, for a player who has just taken
@@ -614,7 +614,7 @@ func (c *Character) ReservationDecreaseNotice(before ReservationTotals) string {
 	}
 
 	return `Taking that off gives part of you back. ` + sources.subject() + ` now ` +
-		sources.verb() + ` ` + joinWithAnd(parts) + ` in reserve.`
+		sources.verb() + ` ` + util.JoinAnd(parts) + ` in reserve.`
 }
 
 // holdsAnyReservation reports whether ANY pool is still spoken for. Asked of
@@ -657,29 +657,6 @@ func (c *Character) movedPoolShares(before ReservationTotals, moved func(beforeR
 		sources = sources.merge(c.reserveSourcesOn(p.pool))
 	}
 	return parts, sources
-}
-
-// joinWithAnd renders a list as plain English: "a", "a and b", "a, b and c".
-func joinWithAnd(parts []string) string {
-	return joinWith(parts, ` and `)
-}
-
-// joinWithOr is joinWithAnd for a list of alternatives, which is what a remedy
-// list is: the player needs to do ONE of them, not all of them.
-func joinWithOr(parts []string) string {
-	return joinWith(parts, ` or `)
-}
-
-func joinWith(parts []string, conjunction string) string {
-	switch len(parts) {
-	case 0:
-		return ``
-	case 1:
-		return parts[0]
-	case 2:
-		return parts[0] + conjunction + parts[1]
-	}
-	return strings.Join(parts[:len(parts)-1], `, `) + conjunction + parts[len(parts)-1]
 }
 
 // ReservationRefusal is the message every refusing path sends. It names

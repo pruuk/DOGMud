@@ -302,16 +302,18 @@ slots, as `ProcessEvents` does, so a later refresh queues again.
 
 ### Talk Next-Offer Event (#375 phase 2)
 
-`TalkNextOffer{UserId, MobInstanceId, TopicKey}` (`eventtypes.go`) asks the talk
-flow to pitch an NPC's next quest offer after a hand-in. `conversation.queueNextOffer`
-queues it at `TalkNextOfferPriority` (45), so it runs after the completion banner
-and reward lines (priority 0) and before a menu shown last (priority 50).
-`conversation.HandleTalkNextOffer` (registered in `internal/hooks/hooks.go`)
-handles it.
+`TalkNextOffer{UserId, MobInstanceId, FinalToken}` (`eventtypes.go`) brings the
+talk back after a hand-in that granted `FinalToken`. `conversation.queueRedraw`
+queues it at `TalkNextOfferPriority` (45), so it runs after the token has landed
+with its completion banner and reward lines (priority 0) and before a menu shown
+last (priority 50). `conversation.HandleTalkNextOffer` (registered in
+`internal/hooks/hooks.go`) pitches the one next offer that token opened, or
+re-shows the talk menu.
 
 `TalkMenuAgain{UserId, MobInstanceId}` (tier 1) is queued at the same priority
-by an accepted offer for a held item (`CarriesItem`), so the grant and step
-start run first; `conversation.HandleTalkMenuAgain` reopens the talk menu.
+by `queueRedraw` after any other grant (every accepted offer since #940), so the
+grant, the step start and any `quest_granted` trigger run first;
+`conversation.HandleTalkMenuAgain` reopens the talk menu.
 
 `DrainAllQueuedEventsForTest` and `DrainQueuedByTypeForTest` free each drained
 unique event's slot, as `ProcessEvents` does, so a later unique event (a

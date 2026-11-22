@@ -1,0 +1,39 @@
+# HOLDER seat: you have finished the town walk and stand in the Drill Yard
+# with Drillmaster Vorn. Another tester, the FRIEND seat, stands here too.
+# Your job: end up holding two cudgels that Vorn gave you, or get gold for
+# one. Quote every game line VERBATIM.
+ephemeral:
+  profile: early
+  start_room: 5227
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end", "88-start", "88-end", "31-start", "31-lantern", "31-end"]
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    Type `talk vorn` and take First Blood. Type `inventory` and quote it. Type
+    `look cudgel` and quote every line.
+  - >-
+    Type `drop cudgel` and quote everything. Type `look` and say whether a
+    cudgel lies on the ground. Type `talk vorn` and take a new cudgel if he
+    offers one. Type `inventory`.
+  - >-
+    Type `who` or `look` to find the other tester's character name, then
+    `give cudgel <their name>`. Quote everything. Ask Vorn for a new cudgel
+    again if he offers one.
+  - >-
+    Type `stash cudgel` and quote it. Then try `put cudgel <any container you
+    can see>` if there is one. After each, ask Vorn for a new cudgel and type
+    `inventory`.
+  - >-
+    Type `give cudgel vorn` and quote it, then `inventory`. Type `salvage
+    cudgel` and quote it, then `inventory`. Ask Vorn again.
+  - >-
+    Walk to Trader Onna's stall: from the Drill Yard go west four times, south
+    to Hub Square, then follow `look` exits to Market Row (east or south of
+    Hub Square). Type `sell cudgel` and `offer cudgel` (or `appraise cudgel`)
+    and quote each.
+  - >-
+    Try anything else you can think of to keep a quest cudgel AND get a new
+    one, or to get gold for it. Report every command and its result.

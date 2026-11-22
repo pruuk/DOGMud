@@ -31,7 +31,7 @@ var storeItemAllowlist = map[string]string{
 	"internal/actions/steal_pocket.go":            "a bauble moved into the mark's own pocket",
 	"internal/characters/inventory.go":            "ReturnToPack: an own-container move",
 	"internal/usercommands/get.go":                "Pet.StoreItem: a companion's inventory, not a player's",
-	"internal/usercommands/give.go":               "Pet.StoreItem: a companion's inventory, not a player's",
+	"internal/usercommands/give.go":               "Pet.StoreItem: a companion's inventory, not a player's; and quest gear set in an NPC's hands for its tree to see (giveQuestGearToNPC, #940), a mob's inventory",
 	"internal/playtestprofiles/overlay.go":        "playtest harness setup",
 	"internal/behaviortree/actions_wagon.go":      "cargo handling on a wagon, not a player acquisition",
 	"internal/caravan/arrival_listener.go":        "caravan cargo handling",

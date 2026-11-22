@@ -382,6 +382,25 @@ so a 0 reaching here is an authored never. The item's own `DropChance` of 0
 still means unset, because the field is `omitempty` (a saved 0 cannot be
 told from an absent key) and no item data authors `dropchance: 0`.
 
+### Quest-given copies (`QuestGiven`, #940)
+
+`Item.QuestGiven` (yaml `questgiven`) marks a copy a quest handed out: a
+dialogue topic's `givesItem` or a quest trigger's `give_item`. Only
+`acquire.AcquireItemForChar` sets it (for `acquire.AcquireTopic` and
+`acquire.AcquireQuestGive`); `Item.IsQuestGiven()` reads it. The mark is on
+the copy, not the template, because most quest starter items are also
+ordinary shop and loot goods. It saves with the character like any other
+per-copy field and survives every move that keeps the same struct (a
+companion, a rename). Owner ruling 2026-11-22: while its holder keeps it,
+it is ordinary gear; whenever it leaves their hands it fades away
+(`actions.VanishQuestGiven`), shops never buy it, and a trade-in never takes
+it. `SameStack` keeps a quest copy off a bought copy's inventory row (the
+row reads "(quest gear)"); storage never holds a quest copy, since it fades
+on the way in, so bank slots are unchanged.
+`internal/guards/quest_given_ways_out_guard_test.go` keeps every
+`RemoveItem` call and every floor drop classified so a new way out cannot
+skip the rule.
+
 ### Item Identification and Matching
 ```go
 // Multiple identification methods

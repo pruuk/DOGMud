@@ -1,11 +1,13 @@
 # Quest 50, First Shot (Pothole Coulee, archery line, quest 1 of 3)
 #
 # Token flow (#375 phase 7, one action per step, giver to giver):
-#   50-start:      granted by Crier Toke's send_range offer (9106), after
-#                  31-end; the offer hands over a sling (givesItem 10038). It
-#                  is the only starter since #375 phase 7. A quest_granted
-#                  trigger below hands over a pouch of shot (30064) unless the
-#                  player already carries one.
+#   50-start:      granted by Crier Toke's send_range offer (9106) or Marksman
+#                  Iden's shoot_start offer (9161), after 31-end; either offer
+#                  hands over a sling (givesItem 10038). An Iden start skips
+#                  50-met (a quest_granted trigger below), because the player
+#                  is already on the Firing Range. A quest_granted trigger
+#                  below hands over a pouch of shot (30064) unless the player
+#                  already carries one.
 #   50-met:        topic_heard on Marksman Iden's shoot_lesson topic (9161).
 #   50-equip:      command trigger on `equip` of the sling (item 10038).
 #   50-shoot:      command trigger on `fire` at the practice butt (9163) on the
@@ -132,6 +134,25 @@ triggers:
     actions:
       - give_item: 30064
 
+  # MET, skipped: a player who takes the quest from Iden is already on the
+  # Firing Range (owner ruling 2026-11-22, #940), so the grant of 50-start
+  # there moves them past met. The room tells the two doors apart: Toke never
+  # leaves Hub Square (5203) and Iden never leaves the range (5350). A
+  # topic_heard trigger cannot do this, because the offer's grant is only
+  # queued when the topic plays, and a flag condition is refused by the
+  # one-action rule (questloop.ruleOneAction).
+  - event: quest_granted
+    quest_token: 50-start
+    conditions:
+      in_room: 5350
+      has: ["50-start"]
+      missing: ["50-met"]
+    actions:
+      - grant: "50-met"
+      - actor: >-
+          Iden is ready to teach you now. Ready the sling: type equip sling.
+          If it is already in your hand, first use remove sling.
+
   # MET: hearing Iden's lesson.
   - event: topic_heard
     mob: 9161
@@ -142,8 +163,8 @@ triggers:
     actions:
       - grant: "50-met"
       - actor: >-
-          Iden has your measure. Ready the sling: type equip sling. If it is
-          already in your hand, first use remove sling.
+          Iden is ready to teach you now. Ready the sling: type equip sling.
+          If it is already in your hand, first use remove sling.
 
   # EQUIP: ready the sling (only the sling, item 10038, counts).
   - event: command

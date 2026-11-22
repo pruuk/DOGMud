@@ -392,6 +392,27 @@ except light for a screen reader user.
   first, by sight or by not being there, so a held potion reads the refusal a
   backpack item reads (`bandolierItemForGive`). An ordinary give to a player, a
   pet or an NPC wanting nothing stays backpack only.
+- **Quest gear** (#940, owner ruling 2026-11-22): a quest-given copy
+  (`items.Item.IsQuestGiven`) fades through `actions.VanishQuestGiven` on
+  every way out here: drop, give to another player, put, stash, `storage
+  add`, `stow`, mail (the mail goes without it), guild donate, and a take
+  from a pet that cannot hold it back. Every way out finds its item with
+  the let-go lookups (`characters.FindInBackpackToLetGo`), so an ordinary
+  copy of the same item goes first. Given to an NPC that is not the giver's
+  own companion (any NPC, or another player's charmed mob),
+  `giveQuestGearToNPC` sets it in the NPC's hands for a `player_give` tree
+  handler, which behaves as for any gift; otherwise the NPC considers it and
+  hands it back ("X hands back the Y." to the giver, "X hands the Y back." to
+  the room), and no ownership, gain or gift event is raised. Another
+  player's pet, or the giver's own pet with no room, hands it back the same
+  way. Only the giver's own charmed mob or own pet keeps it. `look` adds
+  `actions.QuestGearLookLine` under it and `inventory` lists it on its own
+  row marked "(quest gear)" (`questGearListName`). `salvage` and `appraise`,
+  which name their item through `FindItem`, take a bought copy first
+  (`boughtCopyFirst`); salvaging a quest copy destroys it at once with
+  nothing recovered, and appraising one is refused before the fee with
+  `actions.SellTellQuestGiven`. A tree that hands quest gear back with
+  `return_item` raises no gift (`carriesCopy`).
 - **PlayerState**: `conversation.PlayerState(user)` builds the
   `dialogue.PlayerState` callbacks (`HasQuest`, `HasItem`, `RemoveItem`,
   `GiveQuest`, `GiveItem`, ...). `GiveItem` returns whether the item
@@ -498,8 +519,9 @@ functions; do not reimplement them.
   because it is abandon policy, not a fact about offers: `dialogue.Resumable`
   keeps meaning "an offer can show again". `SetAutoStartedForTest` returns a
   restore func.
-- `QuestGiver(questId) string`: the first resuming NPC's name (else the first
-  offering NPC's), else "the one who gave it to you".
+- `QuestGiver(questId) string`: every resuming NPC's name (else every
+  offering NPC's), deduplicated, in mob id order, joined with `util.JoinOr`
+  ("A or B", "A, B or C"); "the one who gave it to you" when none has a name.
 - `SendQuestLogLine(user, ok, line)`: sends the reply, wrapped to the reader's
   width with `messaging.WrapAnsi` because `CategorySystem` is never wrapped.
 

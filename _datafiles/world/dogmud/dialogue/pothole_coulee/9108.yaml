@@ -13,8 +13,19 @@ opener:
       rite. Then come back.
     hints: Find Cleric Hadwen at the reflecting pool north of the hub. Complete the
       Awakening before speaking with Vorn again.
-  # Crier Toke starts every trade (#375 phase 7): Vorn takes First Blood's
-  # hand-in but no longer offers it.
+  # Crier Toke or Vorn offers First Blood (owner ruling 2026-11-22, #940).
+  # Vorn's offer is gated on Find Your Footing (31-end), like Toke's. The
+  # "find Toke" variant after this one now shows only before Find Your
+  # Footing, where it is still true.
+  - questRequired:
+    - 30-end
+    - 31-end
+    questExcluded:
+    - 32-start
+    - 32-end
+    text: You have been through the rite and walked the town. Good. I train
+      fighters. If you want training, ask me, and we begin.
+    hints: Choose First Blood below to learn to fight from Vorn.
   - questRequired:
     - 30-end
     questExcluded:
@@ -121,6 +132,30 @@ topics:
   questExcluded:
   - 32-end
   grantsQuest: 32-end
+- key: drill_start
+  kind: offer
+  quest: 32
+  label: First Blood
+  playerLine: Will you teach me to fight?
+  text: I will. Stand straight and listen. Here, take this cudgel. It is nothing
+    fancy, but it will not embarrass you in a real fight. First, take it in your
+    hand. Then consider the training dummy in this yard, to see what you are
+    walking into. Then hit it until it stops hitting back. After that, kick it or
+    trip it once, to learn that you have more than the basic swing. Last, set
+    combatverbosity to your taste. It controls how much combat detail you see.
+    Then come back to me and report.
+  hints: Accept, and Vorn hands you a cudgel. Type wield cudgel. If it is already
+    in your hand, that will not work, so first use remove cudgel to put it back
+    in your pack.
+  objective: Take the cudgel in your hand. Type wield cudgel. If it is already in
+    your hand, use remove cudgel first.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 32-start
+  - 32-end
+  grantsQuest: 32-start
+  givesItem: 10043
 - key: drill_arrive
   kind: info
   label: Crier Toke sent me to learn to fight.

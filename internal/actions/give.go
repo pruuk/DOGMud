@@ -16,10 +16,13 @@ type GiveItemResult struct {
 // GiveItemToChar searches the actor's backpack for an item matching itemName,
 // then atomically transfers it to toChar using TransferItemBetweenChars.
 // If no matching item is found, Found is false and no transfer occurs.
+// A quest-given copy that would leave the giver's side fades away in the
+// transfer instead, and Err is ErrQuestGivenVanished (#940).
 func GiveItemToChar(actor Actor, itemName string, toChar *characters.Character, toUserId int, toMobInstanceId int) GiveItemResult {
 	fromChar := actor.GetCharacter()
 
-	matchItem, found := fromChar.FindInBackpack(itemName)
+	// The let-go lookup: an ordinary copy before quest gear (#940).
+	matchItem, found := fromChar.FindInBackpackToLetGo(itemName)
 	if !found {
 		return GiveItemResult{Found: false}
 	}

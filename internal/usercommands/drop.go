@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -126,14 +127,23 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	itemName, matchNum := util.GetMatchNumber(rest)
 	if matchNum == -1 {
 		actor := &actions.UserActor{User: user, Room: room}
-		dropped := 0
+		dropped, faded := 0, 0
 		for {
 			result := actions.DropItem(actor, itemName)
 			if !result.Found {
 				break
 			}
 			user.Character.CancelConditionsWithFlag(conditions.Hidden)
+			// Quest gear fades instead of dropping, one line per copy
+			// (actions.VanishQuestGiven told the player and the room).
+			if errors.Is(result.Err, actions.ErrQuestGivenVanished) {
+				faded++
+				continue
+			}
 			dropped++
+		}
+		if dropped == 0 && faded > 0 {
+			return true, nil
 		}
 		if dropped == 0 {
 			refusal.NotCarrying(user, itemName)
@@ -153,6 +163,9 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if !result.Found {
 		refusal.NotCarrying(user, rest)
+	} else if errors.Is(result.Err, actions.ErrQuestGivenVanished) {
+		// Quest gear fades instead of dropping; VanishQuestGiven said so.
+		user.Character.CancelConditionsWithFlag(conditions.Hidden)
 	} else {
 		user.Character.CancelConditionsWithFlag(conditions.Hidden)
 

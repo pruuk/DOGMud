@@ -65,7 +65,7 @@ func getAllMatchingFromFloor(user *users.UserRecord, room *rooms.Room, itemName 
 		user.Character.CancelConditionsWithFlag(conditions.Hidden)
 		if err != nil {
 			user.SendText(messaging.CategoryRefusal,
-				fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
+				fmt.Sprintf(overloadedCarryLine, matchItem.DisplayName()),
 			)
 			break
 		}
@@ -99,6 +99,10 @@ func itemCount(n int) string {
 	}
 	return fmt.Sprintf(`%d items`, n)
 }
+
+// overloadedCarryLine refuses a pickup the player cannot carry: get, a take
+// from a pet or a container, and loot. The item name arrives untagged.
+const overloadedCarryLine = `You can't carry the <ansi fg="itemname">%s</ansi>. You're already overloaded!`
 
 func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
@@ -468,14 +472,17 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 			if user.Character.Pet.RemoveItem(matchItem) {
 				if !acquire.AcquireItem(user, matchItem, acquire.AcquireGet) {
+					user.SendText(messaging.CategoryRefusal,
+						fmt.Sprintf(overloadedCarryLine, matchItem.DisplayName()),
+					)
 					// Back to the pet; should it refuse too, the item falls
 					// at the player's feet rather than vanishing (#696).
-					if !user.Character.Pet.StoreItem(matchItem) {
+					// Quest gear fades rather than fall (#940), its line
+					// after the refusal that explains it.
+					if !user.Character.Pet.StoreItem(matchItem) &&
+						!actions.FadeQuestGivenOffHand(user.Character, user.UserId, 0, matchItem, room) {
 						room.AddItem(matchItem, false)
 					}
-					user.SendText(messaging.CategoryRefusal,
-						fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
-					)
 				} else {
 
 					user.SendText(messaging.CategorySystem,
@@ -570,7 +577,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 			} else {
 				user.SendText(messaging.CategoryRefusal,
-					fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
+					fmt.Sprintf(overloadedCarryLine, matchItem.DisplayName()),
 				)
 			}
 
@@ -638,7 +645,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				case result.Err != nil:
 					// Capacity exceeded: item was rolled back to floor
 					user.SendText(messaging.CategoryRefusal,
-						fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
+						fmt.Sprintf(overloadedCarryLine, matchItem.DisplayName()),
 					)
 					return true, nil
 				}
@@ -660,7 +667,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 					}
 					if result.Err != nil {
 						user.SendText(messaging.CategoryRefusal,
-							fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
+							fmt.Sprintf(overloadedCarryLine, matchItem.DisplayName()),
 						)
 						return true, nil
 					}
@@ -805,7 +812,7 @@ func takeCorpseItem(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corp
 
 	if !acquire.AcquireItem(user, matchItem, acquire.AcquireLoot) {
 		user.SendText(messaging.CategoryRefusal,
-			fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
+			fmt.Sprintf(overloadedCarryLine, matchItem.DisplayName()),
 		)
 		return
 	}

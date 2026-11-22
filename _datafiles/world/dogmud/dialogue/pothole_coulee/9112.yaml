@@ -24,8 +24,8 @@ opener:
       it. Come back after.
     hints: Find Cleric Hadwen at the reflecting pool and complete the Awakening before
       pushing out into the wash.
-  # No fighting trade yet: Crier Toke starts every trade (#375 phase 7), and
-  # Vorn sends a newcomer back to him, so Garve names Toke first.
+  # No fighting trade yet: Crier Toke starts every trade (#375 phase 7) and
+  # Vorn offers First Blood too (#940), so Garve names Toke first.
   - questRequired:
     - 30-end
     questExcluded:
@@ -152,8 +152,7 @@ opener:
     - 90-end
     text: You took the tower. I heard it go quiet up there and I knew. Whatever the
       captain was guarding is the coulee's problem now, not just mine, and that is a
-      better class of problem. Crier Toke will want the news from your own mouth. He
-      sent you down this road in the first place.
+      better class of problem. Crier Toke will want the news from your own mouth.
     hints: Choose Report to Toke (Fighting) below to carry the news to Toke.
   - questRequired:
     - 90-start
@@ -374,7 +373,7 @@ topics:
   quest: 90
   label: Report to Toke (Fighting)
   playerLine: Should I take the news of the tower to Toke?
-  text: Do that. Toke sent you down this road, and he likes his news firsthand. He
+  text: Do that. Toke likes his news firsthand. He
     keeps to Hub Square, south of the Awakening Pool, and he shouts the day's word
     to anyone who stands still. Tell him the wash is held and the tower is ours.
   hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk toke.

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/conversation"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/stretchr/testify/require"
 )
@@ -125,9 +126,9 @@ func menuLine(t *testing.T, out, label string) string {
 	return ""
 }
 
-// The menu re-shown straight after Accept counts the queued start token as
-// held (heldAlso), and so does its objective marker: the topic the quest's
-// next step listens for is marked [*] although the grant has not landed.
+// The menu that comes back after Accept is drawn once the grant has landed
+// (#940), so its objective marker sees the new quest: the topic the quest's
+// next step listens for is marked [*].
 func TestTopicHeard_ObjectiveMarkerSeesAJustAcceptedQuest(t *testing.T) {
 	user, mob, done := fixtureWith(t, acceptThenAskYAML)
 	defer done()
@@ -152,7 +153,10 @@ func TestTopicHeard_ObjectiveMarkerSeesAJustAcceptedQuest(t *testing.T) {
 	require.True(t, user.RouteMenuInput("1", true), "1 is the hunt offer")
 	drained(1)
 	require.True(t, user.RouteMenuInput("1", true), "1 is Accept")
-	require.False(t, user.Character.HasQuest("999431-start"), "precondition: the grant is still queued")
-	require.Contains(t, menuLine(t, drained(1), "Where are the wolves?"), "[*]",
+	defer events.DrainAllQueuedEventsForTest()
+	got := runTalkQueue(t, nil)
+	require.True(t, user.Character.HasQuest("999431-start"), "the grant landed")
+	require.True(t, user.HasOpenMenu(), "the talk menu is back")
+	require.Contains(t, menuLine(t, strings.Join(got, "\n"), "Where are the wolves?"), "[*]",
 		"the re-shown menu marks the next step's topic")
 }

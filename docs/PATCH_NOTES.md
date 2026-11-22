@@ -1,5 +1,12 @@
 # DOGMud Patch Notes
 
+## 2026-11-22: Pothole Coulee teachers offer their own trades
+
+- Once you have walked the town with Crier Toke, each trade's teacher in Pothole Coulee offers you that trade's first quest directly: Drillmaster Vorn, Smith Rusk, Herbalist Birna, Scout Tarn, Adept Grieve, Elder Wenna, Marksman Iden and Lamplighter Gethin. Look for the `[!]` beside their name.
+- Taking a trade from its teacher starts you on the first real lesson, with any starting gear handed over. Toke still offers every trade you have not started.
+- Gear a quest hands you is now quest gear. It shows as "(quest gear)" in your inventory and fades away if it leaves your hands: dropped, given to another player, put away, stored, mailed or auctioned. Shops will not buy it, and salvaging it gives nothing back. Give it to someone who did not ask for it and they hand it back. Keep it and it is yours, even after the quest. If you lose it during the quest, the person who gave it to you will hand you another.
+- When you set a quest aside, the game now names everyone who can give it back to you.
+
 ## 2026-11-22: Comms shows the newest message, and paging has a help page
 
 - In the Comms panel, choosing a channel now shows its newest message. A small Comms panel used to show the oldest one. If you make the panel smaller, the newest message stays in view, unless you had scrolled up to read older ones.

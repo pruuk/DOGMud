@@ -34,6 +34,41 @@ func TestChain_NextOfferElsewhereIsRefused(t *testing.T) {
 	require.Contains(t, rules(Validate(chainWorld(9200))), "chain mob 9200 topic next_offer")
 }
 
+// A second door (#940): quest 54 is offered on the hand-in NPC 9112 and again
+// on NPC 9200, both gated on 53-end.
+func secondDoorWorld(handInMobOffers bool) World {
+	w := chainWorld(9200)
+	if handInMobOffers {
+		offer := dialogue.Topic{Key: "next_offer", Kind: dialogue.KindOffer, Quest: 54, Label: "Next", Text: "t",
+			Gates: dialogue.Gates{QuestRequired: []string{"53-end"}}, Effects: dialogue.Effects{GrantsQuest: "54-start"}}
+		w.Dialogue[0].Topics = append(w.Dialogue[0].Topics, offer)
+	}
+	return w
+}
+
+func TestChain_SecondDoorBesideTheHandInOfferPasses(t *testing.T) {
+	require.Empty(t, Validate(secondDoorWorld(true)))
+}
+
+func TestChain_SecondDoorWithNoHandInOfferIsRefused(t *testing.T) {
+	require.Contains(t, rules(Validate(secondDoorWorld(false))), "chain mob 9200 topic next_offer")
+}
+
+// A sibling offer on a mob that takes only another quest's hand-in is no door
+// the hand-in pitches from: the chain finding stays.
+func TestChain_SiblingOnAnotherNonHandInMobIsRefused(t *testing.T) {
+	w := secondDoorWorld(false)
+	offer := dialogue.Topic{Key: "next_offer", Kind: dialogue.KindOffer, Quest: 54, Label: "Next", Text: "t",
+		Gates: dialogue.Gates{QuestRequired: []string{"53-end"}}, Effects: dialogue.Effects{GrantsQuest: "54-start"}}
+	other := dialogue.Topic{Key: "other_in", Kind: dialogue.KindHandIn, Quest: 54, Label: "Next", Text: "t",
+		Gates: dialogue.Gates{QuestRequired: []string{"54-start"}}, Effects: dialogue.Effects{GrantsQuest: "54-end"}}
+	// Mob 9300 offers quest 54 and takes quest 54's hand-in, not quest 53's.
+	w.Dialogue = append(w.Dialogue, &dialogue.DialogueFile{MobId: 9300, Topics: []dialogue.Topic{offer, other}})
+	found := rules(Validate(w))
+	require.Contains(t, found, "chain mob 9200 topic next_offer")
+	require.Contains(t, found, "chain mob 9300 topic next_offer")
+}
+
 func TestRepeat_Rules(t *testing.T) {
 	w := goodWorld()
 	w.Quests[0].Repeatable = true

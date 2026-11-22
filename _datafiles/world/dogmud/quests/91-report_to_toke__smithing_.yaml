@@ -17,8 +17,8 @@ steps:
       mob: 9106  # follow Crier Toke (schedule pothole_toke)
       room: 5203  # fallback when Crier Toke is not spawned
     description: >-
-      The stone-blooded beast is dead and the deep vein is open. Crier Toke,
-      who sent you to Smith Rusk, waits in Hub Square for the news.
+      The stone-blooded beast is dead and the deep vein is open. Crier Toke
+      waits in Hub Square for the news.
     hint: >-
       Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk
       toke.

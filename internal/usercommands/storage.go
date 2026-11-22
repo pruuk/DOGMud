@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/acquire"
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -115,7 +116,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 					refused = append(refused, itm.DisplayName())
 					continue
 				}
-				if storageAddQuiet(user, itm) {
+				if stored, _ := storageAddQuiet(user, itm); stored {
 					deposited++
 				}
 			}
@@ -130,7 +131,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 		// storage add all iron-ore — deposit all matching units
 		if qtyAll {
-			deposited := 0
+			deposited, fadedAny := 0, false
 			var hot items.Item
 			for {
 				if user.ItemStorage.SlotCount() >= storageCap {
@@ -145,7 +146,12 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 					hot = stolen
 					break
 				}
-				if !storageAddQuiet(user, itm) {
+				stored, faded := storageAddQuiet(user, itm)
+				if faded {
+					fadedAny = true
+					continue
+				}
+				if !stored {
 					break
 				}
 				deposited++
@@ -153,6 +159,8 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			switch {
 			case deposited == 0 && hot.ItemId != 0:
 				// the refusal below says why
+			case deposited == 0 && fadedAny:
+				// each faded copy said so itself
 			case deposited == 0:
 				refusal.NotCarrying(user, itemName)
 			case deposited == 1:
@@ -172,7 +180,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			return true, nil
 		}
 
-		deposited := 0
+		deposited, faded := 0, 0
 		for i := 0; i < qty; i++ {
 			if user.ItemStorage.SlotCount() >= storageCap {
 				user.SendText(messaging.CategoryRefusal, `Your storage is full.`)
@@ -185,12 +193,19 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 					storageSayStolen(user, hot.DisplayName())
 				case deposited > 0:
 					user.SendText(messaging.CategorySystem, fmt.Sprintf(`You only had %d to deposit.`, deposited))
+				case faded > 0:
+					// each faded copy said so itself
 				default:
 					refusal.NotCarrying(user, itemName)
 				}
 				break
 			}
-			if !storageAddQuiet(user, itm) {
+			stored, fadedNow := storageAddQuiet(user, itm)
+			if fadedNow {
+				faded++
+				continue
+			}
+			if !stored {
 				break
 			}
 			deposited++
@@ -336,7 +351,9 @@ func storageRefusesStolen(itm items.Item, room *rooms.Room) bool {
 // found is false and hot is that bauble, for the refusal.
 func storageFindAddable(user *users.UserRecord, itemName string, room *rooms.Room) (itm items.Item, found bool, hot items.Item) {
 	now := storageNow()
-	if itm, ok := user.Character.FindInBackpackWhere(itemName, func(i items.Item) bool { return !baubles.ItemIsHotIn(i, room.Zone, now) }); ok {
+	// The let-go lookups: an ordinary copy before quest gear (#940).
+	cool := func(i items.Item) bool { return !baubles.ItemIsHotIn(i, room.Zone, now) }
+	if itm, ok := user.Character.FindInBackpackToLetGoWhere(itemName, cool); ok {
 		// An item handle (@uuid) is an explicit pick that bypasses the
 		// filter, so the pick is checked itself.
 		if baubles.ItemIsHotIn(itm, room.Zone, now) {
@@ -344,14 +361,8 @@ func storageFindAddable(user *users.UserRecord, itemName string, room *rooms.Roo
 		}
 		return itm, true, items.Item{}
 	}
-	if len(user.Character.ComponentItems) > 0 {
-		close, full := items.FindMatchIn(itemName, user.Character.ComponentItems...)
-		if full.ItemId != 0 {
-			return full, true, items.Item{}
-		}
-		if close.ItemId != 0 {
-			return close, true, items.Item{}
-		}
+	if itm, ok := user.Character.FindInComponentsToLetGo(itemName); ok {
+		return itm, true, items.Item{}
 	}
 	if stolen, ok := user.Character.FindInBackpack(itemName); ok {
 		return items.Item{}, false, stolen // every match is hot
@@ -366,10 +377,15 @@ func storageSayStolen(user *users.UserRecord, name string) {
 
 // storageAddQuiet transfers one unit of itm from the player to storage.
 // No player-facing message is sent; the caller is expected to print a
-// summary. Returns false if RemoveItem fails (item not on player).
-func storageAddQuiet(user *users.UserRecord, itm items.Item) bool {
+// summary. stored is false if RemoveItem fails (item not on player). Quest
+// gear is never stored: it fades (#940), with its own line, and faded is
+// true; a loop goes on to the next item rather than stopping.
+func storageAddQuiet(user *users.UserRecord, itm items.Item) (stored bool, faded bool) {
+	if actions.VanishQuestGiven(user.Character, user.UserId, 0, itm, nil) {
+		return false, true
+	}
 	if !user.Character.RemoveItem(itm) {
-		return false
+		return false, false
 	}
 	user.ItemStorage.AddItem(itm)
 	events.AddToQueue(events.ItemOwnership{
@@ -377,7 +393,7 @@ func storageAddQuiet(user *users.UserRecord, itm items.Item) bool {
 		Item:   itm,
 		Gained: false,
 	})
-	return true
+	return true, false
 }
 
 // storageRemoveQuiet transfers one unit of itm from storage to the player.

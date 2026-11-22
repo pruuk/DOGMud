@@ -199,7 +199,7 @@ func validatePurchase(
 	if matchedShopItem.TradeItemId > 0 {
 		tradeItm := items.New(matchedShopItem.TradeItemId)
 		tradeItemName = tradeItm.Name()
-		if _, found := char.FindInBackpack(tradeItemName); !found {
+		if _, found := findTradeInItem(char, tradeItemName); !found {
 			if buyer.IsPlayer() {
 				buyer.SendText(messaging.CategoryError, fmt.Sprintf(`You must have %s<ansi fg="itemname">%s</ansi> to trade for that.`, items.ArticleFor(tradeItm.ItemId, tradeItm.DisplayName()), items.MidSentenceName(tradeItm.DisplayName())))
 			}
@@ -245,7 +245,7 @@ func validatePurchase(
 		tradeInString = fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(price))
 	}
 	if tradeItemName != "" {
-		if itm, found := char.FindInBackpack(tradeItemName); found {
+		if itm, found := findTradeInItem(char, tradeItemName); found {
 			char.RemoveItem(itm)
 			if buyer.IsPlayer() {
 				events.AddToQueue(events.ItemOwnership{
@@ -277,6 +277,19 @@ func validatePurchase(
 		price:           price,
 		tradeInString:   tradeInString,
 	}, "", true
+}
+
+// findTradeInItem is the carried copy a trade-in takes as payment. Quest gear
+// never pays (#940): a copy a quest handed out is passed over, so a player
+// holding only that one is told they have nothing to trade. It is the
+// let-go lookup every way out uses (characters.FindInBackpackToLetGo), which
+// prefers an ordinary copy of the same item.
+func findTradeInItem(char *characters.Character, tradeItemName string) (items.Item, bool) {
+	itm, found := char.FindInBackpackToLetGo(tradeItemName)
+	if !found || itm.IsQuestGiven() {
+		return items.Item{}, false
+	}
+	return itm, true
 }
 
 // sendMerchantMessage delivers a message to the buyer, branching on

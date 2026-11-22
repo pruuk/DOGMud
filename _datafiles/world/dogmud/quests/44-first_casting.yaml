@@ -1,7 +1,10 @@
 # Quest 44, First Casting (Pothole Coulee, casting line, quest 1 of 3)
 #
 # Token flow (#375 phase 7, one action per step, giver to giver):
-#   44-start: granted by Crier Toke's send_folding offer (9106), after 31-end.
+#   44-start: granted by Crier Toke's send_folding offer (9106) or Adept
+#             Grieve's cast_start offer (9144), after 31-end. A Grieve start
+#             skips 44-met (a quest_granted trigger below), because the
+#             player is already in the Observatory Hall.
 #   44-met:   topic_heard on Adept Grieve's cast_lesson topic (9144): the
 #             player went to Grieve and heard the lesson.
 #   44-cast:  command trigger on `cast` aimed at the Practice Mote (9146) in
@@ -76,6 +79,22 @@ rewards:
   observer: "Grieve presses a pale oak staff into the newcomer's hands."
 
 triggers:
+  # MET, skipped: a player who takes the quest from Grieve is already in the
+  # Observatory Hall (owner ruling 2026-11-22, #940), so the grant of 44-start
+  # there moves them past met. The room tells the two doors apart: Toke never
+  # leaves Hub Square (5203) and Grieve never leaves the hall (5303). A
+  # topic_heard trigger cannot do this, because the offer's grant is only
+  # queued when the topic plays, and a flag condition is refused by the
+  # one-action rule (questloop.ruleOneAction).
+  - event: quest_granted
+    quest_token: 44-start
+    conditions:
+      in_room: 5303
+      has: ["44-start"]
+      missing: ["44-met"]
+    actions:
+      - grant: "44-met"
+
   # MET: hearing Grieve's lesson (the topic the giver's hint invites).
   - event: topic_heard
     mob: 9144

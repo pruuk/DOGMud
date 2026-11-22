@@ -463,6 +463,7 @@
 9108.cudgel_replace
 9108.defence_help
 9108.drill_arrive
+9108.drill_start
 9108.grapple_help
 9108.kick_help
 9108.progress_sized_up
@@ -499,6 +500,7 @@
 9116.heat_craft_help
 9116.heat_ingot_help
 9116.heat_list_help
+9116.heat_start
 9116.heat_strip_help
 9116.vein_offer
 9117.bag_help
@@ -522,6 +524,7 @@
 9125.infravision
 9125.lantern_have
 9125.lantern_spare
+9125.light_start
 9125.made_dark
 9125.night
 9125.quiet_hands_offer
@@ -543,6 +546,7 @@
 9128.bottles
 9128.brew_arrive
 9128.brew_help
+9128.brew_start
 9128.brew_step_craft
 9128.brew_step_drink
 9128.brew_step_list
@@ -575,6 +579,7 @@
 9136.sign_help
 9136.sign_progress_start
 9136.sign_progress_track
+9136.sign_start
 9136.sign_turnin
 9137.game_loop_in
 9137.game_loop_offer
@@ -601,6 +606,7 @@
 9144.cast_help
 9144.cast_lesson
 9144.cast_progress
+9144.cast_start
 9144.cast_turnin
 9144.charm
 9144.conjure
@@ -631,6 +637,7 @@
 9153.stones_offer
 9153.words_lesson
 9153.words_progress
+9153.words_start
 9153.words_turnin
 9157.dispute
 9157.dispute_settled
@@ -666,6 +673,7 @@
 9161.perception
 9161.shoot_help
 9161.shoot_lesson
+9161.shoot_start
 9161.shoot_turnin
 9161.shot_have
 9161.shot_supply

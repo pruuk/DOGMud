@@ -73,6 +73,16 @@ func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			return true, nil
 		}
 
+		// Quest gear (#940): a bought copy of the same item is the one
+		// appraised. A quest copy no shop will buy is refused before any fee,
+		// with sell's own line.
+		item = boughtCopyFirst(rest, item, user.Character.FindInBackpackToLetGo,
+			user.Character.FindInPotionsToLetGo, user.Character.FindInComponentsToLetGo)
+		if item.IsQuestGiven() {
+			user.SendText(messaging.CategoryRefusal, actions.SellTellQuestGiven)
+			return true, nil
+		}
+
 		itemSpec := item.GetSpec()
 		if itemSpec.ItemId < 1 {
 			return true, nil

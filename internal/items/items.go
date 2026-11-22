@@ -63,6 +63,7 @@ type Item struct {
 	EnchantBaseline  *SpecBaseline  `yaml:"enchantbaseline,omitempty"` // Numeric spec BEFORE any enchantment; see SpecBaseline
 	ReservePool      string         `yaml:"reservepool,omitempty"`     // "health", "stamina", or "conviction"
 	StashedBy        int            `yaml:"stashedby,omitempty"`       // userid of whoever stashed this item
+	QuestGiven       bool           `yaml:"questgiven,omitempty"`      // A quest handed out this copy (acquire.AcquireItemForChar marks it); it fades when it leaves its holder. See IsQuestGiven
 	DetuneMigrated   bool           `yaml:"detunemigrated,omitempty"`  // U10d: this ranged weapon is already on the post-detune line; see detune_migration.go
 	Bauble           string         `yaml:"bauble,omitempty"`          // Bauble catalog record id (internal/baubles); the name, description, value and weight come from the catalog
 	BaubleSpot       string         `yaml:"baublespot,omitempty"`      // Where a found bauble lies in its room ("on the bookshelf"); cleared once anyone carries it
@@ -449,6 +450,16 @@ func (i *Item) IsSpecial() bool {
 
 func (i *Item) GetDamage() Damage {
 	return i.GetSpec().Damage
+}
+
+// IsQuestGiven reports whether a quest handed out this copy (a dialogue
+// topic's givesItem or a quest trigger's give_item; owner ruling 2026-11-22,
+// #940). Such a copy is ordinary gear while its holder keeps it and fades
+// away whenever it leaves their hands (actions.VanishQuestGiven); shops never
+// buy it. The mark is on the copy, not the template: a bought or looted copy
+// of the same item is unmarked.
+func (i Item) IsQuestGiven() bool {
+	return i.QuestGiven
 }
 
 func (i *Item) Equals(b Item) bool {

@@ -17,8 +17,8 @@ package owns everything that needs a user, a room or a mob.
 | `give.go` | `Give(user, room, mob, itm) bool`: `give <item> <npc>` resolved against the NPC's topics before any transfer (R8). A topic wants the item through `requiresItem` (taken) or `carriesItem` (shown, never taken, so no handover line and the item stays with the player); the first eligible one in authored order runs through `resolve`, the same path as a menu choice (an offer shows its card and takes the item only on Accept), and takes the instance the player named (`give 2.purse`); a wanted item with no eligible topic is handed back by `handBack`, which first offers the give to the mob's tree as a `player_give` hand-back (`behaviortree.GiveHandBack`) so an authored refusal written for that item plays ("See Drunn first, then come back."), crediting nothing, and prints the generic "looks at the X and hands it back." line when no branch ran `return_item`; the item never moves; false (nothing changed) when no topic wants it or the NPC is charmed. `WantsItem(user, mob, itemId)` is the same test with nothing played, open topic or not: `usercommands/give.go` asks it before reaching into the bandolier |
 | `companion.go` | `CompanionTopic(user, mob, what)`: resolves the owner's `companion-ask` words to one eligible info topic key (key, or the one label holding every word; never an offer, a hand-in or a `behavior` topic) plus the info labels for the refusal line; `AskForOwner(ownerId, mobInstanceId, key, authorized)`: plays that info topic as the owner choosing it, with no owner line and no menu; this package's `init` installs it as the companion NPC asker (`companionai.SetNpcAsker`), so the module's `sayto` reaches it through `companionai.AskNpc`; `modules/aicompanion` imports this package (as `talkflow`) only for `CompanionTopic` |
 | `card.go` | `offerCardBody(t, q, names, lastRun)` is `cardBody` with the offer topic's `objective` (tier 1) replacing the first line; `cardBody(q, names, lastRun)`: the offer card's body (phase 2 spec 3, 4.3), the first step's description, `"Reward: " + quests.RewardSummary`, and for a repeatable the repeat line (the last-time line when `lastRun`); `talk.go`'s `offerCard` sets it as the card's `Body` with `cardNames(character)`, which is `questworld.Names()` plus `SkillMet` from the character's skill levels, so a repeat run's card leaves out training already met |
-| `nextoffer.go` | After a hand-in that granted a quest's final token, `queueNextOffer` queues `events.TalkNextOffer` when exactly one offer on this NPC is gated on that token (phase 2 spec 4.1); `HandleTalkNextOffer` (registered in `internal/hooks/hooks.go`) pitches it after the completion lines as if chosen, and says nothing while a menu gate holds or a prompt is open, so the offer waits in the talk menu with its `[!]` |
-| `talk.go` | `Talk(user, room, mob)`: the approach line, opener and breadcrumbs, then the private talk menu (refused first with `TalkSightLine` when the player cannot see the NPC by name, `seesByName`); info and hand-in choices (player line, handover line, NPC reply, then the menu re-shown), the offer pitch and its Accept / Leave card, and `player_topic` for `behavior` topics (a behavior topic whose effects landed closes the menu instead of re-showing it, R18) |
+| `nextoffer.go` | `queueRedraw` brings the talk back after any choice that granted a quest token, on the event queue behind the grant: `events.TalkNextOffer` after a hand-in, `events.TalkMenuAgain` after anything else (an accepted offer). `HandleTalkNextOffer` (registered in `internal/hooks/hooks.go`) computes `nextOffers` once the final token has landed and pitches the one offer gated on it as if chosen (phase 2 spec 4.1), else re-shows the talk menu; `HandleTalkMenuAgain` re-shows the menu. Both say and open nothing while a menu gate holds or a prompt is open, so an offer waits in the talk menu with its `[!]` |
+| `talk.go` | `Talk(user, room, mob)`: the approach line, opener and breadcrumbs, then the private talk menu (refused first with `TalkSightLine` when the player cannot see the NPC by name, `seesByName`); info and hand-in choices (player line, handover line, NPC reply; a choice that granted a quest token then has the talk menu redrawn from the event queue by `queueRedraw`, `nextoffer.go`), the offer pitch and its Accept / Leave card, and `player_topic` for `behavior` topics (a behavior topic whose effects landed closes the menu instead of re-showing it, R18) |
 
 ## Sales
 
@@ -44,20 +44,24 @@ same learned line `GameBridge.LearnRecipe` prints.
   the reward line, and for a repeatable the "again" line (and a last-time line
   when `Character.LastRepeat`). An offer on cooldown or at its cap is not
   eligible (`dialogue.PlayerState.QuestOpen`), so it shows no `[!]` and no card.
-- A hand-in that grants a quest's final token calls `queueNextOffer`. When
-  exactly one offer on this NPC is gated on that token, `events.TalkNextOffer`
-  is queued at `events.TalkNextOfferPriority` (45): after the completion banner
-  and reward lines (priority 0, queued by `GiveQuest`) and before a menu shown
-  last (priority 50), so the player reads completion, then the next pitch and
-  card. Several next offers, or none, re-show the menu as before (the offers
-  wait with their `[!]`). `HandleTalkNextOffer` says nothing while a menu gate
-  holds or a prompt is open.
-- Accepting an offer for an item the player already holds queues
-  `events.TalkMenuAgain` at `TalkNextOfferPriority` (the offer card's callback
-  in `talk.go`), so the grant and the step start (Hook 1) run first.
-  `HandleTalkMenuAgain` (`nextoffer.go`) then re-shows the talk menu with the
-  hand-in on it, and opens nothing while a menu gate holds or a prompt is open.
-  `offerCardBody` builds the offer card's body with the topic's `objective`.
+- A choice that granted a quest token never redraws the talk menu itself:
+  `queueRedraw` queues the redraw at `events.TalkNextOfferPriority` (45),
+  after the grant (priority 0, queued by `GiveQuest`) and before a menu shown
+  last (priority 50). The quest engine lands the token, prints the banner and
+  rewards, and runs the step start (Hook 1) and any `quest_granted` trigger
+  that moves the step (a trainer's own offer skips the arrival talk, #940), all
+  before the redraw, so the menu reads the character as it then stands.
+- A hand-in queues `events.TalkNextOffer` with its final token. When exactly
+  one offer on this NPC is gated on that token and eligible,
+  `HandleTalkNextOffer` pitches it, so the player reads completion, then the
+  next pitch and card. Several next offers, or none, re-show the menu (the
+  offers wait with their `[!]`).
+- An accepted offer (the offer card's callback in `talk.go`), or any other
+  grant, queues `events.TalkMenuAgain`; `HandleTalkMenuAgain` re-shows the
+  talk menu, with a hand-in the step start opened on it.
+- Both handlers say and open nothing while a menu gate holds or a prompt is
+  open. `offerCardBody` builds the offer card's body with the topic's
+  `objective`.
 - Observers see a conversation, never a menu: the player's line and the NPC's
   answer go to the room through `actions.Say`; menus, cards and hints go to the
   player only.
@@ -65,13 +69,12 @@ same learned line `GameBridge.LearnRecipe` prints.
   NPC in the same room, the room at full sight, the NPC perceived) runs
   before every choice; a failed check closes the menu with the context-lost
   line.
-- Quest grants are queued (`events.Quest`), so the menu re-shown after a
-  choice counts the token that choice granted as held (`heldAlso`); without
-  it the re-shown menu still lists an offer the player just accepted. The
-  `[*]` objective marker (`PlayerState.Objective`, a `WouldFire` dry run)
-  reads that same `HasQuest` (through the `heldQuests` adapter, which wraps
-  the `questengine.GameBridge` with the PlayerState's `HasQuest`), so the
-  next step's topic is marked at once.
+- Quest grants are queued (`events.Quest`), which is why the redraw after a
+  grant waits behind it (above): drawn at once, the menu would still list an
+  offer the player just accepted. The `[*]` objective marker
+  (`PlayerState.Objective`, a `WouldFire` dry run over a
+  `questengine.GameBridge`) then sees the landed token, so the new quest's
+  next topic is marked on that menu.
 - Every played topic raises the quest engine's `topic_heard`
   (`questengine.NotifyTopicHeard`) from `applyWithHandover`, once the topic's
   own effects landed: a menu choice, an accepted offer, and a companion's ask,

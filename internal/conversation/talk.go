@@ -7,7 +7,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
-	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -53,7 +52,7 @@ func Talk(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob) {
 		npcSay(mob, room, b)
 	}
 	sendHints(user, hints)
-	openMenu(user, mob.InstanceId, "")
+	openMenu(user, mob.InstanceId)
 }
 
 // blockedLines name why a conversation cannot start, one per menu gate rule.
@@ -168,21 +167,6 @@ func talkState(user *users.UserRecord, buf *lineBuffer) *dialogue.PlayerState {
 	return ps
 }
 
-// heldAlso is ps with granted counted as held. GiveQuest only queues the
-// token and the quest engine records it on a later event pass, so the menu
-// re-shown straight after a grant would otherwise still list the topic the
-// player just took (an accepted offer, a hand-in or a step whose
-// questExcluded names its own grant). The objective marker sees it too:
-// PlayerState's Objective asks the quest engine through ps.HasQuest.
-func heldAlso(ps *dialogue.PlayerState, granted string) *dialogue.PlayerState {
-	if granted == "" || ps == nil || ps.HasQuest == nil {
-		return ps
-	}
-	has := ps.HasQuest
-	ps.HasQuest = func(token string) bool { return token == granted || has(token) }
-	return ps
-}
-
 // present returns the mob and room while the player can still talk to it:
 // same room, full sight, and the mob perceived. It backs StillValid.
 func present(user *users.UserRecord, mobInstanceId int) (*mobs.Mob, *rooms.Room, bool) {
@@ -219,15 +203,16 @@ func session(user *users.UserRecord, mob *mobs.Mob, onChoose func(menu.Entry)) m
 }
 
 // openMenu shows (or re-shows) the talk menu, recomputed for this moment.
-// Nothing opens when the NPC is gone or has nothing to talk about. granted
-// names the quest token the choice just granted, if any (see heldAlso).
-func openMenu(user *users.UserRecord, mobInstanceId int, granted string) {
+// Nothing opens when the NPC is gone or has nothing to talk about. A choice
+// that granted a quest token never calls it directly: queueRedraw puts the
+// menu behind the grant, so the menu reads the token as held.
+func openMenu(user *users.UserRecord, mobInstanceId int) {
 	mob, _, ok := present(user, mobInstanceId)
 	if !ok {
 		return
 	}
 	df := dialogue.Load(int(mob.MobId), mob.Zone)
-	m := df.Menu(mob.Character.Name, heldAlso(PlayerState(user), granted))
+	m := df.Menu(mob.Character.Name, PlayerState(user))
 	if len(m.Entries) == 0 {
 		return
 	}
@@ -244,7 +229,7 @@ func choose(user *users.UserRecord, mobInstanceId int, key string) {
 	ps := talkState(user, buf)
 	t := df.FindTopic(key)
 	if t == nil || !df.Eligible(t, ps) {
-		openMenu(user, mobInstanceId, "")
+		openMenu(user, mobInstanceId)
 		return
 	}
 	resolve(user, room, mob, df, t, ps, buf)
@@ -260,7 +245,7 @@ func resolve(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialog
 		if !dialogue.SaleReady(t, ps) {
 			// No card and no price: the NPC names the trades to practice.
 			npcSay(mob, room, t.NotReadyText)
-			openMenu(user, mob.InstanceId, "")
+			openMenu(user, mob.InstanceId)
 			return
 		}
 		npcSay(mob, room, t.Text)
@@ -279,10 +264,12 @@ func resolve(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialog
 	if applied && t.Behavior {
 		return // a timed scene is under way: the menu closes (R18)
 	}
-	if applied && t.Kind == dialogue.KindHandIn && queueNextOffer(user, mob.InstanceId, df, granted) {
-		return // the next offer's pitch and card follow the completion lines
+	if granted != "" {
+		// The menu, or a hand-in's next offer, follows the grant's lines.
+		queueRedraw(user, mob.InstanceId, granted, t.Kind == dialogue.KindHandIn)
+		return
 	}
-	openMenu(user, mob.InstanceId, granted)
+	openMenu(user, mob.InstanceId)
 }
 
 // play speaks and applies an info or hand-in topic: the player's line, the
@@ -359,11 +346,14 @@ func offerCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic, prefer 
 		if closes {
 			return
 		}
-		if granted != "" && t.CarriesItem > 0 {
-			events.AddToQueue(events.TalkMenuAgain{UserId: user.UserId, MobInstanceId: inst}, events.TalkNextOfferPriority)
+		// A granted offer redraws the menu from the event queue, after the
+		// grant and its step-start chain: a quest_granted trigger may move the
+		// step (a trainer's own offer skips the arrival talk, #940).
+		if granted != "" {
+			queueRedraw(user, inst, granted, false)
 			return
 		}
-		openMenu(user, inst, granted)
+		openMenu(user, inst)
 	}))
 }
 
@@ -377,7 +367,7 @@ func saleCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic) {
 		if e.Id == "yes" {
 			acceptSale(user, inst, key)
 		}
-		openMenu(user, inst, "")
+		openMenu(user, inst)
 	}))
 }
 

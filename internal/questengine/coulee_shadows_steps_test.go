@@ -42,6 +42,21 @@ func shadowsInstallMine(t *testing.T) {
 
 func TestQuest98FirstLight_Steps(t *testing.T) {
 	q := loadShippedQuest(t, "98-first_light.yaml", 98)
+
+	// Gethin's own offer (owner ruling 2026-11-22, #940) starts at the Mine
+	// Head and skips the lantern talk; Toke's offer, made in Hub Square, does
+	// not.
+	t.Run("the grant at the Mine Head skips the lantern step", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "98-start", RoomId: mineHead})
+		require.Equal(t, "lantern", w.p.current)
+	})
+	t.Run("the grant in Hub Square does not", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "98-start", RoomId: 5203})
+		require.Equal(t, "start", w.p.current)
+	})
+
 	w := newQuestWalker(q).at("start")
 
 	w.notify("topic_heard", EventDetails{MobId: gethin, Topic: "night"})

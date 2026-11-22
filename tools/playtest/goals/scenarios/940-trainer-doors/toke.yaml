@@ -1,0 +1,24 @@
+# TOKE seat: you have finished the town walk (Find Your Footing) and stand
+# with Crier Toke in Hub Square. Quote every game line VERBATIM.
+ephemeral:
+  profile: early
+  start_room: 5203
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end", "88-start", "88-end", "31-start", "31-lantern", "31-end"]
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    Type `talk toke` and quote the whole menu. Choose the forge trade's line
+    (First Heat), quote the card, and accept. Quote everything that prints.
+  - >-
+    Type `quests` and `hint` and quote both. Follow the hint to the forge
+    teacher. Type `look` there and quote how the teacher's name is shown.
+  - >-
+    Type `talk` to the teacher and quote the whole menu. Say whether it offers
+    First Heat a second time. Choose the line about Toke sending you, quote it,
+    and quote what the game says about your quest.
+  - >-
+    Follow the hints for two more steps of First Heat. Quote each progress
+    line.

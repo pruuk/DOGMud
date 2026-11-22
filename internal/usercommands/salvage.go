@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -66,6 +67,10 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		return true, nil
 	}
 
+	// Quest gear (#940): a bought copy of the same item goes first, as every
+	// way out prefers (characters.FindInBackpackToLetGo).
+	itm = boughtCopyFirst(rest, itm, user.Character.FindInBackpackToLetGo, user.Character.FindInPotionsToLetGo)
+
 	spec := itm.GetSpec()
 
 	// Spoiled/declining potions can be salvaged for binding paste
@@ -85,6 +90,15 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	if recipe == nil && !hasSalvageReturns && !isSpoiledPotion {
 		user.SendText(messaging.CategoryRefusal, `<ansi fg="red">You can't find anything useful to salvage from that.</ansi>`)
+		return true, nil
+	}
+
+	// A quest copy itself is destroyed at once and yields nothing (owner
+	// ruling 2026-11-22): no salvage rounds, no roll, no award.
+	if itm.IsQuestGiven() {
+		user.Character.RemoveItem(itm)
+		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: itm, Gained: false})
+		user.SendText(messaging.CategoryCraft, fmt.Sprintf(actions.QuestGearSalvageLine, itm.DisplayName()))
 		return true, nil
 	}
 
@@ -216,6 +230,23 @@ func startCorpseSalvage(user *users.UserRecord, room *rooms.Room, corpse rooms.C
 // there cannot even be NAMED by this command. That is a FindItem gap rather
 // than a salvage one, and it is filed separately; actions.salvageItem already
 // searches all three containers, so closing it there is enough.
+// boughtCopyFirst swaps a found quest copy (#940) for an ordinary copy of
+// the same item that one of the let-go lookups finds (a handle or an
+// explicit count keeps the quest copy, as there). A command that names its
+// item through FindItem (salvage, appraise) passes the lookups for the carry
+// lists it reads. It returns found when there is no such copy.
+func boughtCopyFirst(name string, found items.Item, finders ...func(string) (items.Item, bool)) items.Item {
+	if !found.IsQuestGiven() {
+		return found
+	}
+	for _, find := range finders {
+		if other, ok := find(name); ok && other.ItemId == found.ItemId && !other.IsQuestGiven() {
+			return other
+		}
+	}
+	return found
+}
+
 func salvageableSource(source string) bool {
 	switch source {
 	case "in your backpack", "in your bandolier":

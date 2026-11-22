@@ -10,6 +10,7 @@ package items
 //   - EnchantType
 //   - EnchantTier
 //   - BottleMultiplier (different bottles age potions at different rates)
+//   - Preserved and QuestGiven (a quest's copy, #940)
 //   - Spec override: if either item carries a custom Spec (enchant stat
 //     mods, renamed items, etc.) the items are treated as distinct unless
 //     their overrides are pointer-equal (same source object).
@@ -32,6 +33,12 @@ func SameStack(a, b Item) bool {
 	// A preserved potion out of its bandolier has rotted (Item.AgingAt), so
 	// it never stacks with one that has not.
 	if a.Preserved != b.Preserved {
+		return false
+	}
+	// A quest's copy fades when it leaves its holder and a bought one does
+	// not (#940), so the two are never one row. Storage never holds a quest
+	// copy (it fades on the way in), so its slots are unchanged.
+	if a.QuestGiven != b.QuestGiven {
 		return false
 	}
 	if a.EnchantType != b.EnchantType {

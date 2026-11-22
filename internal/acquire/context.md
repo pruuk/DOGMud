@@ -40,13 +40,23 @@ rather than part of `internal/actions` because `actions` imports
   int, itm items.Item, reason AcquireReason) bool`: for a route holding a bare
   character, or an `actions.Actor` (pass `GetUserId()` and
   `GetMobInstanceId()`). It serves mob receivers too; the event keeps
-  whichever id the caller passed.
+  whichever id the caller passed. It is also the one place a copy is marked
+  quest-given (#940, owner ruling 2026-11-22): for `AcquireTopic` and
+  `AcquireQuestGive` it sets `items.Item.QuestGiven` on the copy before
+  storing it, so the stored copy and the gain event both carry the mark. Such
+  a copy fades away whenever it leaves its holder
+  (`actions.VanishQuestGiven`). `AcquireReward` is not marked: a reward is
+  paid once and no NPC replaces it.
+- `MarksQuestGiven(reason AcquireReason) bool`: whether `AcquireItemForChar`
+  marks an item acquired for that reason.
 - `AcquireOrDrop(char, userId, mobInstanceId, itm, reason) bool` and
   `AcquireItemOrDrop(user, itm, reason) bool` (#696): for an item that already
   exists for the receiver (made, bought, foraged, salvaged, earned, given by a
   tree). When it is too much to carry it falls in the receiver's room
   (`Room.AddItem`, as a drop does) and a player reads `TooMuchToCarryLine`;
-  no gain event, since it was never held.
+  no gain event, since it was never held. A quest hand-out reason marks the
+  copy here too (#940), so one that falls is the same quest gear it would be
+  in hand.
 
 ## Using it correctly
 
@@ -85,7 +95,8 @@ craft, `hooks` quest rewards, timed craft and the offhand-break replacement,
 ## Tests
 
 `acquire_test.go` (the seam itself), `acquire_or_drop_test.go` (an item too
-much to carry falls, #696), `actions/transfer_gain_test.go` (the
+much to carry falls, #696), `quest_given_test.go` (only the two quest
+hand-out reasons mark, a reward does not, #940), `actions/transfer_gain_test.go` (the
 transfer helpers), and one test per formerly silent route:
 `questengine/bridge_acquire_test.go`, `hooks/quest_reward_acquire_test.go`,
 `hooks/shield_swap_acquire_test.go`,

@@ -207,15 +207,17 @@ opener:
     - 47-start
     - 50-start
     - 98-start
-    text: You have taken up every trade I can start you on, all eight. The rest is
+    text: You have taken up every trade the coulee teaches, all eight. The rest is
       your own walking. Come back when you have news, and I will carry it across
       the square.
     hints: Toke has no more trades to start. When a teacher sends you back with
       news, a line marked [?] shows below. Other lines tell you about the news and
       the seven mouths of the coulee.
-  # The hub (#375 phase 7): Toke is the only starter of the eight trades, and
-  # a player new to MUDs is told so in plain words. Each trade's first quest
-  # is one [!] line on his menu; take one, several or all eight.
+  # The hub (#375 phase 7): Toke offers every one of the eight trades, and a
+  # player new to MUDs is told so in plain words. Since 2026-11-22 (#940) each
+  # trade's trainer offers it too, gated on Find Your Footing, so the text
+  # claims only what Toke can do. Each trade's first quest is one [!] line on
+  # his menu; take one, several or all eight.
   - questRequired:
     - 31-end
     text: 'The town knows your face now. I made sure of it. Here is the rest of
@@ -472,9 +474,10 @@ topics:
   grantsQuest: 97-end
   moodChange: friendly
 # R21: the eight trails, each its own offer after Find Your Footing. Each
-# starter item rides on the offer of the quest it belongs to. Toke is the
-# only starter of the eight (#375 phase 7); each first teacher takes the
-# hand-in and points a newcomer back here. Quest 50's pouch of shot comes
+# starter item rides on the offer of the quest it belongs to. Toke offers all
+# eight (#375 phase 7), and since 2026-11-22 (#940) each trade's trainer offers
+# its first quest too; each first teacher takes the hand-in and points a
+# newcomer back here. Quest 50's pouch of shot comes
 # from its own quest_granted 50-start trigger (missing_item 30064).
 - key: send_drill
   kind: offer

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/acquire"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
@@ -82,7 +83,8 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 	}
 
 	// Find item in actor's backpack.
-	plantItem, found := char.FindInBackpack(opts.ItemNoun)
+	// The let-go lookup: an ordinary copy before quest gear (#940).
+	plantItem, found := char.FindInBackpackToLetGo(opts.ItemNoun)
 	if !found {
 		refusal.NotCarrying(actor, opts.ItemNoun)
 		return PlantResult{Reason: "item not in backpack"}
@@ -119,6 +121,23 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 // thief keeps it (#696). The target's name arrives already tagged.
 const plantTooFullLine = `%s has no room to carry <ansi fg="itemname">%s</ansi>, so you keep it.`
 
+// plantQuestGearFades is the moment a successful plant lets go of the item
+// (#940): quest gear fades there instead of reaching the target, quietly,
+// since a plant shows the room nothing. A plant that fails keeps the item,
+// as it keeps any item, and so does one on a target that cannot carry it
+// (#696): target is the creature or player planted on, and nil for a
+// container, which always takes it. It reports whether the gear faded, with
+// the result to return.
+func plantQuestGearFades(actor Actor, plantItem items.Item, target *characters.Character, defenderName string) (PlantResult, bool) {
+	if target != nil && !target.CanCarry(plantItem) {
+		return PlantResult{}, false // the full-target refusal below keeps it
+	}
+	if !VanishQuestGivenFrom(actor, plantItem, nil) {
+		return PlantResult{}, false
+	}
+	return PlantResult{DefenderName: defenderName, Reason: "quest gear faded"}, true
+}
+
 // plantOnMob handles slipping an item into a creature's inventory.
 // t.score() carries the planter's sight ramp already; do not apply
 // SightMult again.
@@ -150,6 +169,9 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item, t theftAtt
 	room := actor.GetRoom()
 
 	if success {
+		if res, faded := plantQuestGearFades(actor, plantItem, &m.Character, m.Character.Name); faded {
+			return res
+		}
 		// The target must take it before the thief lets go: a target that
 		// cannot carry it leaves it with the thief (#696).
 		if !acquire.AcquireItemForChar(&m.Character, 0, m.InstanceId, plantItem, acquire.AcquirePlant) {
@@ -306,6 +328,10 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item, t theftA
 			DefenderName: targetUser.Character.Name,
 			Reason:       "detected",
 		}
+	}
+
+	if res, faded := plantQuestGearFades(actor, plantItem, targetUser.Character, targetUser.Character.Name); faded {
+		return res
 	}
 
 	// Success — transfer item to target player. The target must take it
@@ -469,6 +495,10 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item, t
 			DefenderName: spotterName,
 			Reason:       "detected",
 		}
+	}
+
+	if res, faded := plantQuestGearFades(actor, plantItem, nil, containerName); faded {
+		return res
 	}
 
 	// Success — place item into container.
