@@ -674,6 +674,25 @@ func SecretExitDiscoveryKey(exitName string) string {
 	return "exit:" + exitName
 }
 
+// KnowsSecretExit reports whether c has found the secret exit exitName of
+// roomId: `search` found it (actions/search.go), or c moved through it behind
+// a leader it follows (actions.LearnSecretExitFollowing). It is the one
+// secret-exit rule (#781, owner rulings 1, 2 and 13): rooms.KnownExits, every
+// player path that names an exit, the maps, quest guidance and an NPC's own
+// unscripted moves all ask it. A nil character knows none.
+func (c *Character) KnowsSecretExit(roomId int, exitName string) bool {
+	if c == nil {
+		return false
+	}
+	return c.HasDiscovery(roomId, SecretExitDiscoveryKey(exitName))
+}
+
+// LearnSecretExit records that c knows the secret exit exitName of roomId, in
+// the record `search` writes. Recording it twice stores it once.
+func (c *Character) LearnSecretExit(roomId int, exitName string) {
+	c.AddDiscovery(roomId, SecretExitDiscoveryKey(exitName))
+}
+
 func (c *Character) HasDiscovery(roomId int, key string) bool {
 	if c.Discoveries == nil {
 		return false

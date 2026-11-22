@@ -1192,6 +1192,11 @@ new per-instance write to a template-sourced field, check which of those two
 categories it is in. `internal/mobs/spawn_template_isolation_test.go` guards
 the copies.
 
+- `Character.Discoveries` is deep-copied at spawn (#781), so a mob's search
+  find or a secret exit learned behind its leader stays with that instance.
+  Discoveries are not saved in `MobInstanceData`; a fresh spawn has found
+  nothing.
+
 ## WalkItems (walk_items.go)
 
 `(*Mob).WalkItems` walks the mob's character (`Character.WalkItems`). A

@@ -190,3 +190,36 @@ func TestSpawn_GroupsAppendIsPerInstance(t *testing.T) {
 		t.Errorf("template Groups length = %d, want 2", len(template.Groups))
 	}
 }
+
+// #781: a mob instance learns secret exits (a search find, a leader followed).
+// Spawning copies the template with `mob := *m`, so an authored discoveries
+// map would be shared by every spawn and one mob's find would teach them all.
+func TestSpawn_SecretExitDiscoveriesArePerInstance(t *testing.T) {
+	cleanup := seedTemplateIsolationFixture(t)
+	defer cleanup()
+
+	template := mobs[stiTemplateId]
+	template.Character.Discoveries = map[int][]string{5: {characters.SecretExitDiscoveryKey("west")}}
+
+	first := NewMobByIdFresh(stiTemplateId, 1)
+	if first == nil {
+		t.Fatal("NewMobByIdFresh returned nil for the first spawn")
+	}
+	defer DestroyInstance(first.InstanceId)
+	second := NewMobByIdFresh(stiTemplateId, 1)
+	if second == nil {
+		t.Fatal("NewMobByIdFresh returned nil for the second spawn")
+	}
+	defer DestroyInstance(second.InstanceId)
+
+	if !second.Character.KnowsSecretExit(5, "west") {
+		t.Fatal("precondition: an authored discovery reaches every spawn")
+	}
+	first.Character.LearnSecretExit(5, "north")
+	if second.Character.KnowsSecretExit(5, "north") {
+		t.Error("the second spawn learned what the first found: the discoveries map is shared")
+	}
+	if got := len(template.Character.Discoveries[5]); got != 1 {
+		t.Errorf("template discoveries for room 5 = %d, want 1 (polluted by a spawn)", got)
+	}
+}

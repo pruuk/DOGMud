@@ -2498,3 +2498,11 @@ The ward effects `mitigation_magical` and `mitigation_conviction` are read by
 `GetMagicalMitigation` and `GetConvictionMitigation` through
 `Conditions.Effect`, beside the statmods they sum with, as `mitigation_flat`
 is by `GetPhysicalMitigation`.
+
+## Secret exits (#781)
+
+`KnowsSecretExit(roomId, exitName)` is the one secret-exit rule (#781,
+owner rulings 1, 2 and 13): true once the character holds the discovery
+`SecretExitDiscoveryKey(exitName)` for that room. `search` writes it, and
+`LearnSecretExit` writes it for a follower moving behind its leader. A nil
+character knows none. `rooms.KnownExits` and every exit filter call it.

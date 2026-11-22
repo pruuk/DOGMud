@@ -598,6 +598,17 @@ func newMobByIdInternal(mobId MobId, homeRoomId int, skipInstanceLoad bool, forc
 			copy(adjCopy, mob.Character.Adjectives)
 			mob.Character.Adjectives = adjCopy
 		}
+		// Discoveries is written per instance: a search find, and since #781 a
+		// secret exit learned behind a leader. An authored discoveries: map
+		// would otherwise be shared by every spawn of the template, so one
+		// mob's find would teach them all.
+		if mob.Character.Discoveries != nil {
+			discCopy := make(map[int][]string, len(mob.Character.Discoveries))
+			for roomId, keys := range mob.Character.Discoveries {
+				discCopy[roomId] = append([]string(nil), keys...)
+			}
+			mob.Character.Discoveries = discCopy
+		}
 
 		// Stage 38.4: Try to load a saved instance (progression data from disk).
 		// If found, apply saved training values instead of randomizing.
