@@ -1548,17 +1548,19 @@ func (r *Room) GetRandomExitWhere(keep func(exitName string, roomId int) bool) (
 // exits stay out, as in GetRandomExit.
 func (r *Room) GetRandomKnownExit(char *characters.Character) (exitName string, roomId int) {
 	return r.randomExit(func(name string, ex exit.RoomExit) bool {
-		return !ex.Secret || char.KnowsSecretExit(r.RoomId, name)
+		return r.exitKnown(char, name, ex)
 	}, nil)
 }
 
 // randomExit picks uniformly among the unlocked room and mutator exits allowed
-// accepts and keep (nil keeps every one) accepts.
+// accepts and keep (nil keeps every one) accepts. A name means the exit
+// permanentExits settles on (an active mutator's takes the place of the
+// room's), so allowed judges the exit a mover would actually take.
 func (r *Room) randomExit(allowed func(exitName string, ex exit.RoomExit) bool, keep func(exitName string, roomId int) bool) (exitName string, roomId int) {
 
 	allExits := map[string]int{}
 
-	for exitName, ex := range r.Exits {
+	for exitName, ex := range r.permanentExits() {
 		if !allowed(exitName, ex) {
 			continue
 		}
@@ -1567,19 +1569,6 @@ func (r *Room) randomExit(allowed func(exitName string, ex exit.RoomExit) bool, 
 		}
 
 		allExits[exitName] = ex.RoomId
-	}
-
-	for mut := range r.ActiveMutators {
-		spec := mut.GetSpec()
-		for exitName, ex := range spec.Exits {
-			if !allowed(exitName, ex) {
-				continue
-			}
-			if ex.Lock.IsLocked() {
-				continue
-			}
-			allExits[exitName] = ex.RoomId
-		}
 	}
 
 	if keep != nil {
@@ -2701,31 +2690,28 @@ func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomI
 // no secret exit.
 func (r *Room) FindKnownExitByName(char *characters.Character, exitNameSearch string) (exitName string, exitRoomId int) {
 	return r.findExitByName(exitNameSearch, func(name string, ex exit.RoomExit) bool {
-		return !ex.Secret || char.KnowsSecretExit(r.RoomId, name)
+		return r.exitKnown(char, name, ex)
 	})
 }
 
 // findExitByName is FindExitByName over the room and mutator exits usable
-// accepts. Temporary exits are never secret and are always searched.
+// accepts. A name means the exit permanentExits settles on (an active
+// mutator's takes the place of the room's, GetExitInfo's rule), and usable
+// judges that exit. Temporary exits are never secret and are always searched.
 func (r *Room) findExitByName(exitNameSearch string, usable func(name string, ex exit.RoomExit) bool) (exitName string, exitRoomId int) {
+
+	permanent := r.permanentExits()
 
 	// Check for direction aliases from keywords.yaml first
 	fullDirection := keywords.TryDirectionAlias(exitNameSearch)
 	if fullDirection != exitNameSearch {
 		// A direction alias was found, check if this exact direction exists
-		if exitInfo, ok := r.Exits[fullDirection]; ok && usable(fullDirection, exitInfo) {
+		if exitInfo, ok := permanent[fullDirection]; ok && usable(fullDirection, exitInfo) {
 			return fullDirection, exitInfo.RoomId
 		}
 		// Check temporary exits
 		if tempExit, ok := r.ExitsTemp[fullDirection]; ok {
 			return fullDirection, tempExit.RoomId
-		}
-		// Check mutator exits
-		for mut := range r.ActiveMutators {
-			spec := mut.GetSpec()
-			if exitInfo, ok := spec.Exits[fullDirection]; ok && usable(fullDirection, exitInfo) {
-				return fullDirection, exitInfo.RoomId
-			}
 		}
 		// Direction alias used but exit doesn't exist
 		return ``, 0
@@ -2733,26 +2719,16 @@ func (r *Room) findExitByName(exitNameSearch string, usable func(name string, ex
 
 	// Build list of all exits for fuzzy matching
 	exitNames := []string{}
-	for exitName, exitInfo := range r.Exits {
+	usableExits := map[string]exit.RoomExit{}
+	for exitName, exitInfo := range permanent {
 		if usable(exitName, exitInfo) {
+			usableExits[exitName] = exitInfo
 			exitNames = append(exitNames, exitName)
 		}
 	}
 
 	for exitName := range r.ExitsTemp {
 		exitNames = append(exitNames, exitName)
-	}
-
-	mutatorExits := map[string]exit.RoomExit{}
-	for mut := range r.ActiveMutators {
-		spec := mut.GetSpec()
-		for exitName, exitInfo := range spec.Exits {
-			if !usable(exitName, exitInfo) {
-				continue
-			}
-			mutatorExits[exitName] = exitInfo
-			exitNames = append(exitNames, exitName)
-		}
 	}
 
 	// Use fuzzy matching for all exits
@@ -2779,16 +2755,12 @@ func (r *Room) findExitByName(exitNameSearch string, usable func(name string, ex
 		return "", 0
 	}
 
-	if exitInfo, ok := r.Exits[exactMatch]; ok && usable(exactMatch, exitInfo) {
+	if exitInfo, ok := usableExits[exactMatch]; ok {
 		return exactMatch, exitInfo.RoomId
 	}
 
 	if exitInfo, ok := r.ExitsTemp[exactMatch]; ok {
 		return exitInfo.Title, exitInfo.RoomId
-	}
-
-	if exitInfo, ok := mutatorExits[exactMatch]; ok {
-		return exactMatch, exitInfo.RoomId
 	}
 
 	return "", 0

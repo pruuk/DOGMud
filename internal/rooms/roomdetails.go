@@ -25,6 +25,10 @@ type RoomTemplateDetails struct {
 	VisibleCorpses []string
 	VisibleExits   map[string]exit.RoomExit
 	TemporaryExits map[string]exit.TemporaryRoomExit
+	// ExitsDark is true when the viewer sees nothing in the room
+	// (KnownExitList.Dark): both exit maps are empty because nothing is seen,
+	// not because there is no way out, so no exits line may say "None" (#781).
+	ExitsDark      bool
 	UserId         int
 	Character      *characters.Character
 	RoomSymbol     string
@@ -362,8 +366,10 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	// The exits line lists what the viewer knows of this room's exits, the
 	// one rule Room.Info, the maps and the touch buttons read too (KnownExits,
 	// #781): a secret exit once found, mutator and temporary exits, and
-	// nothing at all in the dark.
-	for _, ke := range KnownExits(r, user.Character).Exits {
+	// nothing at all in the dark, which ExitsDark tells apart from no exits.
+	known := knownExitsAt(r, user.Character, sight)
+	details.ExitsDark = known.Dark
+	for _, ke := range known.Exits {
 		if ke.Kind == ExitTemporary {
 			details.TemporaryExits[ke.Name] = ke.Temp
 			continue

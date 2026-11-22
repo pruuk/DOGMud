@@ -963,9 +963,16 @@ The filters on the same rule: `ExitKnownTo(char, name)`,
 `FindKnownExitByName(char, search)` (every player path that names an exit;
 `internal/guards/exit_lookup_guard_test.go` registers the unfiltered
 `FindExitByName` callers), `FindKnownExitTo(char, roomId)` and
-`GetRandomKnownExit(char)` (NPC choice points, ruling 13). The unfiltered
-`FindExitByName`, `FindExitTo` and `GetRandomExit` keep their old answers for
-mob moves, scripted routes and flee.
+`GetRandomKnownExit(char)` (NPC choice points, ruling 13). Each resolves a
+name through `permanentExits` (or `GetExitInfo`, the same rule) before
+`exitKnown` judges it, so a secret mutator exit over a plain room exit of the
+same name is hidden from all of them alike. The unfiltered `FindExitByName`,
+`FindExitTo` and `GetRandomExit` keep their old answers for mob moves,
+scripted routes and flee; `FindExitByName` and `GetRandomExit` share the
+merge, so a mutator exit takes the place of the room exit there too.
 
-`GetDetails` fills `VisibleExits` and `TemporaryExits` from `KnownExits`, so
-the exits line follows the same rule; at no sight both are empty.
+`GetDetails` fills `VisibleExits` and `TemporaryExits` from `knownExitsAt`
+(`KnownExits` with the sight `GetDetails` already read for the roster), so
+the exits line follows the same rule. At no sight both are empty and
+`ExitsDark` is set, so no exits line reads "None": `exits` gives look's
+no-sight line and `lookRoom` leaves the line out.

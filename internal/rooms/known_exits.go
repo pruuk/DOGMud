@@ -73,13 +73,19 @@ type KnownExitList struct {
 // ParticipantSight) the list is dark and empty. A nil c sees fully and knows
 // no secret exit. Exits come in exitOrder, then A to Z.
 func KnownExits(r *Room, c *characters.Character) KnownExitList {
+	return knownExitsAt(r, c, messaging.ParticipantSight(c, r))
+}
+
+// knownExitsAt is KnownExits for a caller that already holds c's sight in r
+// (GetDetails reads it once for the roster too).
+func knownExitsAt(r *Room, c *characters.Character, sight messaging.SightDecision) KnownExitList {
 	list := KnownExitList{Exits: []KnownExit{}}
-	if messaging.ParticipantSight(c, r) == messaging.SightNone {
+	if sight == messaging.SightNone {
 		list.Dark = true
 		return list
 	}
 	for name, ex := range r.permanentExits() {
-		if ex.Secret && !c.KnowsSecretExit(r.RoomId, name) {
+		if !r.exitKnown(c, name, ex) {
 			continue
 		}
 		list.Exits = append(list.Exits, KnownExit{
@@ -118,9 +124,18 @@ func knownExitRank(k KnownExit) int {
 	return len(exitOrder)
 }
 
+// exitKnown is the one test every known-exit filter applies to a room or
+// mutator exit, after permanentExits (or GetExitInfo) has settled which exit
+// a name means: not secret, or a secret one char found.
+func (r *Room) exitKnown(char *characters.Character, exitName string, ex exit.RoomExit) bool {
+	return !ex.Secret || char.KnowsSecretExit(r.RoomId, exitName)
+}
+
 // permanentExits is every room and mutator exit of r by name. The first
 // active mutator holding a name takes the place of the room exit and of later
-// mutators, GetExitInfo's rule.
+// mutators, GetExitInfo's rule. Every known-exit filter resolves a name
+// through it, so a secret mutator exit over a plain room exit of the same
+// name is hidden from all of them alike.
 func (r *Room) permanentExits() map[string]exit.RoomExit {
 	all := make(map[string]exit.RoomExit, len(r.Exits))
 	for name, ex := range r.Exits {
@@ -149,7 +164,7 @@ func (r *Room) permanentExits() map[string]exit.RoomExit {
 // points ask it (owner ruling 13).
 func (r *Room) ExitKnownTo(char *characters.Character, exitName string) bool {
 	if ex, ok := r.GetExitInfo(exitName); ok {
-		return !ex.Secret || char.KnowsSecretExit(r.RoomId, exitName)
+		return r.exitKnown(char, exitName, ex)
 	}
 	_, ok := r.ExitsTemp[exitName]
 	return ok
@@ -157,28 +172,18 @@ func (r *Room) ExitKnownTo(char *characters.Character, exitName string) bool {
 
 // FindKnownExitTo is FindExitTo among the exits char knows (ExitKnownTo): the
 // exit of r that leads to roomId, or "" when the only way there is a secret
-// exit char has not found. An NPC heading for a room on its own uses it
-// (owner ruling 13).
+// exit char has not found. A room exit a mutator exit has taken the place of
+// leads nowhere. An NPC heading for a room on its own uses it (owner ruling
+// 13).
 func (r *Room) FindKnownExitTo(char *characters.Character, roomId int) string {
-	for exitName, ex := range r.Exits {
-		if ex.RoomId == roomId && r.ExitKnownTo(char, exitName) {
+	for exitName, ex := range r.permanentExits() {
+		if ex.RoomId == roomId && r.exitKnown(char, exitName, ex) {
 			return exitName
 		}
 	}
 	for _, ex := range r.ExitsTemp {
 		if ex.RoomId == roomId {
 			return ex.Title
-		}
-	}
-	for mut := range r.ActiveMutators {
-		spec := mut.GetSpec()
-		if spec == nil {
-			continue
-		}
-		for exitName, ex := range spec.Exits {
-			if ex.RoomId == roomId && r.ExitKnownTo(char, exitName) {
-				return exitName
-			}
 		}
 	}
 	return ""

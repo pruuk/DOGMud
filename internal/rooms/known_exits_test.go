@@ -241,6 +241,66 @@ func TestGetRandomKnownExit(t *testing.T) {
 	}
 }
 
+// One mutator rule everywhere (GetExitInfo's): an active mutator's exit takes
+// the place of the room exit of the same name. A secret mutator west the
+// mover has not found, over a plain room west, hides west from every filter
+// alike; once found, every filter answers the mutator's west.
+func TestKnownExitFilters_MutatorExitTakesThePlaceOfTheRoomExit(t *testing.T) {
+	r, c := knownExitsRoom(t, true)
+	r.Exits["west"] = exit.RoomExit{RoomId: 5}
+	t.Cleanup(mutators.SeedSpecsForTest(mutators.MutatorSpec{
+		MutatorId: "test-known-false-wall",
+		Exits:     map[string]exit.RoomExit{"west": {RoomId: 9, Secret: true}},
+	}))
+	if !GetZoneConfig("TestZone").Mutators.Add("test-known-false-wall") {
+		t.Fatal("fixture premise: the mutator must attach")
+	}
+
+	if names := knownNames(KnownExits(r, c)); equalStrings(names, []string{"north", "east", "south", "west"}) {
+		t.Errorf("KnownExits listed the shadowed room west: %v", names)
+	}
+	if r.ExitKnownTo(c, "west") {
+		t.Error("ExitKnownTo: the unfound mutator west must not be known")
+	}
+	for _, guess := range []string{"west", "w", "wes"} {
+		if name, id := r.FindKnownExitByName(c, guess); name != "" {
+			t.Errorf("FindKnownExitByName(%q) = %q (%d), want nothing", guess, name, id)
+		}
+	}
+	for _, roomId := range []int{9, 5} {
+		if got := r.FindKnownExitTo(c, roomId); got != "" {
+			t.Errorf("FindKnownExitTo(%d) = %q, want nothing", roomId, got)
+		}
+	}
+	for i := 0; i < 100; i++ {
+		if name, _ := r.GetRandomKnownExit(c); name == "west" {
+			t.Fatal("GetRandomKnownExit picked the shadowed room west")
+		}
+	}
+
+	c.LearnSecretExit(1, "west")
+	if ke := knownExit(t, KnownExits(r, c), "west"); ke.RoomId != 9 {
+		t.Errorf("KnownExits west leads to %d, want the mutator's 9", ke.RoomId)
+	}
+	if name, id := r.FindKnownExitByName(c, "w"); name != "west" || id != 9 {
+		t.Errorf("FindKnownExitByName(w) = %q (%d), want west (9)", name, id)
+	}
+	if name, id := r.FindKnownExitByName(c, "wes"); name != "west" || id != 9 {
+		t.Errorf("FindKnownExitByName(wes) = %q (%d), want west (9)", name, id)
+	}
+	if got := r.FindKnownExitTo(c, 9); got != "west" {
+		t.Errorf("FindKnownExitTo(9) = %q, want west", got)
+	}
+	if got := r.FindKnownExitTo(c, 5); got != "" {
+		t.Errorf("FindKnownExitTo(5) = %q, want nothing (the room west is shadowed)", got)
+	}
+	for i := 0; i < 100; i++ {
+		if name, id := r.GetRandomKnownExit(c); name == "west" && id != 9 {
+			t.Fatalf("GetRandomKnownExit picked west to %d, want the mutator's 9", id)
+		}
+	}
+}
+
 func equalStrings(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
@@ -285,5 +345,11 @@ func TestGetDetails_ExitsLineReadsKnownExits(t *testing.T) {
 	dark := GetDetails(r, viewer)
 	if len(dark.VisibleExits) != 0 || len(dark.TemporaryExits) != 0 {
 		t.Errorf("the dark listed %v and %v", dark.VisibleExits, dark.TemporaryExits)
+	}
+	if !dark.ExitsDark {
+		t.Error("ExitsDark must tell the dark apart from a room with no exits")
+	}
+	if d.ExitsDark {
+		t.Error("a lit room's exits are not dark")
 	}
 }

@@ -923,8 +923,13 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 		user.SendText(messaging.CategoryRoomDescription, textOut)
 	}
 
-	textOut, _ = templates.Process("descriptions/exits", details, user.UserId)
-	user.SendText(messaging.CategoryRoomDescription, textOut)
+	// Peering into a pitch-dark room lists none of its exits (rooms.KnownExits,
+	// #781). The line is left out, as the roster is, rather than reading
+	// "Exits: None", which would not be true.
+	if !details.ExitsDark {
+		textOut, _ = templates.Process("descriptions/exits", details, user.UserId)
+		user.SendText(messaging.CategoryRoomDescription, textOut)
+	}
 
 }
 
