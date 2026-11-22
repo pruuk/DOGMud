@@ -81,6 +81,21 @@ func TestAbandonQuest_EmptyGiverNameFallsBack(t *testing.T) {
 	require.Equal(t, "You set The Hunt aside. Talk to the one who gave it to you to take it up again. You will pick up where you left off.", line)
 }
 
+func TestQuestGiver_NamesEveryGiver(t *testing.T) {
+	u := questlogFixture(t)
+	t.Cleanup(dialogue.SetOfferIndexForTest(map[int][]int{42: {9137, 9138}}))
+	t.Cleanup(setGiverNameForTest(map[int]string{9137: "Hunter Delk", 9138: "Warden Pike"}))
+	require.Equal(t, "Hunter Delk or Warden Pike", QuestGiver(42))
+
+	events.DrainQueuedQuestsForTest()
+	_, line := AbandonQuest(u, 42)
+	require.Contains(t, line, "Talk to Hunter Delk or Warden Pike to take it up again.")
+
+	t.Cleanup(dialogue.SetOfferIndexForTest(map[int][]int{42: {9137, 9138, 9139, 9140}}))
+	t.Cleanup(setGiverNameForTest(map[int]string{9137: "Hunter Delk", 9138: "Warden Pike", 9139: "Hunter Delk", 9140: "Sister Wren"}))
+	require.Equal(t, "Hunter Delk, Warden Pike or Sister Wren", QuestGiver(42), "a repeated name appears once")
+}
+
 func TestFindActiveQuest(t *testing.T) {
 	u := questlogFixture(t)
 	for name, want := range map[string]int{"hunt": 42, "The Hunt": 42, "secret": 0, "dragon": 0} {

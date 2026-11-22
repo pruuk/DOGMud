@@ -118,6 +118,10 @@ begins `<ansi` or `</ansi`), leaves every other `<` alone so `<3` and `a < b`
 still read naturally, and is idempotent so persisted fields can be escaped both
 on write and on render.
 
+**`JoinAnd` / `JoinOr` render a list as plain English** (`util.go`): "a", "a and
+b", "a, b and c" (and the same with "or" for a list of alternatives). Use them
+rather than a local joiner.
+
 ## Matching
 
 ```go

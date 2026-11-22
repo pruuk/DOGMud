@@ -498,8 +498,9 @@ functions; do not reimplement them.
   because it is abandon policy, not a fact about offers: `dialogue.Resumable`
   keeps meaning "an offer can show again". `SetAutoStartedForTest` returns a
   restore func.
-- `QuestGiver(questId) string`: the first resuming NPC's name (else the first
-  offering NPC's), else "the one who gave it to you".
+- `QuestGiver(questId) string`: every resuming NPC's name (else every
+  offering NPC's), deduplicated, in mob id order, joined with `util.JoinOr`
+  ("A or B", "A, B or C"); "the one who gave it to you" when none has a name.
 - `SendQuestLogLine(user, ok, line)`: sends the reply, wrapped to the reader's
   width with `messaging.WrapAnsi` because `CategorySystem` is never wrapped.
 
