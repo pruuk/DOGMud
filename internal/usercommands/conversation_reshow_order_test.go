@@ -56,6 +56,7 @@ func deliveredInOrder(t *testing.T) []string {
 		}
 		return events.Continue
 	})
+	events.RegisterListener(events.TalkMenuAgain{}, conversation.HandleTalkMenuAgain)
 	events.RegisterListener(events.Quest{}, func(e events.Event) events.ListenerReturn {
 		q := e.(events.Quest)
 		if u := users.GetByUserId(q.UserId); u != nil {
@@ -90,9 +91,10 @@ func TestTalk_ReshownMenuComesAfterTheQuestBanner(t *testing.T) {
 		require.True(t, user.RouteMenuInput("1", true), "1 is the offer")
 		drained(1)
 		require.True(t, user.RouteMenuInput("1", true), "1 is Accept")
-		require.True(t, user.HasOpenMenu(), "the menu is re-shown at once, for input")
+		require.False(t, user.HasOpenMenu(), "the menu is queued behind the grant (#940)")
 
 		got := deliveredInOrder(t)
+		require.True(t, user.HasOpenMenu(), "the menu is re-shown for input once the queue has run")
 		banner, menuAt := indexOf(got, reshowBanner+"7-start"), indexOf(got, "Talking with")
 		require.GreaterOrEqual(t, banner, 0, "%q", got)
 		require.Greater(t, menuAt, indexOf(got, "You receive 10 gold!"), "the menu printed before the banner and rewards: %q", got)

@@ -68,9 +68,11 @@ func HandleTalkNextOffer(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
-// HandleTalkMenuAgain re-shows the talk menu queued by an accepted offer for a
-// held item. While a menu gate holds or a prompt is open nothing opens, and the
-// hand-in waits in the talk menu with its [?].
+// HandleTalkMenuAgain re-shows the talk menu queued by every accepted offer,
+// after the grant and its step-start chain have run (#940: a quest_granted
+// trigger may move the step before the menu should be drawn). While a menu gate
+// holds or a prompt is open nothing opens, and the hand-in waits in the talk
+// menu with its [?].
 func HandleTalkMenuAgain(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.TalkMenuAgain)
 	if !ok {

@@ -359,7 +359,11 @@ func offerCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic, prefer 
 		if closes {
 			return
 		}
-		if granted != "" && t.CarriesItem > 0 {
+		// Every granted offer redraws the menu from the event queue, so the
+		// grant and its step-start chain run first: a quest_granted trigger
+		// may move the step (a trainer's own offer skips the arrival talk,
+		// #940), and an immediate menu would still show the skipped topic.
+		if granted != "" {
 			events.AddToQueue(events.TalkMenuAgain{UserId: user.UserId, MobInstanceId: inst}, events.TalkNextOfferPriority)
 			return
 		}

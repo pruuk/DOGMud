@@ -75,11 +75,19 @@ func TestOffer_AcceptingAHeldItemsOfferQueuesTheMenuInsteadOfOpeningIt(t *testin
 	require.Equal(t, []string{"Quest", "TalkMenuAgain"}, relevant, "the grant runs before the menu")
 }
 
-func TestOffer_AcceptingAnOrdinaryOffersReshowsTheMenuAtOnce(t *testing.T) {
+// Every accepted offer queues the menu, not only one for a held item (#940):
+// a quest_granted trigger may move the step, and the menu must be drawn after.
+func TestOffer_AcceptingAnOrdinaryOfferQueuesTheMenuToo(t *testing.T) {
 	open, queued, done := acceptHunt(t, menuAgainPlainYAML)
 	defer done()
-	require.True(t, open, "positive control: an ordinary offer opens the menu itself")
-	require.NotContains(t, queued, "TalkMenuAgain")
+	require.False(t, open, "the menu waits for the quest chain")
+	var relevant []string
+	for _, ty := range queued {
+		if ty == "Quest" || ty == "TalkMenuAgain" {
+			relevant = append(relevant, ty)
+		}
+	}
+	require.Equal(t, []string{"Quest", "TalkMenuAgain"}, relevant, "the grant runs before the menu")
 }
 
 func TestHandleTalkMenuAgain_OpensTheTalkMenu(t *testing.T) {

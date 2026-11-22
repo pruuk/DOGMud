@@ -70,6 +70,7 @@ func newSpineWalk(t *testing.T) *spineWalk {
 	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
 	events.RegisterListener(events.Quest{}, hooks.HandleQuestUpdate)
 	events.RegisterListener(events.TalkNextOffer{}, conversation.HandleTalkNextOffer)
+	events.RegisterListener(events.TalkMenuAgain{}, conversation.HandleTalkMenuAgain)
 	events.RegisterListener(events.RoomChange{}, hooks.QuestRoomEnter)
 	events.RegisterListener(events.RoomChange{}, hooks.MenuCloseOnRoomChange)
 	events.RegisterListener(events.ItemOwnership{}, hooks.CheckItemQuests)
@@ -605,17 +606,18 @@ func TestSmoke_TrainerDoorsSkipTheArrivalTalk(t *testing.T) {
 		trainer int
 		room    int
 		door    string
+		arrive  string // the arrival topic the skip makes untrue
 		second  string
 		items   []int
 	}{
-		{"Vorn", 32, 9108, 5227, "drill_offer", "met", []int{10043}},
-		{"Rusk", 35, 9116, 5245, "heat_start", "met", nil},
-		{"Birna", 38, 9128, 5265, "brew_start", "met", nil},
-		{"Tarn", 41, 9136, 5283, "sign_start", "met", nil},
-		{"Grieve", 44, 9144, 5303, "cast_start", "met", nil},
-		{"Wenna", 47, 9153, 5324, "words_start", "met", nil},
-		{"Iden", 50, 9161, 5350, "shoot_start", "met", []int{10038, 30064}},
-		{"Gethin", 98, 9125, 5255, "light_start", "lantern", []int{20097}},
+		{"Vorn", 32, 9108, 5227, "drill_offer", "drill_arrive", "met", []int{10043}},
+		{"Rusk", 35, 9116, 5245, "heat_start", "heat_arrive", "met", nil},
+		{"Birna", 38, 9128, 5265, "brew_start", "brew_arrive", "met", nil},
+		{"Tarn", 41, 9136, 5283, "sign_start", "sign_arrive", "met", nil},
+		{"Grieve", 44, 9144, 5303, "cast_start", "cast_lesson", "met", nil},
+		{"Wenna", 47, 9153, 5324, "words_start", "words_lesson", "met", nil},
+		{"Iden", 50, 9161, 5350, "shoot_start", "shoot_lesson", "met", []int{10038, 30064}},
+		{"Gethin", 98, 9125, 5255, "light_start", "first_light_lantern", "lantern", []int{20097}},
 	}
 	for _, d := range doors {
 		t.Run(d.name, func(t *testing.T) {
@@ -630,7 +632,32 @@ func TestSmoke_TrainerDoorsSkipTheArrivalTalk(t *testing.T) {
 			if !w.onMenu(d.trainer, d.door) {
 				t.Fatalf("%s is not on the menu after Find Your Footing", d.door)
 			}
-			w.offer(d.trainer, d.door, fmt.Sprintf("%d-start", d.quest))
+			arrive := w.df(d.trainer).FindTopic(d.arrive)
+			if arrive == nil {
+				t.Fatalf("mob %d has no arrival topic %s", d.trainer, d.arrive)
+			}
+			start := fmt.Sprintf("%d-start", d.quest)
+			w.talk(d.trainer)
+			w.choose(d.door)
+			w.pump()
+			if w.user.Character.HasQuest(start) {
+				t.Fatalf("topic %s granted %s before Accept", d.door, start)
+			}
+			w.choose("yes")
+			w.pump()
+			w.requireHeld(start)
+			// The talk menu is open again once the queue has drained. It is
+			// drawn after the quest_granted trigger has moved the step, so it
+			// must not offer the arrival talk. The menu has no reader, so the
+			// test types the arrival topic's label: a label on the menu is
+			// chosen (true), and one that is not closes the menu as another
+			// command (false).
+			if !w.user.HasOpenMenu() {
+				t.Fatal("the talk menu was not redrawn after Accept")
+			}
+			if w.user.RouteMenuInput(arrive.Label, true) {
+				t.Errorf("the menu after Accept still offers the arrival topic %s (%q)", d.arrive, arrive.Label)
+			}
 			w.step(d.quest, d.second, d.name+"'s "+d.door)
 			for _, id := range d.items {
 				if !w.user.Character.CarriesItem(id) {
