@@ -54,7 +54,7 @@ const PartyFollowLostLine = `You can't see where the party leader went, so you s
 
 func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
-	exitResult := actions.FindExit(room, rest)
+	exitResult := actions.FindKnownExit(room, user.Character, rest)
 	exitName, goRoomId := exitResult.ExitName, exitResult.RoomId
 
 	// If no valid exit, check if it's a recognized cardinal direction (handled below

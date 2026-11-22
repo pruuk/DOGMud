@@ -418,6 +418,16 @@ placement and call these bodies once, right before relocating.
 `move_wrapper_guard_test.go` (internal/guards) greps both wrapper files for a
 second price or detection implementation.
 
+**Known exits (#781).** `FindKnownExit(room, char, name)` (`go.go`) is
+`FindExit` for a mover who knows only some exits (`Room.FindKnownExitByName`):
+a secret exit the mover has not found is not found. Every player path uses it
+or `FindKnownExitByName` (`ResolveLook`, `ShotSight`, `ExecuteFire`,
+`resolveDefuseLockTarget` here; `go`, `lock`, `unlock`, `picklock`, `shoot`
+in `usercommands`), so an unfound secret exit is not looked, shot or walked
+through. Mob moves keep `FindExit` (`QuoteMobStep`, `mobcommands.Go`), since
+a scripted route takes its secret exits; `internal/guards/exit_lookup_guard_test.go`
+registers every unfiltered lookup with its reason.
+
 **Cost:**
 
 ```go

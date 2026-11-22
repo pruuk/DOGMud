@@ -135,10 +135,10 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 		return res
 	}
 
-	exitName, exitRoomId := room.FindExitByName(lookAt)
+	exitName, exitRoomId := room.FindKnownExitByName(char, lookAt)
 	if exitName == `` {
 		if alias := keywords.TryDirectionAlias(lookAt); alias != lookAt {
-			if exitName, exitRoomId = room.FindExitByName(alias); exitName != `` {
+			if exitName, exitRoomId = room.FindKnownExitByName(char, alias); exitName != `` {
 				res.LookAt = alias
 			}
 		}

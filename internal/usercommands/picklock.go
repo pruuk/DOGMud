@@ -60,7 +60,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	lockRotation := uint64(0)
 
 	containerName := room.FindVisibleContainerByName(characterOf(user), args[0])
-	exitName, _ := room.FindExitByName(args[0])
+	exitName, _ := room.FindKnownExitByName(characterOf(user), args[0])
 
 	if containerName != `` {
 

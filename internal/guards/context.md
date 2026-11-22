@@ -26,6 +26,12 @@ package main.
   `quest_given_ways_out_guard_test.go` (#940: every `RemoveItem` call site is
   classified as consumed, replaced-in-place, quest-given-checked or
   not-a-leave, so a new way out cannot skip `actions.VanishQuestGiven`),
+  `exit_lookup_guard_test.go` (#781: every unfiltered exit lookup,
+  `Room.FindExitByName` or `actions.FindExit`, in `internal/` and `modules/`
+  is registered per function with a count and a reason; a player path must
+  use `Room.FindKnownExitByName` / `actions.FindKnownExit`, so a guess at an
+  unfound secret exit reveals nothing; `TestExitLookupGuardCanFail` proves
+  the scanner fires),
   `client_type_guard_test.go` (the web client's and site's fonts,
   sizes and weights read the tokens in `gomud.css`), the
   `*_wrapper_guard_test.go` files

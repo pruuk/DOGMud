@@ -50,6 +50,13 @@ The `internal/usercommands` package implements the complete command system for p
   so `GetDetails` sets `ExitsDark`: then `exits` answers with look's no-sight
   line (`noSightRefusal`), and `lookRoom` leaves the exits line out when
   peering into a pitch-dark room, as the roster is, instead of "Exits: None".
+  Every verb that names an exit (`go` and the bare exit word in `TryCommand`
+  and `fallbackRoute`, `look`, `lock`, `unlock`, `picklock`, `shoot`)
+  resolves it with `Room.FindKnownExitByName(characterOf(user), ...)` or
+  `actions.FindKnownExit`: an unfound secret exit answers "You're bumping
+  into walls." for a compass word and "not recognized" otherwise, exactly as
+  no exit (#781, owner ruling 1). `keyring` keeps `FindExitByName`, registered
+  in `internal/guards/exit_lookup_guard_test.go`.
 - **Inventory**: `inventory`, `get`, `drop`, `give`, `put` - Item management
 - **Quaff** (`quaff.go`, drink path unification 2026-09-28, renamed in #375
   phase 7): `Quaff` is a wrapper over `actions.Quaff`, which holds every potion

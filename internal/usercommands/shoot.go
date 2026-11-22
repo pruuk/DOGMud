@@ -725,7 +725,7 @@ func resolveShootTarget(room *rooms.Room, rest string, viewer *characters.Charac
 	targetRoom = room
 	targetWords := args
 	if len(args) >= 2 {
-		if name, roomId := room.FindExitByName(args[len(args)-1]); name != "" {
+		if name, roomId := room.FindKnownExitByName(viewer, args[len(args)-1]); name != "" {
 			if actions.ShotExitClosed(shooter, room, name, roomId) {
 				return 0, 0, room, false
 			}

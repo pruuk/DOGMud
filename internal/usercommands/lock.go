@@ -28,7 +28,7 @@ func Lock(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	containerName := room.FindVisibleContainerByName(characterOf(user), args[0])
-	exitName, _ := room.FindExitByName(args[0])
+	exitName, _ := room.FindKnownExitByName(characterOf(user), args[0])
 
 	if containerName != `` {
 

@@ -113,7 +113,7 @@ func ShotSight(viewer *characters.Character, room *rooms.Room, rest string) mess
 	}
 	args := strings.Fields(rest)
 	if len(args) >= 2 {
-		if name, roomId := room.FindExitByName(args[len(args)-1]); name != "" {
+		if name, roomId := room.FindKnownExitByName(viewer, args[len(args)-1]); name != "" {
 			if adj := rooms.LoadRoom(roomId); adj != nil {
 				sight, reaches := scanReach(viewer, room, adj)
 				if !reaches {
@@ -225,7 +225,7 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	targetWords := args
 
 	if len(args) >= 2 {
-		if name, roomId := room.FindExitByName(args[len(args)-1]); name != "" {
+		if name, roomId := room.FindKnownExitByName(actor.GetCharacter(), args[len(args)-1]); name != "" {
 			if ShotExitClosed(actor, room, name, roomId) {
 				return FireResult{WeaponName: weapon.DisplayName(), ExitName: name, ExitLocked: true}
 			}

@@ -215,7 +215,7 @@ func resolveDefuseLockTarget(actor Actor, room *rooms.Room, noun string) defuseL
 	}
 
 	// Try exits.
-	exitName, _ := room.FindExitByName(noun)
+	exitName, _ := room.FindKnownExitByName(actor.GetCharacter(), noun)
 	if exitName != "" {
 		exitInfo, ok := room.GetExitInfo(exitName)
 		if ok {
