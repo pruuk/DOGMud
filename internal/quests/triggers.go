@@ -152,8 +152,6 @@ type ActionDef struct {
 	RoomText             string              `yaml:"observer,omitempty" json:"observer,omitempty"`
 	SpawnMob             *SpawnDef           `yaml:"spawn_mob,omitempty" json:"spawn_mob,omitempty"`
 	SpawnItem            *SpawnDef           `yaml:"spawn_item,omitempty" json:"spawn_item,omitempty"`
-	LockExits            *ExitLock           `yaml:"lock_exits,omitempty" json:"lock_exits,omitempty"`
-	UnlockExits          *ExitLock           `yaml:"unlock_exits,omitempty" json:"unlock_exits,omitempty"`
 	TeachSpell           string              `yaml:"teach_spell,omitempty" json:"teach_spell,omitempty"`
 	TrainSkill           *SkillDef           `yaml:"train_skill,omitempty" json:"train_skill,omitempty"`
 	TrainStat            *StatDef            `yaml:"train_stat,omitempty" json:"train_stat,omitempty"`
@@ -227,11 +225,6 @@ type SayLineDef struct {
 type SpawnDef struct {
 	Id   int `yaml:"id" json:"id"`     // mob or item ID
 	Room int `yaml:"room" json:"room"` // room to spawn in
-}
-
-type ExitLock struct {
-	Room         int  `yaml:"room" json:"room"`
-	PlayerScoped bool `yaml:"player_scoped,omitempty" json:"player_scoped,omitempty"` // only affect this player
 }
 
 type SkillDef struct {

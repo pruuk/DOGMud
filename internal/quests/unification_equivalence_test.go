@@ -174,8 +174,6 @@ type oldActionDef struct {
 	RoomText       string               `yaml:"observer,omitempty"`
 	SpawnMob       *oldSpawnDef         `yaml:"spawn_mob,omitempty"`
 	SpawnItem      *oldSpawnDef         `yaml:"spawn_item,omitempty"`
-	LockExits      *oldExitLock         `yaml:"lock_exits,omitempty"`
-	UnlockExits    *oldExitLock         `yaml:"unlock_exits,omitempty"`
 	TeachSpell     string               `yaml:"teach_spell,omitempty"`
 	TrainSkill     *oldSkillDef         `yaml:"train_skill,omitempty"`
 	TrainStat      *oldStatDef          `yaml:"train_stat,omitempty"`
@@ -239,11 +237,6 @@ type oldSayLineDef struct {
 type oldSpawnDef struct {
 	Id   int `yaml:"id"`
 	Room int `yaml:"room"`
-}
-
-type oldExitLock struct {
-	Room         int  `yaml:"room"`
-	PlayerScoped bool `yaml:"player_scoped,omitempty"`
 }
 
 type oldSkillDef struct {

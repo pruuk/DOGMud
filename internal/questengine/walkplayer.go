@@ -195,8 +195,6 @@ func (c *walkCtx) IncreaseStat(string, int)                {}
 func (c *walkCtx) LearnRecipe(string)                      {}
 func (c *walkCtx) ApplyStatusCondition(StatusConditionDef) {}
 func (c *walkCtx) Teleport(int)                            {}
-func (c *walkCtx) LockExits(ExitLock)                      {}
-func (c *walkCtx) UnlockExits(ExitLock)                    {}
 func (c *walkCtx) QueueNpcSay(NpcSayDef)                   {}
 func (c *walkCtx) GiveMutation()                           {}
 func (c *walkCtx) DiscoverHiddenNoun(string)               {}

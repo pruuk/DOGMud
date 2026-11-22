@@ -34,8 +34,6 @@ type mockActionContext struct {
 	taughtSpells      []string
 	appliedConditions []StatusConditionDef
 	teleported        int
-	lockedExits       []ExitLock
-	unlockedExits     []ExitLock
 	npcSays           []NpcSayDef
 	sequences         []SequenceDef
 	bumpedRep         []BumpRepCall
@@ -89,8 +87,6 @@ func (m *mockActionContext) ApplyStatusCondition(b StatusConditionDef) {
 	m.appliedConditions = append(m.appliedConditions, b)
 }
 func (m *mockActionContext) Teleport(roomId int)            { m.teleported = roomId }
-func (m *mockActionContext) LockExits(e ExitLock)           { m.lockedExits = append(m.lockedExits, e) }
-func (m *mockActionContext) UnlockExits(e ExitLock)         { m.unlockedExits = append(m.unlockedExits, e) }
 func (m *mockActionContext) QueueNpcSay(n NpcSayDef)        { m.npcSays = append(m.npcSays, n) }
 func (m *mockActionContext) QueueSequence(s SequenceDef)    { m.sequences = append(m.sequences, s) }
 func (m *mockActionContext) GiveMutation()                  {}
@@ -136,15 +132,6 @@ func TestExecuteAction_NpcSay(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, ctx.npcSays, 1)
 	assert.Equal(t, 79, ctx.npcSays[0].Mob)
-}
-
-func TestExecuteAction_LockExits(t *testing.T) {
-	ctx := newMockActionContext(1)
-	lock := &ExitLock{Room: 113, PlayerScoped: true}
-	err := ExecuteAction(ActionDef{LockExits: lock}, ctx)
-	assert.NoError(t, err)
-	assert.Len(t, ctx.lockedExits, 1)
-	assert.True(t, ctx.lockedExits[0].PlayerScoped)
 }
 
 func TestExecuteAction_Teleport(t *testing.T) {

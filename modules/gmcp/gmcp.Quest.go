@@ -192,8 +192,6 @@ var questActionVocab = []vocabEntry{
 	{"observer", "message to the whole room"},
 	{"spawn_mob", "spawn a mob into a room"},
 	{"spawn_item", "spawn an item into a room"},
-	{"lock_exits", "lock a room's exits (optionally player-scoped)"},
-	{"unlock_exits", "unlock a room's exits"},
 	{"teach_spell", "teach the player a spell"},
 	{"train_skill", "raise a skill to a level"},
 	{"train_stat", "raise a stat by an amount"},

@@ -517,30 +517,6 @@ func (b *GameBridge) Teleport(roomId int) {
 	}
 }
 
-// LockExits locks all exits in the specified room.
-func (b *GameBridge) LockExits(e ExitLock) {
-	room := rooms.LoadRoom(e.Room)
-	if room == nil {
-		mudlog.Error("GameBridge.LockExits", "error", fmt.Sprintf("room %d not found", e.Room))
-		return
-	}
-	for exitName := range room.Exits {
-		room.SetExitLock(exitName, true)
-	}
-}
-
-// UnlockExits unlocks all exits in the specified room.
-func (b *GameBridge) UnlockExits(e ExitLock) {
-	room := rooms.LoadRoom(e.Room)
-	if room == nil {
-		mudlog.Error("GameBridge.UnlockExits", "error", fmt.Sprintf("room %d not found", e.Room))
-		return
-	}
-	for exitName := range room.Exits {
-		room.SetExitLock(exitName, false)
-	}
-}
-
 // DiscoverHiddenNoun records key as discovered in the bridge's room, the
 // real room the player stands in (room.RoomId), which is the id look and
 // search check and record with.

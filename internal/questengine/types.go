@@ -20,7 +20,6 @@ type (
 	NpcSayDef          = quests.NpcSayDef
 	SayLineDef         = quests.SayLineDef
 	SpawnDef           = quests.SpawnDef
-	ExitLock           = quests.ExitLock
 	SkillDef           = quests.SkillDef
 	StatDef            = quests.StatDef
 	RecipeDef          = quests.RecipeDef

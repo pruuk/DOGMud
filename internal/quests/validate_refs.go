@@ -204,12 +204,6 @@ func (c *refsCtx) checkActions(where string, actions []ActionDef, depth int, roo
 			c.checkItem(aw+" spawn_item", a.SpawnItem.Id)
 			c.checkRoom(aw+" spawn_item", a.SpawnItem.Room)
 		}
-		if a.LockExits != nil {
-			c.checkRoom(aw+" lock_exits", a.LockExits.Room)
-		}
-		if a.UnlockExits != nil {
-			c.checkRoom(aw+" unlock_exits", a.UnlockExits.Room)
-		}
 		if a.TeachSpell != "" && !c.v.SpellExists(a.TeachSpell) {
 			c.errf("%s: teach_spell %q does not exist", aw, a.TeachSpell)
 		}
