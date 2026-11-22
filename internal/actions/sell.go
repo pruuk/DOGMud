@@ -186,7 +186,7 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 	// is quest gear only when every match is (#940).
 	if probe.IsQuestGiven() {
 		if seller.IsPlayer() {
-			seller.SendText(messaging.CategoryRefusal, sellTellQuestGiven)
+			seller.SendText(messaging.CategoryRefusal, SellTellQuestGiven)
 		}
 		return SellResult{Reason: SellStopRejected}
 	}

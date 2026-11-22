@@ -69,9 +69,7 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	// Quest gear (#940): a bought copy of the same item goes first, as every
 	// way out prefers (characters.FindInBackpackToLetGo).
-	if itm.IsQuestGiven() {
-		itm = salvageBoughtCopyFirst(user, rest, itm)
-	}
+	itm = boughtCopyFirst(rest, itm, user.Character.FindInBackpackToLetGo, user.Character.FindInPotionsToLetGo)
 
 	spec := itm.GetSpec()
 
@@ -232,15 +230,16 @@ func startCorpseSalvage(user *users.UserRecord, room *rooms.Room, corpse rooms.C
 // there cannot even be NAMED by this command. That is a FindItem gap rather
 // than a salvage one, and it is filed separately; actions.salvageItem already
 // searches all three containers, so closing it there is enough.
-// salvageBoughtCopyFirst swaps a found quest copy for an ordinary copy of
-// the same item carried in the backpack or the bandolier, by the let-go
-// lookups' rule (a handle or an explicit count keeps the quest copy). It
-// returns found when there is none.
-func salvageBoughtCopyFirst(user *users.UserRecord, name string, found items.Item) items.Item {
-	for _, find := range []func(string) (items.Item, bool){
-		user.Character.FindInBackpackToLetGo,
-		user.Character.FindInPotionsToLetGo,
-	} {
+// boughtCopyFirst swaps a found quest copy (#940) for an ordinary copy of
+// the same item that one of the let-go lookups finds (a handle or an
+// explicit count keeps the quest copy, as there). A command that names its
+// item through FindItem (salvage, appraise) passes the lookups for the carry
+// lists it reads. It returns found when there is no such copy.
+func boughtCopyFirst(name string, found items.Item, finders ...func(string) (items.Item, bool)) items.Item {
+	if !found.IsQuestGiven() {
+		return found
+	}
+	for _, find := range finders {
 		if other, ok := find(name); ok && other.ItemId == found.ItemId && !other.IsQuestGiven() {
 			return other
 		}

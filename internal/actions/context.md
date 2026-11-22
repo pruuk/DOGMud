@@ -623,10 +623,12 @@ bandolier). Here the fade runs in `TransferItemToFloor` (drop; returns
 any mob but the giver's own charmed one, or a mob giving it to anyone but its
 charmer; a tree's `return_item`, `AcquireTreeGive`, keeps it), so no caller
 can skip it, and in a plant at the moment it succeeds (`plantQuestGearFades`;
-a failed plant keeps it). Salvaging quest gear destroys it with
-`questGearSalvageLine` and recovers nothing: no roll, no award, no success
-(owner ruling 2026-11-22). `QuoteSale` refuses it with the seller's own line
-(`sellTellQuestGiven`), `sell all X` stops at the quest copy as a completed
+a failed plant keeps it, and so does a plant on a target that cannot carry
+it, `Character.CanCarry`). Salvaging quest gear destroys it with
+`QuestGearSalvageLine` and recovers nothing: no roll, no award, no success
+(owner ruling 2026-11-22); the salvage command does it at once, with no
+rounds. `QuoteSale` refuses it with the seller's own line
+(`SellTellQuestGiven`, which appraise also sends before any fee), `sell all X` stops at the quest copy as a completed
 sale, `sellSweep` skips it, and a trade-in (`findTradeInItem`) never takes it
 as payment. Every way out finds its item with the let-go lookups
 (`characters.FindInBackpackToLetGo` and kin), which take an ordinary copy of

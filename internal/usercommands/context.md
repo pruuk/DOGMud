@@ -407,7 +407,12 @@ except light for a screen reader user.
   player's pet, or the giver's own pet with no room, hands it back the same
   way. Only the giver's own charmed mob or own pet keeps it. `look` adds
   `actions.QuestGearLookLine` under it and `inventory` lists it on its own
-  row marked "(quest gear)" (`questGearListName`).
+  row marked "(quest gear)" (`questGearListName`). `salvage` and `appraise`,
+  which name their item through `FindItem`, take a bought copy first
+  (`boughtCopyFirst`); salvaging a quest copy destroys it at once with
+  nothing recovered, and appraising one is refused before the fee with
+  `actions.SellTellQuestGiven`. A tree that hands quest gear back with
+  `return_item` raises no gift (`carriesCopy`).
 - **PlayerState**: `conversation.PlayerState(user)` builds the
   `dialogue.PlayerState` callbacks (`HasQuest`, `HasItem`, `RemoveItem`,
   `GiveQuest`, `GiveItem`, ...). `GiveItem` returns whether the item

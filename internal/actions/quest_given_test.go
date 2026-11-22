@@ -63,7 +63,7 @@ func TestQuestGear_SellByNameIsRefused(t *testing.T) {
 	assert.Equal(t, SellStopRejected, res.Reason)
 	assert.Equal(t, 0, seller.GetCharacter().Gold)
 	assert.Equal(t, 1, countId(seller.GetCharacter().Items, sellTestItemId), "the seller keeps it")
-	assert.Contains(t, strings.Join(events.DrainQueuedMessagesForTest(seller.GetUserId()), "\n"), sellTellQuestGiven)
+	assert.Contains(t, strings.Join(events.DrainQueuedMessagesForTest(seller.GetUserId()), "\n"), SellTellQuestGiven)
 }
 
 func TestQuestGear_SellByNameBoughtCopySells(t *testing.T) {
@@ -98,7 +98,7 @@ func TestQuestGear_SellPrefersTheBoughtCopy(t *testing.T) {
 	res = Sell(seller, SellOptions{ItemName: "iron sword", Quantity: UnlimitedSell})
 	assert.Equal(t, 2, res.Sold)
 	assert.Equal(t, SellStopSoldAll, res.Reason)
-	assert.NotContains(t, strings.Join(events.DrainQueuedMessagesForTest(seller.GetUserId()), "\n"), sellTellQuestGiven,
+	assert.NotContains(t, strings.Join(events.DrainQueuedMessagesForTest(seller.GetUserId()), "\n"), SellTellQuestGiven,
 		"selling the rest is a completed sale, not a refusal")
 	require.Equal(t, 1, countId(seller.GetCharacter().Items, sellTestItemId))
 	assert.True(t, seller.GetCharacter().Items[0].IsQuestGiven())
@@ -125,7 +125,7 @@ func TestQuestGear_QuoteSaleTells(t *testing.T) {
 
 	q := QuoteSale(nil, rooms.LoadRoom(1), merchantInstance(), nil, questGiven(sellTestItemId), true)
 	assert.Equal(t, 0, q.Price)
-	assert.Equal(t, sellTellQuestGiven, q.Tell)
+	assert.Equal(t, SellTellQuestGiven, q.Tell)
 
 	q = QuoteSale(nil, rooms.LoadRoom(1), merchantInstance(), nil, items.New(sellTestItemId), true)
 	assert.Greater(t, q.Price, 0, "a bought copy is quoted as before")
