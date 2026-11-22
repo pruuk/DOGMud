@@ -1,0 +1,30 @@
+# VORN seat: you have finished the town walk (Find Your Footing) and stand in
+# the Drill Yard with Drillmaster Vorn. Quote every game line VERBATIM.
+ephemeral:
+  profile: early
+  start_room: 5227
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end", "88-start", "88-end", "31-start", "31-lantern", "31-end"]
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    Type `look` and quote how Vorn's name is shown, including any mark before
+    it. Type `talk vorn` and quote what he says and the whole menu.
+  - >-
+    Choose the First Blood line. Quote Vorn's words and the whole Accept card
+    before you choose. Say whether anything on the card is false for someone
+    standing in the Drill Yard. Accept, then quote everything that prints,
+    including the menu that comes back. Say whether that menu offers any line
+    about Crier Toke sending you.
+  - >-
+    Type `quests` and `hint` and quote both. Type `inventory` and say whether
+    you carry a cudgel.
+  - >-
+    Play First Blood through to the end by following the hints only. Quote
+    each progress line and the hand-in.
+  - >-
+    Walk to Crier Toke in Hub Square: from the Drill Yard go west four times,
+    then south. Type `talk toke` and quote the whole menu. Say whether First
+    Blood is still offered and whether the other trades are.

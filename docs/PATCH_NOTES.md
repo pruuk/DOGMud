@@ -1,5 +1,10 @@
 # DOGMud Patch Notes
 
+## 2026-11-22: Pothole Coulee teachers offer their own trades
+
+- Once you have walked the town with Crier Toke, each trade's teacher in Pothole Coulee offers you that trade's first quest directly: Drillmaster Vorn, Smith Rusk, Herbalist Birna, Scout Tarn, Adept Grieve, Elder Wenna, Marksman Iden and Lamplighter Gethin. Look for the `[!]` beside their name.
+- Taking a trade from its teacher starts you on the first real lesson, with any starting gear handed over. Toke still offers every trade you have not started.
+
 ## 2026-11-22: Comms shows the newest message, and paging has a help page
 
 - In the Comms panel, choosing a channel now shows its newest message. A small Comms panel used to show the oldest one. If you make the panel smaller, the newest message stays in view, unless you had scrolled up to read older ones.

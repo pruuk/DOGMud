@@ -1,0 +1,25 @@
+# IDEN seat: you have finished the town walk (Find Your Footing) and stand
+# with Marksman Iden on the terraces. Quote every game line VERBATIM.
+ephemeral:
+  profile: early
+  start_room: 5350
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end", "88-start", "88-end", "31-start", "31-lantern", "31-end"]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `look` and quote how Iden's name is shown. Type `talk iden` and quote
+    what Iden says and the whole menu.
+  - >-
+    Choose the First Shot line. Quote Iden's words and the whole Accept card.
+    Say whether anything on the card is false for someone standing here.
+    Accept and quote everything that prints, including the menu that comes
+    back.
+  - >-
+    Type `inventory` and say what Iden gave you. Type `quests` and `hint` and
+    quote both.
+  - >-
+    Follow the hints for at least three steps of First Shot. Quote each
+    progress line. Report anything confusing.

@@ -1,0 +1,44 @@
+# #940 (owner rulings 2026-11-22): each Pothole Coulee trade trainer offers
+# the trade's first quest directly, beside Crier Toke, once Find Your Footing
+# is done. A trainer start skips the arrival talk; Toke drops the offer once
+# it is taken. Three seats start at a trainer (no item, sling, lantern with a
+# different second step), one takes a trade from Toke, and one tries to break
+# the doors (before the town walk, lost item, abandon and resume).
+name: 940-trainer-doors
+mode: party
+summary: >-
+  Trainers offer their own trade after Find Your Footing; a trainer start
+  skips the arrival talk and hands over the starter item; Toke stops offering
+  a trade taken elsewhere; the Toke route is unchanged.
+on_actor_stop: continue
+budgets:
+  wall_clock: 45m
+requires:
+  max_connections: 20
+roster:
+  - id: vorn
+    personality: bug-finder
+    goals: goals/scenarios/940-trainer-doors/vorn.yaml
+  - id: iden
+    personality: bug-finder
+    goals: goals/scenarios/940-trainer-doors/iden.yaml
+  - id: gethin
+    personality: bug-finder
+    goals: goals/scenarios/940-trainer-doors/gethin.yaml
+  - id: toke
+    personality: bug-finder
+    goals: goals/scenarios/940-trainer-doors/toke.yaml
+  - id: breaker
+    personality: bug-finder
+    goals: goals/scenarios/940-trainer-doors/breaker.yaml
+
+group_goals:
+  - id: trainer-door-works
+    do: Seats at a trainer take the trade's first quest from the trainer.
+    verify: The offer shows with [!], the card reads true at the trainer, the menu after Accept does not offer a "Toke sent me" line, the quest is on its second step, and the starter item is carried.
+  - id: toke-door-unchanged
+    do: A seat takes a trade from Toke and walks to the trainer.
+    verify: The arrival talk is still there and moves the step; the trainer does not offer the quest a second time.
+  - id: toke-drops-taken-trade
+    do: After a trainer start, a seat talks to Toke.
+    verify: Toke no longer offers that trade and still offers the others.

@@ -1,0 +1,25 @@
+# GETHIN seat: you have finished the town walk (Find Your Footing) and stand
+# with Lamplighter Gethin at the Mine Head. Quote every game line VERBATIM.
+ephemeral:
+  profile: early
+  start_room: 5255
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end", "88-start", "88-end", "31-start", "31-lantern", "31-end"]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `look` and quote how Gethin's name is shown. Type `talk gethin` and
+    quote what Gethin says and the whole menu.
+  - >-
+    Choose the First Light line. Quote Gethin's words and the whole Accept
+    card. Say whether anything on the card is false for someone standing at
+    the Mine Head. Accept and quote everything that prints, including the menu
+    that comes back.
+  - >-
+    Type `inventory` and say whether you carry a lantern. Type `quests` and
+    `hint` and quote both.
+  - >-
+    Follow the hints for at least two steps of First Light. Quote each
+    progress line.

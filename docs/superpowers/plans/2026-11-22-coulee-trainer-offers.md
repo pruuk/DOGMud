@@ -58,7 +58,7 @@ rule. See the decisions table.)
 In the trainer's dialogue file, a new offer:
 
 ```yaml
-- key: <trade>_offer
+- key: <trade>_start   # the <trade>_offer keys are retired in topic-keys.txt
   kind: offer
   quest: NN
   label: <quest title>
@@ -68,6 +68,7 @@ In the trainer's dialogue file, a new offer:
   questExcluded: [NN-start, NN-end]
   grantsQuest: NN-start
   givesItem: <10043 for Vorn, 10038 for Iden, 20097 for Gethin; none otherwise>
+  objective: <the second step's task as it reads at the trainer; the card's first line>
 ```
 
 Toke's offer needs no change: its `questExcluded: [NN-start, NN-end]` already
@@ -79,8 +80,8 @@ Run subagent-driven (Sonnet for the YAML, controller reviews each diff).
 Brief every subagent on the Edit/Write rule and on `dogmud-authoring-quests`
 and `dogmud-player-copy`.
 
-1. **Quest 32 and Vorn first, as the pattern.** Flag, `quest_granted`
-   trigger, Vorn's `drill_offer` with the cudgel, topic key in
+1. **Quest 32 and Vorn first, as the pattern.** The `quest_granted`
+   trigger (room gated, see Mechanism), Vorn's `drill_start` with the cudgel, topic key in
    `topic-keys.txt`. Opener: a new variant placed before the "find Toke"
    one, `questRequired: [31-end]`, `questExcluded: [32-start, 32-end]`,
    whose text and hint point at the offer. The "find Toke" variant keeps its
