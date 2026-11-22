@@ -651,7 +651,8 @@ func guildDonate(user *users.UserRecord, remainder string) {
 		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">guild donate <item></ansi>`)
 		return
 	}
-	item, found := user.Character.FindInBackpack(name)
+	// The let-go lookup: an ordinary copy before quest gear (#940).
+	item, found := user.Character.FindInBackpackToLetGo(name)
 	if !found {
 		refusal.NotCarrying(user, name)
 		return

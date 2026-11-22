@@ -173,7 +173,8 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 	var attached *items.Item
 	if question.Response != `none` && question.Response != `` {
-		if found, foundOk := user.Character.FindInBackpack(question.Response); foundOk {
+		// The let-go lookup: an ordinary copy before quest gear (#940).
+		if found, foundOk := user.Character.FindInBackpackToLetGo(question.Response); foundOk {
 			itemCopy := found
 			attached = &itemCopy
 			msg.Item = attached

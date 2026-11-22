@@ -54,7 +54,9 @@ rather than part of `internal/actions` because `actions` imports
   exists for the receiver (made, bought, foraged, salvaged, earned, given by a
   tree). When it is too much to carry it falls in the receiver's room
   (`Room.AddItem`, as a drop does) and a player reads `TooMuchToCarryLine`;
-  no gain event, since it was never held.
+  no gain event, since it was never held. A quest hand-out reason marks the
+  copy here too (#940), so one that falls is the same quest gear it would be
+  in hand.
 
 ## Using it correctly
 

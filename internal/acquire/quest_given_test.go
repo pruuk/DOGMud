@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,6 +56,26 @@ func TestAcquireReward_IsNotMarked(t *testing.T) {
 	require.True(t, AcquireItemOrDrop(user, newTestItem(94002), AcquireReward))
 	require.Len(t, user.Character.Items, 1)
 	assert.False(t, user.Character.Items[0].IsQuestGiven())
+}
+
+// A quest's hand-out that falls at the receiver's feet is the same quest gear
+// it would have been in their hands (#940).
+func TestAcquireOrDrop_QuestHandOutFallsMarked(t *testing.T) {
+	events.DrainAllQueuedEventsForTest()
+	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
+	room := &rooms.Room{RoomId: 9403}
+	defer rooms.SeedRoomsForTest(map[int]*rooms.Room{9403: room}, nil)()
+	char := newWeakChar()
+	char.RoomId = 9403
+
+	require.False(t, AcquireOrDrop(char, 0, 0, newHeavyTestItem(94003), AcquireQuestGive))
+	require.Len(t, room.Items, 1)
+	assert.True(t, room.Items[0].IsQuestGiven())
+
+	room.Items = nil
+	require.False(t, AcquireOrDrop(char, 0, 0, newHeavyTestItem(94003), AcquireReward))
+	require.Len(t, room.Items, 1)
+	assert.False(t, room.Items[0].IsQuestGiven(), "a reward is never marked")
 }
 
 // The test's own list must name every reason, or a new one would go untested.

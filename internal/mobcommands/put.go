@@ -68,9 +68,10 @@ func Put(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	} else {
 
-		item, itemFound = mob.Character.FindInBackpack(strings.Join(args, ` `))
+		// The let-go lookup: an ordinary copy before quest gear (#940).
+		item, itemFound = mob.Character.FindInBackpackToLetGo(strings.Join(args, ` `))
 		if !itemFound && len(args) > 1 {
-			item, itemFound = mob.Character.FindInBackpack(args[0])
+			item, itemFound = mob.Character.FindInBackpackToLetGo(args[0])
 		}
 	}
 

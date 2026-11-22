@@ -108,6 +108,11 @@ func AcquireOrDrop(char *characters.Character, userId int, mobInstanceId int, it
 	if itm.ItemId < 1 {
 		return false
 	}
+	// A quest's hand-out is marked whether it lands or falls (#940), so the
+	// copy at the receiver's feet is the same quest gear they would carry.
+	if MarksQuestGiven(reason) {
+		itm.QuestGiven = true
+	}
 	if AcquireItemForChar(char, userId, mobInstanceId, itm, reason) {
 		return true
 	}

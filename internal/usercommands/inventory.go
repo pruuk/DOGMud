@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -263,6 +264,7 @@ func Inventory(rest string, user *users.UserRecord, room *rooms.Room, flags even
 				iNameFormatted = fmt.Sprintf(`%s <ansi fg="uses-left">(%d)</ansi>`, iNameFormatted, item.Uses)
 			}
 		}
+		iName, iNameFormatted = questGearListName(item, iName, iNameFormatted)
 
 		stacks[stackKey] = &stackEntry{
 			name:           iName,
@@ -320,6 +322,7 @@ func Inventory(rest string, user *users.UserRecord, room *rooms.Room, flags even
 				iNameFormatted = fmt.Sprintf(`%s <ansi fg="uses-left">(%d)</ansi>`, iNameFormatted, item.Uses)
 			}
 		}
+		iName, iNameFormatted = questGearListName(item, iName, iNameFormatted)
 
 		compStacks[stackKey] = &stackEntry{
 			name:           iName,
@@ -374,6 +377,7 @@ func Inventory(rest string, user *users.UserRecord, room *rooms.Room, flags even
 			iName = fmt.Sprintf(`%s (turned)`, item.Name())
 			iNameFormatted = fmt.Sprintf(`<ansi fg="8">%s (turned)</ansi>`, item.DisplayName())
 		}
+		iName, iNameFormatted = questGearListName(item, iName, iNameFormatted)
 
 		potStacks[stackKey] = &stackEntry{
 			name:           iName,
@@ -427,4 +431,15 @@ func Inventory(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	user.SendText(messaging.CategoryScreen, strings.TrimRight(tplTxt, "\r\n"))
 
 	return true, nil
+}
+
+// questGearListName marks a quest's copy in an inventory row (#940):
+// items.SameStack keeps it off a bought copy's row, and this says which row
+// is which ("Firebomb" and "Firebomb (quest gear)").
+func questGearListName(item items.Item, name, nameFormatted string) (string, string) {
+	if !item.IsQuestGiven() {
+		return name, nameFormatted
+	}
+	return fmt.Sprintf(`%s (%s)`, name, actions.QuestGearListTag),
+		fmt.Sprintf(`%s <ansi fg="uses-left">(%s)</ansi>`, nameFormatted, actions.QuestGearListTag)
 }

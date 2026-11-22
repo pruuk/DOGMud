@@ -16,6 +16,32 @@ import (
 // #940 (owner ruling 2026-11-22): quest gear never goes on the block. It fades
 // as the seller lets it go, after the confirm and the price, where a bought
 // copy is listed.
+// A listing that cannot start (another auction began while the seller set a
+// price) leaves quest gear with the seller, as it leaves any item.
+func TestQuestGear_AuctionThatCannotStartKeepsIt(t *testing.T) {
+	mod, seller := auctionSeller(t)
+	mod.plug = &plugins.Plugin{}
+	seller.Character.Items[0].QuestGiven = true
+	room := &rooms.Room{RoomId: 1, Zone: "TestZone"}
+	run := func() { _, _ = mod.auctionCommand("silver ring", seller, room, 0) }
+
+	run()
+	_, had := seller.RoutePromptInput("1", true)
+	require.True(t, had)
+	run()
+	other := &AuctionItem{SellerName: "Someone"}
+	mod.auctionMgr.ActiveAuction = other
+	_, had = seller.RoutePromptInput("500", true)
+	require.True(t, had)
+	run()
+	out := strings.Join(events.DrainQueuedMessagesForTest(seller.UserId), "\n")
+
+	require.Len(t, seller.Character.Items, 1, "the seller keeps it")
+	assert.True(t, seller.Character.Items[0].IsQuestGiven())
+	assert.NotContains(t, out, "fades away")
+	assert.Same(t, other, mod.auctionMgr.GetCurrentAuction())
+}
+
 func TestQuestGear_Auction(t *testing.T) {
 	for _, tc := range []struct {
 		name  string

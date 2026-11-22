@@ -281,18 +281,15 @@ func validatePurchase(
 
 // findTradeInItem is the carried copy a trade-in takes as payment. Quest gear
 // never pays (#940): a copy a quest handed out is passed over, so a player
-// holding only that one is told they have nothing to trade. The name search
-// is the one the trade-in always used; a copy the narrower pool admits must
-// be the same item it found, so it never lands on another item the name
-// fits.
+// holding only that one is told they have nothing to trade. It is the
+// let-go lookup every way out uses (characters.FindInBackpackToLetGo), which
+// prefers an ordinary copy of the same item.
 func findTradeInItem(char *characters.Character, tradeItemName string) (items.Item, bool) {
-	itm, found := char.FindInBackpack(tradeItemName)
-	if !found || !itm.IsQuestGiven() {
-		return itm, found
+	itm, found := char.FindInBackpackToLetGo(tradeItemName)
+	if !found || itm.IsQuestGiven() {
+		return items.Item{}, false
 	}
-	return char.FindInBackpackWhere(tradeItemName, func(other items.Item) bool {
-		return other.ItemId == itm.ItemId && !other.IsQuestGiven()
-	})
+	return itm, true
 }
 
 // sendMerchantMessage delivers a message to the buyer, branching on

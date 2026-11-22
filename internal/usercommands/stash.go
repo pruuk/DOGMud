@@ -19,7 +19,8 @@ func Stash(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	// Check whether the user has an item in their inventory that matches
-	matchItem, found := user.Character.FindInBackpack(rest)
+	// The let-go lookup: an ordinary copy before quest gear (#940).
+	matchItem, found := user.Character.FindInBackpackToLetGo(rest)
 
 	if !found {
 		refusal.NotCarrying(user, rest)

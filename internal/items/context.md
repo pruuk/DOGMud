@@ -394,8 +394,12 @@ per-copy field and survives every move that keeps the same struct (a
 companion, a rename). Owner ruling 2026-11-22: while its holder keeps it,
 it is ordinary gear; whenever it leaves their hands it fades away
 (`actions.VanishQuestGiven`), shops never buy it, and a trade-in never takes
-it. `internal/guards/quest_given_ways_out_guard_test.go` keeps every
-`RemoveItem` call site classified so a new way out cannot skip the rule.
+it. `SameStack` keeps a quest copy off a bought copy's inventory row (the
+row reads "(quest gear)"); storage never holds a quest copy, since it fades
+on the way in, so bank slots are unchanged.
+`internal/guards/quest_given_ways_out_guard_test.go` keeps every
+`RemoveItem` call and every floor drop classified so a new way out cannot
+skip the rule.
 
 ### Item Identification and Matching
 ```go

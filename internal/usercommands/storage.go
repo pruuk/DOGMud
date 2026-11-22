@@ -351,7 +351,9 @@ func storageRefusesStolen(itm items.Item, room *rooms.Room) bool {
 // found is false and hot is that bauble, for the refusal.
 func storageFindAddable(user *users.UserRecord, itemName string, room *rooms.Room) (itm items.Item, found bool, hot items.Item) {
 	now := storageNow()
-	if itm, ok := user.Character.FindInBackpackWhere(itemName, func(i items.Item) bool { return !baubles.ItemIsHotIn(i, room.Zone, now) }); ok {
+	// The let-go lookups: an ordinary copy before quest gear (#940).
+	cool := func(i items.Item) bool { return !baubles.ItemIsHotIn(i, room.Zone, now) }
+	if itm, ok := user.Character.FindInBackpackToLetGoWhere(itemName, cool); ok {
 		// An item handle (@uuid) is an explicit pick that bypasses the
 		// filter, so the pick is checked itself.
 		if baubles.ItemIsHotIn(itm, room.Zone, now) {
@@ -359,14 +361,8 @@ func storageFindAddable(user *users.UserRecord, itemName string, room *rooms.Roo
 		}
 		return itm, true, items.Item{}
 	}
-	if len(user.Character.ComponentItems) > 0 {
-		close, full := items.FindMatchIn(itemName, user.Character.ComponentItems...)
-		if full.ItemId != 0 {
-			return full, true, items.Item{}
-		}
-		if close.ItemId != 0 {
-			return close, true, items.Item{}
-		}
+	if itm, ok := user.Character.FindInComponentsToLetGo(itemName); ok {
+		return itm, true, items.Item{}
 	}
 	if stolen, ok := user.Character.FindInBackpack(itemName); ok {
 		return items.Item{}, false, stolen // every match is hot

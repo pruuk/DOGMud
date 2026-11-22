@@ -428,7 +428,8 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 	}
 
 	// Check whether the user has an item in their inventory that matches
-	matchItem, found := user.Character.FindInBackpack(rest)
+	// The let-go lookup: an ordinary copy before quest gear (#940).
+	matchItem, found := user.Character.FindInBackpackToLetGo(rest)
 
 	if !found {
 		refusal.NotCarrying(user, rest)
@@ -480,8 +481,15 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 	user.ClearPrompt()
 
 	// Quest gear never goes on the block (#940): it fades as it leaves the
-	// seller's hands.
-	if actions.VanishQuestGiven(user.Character, user.UserId, 0, matchItem, nil) {
+	// seller's hands, which is only where StartAuction would have listed it.
+	// A listing that could not start leaves it with the seller, as it leaves
+	// any item.
+	if matchItem.IsQuestGiven() {
+		if mod.auctionMgr.CanStartAuction(user.UserId) {
+			actions.VanishQuestGiven(user.Character, user.UserId, 0, matchItem, nil)
+		} else {
+			user.SendText(messaging.CategoryRefusal, `There is already an auction in progress.`)
+		}
 		return true, nil
 	}
 
@@ -1018,9 +1026,17 @@ func (mod *AuctionsModule) resolveSeizedLot(a *AuctionItem) {
 	}
 }
 
+// CanStartAuction reports whether StartAuction would list a lot for userId
+// now: no auction is running and the seller is online. The auction command
+// asks it before letting quest gear fade (#940), so the gear fades only where
+// a listing would have taken it.
+func (am *AuctionManager) CanStartAuction(userId int) bool {
+	return am.ActiveAuction == nil && getUser(userId) != nil
+}
+
 func (am *AuctionManager) StartAuction(item items.Item, userId int, buyout int, durationSeconds int, anon bool) bool {
 
-	if am.ActiveAuction != nil {
+	if !am.CanStartAuction(userId) {
 		return false
 	}
 

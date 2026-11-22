@@ -450,34 +450,17 @@ func notifySaleToQuests(seller Actor, item items.Item, mob *mobs.Mob) {
 }
 
 // sellFindItemInChar searches backpack → potions → components for a match.
+// Each search prefers a copy that is not quest gear (#940,
+// characters.FindInBackpackToLetGo): `sell cudgel` with a bought cudgel and
+// the one a quest gave sells the bought one. Only when every copy is quest
+// gear does it come back, for QuoteSale to refuse.
 func sellFindItemInChar(char *characters.Character, name string) (items.Item, bool) {
-	item, found := char.FindInBackpack(name)
-	// A sellable copy of the same item first: `sell cudgel` with a bought
-	// cudgel and the one a quest gave sells the bought one (#940). Only when
-	// every copy is quest gear does it come back, for QuoteSale to refuse.
-	// The same item id only, so the narrower search never lands on some
-	// other item the name also fits.
-	if found && item.IsQuestGiven() {
-		if other, ok := char.FindInBackpackWhere(name, func(itm items.Item) bool {
-			return itm.ItemId == item.ItemId && !itm.IsQuestGiven()
-		}); ok {
-			return other, true
-		}
+	item, found := char.FindInBackpackToLetGo(name)
+	if !found {
+		item, found = char.FindInPotionsToLetGo(name)
 	}
 	if !found {
-		item, found = char.FindInPotions(name)
-		// The same preference in the bandolier, where a quest's firebomb
-		// lands beside a bought one.
-		if found && item.IsQuestGiven() {
-			if other, ok := char.FindInPotionsWhere(name, func(itm items.Item) bool {
-				return itm.ItemId == item.ItemId && !itm.IsQuestGiven()
-			}); ok {
-				return other, true
-			}
-		}
-	}
-	if !found {
-		item, found = char.FindInComponents(name)
+		item, found = char.FindInComponentsToLetGo(name)
 	}
 	return item, found
 }

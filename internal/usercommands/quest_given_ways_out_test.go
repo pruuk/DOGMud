@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/guilds"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/pets"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -93,6 +94,60 @@ func TestQuestGear_Drop(t *testing.T) {
 		assert.NotContains(t, out, "You drop")
 		assert.NotContains(t, out, "You don't have")
 	})
+}
+
+// A way out named by a word that fits both copies takes the bought one: the
+// let-go lookup (characters.FindInBackpackToLetGo), shared by every way out.
+func TestQuestGear_DropTakesTheBoughtCopyFirst(t *testing.T) {
+	user, room := questGearHolder(t, questGearCopy())
+	user.Character.Items = append(user.Character.Items, boughtCopy())
+	_, err := Drop("iron sword", user, room, 0)
+	require.NoError(t, err)
+	assert.Contains(t, sentTo(user), "You drop the")
+	require.Equal(t, 1, carriesSword(room.Items))
+	assert.False(t, room.Items[0].IsQuestGiven())
+	require.Equal(t, 1, carriesSword(user.Character.Items))
+	assert.True(t, user.Character.Items[0].IsQuestGiven(), "the quest copy stays")
+}
+
+// The inventory marks a quest copy's row (items.SameStack keeps it off a
+// bought copy's row; internal/items/quest_given_stack_test.go).
+func TestQuestGear_InventoryRowIsMarked(t *testing.T) {
+	name, formatted := questGearListName(questGearCopy(), "Firebomb", `<ansi fg="itemname">Firebomb</ansi>`)
+	assert.Equal(t, "Firebomb (quest gear)", name)
+	assert.Equal(t, `<ansi fg="itemname">Firebomb</ansi> <ansi fg="uses-left">(quest gear)</ansi>`, formatted)
+	name, _ = questGearListName(boughtCopy(), "Firebomb", `<ansi fg="itemname">Firebomb</ansi>`)
+	assert.Equal(t, "Firebomb", name)
+}
+
+// Taking an item from your pet while overloaded puts it back on the pet, or,
+// when the pet cannot hold it either, drops it at your feet. Quest gear fades
+// instead of dropping (#940).
+func TestQuestGear_TakeFromPetWhileOverloaded(t *testing.T) {
+	for _, quest := range []bool{true, false} {
+		user, room := questGearHolder(t, items.Item{})
+		t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+			94601: {ItemId: 94601, Name: "Anvil", NameSimple: "anvil", Type: items.Object, Weight: 500},
+		}))
+		user.Character.Items = nil
+		user.Character.Stats.Strength.ValueAdj = 1
+		anvil := items.New(94601)
+		anvil.QuestGiven = quest
+		user.Character.Pet = pets.Pet{Name: "Rex", Type: "dog", Capacity: 0, Items: []items.Item{anvil}}
+		room.Items = nil
+
+		_, err := Get("anvil from rex", user, room, 0)
+		require.NoError(t, err)
+		out := sentTo(user)
+		assert.Empty(t, user.Character.Items, "quest=%v: too heavy to carry", quest)
+		assert.Empty(t, user.Character.Pet.Items, "quest=%v: a pet with no room cannot hold it", quest)
+		if quest {
+			assert.Contains(t, out, fmt.Sprintf(actions.QuestGearFadesLine, "Anvil"))
+			assert.Empty(t, room.Items, "quest gear never reaches the floor")
+		} else {
+			assert.Len(t, room.Items, 1, "a bought anvil falls at the player's feet")
+		}
+	}
 }
 
 func TestQuestGear_Put(t *testing.T) {

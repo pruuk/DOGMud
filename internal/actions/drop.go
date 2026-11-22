@@ -19,7 +19,8 @@ func DropItem(actor Actor, itemName string) DropItemResult {
 	char := actor.GetCharacter()
 	room := actor.GetRoom()
 
-	matchItem, found := char.FindInBackpack(itemName)
+	// The let-go lookup: an ordinary copy before quest gear (#940).
+	matchItem, found := char.FindInBackpackToLetGo(itemName)
 	if !found {
 		return DropItemResult{Found: false}
 	}
