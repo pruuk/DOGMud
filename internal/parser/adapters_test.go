@@ -34,6 +34,26 @@ func TestExitAdapter(t *testing.T) {
 	assert.Equal(t, "north", m.Name)
 }
 
+// #781, owner ruling 1: a secret exit the user has not found matches nothing;
+// once found it matches. With no user in scope no secret exit matches.
+func TestExitAdapter_AnUnfoundSecretExitIsNotAnExit(t *testing.T) {
+	s, cleanup := seedParserTest(t)
+	defer cleanup()
+	north := s.Room.Exits["north"]
+	north.Secret = true
+	s.Room.Exits["north"] = north
+
+	_, ok := exitAdapter(s, "north")
+	assert.False(t, ok, "an unfound secret exit")
+	_, ok = exitAdapter(Scope{Room: s.Room}, "north")
+	assert.False(t, ok, "no user: no secret exit")
+
+	s.User.Character.LearnSecretExit(s.Room.RoomId, "north")
+	m, ok := exitAdapter(s, "north")
+	require.True(t, ok, "a found secret exit")
+	assert.Equal(t, "north", m.Name)
+}
+
 func TestContainerAdapter(t *testing.T) {
 	s, cleanup := seedParserTest(t)
 	defer cleanup()

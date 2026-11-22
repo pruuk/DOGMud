@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -90,20 +91,67 @@ func secretExit(t *testing.T, room *rooms.Room, name string) {
 	})
 }
 
-// Ruling 1 and the spec decision: an unfound secret exit answers a compass
-// word exactly as no exit does.
-func TestGo_AnUnfoundSecretExitBumpsLikeAWall(t *testing.T) {
+// gmcpCapture is a FunctionExporter whose SendGMCPEvent records each send.
+type gmcpCapture struct{ sent *[]string }
+
+func (g gmcpCapture) GetExportedFunction(name string) (any, bool) {
+	if name != `SendGMCPEvent` {
+		return nil, false
+	}
+	return func(userId int, module string, payload any) {
+		*g.sent = append(*g.sent, fmt.Sprintf("gmcp %d %s %v", userId, module, payload))
+	}, true
+}
+
+// bumpNorth runs Go("north") for user 1 in a fresh fixture whose room 1 has
+// no north exit (secret false) or a secret one user 1 has not found, and
+// returns everything the move sent: the player's text and GMCP, the other
+// player's text, the room's messages and where the player stands.
+func bumpNorth(t *testing.T, secret bool) string {
+	t.Helper()
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	var sent []string
+	exporters := functionExporters
+	functionExporters = []FunctionExporter{gmcpCapture{sent: &sent}}
+	defer func() { functionExporters = exporters }()
+
 	user, room := getTestUserAndRoom(t)
-	secretExit(t, room, "north")
-	events.DrainQueuedMessagesForTest(user.UserId)
+	if secret {
+		north := room.Exits["north"]
+		north.Secret = true
+		room.Exits["north"] = north
+	} else {
+		delete(room.Exits, "north")
+	}
+	events.DrainQueuedMessageEventsForTest(1)
+	events.DrainQueuedMessageEventsForTest(2)
+	events.DrainQueuedRoomMessagesForTest(1)
 
 	handled, err := Go("north", user, room, 0)
 	require.True(t, handled)
 	require.NoError(t, err)
-	require.Equal(t, 1, user.Character.RoomId, "the player must not pass an unfound secret exit")
-	require.Contains(t, drainedText(user), "You're bumping into walls.")
+
+	out := []string{fmt.Sprintf("room %d", user.Character.RoomId)}
+	for _, uid := range []int{1, 2} {
+		for _, m := range events.DrainQueuedMessageEventsForTest(uid) {
+			out = append(out, fmt.Sprintf("user %d: %+v", uid, m))
+		}
+	}
+	for _, m := range events.DrainQueuedRoomMessagesForTest(1) {
+		out = append(out, fmt.Sprintf("room: %+v", m))
+	}
+	out = append(out, sent...)
+	return strings.Join(out, "\n")
+}
+
+// Ruling 1 and the spec decision: an unfound secret exit answers a compass
+// word exactly as no exit does, every byte of text and GMCP alike.
+func TestGo_AnUnfoundSecretExitBumpsLikeAWall(t *testing.T) {
+	wall := bumpNorth(t, false)
+	require.Contains(t, wall, "You're bumping into walls.", "premise: the wall bump is captured")
+	require.Contains(t, wall, "gmcp 1 Room.WrongDir", "premise: the GMCP is captured")
+	require.Equal(t, wall, bumpNorth(t, true), "an unfound secret exit must answer as no exit")
 }
 
 func TestGo_AFoundSecretExitWalks(t *testing.T) {

@@ -88,12 +88,16 @@ stands is not moved.
 
 ## Secret exits (#781)
 
-A player follower learns a secret exit the one they follow takes
-(`actions.LearnSecretExitFollowing`, owner ruling 2), after the sight check
-and before their own step, which answers to their own known-exit rule. An
-NPC follower takes a secret exit only if it found it
-(`Room.ExitKnownTo`); one charmed by the moving player learns it and
-follows, any other stops following (`follow stop`, ruling 13). Tests:
+`roomChangeHandler` steps followers through `actions.FollowExitTo`: the
+exit the mover could have used (room, mutator and temporary exits; a secret
+one only when the mover knows it or nothing else leads there), so a follower
+never learns a secret exit the mover did not take. A player follower learns
+a secret exit the one they follow takes (`actions.LearnSecretExitFollowing`,
+owner ruling 2), after the sight check and before their own step, which
+answers to their own known-exit rule. An NPC follower answers to
+`actions.NPCMayFollowThrough` (ruling 13): an exit it found, or a secret one
+it learns behind a mob leader (plan D17) or the player who charmed it; any
+other NPC following a player stops following (`follow stop`). Tests:
 `follow_secret_test.go`.
 
 `help follow` ships here (`files/datafiles/templates/help/follow.template`)

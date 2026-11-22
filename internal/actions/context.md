@@ -426,12 +426,28 @@ or `FindKnownExitByName` (`ResolveLook`, `ShotSight`, `ExecuteFire`,
 in `usercommands`), so an unfound secret exit is not looked, shot or walked
 through. Mob moves keep `FindExit` (`QuoteMobStep`, `mobcommands.Go`), since
 a scripted route takes its secret exits; `internal/guards/exit_lookup_guard_test.go`
-registers every unfiltered lookup with its reason.
-`LearnSecretExitFollowing(c, room, exitName)` (`follow_secret.go`): a
-follower moving behind its leader through a secret exit learns it (#781
-rulings 2 and 13), called when the follow step is issued so the step passes
-the follower's own rule. Called by the party follow and companion loops in
-`usercommands.Go` and by `modules/follow`.
+registers every unfiltered lookup with its reason, and every read of an exit
+by its key (`GetExitInfo`, `Exits[...]`) in this package, `usercommands` and
+`parser`.
+
+Following through secret exits (`follow_secret.go`, #781 rulings 2 and 13;
+shadowing is following):
+- `LearnSecretExitFollowing(c, room, exitName)`: a follower moving behind its
+  leader through a secret exit learns it, when the follow step is issued so
+  the step passes the follower's own rule. Called by the party follow and
+  companion loops in `usercommands.Go`, the player branch of
+  `modules/follow`, and the player shadower in
+  `hooks/RoomChange_ShadowFollow.go`.
+- `NPCMayFollowThrough(c, room, exitName, leaderUserId)`: an NPC takes an
+  exit it knows; at a secret one it has not found it learns it and goes on
+  behind a mob leader (plan D17) or the player who charmed it, and any other
+  NPC following a player stops. `modules/follow` ends the follow there, the
+  shadow hook drops the shadow quietly (`DropShadow`).
+- `FollowExitTo(room, leader, toRoomId)`: the exit key a follower or
+  shadower steps through. The move names no exit, so the one the leader could
+  have used wins (plain, then temporary, then a secret one the leader knows,
+  then any secret one), so a follower never learns a secret exit the leader
+  did not take.
 
 **Cost:**
 

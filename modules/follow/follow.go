@@ -358,22 +358,9 @@ func (f *FollowModule) roomChangeHandler(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
-	followExitName := ``
-	for exitName, exitInfo := range fromRoom.Exits {
-		if exitInfo.RoomId == evt.ToRoomId {
-			followExitName = exitName
-			break
-		}
-	}
-
-	if followExitName == `` {
-		for exitName, exitInfo := range fromRoom.ExitsTemp {
-			if exitInfo.RoomId == evt.ToRoomId {
-				followExitName = exitName
-				break
-			}
-		}
-	}
+	// The exit the mover could have used (#781): a follower never learns a
+	// secret exit the mover did not take.
+	followExitName := actions.FollowExitTo(fromRoom, moverCharacter(evt), evt.ToRoomId)
 
 	// The exit they went through is gone/missing? (Teleported?)
 	// End the follow
@@ -391,17 +378,14 @@ func (f *FollowModule) roomChangeHandler(e events.Event) events.ListenerReturn {
 
 				if mob := mobs.GetInstance(fId.mobInstanceId); mob != nil {
 					if fromRoom.RoomId == mob.Character.RoomId {
-						// #781, owner ruling 13: an NPC following a player
-						// takes a secret exit only if it found it; a
-						// companion or charmed NPC moving with its leader
-						// learns it. Any other follower stops here.
-						if !fromRoom.ExitKnownTo(&mob.Character, followExitName) {
-							if evt.UserId == 0 || !mob.Character.IsCharmed(evt.UserId) {
-								mob.Command(`follow stop`)
-								f.stopFollowing(fId)
-								continue
-							}
-							actions.LearnSecretExitFollowing(&mob.Character, fromRoom, followExitName)
+						// #781, owner ruling 13: at a secret exit it has not
+						// found, an NPC behind a mob leader or the player who
+						// charmed it learns it; any other NPC following a
+						// player stops here.
+						if !actions.NPCMayFollowThrough(&mob.Character, fromRoom, followExitName, evt.UserId) {
+							mob.Command(`follow stop`)
+							f.stopFollowing(fId)
+							continue
 						}
 						mob.Command(followExitName, .25)
 						// Count follows as wandering

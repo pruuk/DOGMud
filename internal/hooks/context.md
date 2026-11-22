@@ -2225,13 +2225,20 @@ Registered as a `RoomChange` event listener (player/mob parity slice 6); it
 replaced a loop in `usercommands/go.go` and `MobRoomChange_ShadowFollow.go`,
 which moved only player shadowers. `RoomChangeShadowFollow` runs two passes:
 
-- **Follow.** `shadowExitTo` resolves the exit's map key from `Exits`, then
-  `ExitsTemp`, then the active mutators' exits (not `Room.FindExitTo`, which
-  returns a temporary exit's title). No exit (a teleport): nothing. Otherwise
-  every player and mob in the old room whose `actions.ShadowTargetOf` names
-  the mover is checked: no condition 87 means stale, `actions.ClearShadow`;
-  not hidden, it stays; else it queues the exit through one `Command` call
-  (users and mobs share the signature).
+- **Follow.** `actions.FollowExitTo` resolves the exit's map key (room,
+  mutator and temporary exits; never a temporary exit's title), preferring
+  the exit the mover could have used, so a shadower never learns a secret
+  exit the mover did not take (#781). No exit (a teleport): nothing.
+  Otherwise every player and mob in the old room whose
+  `actions.ShadowTargetOf` names the mover is checked: no condition 87 means
+  stale, `actions.ClearShadow`; not hidden, it stays; else it queues the exit
+  through one `Command` call (users and mobs share the signature). At a
+  secret exit (#781, rulings 2 and 13, shadowing is following) a player
+  shadower learns it first (`actions.LearnSecretExitFollowing`); a mob
+  shadower answers to `actions.NPCMayFollowThrough`, and one that may not
+  take it drops the shadow quietly (`actions.DropShadow`: no cooldown, no
+  line), so nothing hints at the exit. Tests:
+  `RoomChange_ShadowFollow_secret_test.go`.
 - **Arrival.** When the mover has a live shadow whose quarry is in the room
   it entered: not hidden, `actions.EndShadow` with "You've been spotted --
   your shadow ends."; still hidden, `actions.ShadowSenseRoll` in that room.

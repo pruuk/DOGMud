@@ -30,8 +30,12 @@ package main.
   `Room.FindExitByName` or `actions.FindExit`, in `internal/` and `modules/`
   is registered per function with a count and a reason; a player path must
   use `Room.FindKnownExitByName` / `actions.FindKnownExit`, so a guess at an
-  unfound secret exit reveals nothing; `TestExitLookupGuardCanFail` proves
-  the scanner fires),
+  unfound secret exit reveals nothing; in `internal/usercommands`,
+  `internal/actions` and `internal/parser` every read of an exit by its key,
+  `GetExitInfo(...)` or `x.Exits[...]`, is registered the same way in
+  `exitReadRegistry`; a file that does not parse is an error, never
+  skipped; `TestExitLookupGuardCanFail` and `TestExitReadGuardCanFail` prove
+  the scanners and the parse report fire),
   `client_type_guard_test.go` (the web client's and site's fonts,
   sizes and weights read the tokens in `gomud.css`), the
   `*_wrapper_guard_test.go` files
