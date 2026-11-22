@@ -1,8 +1,10 @@
 # Quest 32, First Blood (Pothole Coulee, fighting line, quest 1).
 #
-# Crier Toke offers it (topic send_drill, dialogue 9106) and hands over the
-# Drillyard Cudgel (10043). Drillmaster Vorn (9108) takes the hand-in
-# (train_turnin) and then offers Hold the Wash (33).
+# Crier Toke (topic send_drill, dialogue 9106) or Drillmaster Vorn (topic
+# drill_offer, dialogue 9108) offers it, and either one hands over the
+# Drillyard Cudgel (10043). A Vorn start skips the met step, because the
+# player is already in the yard (a quest_granted trigger below). Vorn
+# takes the hand-in (train_turnin) and then offers Hold the Wash (33).
 #
 # One command per step, each trigger gated on the step before it (owner
 # ruling 2026-10-17):
@@ -113,6 +115,22 @@ rewards:
   observer: "Vorn nods at {actor} with a gruff, brief approval."
 
 triggers:
+  # met, skipped: a player who takes the quest from Vorn is already in the
+  # yard (owner ruling 2026-11-22, #940), so the grant of 32-start in the
+  # yard moves them past met. The room tells the two doors apart: Toke never
+  # leaves Hub Square (5203) and Vorn never leaves the Drill Yard (5227). A
+  # topic_heard trigger cannot do this, because the offer's grant is only
+  # queued when the topic plays, and a flag condition is refused by the
+  # one-action rule (questloop.ruleOneAction).
+  - event: quest_granted
+    quest_token: 32-start
+    conditions:
+      in_room: 5227
+      has: ["32-start"]
+      missing: ["32-met"]
+    actions:
+      - grant: "32-met"
+
   # met: hearing Vorn's drill_arrive topic.
   - event: topic_heard
     mob: 9108

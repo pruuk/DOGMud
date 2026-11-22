@@ -545,16 +545,19 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 	w.step(31, "lantern", "The Drowned Lantern")
 	w.walkTo(spineSquare)
 
-	// The seven trades: Toke offers each first quest and starts it; its first
-	// teacher offers none and points back to Toke.
+	// The seven trades: Toke offers each first quest and starts it. A trade's
+	// first teacher either offers none and points back to Toke, or (door set)
+	// is a second door that offers it too (owner ruling 2026-11-22, #940; the
+	// other trades move to two doors one by one).
 	trades := []struct {
 		offer   string
 		quest   int
 		teacher int
+		door    string // the teacher's own offer topic, when it has one
 	}{
-		{"send_drill", 32, 9108}, {"send_forge", 35, 9116}, {"send_brew", 38, 9128},
-		{"send_steppe", 41, 9136}, {"send_folding", 44, 9144}, {"send_folk", 47, 9153},
-		{"send_range", 50, 9161},
+		{"send_drill", 32, 9108, "drill_offer"}, {"send_forge", 35, 9116, ""}, {"send_brew", 38, 9128, ""},
+		{"send_steppe", 41, 9136, ""}, {"send_folding", 44, 9144, ""}, {"send_folk", 47, 9153, ""},
+		{"send_range", 50, 9161, ""},
 	}
 	for _, tr := range trades {
 		if w.onMenu(spineToke, tr.offer) {
@@ -567,12 +570,14 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 	for _, tr := range trades {
 		start := fmt.Sprintf("%d-start", tr.quest)
 		for _, tp := range w.df(tr.teacher).Topics {
-			if tp.GrantsQuest == start {
-				t.Errorf("mob %d topic %s still grants %s: Toke is the only starter", tr.teacher, tp.Key, start)
+			if tp.GrantsQuest == start && tp.Key != tr.door {
+				t.Errorf("mob %d topic %s grants %s: Toke is the only starter besides the door %q", tr.teacher, tp.Key, start, tr.door)
 			}
 		}
-		if text, _ := w.df(tr.teacher).OpenerFor(w.ps()); !strings.Contains(text, "Toke") {
+		if text, _ := w.df(tr.teacher).OpenerFor(w.ps()); tr.door == "" && !strings.Contains(text, "Toke") {
 			t.Errorf("mob %d's opener for an Opened newcomer does not send them to Toke: %q", tr.teacher, text)
+		} else if tr.door != "" && !strings.Contains(text, "ask me") {
+			t.Errorf("mob %d's opener for an Opened newcomer does not invite them to ask: %q", tr.teacher, text)
 		}
 		if !w.onMenu(spineToke, tr.offer) {
 			t.Fatalf("Toke's %s is not open after footing", tr.offer)
