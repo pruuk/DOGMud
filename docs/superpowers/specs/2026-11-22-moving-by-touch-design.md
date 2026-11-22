@@ -54,6 +54,13 @@ buttons.
     limited to found secret exits: wandering, chasing or pursuing, a
     planner's errand route, following a player. Fleeing already skips every
     secret exit and stays as it is.
+14. **Onlookers learn it** (during the build, from the batch 2 review):
+    someone who sees another character leave through a secret exit
+    ("Mira leaves down.") or arrive through one learns that exit. Only an
+    onlooker who sees the mover learns: in the dark, or when the mover is
+    unseen (sneaking, hidden), no line prints and nothing is learned. The
+    arrival side teaches the exit of the arrival room that leads back the way
+    the mover came, when that exit is secret.
 
 ## Facts verified against source (2026-11-22)
 

@@ -117,6 +117,13 @@ The spec was not edited; these are recorded here for the owner.
 
 ---
 
+**Added during the build (2026-11-22):** D26: shadowing is following:
+a player shadower passes a secret exit and learns it (ruling 2); a mob shadower
+learns it if charmed by the target, otherwise the shadow ends quietly
+(ruling 13). D27: a mob following a mob leader learns the exit, like packmates
+(D17). D28: ruling 14 applies only to onlookers who see the mover, on both the
+leave and the arrive side (Task 5b).
+
 ## File map
 
 **New files**
@@ -1939,6 +1946,39 @@ EOF
 ```
 
 ---
+
+### Task 5b (added 2026-11-22, owner ruling 14): onlookers learn the secret exit they see used
+
+Added during the build after the batch 2 review found that the leave and
+arrive lines name a secret exit to onlookers who had not found it. Owner
+ruling 14: an onlooker who sees the mover learns the exit.
+
+**Files:** `internal/usercommands/go.go` (the leave line, about line 300, and
+the arrive line, about line 238, which uses `destRoom.FindExitTo`), and any
+other place a leave or arrive line names an exit for onlookers (grep the
+movement paths for the room-wide leave/arrive messages: `go.go`, mob moves in
+`internal/mobcommands/go.go`, `RoomChange_ShadowFollow.go`, follow moves).
+
+- [ ] **Step 1:** Find every place that sends a leave or arrive line naming an
+  exit to the other characters in the room, for player and mob movers.
+- [ ] **Step 2:** Write failing tests: (a) a sighted player in the origin room
+  sees "X leaves <exit>" through a secret exit and afterwards
+  `KnowsSecretExit(origin, exit)` is true; (b) a sighted player in the
+  destination room sees X arrive and learns the destination room's secret
+  exit leading back to the origin; (c) an onlooker who cannot see the mover
+  (dark room, or the mover unseen) learns nothing; (d) the mover's own
+  knowledge is unchanged by this rule; (e) an ordinary (not secret) exit
+  records nothing.
+- [ ] **Step 3:** Implement one helper beside `LearnSecretExitFollowing` in
+  `internal/actions/follow_secret.go`, e.g.
+  `LearnSecretExitWatching(room *rooms.Room, exitName string, mover any, onlookers ...)`,
+  using the same sight decision that decides whether the line is shown to that
+  onlooker (reuse the existing per-viewer visibility check of the leave and
+  arrive lines; do not add a second sight rule). Call it where each line is
+  sent, for player and NPC onlookers alike (NPC onlookers record on their
+  instance, as search does).
+- [ ] **Step 4:** Run the tests and null probes, `go test ./internal/usercommands/ ./internal/actions/ ./internal/mobcommands/ -count=1`.
+- [ ] **Step 5:** Commit `feat(go): onlookers learn the secret exit they see used (#781)`.
 
 ### Task 6: The maps and quest guidance use the discovery rule; `GetPathKnown`
 
