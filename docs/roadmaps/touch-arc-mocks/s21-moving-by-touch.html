@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>Moving by touch</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; padding:16px; background:#e9e4dc; font-family: system-ui, sans-serif; color:#222; }
+  h2 { margin:0 0 4px; font-size:20px; }
+  h3 { margin:18px 0 6px; font-size:16px; }
+  .sub { margin:0 0 14px; font-size:14px; color:#444; max-width:1150px; line-height:1.45; }
+  .row { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col { width:366px; }
+  .col.narrow { width:326px; }
+  .cap { font-size:13px; line-height:1.45; margin-top:8px; }
+  .phone { width:360px; height:800px; border:3px solid #333; border-radius:22px; overflow:hidden; background:#0d0b09; font-family:"JetBrains Mono", monospace; display:flex; flex-direction:column; }
+  .phone.w320 { width:320px; }
+  .sess { height:58px; flex:none; box-sizing:border-box; margin:6px 6px 0; border-radius:6px; background:#e2cf9a; display:flex; align-items:center; gap:8px; padding:0 8px; }
+  .sess .u { font-size:14px; color:#2a2016; flex:1; }
+  .gb { height:44px; display:flex; align-items:center; justify-content:center; padding:0 12px; border-radius:6px; background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; font-size:14px; color:#2a2016; box-shadow:0 2px 0 #6b5428; }
+  .gb.sq { width:44px; padding:0; }
+  .game { flex:1 1 auto; min-height:0; overflow:hidden; margin:6px 6px 0; border:1px solid #6b5428; border-radius:6px 6px 0 0; border-bottom:0; padding:4px 8px; font-size:14px; line-height:22.4px; color:#e6dccb; display:flex; flex-direction:column; justify-content:flex-end; }
+  .game p { margin:0; white-space:pre; overflow:hidden; }
+  .y { color:#d8a64a; } .g { color:#b9b06a; } .w { color:#e6dccb; } .dim { color:#8a7b66; }
+  .deck { flex:none; margin:0 6px; padding:8px; box-sizing:border-box; background:#1f1912; border:1px solid #6b5428; border-top:2px solid #b08a4e; display:grid; grid-template-columns:repeat(6,48px); grid-template-rows:repeat(2,48px); gap:8px; }
+  .w320 .deck { grid-template-columns:repeat(6,44px); grid-template-rows:repeat(2,44px); gap:5px; }
+  .b { position:relative; border-radius:6px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:13px; line-height:14px; box-sizing:border-box; }
+  .mv { background:#3a2c1d; border:1px solid #c9a35a; color:#f1e4cc; font-size:18px; }
+  .mv.off { opacity:.22; }
+  .mv { flex-direction:column; }
+  .b small { display:block; font-size:10px; line-height:11px; }
+  svg.st { width:24px; height:24px; }
+  /* Dark room (owner and Malia, 2026-11-22: option O, olive grey from the palette spec) */
+  .mv.blind, .mv.bumped { background:#19140c; border:1px dashed #5d5c4e; color:#8b897a; }
+  .mv.bumped:after { content:"\2715"; position:absolute; right:3px; top:1px; font-size:11px; color:#e35349; }
+  .darktile { background:#252015; border:1px solid #969889; color:#cec6aa; font-size:11px; line-height:12px; flex-direction:column; gap:2px; }
+  .deck.dark { background:#19140c; }
+  svg.eye { width:24px; height:24px; }
+  .mv.combat { opacity:.22; }
+  .ex { background:#3a2c1d; border:2px dashed #c9a35a; color:#f1e4cc; font-size:12px; line-height:13px; }
+  .ex.off { opacity:.22; }
+  .lk { position:absolute; right:2px; top:2px; width:12px; height:12px; }
+  .back { background:#2a2017; border:1px solid #8a6f3a; color:#e8d3a0; border-radius:3px; font-size:12px; line-height:13px; }
+  .named { background:#3a2c1d; border:1px solid #c9a35a; color:#f1e4cc; font-size:11px; line-height:12px; padding:0 2px; }
+  .empty { border:1px dashed #4a3a26; }
+  .divider { height:12px; flex:none; margin:0 6px; border-left:1px solid #6b5428; border-right:1px solid #6b5428; position:relative; }
+  .divider:after { content:""; position:absolute; left:20px; right:20px; top:5px; height:2px; background:#6b5428; }
+  .cmd { height:62px; flex:none; margin:0 6px; box-sizing:border-box; padding:6px; background:#e2cf9a; border-radius:0 0 6px 6px; }
+  .cmd .box { height:50px; box-sizing:border-box; background:#16110c; border:2px solid #6b5428; border-radius:4px; color:#8a7b66; font-size:16px; line-height:46px; padding-left:12px; }
+  .tabs { height:56px; flex:none; margin:4px 6px 6px; border:2px solid #8a6f3a; border-radius:28px; display:flex; align-items:center; justify-content:space-around; padding:0 4px; }
+  .tabs i { width:42px; height:42px; border-radius:50%; background:radial-gradient(#ecd79c,#b8923e); font-style:normal; display:flex; align-items:center; justify-content:center; color:#3a2a14; font-size:15px; }
+  .tabs i.on { background:#5a4426; color:#f1e4cc; box-shadow:inset 0 0 0 2px #c9a35a; }
+  /* Map tab card in the slot */
+  .card { flex:none; margin:0 6px; height:360px; box-sizing:border-box; background:#1f1912; border:1px solid #6b5428; border-top:2px solid #b08a4e; display:flex; flex-direction:column; }
+  .card .title { height:36px; flex:none; display:flex; align-items:center; padding:0 8px; color:#e8d3a0; font-size:14px; border-bottom:1px solid #4a3a26; gap:8px; }
+  .card .title .sp { flex:1; }
+  .card .body { flex:1; display:flex; gap:8px; padding:8px; min-height:0; }
+  .map { flex:1; background:#120e0a; border:1px solid #4a3a26; border-radius:4px; position:relative; overflow:hidden; }
+  .map svg { position:absolute; inset:0; }
+  .mvcol { flex:none; width:160px; display:grid; grid-template-columns:repeat(3,48px); grid-auto-rows:48px; gap:8px; align-content:start; }
+  .mvcol .ex, .mvcol .back { grid-column: span 1; }
+  .note { font-size:12px; color:#555; }
+  /* sideways */
+  .side { width:800px; height:360px; border:3px solid #333; border-radius:22px; overflow:hidden; background:#0d0b09; font-family:"JetBrains Mono", monospace; display:flex; }
+  .side .game { margin:6px 0 6px 6px; border-radius:6px; border-bottom:1px solid #6b5428; }
+  .side .deck { margin:6px; grid-template-columns:repeat(3,48px); grid-template-rows:repeat(4,48px); align-content:start; height:fit-content; }
+  .menu { background:linear-gradient(#ead9a6,#cfb46c); border:1px solid #8a6f3a; color:#2a2016; border-radius:3px; box-shadow:0 2px 0 #6b5428; font-size:12px; }
+  table.k { border-collapse:collapse; font-size:13px; }
+  table.k td { padding:4px 8px; border-top:1px solid #ccc; vertical-align:middle; }
+  table.k .b { width:48px; height:48px; }
+</style></head><body>
+<h2>Moving by touch: deck and Map tab (touch arc spec 2, #781)</h2>
+<p class="sub"><b>Approved by the owner 2026-11-22</b> for the spec (Malia was away; her look comes before plan 2b is built). Symbols: an arrow with its letter for compass and diagonal exits, an ISO 7001 style stairs pictogram for up and down. Dark room: option O, olive grey.</p>
+<p class="sub">Galaxy S21, 1:1, full screen. Rooms, exits and the opening lines of each description are real game data (descriptions cut short). The command slots on the right of the deck are left empty: they belong to the command bar (spec 3). Kinds are told apart by shape, edge and marks, never by colour alone.</p>
+
+<h3>Button states</h3>
+<table class="k">
+<tr><td><div class="b mv">↑<small>N</small></div></td><td>An exit you know. Tap walks (sends a fixed id for that direction; the server runs it as <code>north</code>).</td></tr>
+<tr><td><div class="b mv off">↑<small>N</small></div></td><td>No exit that way.</td></tr>
+<tr><td><div class="b mv"><svg class="st" viewBox="0 0 26 26"><path d="M3 7h5v5h5v5h5v5h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M22 16v6h-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><svg class="lk" viewBox="0 0 12 12"><rect x="2" y="5.5" width="8" height="5.5" rx="1" fill="none" stroke="#e8d3a0" stroke-width="1.3"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="#e8d3a0" stroke-width="1.3"/></svg></div></td><td>Locked right now. Tap tries it like typing: with a key it unlocks and walks, otherwise "That way is locked."</td></tr>
+<tr><td><div class="b mv blind">↑<small>N</small></div></td><td>Dark: you can't see the exits. All six stay tappable and look the same whether or not an exit is there.</td></tr>
+<tr><td><div class="b mv bumped">↑<small>N</small></div></td><td>Dark, and you already bumped a wall that way in this room. Cleared when you leave the room or it gets light.</td></tr>
+<tr><td><div class="b ex">⋯<br>exits</div></td><td>Other exits: diagonal, named and temporary ones. Dim when the room has none; its slot stays so nothing moves.</td></tr>
+</table>
+
+<div class="row">
+
+<div class="col">
+<h3>1. Tower Top (Pothole Coulee, room 5243)</h3>
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p class="y">Tower Top</p>
+<p class="w">A doorway off the watch room lets you</p>
+<p class="w">out onto the broken crown of the</p>
+<p class="w">tower, open to the whole wide sky.</p>
+<p class="y">Exits: <span class="g">west, shrine, overlook</span></p>
+<p class="w">[HP:██████ SP:██████ CP:██████]:</p>
+  </div>
+  <div class="deck">
+    <div class="b mv off"><svg class="st" viewBox="0 0 26 26"><path d="M3 22h5v-5h5v-5h5V7h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 4h6v6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div><div class="b mv off">↑<small>N</small></div><div class="b mv off"><svg class="st" viewBox="0 0 26 26"><path d="M3 7h5v5h5v5h5v5h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M22 16v6h-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
+    <div class="b ex">⋯<br>exits</div>
+    <div class="b empty"></div><div class="b empty"></div>
+    <div class="b mv">←<small>W</small></div><div class="b mv off">↓<small>S</small></div><div class="b mv off">→<small>E</small></div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b empty"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="cmd"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i>▤</i><i>☰</i><i>♥</i><i>▣</i><i>✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>Only west is a compass exit.</b> Up, north, down, south and east are dim. "exits" is live because the room has two named exits.</div>
+</div>
+
+<div class="col">
+<h3>2. Tapping "exits" (same room)</h3>
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p class="y">Tower Top</p>
+<p class="w">A doorway off the watch room lets you</p>
+<p class="w">out onto the broken crown of the</p>
+<p class="w">tower, open to the whole wide sky.</p>
+<p class="y">Exits: <span class="g">west, shrine, overlook</span></p>
+<p class="w">[HP:██████ SP:██████ CP:██████]:</p>
+  </div>
+  <div class="deck">
+    <div class="b back">‹ Back</div>
+    <div class="b named">shrine</div><div class="b named">overlook</div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b empty"></div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b empty"></div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b empty"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="cmd"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i>▤</i><i>☰</i><i>♥</i><i>▣</i><i>✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>The list replaces the whole deck</b> (roadmap rule for levels): Back top-left, one button per exit in a fixed order (diagonals clockwise from northeast, then named and temporary exits A to Z), More bottom-right only if they do not fit. No room in the game has more than three, so More never shows today. After a move from the list, the deck returns to the T. Each of these ids is for this room; an old one after moving is refused.</div>
+</div>
+
+<div class="col">
+<h3>3. Junction Vault (diagonals only, room 6408)</h3>
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p class="y">The Junction Vault</p>
+<p class="w">Three flows meet beneath a brick dome</p>
+<p class="w">here, and the vault gives their</p>
+<p class="w">meeting a voice.</p>
+<p class="y">Exits: <span class="g">northeast, southwest</span></p>
+<p class="w">[HP:██████ SP:██████ CP:██████]:</p>
+  </div>
+  <div class="deck">
+    <div class="b back">‹ Back</div>
+    <div class="b named">↗<br>NE</div><div class="b named">↙<br>SW</div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b empty"></div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b empty"></div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b empty"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="cmd"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i>▤</i><i>☰</i><i>♥</i><i>▣</i><i>✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>Diagonals show an arrow and a short label.</b> With the list closed, all six T buttons here are dim and only "exits" is live.</div>
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col">
+<h3>4. Locked door (Guard Barracks, Thornwall, room 473)</h3>
+<div class="phone" style="height:auto">
+  <div class="game" style="height:160px; flex:none">
+<p class="y">Guard Barracks</p>
+<p class="y">Exits: <span class="g">down (locked), south, up</span></p>
+<p class="w">[HP:██████ SP:██████ CP:██████]:</p>
+  </div>
+  <div class="deck">
+    <div class="b mv"><svg class="st" viewBox="0 0 26 26"><path d="M3 22h5v-5h5v-5h5V7h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 4h6v6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div><div class="b mv off">↑<small>N</small></div><div class="b mv"><svg class="st" viewBox="0 0 26 26"><path d="M3 7h5v5h5v5h5v5h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M22 16v6h-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><svg class="lk" viewBox="0 0 12 12"><rect x="2" y="5.5" width="8" height="5.5" rx="1" fill="none" stroke="#e8d3a0" stroke-width="1.3"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="#e8d3a0" stroke-width="1.3"/></svg></div>
+    <div class="b ex off">⋯<br>exits</div>
+    <div class="b empty"></div><div class="b empty"></div>
+    <div class="b mv off">←<small>W</small></div><div class="b mv">↓<small>S</small></div><div class="b mv off">→<small>E</small></div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b empty"></div>
+  </div>
+  <div style="height:8px"></div>
+</div>
+<div class="cap">Down carries the padlock while it is locked. When someone unlocks it, or it relocks on its timer, the padlock follows within a round.</div>
+</div>
+
+<div class="col">
+<h3>5. Pitch dark, after one bump</h3>
+<div class="phone" style="height:auto">
+  <div class="game" style="height:160px; flex:none">
+<p class="w">It is too dark to see.</p>
+<p class="w">&gt; north</p>
+<p class="w">You're bumping into walls.</p>
+<p class="w">[HP:██████ SP:██████ CP:██████]:</p>
+  </div>
+  <div class="deck dark">
+    <div class="b mv blind"><svg class="st" viewBox="0 0 26 26"><path d="M3 22h5v-5h5v-5h5V7h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 4h6v6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div><div class="b mv bumped">↑<small>N</small></div><div class="b mv blind"><svg class="st" viewBox="0 0 26 26"><path d="M3 7h5v5h5v5h5v5h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M22 16v6h-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
+    <div class="b darktile"><svg class="eye" viewBox="0 0 26 26"><path d="M3 12c3 4 7 6 10 6s7-2 10-6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M6 16l-2 3M10 18l-1 3.5M16 18l1 3.5M20 16l2 3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Dark</div>
+    <div class="b empty"></div><div class="b empty"></div>
+    <div class="b mv blind">←<small>W</small></div><div class="b mv blind">↓<small>S</small></div><div class="b mv blind">→<small>E</small></div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b empty"></div>
+  </div>
+  <div style="height:8px"></div>
+</div>
+<div class="cap">All six stay tappable and look alike. North carries the ✕ because the player just bumped a wall there (typed or tapped). A locked door felt in the dark would show the padlock instead. The exits slot becomes the closed-eye "Dark" tile (named exits can't be guessed blind); tapping it says "It is too dark to see the way. Light a torch or cast glow." Olive grey from the palette spec (option O, owner and Malia 2026-11-22).</div>
+</div>
+
+<div class="col">
+<h3>6. In a fight</h3>
+<div class="phone" style="height:auto">
+  <div class="game" style="height:160px; flex:none">
+<p class="y">Tower Top</p>
+<p class="w">The scree scavenger lunges at you!</p>
+<p class="w">[HP:████░░ SP:█████░ CP:██████]:</p>
+  </div>
+  <div class="deck">
+    <div class="b mv combat"><svg class="st" viewBox="0 0 26 26"><path d="M3 22h5v-5h5v-5h5V7h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 4h6v6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div><div class="b mv combat">↑<small>N</small></div><div class="b mv combat"><svg class="st" viewBox="0 0 26 26"><path d="M3 7h5v5h5v5h5v5h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M22 16v6h-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
+    <div class="b ex combat off">⋯<br>exits</div>
+    <div class="b empty"></div><div class="b empty"></div>
+    <div class="b mv combat">←<small>W</small></div><div class="b mv combat">↓<small>S</small></div><div class="b mv combat">→<small>E</small></div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b empty"></div>
+  </div>
+  <div style="height:8px"></div>
+</div>
+<div class="cap">Movement is refused in a fight, so spec 2 dims it. Flee taking these slots comes with the command bar (plan 3d).</div>
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="col">
+<h3>7. Map tab open (Tower Top)</h3>
+<div class="phone">
+  <div class="sess"><span class="u">testa4</span><span class="gb">● Leave Game</span><span class="gb sq">⚙</span><span class="gb sq">⛶</span></div>
+  <div class="game">
+<p class="y">Tower Top</p>
+<p class="y">Exits: <span class="g">west, shrine, overlook</span></p>
+<p class="w">[HP:██████ SP:██████ CP:██████]:</p>
+  </div>
+  <div class="card">
+    <div class="title"><span>Map</span><span class="sp"></span><span class="gb sq" style="height:32px;width:32px">?</span><span class="gb sq" style="height:32px;width:32px">✕</span></div>
+    <div class="body">
+      <div class="map"><svg viewBox="0 0 160 300"><g stroke="#8a6f3a" stroke-width="2"><line x1="40" y1="150" x2="90" y2="150"/><line x1="90" y1="150" x2="120" y2="110"/><line x1="90" y1="150" x2="125" y2="190"/></g><g fill="#3a2c1d" stroke="#c9a35a"><rect x="28" y="140" width="22" height="22"/><rect x="110" y="98" width="22" height="22"/><rect x="114" y="180" width="22" height="22"/></g><rect x="78" y="138" width="24" height="24" fill="#c9a35a" stroke="#f1e4cc"/></svg></div>
+      <div class="mvcol">
+        <div class="b mv off"><svg class="st" viewBox="0 0 26 26"><path d="M3 22h5v-5h5v-5h5V7h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 4h6v6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div><div class="b mv off">↑<small>N</small></div><div class="b mv off"><svg class="st" viewBox="0 0 26 26"><path d="M3 7h5v5h5v5h5v5h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M22 16v6h-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div class="b mv">←<small>W</small></div><div class="b mv off">↓<small>S</small></div><div class="b mv off">→<small>E</small></div>
+        <div class="b ex">⋯<br>exits</div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="cmd"><div class="box">Enter command...</div></div>
+  <div class="tabs"><i class="on">▤</i><i>☰</i><i>♥</i><i>▣</i><i>✉</i><i>⛨</i><i>◷</i></div>
+</div>
+<div class="cap"><b>The same T and the same exits button sit beside the map</b> (about 160px), with the same states and marks as the deck. Tapping "exits" swaps the three rows for Back and the list; the map stays.</div>
+</div>
+
+<div class="col narrow">
+<h3>8. 320px wide (the smallest we pin)</h3>
+<div class="phone w320" style="height:auto">
+  <div class="game" style="height:120px; flex:none">
+<p class="y">Tower Top</p>
+<p class="y">Exits: <span class="g">west, shrine,</span></p>
+<p class="g">overlook</p>
+  </div>
+  <div class="deck">
+    <div class="b mv off"><svg class="st" viewBox="0 0 26 26"><path d="M3 22h5v-5h5v-5h5V7h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 4h6v6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div><div class="b mv off">↑<small>N</small></div><div class="b mv off"><svg class="st" viewBox="0 0 26 26"><path d="M3 7h5v5h5v5h5v5h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M22 16v6h-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
+    <div class="b ex">⋯<br>exits</div>
+    <div class="b empty"></div><div class="b empty"></div>
+    <div class="b mv">←<small>W</small></div><div class="b mv off">↓<small>S</small></div><div class="b mv off">→<small>E</small></div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b empty"></div>
+  </div>
+  <div style="height:8px"></div>
+</div>
+<div class="cap">44px buttons with 5px gaps (289px), as spec 1 set for this width.</div>
+</div>
+
+</div>
+
+<h3>9. Phone held sideways (Tower Top): bars folded away, Menu in the side column</h3>
+<div class="side">
+  <div class="game" style="flex:1">
+<p class="y">Tower Top</p>
+<p class="w">A doorway off the watch room lets you out onto the broken</p>
+<p class="w">crown of the tower, open to the whole wide sky.</p>
+<p class="y">Exits: <span class="g">west, shrine, overlook</span></p>
+<p class="w">[HP:██████ SP:██████ CP:██████]:</p>
+  </div>
+  <div class="deck">
+    <div class="b mv off"><svg class="st" viewBox="0 0 26 26"><path d="M3 22h5v-5h5v-5h5V7h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 4h6v6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div><div class="b mv off">↑<small>N</small></div><div class="b mv off"><svg class="st" viewBox="0 0 26 26"><path d="M3 7h5v5h5v5h5v5h5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M22 16v6h-6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
+    <div class="b mv">←<small>W</small></div><div class="b mv off">↓<small>S</small></div><div class="b mv off">→<small>E</small></div>
+    <div class="b ex">⋯<br>exits</div><div class="b empty"></div><div class="b empty"></div>
+    <div class="b empty"></div><div class="b empty"></div><div class="b menu">☰<br>Menu</div>
+  </div>
+</div>
+<div class="cap" style="max-width:800px">The session bar and the tab bar are gone. <b>Menu</b> (bottom right of the side column) brings both bars back over the game until the player picks something or taps away (#938, ruled 2026-11-22). The once-per-device toast "This game is easier to play with your phone held upright." still shows the first time.</div>
+
+</body></html>

@@ -17,6 +17,7 @@ otherwise): `docs/roadmaps/touch-arc-mocks/`.
 | `s21-comms.html` | Comms: tap a message to reply (screen 2 was chosen) |
 | `s21-submenus.html` | Three-level contextual menus, Cast and Craft, in the brass look |
 | `tablets-v2.html` | Upright tablet, open foldable, sideways tablet, sideways phone (half size) |
+| `s21-moving-by-touch.html` | Spec 2 (#781): the T with its states (lit, dim, padlock, dark, ✕), the other-exits level, the Map tab copy, 320px, and the sideways phone's Menu (owner approved 2026-11-22) |
 
 Reference screenshots of production on real phones (kept locally, not in
 git: `_archive/` is ignored):
@@ -270,7 +271,7 @@ guards, `tools/jstest`, `tools/webclient-tests`.
    combat top level is for the command bar spec to settle (Target, Interact, Attack,
    Cast and More keep their places where they can, plus contextual combat
    slots such as a buff to renew).
-2. **The Map's movement buttons:** the inverted T (same as the deck, about
+2. **Settled (owner, 2026-11-22, spec 2): the inverted T.** Was: **The Map's movement buttons:** the inverted T (same as the deck, about
    160px wide, map shrinks) or a two-column compass (about 104px, map loses
    about 12%). Consistency favours the T.
 3. **How the server ranks contextual commands** for the flex slots, and how
