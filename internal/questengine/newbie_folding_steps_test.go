@@ -134,6 +134,20 @@ func TestQuest44FirstCasting_GiverToGiver(t *testing.T) {
 	turnIn := turnInRequires(t, "9144.yaml", "cast_turnin")
 	require.Equal(t, []string{"44-cast"}, turnIn, "the turn-in gates on the last step")
 
+	// Grieve's own offer (owner ruling 2026-11-22, #940) starts in the
+	// Observatory Hall and skips the lesson; Toke's offer, made in Hub
+	// Square, does not.
+	t.Run("the grant in the hall skips met", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "44-start", RoomId: foldingObservatory})
+		require.Equal(t, "met", w.p.current)
+	})
+	t.Run("the grant in Hub Square does not", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "44-start", RoomId: foldingHubSquare})
+		require.Equal(t, "start", w.p.current)
+	})
+
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
 		w.notify("command", EventDetails{Command: "cast", Noun: "conviction-spike", RoomId: foldingStarChamber})

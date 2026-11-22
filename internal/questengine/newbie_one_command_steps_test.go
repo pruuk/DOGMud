@@ -380,6 +380,20 @@ func TestQuest41FirstSign_OneCommandPerStep(t *testing.T) {
 	turnIn := turnInRequires(t, "9136.yaml", "sign_turnin")
 	heard := EventDetails{Command: "", MobId: 9136, Topic: "sign_arrive", RoomId: 5283}
 
+	// Tarn's own offer (owner ruling 2026-11-22, #940) starts at the Steppe
+	// Edge and skips the arrival talk; Toke's offer, made in Hub Square, does
+	// not.
+	t.Run("the grant at the Steppe Edge skips met", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "41-start", RoomId: 5283})
+		require.Equal(t, "met", w.p.current)
+	})
+	t.Run("the grant in Hub Square does not", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "41-start", RoomId: 5203})
+		require.Equal(t, "start", w.p.current)
+	})
+
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
 		w.notify("command", EventDetails{Command: "track", RoomId: 5284})
@@ -419,6 +433,19 @@ func TestQuest50FirstShot_OneCommandPerStep(t *testing.T) {
 	require.Equal(t, []string{"start", "met", "equip", "shoot", "ambush", "cover_shot", "end"}, newLinearPlayer(q).steps,
 		"the old ids survive so a player mid-quest resumes; met is the meeting with Iden (#375 phase 7)")
 	turnIn := turnInRequires(t, "9161.yaml", "shoot_turnin")
+
+	// Iden's own offer (owner ruling 2026-11-22, #940) starts on the Firing
+	// Range and skips the lesson; Toke's offer, made in Hub Square, does not.
+	t.Run("the grant on the range skips met", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "50-start", RoomId: rangeRoom})
+		require.Equal(t, "met", w.p.current)
+	})
+	t.Run("the grant in Hub Square does not", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "50-start", RoomId: 5203})
+		require.Equal(t, "start", w.p.current)
+	})
 
 	// A shot at the practice butt, from the Long Terrace. A miss counts too:
 	// the command event goes out when the shot resolves, hit or not.

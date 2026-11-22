@@ -428,7 +428,7 @@ func TestSmoke_FleeElsewhereCountsForNothing(t *testing.T) {
 // TestSmoke_NewCharacterSpine walks a brand-new character through the Pothole
 // Coulee opening on shipped data (#375 phase 7, plan 2): every quest is offered
 // by the NPC who took the previous hand-in, nothing is granted by itself, and
-// Crier Toke ends up the only starter of the seven trades. No token is written
+// Crier Toke and each trade's trainer start the seven trades. No token is written
 // by the test: each one lands through the talk menu, a quest trigger or a
 // behavior tree, and the newcomer flag is set the way the new-to-MUDs route sets it.
 func TestSmoke_NewCharacterSpine(t *testing.T) {
@@ -547,17 +547,18 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 
 	// The seven trades: Toke offers each first quest and starts it. A trade's
 	// first teacher either offers none and points back to Toke, or (door set)
-	// is a second door that offers it too (owner ruling 2026-11-22, #940; the
-	// other trades move to two doors one by one).
+	// is a second door that offers it too (owner ruling 2026-11-22, #940; all
+	// seven trades have a door now).
 	trades := []struct {
 		offer   string
 		quest   int
 		teacher int
 		door    string // the teacher's own offer topic, when it has one
 	}{
-		{"send_drill", 32, 9108, "drill_offer"}, {"send_forge", 35, 9116, ""}, {"send_brew", 38, 9128, ""},
-		{"send_steppe", 41, 9136, ""}, {"send_folding", 44, 9144, ""}, {"send_folk", 47, 9153, ""},
-		{"send_range", 50, 9161, ""},
+		{"send_drill", 32, 9108, "drill_offer"}, {"send_forge", 35, 9116, "heat_start"},
+		{"send_brew", 38, 9128, "brew_start"}, {"send_steppe", 41, 9136, "sign_start"},
+		{"send_folding", 44, 9144, "cast_start"}, {"send_folk", 47, 9153, "words_start"},
+		{"send_range", 50, 9161, "shoot_start"},
 	}
 	for _, tr := range trades {
 		if w.onMenu(spineToke, tr.offer) {
@@ -571,7 +572,7 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 		start := fmt.Sprintf("%d-start", tr.quest)
 		for _, tp := range w.df(tr.teacher).Topics {
 			if tp.GrantsQuest == start && tp.Key != tr.door {
-				t.Errorf("mob %d topic %s grants %s: Toke is the only starter besides the door %q", tr.teacher, tp.Key, start, tr.door)
+				t.Errorf("mob %d topic %s grants %s: only Toke and the door %q may start it", tr.teacher, tp.Key, start, tr.door)
 			}
 		}
 		if text, _ := w.df(tr.teacher).OpenerFor(w.ps()); tr.door == "" && !strings.Contains(text, "Toke") {
@@ -591,25 +592,51 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 	}
 }
 
-// TestSmoke_VornDoorSkipsTheArrivalTalk takes First Blood from Vorn in the
-// Drill Yard (owner ruling 2026-11-22, #940): the quest starts on `met`, and
-// the cudgel is in the pack. The two earlier quests are marked done directly,
-// because the offer reads only their end tokens.
-func TestSmoke_VornDoorSkipsTheArrivalTalk(t *testing.T) {
-	w := newSpineWalk(t)
-	for _, tok := range []string{"30-start", "30-end", "31-start", "31-end"} {
-		if !w.user.Character.GiveQuestToken(tok) {
-			t.Fatalf("could not hold %s", tok)
-		}
+// TestSmoke_TrainerDoorsSkipTheArrivalTalk takes each trade's first quest from
+// its trainer in the trainer's room (owner ruling 2026-11-22, #940): the quest
+// starts on its second step, and every item the offer carries is in the pack.
+// The two earlier quests are marked done directly, because the offer reads
+// only their end tokens. First Light (98) is not one of the seven trades Toke
+// offers in the spine, so it is here only.
+func TestSmoke_TrainerDoorsSkipTheArrivalTalk(t *testing.T) {
+	doors := []struct {
+		name    string
+		quest   int
+		trainer int
+		room    int
+		door    string
+		second  string
+		items   []int
+	}{
+		{"Vorn", 32, 9108, 5227, "drill_offer", "met", []int{10043}},
+		{"Rusk", 35, 9116, 5245, "heat_start", "met", nil},
+		{"Birna", 38, 9128, 5265, "brew_start", "met", nil},
+		{"Tarn", 41, 9136, 5283, "sign_start", "met", nil},
+		{"Grieve", 44, 9144, 5303, "cast_start", "met", nil},
+		{"Wenna", 47, 9153, 5324, "words_start", "met", nil},
+		{"Iden", 50, 9161, 5350, "shoot_start", "met", []int{10038, 30064}},
+		{"Gethin", 98, 9125, 5255, "light_start", "lantern", []int{20097}},
 	}
-	w.walkTo(5227)
-	w.npc(9108)
-	if !w.onMenu(9108, "drill_offer") {
-		t.Fatal("Vorn's drill_offer is not on the menu after Find Your Footing")
-	}
-	w.offer(9108, "drill_offer", "32-start")
-	w.step(32, "met", "Vorn's drill_offer")
-	if !w.user.Character.CarriesItem(10043) {
-		t.Fatal("Vorn did not hand over the cudgel")
+	for _, d := range doors {
+		t.Run(d.name, func(t *testing.T) {
+			w := newSpineWalk(t)
+			for _, tok := range []string{"30-start", "30-end", "31-start", "31-end"} {
+				if !w.user.Character.GiveQuestToken(tok) {
+					t.Fatalf("could not hold %s", tok)
+				}
+			}
+			w.walkTo(d.room)
+			w.npc(d.trainer)
+			if !w.onMenu(d.trainer, d.door) {
+				t.Fatalf("%s is not on the menu after Find Your Footing", d.door)
+			}
+			w.offer(d.trainer, d.door, fmt.Sprintf("%d-start", d.quest))
+			w.step(d.quest, d.second, d.name+"'s "+d.door)
+			for _, id := range d.items {
+				if !w.user.Character.CarriesItem(id) {
+					t.Errorf("%s did not hand over item %d", d.name, id)
+				}
+			}
+		})
 	}
 }

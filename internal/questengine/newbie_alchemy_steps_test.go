@@ -59,6 +59,19 @@ func TestQuest38FirstBrew_OneCommandPerStep(t *testing.T) {
 	require.Equal(t, []string{"38-drink"}, turnIn)
 	heard := EventDetails{MobId: birnaMob, Topic: "brew_arrive", RoomId: sheltered}
 
+	// Birna's own offer (owner ruling 2026-11-22, #940) starts at her pool and
+	// skips the arrival talk; Toke's offer, made in Hub Square, does not.
+	t.Run("the grant at the pool skips met", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "38-start", RoomId: sheltered})
+		require.Equal(t, "met", w.p.current)
+	})
+	t.Run("the grant in Hub Square does not", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "38-start", RoomId: 5203})
+		require.Equal(t, "start", w.p.current)
+	})
+
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
 		ctx := &countingLinearCtx{linearCtx: w.ctx, counts: map[string]int{}}

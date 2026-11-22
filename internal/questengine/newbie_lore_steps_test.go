@@ -92,6 +92,19 @@ func TestQuest47FirstWords_GiverToGiver(t *testing.T) {
 	require.Contains(t, squash(loreStepHint(t, q, "start")), "east, then north six times to the commons yard")
 	require.Equal(t, 5324, foldingWalk(t, foldingHubSquare, "east", "north", "north", "north", "north", "north", "north"))
 
+	// Wenna's own offer (owner ruling 2026-11-22, #940) starts in the Commons
+	// Yard and skips the lesson; Toke's offer, made in Hub Square, does not.
+	t.Run("the grant in the yard skips met", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "47-start", RoomId: 5324})
+		require.Equal(t, "met", w.p.current)
+	})
+	t.Run("the grant in Hub Square does not", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "47-start", RoomId: foldingHubSquare})
+		require.Equal(t, "start", w.p.current)
+	})
+
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
 		w.notify("command", EventDetails{Command: "help", RoomId: 5200})
