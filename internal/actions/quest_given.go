@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -29,6 +30,14 @@ const QuestGearFadesLine = `The <ansi fg="itemname">%s</ansi> fades away. Quest 
 // questGearFadesRoomLine is what the room sees: the holder's name, tagged,
 // and the item's name.
 const questGearFadesRoomLine = `%s's <ansi fg="itemname">%s</ansi> fades away.`
+
+// questGearSalvageLine is what the salvager reads when the item salvaged is
+// quest gear: it is destroyed and yields nothing (salvageItem).
+const questGearSalvageLine = `The <ansi fg="itemname">%s</ansi> crumbles to nothing. Quest gear holds nothing worth salvaging.`
+
+// QuestGearListTag is the short mark an inventory row puts after a quest's
+// copy, in brackets: "Firebomb (quest gear)".
+const QuestGearListTag = `quest gear`
 
 // QuestGearLookLine is the extra line look and examine show under a
 // quest-given copy, so no one loses one by surprise.
@@ -58,6 +67,29 @@ func VanishQuestGiven(char *characters.Character, userId int, mobInstanceId int,
 		// Not held: nothing to fade, and nothing may move it either.
 		return true
 	}
+	fadeQuestGiven(char, userId, mobInstanceId, itm, room)
+	return true
+}
+
+// FadeQuestGivenOffHand is VanishQuestGiven for a copy already out of its
+// holder's carry lists, on its way to the floor without going through
+// RemoveItem: displaced by an equip while overloaded, taken off while over
+// twice carry capacity, refused by the pet it came from, or a spoiled bomb
+// out of the bandolier. For a quest-given itm it fades (the loss and the
+// lines, as VanishQuestGiven) and reports true, and the caller must not put
+// it on the floor; for any other item it does nothing and reports false.
+// char names the holder for the room line and may be nil.
+func FadeQuestGivenOffHand(char *characters.Character, userId int, mobInstanceId int, itm items.Item, room *rooms.Room) bool {
+	if !itm.IsQuestGiven() {
+		return false
+	}
+	fadeQuestGiven(char, userId, mobInstanceId, itm, room)
+	return true
+}
+
+// fadeQuestGiven is the fade itself, once the copy is out of the holder's
+// carry lists: the loss event, the holder's line and the room's.
+func fadeQuestGiven(char *characters.Character, userId int, mobInstanceId int, itm items.Item, room *rooms.Room) {
 	events.AddToQueue(events.ItemOwnership{
 		UserId:        userId,
 		MobInstanceId: mobInstanceId,
@@ -69,7 +101,7 @@ func VanishQuestGiven(char *characters.Character, userId int, mobInstanceId int,
 			u.SendText(messaging.CategoryWarning, fmt.Sprintf(QuestGearFadesLine, itm.DisplayName()))
 		}
 	}
-	if room != nil {
+	if room != nil && char != nil {
 		nameTag := `mobname`
 		if userId > 0 {
 			nameTag = `username`
@@ -79,7 +111,6 @@ func VanishQuestGiven(char *characters.Character, userId int, mobInstanceId int,
 			[]string{char.Name},
 			userId)
 	}
-	return true
 }
 
 // VanishQuestGivenFrom is VanishQuestGiven for an Actor.
@@ -87,16 +118,30 @@ func VanishQuestGivenFrom(actor Actor, itm items.Item, room *rooms.Room) bool {
 	return VanishQuestGiven(actor.GetCharacter(), actor.GetUserId(), actor.GetMobInstanceId(), itm, room)
 }
 
-// questGivenLeavesOnGive reports whether a quest-given copy the actor gives
-// leaves the player's side, and so fades. A player giving to another player
-// lets it go; a player giving to an NPC is decided by usercommands.Give
-// before it gets here (a topic, a tree handler, a companion, or a hand-back).
-// A mob gives it away unless it hands it to the player who charmed it: a
-// companion returning gear to its master keeps the copy.
-func questGivenLeavesOnGive(actor Actor, toUserId int) bool {
-	if actor.IsPlayer() {
-		return toUserId > 0 && toUserId != actor.GetUserId()
+// questGivenLeaves reports whether a quest-given copy moving from one
+// character to another leaves the side of the player it belongs with, and
+// so fades (TransferItemBetweenChars). The copy stays when:
+//   - a behaviour tree hands back the item it was just given
+//     (acquire.AcquireTreeGive, the tree's return_item);
+//   - a player hands it to their own companion (a mob they charmed);
+//   - a companion hands it back to the player who charmed it.
+//
+// Anything else lets it go: a player to another player or to any other mob
+// (usercommands.Give never sends an NPC's give here: it hands quest gear
+// back itself), and a mob to anyone but its charmer.
+func questGivenLeaves(fromChar *characters.Character, fromUserId int, toChar *characters.Character, toUserId int, reason acquire.AcquireReason) bool {
+	if reason == acquire.AcquireTreeGive {
+		return false
 	}
-	charmer := actor.GetCharacter().GetCharmedUserId()
+	if fromUserId > 0 {
+		if toUserId > 0 {
+			return toUserId != fromUserId
+		}
+		return toChar == nil || !toChar.IsCharmed(fromUserId)
+	}
+	charmer := 0
+	if fromChar != nil {
+		charmer = fromChar.GetCharmedUserId()
+	}
 	return charmer == 0 || toUserId != charmer
 }

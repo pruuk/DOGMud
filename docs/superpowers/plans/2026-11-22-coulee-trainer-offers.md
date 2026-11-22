@@ -179,7 +179,23 @@ gear, and you keep it after the quest ends. Fix it in this branch.
   line, and the copy stays with the player. A topic that wants the item
   (`requiresItem` / `carriesItem`) and a `player_give` tree handler keep their
   current behaviour. Decision taken without asking: a pet counts as a
-  companion here (if wrong, pets hand it back too).
+  companion here (if wrong, pets hand it back too). **Controller ruling
+  (2026-11-22, on review):** only the giver's OWN charmed mob or own pet is a
+  companion. Another player's charmed mob or pet is treated like any NPC and
+  hands it back, and so does the giver's own pet when it has no room. A
+  handed-back item raises no gift, ownership or gain event.
+- **Companions and the lost-item lines (owner ruling 2026-11-22, option B):**
+  the "I've lost my ..." replacement lines check only what the player carries.
+  A player who arms their pet or charmed mob and then asks for another copy is
+  accepted ("no big deal"). Fact noted with the ruling: a player can take an
+  item back from their own pet (`get <item> from <pet>`,
+  `usercommands/get.go:462-469`); there is no command to take one back from a
+  charmed mob. Extra copies farmed this way stay marked, so they cannot be
+  sold or given away.
+- **Salvage and crafting (owner ruling 2026-11-22, option A):** salvaging a
+  quest-given copy destroys it and recovers nothing, with no skill award.
+  Crafting still accepts it as an ingredient (Tarn's salt pouch is handed over
+  for The Hunt, quest 42, to cook with) and the output is ordinary.
 - `look` / `examine` on the item adds one line saying it is quest gear and
   vanishes if it leaves your hands, so no one loses it by surprise.
 - A guard test lists every `RemoveItem` call site outside the allowed ones

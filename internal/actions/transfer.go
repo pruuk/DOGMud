@@ -75,7 +75,17 @@ func TransferItemToBackpack(item items.Item, toChar *characters.Character, toUse
 // Returns an error if the item cannot be removed from the source or stored in the destination.
 // reason rides on the receiver's gain event: give for player and mob give,
 // tree_give for the behaviour tree's return_item.
+//
+// Quest gear (#940): when questGivenLeaves says the copy would leave the
+// giver's side, it fades instead (VanishQuestGiven, telling the giver's
+// room) and the error is ErrQuestGivenVanished. Every caller meets the rule
+// here, so a new one cannot skip it.
 func TransferItemBetweenChars(item items.Item, fromChar *characters.Character, fromUserId int, fromMobInstanceId int, toChar *characters.Character, toUserId int, toMobInstanceId int, reason acquire.AcquireReason) error {
+	if item.IsQuestGiven() && questGivenLeaves(fromChar, fromUserId, toChar, toUserId, reason) {
+		VanishQuestGiven(fromChar, fromUserId, fromMobInstanceId, item, rooms.LoadRoom(fromChar.RoomId))
+		return ErrQuestGivenVanished
+	}
+
 	// Remove from source
 	if !fromChar.RemoveItem(item) {
 		return fmt.Errorf("item not found in source inventory")
