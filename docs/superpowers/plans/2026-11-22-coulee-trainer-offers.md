@@ -89,7 +89,8 @@ and `dogmud-player-copy`.
    seven start.
 2. **The other seven** (35, 38, 41, 44, 47, 50, 98), same shape, one subagent
    per two or three files. Iden gives the sling, Gethin the lantern.
-3. **Bridge copy.** Quests 90 and 93: "Crier Toke, who sent you to ..."
+3. **Bridge copy.** Quests 90, 91, 92 and 93 (corrected during the build: the
+   first fact sweep found only 90 and 93): "Crier Toke, who sent you to ..."
    becomes wording true for both doors.
 4. **Toke's own lines.** Audit `9106.yaml` for variants or topics gated on a
    trade's `NN-start` that assume he sent the player; reword any that would
