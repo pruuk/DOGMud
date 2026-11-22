@@ -579,9 +579,37 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 		} else if tr.door != "" && !strings.Contains(text, "ask me") {
 			t.Errorf("mob %d's opener for an Opened newcomer does not invite them to ask: %q", tr.teacher, text)
 		}
+		if tr.door != "" && !w.onMenu(tr.teacher, tr.door) {
+			t.Errorf("mob %d's door %s is not on the menu after footing", tr.teacher, tr.door)
+		}
 		if !w.onMenu(spineToke, tr.offer) {
 			t.Fatalf("Toke's %s is not open after footing", tr.offer)
 		}
 		w.offer(spineToke, tr.offer, start)
+		// Toke's door is in Hub Square: it does not skip the arrival talk.
+		w.step(tr.quest, "start", "Toke's "+tr.offer)
+	}
+}
+
+// TestSmoke_VornDoorSkipsTheArrivalTalk takes First Blood from Vorn in the
+// Drill Yard (owner ruling 2026-11-22, #940): the quest starts on `met`, and
+// the cudgel is in the pack. The two earlier quests are marked done directly,
+// because the offer reads only their end tokens.
+func TestSmoke_VornDoorSkipsTheArrivalTalk(t *testing.T) {
+	w := newSpineWalk(t)
+	for _, tok := range []string{"30-start", "30-end", "31-start", "31-end"} {
+		if !w.user.Character.GiveQuestToken(tok) {
+			t.Fatalf("could not hold %s", tok)
+		}
+	}
+	w.walkTo(5227)
+	w.npc(9108)
+	if !w.onMenu(9108, "drill_offer") {
+		t.Fatal("Vorn's drill_offer is not on the menu after Find Your Footing")
+	}
+	w.offer(9108, "drill_offer", "32-start")
+	w.step(32, "met", "Vorn's drill_offer")
+	if !w.user.Character.CarriesItem(10043) {
+		t.Fatal("Vorn did not hand over the cudgel")
 	}
 }

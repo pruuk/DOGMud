@@ -24,8 +24,8 @@ opener:
       it. Come back after.
     hints: Find Cleric Hadwen at the reflecting pool and complete the Awakening before
       pushing out into the wash.
-  # No fighting trade yet: Crier Toke starts every trade (#375 phase 7), and
-  # Vorn sends a newcomer back to him, so Garve names Toke first.
+  # No fighting trade yet: Crier Toke starts every trade (#375 phase 7) and
+  # Vorn offers First Blood too (#940), so Garve names Toke first.
   - questRequired:
     - 30-end
     questExcluded:

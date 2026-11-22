@@ -68,8 +68,8 @@ func TestTokeNamesWhatIsOnTheMenu(t *testing.T) {
 }
 
 // Garve sends a player with no fighting trade to the one who starts it. Crier
-// Toke starts every trade, and Vorn himself sends a newcomer back to Toke, so
-// Garve names Vorn only once First Blood is under way.
+// Toke starts every trade and Vorn offers First Blood too (#940), so Garve
+// still names Toke first and names Vorn only once First Blood is under way.
 func TestGarveSendsANewcomerToToke(t *testing.T) {
 	df := loadShippedDialogue(t, "pothole_coulee", "9112.yaml")
 

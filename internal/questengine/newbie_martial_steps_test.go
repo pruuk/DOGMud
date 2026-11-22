@@ -7,8 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// The fighting line of Pothole Coulee (#375 phase 7): Crier Toke offers
-// First Blood (32) and Drillmaster Vorn takes its hand-in; Vorn offers Hold
+// The fighting line of Pothole Coulee (#375 phase 7): Crier Toke or
+// Drillmaster Vorn offers First Blood (32) and Vorn takes its hand-in (#940,
+// owner ruling 2026-11-22); Vorn offers Hold
 // the Wash (33) and Caravan Guard Garve takes it; Garve offers Take the
 // Tower (34), then Report to Toke (Fighting) (90) and the repeatable Cull
 // the Wash (53). One command per step, each trigger gated on the step before
@@ -50,6 +51,20 @@ func TestQuest32FirstBlood_OneCommandPerStep(t *testing.T) {
 	kill := EventDetails{MobId: martialDummy, RoomId: martialDrillYard}
 	equipCudgel := EventDetails{Command: "equip", RoomId: martialDrillYard, ItemId: martialCudgel}
 	heard := EventDetails{MobId: martialVorn, Topic: "drill_arrive", RoomId: martialDrillYard}
+
+	// Vorn's own offer (owner ruling 2026-11-22, #940) starts in the Drill
+	// Yard and skips the arrival talk; Toke's offer, made in Hub Square,
+	// does not.
+	t.Run("the grant in the yard skips met", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "32-start", RoomId: martialDrillYard})
+		require.Equal(t, "met", w.p.current)
+	})
+	t.Run("the grant in Hub Square does not", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("quest_granted", EventDetails{QuestToken: "32-start", RoomId: 5203})
+		require.Equal(t, "start", w.p.current)
+	})
 
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
