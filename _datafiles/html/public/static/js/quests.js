@@ -276,8 +276,6 @@
     npc_say:       "custom",
     spawn_mob:     [{ k: "id", kind: "mob", label: "Mob", nest: true }, { k: "room", kind: "room", label: "Room", nest: true }],
     spawn_item:    [{ k: "id", kind: "item", label: "Item", nest: true }, { k: "room", kind: "room", label: "Room", nest: true }],
-    lock_exits:    [{ k: "room", kind: "room", label: "Room", nest: true }, { k: "player_scoped", kind: "bool", label: "Player-scoped", nest: true }],
-    unlock_exits:  [{ k: "room", kind: "room", label: "Room", nest: true }, { k: "player_scoped", kind: "bool", label: "Player-scoped", nest: true }],
     train_skill:   [{ k: "skill", kind: "skill", label: "Skill", nest: true }, { k: "level", kind: "num", label: "Level", nest: true }],
     train_stat:    [{ k: "stat", kind: "stat", label: "Stat", nest: true }, { k: "amount", kind: "num", label: "Amount", nest: true }],
     learn_recipe:  [{ k: "recipe", kind: "recipe", label: "Recipe", nest: true }],

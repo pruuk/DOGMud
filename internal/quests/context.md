@@ -1186,6 +1186,7 @@ maintainers know the quests are coupled.
 |------|---------|
 | `quests.go` | Every quest definition type: the single owner of the quest file parse |
 | `triggers.go` | Trigger and action definition shapes |
+| `removed_actions.go` | `ActionDef.UnmarshalYAML`: refuses the removed `lock_exits` and `unlock_exits` keys (yaml.v2 would otherwise drop them silently) |
 | `save.go` | Quest file persistence |
 | `engine_flags.go` | `EngineSetFlags`: quest flag values only Go code sets, which the dialogue walker counts as set; `NewcomerFlagKey`, `NewcomerFlagValue` |
 | `roomtext.go` | `RoomTextProblems` and the observer-line rule `Validate` enforces (every quest room line names `{actor}`, walking nested sequences) |

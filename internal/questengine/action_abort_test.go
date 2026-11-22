@@ -40,8 +40,6 @@ func (c *recordingCtx) IncreaseStat(string, int)                {}
 func (c *recordingCtx) LearnRecipe(string)                      {}
 func (c *recordingCtx) ApplyStatusCondition(StatusConditionDef) {}
 func (c *recordingCtx) Teleport(int)                            {}
-func (c *recordingCtx) LockExits(ExitLock)                      {}
-func (c *recordingCtx) UnlockExits(ExitLock)                    {}
 func (c *recordingCtx) QueueNpcSay(NpcSayDef)                   {}
 func (c *recordingCtx) QueueSequence(SequenceDef)               {}
 func (c *recordingCtx) GiveMutation()                           {}

@@ -36,8 +36,6 @@ type ActionContext interface {
 	LearnRecipe(recipe string)
 	ApplyStatusCondition(b StatusConditionDef)
 	Teleport(roomId int)
-	LockExits(e ExitLock)
-	UnlockExits(e ExitLock)
 	QueueNpcSay(n NpcSayDef)
 	QueueSequence(s SequenceDef)
 	GiveMutation()
@@ -91,16 +89,6 @@ func ExecuteAction(a ActionDef, ctx ActionContext) error {
 	if a.SpawnItem != nil {
 		LogVerboseF(ctx.GetUserId(), "spawn item %d in room %d", a.SpawnItem.Id, a.SpawnItem.Room)
 		ctx.SpawnItem(*a.SpawnItem)
-		return nil
-	}
-	if a.LockExits != nil {
-		LogVerboseF(ctx.GetUserId(), "lock exits room %d (player_scoped=%v)", a.LockExits.Room, a.LockExits.PlayerScoped)
-		ctx.LockExits(*a.LockExits)
-		return nil
-	}
-	if a.UnlockExits != nil {
-		LogVerboseF(ctx.GetUserId(), "unlock exits room %d", a.UnlockExits.Room)
-		ctx.UnlockExits(*a.UnlockExits)
 		return nil
 	}
 	if a.TeachSpell != "" {
