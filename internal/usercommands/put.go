@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -110,6 +111,11 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		container.Gold += goldAmt
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You place <ansi fg="gold">%s gold</ansi> into the <ansi fg="container">%s</ansi>`, util.FormatNumber(goldAmt), containerName))
 		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> places some <ansi fg="gold">gold</ansi> into the <ansi fg="container">%s</ansi>`, user.Character.Name, containerName), user.UserId)
+	}
+
+	// Quest gear fades instead of going in (#940).
+	if itemFound && actions.VanishQuestGiven(user.Character, user.UserId, 0, item, room) {
+		itemFound = false
 	}
 
 	if itemFound {

@@ -199,7 +199,7 @@ func validatePurchase(
 	if matchedShopItem.TradeItemId > 0 {
 		tradeItm := items.New(matchedShopItem.TradeItemId)
 		tradeItemName = tradeItm.Name()
-		if _, found := char.FindInBackpack(tradeItemName); !found {
+		if _, found := findTradeInItem(char, tradeItemName); !found {
 			if buyer.IsPlayer() {
 				buyer.SendText(messaging.CategoryError, fmt.Sprintf(`You must have %s<ansi fg="itemname">%s</ansi> to trade for that.`, items.ArticleFor(tradeItm.ItemId, tradeItm.DisplayName()), items.MidSentenceName(tradeItm.DisplayName())))
 			}
@@ -245,7 +245,7 @@ func validatePurchase(
 		tradeInString = fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(price))
 	}
 	if tradeItemName != "" {
-		if itm, found := char.FindInBackpack(tradeItemName); found {
+		if itm, found := findTradeInItem(char, tradeItemName); found {
 			char.RemoveItem(itm)
 			if buyer.IsPlayer() {
 				events.AddToQueue(events.ItemOwnership{
@@ -277,6 +277,22 @@ func validatePurchase(
 		price:           price,
 		tradeInString:   tradeInString,
 	}, "", true
+}
+
+// findTradeInItem is the carried copy a trade-in takes as payment. Quest gear
+// never pays (#940): a copy a quest handed out is passed over, so a player
+// holding only that one is told they have nothing to trade. The name search
+// is the one the trade-in always used; a copy the narrower pool admits must
+// be the same item it found, so it never lands on another item the name
+// fits.
+func findTradeInItem(char *characters.Character, tradeItemName string) (items.Item, bool) {
+	itm, found := char.FindInBackpack(tradeItemName)
+	if !found || !itm.IsQuestGiven() {
+		return itm, found
+	}
+	return char.FindInBackpackWhere(tradeItemName, func(other items.Item) bool {
+		return other.ItemId == itm.ItemId && !other.IsQuestGiven()
+	})
 }
 
 // sendMerchantMessage delivers a message to the buyer, branching on

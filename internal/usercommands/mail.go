@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/acquire"
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -202,6 +203,13 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// fresh here — their online/offline status may have changed while composing,
 	// and a stale snapshot could drop the mail (deliver to a now-offline live
 	// record, or write a disk copy a now-online session would clobber).
+	//
+	// Quest gear never travels (#940): the mail goes without it, and once
+	// the mail is on its way the gear fades from the sender.
+	questGear := attached != nil && attached.IsQuestGiven()
+	if questGear {
+		msg.Item = nil
+	}
 	rec, offlineUsername, ok := resolveMailRecipient(recipientName, user.UserId, users.GetByCharacterName, users.CharacterNameSearch)
 	if !ok || !deliverMail(rec, offlineUsername, msg) {
 		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`Your mail to <ansi fg="username">%s</ansi> could not be delivered. Nothing was sent.`, recipientName))
@@ -213,7 +221,9 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.Character.Gold -= gold
 		events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -gold})
 	}
-	if attached != nil {
+	if questGear {
+		actions.VanishQuestGiven(user.Character, user.UserId, 0, *attached, nil)
+	} else if attached != nil {
 		user.Character.RemoveItem(*attached)
 	}
 	user.Character.LastMailSentRound = util.GetRoundCount()

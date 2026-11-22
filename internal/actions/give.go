@@ -16,12 +16,20 @@ type GiveItemResult struct {
 // GiveItemToChar searches the actor's backpack for an item matching itemName,
 // then atomically transfers it to toChar using TransferItemBetweenChars.
 // If no matching item is found, Found is false and no transfer occurs.
+// A quest-given copy that would leave the player's side (another player, or
+// a mob giving it to anyone but its charmer) fades away instead and Err is
+// ErrQuestGivenVanished (#940); questGivenLeavesOnGive says when.
 func GiveItemToChar(actor Actor, itemName string, toChar *characters.Character, toUserId int, toMobInstanceId int) GiveItemResult {
 	fromChar := actor.GetCharacter()
 
 	matchItem, found := fromChar.FindInBackpack(itemName)
 	if !found {
 		return GiveItemResult{Found: false}
+	}
+
+	if matchItem.IsQuestGiven() && questGivenLeavesOnGive(actor, toUserId) {
+		VanishQuestGivenFrom(actor, matchItem, actor.GetRoom())
+		return GiveItemResult{Item: matchItem, Found: true, Err: ErrQuestGivenVanished}
 	}
 
 	err := TransferItemBetweenChars(

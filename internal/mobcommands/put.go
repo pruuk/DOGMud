@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -87,6 +88,12 @@ func Put(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		mob.Character.Gold -= goldAmt
 		container.Gold += goldAmt
 		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> places some <ansi fg="gold">gold</ansi> into the <ansi fg="container">%s</ansi>`, mob.Character.Name, containerName))
+	}
+
+	// Quest gear a companion holds fades instead of going in, as it does
+	// when the companion drops it (#940).
+	if itemFound && actions.VanishQuestGiven(&mob.Character, 0, mob.InstanceId, item, room) {
+		itemFound = false
 	}
 
 	if itemFound {

@@ -22,6 +22,9 @@ const (
 	sellSayOverstock   = "I have all of those I can use right now. Another trader might buy it."
 	sellSayCantAfford  = "I can't afford that right now."
 	sellSayNotInterest = "I'm not interested in that."
+	// sellTellQuestGiven is a Tell, the seller's own line, like
+	// sellSayQuestItem: a copy a quest handed out (#940).
+	sellTellQuestGiven = "No shop will buy quest gear. You keep it."
 )
 
 // sellTellHeldInBandolier is the seller's own line when the potion they name
@@ -65,6 +68,11 @@ func QuoteSale(char *characters.Character, room *rooms.Room, mob *mobs.Mob,
 	}
 	if spec.QuestToken != "" {
 		return SaleQuote{Tell: sellSayQuestItem}
+	}
+	// A copy a quest handed out is never bought (#940); a bought copy of the
+	// same item still sells.
+	if item.IsQuestGiven() {
+		return SaleQuote{Tell: sellTellQuestGiven}
 	}
 	// A potion the Vitalis Bandolier holds is at peak there and would sour
 	// the moment it left, so it is not for sale and nothing moves (#794).

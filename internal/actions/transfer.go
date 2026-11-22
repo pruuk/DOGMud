@@ -19,7 +19,13 @@ var ErrInventoryFull = errors.New("destination inventory capacity exceeded")
 
 // TransferItemToFloor moves an item from a character's inventory to the room floor.
 // Returns an error if the item cannot be removed from the character's inventory.
+// A quest-given copy never reaches the floor: it fades away (VanishQuestGiven)
+// and the error is ErrQuestGivenVanished (#940).
 func TransferItemToFloor(item items.Item, char *characters.Character, userId int, mobInstanceId int, room *rooms.Room) error {
+	if VanishQuestGiven(char, userId, mobInstanceId, item, room) {
+		return ErrQuestGivenVanished
+	}
+
 	// Remove item from character
 	if !char.RemoveItem(item) {
 		return fmt.Errorf("item not found in inventory")

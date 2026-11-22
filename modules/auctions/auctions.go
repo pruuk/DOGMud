@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/acquire"
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -477,6 +478,12 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 	}
 
 	user.ClearPrompt()
+
+	// Quest gear never goes on the block (#940): it fades as it leaves the
+	// seller's hands.
+	if actions.VanishQuestGiven(user.Character, user.UserId, 0, matchItem, nil) {
+		return true, nil
+	}
 
 	user.SendText(messaging.CategorySystem, fmt.Sprintf("Auctioning your <ansi fg=\"item\">%s</ansi>: buyout <ansi fg=\"gold\">%s gold</ansi>, reserve <ansi fg=\"gold\">%s gold</ansi>.", matchItem.DisplayName(), util.FormatNumber(amt), util.FormatNumber(reserveFrom(amt, auctionReservePct))))
 

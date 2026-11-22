@@ -31,17 +31,21 @@ func Stow(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	stowed := 0
-	full := false
+	full, fadedAny := false, false
 	for _, itm := range comps {
 		if user.ItemStorage.SlotCount() >= storageCap {
 			full = true
 			break
 		}
-		if storageAddQuiet(user, itm) {
+		stored, faded := storageAddQuiet(user, itm)
+		if stored {
 			stowed++
 		}
+		fadedAny = fadedAny || faded
 	}
 	switch {
+	case stowed == 0 && fadedAny && !full:
+		// quest gear faded with its own line (#940); nothing else to say
 	case stowed == 0 && full:
 		user.SendText(messaging.CategoryRefusal, `Storage is full.`)
 	case stowed == 0:

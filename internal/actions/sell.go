@@ -182,6 +182,14 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 		}
 		return SellResult{Reason: SellStopRejected}
 	}
+	// sellFindItemInChar prefers a copy that is not quest gear, so the probe
+	// is quest gear only when every match is (#940).
+	if probe.IsQuestGiven() {
+		if seller.IsPlayer() {
+			seller.SendText(messaging.CategoryRefusal, sellTellQuestGiven)
+		}
+		return SellResult{Reason: SellStopRejected}
+	}
 	// No WILLING merchant still routes through sellOneToMerchant when a
 	// merchant is present (SaleMerchant), so the merchant says why it won't
 	// buy and we return SellStopRejected / SellStopMerchantBroke rather than
@@ -201,6 +209,11 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 		soldId := probe.ItemId
 		soldBauble := probe.IsBauble()
 		if next, ok := sellFindItemInChar(char, itemName); ok {
+			// Only quest gear left (#940): `sell all cudgel` sold every
+			// other copy and keeps this one, as a completed sale.
+			if next.IsQuestGiven() && out.Sold > 0 {
+				break
+			}
 			soldBauble = next.IsBauble()
 			soldName = next.GetSpec().Name
 			soldId = next.ItemId
@@ -250,7 +263,8 @@ func sellSweep(seller Actor, room *rooms.Room) SellResult {
 	soldAny := false
 	for _, itm := range snapshot {
 		spec := itm.GetSpec()
-		if spec.ItemId < 1 || spec.QuestToken != "" || spec.Value <= 0 || spec.IsComponent {
+		// Quest gear stays with its holder (#940): sell all skips it.
+		if spec.ItemId < 1 || spec.QuestToken != "" || itm.IsQuestGiven() || spec.Value <= 0 || spec.IsComponent {
 			continue
 		}
 		mob, shopInv := resolveMerchant(room, itm, seller.IsPlayer())
@@ -438,8 +452,29 @@ func notifySaleToQuests(seller Actor, item items.Item, mob *mobs.Mob) {
 // sellFindItemInChar searches backpack → potions → components for a match.
 func sellFindItemInChar(char *characters.Character, name string) (items.Item, bool) {
 	item, found := char.FindInBackpack(name)
+	// A sellable copy of the same item first: `sell cudgel` with a bought
+	// cudgel and the one a quest gave sells the bought one (#940). Only when
+	// every copy is quest gear does it come back, for QuoteSale to refuse.
+	// The same item id only, so the narrower search never lands on some
+	// other item the name also fits.
+	if found && item.IsQuestGiven() {
+		if other, ok := char.FindInBackpackWhere(name, func(itm items.Item) bool {
+			return itm.ItemId == item.ItemId && !itm.IsQuestGiven()
+		}); ok {
+			return other, true
+		}
+	}
 	if !found {
 		item, found = char.FindInPotions(name)
+		// The same preference in the bandolier, where a quest's firebomb
+		// lands beside a bought one.
+		if found && item.IsQuestGiven() {
+			if other, ok := char.FindInPotionsWhere(name, func(itm items.Item) bool {
+				return itm.ItemId == item.ItemId && !itm.IsQuestGiven()
+			}); ok {
+				return other, true
+			}
+		}
 	}
 	if !found {
 		item, found = char.FindInComponents(name)

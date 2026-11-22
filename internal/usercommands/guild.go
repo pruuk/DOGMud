@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/acquire"
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/guilds"
@@ -653,6 +654,10 @@ func guildDonate(user *users.UserRecord, remainder string) {
 	item, found := user.Character.FindInBackpack(name)
 	if !found {
 		refusal.NotCarrying(user, name)
+		return
+	}
+	// Quest gear never reaches the vault: it fades (#940).
+	if actions.VanishQuestGiven(user.Character, user.UserId, 0, item, nil) {
 		return
 	}
 	itemName := item.DisplayName()

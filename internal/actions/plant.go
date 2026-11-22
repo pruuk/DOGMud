@@ -88,6 +88,14 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 		return PlantResult{Reason: "item not in backpack"}
 	}
 
+	// Quest gear fades as the thief lets go of it (#940), before any
+	// contest: there is nothing to plant, so no attempt and no cooldown.
+	// This covers all three paths below (mob, player, container). Quietly:
+	// a plant shows the room nothing.
+	if VanishQuestGivenFrom(actor, plantItem, nil) {
+		return PlantResult{Reason: "quest gear faded"}
+	}
+
 	// Shares the steal cooldown key, intentionally: one skullduggery
 	// cooldown. Only CHECKED here; the attempt arms it (theftAttempt.score),
 	// so a refusal below spends nothing.

@@ -603,6 +603,31 @@ through it with `acquire.AcquireGet`; `TransferItemBetweenChars` takes a
 and the giver's loss event queues after the receiver's gain. A refused store
 raises nothing.
 
+**Quest gear** (`quest_given.go`, #940, owner ruling 2026-11-22). A copy a
+quest handed out (`items.Item.IsQuestGiven`, marked by the acquire seam) is
+ordinary gear while its holder keeps it and fades whenever it leaves their
+hands. `VanishQuestGiven(char, userId, mobInstanceId, itm, room) bool` is the
+one way it leaves: for a quest-given `itm` it removes it, queues the loss,
+tells a player holder `QuestGearFadesLine` ("The X fades away. Quest gear
+lasts only while you carry it.") and, with a non-nil room, tells the room;
+it reports true and the caller must not move the item. For any other item it
+does nothing and reports false, so a way out calls it first.
+`VanishQuestGivenFrom(actor, itm, room)` is the Actor form. Here it runs in
+`TransferItemToFloor` (drop; returns `ErrQuestGivenVanished`), in
+`GiveItemToChar` when the copy would leave the player's side (another player,
+or a mob giving it to anyone but its charmer; `ErrQuestGivenVanished`), and in
+`Plant` before any contest (`Reason: "quest gear faded"`). `QuoteSale`
+refuses it with the seller's own line (`sellTellQuestGiven`), `sellNamed`
+prefers a copy of the same item that is not quest gear and stops `sell all X`
+at the quest copy as a completed sale, `sellSweep` skips it, and a trade-in
+(`findTradeInItem`) never takes it as payment. `QuestGearLookLine` is the
+line `look` shows under it. The ways out in `usercommands` (put, stash,
+storage and stow, mail, guild donate, give to a pet), `mobcommands` (put) and
+`modules/auctions` call `VanishQuestGiven` too, and `usercommands.Give` hands
+quest gear back from an NPC that did not ask for it.
+`internal/guards/quest_given_ways_out_guard_test.go` classifies every
+`RemoveItem` call site, so a new way out fails CI until it is decided.
+
 **`look.go`** (new file, slice 5a): `ResolveLook(actor Actor, lookAt string)
 LookResolution` (`:49`) is the shared look body, in the player's exact order:
 sight first, then no-target (the room), then a creature (resolved with the

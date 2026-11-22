@@ -3,6 +3,7 @@ package usercommands
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
@@ -22,6 +23,9 @@ func Stash(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	if !found {
 		refusal.NotCarrying(user, rest)
+	} else if actions.VanishQuestGiven(user.Character, user.UserId, 0, matchItem, nil) {
+		// Quest gear fades instead of being stashed (#940). Quietly: a stash
+		// shows the room nothing about the item.
 	} else {
 		// Swap the item location
 
