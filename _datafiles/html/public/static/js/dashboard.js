@@ -214,6 +214,7 @@
         if (document.getElementById("vitals-bars")) arrange.observe(document.getElementById("vitals-bars"));
         if (document.getElementById("dash-panels")) arrange.observe(document.getElementById("dash-panels"));
       }
+      this._watchComms();
       // The name pill is measured in pixels: measure again once the web font lands.
       if (document.fonts && document.fonts.ready) {
         document.fonts.ready.then(function () { self._relayoutTabs(); });
@@ -825,6 +826,37 @@
     _scrollChatToNewest: function (panel) {
       var chatMessages = panel ? panel.querySelector(".chat-window.active") : null;
       if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+    },
+
+    // Comms opens each channel at its newest message (#942). Lines that
+    // arrive while another channel shows land in a hidden box, which keeps
+    // its scroll place at the top, so choosing that channel showed its
+    // oldest line. A channel made smaller keeps its scroll place too, so the
+    // newest lines slid under the bottom edge. A channel the player has
+    // scrolled up to read stays where it is when the panel changes size.
+    _watchComms: function () {
+      var out = document.getElementById("comm-output");
+      if (!out) return;
+      var self = this;
+      var atNewest = true;
+      // Runs after the page's own handler on the button, which has already
+      // made the chosen channel active.
+      out.addEventListener("click", function (e) {
+        if (!e.target.closest || !e.target.closest(".subtab")) return;
+        atNewest = true;
+        self._scrollChatToNewest(out);
+      });
+      if (!window.ResizeObserver) return;
+      // Scroll does not bubble: listen in the capture phase.
+      out.addEventListener("scroll", function (e) {
+        var w = e.target;
+        if (!w.classList || !w.classList.contains("chat-window") || !w.classList.contains("active")) return;
+        atNewest = w.scrollHeight - w.scrollTop - w.clientHeight < 8;
+      }, true);
+      var resized = new ResizeObserver(function () {
+        if (atNewest) self._scrollChatToNewest(out);
+      });
+      out.querySelectorAll(".chat-window").forEach(function (w) { resized.observe(w); });
     },
 
     _closeDrawer: function () {
