@@ -120,8 +120,91 @@ Blood is no longer on his menu, the other trades still are.
 | Decision | Why | If wrong |
 |---|---|---|
 | Skip uses a `quest_granted` trigger gated `in_room: <trainer's room>`, not a `topic_heard` on the offer and not a flag (amended during Task 1) | `topic_heard` fires before the queued grant lands; the `one-action` loop rule refuses a flag condition on a step grant (`internal/questloop/rule_oneaction.go:45`). Toke's schedule keeps him in 5203 at every hour and each trainer has `maxwander: 0` in their own room, so the room tells the doors apart | If a trainer or Toke ever moves rooms, the trigger's room needs updating |
-| `chain` loop rule accepts a second door (amended during Task 1) | The rule refused any offer gated on `31-end` off Toke, who takes 31's hand-in. It stands for requirement 65 ("Every chain offers its next quest at hand-in", `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`), which still holds while Toke offers every trade. Now an offer also passes when another offer for the same quest, behind the same gate, sits on the hand-in NPC | Revert the rule change and give each trainer a bridge quest instead |
-| The talk menu after any accepted offer, and after a hand-in, is redrawn from the queue (`TalkMenuAgain`, priority 45) once the grant and its `quest_granted` chain have landed; `heldAlso` is removed (scope widened during Task 2 review) | Redrawing at once showed a trainer-door player the skipped arrival topic as the objective, labelled "Toke sent me". Item offers already waited this way; leaving hand-ins on the old path would keep two mechanisms for one job | Revert to the immediate redraw and give the door path its own exception |
+| `chain` loop rule accepts a second door (amended during Task 1; taken without asking, then **approved by the owner 2026-11-22**, option A) | The rule refused any offer gated on `31-end` off Toke, who takes 31's hand-in. It stands for requirement 65 ("Every chain offers its next quest at hand-in", `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`), which still holds while Toke offers every trade. Now an offer also passes when another offer for the same quest, behind the same gate, sits on the hand-in NPC | Revert the rule change and give each trainer a bridge quest instead |
+| The talk menu after any accepted offer, and after a hand-in, is redrawn from the queue (`TalkMenuAgain`, priority 45) once the grant and its `quest_granted` chain have landed; `heldAlso` is removed (scope widened during Task 2 review; taken without asking, then **approved by the owner 2026-11-22**) | Redrawing at once showed a trainer-door player the skipped arrival topic as the objective, labelled "Toke sent me". Item offers already waited this way; leaving hand-ins on the old path would keep two mechanisms for one job | Revert to the immediate redraw and give the door path its own exception |
 | The trainer's offer text carries the arrival lesson | The skipped arrival topic is where the lesson lives; without it the player gets only the next-step opener | Drop the lesson from the pitch and keep it short |
 | `start` step text that says Toke sent the player stays | A trainer-started player skips `start` and never reads it | Reword the eight `start` descriptions too |
 | Arrival topic labels ("Crier Toke sent me...") stay | They show only on the Toke path, where they are true | Reword them neutral |
+
+## Addendum (2026-11-22): quest-given items vanish when they leave you
+
+**Found by the playtest** (breaker seat, raw log `Drillyard Cudgel (x2)`): drop
+the starter item, choose the trainer's "I've lost my cudgel." line, pick the
+old one up. Repeat for as many as you like. Live on master, on every
+replacement line (Vorn, Iden, Gethin, Birna, Tarn). The items sell: cudgel 12,
+sling 40, pouch of shot 40, lantern 20, firebomb 20.
+
+**Owner ruling (2026-11-22, option B):** a copy a quest hands you vanishes
+whenever it leaves your hands (drop, give, put in a container, store, mail,
+and the rest below). Shops will not buy it. While you keep it, it is ordinary
+gear, and you keep it after the quest ends. Fix it in this branch.
+
+### Facts verified against source (2026-11-22)
+
+| Fact | Where |
+|---|---|
+| A topic's `givesItem` makes `items.New(itemId)` and stores it through `acquire.AcquireItem(user, newItem, acquire.AcquireTopic)` | `internal/conversation/playerstate.go:58-74` |
+| A quest trigger's `give_item` does the same with `acquire.AcquireQuestGive` | `internal/questengine/bridge.go:290-299` |
+| Those two reasons (`topic_give`, `quest_give`) are used nowhere else | `internal/acquire/acquire.go:36,40`; grep of `internal/` |
+| Quest rewards (`rewards.itemid`) use `acquire.AcquireReward`, a separate path | `internal/hooks/Quest_HandleQuestUpdate.go:224-231` |
+| Five of the six starter items are ordinary shop and loot goods too (the hooded lantern has 11 other sources), so the mark must be on the copy, not the template | grep of `shops/`, `mobs/` |
+| `items.Item` already carries per-copy fields such as `StashedBy int yaml:"stashedby,omitempty"`, and saves with the character by `yaml.Marshal`, so a new tagged field persists with no other change | `internal/items/items.go:42,65`; `internal/users/autosave_prepare.go:56` |
+| No single function sees every way an item leaves: only drop and give go through `actions/transfer.go` (`TransferItemToFloor` :22, `TransferItemBetweenChars` :72) | read-only sweep of 56 files |
+| Voluntary ways out that bypass it: put (`usercommands/put.go:117`), stash (`stash.go:30`), storage and stow (`storage.go:371` `storageAddQuiet`), mail (`mail.go:217`), guild donate (`guild.go:661-671`), auction (`modules/auctions/auctions.go:494`), plant x3 (`actions/plant.go:160,319,476`), give to a pet (`usercommands/give.go:403`), trade-in as payment (`actions/buy.go:249`) | same sweep |
+| Every sell, offer and appraise prices through one function, which already refuses template quest items with a `Tell` line | `internal/actions/sell_quote.go:59,66-67` |
+| `sell <name>` and `sell all` check before that function | `internal/actions/sell.go:179-183, 253` |
+| Death moves nothing: the corpse keeps a copy of the character, and looting reads only `corpse.Loot`, which a player corpse never fills | `internal/hooks/Death_PlayerCorpse.go:60`; `internal/usercommands/get.go:790-812` |
+| Using up, eating, drinking, throwing, crafting and key absorption destroy the item; they are not ways out | same sweep |
+
+### Mechanism
+
+- `items.Item` gains `QuestGiven bool yaml:"questgiven,omitempty"`, plus one
+  method that says so (e.g. `IsQuestGiven()`).
+- Set at one place: `acquire.AcquireItemForChar` marks the copy when the
+  reason is `AcquireTopic` or `AcquireQuestGive`.
+- One helper, e.g. `actions.VanishQuestGiven(...)`, removes the copy and sends
+  the line. Every voluntary way out above calls it instead of moving the item:
+  drop, give to another player, put, stash, storage and stow, mail, guild
+  donate, auction, plant. `sell` refuses in `QuoteSale` (and `sell all` skips
+  it); a trade-in never takes a quest-given copy as payment.
+- **Giving one to an NPC (owner ruling 2026-11-22, on review of this
+  addendum):** the NPC considers it and hands it back; it never keeps it and
+  it does not vanish. A companion (a creature that follows and fights for the
+  player: a charmed mob or a pet) takes it as usual and may equip it. Today an
+  NPC that did not ask for an item "considers the X for a moment" and then
+  runs `gearup`, which equips it if better and otherwise KEEPS it
+  (`usercommands/give.go:318-319`, `mobcommands/gearup.go`); only a
+  behaviour-tree `player_give` handler hands items back. So for a quest-given
+  copy and a non-companion NPC: the existing "considers" line, then a hand-back
+  line, and the copy stays with the player. A topic that wants the item
+  (`requiresItem` / `carriesItem`) and a `player_give` tree handler keep their
+  current behaviour. Decision taken without asking: a pet counts as a
+  companion here (if wrong, pets hand it back too).
+- `look` / `examine` on the item adds one line saying it is quest gear and
+  vanishes if it leaves your hands, so no one loses it by surprise.
+- A guard test lists every `RemoveItem` call site outside the allowed ones
+  (consumption, in-place replacement, the vanish helper), so a new way out
+  added later fails CI until it is classified. This keeps the ruling enforced.
+
+### Tasks
+
+9. **Mark and vanish** (Opus: many touch points). Field, setter at the acquire
+   seam, vanish helper, every voluntary way out above, the sell refusal, the
+   trade-in filter, the look line, unit tests per way out (a quest-given copy
+   vanishes; a bought copy of the same item moves as before), and the guard.
+   Update `internal/items/context.md`, `internal/acquire/context.md`,
+   `internal/actions/context.md`.
+10. **Re-run the breaker seat** on the cudgel, sling and lantern: drop, give,
+    put in a container, sell, then ask the trainer. One copy at a time, never
+    two.
+11. **Patch notes** line.
+
+### Decisions taken without asking
+
+| Decision | Why | If wrong |
+|---|---|---|
+| Quest rewards (`rewards.itemid`) are NOT marked | A reward is paid once and no NPC replaces it, so it cannot be farmed; players expect to keep and trade rewards | Mark `AcquireReward` too |
+| Mail, guild donate and auction make the copy vanish rather than refuse | One rule for every way out is easier to learn and to enforce than a list of refusals | Refuse those three with a line instead |
+| ~~Giving a quest-given copy to an NPC that does not want it makes it vanish~~ **Overruled by the owner 2026-11-22**: see the ruling below | | |
+| No migration: copies handed out before this change are not marked | There are no live players; marking old copies would need guessing which were quest-given | Mark every carried copy of a quest starter item at login |
+| Vanish line: "The Drillyard Cudgel fades away. Quest gear lasts only while you carry it." | Plain, says what happened and why | Reword |
