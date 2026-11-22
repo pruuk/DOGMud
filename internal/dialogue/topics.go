@@ -243,6 +243,19 @@ func (df *DialogueFile) ItemTopic(itemId int, ps *PlayerState) (t *Topic, wanted
 	return nil, wanted
 }
 
+// deliveryState returns the PlayerState whose GiveItem delivers t's item. A
+// hand-in topic (kind: handin) hands over a quest's reward, which is not quest
+// gear, so it delivers through GiveRewardItem when the state has one. Every
+// other kind keeps GiveItem. The state is copied, never changed.
+func deliveryState(t *Topic, ps *PlayerState) *PlayerState {
+	if ps == nil || t.Kind != KindHandIn || ps.GiveRewardItem == nil {
+		return ps
+	}
+	cp := *ps
+	cp.GiveItem = ps.GiveRewardItem
+	return &cp
+}
+
 // Apply takes a chosen topic's price and runs its effects in the engine's
 // fixed order (delivery first, then the rest; see applyQuestEffects), and
 // records an info topic as heard once its effects landed. It reports false,
@@ -265,6 +278,7 @@ func (df *DialogueFile) Apply(t *Topic, ps *PlayerState) bool {
 	if !tryCharge(charge, ps) {
 		return false
 	}
+	ps = deliveryState(t, ps)
 	if !applyPaidEffects(charge, t.GrantsQuest, t.RequiresItem, give,
 		t.SetsQuestFlag, t.BumpsRep, gold, ps) {
 		return false

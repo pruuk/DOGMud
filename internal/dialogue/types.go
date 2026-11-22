@@ -21,7 +21,12 @@ type PlayerState struct {
 	// token on an undelivered item (the soft-lock fixed 2026-08-03; the
 	// questengine bridge got the same treatment in Tier 2). The node
 	// stays re-triggerable once the player makes room.
-	GiveItem         func(itemId int) bool
+	GiveItem func(itemId int) bool
+	// GiveRewardItem is GiveItem for a hand-in topic (kind: handin): the
+	// item is a quest's reward, not quest gear, so the callback must not
+	// mark it (owner ruling 2026-11-22). Same contract as GiveItem. Nil
+	// falls back to GiveItem, which keeps stub states working.
+	GiveRewardItem   func(itemId int) bool
 	GetQuestFlag     func(key string) string
 	SetQuestFlag     func(key, value string)
 	BumpRep          func(faction string, delta int)

@@ -30,6 +30,51 @@ func TestApply_OfferIsNotRecordedAsHeard(t *testing.T) {
 	require.False(t, f.heard["50.hunt"], "quest state lives in tokens")
 }
 
+// #940 (owner ruling 2026-11-22): the item a hand-in topic gives is a reward,
+// so it goes through GiveRewardItem. An offer or info topic keeps GiveItem.
+func TestApply_HandInGivesItemAsReward_OfferAsQuestGear(t *testing.T) {
+	for _, tc := range []struct {
+		kind, want string
+	}{{"handin", "reward"}, {"offer", "gear"}, {"info", "gear"}} {
+		t.Run(tc.kind, func(t *testing.T) {
+			df := loadFixture(t, `mobid: 57
+zone: testzone
+topics:
+  - key: give
+    kind: `+tc.kind+`
+    label: "Give"
+    text: "Here."
+    givesItem: 9001
+`)
+			var via string
+			ps := newFake().ps()
+			ps.GiveItem = func(int) bool { via = "gear"; return true }
+			ps.GiveRewardItem = func(int) bool { via = "reward"; return true }
+			require.True(t, df.Apply(df.FindTopic("give"), ps))
+			require.Equal(t, tc.want, via)
+		})
+	}
+}
+
+// A state with no GiveRewardItem still delivers a hand-in item (stub states).
+func TestApply_HandInWithoutRewardCallbackFallsBackToGiveItem(t *testing.T) {
+	df := loadFixture(t, `mobid: 58
+zone: testzone
+topics:
+  - key: give
+    kind: handin
+    label: "Give"
+    text: "Here."
+    givesItem: 9001
+`)
+	given := 0
+	ps := newFake().ps()
+	ps.GiveItem = func(int) bool { given = 9001; return true }
+	ps.GiveRewardItem = nil
+	require.True(t, df.Apply(df.FindTopic("give"), ps))
+	require.Equal(t, 9001, given)
+}
+
 func TestApply_TakesRequiredItem(t *testing.T) {
 	df := loadFixture(t, `mobid: 52
 zone: testzone

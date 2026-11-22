@@ -145,6 +145,11 @@ callback in `conversation.PlayerState` returns `StoreItem`'s verdict and
 returns false (with an error log) for an invalid item id. A nil `GiveItem`
 counts as delivered (skip-checks contract).
 
+`Apply` picks the delivery callback by topic kind (`deliveryState`): a
+`kind: handin` topic's `givesItem` goes through `PlayerState.GiveRewardItem`
+(a reward, not marked quest gear), every other kind through `GiveItem`
+(marked, #940). A nil `GiveRewardItem` falls back to `GiveItem`.
+
 `goldRequired` (2026-10-05) hides a topic from a player carrying less than
 that much gold (`PlayerState.HasGold`; nil fails it closed). It takes nothing
 by itself. `chargesGold` is the first effect `Apply` takes (`tryCharge`,

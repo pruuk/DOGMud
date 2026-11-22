@@ -25,6 +25,39 @@ func PlayerState(user *users.UserRecord) *dialogue.PlayerState {
 	return playerState(user, user.SendText)
 }
 
+// giveDialogueItem backs a PlayerState item callback: it creates the item and
+// acquires it for reason, which decides whether the copy is marked quest gear
+// (see acquire.MarksQuestGiven).
+func giveDialogueItem(user *users.UserRecord, send func(messaging.Category, string), reason acquire.AcquireReason) func(int) bool {
+	return func(itemId int) bool {
+		newItem := items.New(itemId)
+		if newItem.ItemId <= 0 {
+			// Data bug (givesItem points at no item). Report failure so
+			// the engine also withholds grantsQuest: granting a quest
+			// whose item can never exist is the soft-lock, loudly.
+			mudlog.Error("conversation.GiveItem", "msg", "dialogue givesItem references invalid item",
+				"userId", user.UserId, "itemId", itemId)
+			return false
+		}
+		// StoreItem refuses past twice carry capacity (the "crushed"
+		// encumbrance tier). Claiming delivery anyway, and worse,
+		// queueing ItemOwnership{Gained:true}, which fires item_gain
+		// quest triggers and auto-grants QuestTokens, advanced quest
+		// state on an item the player never received. The acquire seam
+		// raises the gain only when the item lands.
+		if !acquire.AcquireItem(user, newItem, reason) {
+			send(messaging.CategoryRefusal, fmt.Sprintf(
+				`You can't carry the <ansi fg="itemname">%s</ansi>. `+
+					`Drop something, then ask again.`, newItem.DisplayName()))
+			mudlog.Warn("conversation.GiveItem", "msg", "player could not carry dialogue item",
+				"userId", user.UserId, "itemId", itemId)
+			return false
+		}
+		send(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>.`, items.ArticleFor(newItem.ItemId, newItem.DisplayName()), items.MidSentenceName(newItem.DisplayName())))
+		return true
+	}
+}
+
 // playerState is PlayerState with the callbacks' private lines (a delivery,
 // gold received or paid, a refusal) sent through send. The talk flow passes
 // a lineBuffer's add so those lines land after the handover line and before
@@ -55,33 +88,11 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 				QuestToken: token,
 			})
 		},
-		GiveItem: func(itemId int) bool {
-			newItem := items.New(itemId)
-			if newItem.ItemId <= 0 {
-				// Data bug (givesItem points at no item). Report failure so
-				// the engine also withholds grantsQuest: granting a quest
-				// whose item can never exist is the soft-lock, loudly.
-				mudlog.Error("conversation.GiveItem", "msg", "dialogue givesItem references invalid item",
-					"userId", user.UserId, "itemId", itemId)
-				return false
-			}
-			// StoreItem refuses past twice carry capacity (the "crushed"
-			// encumbrance tier). Claiming delivery anyway, and worse,
-			// queueing ItemOwnership{Gained:true}, which fires item_gain
-			// quest triggers and auto-grants QuestTokens, advanced quest
-			// state on an item the player never received. The acquire seam
-			// raises the gain only when the item lands.
-			if !acquire.AcquireItem(user, newItem, acquire.AcquireTopic) {
-				send(messaging.CategoryRefusal, fmt.Sprintf(
-					`You can't carry the <ansi fg="itemname">%s</ansi>. `+
-						`Drop something, then ask again.`, newItem.DisplayName()))
-				mudlog.Warn("conversation.GiveItem", "msg", "player could not carry dialogue item",
-					"userId", user.UserId, "itemId", itemId)
-				return false
-			}
-			send(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>.`, items.ArticleFor(newItem.ItemId, newItem.DisplayName()), items.MidSentenceName(newItem.DisplayName())))
-			return true
-		},
+		// An offer or info topic's item is quest gear (acquire.AcquireTopic);
+		// a hand-in topic's item is a reward (acquire.AcquireReward, owner
+		// ruling 2026-11-22), so it is not marked.
+		GiveItem:       giveDialogueItem(user, send, acquire.AcquireTopic),
+		GiveRewardItem: giveDialogueItem(user, send, acquire.AcquireReward),
 		GetQuestFlag: func(key string) string {
 			return user.Character.GetQuestFlag(key)
 		},

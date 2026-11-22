@@ -46,7 +46,10 @@ rather than part of `internal/actions` because `actions` imports
   storing it, so the stored copy and the gain event both carry the mark. Such
   a copy fades away whenever it leaves its holder
   (`actions.VanishQuestGiven`). `AcquireReward` is not marked: a reward is
-  paid once and no NPC replaces it.
+  paid once and no NPC replaces it. So is the item a hand-in topic
+  (`kind: handin`) gives: the dialogue path acquires it with `AcquireReward`
+  (`PlayerState.GiveRewardItem`), while an offer or info topic's item uses
+  `AcquireTopic` and is marked.
 - `MarksQuestGiven(reason AcquireReason) bool`: whether `AcquireItemForChar`
   marks an item acquired for that reason.
 - `AcquireOrDrop(char, userId, mobInstanceId, itm, reason) bool` and

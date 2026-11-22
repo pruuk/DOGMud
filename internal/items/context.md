@@ -385,7 +385,8 @@ told from an absent key) and no item data authors `dropchance: 0`.
 ### Quest-given copies (`QuestGiven`, #940)
 
 `Item.QuestGiven` (yaml `questgiven`) marks a copy a quest handed out: a
-dialogue topic's `givesItem` or a quest trigger's `give_item`. Only
+dialogue offer or info topic's `givesItem` (a hand-in topic's is a reward and
+is not marked) or a quest trigger's `give_item`. Only
 `acquire.AcquireItemForChar` sets it (for `acquire.AcquireTopic` and
 `acquire.AcquireQuestGive`); `Item.IsQuestGiven()` reads it. The mark is on
 the copy, not the template, because most quest starter items are also

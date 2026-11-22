@@ -8,6 +8,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // conversation.PlayerState's GiveItem backs topic `givesItem:`. It discarded
@@ -75,6 +77,20 @@ func TestDialogueGiveItem_OverloadedPlayer_NoPhantomDeliveryOrEvent(t *testing.T
 	if !strings.Contains(msgs, "You can't carry the") {
 		t.Errorf("player got no usable explanation for the failure:\n%s", msgs)
 	}
+}
+
+// #940 (owner ruling 2026-11-22): an offer's item is quest gear; the item a
+// hand-in topic gives is a reward and is not marked.
+func TestDialogueGiveItem_OfferIsMarked_HandInRewardIsNot(t *testing.T) {
+	u, cleanup := seedTalkGiveItemFixture(t)
+	defer cleanup()
+
+	ps := conversation.PlayerState(u)
+	require.True(t, ps.GiveItem(tgiItemId))
+	require.True(t, ps.GiveRewardItem(tgiItemId))
+	require.Len(t, u.Character.Items, 2)
+	assert.True(t, u.Character.Items[0].IsQuestGiven(), "an offer's item is quest gear")
+	assert.False(t, u.Character.Items[1].IsQuestGiven(), "a hand-in's item is a reward")
 }
 
 func TestDialogueGiveItem_HappyPath_StillDeliversAndFiresEvent(t *testing.T) {
