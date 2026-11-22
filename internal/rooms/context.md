@@ -966,3 +966,6 @@ The filters on the same rule: `ExitKnownTo(char, name)`,
 `GetRandomKnownExit(char)` (NPC choice points, ruling 13). The unfiltered
 `FindExitByName`, `FindExitTo` and `GetRandomExit` keep their old answers for
 mob moves, scripted routes and flee.
+
+`GetDetails` fills `VisibleExits` and `TemporaryExits` from `KnownExits`, so
+the exits line follows the same rule; at no sight both are empty.

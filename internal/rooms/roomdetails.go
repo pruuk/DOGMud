@@ -2,7 +2,6 @@ package rooms
 
 import (
 	"fmt"
-	"maps"
 	"sort"
 	"strings"
 
@@ -360,22 +359,16 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		details.VisibleMobs = []string{}
 	}
 
-	maps.Copy(details.TemporaryExits, r.ExitsTemp)
-
-	// Do this twice to ensure secrets are last
-
-	for exitStr, exitInfo := range r.Exits {
-
-		// If it's a secret room we need to make sure the player has recently been there before including it in the exits
-		if exitInfo.Secret {
-			if targetRm := LoadRoom(exitInfo.RoomId); targetRm != nil {
-				if targetRm.HasVisited(user.UserId, VisitorUser) {
-					details.VisibleExits[exitStr] = exitInfo
-				}
-			}
-		} else {
-			details.VisibleExits[exitStr] = exitInfo
+	// The exits line lists what the viewer knows of this room's exits, the
+	// one rule Room.Info, the maps and the touch buttons read too (KnownExits,
+	// #781): a secret exit once found, mutator and temporary exits, and
+	// nothing at all in the dark.
+	for _, ke := range KnownExits(r, user.Character).Exits {
+		if ke.Kind == ExitTemporary {
+			details.TemporaryExits[ke.Name] = ke.Temp
+			continue
 		}
+		details.VisibleExits[ke.Name] = ke.Exit
 	}
 
 	// add any corpses present
@@ -429,12 +422,6 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		} else {
 			details.VisibleCorpses = append(details.VisibleCorpses, fmt.Sprintf(`<ansi fg="mob-corpse">%d %ss</ansi>`, qty, corpseStem(name)))
 		}
-	}
-
-	// assign mutator exits last so that they can overwrite normal exits
-	for mut := range r.ActiveMutators {
-		spec := mut.GetSpec()
-		maps.Copy(details.VisibleExits, spec.Exits)
 	}
 
 	if searchMobName := user.Character.GetMiscData(`tracking-mob`); searchMobName != nil {

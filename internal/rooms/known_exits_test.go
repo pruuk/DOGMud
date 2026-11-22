@@ -252,3 +252,38 @@ func equalStrings(a, b []string) bool {
 	}
 	return true
 }
+
+// The exits line lists exactly what KnownExits lists: the found secret exit
+// joins it, a temporary exit sits in TemporaryExits, and the dark lists none.
+func TestGetDetails_ExitsLineReadsKnownExits(t *testing.T) {
+	r, c := knownExitsRoom(t, true)
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{}))
+	viewer := users.NewTestUser(7802, "liner", "Liner", 97802)
+	viewer.Character = c
+	if !r.AddTemporaryExit("gangplank", exit.TemporaryRoomExit{RoomId: 4}) {
+		t.Fatal("fixture premise: the temporary exit must attach")
+	}
+	keys := func(d RoomTemplateDetails) map[string]bool {
+		out := map[string]bool{}
+		for k := range d.VisibleExits {
+			out[k] = true
+		}
+		return out
+	}
+	d := GetDetails(r, viewer)
+	if got := keys(d); len(got) != 3 || got["west"] {
+		t.Fatalf("visible exits %v, want north, south, east (west unfound)", got)
+	}
+	if _, ok := d.TemporaryExits["gangplank"]; !ok {
+		t.Errorf("the gangplank must be in TemporaryExits, got %v", d.TemporaryExits)
+	}
+	c.LearnSecretExit(1, "west")
+	if got := keys(GetDetails(r, viewer)); !got["west"] {
+		t.Errorf("the found west must be listed, got %v", got)
+	}
+	r.Lamp = nil
+	dark := GetDetails(r, viewer)
+	if len(dark.VisibleExits) != 0 || len(dark.TemporaryExits) != 0 {
+		t.Errorf("the dark listed %v and %v", dark.VisibleExits, dark.TemporaryExits)
+	}
+}
