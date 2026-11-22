@@ -612,21 +612,33 @@ tells a player holder `QuestGearFadesLine` ("The X fades away. Quest gear
 lasts only while you carry it.") and, with a non-nil room, tells the room;
 it reports true and the caller must not move the item. For any other item it
 does nothing and reports false, so a way out calls it first.
-`VanishQuestGivenFrom(actor, itm, room)` is the Actor form. Here it runs in
-`TransferItemToFloor` (drop; returns `ErrQuestGivenVanished`), in
-`GiveItemToChar` when the copy would leave the player's side (another player,
-or a mob giving it to anyone but its charmer; `ErrQuestGivenVanished`), and in
-`Plant` before any contest (`Reason: "quest gear faded"`). `QuoteSale`
-refuses it with the seller's own line (`sellTellQuestGiven`), `sellNamed`
-prefers a copy of the same item that is not quest gear and stops `sell all X`
-at the quest copy as a completed sale, `sellSweep` skips it, and a trade-in
-(`findTradeInItem`) never takes it as payment. `QuestGearLookLine` is the
-line `look` shows under it. The ways out in `usercommands` (put, stash,
-storage and stow, mail, guild donate, give to a pet), `mobcommands` (put) and
-`modules/auctions` call `VanishQuestGiven` too, and `usercommands.Give` hands
-quest gear back from an NPC that did not ask for it.
+`VanishQuestGivenFrom(actor, itm, room)` is the Actor form, and
+`FadeQuestGivenOffHand(char, userId, mobInstanceId, itm, room) bool` the same
+fade for a copy already out of the carry lists on its way to the floor (gear
+displaced by an equip or taken off while overloaded, here in
+`remove_equip.go`; a pet refusing it back; a spoiled bomb out of the
+bandolier). Here the fade runs in `TransferItemToFloor` (drop; returns
+`ErrQuestGivenVanished`), in `TransferItemBetweenChars` itself whenever
+`questGivenLeaves` says the copy leaves the player's side (another player,
+any mob but the giver's own charmed one, or a mob giving it to anyone but its
+charmer; a tree's `return_item`, `AcquireTreeGive`, keeps it), so no caller
+can skip it, and in a plant at the moment it succeeds (`plantQuestGearFades`;
+a failed plant keeps it). Salvaging quest gear destroys it with
+`questGearSalvageLine` and recovers nothing: no roll, no award, no success
+(owner ruling 2026-11-22). `QuoteSale` refuses it with the seller's own line
+(`sellTellQuestGiven`), `sell all X` stops at the quest copy as a completed
+sale, `sellSweep` skips it, and a trade-in (`findTradeInItem`) never takes it
+as payment. Every way out finds its item with the let-go lookups
+(`characters.FindInBackpackToLetGo` and kin), which take an ordinary copy of
+the same item before quest gear. `QuestGearLookLine` is the line `look` shows
+under it and `QuestGearListTag` the inventory row's mark. The ways out in
+`usercommands` (put, stash, storage and stow, mail, guild donate),
+`mobcommands` (put) and `modules/auctions` (only when a listing would start)
+fade it too, and `usercommands.Give` hands quest gear back from an NPC or a
+pet that is not the giver's own companion. The guard
 `internal/guards/quest_given_ways_out_guard_test.go` classifies every
-`RemoveItem` call site, so a new way out fails CI until it is decided.
+`RemoveItem` call and every floor drop (`Room.AddItem`) with a pinned count
+per function, so a new way out fails CI until it is decided.
 
 **`look.go`** (new file, slice 5a): `ResolveLook(actor Actor, lookAt string)
 LookResolution` (`:49`) is the shared look body, in the player's exact order:

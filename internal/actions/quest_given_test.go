@@ -6,13 +6,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -233,37 +234,150 @@ func TestQuestGear_CompanionGivesItBackToItsMaster(t *testing.T) {
 
 // ─── Plant ──────────────────────────────────────────────────────────────────
 
-// Quest gear fades before any contest: no attempt, no award, nothing planted.
-// A bought copy goes on to the contest as before.
+// Quest gear fades only when the plant succeeds, the moment it would have
+// left the thief; nothing reaches the target. A plant that fails keeps it, as
+// it keeps any item. A bought copy is planted as before.
 func TestQuestGear_Plant(t *testing.T) {
-	target := newPlantTestMob(testPlantMobInstId, 1)
-	mobs.SetInstanceForTest(testPlantMobInstId, target)
-	defer mobs.SetInstanceForTest(testPlantMobInstId, nil)
-
-	t.Run("quest gear fades", func(t *testing.T) {
-		actor := newPlantPlayerActor(200, 8)
+	questItem := func() items.Item {
 		itm := plantTestItem()
 		itm.QuestGiven = true
+		return itm
+	}
+	attempt := func(t *testing.T, perception, dex, rank int, itm items.Item) (PlantResult, *stubActorWithId, *mobs.Mob) {
+		t.Helper()
+		target := newPlantTestMob(testPlantMobInstId, perception)
+		mobs.SetInstanceForTest(testPlantMobInstId, target)
+		t.Cleanup(func() { mobs.SetInstanceForTest(testPlantMobInstId, nil) })
+		actor := newPlantPlayerActor(dex, rank)
 		actor.char.StoreItem(itm)
-		target.Character.Items = nil
+		return Plant(actor, PlantOptions{TargetMobInstanceId: testPlantMobInstId, ItemNoun: "!1"}), actor, target
+	}
 
-		res := Plant(actor, PlantOptions{TargetMobInstanceId: testPlantMobInstId, ItemNoun: "!1"})
-		assert.False(t, res.Succeeded)
-		assert.Equal(t, "quest gear faded", res.Reason)
-		assert.Empty(t, actor.char.Items)
-		assert.Empty(t, target.Character.Items)
-		assert.Empty(t, actor.awards, "no attempt was made")
-		assert.True(t, actor.char.CooldownReady(skills.Skullduggery.String("steal")), "no cooldown spent")
+	t.Run("a successful plant fades quest gear", func(t *testing.T) {
+		faded := 0
+		for range 20 {
+			res, actor, target := attempt(t, 1, 200, 8, questItem())
+			assert.Empty(t, target.Character.Items, "quest gear never reaches the target")
+			assert.False(t, res.Succeeded)
+			if res.Reason == "quest gear faded" {
+				faded++
+				assert.Empty(t, actor.char.Items)
+			}
+		}
+		assert.Greater(t, faded, 10, "a strong thief succeeds, and the gear fades")
 	})
-	t.Run("bought copy is attempted", func(t *testing.T) {
-		actor := newPlantPlayerActor(200, 8)
-		seedPlantItem(actor)
-		target.Character.Items = nil
+	t.Run("a failed plant keeps quest gear", func(t *testing.T) {
+		caught := 0
+		for range 20 {
+			res, actor, _ := attempt(t, 100000, 1, 0, questItem())
+			if res.Detected {
+				caught++
+				require.Len(t, actor.char.Items, 1, "the thief keeps it")
+				assert.True(t, actor.char.Items[0].IsQuestGiven())
+			}
+		}
+		assert.Greater(t, caught, 10, "a weak thief is caught")
+	})
+	t.Run("a bought copy is planted", func(t *testing.T) {
+		planted := 0
+		for range 20 {
+			res, _, target := attempt(t, 1, 200, 8, plantTestItem())
+			assert.NotEqual(t, "quest gear faded", res.Reason)
+			if res.Succeeded {
+				planted++
+				assert.Len(t, target.Character.Items, 1)
+			}
+		}
+		assert.Greater(t, planted, 10)
+	})
+}
 
-		res := Plant(actor, PlantOptions{TargetMobInstanceId: testPlantMobInstId, ItemNoun: "!1"})
-		assert.NotEqual(t, "quest gear faded", res.Reason)
-		assert.NotEmpty(t, actor.awards, "the contest ran")
-	})
+// ─── Floors reached without RemoveItem ──────────────────────────────────────
+
+// questHammerId is a worn weapon too heavy to go back in a weak pack.
+const questHammerId = 94501
+
+func seedHammer(t *testing.T) {
+	t.Helper()
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		questHammerId:     {ItemId: questHammerId, Name: "Anvil Hammer", NameSimple: "hammer", Type: items.Weapon, Hands: 1, Weight: 500},
+		questHammerId + 1: {ItemId: questHammerId + 1, Name: "Twig", NameSimple: "twig", Type: items.Weapon, Hands: 2, Weight: 0.1}, // two hands: it displaces the hammer
+	}))
+}
+
+// A worn item taken off by a character over twice its carry capacity falls to
+// the floor; quest gear fades instead.
+func TestQuestGear_RemoveWhileOverloadedFades(t *testing.T) {
+	defer seedSellRoom(t)()
+	seedHammer(t)
+	room := rooms.LoadRoom(1)
+	for _, quest := range []bool{true, false} {
+		room.Items = nil
+		char := characters.New()
+		char.Stats.Strength.ValueAdj = 1
+		char.Equipment.Weapon = items.Item{ItemId: questHammerId, UUID: items.NewItemUUID(), QuestGiven: quest}
+		actor := &stubActor{char: char, room: room}
+
+		res := RemoveEquipment(actor, "hammer")
+		require.True(t, res.Removed, "quest=%v", quest)
+		assert.Equal(t, 0, char.Equipment.Weapon.ItemId)
+		assert.Empty(t, char.Items, "too heavy for the pack")
+		want := 1
+		if quest {
+			want = 0
+		}
+		assert.Equal(t, want, countId(room.Items, questHammerId), "quest=%v", quest)
+	}
+}
+
+// Gear displaced by an equip that will not fit the pack falls to the floor;
+// quest gear fades instead.
+func TestQuestGear_DisplacedByEquipFades(t *testing.T) {
+	defer seedSellRoom(t)()
+	seedHammer(t)
+	room := rooms.LoadRoom(1)
+	for _, quest := range []bool{true, false} {
+		room.Items = nil
+		char := characters.New()
+		char.Stats.Strength.ValueAdj = 1
+		char.Equipment.Weapon = items.Item{ItemId: questHammerId, UUID: items.NewItemUUID(), QuestGiven: quest}
+		char.Items = []items.Item{items.New(questHammerId + 1)}
+		actor := &stubActor{char: char, room: room}
+
+		res := EquipItem(actor, "twig")
+		require.True(t, res.Equipped, "quest=%v: %+v", quest, res)
+		assert.Equal(t, questHammerId+1, char.Equipment.Weapon.ItemId)
+		want := 1
+		if quest {
+			want = 0
+		}
+		assert.Equal(t, want, countId(room.Items, questHammerId), "quest=%v", quest)
+		assert.Equal(t, 0, countId(char.Items, questHammerId))
+	}
+}
+
+// TransferItemBetweenChars holds the leave rule itself (#940), so no caller
+// can skip it: a player to another player fades; a tree handing back what it
+// was given does not.
+func TestQuestGear_TransferHoldsTheRule(t *testing.T) {
+	defer seedSellItemSpecs()()
+	from := characters.New()
+	to := characters.New()
+	gear := questGiven(sellTestItemId)
+	from.Items = []items.Item{gear}
+
+	err := TransferItemBetweenChars(gear, from, 9421, 0, to, 9422, 0, acquire.AcquireGive)
+	assert.ErrorIs(t, err, ErrQuestGivenVanished)
+	assert.Empty(t, from.Items)
+	assert.Empty(t, to.Items)
+
+	npc := characters.New()
+	npc.Items = []items.Item{gear}
+	player := characters.New()
+	err = TransferItemBetweenChars(gear, npc, 0, 9423, player, 9421, 0, acquire.AcquireTreeGive)
+	require.NoError(t, err)
+	require.Len(t, player.Items, 1)
+	assert.True(t, player.Items[0].IsQuestGiven())
 }
 
 // ─── The helper ─────────────────────────────────────────────────────────────
@@ -287,4 +401,50 @@ func TestQuestGearFadesLineFitsOneScreen(t *testing.T) {
 	plain := strings.NewReplacer(`<ansi fg="itemname">`, ``, `</ansi>`, ``).Replace(line)
 	assert.Equal(t, "The Drillyard Cudgel fades away. Quest gear lasts only while you carry it.", plain)
 	assert.LessOrEqual(t, len(plain), 80)
+}
+
+// ─── Salvage ────────────────────────────────────────────────────────────────
+
+// sayingActor records what its holder reads.
+type sayingActor struct {
+	*stubActorWithId
+	said []string
+}
+
+func (a *sayingActor) SendText(_ messaging.Category, s string) { a.said = append(a.said, s) }
+
+// Owner ruling 2026-11-22 (option A): salvaging a quest's copy destroys it and
+// recovers nothing, with no roll, no skill award and no success. A bought copy
+// salvages as before.
+func TestQuestGear_SalvageYieldsNothing(t *testing.T) {
+	seedRouteAcquire(t)
+	const gearId = 94801
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		gearId: {ItemId: gearId, Name: "Drillyard Cudgel", Type: items.Weapon,
+			SalvageReturns: []items.SalvageReturn{{ItemTag: routeAcqTag, Quantity: 1}}},
+		routeAcqLight: {ItemId: routeAcqLight, Name: "scrap", Type: items.Object, Weight: 0.1, ComponentTag: routeAcqTag},
+	}))
+	for _, quest := range []bool{true, false} {
+		actor := &sayingActor{stubActorWithId: newStealPlayerActor(100, 0)}
+		itm := items.New(gearId)
+		itm.QuestGiven = quest
+		actor.char.Items = []items.Item{itm}
+		events.DrainAllQueuedEventsForTest()
+
+		res := salvageItem(actor, itm.UUID.String(), false, 1e9)
+
+		assert.Equal(t, 0, countId(actor.char.Items, gearId), "quest=%v: the item is destroyed either way", quest)
+		if quest {
+			assert.False(t, res.Succeeded)
+			assert.False(t, res.RollHappened, "no roll")
+			assert.Empty(t, res.MaterialIds, "nothing recovered")
+			assert.Empty(t, actor.awards, "no skill award")
+			assert.Empty(t, routeGains(actor.userId), "nothing acquired")
+			assert.Equal(t, []string{fmt.Sprintf(questGearSalvageLine, "Drillyard Cudgel")}, actor.said)
+		} else {
+			assert.True(t, res.Succeeded)
+			assert.True(t, res.RollHappened)
+			assert.Len(t, actor.awards, 1, "one award, as before")
+		}
+	}
 }

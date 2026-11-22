@@ -394,14 +394,20 @@ except light for a screen reader user.
   pet or an NPC wanting nothing stays backpack only.
 - **Quest gear** (#940, owner ruling 2026-11-22): a quest-given copy
   (`items.Item.IsQuestGiven`) fades through `actions.VanishQuestGiven` on
-  every way out here: drop, give to another player or another player's pet
-  (or to the giver's own pet when it has no room), put, stash, `storage add`,
-  `stow`, mail (the mail goes without it) and guild donate. Given to an NPC
-  that no topic and no `player_give` tree handler took, it comes back
-  (`handBackQuestGear`: the usual "considers" emote, then "X hands back the
-  Y."), and the NPC never keeps or equips it; a mob the giver charmed is a
-  companion and takes it as usual, as does the giver's own pet. `look` adds
-  `actions.QuestGearLookLine` under it.
+  every way out here: drop, give to another player, put, stash, `storage
+  add`, `stow`, mail (the mail goes without it), guild donate, and a take
+  from a pet that cannot hold it back. Every way out finds its item with
+  the let-go lookups (`characters.FindInBackpackToLetGo`), so an ordinary
+  copy of the same item goes first. Given to an NPC that is not the giver's
+  own companion (any NPC, or another player's charmed mob),
+  `giveQuestGearToNPC` sets it in the NPC's hands for a `player_give` tree
+  handler, which behaves as for any gift; otherwise the NPC considers it and
+  hands it back ("X hands back the Y." to the giver, "X hands the Y back." to
+  the room), and no ownership, gain or gift event is raised. Another
+  player's pet, or the giver's own pet with no room, hands it back the same
+  way. Only the giver's own charmed mob or own pet keeps it. `look` adds
+  `actions.QuestGearLookLine` under it and `inventory` lists it on its own
+  row marked "(quest gear)" (`questGearListName`).
 - **PlayerState**: `conversation.PlayerState(user)` builds the
   `dialogue.PlayerState` callbacks (`HasQuest`, `HasItem`, `RemoveItem`,
   `GiveQuest`, `GiveItem`, ...). `GiveItem` returns whether the item

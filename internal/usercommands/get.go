@@ -470,7 +470,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				if !acquire.AcquireItem(user, matchItem, acquire.AcquireGet) {
 					// Back to the pet; should it refuse too, the item falls
 					// at the player's feet rather than vanishing (#696).
-					if !user.Character.Pet.StoreItem(matchItem) {
+					// Quest gear fades rather than fall (#940).
+					if !user.Character.Pet.StoreItem(matchItem) &&
+						!actions.FadeQuestGivenOffHand(user.Character, user.UserId, 0, matchItem, room) {
 						room.AddItem(matchItem, false)
 					}
 					user.SendText(messaging.CategoryRefusal,

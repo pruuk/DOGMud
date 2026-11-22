@@ -334,6 +334,19 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) Sa
 		return result
 	}
 
+	// Quest gear (#940, owner ruling 2026-11-22): salvaging a quest's copy
+	// destroys it and recovers nothing, with no roll, no skill award and no
+	// success, so a quest's replacement line cannot be farmed for
+	// materials. A bought copy salvages as before.
+	if targetItem.IsQuestGiven() {
+		char.RemoveItem(targetItem)
+		if actor.IsPlayer() {
+			actor.SendText(messaging.CategoryCraft, fmt.Sprintf(questGearSalvageLine, targetItem.DisplayName()))
+		}
+		result.Reason = "quest gear"
+		return result
+	}
+
 	// Roll returns from spoiled-potion branch, recipe lookup, or
 	// tagged salvage_returns.
 	var recovered []crafting.RecipeIngredient

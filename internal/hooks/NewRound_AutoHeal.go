@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -109,39 +110,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		}
 
 		// Auto-eject spoiled items from bandolier
-		if len(user.Character.PotionItems) > 0 {
-			currentRound := util.GetRoundCount()
-			ejected := 0
-			remaining := make([]items.Item, 0, len(user.Character.PotionItems))
-			for _, pot := range user.Character.PotionItems {
-				potSpec := pot.GetSpec()
-				// A preserving bandolier reads its potions at peak, so it
-				// never ejects one (Character.PotionAging, #794).
-				if user.Character.PotionAging(pot, currentRound).Spoiled() {
-					if potSpec.Subtype == items.Throwable {
-						// Spoiled grenades fall safely to the ground
-						if userRoom := rooms.LoadRoom(user.Character.RoomId); userRoom != nil {
-							userRoom.AddItem(pot, false)
-						}
-						user.SendText(messaging.CategoryWarning, fmt.Sprintf(
-							`<ansi fg="yellow">Your <ansi fg="itemname">%s</ansi> has destabilized and falls out of your bandolier onto the ground.</ansi>`,
-							pot.DisplayName()))
-					} else {
-						// Spoiled potions go to backpack
-						user.Character.Items = append(user.Character.Items, pot)
-						user.SendText(messaging.CategoryWarning, fmt.Sprintf(
-							`<ansi fg="yellow">Your <ansi fg="itemname">%s</ansi> has spoiled and falls out of your bandolier.</ansi>`,
-							pot.DisplayName()))
-					}
-					ejected++
-					continue
-				}
-				remaining = append(remaining, pot)
-			}
-			if ejected > 0 {
-				user.Character.PotionItems = remaining
-			}
-		}
+		ejectSpoiledFromBandolier(user, util.GetRoundCount())
 
 		// Toxicity regen penalty (applied to all pool regen below)
 		toxRegenMult, _, _ := user.Character.GetToxicityPenalties()
@@ -337,6 +306,50 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 
 // tickToxicity is AutoHeal's per-tick toxicity step: decay (slower at high
 // levels), then acute harm at dangerous toxicity.
+// ejectSpoiledFromBandolier takes what has spoiled out of the user's
+// bandolier: a spoiled potion drops into the backpack, a spoiled grenade
+// falls safely to the ground. A quest's grenade fades instead of falling, with
+// its own line (#940).
+func ejectSpoiledFromBandolier(user *users.UserRecord, currentRound uint64) {
+	if len(user.Character.PotionItems) == 0 {
+		return
+	}
+	ejected := 0
+	remaining := make([]items.Item, 0, len(user.Character.PotionItems))
+	for _, pot := range user.Character.PotionItems {
+		potSpec := pot.GetSpec()
+		// A preserving bandolier reads its potions at peak, so it
+		// never ejects one (Character.PotionAging, #794).
+		if user.Character.PotionAging(pot, currentRound).Spoiled() {
+			if potSpec.Subtype == items.Throwable {
+				userRoom := rooms.LoadRoom(user.Character.RoomId)
+				if actions.FadeQuestGivenOffHand(user.Character, user.UserId, 0, pot, userRoom) {
+					ejected++
+					continue
+				}
+				if userRoom != nil {
+					userRoom.AddItem(pot, false)
+				}
+				user.SendText(messaging.CategoryWarning, fmt.Sprintf(
+					`<ansi fg="yellow">Your <ansi fg="itemname">%s</ansi> has destabilized and falls out of your bandolier onto the ground.</ansi>`,
+					pot.DisplayName()))
+			} else {
+				// Spoiled potions go to backpack
+				user.Character.Items = append(user.Character.Items, pot)
+				user.SendText(messaging.CategoryWarning, fmt.Sprintf(
+					`<ansi fg="yellow">Your <ansi fg="itemname">%s</ansi> has spoiled and falls out of your bandolier.</ansi>`,
+					pot.DisplayName()))
+			}
+			ejected++
+			continue
+		}
+		remaining = append(remaining, pot)
+	}
+	if ejected > 0 {
+		user.Character.PotionItems = remaining
+	}
+}
+
 func tickToxicity(c *characters.Character) {
 	if c.Toxicity <= 0 {
 		return

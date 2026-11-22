@@ -95,7 +95,10 @@ func equipItem(actor Actor, itemName string, wear func(*characters.Character, it
 	for _, di := range displaced {
 		if di.ItemId != 0 {
 			if !char.StoreItem(di) {
-				actor.GetRoom().AddItem(di, false)
+				// Quest gear fades rather than fall (#940).
+				if !FadeQuestGivenOffHand(char, actor.GetUserId(), actor.GetMobInstanceId(), di, actor.GetRoom()) {
+					actor.GetRoom().AddItem(di, false)
+				}
 			}
 		}
 	}
@@ -184,8 +187,11 @@ func removeWorn(actor Actor, matchItem items.Item) RemoveEquipResult {
 	}
 
 	if !char.StoreItem(matchItem) {
-		// Backpack full: drop to floor as safety net
-		room.AddItem(matchItem, false)
+		// Backpack full: drop to floor as safety net. Quest gear fades
+		// rather than fall (#940).
+		if !FadeQuestGivenOffHand(char, actor.GetUserId(), actor.GetMobInstanceId(), matchItem, room) {
+			room.AddItem(matchItem, false)
+		}
 	}
 
 	events.AddToQueue(events.EquipmentChange{
