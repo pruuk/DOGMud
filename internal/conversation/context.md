@@ -118,3 +118,6 @@ same learned line `GameBridge.LearnRecipe` prints.
 - `GiveItem` acquires through `acquire.AcquireItem` with
   `acquire.AcquireTopic` (#375 phase 3a), which raises the gain event only
   when the item lands; a refused store returns false and raises nothing.
+  `GiveRewardItem` is the same helper (`giveDialogueItem`) with
+  `acquire.AcquireReward`: it delivers the item of a `kind: handin` topic,
+  which is a reward and is not marked quest gear (owner ruling 2026-11-22).
