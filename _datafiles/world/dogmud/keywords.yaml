@@ -9,6 +9,7 @@ help:
       - alias
       - combatverbosity
       - macros
+      - pagination
       - password
       - deletecharacter
       - rename
@@ -241,6 +242,7 @@ help:
 # Key is the target keyword, value is the list of aliases
 help-aliases:
   online:           [who]
+  pagination:       [page, pages, paging, pager, pagesize, more]
   progression:      [progress, advancement, advance, improve, improving, improvement,
                      train, training, level, levels, levelling, leveling, xp, exp,
                      experience, gain, gains, grind, grinding, "get better",

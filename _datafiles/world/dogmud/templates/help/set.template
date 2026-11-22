@@ -68,9 +68,11 @@ There are a handful of settings you can adjust with this command, including:
                                   stops and waits for Enter. <ansi fg="command">auto</ansi> follows your
                                   screen, <ansi fg="command">off</ansi> never stops. While stopped, Enter
                                   shows more, <ansi fg="command">q</ansi> stops, any other command runs.
+                                  See <ansi fg="command">help pagination</ansi>.
 ::
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help alias</ansi>, <ansi fg="command">help macros</ansi>,
-           <ansi fg="command">help set-prompt</ansi>, <ansi fg="command">help submission</ansi>
+           <ansi fg="command">help set-prompt</ansi>, <ansi fg="command">help submission</ansi>,
+           <ansi fg="command">help pagination</ansi>
 ::
