@@ -1,0 +1,19 @@
+# FRIEND seat: you stand in the Drill Yard. Another tester, the HOLDER seat,
+# will try to hand you a cudgel. Quote every game line VERBATIM.
+ephemeral:
+  profile: early
+  start_room: 5227
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `look` and quote who is here. Every couple of minutes, type
+    `inventory` and say whether you carry a Drillyard Cudgel. Quote any line
+    about a cudgel being given to you or fading away.
+  - >-
+    If a cudgel ever lies on the ground (`look`), try `get cudgel` and quote
+    the result.
+  - >-
+    After about 15 minutes, report every cudgel line you saw and what your
+    inventory showed each time.

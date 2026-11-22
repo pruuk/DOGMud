@@ -1,0 +1,27 @@
+# #940 addendum (owner rulings 2026-11-22): a copy of an item a quest hands
+# you vanishes when it leaves your hands, shops will not buy it, salvage
+# recovers nothing, and an NPC that did not ask for it hands it back. Two
+# seats share the Drill Yard so one can try to pass quest gear to the other.
+name: 940-quest-gear
+mode: party
+summary: >-
+  Quest gear fades on drop, give to a player, put, stash; shops refuse it;
+  salvage recovers nothing; an NPC hands it back; the trainer's replacement
+  line never yields two copies at once.
+on_actor_stop: continue
+budgets:
+  wall_clock: 40m
+requires:
+  max_connections: 20
+roster:
+  - id: holder
+    personality: bug-finder
+    goals: goals/scenarios/940-quest-gear/holder.yaml
+  - id: friend
+    personality: bug-finder
+    goals: goals/scenarios/940-quest-gear/friend.yaml
+
+group_goals:
+  - id: never-two
+    do: The holder tries every way to end up with two quest-given cudgels.
+    verify: At no point does the holder (or the friend) carry a second quest-given cudgel; every way out prints the fade line or a refusal.
