@@ -1,8 +1,11 @@
 # Quest 35, First Heat (Pothole Coulee, smithing line, quest 1).
 #
-# Crier Toke offers it (send_forge, dialogue 9106). Smith Rusk (9116) takes
-# the hand-in (craft_turnin when the dagger is shown, craft_turnin_told when
-# it was sold, salvaged or lost) and then offers Pick the Vein (36).
+# Crier Toke (topic send_forge, dialogue 9106) or Smith Rusk (topic
+# heat_start, dialogue 9116) offers it. A Rusk start skips the met step,
+# because the player is already in the smithy (a quest_granted trigger below).
+# Rusk takes the hand-in (craft_turnin when the dagger is shown,
+# craft_turnin_told when it was sold, salvaged or lost) and then offers Pick
+# the Vein (36).
 #   start  go to the Coulee Smithy and talk to Rusk
 #   met    topic_heard on Rusk's heat_arrive topic
 #   list   list beside Rusk in the smithy (5245)
@@ -97,6 +100,22 @@ rewards:
     hand."
 
 triggers:
+  # met, skipped: a player who takes the quest from Rusk is already in the
+  # smithy (owner ruling 2026-11-22, #940), so the grant of 35-start in the
+  # smithy moves them past met. The room tells the two doors apart: Toke never
+  # leaves Hub Square (5203) and Rusk never leaves the smithy (5245). A
+  # topic_heard trigger cannot do this, because the offer's grant is only
+  # queued when the topic plays, and a flag condition is refused by the
+  # one-action rule (questloop.ruleOneAction).
+  - event: quest_granted
+    quest_token: 35-start
+    conditions:
+      in_room: 5245
+      has: ["35-start"]
+      missing: ["35-met"]
+    actions:
+      - grant: "35-met"
+
   # met: hearing Rusk's heat_arrive topic.
   - event: topic_heard
     mob: 9116

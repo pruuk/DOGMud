@@ -13,8 +13,20 @@ opener:
       here. Go be Opened, then come back and I will teach you the bench.
     hints: Find Cleric Hadwen at the reflecting pool and complete the Awakening before
       returning to Herbalist Birna.
-  # Crier Toke starts every trade (#375 phase 7): Birna takes First Brew's
-  # hand-in but no longer offers it.
+  # Crier Toke or Birna offers First Brew (owner ruling 2026-11-22, #940).
+  # Birna's offer is gated on Find Your Footing (31-end), like Toke's. The
+  # "find Toke" variant after this one now shows only before Find Your
+  # Footing, where it is still true.
+  - questRequired:
+    - 30-end
+    - 31-end
+    questExcluded:
+    - 38-start
+    - 38-end
+    text: You have been through the rite and walked the town. Good. I teach the
+      brew, and you may ask me to teach you. Say the word and we begin at the
+      water.
+    hints: Choose First Brew below to learn to brew from Birna.
   - questRequired:
     - 30-end
     questExcluded:
@@ -123,6 +135,26 @@ topics:
   questExcluded:
   - 38-end
   grantsQuest: 38-end
+- key: brew_start
+  kind: offer
+  quest: 38
+  label: First Brew
+  playerLine: Will you teach me to brew?
+  text: I will. Brewing is patience and clean hands, and the bench does the rest.
+    Here is the shape of it. A healing salve takes two healer's roots and one
+    glass vial, and both are on my racks. First see what I stock and what it
+    costs. Then buy the vial, then the roots. Take them to the alchemy bench at
+    the water's edge and craft a healing salve. The roots and the water become
+    the brew, sealed in the vial. Then quaff it and feel what you made. A brew
+    you have not tasted is just a guess. Come back when you have brewed and
+    taken it.
+  hints: Accept, then at Birna's pool, type list.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 38-start
+  - 38-end
+  grantsQuest: 38-start
 - key: brew_arrive
   kind: info
   label: Crier Toke sent me to learn to brew.

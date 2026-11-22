@@ -13,8 +13,20 @@ opener:
       The eye I teach needs a mind that has been woken. Come back when it has.
     hints: Return to the hub and complete the Awakening rite with Cleric Hadwen before
       training with Marksman Iden.
-  # Crier Toke starts every trade (#375 phase 7): Iden takes First Shot's
-  # hand-in but no longer offers it.
+  # Crier Toke or Iden offers First Shot (owner ruling 2026-11-22, #940).
+  # Iden's offer is gated on Find Your Footing (31-end), like Toke's. The
+  # "find Toke" variant after this one now shows only before Find Your
+  # Footing, where it is still true.
+  - questRequired:
+    - 30-end
+    - 31-end
+    questExcluded:
+    - 50-start
+    - 50-end
+    text: Opened, and you have walked the town. Good. The terraces are where the
+      coulee learns to reach past arm's length, and you may ask me to teach you
+      to shoot. Say the word.
+    hints: Choose First Shot below to learn to shoot from Iden.
   - questRequired:
     - 30-end
     questExcluded:
@@ -123,6 +135,27 @@ topics:
   questExcluded:
   - 50-met
   - 50-end
+- key: shoot_start
+  kind: offer
+  quest: 50
+  label: First Shot
+  playerLine: Will you teach me to shoot?
+  text: I will. Here, take this sling, plaited cord and a leather cradle, cheap
+    and honest, and a pouch of shot to feed it. Both are yours to keep. Ready the
+    sling first. The cradle fills itself while your eye is still on the mark, so
+    there is no second motion to learn. I will walk you through the rest one
+    thing at a time. If the sling is already in your hand, take it off and ready
+    it again, so I can see you do it.
+  hints: Accept, and Iden hands you a sling. Type equip sling. If it is already in
+    your hand, that will not work, so first use remove sling to put it back in
+    your pack.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 50-start
+  - 50-end
+  grantsQuest: 50-start
+  givesItem: 10038
 # Each replacement and its reminder never show together: itemExcluded and
 # carriesItem on the same item are exact opposites.
 - key: shot_supply

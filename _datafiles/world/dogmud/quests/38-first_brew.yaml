@@ -1,7 +1,9 @@
 # Quest 38, First Brew (Pothole Coulee, brewing line, quest 1).
 #
-# Crier Toke offers it (send_brew, dialogue 9106). Herbalist Birna (9128)
-# takes the hand-in (brew_turnin) and then offers Wade the Marsh (39).
+# Crier Toke (topic send_brew, dialogue 9106) or Herbalist Birna (topic
+# brew_start, dialogue 9128) offers it. A Birna start skips the met step,
+# because the player is already at the pool (a quest_granted trigger below).
+# Birna takes the hand-in (brew_turnin) and then offers Wade the Marsh (39).
 #   start  go to the Sheltered Pool and talk to Birna
 #   met    topic_heard on Birna's brew_arrive topic
 #   list   list at Birna's pool (5265)
@@ -109,6 +111,22 @@ rewards:
     things into the newcomer's pack."
 
 triggers:
+  # met, skipped: a player who takes the quest from Birna is already at her
+  # pool (owner ruling 2026-11-22, #940), so the grant of 38-start at the pool
+  # moves them past met. The room tells the two doors apart: Toke never leaves
+  # Hub Square (5203) and Birna never leaves the Sheltered Pool (5265). A
+  # topic_heard trigger cannot do this, because the offer's grant is only
+  # queued when the topic plays, and a flag condition is refused by the
+  # one-action rule (questloop.ruleOneAction).
+  - event: quest_granted
+    quest_token: 38-start
+    conditions:
+      in_room: 5265
+      has: ["38-start"]
+      missing: ["38-met"]
+    actions:
+      - grant: "38-met"
+
   # met: hearing Birna's brew_arrive topic.
   - event: topic_heard
     mob: 9128

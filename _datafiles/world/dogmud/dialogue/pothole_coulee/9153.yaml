@@ -15,8 +15,20 @@ opener:
       I will teach you the folk.
     hints: Find Cleric Hadwen at the reflecting pool and complete the Awakening, then
       return to Elder Wenna.
-  # Crier Toke starts every trade (#375 phase 7): Wenna takes First Words'
-  # hand-in but no longer offers it.
+  # Crier Toke or Wenna offers First Words (owner ruling 2026-11-22, #940).
+  # Wenna's offer is gated on Find Your Footing (31-end), like Toke's. The
+  # "find Toke" variant after this one now shows only before Find Your
+  # Footing, where it is still true.
+  - questRequired:
+    - 30-end
+    - 31-end
+    questExcluded:
+    - 47-start
+    - 47-end
+    text: The rite is on you, and you have walked the town. Good. There is
+      something here worth your while, the way of the folk, and you may ask me
+      to teach it. Sit, and say the word.
+    hints: Choose First Words below to learn the way of the folk from Wenna.
   - questRequired:
     - 30-end
     questExcluded:
@@ -88,6 +100,23 @@ topics:
   questExcluded:
   - 47-met
   - 47-end
+- key: words_start
+  kind: offer
+  quest: 47
+  label: First Words
+  playerLine: Will you teach me the ways of the folk?
+  text: I will, and it is a short lesson. Learn to ask, and learn where to look.
+    Ask me about the folk and our ways whenever you like, and listen to the
+    answers. The other half is the in-game help, for when your own memory fails.
+    It is more patient than I am and always to hand. Open it now, then come back
+    to me.
+  hints: Accept, then type help.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 47-start
+  - 47-end
+  grantsQuest: 47-start
 - key: words_turnin
   kind: handin
   quest: 47

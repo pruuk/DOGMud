@@ -12,8 +12,19 @@ opener:
       Go be Opened, then come back and I will teach you the ground.
     hints: Find Cleric Hadwen at the reflecting pool and complete the Awakening before
       returning to Scout Tarn.
-  # Crier Toke starts every trade (#375 phase 7): Tarn takes First Sign's
-  # hand-in but no longer offers it.
+  # Crier Toke or Tarn offers First Sign (owner ruling 2026-11-22, #940).
+  # Tarn's offer is gated on Find Your Footing (31-end), like Toke's. The
+  # "find Toke" variant after this one now shows only before Find Your
+  # Footing, where it is still true.
+  - questRequired:
+    - 30-end
+    - 31-end
+    questExcluded:
+    - 41-start
+    - 41-end
+    text: You have the rite on you and you have walked the town. Good. I teach
+      the ground, and you may ask me to teach you. Say the word and we start.
+    hints: Choose First Sign below to learn the ground from Tarn.
   - questRequired:
     - 30-end
     questExcluded:
@@ -95,6 +106,22 @@ topics:
   questExcluded:
   - 41-end
   grantsQuest: 41-end
+- key: sign_start
+  kind: offer
+  quest: 41
+  label: First Sign
+  playerLine: Will you teach me to read the ground?
+  text: I will. Here is the first of it. Out on the Open Steppe, just south of
+    here, a hare has left a trail. Read the ground for it. That is tracking. You
+    read what passed and where it went. When you have, I will show you what the
+    scrub can feed you.
+  hints: Accept, then go south to the Open Steppe and type track hare.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 41-start
+  - 41-end
+  grantsQuest: 41-start
 - key: sign_arrive
   kind: info
   label: Crier Toke sent me to learn the ground.

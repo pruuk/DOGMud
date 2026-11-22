@@ -3,10 +3,13 @@
 #
 # Token flow (one action per step, each trigger gated on the step before):
 #   98-start:   granted on Accept of Crier Toke's offer send_light
-#               (dialogue/pothole_coulee/9106.yaml), open after 31-end.
+#               (dialogue/pothole_coulee/9106.yaml) or of Lamplighter
+#               Gethin's offer light_start (9125), open after 31-end.
 #   98-lantern: topic_heard on Lamplighter Gethin (9125), topic
 #               first_light_lantern, which hands over a hooded lantern
-#               (item 20097) through givesItem.
+#               (item 20097) through givesItem. A Gethin start skips it (a
+#               quest_granted trigger below), because the player is already at
+#               the Mine Head, and light_start hands over the same lantern.
 #   98-equip:   command equip of the hooded lantern (item 20097). hood refuses
 #               a lantern that is not in the light slot, so this step exists.
 #   98-drift:   room_enter of the Timbered Drift (5256), cave biome with no
@@ -93,6 +96,22 @@ rewards:
   observer: ""
 
 triggers:
+  # ── THE LANTERN, skipped: a player who takes the quest from Gethin is
+  # already at the Mine Head (owner ruling 2026-11-22, #940), so the grant of
+  # 98-start there moves them past the lantern step. The room tells the two
+  # doors apart: Toke never leaves Hub Square (5203) and Gethin never leaves
+  # the Mine Head (5255). A topic_heard trigger cannot do this, because the
+  # offer's grant is only queued when the topic plays, and a flag condition is
+  # refused by the one-action rule (questloop.ruleOneAction). ──
+  - event: quest_granted
+    quest_token: 98-start
+    conditions:
+      in_room: 5255
+      has: ["98-start"]
+      missing: ["98-lantern"]
+    actions:
+      - grant: "98-lantern"
+
   # ── THE LANTERN: hear Gethin's first lesson, which hands it over ──
   - event: topic_heard
     mob: 9125

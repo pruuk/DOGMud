@@ -1,7 +1,9 @@
 # Quest 41, First Sign (Pothole Coulee, tracking line, quest 1).
 #
-# Crier Toke offers it (send_steppe, dialogue 9106). Scout Tarn (9136) takes
-# the hand-in (sign_turnin) and then offers The Hunt (42).
+# Crier Toke (topic send_steppe, dialogue 9106) or Scout Tarn (topic
+# sign_start, dialogue 9136) offers it. A Tarn start skips the met step,
+# because the player is already at the Steppe Edge (a quest_granted trigger
+# below). Tarn takes the hand-in (sign_turnin) and then offers The Hunt (42).
 #   start   go to the Steppe Edge and talk to Tarn
 #   met     topic_heard on Tarn's sign_arrive topic
 #   track   track on the Open Steppe (5284)
@@ -77,6 +79,22 @@ rewards:
     a rolled traveling cloak."
 
 triggers:
+  # met, skipped: a player who takes the quest from Tarn is already at the
+  # Steppe Edge (owner ruling 2026-11-22, #940), so the grant of 41-start there
+  # moves them past met. The room tells the two doors apart: Toke never leaves
+  # Hub Square (5203) and Tarn never leaves the Steppe Edge (5283). A
+  # topic_heard trigger cannot do this, because the offer's grant is only
+  # queued when the topic plays, and a flag condition is refused by the
+  # one-action rule (questloop.ruleOneAction).
+  - event: quest_granted
+    quest_token: 41-start
+    conditions:
+      in_room: 5283
+      has: ["41-start"]
+      missing: ["41-met"]
+    actions:
+      - grant: "41-met"
+
   # met: hearing Tarn's sign_arrive topic.
   - event: topic_heard
     mob: 9136
