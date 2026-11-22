@@ -1,6 +1,7 @@
 package rooms
 
 import (
+	"maps"
 	"sort"
 	"strings"
 
@@ -103,6 +104,9 @@ func knownExitsAt(r *Room, c *characters.Character, sight messaging.SightDecisio
 	return list
 }
 
+// knownExitLess orders two known exits for KnownExits: by knownExitRank,
+// then A to Z ignoring case, and a room or mutator exit before a temporary
+// exit of the same name.
 func knownExitLess(a, b KnownExit) bool {
 	ra, rb := knownExitRank(a), knownExitRank(b)
 	if ra != rb {
@@ -115,6 +119,8 @@ func knownExitLess(a, b KnownExit) bool {
 	return a.Kind != ExitTemporary && b.Kind == ExitTemporary
 }
 
+// knownExitRank is k's place in exitOrder; a temporary exit, and any name
+// exitOrder does not hold, ranks after all of them.
 func knownExitRank(k KnownExit) int {
 	if k.Kind != ExitTemporary {
 		if rank, ok := exitOrder[k.Name]; ok {
@@ -138,9 +144,7 @@ func (r *Room) exitKnown(char *characters.Character, exitName string, ex exit.Ro
 // name is hidden from all of them alike.
 func (r *Room) permanentExits() map[string]exit.RoomExit {
 	all := make(map[string]exit.RoomExit, len(r.Exits))
-	for name, ex := range r.Exits {
-		all[name] = ex
-	}
+	maps.Copy(all, r.Exits)
 	fromMutator := map[string]bool{}
 	for mut := range r.ActiveMutators {
 		spec := mut.GetSpec()

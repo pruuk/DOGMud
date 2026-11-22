@@ -225,13 +225,13 @@ func TestGetRandomKnownExit(t *testing.T) {
 		"east": {RoomId: 6, Lock: gamelock.Lock{Difficulty: 10}},
 	}}
 	c := &characters.Character{}
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		if name, _ := r.GetRandomKnownExit(c); name != "" {
 			t.Fatalf("picked %q: west is unfound and east is locked", name)
 		}
 	}
 	c.LearnSecretExit(77, "west")
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		if name, id := r.GetRandomKnownExit(c); name != "west" || id != 5 {
 			t.Fatalf("picked %q (%d), want the found west (5)", name, id)
 		}
@@ -272,7 +272,7 @@ func TestKnownExitFilters_MutatorExitTakesThePlaceOfTheRoomExit(t *testing.T) {
 			t.Errorf("FindKnownExitTo(%d) = %q, want nothing", roomId, got)
 		}
 	}
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		if name, _ := r.GetRandomKnownExit(c); name == "west" {
 			t.Fatal("GetRandomKnownExit picked the shadowed room west")
 		}
@@ -294,7 +294,7 @@ func TestKnownExitFilters_MutatorExitTakesThePlaceOfTheRoomExit(t *testing.T) {
 	if got := r.FindKnownExitTo(c, 5); got != "" {
 		t.Errorf("FindKnownExitTo(5) = %q, want nothing (the room west is shadowed)", got)
 	}
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		if name, id := r.GetRandomKnownExit(c); name == "west" && id != 9 {
 			t.Fatalf("GetRandomKnownExit picked west to %d, want the mutator's 9", id)
 		}
