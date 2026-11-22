@@ -735,6 +735,7 @@ When writing hidden noun descriptions:
 | `save_and_load.go` | Room YAML + instance-save persistence, `restoreSkipTaggedFields` |
 | `prose_wrap.go` | Re-folds long prose into wrapped `>` block scalars on template save |
 | `roomdetails.go` | Assembled per-look detail payload |
+| `known_exits.go` | `KnownExits` and the known-exit filters: the one rule for the exits a character knows (#781) |
 | `npcmarker.go` | The `NpcMarker` hook: the viewer's talk marker before an NPC's name (#375) |
 | `zoneconfig.go` | Per-zone `zone-config.yaml` (including `non_cartesian` and the `instance_gold` opt-in) |
 | `zone_lifecycle.go` | Zone create/delete lifecycle |
@@ -944,3 +945,24 @@ a template in the file-path cache or a room in memory, then advances the
 counter. `loadAllRoomZones` raises the counter above the highest template on
 disk and logs once when it had to. Both guards matter on a host where
 `/mud-config` is read-only and the counter cannot persist across restarts.
+
+## Known exits (#781)
+
+`KnownExits(room, char) KnownExitList` is the one answer to which exits a
+character knows in a room (owner ruling 6). It covers `Exits`, active
+mutator exits (the first active mutator with a name takes the place of the
+room exit, `GetExitInfo`'s rule) and `ExitsTemp`; a secret exit is listed
+once `char.KnowsSecretExit` (ruling 1). Each `KnownExit` carries `Name`,
+`Kind` (`ExitCompass`, `ExitVertical`, `ExitDiagonal`, `ExitNamed`,
+`ExitTemporary`, see `ExitKindOf`), `LockedNow` (`Lock.IsLocked()`, ruling
+3), `RoomId` and the `Exit` or `Temp` record. At no sight it is `Dark` and
+empty. Order: north, east, south, west, up, down, the diagonals clockwise
+from northeast, then A to Z.
+
+The filters on the same rule: `ExitKnownTo(char, name)`,
+`FindKnownExitByName(char, search)` (every player path that names an exit;
+`internal/guards/exit_lookup_guard_test.go` registers the unfiltered
+`FindExitByName` callers), `FindKnownExitTo(char, roomId)` and
+`GetRandomKnownExit(char)` (NPC choice points, ruling 13). The unfiltered
+`FindExitByName`, `FindExitTo` and `GetRandomExit` keep their old answers for
+mob moves, scripted routes and flee.

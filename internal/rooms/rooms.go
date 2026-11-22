@@ -1540,30 +1540,45 @@ func (r *Room) GetRandomExit() (exitName string, roomId int) {
 // (nil keeps every one). Secret and locked exits are excluded before keep is
 // asked. Flee passes the fleeing player's quest gate check (#588).
 func (r *Room) GetRandomExitWhere(keep func(exitName string, roomId int) bool) (exitName string, roomId int) {
+	return r.randomExit(func(_ string, ex exit.RoomExit) bool { return !ex.Secret }, keep)
+}
+
+// GetRandomKnownExit is GetRandomExit for a mover who may take the secret
+// exits it has found (#781, owner ruling 13: an NPC's own wandering). Locked
+// exits stay out, as in GetRandomExit.
+func (r *Room) GetRandomKnownExit(char *characters.Character) (exitName string, roomId int) {
+	return r.randomExit(func(name string, ex exit.RoomExit) bool {
+		return !ex.Secret || char.KnowsSecretExit(r.RoomId, name)
+	}, nil)
+}
+
+// randomExit picks uniformly among the unlocked room and mutator exits allowed
+// accepts and keep (nil keeps every one) accepts.
+func (r *Room) randomExit(allowed func(exitName string, ex exit.RoomExit) bool, keep func(exitName string, roomId int) bool) (exitName string, roomId int) {
 
 	allExits := map[string]int{}
 
-	for exitName, exit := range r.Exits {
-		if exit.Secret {
+	for exitName, ex := range r.Exits {
+		if !allowed(exitName, ex) {
 			continue
 		}
-		if exit.Lock.IsLocked() {
+		if ex.Lock.IsLocked() {
 			continue
 		}
 
-		allExits[exitName] = exit.RoomId
+		allExits[exitName] = ex.RoomId
 	}
 
 	for mut := range r.ActiveMutators {
 		spec := mut.GetSpec()
-		for exitName, exit := range spec.Exits {
-			if exit.Secret {
+		for exitName, ex := range spec.Exits {
+			if !allowed(exitName, ex) {
 				continue
 			}
-			if exit.Lock.IsLocked() {
+			if ex.Lock.IsLocked() {
 				continue
 			}
-			allExits[exitName] = exit.RoomId
+			allExits[exitName] = ex.RoomId
 		}
 	}
 
@@ -2675,12 +2690,30 @@ func (r *Room) NounNamedBy(phrase string) string {
 }
 
 func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomId int) {
+	return r.findExitByName(exitNameSearch, func(string, exit.RoomExit) bool { return true })
+}
+
+// FindKnownExitByName is FindExitByName limited to the exits char knows
+// (ExitKnownTo): a secret exit char has not found matches no word, by name,
+// alias or prefix, as if it were not there, so a guess at it answers exactly
+// as no exit does (#781, owner ruling 1). Every player path that names an
+// exit uses it (internal/guards/exit_lookup_guard_test.go). A nil char knows
+// no secret exit.
+func (r *Room) FindKnownExitByName(char *characters.Character, exitNameSearch string) (exitName string, exitRoomId int) {
+	return r.findExitByName(exitNameSearch, func(name string, ex exit.RoomExit) bool {
+		return !ex.Secret || char.KnowsSecretExit(r.RoomId, name)
+	})
+}
+
+// findExitByName is FindExitByName over the room and mutator exits usable
+// accepts. Temporary exits are never secret and are always searched.
+func (r *Room) findExitByName(exitNameSearch string, usable func(name string, ex exit.RoomExit) bool) (exitName string, exitRoomId int) {
 
 	// Check for direction aliases from keywords.yaml first
 	fullDirection := keywords.TryDirectionAlias(exitNameSearch)
 	if fullDirection != exitNameSearch {
 		// A direction alias was found, check if this exact direction exists
-		if exitInfo, ok := r.Exits[fullDirection]; ok {
+		if exitInfo, ok := r.Exits[fullDirection]; ok && usable(fullDirection, exitInfo) {
 			return fullDirection, exitInfo.RoomId
 		}
 		// Check temporary exits
@@ -2690,7 +2723,7 @@ func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomI
 		// Check mutator exits
 		for mut := range r.ActiveMutators {
 			spec := mut.GetSpec()
-			if exitInfo, ok := spec.Exits[fullDirection]; ok {
+			if exitInfo, ok := spec.Exits[fullDirection]; ok && usable(fullDirection, exitInfo) {
 				return fullDirection, exitInfo.RoomId
 			}
 		}
@@ -2700,8 +2733,10 @@ func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomI
 
 	// Build list of all exits for fuzzy matching
 	exitNames := []string{}
-	for exitName := range r.Exits {
-		exitNames = append(exitNames, exitName)
+	for exitName, exitInfo := range r.Exits {
+		if usable(exitName, exitInfo) {
+			exitNames = append(exitNames, exitName)
+		}
 	}
 
 	for exitName := range r.ExitsTemp {
@@ -2712,6 +2747,9 @@ func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomI
 	for mut := range r.ActiveMutators {
 		spec := mut.GetSpec()
 		for exitName, exitInfo := range spec.Exits {
+			if !usable(exitName, exitInfo) {
+				continue
+			}
 			mutatorExits[exitName] = exitInfo
 			exitNames = append(exitNames, exitName)
 		}
@@ -2741,7 +2779,7 @@ func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomI
 		return "", 0
 	}
 
-	if exitInfo, ok := r.Exits[exactMatch]; ok {
+	if exitInfo, ok := r.Exits[exactMatch]; ok && usable(exactMatch, exitInfo) {
 		return exactMatch, exitInfo.RoomId
 	}
 
