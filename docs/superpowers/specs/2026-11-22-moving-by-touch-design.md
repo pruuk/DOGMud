@@ -46,6 +46,14 @@ buttons.
     closed-eye "Dark" tile in the exits slot.
 12. **Mockup:** the owner approves it for this spec; Malia's look moves to
     before plan 2b.
+13. **NPCs and secret exits** (on review of this spec): an NPC moves through
+    a secret exit only if it found it (searched it, like a player) or the
+    move is scripted, because a scripted route is that NPC's regular way and
+    it would know it. Scripted: patrol routes, schedules, a behaviour tree or
+    quest action that names the move, an admin `command`. Unscripted, and so
+    limited to found secret exits: wandering, chasing or pursuing, a
+    planner's errand route, following a player. Fleeing already skips every
+    secret exit and stays as it is.
 
 ## Facts verified against source (2026-11-22)
 
@@ -56,6 +64,9 @@ buttons.
 | The text exits line uses the same trail rule | `internal/rooms/roomdetails.go:59` (`GetDetails`), ~367-379 |
 | `Zone.Map` hides a secret exit until the player visited the far room (permanent visited set) | `internal/mapper/mapper.snapshot.go:245-288` |
 | `search` records a discovery (`characters.SecretExitDiscoveryKey`); quest destinations already read it, nothing else does | `internal/actions/search.go:33`; `internal/characters/character.go:673`; `internal/questengine/destination.go:385` |
+| Any actor can search, NPCs included, and a find records the discovery on that character | `internal/actions/search.go:39-45`; callers `internal/mobcommands/search.go:11`, `internal/behaviortree/actions_scout.go:133` |
+| NPC wandering picks from every exit in `room.Exits`, secret ones included | `internal/mobcommands/wander.go:82-105` |
+| Fleeing (player or NPC) already skips secret, locked and quest-gated exits | `internal/actions/flee.go:215-221` (`fleeExit`) |
 | `go` and a bare exit name reach exits through `FindExitByName`, which ignores `Secret` | `internal/rooms/rooms.go:2677`; `internal/usercommands/usercommands.go:415-420` |
 | `exitsv2` `locked` is set from `HasLock()` (the door has a lock), not `IsLocked()` | `gmcp.Room.go:524`; `internal/exit/exit.go:24` |
 | `Room.Info` leaves out temporary exits (`ExitsTemp`: ferry gangplank, return portal, tree and mob portals) and mutator exits, which `look` shows and `go` accepts | `internal/rooms/rooms.go:119`, ~689; `roomdetails.go:363`, ~435 |
@@ -92,7 +103,16 @@ replaces the 180-second visitor trail (look, `Room.Info`) and the visited-room
 rule (`Zone.Map`). `FindExitByName` callers on the player's movement path
 refuse an unknown secret exit exactly as if no exit were there: "You're
 bumping into walls." for a compass name, "not recognized" otherwise, so a
-guess reveals nothing. Mobs and scripted moves keep their current access.
+guess reveals nothing.
+
+**NPCs (ruling 13).** The same discovery decides for an NPC's own choices:
+wandering, chasing, a planner's errand route and following a player use a
+secret exit only if that NPC holds the discovery (it searched and found it).
+Scripted moves (patrol routes, schedules, a behaviour tree or quest action
+naming the move, an admin `command`) keep using them, since that route is the
+NPC's regular way. A companion or charmed NPC moving with its leader through
+a secret exit learns it, like a player follower. Fleeing is unchanged (it
+already skips secret exits).
 
 **`Room.Info`.** `exitsv2` lists only known exits; `locked` means locked now;
 a new `kind` field per exit; a new top-level `dark` flag. At no sight the exit
@@ -177,6 +197,10 @@ feature; `onRoomClick` stays unused).
   lock; temporary and mutator exits listed; dark returns no exits.
 - `go` and a bare exit name refuse an unfound secret exit with exactly the
   "no exit" answer for that word; a found one walks.
+- NPCs: a wandering, chasing, errand-running or following NPC never takes a
+  secret exit it has not found, and takes one it has; a patrol or schedule
+  route through a secret exit still walks; a companion moving with its
+  leader learns the exit.
 - `Room.Info` (extending `gmcp.RoomSight_test.go`): nothing leaks in the
   dark; unfound secret exits never sent; `locked` follows lock, unlock and a
   timed relock; the watcher resends only on a real change.
@@ -222,7 +246,9 @@ anything from dark-room bumps.
 
 | Decision | Why | If wrong |
 |---|---|---|
-| Mobs and scripted moves (behaviour trees, quest teleports) keep walking through secret exits; a player following a leader moves with them and learns the exit (ruling 2) | Ruling 1 is about what a player knows; NPC patrols and scripts are authored to use them | Apply the refusal to mobs too |
+| A schedule's route counts as scripted, and so does the pathfinding it uses to reach its target room | The owner named an NPC's regular route as known; a schedule is that route | Treat schedule pathfinding as unscripted and route schedules around secret exits |
+| A companion or charmed NPC moving with its leader learns the exit (ruling 2 applied to NPCs) | It walked through behind its leader, as a player follower does | It follows without learning, and cannot use the exit alone later |
+| An NPC's discovery lives on that NPC instance's character and is lost when the instance is gone; a fresh spawn has found nothing | NPC discoveries are recorded the same way as players' today (`search.go:45`) | Keep them per template, so every copy of an NPC knows what one found |
 | An unfound secret exit answers "not recognized" for a named exit and "bumping into walls" for a compass word, the same as no exit at all | Anything else would confirm the exit exists | Use one line for both |
 | The dark marks ride in `Room.Info`, kept on the server, not in the client | The client never builds state the server should own (sync rule), and a typed bump must mark the button too | Track them in the client from the bump lines |
 | In combat the movement buttons dim rather than disappear | Fixed slots: nothing moves; Flee replaces them in 3d | Hide them |
