@@ -64,24 +64,24 @@ buttons.
 | The text exits line uses the same trail rule | `internal/rooms/roomdetails.go:59` (`GetDetails`), ~367-379 |
 | `Zone.Map` hides a secret exit until the player visited the far room (permanent visited set) | `internal/mapper/mapper.snapshot.go:245-288` |
 | `search` records a discovery (`characters.SecretExitDiscoveryKey`); quest destinations already read it, nothing else does | `internal/actions/search.go:33`; `internal/characters/character.go:673`; `internal/questengine/destination.go:385` |
-| Any actor can search, NPCs included, and a find records the discovery on that character | `internal/actions/search.go:39-45`; callers `internal/mobcommands/search.go:11`, `internal/behaviortree/actions_scout.go:133` |
-| NPC wandering picks from every exit in `room.Exits`, secret ones included | `internal/mobcommands/wander.go:82-105` |
-| Fleeing (player or NPC) already skips secret, locked and quest-gated exits | `internal/actions/flee.go:215-221` (`fleeExit`) |
-| `go` and a bare exit name reach exits through `FindExitByName`, which ignores `Secret` | `internal/rooms/rooms.go:2677`; `internal/usercommands/usercommands.go:415-420` |
-| `exitsv2` `locked` is set from `HasLock()` (the door has a lock), not `IsLocked()` | `gmcp.Room.go:524`; `internal/exit/exit.go:24` |
+| Any actor can search, NPCs included, and a find records the discovery on that character | `internal/actions/search.go:449` (corrected by plan 2a); callers `internal/mobcommands/search.go:11`, `internal/behaviortree/actions_scout.go:133` |
+| Plain NPC wandering already skips secret and locked exits (`GetRandomExit`); only `wander loot` and `wander players` pick from every exit, secret ones included (corrected by plan 2a) | `internal/rooms/rooms.go:1547-1550`; `internal/mobcommands/wander.go:82-105` |
+| Fleeing (`fleeExit`) already skips secret, locked and quest-gated exits; the behaviour tree's out-of-combat walk-away (`pickRetreatExit`) does not (corrected by plan 2a) | `internal/actions/flee.go:215-221` |
+| `go` and a bare exit name reach exits through `FindExitByName`, which ignores `Secret`; so do `look`, `lock`, `unlock`, `picklock`, `shoot`, `fire`, `defuse` and the key ring (11 files, corrected by plan 2a) | `internal/rooms/rooms.go:2677`; `internal/usercommands/usercommands.go:415-420` |
+| `exitsv2` gets the string `locked` in `details` from `HasLock()` (the door has a lock), not `IsLocked()` | `gmcp.Room.go:524-526`; `internal/exit/exit.go:24` |
 | `Room.Info` leaves out temporary exits (`ExitsTemp`: ferry gangplank, return portal, tree and mob portals) and mutator exits, which `look` shows and `go` accepts | `internal/rooms/rooms.go:119`, ~689; `roomdetails.go:363`, ~435 |
 | `Room.Info` is sent on `RoomChange` and `SightBandChanged`; nothing resends it after a lock change, a relock, a temporary exit or a found secret exit | `gmcp.Room.go:38-42` |
 | A relock is lazy (time compare), and lock changes come from about a dozen call sites with no event | `internal/gamelock/gamelock.go`; unlock, lock, picklock, go, behaviour tree, quest engine, aicompanion |
 | A per-round "send only if changed" watcher exists for vitals | `modules/gmcp/gmcp.CharVitalsWatch.go:30` (`lastSentVitals`) |
 | At no sight, `Room.Info` sends empty exit maps (present, not omitted) | `gmcp.Room.go:480`; `gmcp.RoomSight_test.go` |
-| Movement refusals in order: combat (`refusal.WhileFighting`), quest sequence lock, `no-go` condition, locked door, quest `room_gate`, exhaustion, instance not opened, no such exit ("You're bumping into walls.") | `internal/usercommands/go.go:77, 96, 185, 206, 227, 615` |
+| Movement refusals in order: combat (`refusal.WhileFighting`), quest sequence lock, `no-go` condition, locked door, quest `room_gate`, exhaustion, instance not opened, no such exit ("You're bumping into walls.") | `internal/usercommands/go.go:77, 82, 96, 185, 206, 227, 262-268, 615` (corrected by plan 2a) |
 | `actions.IsCompassDirection` knows full words only; a bare `n` with no north exit answers "not recognized" | `internal/actions/go.go:18` |
 | Each player's `Commands.State` (mode: exploration, combat, dead) is pushed each round | `modules/gmcp/gmcp.Commands.go:102` |
 | The client sends a typed line with `playerSend` | `_datafiles/html/public/webclient-pure.html:2956` |
 | The deck draws empty slots today, `AUTOMATIC_SHOWS = false` | `_datafiles/html/public/static/js/touchdeck.js:35` |
 | The sideways toast exists, once per device | `_datafiles/html/public/static/js/viewportfit.js:81` |
 | Secret exits shipped: 5, none on a quest route (checked against every quest and dialogue file) | `rooms/`: 6323 west, 5441 east, 6418 north, 4161 down, 487 down (locked) |
-| Exits that are not the six T directions: 22 diagonal, 10 named (`out`, `shrine`, `overlook`, `watchtower`, `drift`, `in`, `portal`, `crack`); no room has more than three | room YAML count |
+| Exits that are not the six T directions: 22 diagonal, 10 named (`out`, `shrine`, `overlook`, `watchtower`, `drift`, `in`, `portal`, `crack`); no room has more than two (corrected by plan 2a) | room YAML count |
 | Brand: darkest colour umber `#19140c`; olive grey ramp `#5d5c4e` `#7e8073` `#969889` `#b4b4a3` `#cec6aa`; muted text `#8b897a` (4.92 on the dark panel); warning red `#e35349` | `docs/superpowers/specs/completed/2026-11-01-brand-palette-design.md:26-32`; `docs/guides/BRAND_STANDARDS.md` section 2 |
 
 ## 2a: the server
