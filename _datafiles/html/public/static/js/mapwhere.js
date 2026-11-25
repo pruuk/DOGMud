@@ -16,5 +16,12 @@
         if (quest) { dest = clean(quest.target_label) || clean(quest.name); }
         return { location: clean(roomName), destination: dest };
     }
-    return { text: text };
+    // recentre: Room.Info comes again in the same room when its exits change
+    // (#781: a door unlocks, a portal opens, a light goes out). The map moves
+    // to the player only in a new room, so a map the player moved (Fit, zoom)
+    // stays where they put it. lastRoomId: the room last centred on, or null.
+    function recentre(lastRoomId, roomId) {
+        return lastRoomId === null || lastRoomId === undefined || lastRoomId !== roomId;
+    }
+    return { text: text, recentre: recentre };
 }));

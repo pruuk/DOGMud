@@ -820,6 +820,7 @@
         let allRooms = {
             currentZoneKey: "",
             roomZones: {},
+            lastRoomId: null,
         };
         let GMCPUpdateHandlers = {
             "Comm": function() {
@@ -898,6 +899,7 @@
 
                     if ( allRooms.currentZoneKey != zoneKey ) {
                         gr.reset();
+                        allRooms.lastRoomId = null;
                         allRooms.currentZoneKey = zoneKey;
                         if( !allRooms.roomZones[zoneKey] || !Array.isArray(allRooms.roomZones[zoneKey]) ) {
                             allRooms.roomZones[zoneKey] = [];
@@ -912,6 +914,13 @@
                         // stay wiped (#650, RoomGridSVG.RESYNC_GRACE_MS).
                         gr.requestResync(RoomGridSVG.RESYNC_GRACE_MS);
                     }
+
+                    // Room.Info comes again in the same room when its exits
+                    // change (#781). The room is still updated below, so an
+                    // exit it gained is drawn; only a new room moves the map,
+                    // so a map the player moved stays where it is (D48).
+                    var newRoom = MapWhere.recentre(allRooms.lastRoomId, obj.Info.num);
+                    allRooms.lastRoomId = obj.Info.num;
 
                     var r = {
                         RoomId: obj.Info.num,
@@ -955,7 +964,8 @@
                     for (var p in obj.Info.exitsv2 ) {
                         var exitInfo = obj.Info.exitsv2[p];
                         // Only add these rooms if there is no z delta, since it's a 2D rendering.
-                        if ( exitInfo.dz == 0 ) {
+                        // A temporary exit (a gangplank, a portal) is no map edge (#781).
+                        if ( exitInfo.dz == 0 && exitInfo.kind !== "temporary" ) {
                             r.Exits.push( { RoomId: exitInfo.num, x: exitInfo.dx+parseInt(coords[1]), y: exitInfo.dy+parseInt(coords[2]), Text: "" } );
                         }
                     }
@@ -969,7 +979,9 @@
                     if ( !(known && known.room.fromSnapshot) ) {
                         gr.addRoom(r);
                     }
-                    gr.centerOnRoom(r.RoomId);
+                    if ( newRoom ) {
+                        gr.centerOnRoom(r.RoomId);
+                    }
                     updateMapWhere();
                 }
 
@@ -3180,6 +3192,8 @@
             socket.onopen = function() {
                 linesSent = 0;
                 if (sendWait) sendWait.reset();
+                // A new connection centres on its first room (#781).
+                allRooms.lastRoomId = null;
                 term.writeln("Connected to the server!");
                 term.clear();
 

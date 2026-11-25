@@ -91,6 +91,8 @@ var code = 'var socket = null, leavingGame = false, leaveFallback = null, inGame
     + 'var screenReader = { isOn: function () { return global.__srOn === true; }, loggedOut: function () {}, write: function (t) { global.__srWrites.push(t); } };\n'
     // onopen forgets the last account's Char.Info.
     + 'var GMCPStructs = {};\n'
+    // onopen forgets the room the map last centred on (#781).
+    + 'var allRooms = { lastRoomId: 5 }; global.__allRooms = allRooms;\n'
     // From gameLine, which sits just above markInGame, so the page's own
     // lines (onclose and the rest) reach the screen reader log here too.
     + extract('function gameLine(text) {', "sessionButton.addEventListener('click'")
@@ -131,6 +133,8 @@ connect.click();
 check('a click while connecting opens no second socket', sockets.length === 1, 'sockets ' + sockets.length);
 
 sockets[0].open();
+check('opening forgets the room the map last centred on', global.__allRooms.lastRoomId === null,
+    'lastRoomId ' + global.__allRooms.lastRoomId);
 check('opening tells the server the game window\'s columns', reported.length === 1 && reported[0] === 57,
     'reported ' + JSON.stringify(reported));
 // Open but at the login prompt: amber, not green (#818).

@@ -28,7 +28,11 @@
  *      never asks; a room with no map coordinates keys the same floor on both
  *      sides;
  *   8. a rebuilt room token (a partial, a re-centre, a re-fog, a party
- *      marker) keeps its stair ticks.
+ *      marker) keeps its stair ticks;
+ *   9. Room.Info again in the same room (its exits changed, #781) leaves a
+ *      moved map where it is but still draws the room's new exit; a found
+ *      exit sent by a partial Zone.Map is drawn too; a temporary exit is no
+ *      map edge; a new room still centres.
  */
 'use strict';
 
@@ -38,6 +42,8 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..', '..', '_datafiles', 'html', 'public');
 const html = fs.readFileSync(path.join(ROOT, 'webclient-pure.html'), 'utf8');
 const js = fs.readFileSync(path.join(ROOT, 'static', 'js', 'gmcp.js'), 'utf8');
+// The Room handler asks MapWhere.recentre whether to move the map (#781).
+global.MapWhere = require(path.join(ROOT, 'static', 'js', 'mapwhere.js'));
 
 // ---------------------------------------------------------------- extraction
 function sliceBalanced(src, startIdx, open, close) {
@@ -139,7 +145,7 @@ for (const name of [
 (0, eval)([
   js,
   'globalThis.RoomGridSVG = RoomGridSVG;',
-  'globalThis.allRooms = { currentZoneKey: "", roomZones: {} };',
+  'globalThis.allRooms = { currentZoneKey: "", roomZones: {}, lastRoomId: null };',
   handlersMap.replace(/^\{/, 'globalThis.GMCPUpdateHandlers = {') + ';',
   handleGMCPSrc,
 ].join('\n'));
@@ -162,6 +168,7 @@ function freshMap() {
   global.gr = g;
   globalThis.allRooms.currentZoneKey = '';
   globalThis.allRooms.roomZones = {};
+  globalThis.allRooms.lastRoomId = null;
   global.GMCPStructs = {};
   snapshotCalls = [];
   sentGMCP = [];
@@ -373,6 +380,42 @@ check('8: one tick each, never doubled',
 roomInfo(1, 0); // back into room 1: it is rebuilt as the current token
 check('8: as the current room again, room 1 keeps its ticks', hasTick(g, 1, '▲') && hasTick(g, 1, '▼'),
   'up=' + hasTick(g, 1, '▲') + ' down=' + hasTick(g, 1, '▼'));
+
+console.log('SCENARIO 9: Room.Info again in the same room keeps a moved map but draws the new exit');
+function roomInfoExits(num, x, exitsv2) {
+  handleGMCP('Room.Info', { num, coords: 'Thornwall, ' + x + ', 0, 0', exitsv2, details: [] });
+}
+function exitIds(g, id) { return (g.rooms.get(id).room.Exits || []).map(e => e.RoomId).sort((a, b) => a - b).join(','); }
+// 9a. A room drawn from Room.Info alone (no Zone.Map has drawn it).
+g = freshMap();
+roomInfoExits(1, 0, {});
+check('9a: the first Room.Info centres on room 1', g.currentCenterId === 1, 'centre=' + g.currentCenterId);
+g.fit();
+g.center = { x: 777, y: 555 }; // the player moved the map
+roomInfoExits(1, 0, { east: { num: 2, dx: 1, dy: 0, dz: 0, kind: 'compass' } });
+check('9a: the same room again leaves the map where the player put it',
+  g.center.x === 777 && g.center.y === 555, 'center=' + JSON.stringify(g.center));
+check('9a: the same room again still draws its new exit', exitIds(g, 1) === '2', 'exits=' + exitIds(g, 1));
+roomInfoExits(1, 0, { east: { num: 2, dx: 1, dy: 0, dz: 0, kind: 'compass' },
+  gangplank: { num: 3, dx: 0, dy: 1, dz: 0, kind: 'temporary' } });
+check('9a: a temporary exit is no map edge', exitIds(g, 1) === '2', 'exits=' + exitIds(g, 1));
+check('9a: a temporary exit adds no room', !g.rooms.get(3), 'rooms=' + ids(g));
+roomInfoExits(2, 1, {});
+check('9a: a new room centres the map', g.currentCenterId === 2 && g.center.x === g.rooms.get(2).room.x * g.spacing,
+  'centre=' + g.currentCenterId + ' center=' + JSON.stringify(g.center));
+// 9b. A room a Zone.Map drew: a found secret exit reaches the map through the
+// partial Zone.Map the server sends with it (roomExitsChangedHandler).
+g = freshMap();
+roomInfo(1, 0);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1)], full: true });
+g.center = { x: 777, y: 555 };
+roomInfoExits(1, 0, { west: { num: 2, dx: 1, dy: 0, dz: 0, kind: 'compass' } });
+zoneMap({ zone: 'Thornwall', cz: 0, party: [],
+  rooms: [room(1, 0, { exits: [{ to: 2, dx: 1, dy: 0, dz: 0, kind: 'compass' }] })], full: false });
+check('9b: the found exit is on the map', exitIds(g, 1) === '2', 'exits=' + exitIds(g, 1));
+check('9b: the map stays where the player put it', g.center.x === 777 && g.center.y === 555,
+  'center=' + JSON.stringify(g.center));
+check('9b: room 1 is still the current room', g.currentCenterId === 1, 'centre=' + g.currentCenterId);
 
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);
