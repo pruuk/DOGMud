@@ -125,3 +125,29 @@ func TestMovementIds_TheDarkIssuesNoPerRoomIds(t *testing.T) {
 		t.Error("a lit room's per-room id must be stale once the room is dark")
 	}
 }
+
+// The round watcher resends Room.Info every round: the same exits in the same
+// room keep the same ids and the set already held, with nothing rebuilt, and
+// the caller gets a copy it cannot write through.
+func TestMovementIds_AnUnchangedResendKeepsTheHeldSet(t *testing.T) {
+	t.Cleanup(func() { Forget(1) })
+	room5 := &rooms.Room{RoomId: 5}
+	first := MovementIds(1, room5, list("north", "northeast", "out"))
+	mu.Lock()
+	held := issuedTo[1]
+	mu.Unlock()
+	again := MovementIds(1, room5, list("north", "northeast", "out"))
+	if again["northeast"] != first["northeast"] || again["out"] != first["out"] {
+		t.Fatalf("a resend in the same room changed the ids: %v then %v", first, again)
+	}
+	mu.Lock()
+	kept := issuedTo[1] == held
+	mu.Unlock()
+	if !kept {
+		t.Error("an unchanged resend must keep the held set, not build a new one")
+	}
+	again["out"] = "xdeadbeef"
+	if line, ok := Resolve(1, 5, first["out"]); !ok || line != "go out" {
+		t.Fatalf("writing to the returned map changed the held set: %q %v", line, ok)
+	}
+}

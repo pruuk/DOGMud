@@ -10,6 +10,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mutators"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -90,6 +92,52 @@ func TestRoomInfo_KindsIdsAndOnlyKnownExits(t *testing.T) {
 	p = roomInfoFor(t, viewer)
 	require.Contains(t, p.ExitsV2["west"].Details, "secret")
 	require.Equal(t, "m4", p.ExitsV2["west"].Id)
+}
+
+// A mutator exit is listed like a room exit, and a mutator exit of a room
+// exit's name takes its place (GetExitInfo's precedence, D6).
+func TestRoomInfo_MutatorExitsAreListed(t *testing.T) {
+	viewer, _ := exitsFixture(t, 60)
+	t.Cleanup(mutators.SeedSpecsForTest(mutators.MutatorSpec{
+		MutatorId: "test-roominfo-bridge",
+		Exits: map[string]exit.RoomExit{
+			"bridge": {RoomId: 9721},
+			"north":  {RoomId: 9721, Lock: gamelock.Lock{Difficulty: 5}},
+		},
+	}))
+	require.True(t, rooms.GetZoneConfig("SightZone").Mutators.Add("test-roominfo-bridge"), "fixture premise")
+
+	p := roomInfoFor(t, viewer)
+	require.Equal(t, 9721, p.Exits["bridge"])
+	require.Equal(t, "named", p.ExitsV2["bridge"].Kind)
+	line, ok := buttons.Resolve(viewer.UserId, 9720, p.ExitsV2["bridge"].Id)
+	require.True(t, ok)
+	require.Equal(t, "go bridge", line)
+	require.Contains(t, p.ExitsV2["north"].Details, "locked", "the mutator's locked north replaces the room's open one")
+}
+
+// A temporary exit named like a permanent one is reached by the permanent
+// one's name (Room.FindExitByName), so Room.Info lists it once, as the
+// permanent exit.
+func TestRoomInfo_ATemporaryExitSharingAPermanentNameIsListedOnce(t *testing.T) {
+	viewer, room := exitsFixture(t, 60)
+	require.True(t, room.AddTemporaryExit("north", exit.TemporaryRoomExit{RoomId: 9720}))
+
+	p := roomInfoFor(t, viewer)
+	require.Equal(t, 9721, p.Exits["north"])
+	require.Equal(t, "compass", p.ExitsV2["north"].Kind)
+	require.Equal(t, 9721, p.ExitsV2["north"].RoomId)
+	require.Equal(t, "m1", p.ExitsV2["north"].Id)
+}
+
+// One sight verdict per Room.Info: the builder uses the sight GetRoomNode
+// read, not a second ParticipantSight of its own.
+func TestRoomInfo_ExitsFollowTheSightPassedIn(t *testing.T) {
+	viewer, room := exitsFixture(t, 60)
+	info := buildRoomExitsInfo(viewer, room, messaging.SightNone)
+	require.True(t, info.Dark)
+	require.Empty(t, info.Exits)
+	require.Empty(t, info.ExitsV2)
 }
 
 // Ruling 3: `locked` follows the door's real state: lock, unlock, and a

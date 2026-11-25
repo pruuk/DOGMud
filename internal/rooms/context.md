@@ -1037,8 +1037,9 @@ same name is hidden from all of them alike. The unfiltered `FindExitByName`,
 scripted routes and flee; `FindExitByName` and `GetRandomExit` share the
 merge, so a mutator exit takes the place of the room exit there too.
 
-`GetDetails` fills `VisibleExits` and `TemporaryExits` from `knownExitsAt`
-(`KnownExits` with the sight `GetDetails` already read for the roster), so
+`GetDetails` fills `VisibleExits` and `TemporaryExits` from `KnownExitsAt`
+(`KnownExits` with the sight `GetDetails` already read for the roster; the
+gmcp `Room.Info` builder calls it the same way), so
 the exits line follows the same rule. At no sight both are empty and
 `ExitsDark` is set, so no exits line reads "None": `exits` gives look's
 no-sight line and `lookRoom` leaves the line out.

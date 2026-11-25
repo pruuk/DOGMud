@@ -55,7 +55,8 @@ var (
 // room, keyed by exit name: a T direction's fixed id, any other known exit's
 // per-room id. Per-room ids are issued here, replacing the player's last set:
 // an exit that is still known in the same room keeps its id, so a resend does
-// not make a tap stale. In the dark known lists no exits, so no per-room id
+// not make a tap stale, and the same exits in the same room keep the held set
+// as it is (the round watcher calls this every round). In the dark known lists no exits, so no per-room id
 // survives (the fixed ids come from FixedIds). A nil room issues nothing and
 // leaves the ids held as they were.
 func MovementIds(userId int, room *rooms.Room, known rooms.KnownExitList) map[string]string {
@@ -84,6 +85,11 @@ func issue(userId, roomId int, names []string) map[string]string {
 	mu.Lock()
 	defer mu.Unlock()
 	prev := issuedTo[userId]
+	// The round watcher resends Room.Info's ids every round: the same room
+	// and the same exits keep the set already held, with nothing rebuilt.
+	if sameNames(prev, roomId, names) {
+		return maps.Clone(prev.byName)
+	}
 	next := &issued{roomId: roomId, byName: map[string]string{}, byId: map[string]string{}}
 	for _, name := range names {
 		id := ``
@@ -98,6 +104,20 @@ func issue(userId, roomId int, names []string) map[string]string {
 	}
 	issuedTo[userId] = next
 	return maps.Clone(next.byName)
+}
+
+// sameNames reports whether prev was issued for roomId to exactly names
+// (MovementIds passes each name once).
+func sameNames(prev *issued, roomId int, names []string) bool {
+	if prev == nil || prev.roomId != roomId || len(prev.byName) != len(names) {
+		return false
+	}
+	for _, name := range names {
+		if _, ok := prev.byName[name]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 // newId is an opaque per-room id: "x" and eight random hex digits from

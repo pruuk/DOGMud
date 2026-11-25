@@ -471,7 +471,14 @@ mutator and temporary exits. Each `exitsv2` entry has `kind` (`compass`,
 `player_has_key`, `player_has_pick_combo` on any lock). Top level: `dark`
 (the viewer sees nothing; the exit maps are then empty), `moves` (the six T
 directions to their fixed ids, always sent) and `darkmarks` (T direction to
-`wall` or `locked`).
+`wall` or `locked`). The builder reads `rooms.KnownExitsAt` with the sight
+`GetRoomNode` already holds, so one `Room.Info` asks `ParticipantSight` once.
+Building `Room.Info` issues the player's per-room ids and replaces the set
+they held (`buttons.MovementIds`); the same exits in the same room keep the
+held set. Building it also clears the player's dark marks once the room is
+not dark to them (`buttons.DarkMarks`). A temporary exit that shares a
+permanent exit's name is listed once, as the permanent exit, since that name
+reaches the permanent one (`Room.FindExitByName`).
 
 `Comm.Channel` say goes through `sayDeliveries` (`gmcp.Comm.go`), one payload per listener,
 matching the text lane (`actions.sendSpoken`): `sender` is the name at clear sight, `A figure`

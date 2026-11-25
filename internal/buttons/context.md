@@ -19,7 +19,9 @@ the player would have typed. Plan 3a widens this to every button.
   (`x` and 8 random hex digits from `util.RandomHex`) issued to that player
   for that room. A resend in the same room keeps the ids of exits still
   known; each call replaces the player's whole set, so an exit no longer
-  known loses its id. A nil room issues nothing and leaves the ids held
+  known loses its id. The same exit names in the same room keep the held
+  set as it is and return a copy of it (`Room.Info`'s round watcher calls
+  this every round). A nil room issues nothing and leaves the ids held
   as they were.
 - `Resolve(userId, roomId, id)`: a fixed id is its bare direction
   (`north`) in any room; a per-room id is `go <exit>` only in the room it

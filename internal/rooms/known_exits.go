@@ -78,12 +78,13 @@ type KnownExitList struct {
 // ParticipantSight) the list is dark and empty. A nil c sees fully and knows
 // no secret exit. Exits come in exitOrder, then A to Z.
 func KnownExits(r *Room, c *characters.Character) KnownExitList {
-	return knownExitsAt(r, c, messaging.ParticipantSight(c, r))
+	return KnownExitsAt(r, c, messaging.ParticipantSight(c, r))
 }
 
-// knownExitsAt is KnownExits for a caller that already holds c's sight in r
-// (GetDetails reads it once for the roster too).
-func knownExitsAt(r *Room, c *characters.Character, sight messaging.SightDecision) KnownExitList {
+// KnownExitsAt is KnownExits for a caller that already holds c's sight in r
+// (GetDetails and Room.Info read it once for the roster too), so one call
+// asks ParticipantSight once.
+func KnownExitsAt(r *Room, c *characters.Character, sight messaging.SightDecision) KnownExitList {
 	list := KnownExitList{Exits: []KnownExit{}}
 	if sight == messaging.SightNone {
 		list.Dark = true

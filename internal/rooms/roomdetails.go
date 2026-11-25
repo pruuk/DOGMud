@@ -367,7 +367,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	// one rule Room.Info, the maps and the touch buttons read too (KnownExits,
 	// #781): a secret exit once found, mutator and temporary exits, and
 	// nothing at all in the dark, which ExitsDark tells apart from no exits.
-	known := knownExitsAt(r, user.Character, sight)
+	known := KnownExitsAt(r, user.Character, sight)
 	details.ExitsDark = known.Dark
 	for _, ke := range known.Exits {
 		if ke.Kind == ExitTemporary {

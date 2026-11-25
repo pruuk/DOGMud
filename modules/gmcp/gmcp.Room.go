@@ -278,8 +278,10 @@ type roomExitsInfo struct {
 	DarkMarks map[string]string
 }
 
-func buildRoomExitsInfo(user *users.UserRecord, room *rooms.Room) roomExitsInfo {
-	known := rooms.KnownExits(room, user.Character)
+// sight is messaging.ParticipantSight(user.Character, room), which the
+// caller has already read, so one Room.Info asks it once.
+func buildRoomExitsInfo(user *users.UserRecord, room *rooms.Room, sight messaging.SightDecision) roomExitsInfo {
+	known := rooms.KnownExitsAt(room, user.Character, sight)
 	info := roomExitsInfo{
 		Exits:     map[string]int{},
 		ExitsV2:   map[string]GMCPRoomModule_Payload_Contents_ExitInfo{},
@@ -548,7 +550,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 		// (#781). In the dark both maps are present and empty, so a client
 		// merging payloads drops the last sighted exits (the Char.Enemies
 		// rule).
-		exitsInfo := buildRoomExitsInfo(user, room)
+		exitsInfo := buildRoomExitsInfo(user, room, sight)
 		payload.Exits = exitsInfo.Exits
 		payload.ExitsV2 = exitsInfo.ExitsV2
 		payload.Dark = exitsInfo.Dark
