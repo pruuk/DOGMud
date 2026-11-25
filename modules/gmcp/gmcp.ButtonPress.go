@@ -16,19 +16,30 @@ import (
 // events.CmdButton, so world.processInput drops it if a prompt has opened by
 // the time it runs.
 //
+// A press is a command from the player's client (events.CmdFromClient), as a
+// typed line and a Char.Action.Try are: it counts against the player's
+// pending inputs (Network.MaxPendingInputs) and runs at the client pace, one
+// per tick. At the cap it is not queued, and events.TryAddToQueue reports the
+// refusal (refusal.InputQueueFull, sent by inputQueueHandler); the press
+// carries CmdTyped, so it is reported as a refused typed line is. A refused
+// press is never retried: the player may have moved by then, and the web
+// client greys the deck while the queue is full (Char.Input.Queue).
+//
 // An id the server did not issue to this player for this room is refused as
 // stale, with one line that never repeats the id, so a crafted, foreign or
 // old id all read the same. The refusal queues events.RoomExitsChanged so
 // Room.Info goes out again and the next press is current. That event merges
 // per player while queued, and a stale press that finds one already waiting
-// adds no second line, so a flood of stale presses reads one line and builds
+// adds no second line, so a run of stale presses reads one line and builds
 // Room.Info once.
 //
 // While a prompt is open a press does nothing: a prompt takes the next typed
 // line as its answer, and a button is never an answer (D13).
-func pressButton(u *users.UserRecord, id string) {
+//
+// It reports whether the press was queued.
+func pressButton(u *users.UserRecord, id string) bool {
 	if u.GetPrompt() != nil {
-		return
+		return false
 	}
 	line, ok := buttons.Resolve(u.UserId, u.Character.RoomId, id)
 	if !ok {
@@ -37,7 +48,7 @@ func pressButton(u *users.UserRecord, id string) {
 			refusal.StaleButton(u)
 		}
 		events.AddToQueue(refresh)
-		return
+		return false
 	}
-	u.CommandFlagged(line, events.CmdTyped|events.CmdButton)
+	return u.CommandFlagged(line, events.CmdTyped|events.CmdFromClient|events.CmdButton)
 }

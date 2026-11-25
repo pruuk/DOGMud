@@ -168,11 +168,22 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 		if err := json.Unmarshal(evt.Payload, &req); err != nil {
 			break
 		}
-		if uid := userIdForConnection(evt.ConnectionId); uid > 0 {
-			if u := users.GetByUserId(uid); u != nil {
-				pressButton(u, req.Id)
-			}
+		uid := userIdForConnection(evt.ConnectionId)
+		if uid <= 0 {
+			break
 		}
+		u := users.GetByUserId(uid)
+		if u == nil {
+			break
+		}
+		// A press spends the AI port's per-round command budget as a typed
+		// line and a Char.Action.Try do, from the same counter; a refused
+		// press is dropped and the connection gets the typed path's line.
+		// Other ports are unlimited.
+		if cd := connections.Get(evt.ConnectionId); cd != nil && cd.AIRateLimited() {
+			break
+		}
+		pressButton(u, req.Id)
 
 	case `Char.Quests.Focus`:
 		var req struct {

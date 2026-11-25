@@ -635,7 +635,8 @@ func (cd *ConnectionDetails) SetStripAnsi(strip bool) {
 //
 // This is the one budget for every path that queues a command for a
 // connection: a typed line (main.go, both read loops), a GMCP
-// Char.Action.Try (modules/gmcp handleCharOp) and each command after the first
+// Char.Action.Try or Char.Button.Press (modules/gmcp handleCharOp) and each
+// command after the first
 // in a macro (world.go processInput). The typed path runs on the
 // connection goroutine and the GMCP path on MainWorker, so the count is
 // guarded by aiCommandMu.

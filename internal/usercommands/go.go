@@ -241,8 +241,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			// it must not answer a prompt or menu opened in between (#375).
 			// CmdFromClient too: the engine's re-run is not a client command,
 			// so it neither counts against the pending inputs nor waits for
-			// the client pace.
-			user.CommandFlagged(rest, (flags&^(events.CmdTyped|events.CmdFromClient))|events.CmdIsRequeue|events.CmdBlockInputUntilComplete, 1)
+			// the client pace. CmdButton too: a pressed step re-runs as a
+			// typed one does, not dropped by a prompt opened in between.
+			user.CommandFlagged(rest, (flags&^(events.CmdTyped|events.CmdFromClient|events.CmdButton))|events.CmdIsRequeue|events.CmdBlockInputUntilComplete, 1)
 			return true, nil
 		}
 

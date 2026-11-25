@@ -37,10 +37,10 @@ const (
 	CmdTyped EventFlag = 0b01000000
 
 	// A command a player's client sent: a typed line (telnet or web client),
-	// a GMCP Char.Action.Try, or a piece of a macro one of those named. Each
-	// counts against the player's pending inputs (Network.MaxPendingInputs,
-	// TryAddToQueue) and runs at most one per tick (World.HandleInputEvents).
-	// An engine-queued command never carries it.
+	// a GMCP Char.Action.Try or Char.Button.Press, or a piece of a macro one
+	// of those named. Each counts against the player's pending inputs
+	// (Network.MaxPendingInputs, TryAddToQueue) and runs at most one per tick
+	// (World.HandleInputEvents). An engine-queued command never carries it.
 	CmdFromClient EventFlag = 0b10000000
 
 	// A piece of a macro (world.processInput). It never expands a macro

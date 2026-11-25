@@ -9,8 +9,9 @@ import (
 
 // Each player's client may have at most Network.MaxPendingInputs commands
 // waiting to run (owner ruling 2026-11-25). A command the client sent is an
-// Input carrying CmdFromClient: a typed line, a GMCP Char.Action.Try, or a
-// piece of a macro one of those named. Engine-queued Inputs never count.
+// Input carrying CmdFromClient: a typed line, a GMCP Char.Action.Try or
+// Char.Button.Press, or a piece of a macro one of those named. Engine-queued
+// Inputs never count.
 //
 // The count lives here, beside the queue it counts, under qLock:
 //

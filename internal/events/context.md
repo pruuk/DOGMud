@@ -251,8 +251,9 @@ fails if anything else queues at or above it. `modules/gmcp` pushes it as
 
 A command a player's client sent is an `Input` carrying `CmdFromClient`: a
 typed line (telnet or web client, `world.inputEventFor`), a GMCP
-`Char.Action.Try` (`modules/gmcp`, through `UserRecord.CommandFlagged`), or a
-piece of a macro one of those named (`world.processInput`). Each player may
+`Char.Action.Try` or `Char.Button.Press` (`modules/gmcp`, through
+`UserRecord.CommandFlagged`), or a piece of a macro one of those named
+(`world.processInput`). Each player may
 have at most `Network.MaxPendingInputs` (ships 10) waiting; engine-queued
 Inputs never count and are never refused.
 
@@ -275,7 +276,8 @@ Inputs never count and are never refused.
   spell a refused `CmdTyped` line is reported again at most once a second
   (`typedRefusalEvery`), so a typed line never vanishes because an earlier
   automatic send took the report. Web client tick and trigger lines are text
-  frames, so they count as typed here; only `Char.Action.Try` is not.
+  frames, so they count as typed here; a touch button press carries
+  `CmdTyped` too; only `Char.Action.Try` is not.
   `modules/gmcp` turns it into `Char.Input.Queue` and, on `Refused`, one plain
   line to every client (`refusal.InputQueueFull`).
 - `PendingInputs(userId)` reads the count. `QueuedEngineInputs(userId,

@@ -656,18 +656,30 @@ Inbound `Char.Button.Press {"id": "..."}` is deferred to MainWorker through
 does nothing. `pressButton` resolves the id with `buttons.Resolve` (a fixed id
 `m1`..`m6` is its bare direction in any room; a per-room id is `go <exit>`
 only in the room it was issued for, to the player it was issued to) and queues
-the line as typed input (`CommandFlagged(line, events.CmdTyped|events.CmdButton)`,
+the line as typed input
+(`CommandFlagged(line, events.CmdTyped|events.CmdFromClient|events.CmdButton)`,
 the current turn) through the same per-user input queue as typing, so it obeys
 everything typing does: combat, conditions, quest gates, dark marks, and a
-menu or page stop treats it as typing. A stale id (never issued, another
+menu or page stop treats it as typing. It is a command from the client, as a
+Try is: it counts against the player's pending inputs and runs at the client
+pace. Refused at the cap, nothing is queued and the player gets
+`refusal.InputQueueFull` through `Char.Input.Queue`'s `Refused` path (the
+press carries `CmdTyped`, so it is reported as a refused typed line is); a
+press has no result frame and is never retried, since the player may have
+moved by then. On an AI-port connection a press spends one command from the
+same per-round budget as typed lines and Try (`AIRateLimited`, checked in
+`handleCharOp` before `pressButton`, so a stale or prompt-time press spends
+too); over the budget it is dropped with the typed path's line. Tests in
+`gmcp.ButtonPress_queue_test.go`. A stale id (never issued, another
 player's, another room's, empty or overlong) answers `refusal.StaleButton`,
 one line that never repeats the id, and queues `events.RoomExitsChanged`,
 which re-sends `Room.Info`. That event merges per player while queued, and a
 stale press that finds one waiting (`events.IsQueued`) adds no second line, so
-a flood of stale presses reads one line and builds `Room.Info` once. A press
+a run of stale presses reads one line and builds `Room.Info` once. A press
 never answers a prompt (D13): `pressButton` does nothing while one is open,
 and `world.processInput` drops a `CmdButton` line silently if a prompt opened
-after the press was queued (its `InputDone` still fires; tests in
+after the press was queued (its `InputDone` still fires, and its pending
+input slot was already freed as the queue popped it; tests in
 `world_button_press_test.go`). A game menu needs no such drop: `RouteMenuInput`
 has no free-text case, so an `AcceptText` menu takes free text only as a
 prompt question. Guard 1 (round trip) for movement ids, destination included,

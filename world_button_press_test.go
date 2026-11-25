@@ -3,9 +3,11 @@ package main
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -71,6 +73,35 @@ func TestProcessInput_AButtonPressNeverAnswersAPrompt(t *testing.T) {
 			require.Len(t, events.DrainQueuedByTypeForTest(`InputDone`), 1, "the line is still marked done")
 		})
 	}
+}
+
+// A press dropped because a prompt opened ahead of it frees its place in the
+// player's pending inputs: through the queue and the world's handler the
+// count returns to zero, the prompt is still unanswered, and nothing is said.
+func TestInputQueue_ADroppedPressFreesItsSlot(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.Network.MaxPendingInputs = 10
+	configs.SetConfigForTest(t, cfg)
+
+	restore := events.SwapListenersForTest()
+	t.Cleanup(restore)
+	u := pressUser(t, 984314)
+	p, ok := u.StartPrompt("mail", "Bob")
+	require.True(t, ok)
+	q := p.Ask("Subject?", nil)
+
+	w := testWorld()
+	events.RegisterListener(events.Input{}, w.HandleInputEvents)
+
+	events.AddToQueue(events.Input{UserId: u.UserId, InputText: "north", ReadyTurn: util.GetTurnCount(),
+		Flags: events.CmdTyped | events.CmdFromClient | events.CmdButton})
+	require.Equal(t, 1, events.PendingInputs(u.UserId), "the press counts while it waits")
+
+	w.EventLoop()
+	require.Equal(t, 0, events.PendingInputs(u.UserId), "the dropped press holds no slot")
+	require.Same(t, p, u.GetPrompt(), "the prompt is still open")
+	require.False(t, q.Done, "the press did not answer it")
+	require.Empty(t, events.DrainQueuedMessagesForTest(u.UserId), "dropped without a word")
 }
 
 // The drop's partner: the same fixture answers a prompt from a typed line, so

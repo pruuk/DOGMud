@@ -56,6 +56,7 @@ func TestPressButton_QueuesTheTypedLine(t *testing.T) {
 	for _, in := range got {
 		require.True(t, in.Flags.Has(events.CmdTyped), "a press is typed input")
 		require.True(t, in.Flags.Has(events.CmdButton), "a press is marked a button, never a prompt's answer")
+		require.True(t, in.Flags.Has(events.CmdFromClient), "a press is the client's: it counts and is paced")
 		require.Equal(t, util.GetTurnCount(), in.ReadyTurn, "a press waits its turn like typing")
 		require.NotZero(t, in.ReadyTurn, "ReadyTurn 0 would bypass the per-turn limit")
 	}

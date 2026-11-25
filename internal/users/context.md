@@ -145,7 +145,8 @@ Its commands past the limit are refused at the queue when it fires.
 or less means now (`commandReadyTurn`): gearup and wimpy's flee pass -1, which
 used to wrap to a turn about 2^64 away on a fresh boot.
 `CommandFlagged` returns whether it was queued: one carrying
-`events.CmdFromClient` (a GMCP `Char.Action.Try`) is refused while the
+`events.CmdFromClient` (a GMCP `Char.Action.Try` or `Char.Button.Press`) is
+refused while the
 player's pending client commands are at `Network.MaxPendingInputs`
 (`events.TryAddToQueue`).
 
