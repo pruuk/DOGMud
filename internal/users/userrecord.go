@@ -111,10 +111,28 @@ type UserTick struct {
 }
 
 // SetTick creates (Id==0 → next id, append) or updates (matching Id) a tick,
-// enforcing a 1-second interval floor. Returns the stored tick.
-func (u *UserRecord) SetTick(t UserTick) UserTick {
+// enforcing a 1-second interval floor. Returns the stored tick, or an error
+// (ErrAutomationFull, ErrAutomationTooLong) and stores nothing when it is
+// past a cap (automation_limits.go).
+func (u *UserRecord) SetTick(t UserTick) (UserTick, error) {
 	if t.IntervalSec < 1 {
 		t.IntervalSec = 1
+	}
+	at := -1
+	if t.Id != 0 {
+		for i := range u.Ticks {
+			if u.Ticks[i].Id == t.Id {
+				at = i
+				break
+			}
+		}
+	}
+	if err := u.tickFits(t, at < 0); err != nil {
+		return UserTick{}, err
+	}
+	if at >= 0 {
+		u.Ticks[at] = t
+		return t, nil
 	}
 	if t.Id == 0 {
 		maxId := 0
@@ -124,17 +142,9 @@ func (u *UserRecord) SetTick(t UserTick) UserTick {
 			}
 		}
 		t.Id = maxId + 1
-		u.Ticks = append(u.Ticks, t)
-		return t
-	}
-	for i := range u.Ticks {
-		if u.Ticks[i].Id == t.Id {
-			u.Ticks[i] = t
-			return t
-		}
 	}
 	u.Ticks = append(u.Ticks, t)
-	return t
+	return t, nil
 }
 
 // RemoveTick deletes the tick with the given id, if present.
@@ -173,8 +183,26 @@ type UserTrigger struct {
 }
 
 // SetTrigger creates (Id==0 → next id, append) or updates (matching Id) a trigger.
-// Returns the stored trigger.
-func (u *UserRecord) SetTrigger(t UserTrigger) UserTrigger {
+// Returns the stored trigger, or an error (ErrAutomationFull,
+// ErrAutomationTooLong) and stores nothing when it is past a cap
+// (automation_limits.go).
+func (u *UserRecord) SetTrigger(t UserTrigger) (UserTrigger, error) {
+	at := -1
+	if t.Id != 0 {
+		for i := range u.Triggers {
+			if u.Triggers[i].Id == t.Id {
+				at = i
+				break
+			}
+		}
+	}
+	if err := u.triggerFits(t, at < 0); err != nil {
+		return UserTrigger{}, err
+	}
+	if at >= 0 {
+		u.Triggers[at] = t
+		return t, nil
+	}
 	if t.Id == 0 {
 		maxId := 0
 		for _, ex := range u.Triggers {
@@ -183,17 +211,9 @@ func (u *UserRecord) SetTrigger(t UserTrigger) UserTrigger {
 			}
 		}
 		t.Id = maxId + 1
-		u.Triggers = append(u.Triggers, t)
-		return t
-	}
-	for i := range u.Triggers {
-		if u.Triggers[i].Id == t.Id {
-			u.Triggers[i] = t
-			return t
-		}
 	}
 	u.Triggers = append(u.Triggers, t)
-	return t
+	return t, nil
 }
 
 // RemoveTrigger deletes the trigger with the given id, if present.
@@ -439,7 +459,10 @@ func (u *UserRecord) InputBlocked() bool {
 	return u.inputBlocked
 }
 
-func (u *UserRecord) CommandFlagged(inputTxt string, flagData events.EventFlag, waitSeconds ...float64) {
+// CommandFlagged queues inputTxt as Command does, with flagData, and reports
+// whether it was queued: a command carrying events.CmdFromClient is refused
+// while the player's pending inputs are at the cap (events.TryAddToQueue).
+func (u *UserRecord) CommandFlagged(inputTxt string, flagData events.EventFlag, waitSeconds ...float64) bool {
 
 	readyTurn := util.GetTurnCount()
 	if len(waitSeconds) > 0 {
@@ -450,7 +473,7 @@ func (u *UserRecord) CommandFlagged(inputTxt string, flagData events.EventFlag, 
 		u.BlockInput()
 	}
 
-	events.AddToQueue(events.Input{
+	return events.TryAddToQueue(events.Input{
 		UserId:    u.UserId,
 		InputText: inputTxt,
 		ReadyTurn: readyTurn,

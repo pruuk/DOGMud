@@ -2632,6 +2632,26 @@ Network:
   #   Maximum commands per game round for AI connections.
   #   Rounds are 4 seconds (configurable via Timing.RoundSeconds).
   AICommandsPerRound: 3
+  # - MaxPendingInputs -
+  #   The most commands one player's client may have waiting to run: typed
+  #   lines (telnet or web client), GMCP Char.Action.Try, and each command a
+  #   macro expands into. Each player runs at most one such command per
+  #   Timing.TurnMs; faster input waits here. Past this many the command is
+  #   refused (GMCP clients get Char.Input.Queue, others one line).
+  #   Keep it at or above 10, the longest macro.
+  MaxPendingInputs: 10
+  # - MaxAutomationTicks / MaxAutomationTriggers -
+  #   How many ticks and triggers one player can keep (web client automation
+  #   panel, GMCP Char.Automation.Set). Past it a new one is refused.
+  MaxAutomationTicks: 50
+  MaxAutomationTriggers: 100
+  # - MaxAutomationFieldLength -
+  #   The most characters in any one text field of a tick or trigger (name,
+  #   commands, pattern, a condition value). A longer one is refused.
+  MaxAutomationFieldLength: 1000
+  # - MaxAutomationConditionValues -
+  #   The most values in one trigger condition (a target list, say).
+  MaxAutomationConditionValues: 50
   # - AfkSeconds -
   #   If this many seconds pass without player input, they are flagged as afk
   #   Set to zero to never mark anyone as AFK

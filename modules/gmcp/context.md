@@ -166,6 +166,14 @@ After processing, either handler emits `events.AutomationChanged{UserId}`
 to re-push the full `Char.Automation` payload to the client. Unknown
 `kind` values are silently ignored.
 
+`users.SetTick` / `SetTrigger` refuse past the caps in `config.yaml`
+(`Network.MaxAutomationTicks` 50, `MaxAutomationTriggers` 100,
+`MaxAutomationFieldLength` 1000 characters in any text field, condition values
+included, `MaxAutomationConditionValues` 50) with `users.ErrAutomationFull` or
+`ErrAutomationTooLong`, storing nothing. Changing a tick or trigger already
+kept is never refused for the count. `refuseAutomation` sends the player
+`refusal.AutomationLimit` or `refusal.AutomationTooLong` and re-pushes nothing.
+
 See `docs/superpowers/specs/completed/2026-06-07-web-client-automation-panel-design.md`
 for the full Phase 2–3 design.
 
@@ -510,6 +518,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Action.go` | `Action` | Clickable action affordances |
 | `gmcp.Menu.go` | `Char.Menu` | Whether a game menu or prompt is open (`{open}`); see "Char.Menu" above |
 | `gmcp.InputDone.go` | `Char.Input.Done` | A typed web client line is done: its number and whether a menu or prompt is open (`{seq, menu}`); see "Char.Input.Done" below |
+| `gmcp.InputQueue.go` | `Char.Input.Queue` | The player's pending client commands filled or freed (`{depth, full}`); see "Char.Input.Queue" below |
 | `gmcp.Commands.go` | `Commands` | Command state, modes, cooldowns |
 | `gmcp.Behavior.go` | `Behavior` | Behaviour-tree state (admin/builder tooling) |
 | `gmcp.Build.go` | `Build` | The admin web building tools' data feed. The whole builder is off (owner 2026-10-28, #375 phase 6 postponed until more big arcs land): `refuseWebBuilder` refuses every `Build.*` message in `handleBuildOp` before dispatch. The handlers stay for its return; the loop door in `buildQuestUpdate` is dormant until then |
@@ -548,6 +557,30 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   (`connections.ConnectionDetails.AIRateLimited`); a Try over the budget is
   not run, the connection gets the typed path's drop line, and the reply is
   status `rejected`, reason `rate limit`. Other ports have no budget.
+- A Try that runs queues its command with `events.CmdFromClient`
+  (`UserRecord.CommandFlagged`), so it counts against the player's pending
+  inputs and runs at the client pace. Refused at the cap, the reply is status
+  `deferred`, reason `queue full` (`actionQueueFullReason`), and the client
+  tries it again later.
+
+## Char.Input.Queue: the pending command queue filled or freed (`gmcp.InputQueue.go`)
+
+Payload: `{"depth": n, "full": true|false}`. Owner rulings 2026-11-25: each
+player's client may have `Network.MaxPendingInputs` (10) commands waiting
+(`internal/events` `pending_inputs.go`).
+
+- Sent on `events.InputQueueChanged` without `Refused`, to any GMCP client,
+  only when the queue fills (`full: true`) or frees (`full: false`), never once
+  per command.
+- On `Refused` (the first command refused in a full spell) a client other than
+  the web client gets `refusal.InputQueueFull` as one plain line; the web client
+  gets nothing more, as it has already greyed out.
+- The web client (`webclient-pure.html` `setInputQueueFull`) puts
+  `input-queue-full` on `body` while full: `dashboard.css` greys the touch deck,
+  the trigger and tick rows and the macro and alias chips, and the automation
+  list's click handler sends nothing from a row or chip (the on/off switches
+  still work). A closed socket clears it. Held by
+  `tools/jstest/webclient-input-queue.test.js`.
 
 ## Char.Input.Done: a typed line is finished (`gmcp.InputDone.go`, web client plan 6)
 
@@ -694,7 +727,11 @@ Completed tabs; `done` rows are the Completed tab and carry a name only.
   `GMCPZoneResync{ConnectionId}` (it runs on the connection goroutine), and
   `zoneResyncHandler` on MainWorker resolves the user, deletes its `zoneSent`
   entry and queues `GMCPZoneUpdate`, so the next map is full. A connection
-  with no logged-in user is ignored.
+  with no logged-in user is ignored. Repeated requests collapse (owner ruling
+  2026-11-25): `GMCPZoneUpdate` is unique per user and `GMCPZoneResync` per
+  connection, and `zoneResyncHandler` answers a player at most once per tick
+  (`resyncTurn`, cleared on despawn); a request in a tick already answered
+  waits for the next (`CancelAndRequeue`) rather than being dropped.
 - **Emit only on change where you can.** These push on room change and round
   boundaries; adding an unconditional per-round emit to a large payload is a
   bandwidth regression that will not show up in a local test.

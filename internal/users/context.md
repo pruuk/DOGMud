@@ -80,8 +80,8 @@ type UserRecord struct {
     LastRenameAt    time.Time             // Last time the rename command was used (cooldown gate)
     Macros          map[string]string     // Up to 10 user-defined command macros
     Aliases         map[string]string     // Command aliases and shortcuts
-    Ticks           []UserTick            // Client-run interval timers (web automation panel)
-    Triggers        []UserTrigger         // Client-run text-pattern automation (web automation panel)
+    Ticks           []UserTick            // Client-run interval timers (web automation panel); capped, see below
+    Triggers        []UserTrigger         // Client-run text-pattern automation (web automation panel); capped, see below
     Character       *characters.Character // Associated character data
     ItemStorage     Storage               // Personal item storage (bank)
     ConfigOptions   map[string]any        // User configuration preferences
@@ -121,7 +121,20 @@ type UserRecord struct {
 
 `UserTick` (`Id, Name, Commands, IntervalSec, Enabled`) and `UserTrigger`
 are both defined in `userrecord.go` alongside `UserRecord`; they back the
-web client's automation panel and are not otherwise covered here.
+web client's automation panel. They come from the client (GMCP
+`Char.Automation.Set`) and live in the save, so `SetTick` and `SetTrigger`
+return `(stored, error)` and refuse past the caps in `config.yaml`
+(`automation_limits.go`): `ErrAutomationFull` for a new one past
+`Network.MaxAutomationTicks` / `MaxAutomationTriggers` (changing one already
+kept is never refused for this), `ErrAutomationTooLong` for any text field
+longer than `MaxAutomationFieldLength` characters or a condition with more
+than `MaxAutomationConditionValues` values. A refusal stores nothing.
+
+`Command` and `CommandFlagged` queue a command as the player.
+`CommandFlagged` returns whether it was queued: one carrying
+`events.CmdFromClient` (a GMCP `Char.Action.Try`) is refused while the
+player's pending client commands are at `Network.MaxPendingInputs`
+(`events.TryAddToQueue`).
 
 ### Active Users Management
 ```go

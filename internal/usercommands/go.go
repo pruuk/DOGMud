@@ -211,7 +211,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			user.SendText(messaging.CategoryRoomDescription, exitInfo.ExitMessage)
 			// CmdTyped is stripped: this delayed re-run is the engine's, and
 			// it must not answer a prompt or menu opened in between (#375).
-			user.CommandFlagged(rest, (flags&^events.CmdTyped)|events.CmdIsRequeue|events.CmdBlockInputUntilComplete, 1)
+			// CmdFromClient too: the engine's re-run is not a client command,
+			// so it neither counts against the pending inputs nor waits for
+			// the client pace.
+			user.CommandFlagged(rest, (flags&^(events.CmdTyped|events.CmdFromClient))|events.CmdIsRequeue|events.CmdBlockInputUntilComplete, 1)
 			return true, nil
 		}
 

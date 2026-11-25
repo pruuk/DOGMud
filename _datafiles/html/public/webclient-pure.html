@@ -1164,6 +1164,12 @@
                 // It also ends the answer the screen reader is reading at once.
                 screenReader.done(d.seq);
             },
+            "Char.Input.Queue": function() {
+                // The server holds as many of our commands as it will
+                // (full), or has room again. Sent only when that changes.
+                var q = ((GMCPStructs["Char"] || {}).Input || {}).Queue || {};
+                setInputQueueFull(q.full === true);
+            },
             "Char.Mutation": function() {
                 var m = (GMCPStructs["Char"] || {}).Mutation;
                 if (m && m.name) { mutationRevealEnqueue(m); }
@@ -2005,6 +2011,17 @@
         var queueSettleTimer = null;    // fallback so the queue never holds forever if no round push arrives
         var menuOpen = false;           // a game menu or prompt is open (Char.Menu, #375): queue, don't send
         var automationReady = false;    // this session's Char.Automation has arrived: ticks/triggers may run
+        var inputQueueFull = false;     // the server holds as many of our commands as it will (Char.Input.Queue)
+
+        // While the server's queue of our commands is full, the controls
+        // that send commands (touch deck, trigger and tick rows, macro and
+        // alias chips) are greyed out (body.input-queue-full in
+        // dashboard.css) and clicking them sends nothing. A new connection
+        // starts empty.
+        function setInputQueueFull(full) {
+            inputQueueFull = full === true;
+            if (document.body) document.body.classList.toggle("input-queue-full", inputQueueFull);
+        }
 
         // Queue an action that would have fired immediately (a tick, or a
         // trigger with no queue mode) while a menu is open. It keeps all its
@@ -2254,6 +2271,13 @@
             // nothing useful (or send text to the login prompt), so say why
             // and stop. The rows can still show from the last session.
             if (e.target.closest(".auto-tog, .auto-row, .auto-chip") && automationNeedsLogin()) {
+                e.stopPropagation();
+                return;
+            }
+            // The server's queue of our commands is full: a row or chip
+            // sends nothing until it frees. Switching an entry on or off is
+            // not a command and still works.
+            if (inputQueueFull && e.target.closest(".auto-row, .auto-chip") && !e.target.closest(".auto-tog")) {
                 e.stopPropagation();
                 return;
             }
@@ -3374,6 +3398,7 @@
 
             socket.onclose = function(event) {
                 stopAutomation(); // nothing fires at the login prompts (#375)
+                setInputQueueFull(false); // the next connection's queue starts empty
                 // Logged out: hide the companion key button and its form.
                 if (companionGlue) { companionGlue.disconnected(); }
 

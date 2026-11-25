@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-11-25: Commands sent quickly wait their turn
+
+- Commands you send quickly now wait in line and run one after another, a moment apart. Typing fast on telnet used to lose some of them. This covers typed commands, the web client's trigger and tick actions, and every command a macro sends.
+- The game holds up to ten of your commands at a time. Past that, a command is not taken: the web client greys out its trigger, tick, macro and alias buttons until there is room again, and other clients show "You're already doing as much as you can. Wait a moment."
+- You can keep up to 50 ticks and 100 triggers, and each of their fields can be up to 1,000 characters long. A tick or trigger past that is not saved, and the game tells you why.
+
 ## 2026-11-22: Pothole Coulee teachers offer their own trades
 
 - Once you have walked the town with Crier Toke, each trade's teacher in Pothole Coulee offers you that trade's first quest directly: Drillmaster Vorn, Smith Rusk, Herbalist Birna, Scout Tarn, Adept Grieve, Elder Wenna, Marksman Iden and Lamplighter Gethin. Look for the `[!]` beside their name.

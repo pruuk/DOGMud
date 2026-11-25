@@ -1,0 +1,107 @@
+package users
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/stretchr/testify/require"
+)
+
+// automationCaps pins small caps so the tests read plainly.
+func automationCaps(t *testing.T) {
+	t.Helper()
+	cfg := configs.GetConfig()
+	cfg.Network.MaxAutomationTicks = 2
+	cfg.Network.MaxAutomationTriggers = 2
+	cfg.Network.MaxAutomationFieldLength = 10
+	cfg.Network.MaxAutomationConditionValues = 2
+	configs.SetConfigForTest(t, cfg)
+}
+
+// A player keeps at most the cap of ticks: a new one past it is refused and
+// nothing is stored, under any id, while changing one already kept still works.
+func TestSetTick_CountIsCapped(t *testing.T) {
+	automationCaps(t)
+	u := &UserRecord{}
+	a, err := u.SetTick(UserTick{Name: "a"})
+	require.NoError(t, err)
+	_, err = u.SetTick(UserTick{Name: "b"})
+	require.NoError(t, err)
+
+	_, err = u.SetTick(UserTick{Name: "c"})
+	require.ErrorIs(t, err, ErrAutomationFull)
+	_, err = u.SetTick(UserTick{Id: 999, Name: "c"})
+	require.ErrorIs(t, err, ErrAutomationFull, "an unknown id is a new tick too")
+	require.Len(t, u.Ticks, 2)
+
+	a.Name = "a2"
+	_, err = u.SetTick(a)
+	require.NoError(t, err, "changing a kept tick is not adding one")
+	require.Equal(t, "a2", u.Ticks[0].Name)
+}
+
+// A tick field longer than the cap is refused, counted in characters.
+func TestSetTick_FieldLengthIsCapped(t *testing.T) {
+	automationCaps(t)
+	u := &UserRecord{}
+	_, err := u.SetTick(UserTick{Name: "ok", Commands: strings.Repeat("x", 11)})
+	require.ErrorIs(t, err, ErrAutomationTooLong)
+	_, err = u.SetTick(UserTick{Name: strings.Repeat("x", 11)})
+	require.ErrorIs(t, err, ErrAutomationTooLong)
+	require.Empty(t, u.Ticks)
+
+	_, err = u.SetTick(UserTick{Name: strings.Repeat("é", 10)})
+	require.NoError(t, err, "ten characters fit, whatever their bytes")
+}
+
+func TestSetTrigger_CountIsCapped(t *testing.T) {
+	automationCaps(t)
+	u := &UserRecord{}
+	for _, n := range []string{"a", "b"} {
+		_, err := u.SetTrigger(UserTrigger{Name: n, Pattern: "*"})
+		require.NoError(t, err)
+	}
+	_, err := u.SetTrigger(UserTrigger{Name: "c", Pattern: "*"})
+	require.ErrorIs(t, err, ErrAutomationFull)
+	require.Len(t, u.Triggers, 2)
+}
+
+// Every text field of a trigger is capped, its condition's included, and so
+// is the number of condition values.
+func TestSetTrigger_FieldsAreCapped(t *testing.T) {
+	automationCaps(t)
+	long := strings.Repeat("x", 11)
+	for name, tr := range map[string]UserTrigger{
+		"name":      {Name: long},
+		"pattern":   {Pattern: long},
+		"then":      {ThenCmds: long},
+		"else":      {ElseCmds: long},
+		"queueMode": {QueueMode: long},
+		"kind":      {Condition: &TriggerCondition{SourceKind: long}},
+		"key":       {Condition: &TriggerCondition{SourceKey: long}},
+		"op":        {Condition: &TriggerCondition{Op: long}},
+		"value":     {Condition: &TriggerCondition{Values: []string{"a", long}}},
+		"values":    {Condition: &TriggerCondition{Values: []string{"a", "b", "c"}}},
+	} {
+		u := &UserRecord{}
+		_, err := u.SetTrigger(tr)
+		require.ErrorIs(t, err, ErrAutomationTooLong, name)
+		require.Empty(t, u.Triggers, name)
+	}
+
+	u := &UserRecord{}
+	_, err := u.SetTrigger(UserTrigger{Name: "fits", Pattern: "*x*",
+		Condition: &TriggerCondition{SourceKind: "target", Op: "oneof", Values: []string{"a", "b"}}})
+	require.NoError(t, err)
+}
+
+// The shipped caps are generous: well above what a player builds by hand.
+func TestAutomationCaps_ShippedDefaults(t *testing.T) {
+	n := configs.Network{}
+	n.Validate()
+	require.Equal(t, 50, int(n.MaxAutomationTicks))
+	require.Equal(t, 100, int(n.MaxAutomationTriggers))
+	require.Equal(t, 1000, int(n.MaxAutomationFieldLength))
+	require.Equal(t, 50, int(n.MaxAutomationConditionValues))
+}

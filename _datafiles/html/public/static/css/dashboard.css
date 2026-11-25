@@ -1905,6 +1905,18 @@ html.layout-column.keyboard-open #dash-drawer {
   color: var(--chip-copper-text);
 }
 
+/* The server holds as many of the player's commands as it will
+   (Char.Input.Queue full): the controls that send commands grey out until it
+   frees. The page also ignores their clicks (setInputQueueFull). */
+body.input-queue-full .auto-chip,
+body.input-queue-full .auto-row,
+body.input-queue-full #touch-deck {
+  opacity: 0.45;
+  filter: grayscale(1);
+  cursor: not-allowed;
+}
+body.input-queue-full #touch-deck { pointer-events: none; }
+
 /* ── Action queue UI — queued/pending trigger rows, badges, status bar ──── */
 
 /* Pending row: red glow border, slightly warmer background */

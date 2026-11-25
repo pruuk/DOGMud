@@ -7,6 +7,15 @@ type Network struct {
 	MaxHumanConnections  ConfigInt         `yaml:"MaxHumanConnections"`  // Pool limit for human connections
 	MaxAIConnections     ConfigInt         `yaml:"MaxAIConnections"`     // Pool limit for AI connections
 	AICommandsPerRound   ConfigInt         `yaml:"AICommandsPerRound"`   // Max commands per game round for AI connections
+	// The most commands one player's client may have waiting to run (typed
+	// lines, web client lines, GMCP Char.Action.Try, each piece of a macro).
+	// Past it a command is refused. See events.TryAddToQueue.
+	MaxPendingInputs ConfigInt `yaml:"MaxPendingInputs"`
+	// Caps on what GMCP Char.Automation.Set may store in a user save.
+	MaxAutomationTicks           ConfigInt `yaml:"MaxAutomationTicks"`           // ticks per player
+	MaxAutomationTriggers        ConfigInt `yaml:"MaxAutomationTriggers"`        // triggers per player
+	MaxAutomationFieldLength     ConfigInt `yaml:"MaxAutomationFieldLength"`     // characters in any one text field
+	MaxAutomationConditionValues ConfigInt `yaml:"MaxAutomationConditionValues"` // values in one trigger condition
 	LocalPort            ConfigInt         `yaml:"LocalPort"`            // Port used for admin connections, localhost only
 	HttpPort             ConfigInt         `yaml:"HttpPort"`             // Port used for web requests
 	HttpsPort            ConfigInt         `yaml:"HttpsPort"`            // Port used for web https requests
@@ -65,6 +74,27 @@ func (n *Network) Validate() {
 
 	if n.AICommandsPerRound < 1 {
 		n.AICommandsPerRound = 3 // default
+	}
+
+	// A cap below 1 would refuse every command, so it falls back instead.
+	if n.MaxPendingInputs < 1 {
+		n.MaxPendingInputs = 10 // default
+	}
+
+	if n.MaxAutomationTicks < 1 {
+		n.MaxAutomationTicks = 50 // default
+	}
+
+	if n.MaxAutomationTriggers < 1 {
+		n.MaxAutomationTriggers = 100 // default
+	}
+
+	if n.MaxAutomationFieldLength < 1 {
+		n.MaxAutomationFieldLength = 1000 // default
+	}
+
+	if n.MaxAutomationConditionValues < 1 {
+		n.MaxAutomationConditionValues = 50 // default
 	}
 
 	if n.HttpPort < 0 {

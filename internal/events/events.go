@@ -136,9 +136,28 @@ func (pq *priorityQueue) Pop() any {
 // The caller can optionally pass a priority value.
 // If omitted, the default priority is 0.
 func AddToQueue(e Event, priority ...int) {
+	TryAddToQueue(e, priority...)
+}
+
+// TryAddToQueue is AddToQueue reporting whether e was queued. It is not
+// queued when it is a unique event already waiting, or a command a player's
+// client sent (CmdFromClient) while that player already has
+// Network.MaxPendingInputs waiting (see pending_inputs.go).
+func TryAddToQueue(e Event, priority ...int) bool {
+
+	pendingUser := clientInputUser(e)
+	limit := 0
+	if pendingUser > 0 {
+		limit = maxPendingInputs()
+	}
 
 	qLock.Lock()
 	defer qLock.Unlock()
+
+	if pendingUser > 0 && pendingInputs[pendingUser] >= limit {
+		refuseInputLocked(pendingUser, limit)
+		return false
+	}
 
 	prio := 0
 	if len(priority) > 0 {
@@ -161,7 +180,7 @@ func AddToQueue(e Event, priority ...int) {
 		uid := ue.UniqueID()
 		// If we already have an entry for this uniqueID, skip it!
 		if _, exists := uniqueMap[uid]; exists {
-			return
+			return false
 		}
 
 		uniqueMap[ue.UniqueID()] = struct{}{}
@@ -180,6 +199,12 @@ func AddToQueue(e Event, priority ...int) {
 	}
 
 	heap.Push(&globalQueue, pe)
+
+	if pendingUser > 0 {
+		pendingInputs[pendingUser]++
+		syncInputQueueLocked(pendingUser, limit)
+	}
+	return true
 }
 
 // OpenReply starts marking every Message queued for userId as the reply to
@@ -272,6 +297,8 @@ func addToRequeue(e Event, prio int, fromTick bool) {
 		priority: prio,
 		fromTick: fromTick,
 	})
+	// A deferred client command is still waiting: it counts again.
+	addPendingLocked(e)
 }
 
 // ProcessEvents runs the event loop until the queue is empty.
@@ -293,6 +320,9 @@ func ProcessEvents() {
 			}
 		}()
 	}
+
+	// Read before qLock, as TryAddToQueue does.
+	inputLimit := maxPendingInputs()
 
 	qLock.Lock()
 
@@ -322,6 +352,10 @@ func ProcessEvents() {
 			delete(uniqueMap, ue.UniqueID())
 		}
 
+		// A client command leaves the player's pending count as it pops,
+		// before it runs (pending_inputs.go).
+		takePendingLocked(pe.event)
+
 		// #842: a typed line's reply ends as its InputDone pops. Closed here,
 		// still under qLock, so nothing queued once it has popped (by its own
 		// listeners included) is marked as the reply.
@@ -347,6 +381,10 @@ func ProcessEvents() {
 
 	// The pass that ran the login bursts is over (EnteringWorld).
 	clear(enteringWorld)
+
+	// Only deferred events remain: rebuild each player's pending count from
+	// them and tell the clients whose queue filled or freed.
+	settleInputQueuesLocked(inputLimit)
 
 	qLock.Unlock()
 }
@@ -562,6 +600,7 @@ func DrainQueuedInputsForTest(instanceId int) []string {
 	}
 	globalQueue = remaining
 	heap.Init(&globalQueue)
+	recountPendingInputsLocked()
 	return found
 }
 
@@ -586,6 +625,7 @@ func DrainQueuedUserInputsForTest(userId int) []string {
 	}
 	globalQueue = remaining
 	heap.Init(&globalQueue)
+	recountPendingInputsLocked()
 	return found
 }
 
@@ -1012,6 +1052,10 @@ func DrainAllQueuedEventsForTest() int {
 	}
 	globalQueue = priorityQueue{}
 	heap.Init(&globalQueue)
+	// Pending client commands (pending_inputs.go) follow the queue, and no
+	// client is left marked full.
+	recountPendingInputsLocked()
+	clear(inputQueueFull)
 	return n
 }
 
@@ -1038,6 +1082,7 @@ func DrainQueuedByTypeForTest(typeName string) []Event {
 	}
 	globalQueue = remaining
 	heap.Init(&globalQueue)
+	recountPendingInputsLocked()
 	return found
 }
 

@@ -247,6 +247,36 @@ text or opens a menu (highest today 50) and below the prompt redraw at 100.
 fails if anything else queues at or above it. `modules/gmcp` pushes it as
 `Char.Input.Done`. It never carries the line's text (spec 2026-11-14, R7).
 
+### Pending client commands (`pending_inputs.go`, owner rulings 2026-11-25)
+
+A command a player's client sent is an `Input` carrying `CmdFromClient`: a
+typed line (telnet or web client, `world.inputEventFor`), a GMCP
+`Char.Action.Try` (`modules/gmcp`, through `UserRecord.CommandFlagged`), or a
+piece of a macro one of those named (`world.processInput`). Each player may
+have at most `Network.MaxPendingInputs` (ships 10) waiting; engine-queued
+Inputs never count and are never refused.
+
+- `TryAddToQueue(e, prio...) bool` is `AddToQueue` reporting whether `e` was
+  queued: false for a unique event already waiting, or a counted `Input` past
+  the cap. `AddToQueue` calls it and ignores the answer.
+- The count (`pendingInputs`, under `qLock`) goes up as a counted Input is
+  queued, down as `ProcessEvents` pops it (before its listeners run, so a
+  macro's line frees its slot for its pieces), and up again on
+  `CancelAndRequeue` (`addToRequeue`). At the end of every pass it is rebuilt
+  from the deferred events (`settleInputQueuesLocked`), so a count that ever
+  went wrong is right within one pass and no player can be shut out. A player
+  who disconnects needs nothing: their commands still pop. The `Drain...ForTest`
+  helpers that can remove an Input recount too.
+- `InputQueueChanged{UserId, Depth, Full, Refused}` is queued only on a
+  change: `Full` when the count reaches the cap, not `Full` when the pass-end
+  rebuild finds it below again, and once per full spell with `Refused` on the
+  first command refused. `modules/gmcp` turns it into `Char.Input.Queue` or one
+  plain line (`refusal.InputQueueFull`).
+- `PendingInputs(userId)` reads the count.
+- The world runs at most one counted Input per player per tick (`TurnMs`;
+  `World.clientInputWaits` returns `CancelAndRequeue`), so a full queue drains
+  in ten ticks.
+
 ### Reply window (#842)
 
 `OpenReply(userId)` and `CloseReply(userId)` keep a per-user count under
@@ -365,6 +395,7 @@ const (
     CmdBlockInputUntilComplete EventFlag = CmdBlockInput | CmdUnBlockInput
     CmdFollowStep              EventFlag = 0b00100000  // Party member's step after the leader: no light-notice check first (#620)
     CmdTyped                   EventFlag = 0b01000000  // A line the player typed; only a typed line may answer a menu or prompt (#375)
+    CmdFromClient              EventFlag = 0b10000000  // A command the player's client sent: counts against MaxPendingInputs, one per tick (pending_inputs.go)
 )
 ```
 
