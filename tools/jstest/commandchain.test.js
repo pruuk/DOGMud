@@ -52,7 +52,7 @@ function field(value) {
 }
 
 var f = field('n;e');
-var c = attachChainCount(f);
+var c = attachChainCount(f, '');
 check('the count shows under the field', f.note.textContent === '2 of 3 commands', f.note.textContent);
 f.type('n;e;s;w');
 check('over the limit the note says so in words', f.note.textContent.indexOf('Too many commands') === 0 && f.note.classList.has('over'), f.note.textContent);
@@ -61,14 +61,24 @@ f.type('n;e;s');
 check('back within, it fits and the warning goes', c.fits() === true && !f.note.classList.has('over'), f.note.textContent);
 
 var old = field('n;e;s;w;n');
-var oc = attachChainCount(old);
+var oc = attachChainCount(old, 'n;e;s;w;n');
 check('a chain saved before the limit, left as it was, still saves', oc.fits() === true, '');
 check('...though it shows the warning', old.note.classList.has('over'), old.note.textContent);
 old.type('n;e;s;w;n;e');
 check('...and once edited it must fit', oc.fits() === false, '');
 
+// The trigger editor moves its then commands between the simple field and
+// the if/else Then field. The field it lands in started empty, but compares
+// with the trigger's saved chain, so an unchanged old chain still saves.
+var moved = field('');
+var mc = attachChainCount(moved, 'n;e;s;w;n');
+moved.type('n;e;s;w;n');
+check('an unchanged old chain moved to the other layout still saves', mc.fits() === true, '');
+moved.type(' n;e;s;w;n ');
+check('...compared trimmed, as the editor sends it', mc.fits() === true, '');
+
 var hid = field('n'); hid.style.display = 'none';
-attachChainCount(hid);
+attachChainCount(hid, '');
 check('a hidden field hides its count', hid.note.hidden === true, '');
 
 // ── The editors use it, and Save stays open on false ────────────────────
@@ -77,6 +87,13 @@ check('Save keeps the editor open when onSave returns false',
 ['if (!macroChain.fits()) return false;', 'if (!tickChain.fits()) return false;',
  '!simpleChain.fits() : (!thenChain.fits() || !elseChain.fits())) return false;'].forEach(function (s) {
     check('an editor refuses to save past the limit: ' + s, html.indexOf(s) >= 0, s);
+});
+// Each trigger field compares with the chain it holds: both then fields with
+// the saved then commands, the else field with the saved else commands. So
+// renaming an old long trigger, in either layout, still saves.
+['attachChainCount(simpleThenArea, prefillThenCmds)', 'attachChainCount(thenArea, prefillThenCmds)',
+ 'attachChainCount(elseArea, prefillElseCmds)', 'attachChainCount(cmdsInput, prefillCmds)'].forEach(function (s) {
+    check('the editor passes the saved chain: ' + s, html.indexOf(s) >= 0, s);
 });
 check('the page loads commandchain.js', html.indexOf('/static/js/commandchain.js') >= 0, '');
 

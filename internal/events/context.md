@@ -271,7 +271,11 @@ Inputs never count and are never refused.
   change: `Full` when the count reaches the cap, not `Full` when the pass-end
   rebuild finds it two below the cap (`freeAt`, a dead band so steady input
   at the cap does not flicker the client; refusal stays at the cap), and
-  once per full spell with `Refused` on the first command refused.
+  once per full spell with `Refused` on the first command refused; within the
+  spell a refused `CmdTyped` line is reported again at most once a second
+  (`typedRefusalEvery`), so a typed line never vanishes because an earlier
+  automatic send took the report. Web client tick and trigger lines are text
+  frames, so they count as typed here; only `Char.Action.Try` is not.
   `modules/gmcp` turns it into `Char.Input.Queue` and, on `Refused`, one plain
   line to every client (`refusal.InputQueueFull`).
 - `PendingInputs(userId)` reads the count. `QueuedEngineInputs(userId,
@@ -406,6 +410,7 @@ const (
     CmdFollowStep              EventFlag = 0b00100000  // Party member's step after the leader: no light-notice check first (#620)
     CmdTyped                   EventFlag = 0b01000000  // A line the player typed; only a typed line may answer a menu or prompt (#375)
     CmdFromClient              EventFlag = 0b10000000  // A command the player's client sent: counts against MaxPendingInputs, one per tick (pending_inputs.go)
+    CmdMacroPiece              EventFlag = 0b1_00000000 // A piece of a macro: never expands a macro itself, so no macro can call itself
 )
 ```
 

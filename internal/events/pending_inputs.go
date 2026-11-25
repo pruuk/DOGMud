@@ -2,6 +2,7 @@ package events
 
 import (
 	"strings"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 )
@@ -55,6 +56,11 @@ var (
 	// full and not yet told it freed. The value is whether a refusal was
 	// reported in this full spell. Guarded by qLock.
 	inputQueueFull = map[int]bool{}
+
+	// typedRefusalAt is when a refused typed line was last reported to each
+	// player in the current full spell (refuseInputLocked). Cleared with the
+	// spell. Guarded by qLock.
+	typedRefusalAt = map[int]time.Time{}
 )
 
 // clientInputUser returns the player a counted Input belongs to, or 0 for
@@ -99,18 +105,37 @@ func syncInputQueueLocked(userId int, limit int) {
 		reAddToQueue(InputQueueChanged{UserId: userId, Depth: depth, Full: true}, 0, false)
 	case depth <= freeAt(limit) && full:
 		delete(inputQueueFull, userId)
+		delete(typedRefusalAt, userId)
 		reAddToQueue(InputQueueChanged{UserId: userId, Depth: depth}, 0, false)
 	}
 }
 
+// typedRefusalEvery is how often a refused TYPED line is reported again
+// within one full spell. The first refusal of a spell is always reported;
+// automatic sends (ticks, triggers, buttons) stay at that one, but a line
+// the player typed must not vanish silently because a tick took the spell's
+// one report a while ago.
+const typedRefusalEvery = time.Second
+
+// refusalClock is time.Now, swapped by tests.
+var refusalClock = time.Now
+
 // refuseInputLocked notes a command refused at the cap: the first refusal of
-// a full spell is reported, later ones are not. qLock must be held.
-func refuseInputLocked(userId int, limit int) {
+// a full spell is reported, and after that a typed line at most once per
+// typedRefusalEvery. qLock must be held.
+func refuseInputLocked(userId int, limit int, typed bool) {
 	syncInputQueueLocked(userId, limit)
+	now := refusalClock()
 	if inputQueueFull[userId] {
-		return
+		last, ok := typedRefusalAt[userId]
+		if !typed || (ok && now.Sub(last) < typedRefusalEvery) {
+			return
+		}
 	}
 	inputQueueFull[userId] = true
+	if typed {
+		typedRefusalAt[userId] = now
+	}
 	reAddToQueue(InputQueueChanged{UserId: userId, Depth: pendingInputs[userId], Full: true, Refused: true}, 0, false)
 }
 

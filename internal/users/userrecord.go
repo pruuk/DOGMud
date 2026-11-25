@@ -442,17 +442,24 @@ func (u *UserRecord) PlaySound(soundId string, category string) {
 
 func (u *UserRecord) Command(inputTxt string, waitSeconds ...float64) {
 
-	readyTurn := util.GetTurnCount()
-	if len(waitSeconds) > 0 {
-		readyTurn += uint64(float64(configs.GetTimingConfig().SecondsToTurns(1)) * waitSeconds[0])
-	}
-
 	events.AddToQueue(events.Input{
 		UserId:    u.UserId,
 		InputText: inputTxt,
-		ReadyTurn: readyTurn,
+		ReadyTurn: commandReadyTurn(waitSeconds),
 	})
 
+}
+
+// commandReadyTurn is the turn a command waiting waitSeconds (none: now) is
+// ready. A wait of zero or less means now: gearup and wimpy's flee pass -1
+// for "at once", and a negative wait converted to uint64 wrapped, so on a
+// fresh boot (turn count below one second's turns) the command never ran.
+func commandReadyTurn(waitSeconds []float64) uint64 {
+	readyTurn := util.GetTurnCount()
+	if len(waitSeconds) > 0 && waitSeconds[0] > 0 {
+		readyTurn += uint64(float64(configs.GetTimingConfig().SecondsToTurns(1)) * waitSeconds[0])
+	}
+	return readyTurn
 }
 
 func (u *UserRecord) BlockInput() {
@@ -472,10 +479,7 @@ func (u *UserRecord) InputBlocked() bool {
 // while the player's pending inputs are at the cap (events.TryAddToQueue).
 func (u *UserRecord) CommandFlagged(inputTxt string, flagData events.EventFlag, waitSeconds ...float64) bool {
 
-	readyTurn := util.GetTurnCount()
-	if len(waitSeconds) > 0 {
-		readyTurn += uint64(float64(configs.GetTimingConfig().SecondsToTurns(1)) * waitSeconds[0])
-	}
+	readyTurn := commandReadyTurn(waitSeconds)
 
 	if flagData&events.CmdBlockInput == events.CmdBlockInput {
 		u.BlockInput()

@@ -683,7 +683,10 @@ func cmdSetMacro(user *users.UserRecord, setTarget string, args []string) (bool,
 
 		for _, cmd := range allComands {
 
-			if strings.TrimSpace(cmd) != `` {
+			// Trimmed first, as the game trims a line before looking up a
+			// macro: " =1" names a macro just as "=1" does. Stored trimmed.
+			cmd = strings.TrimSpace(cmd)
+			if cmd != `` {
 				if cmd[0] == '=' {
 					user.SendText(messaging.CategoryRefusal, `You cannot reference macros inside of a macro`)
 					return true, nil

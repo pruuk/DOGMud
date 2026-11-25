@@ -159,7 +159,8 @@ func TryAddToQueue(e Event, priority ...int) bool {
 	defer qLock.Unlock()
 
 	if pendingUser > 0 && pendingInputs[pendingUser] >= limit {
-		refuseInputLocked(pendingUser, limit)
+		in, _ := e.(Input)
+		refuseInputLocked(pendingUser, limit, in.Flags.Has(CmdTyped))
 		return false
 	}
 
@@ -1073,6 +1074,7 @@ func DrainAllQueuedEventsForTest() int {
 	// client is left marked full.
 	recountPendingInputsLocked()
 	clear(inputQueueFull)
+	clear(typedRefusalAt)
 	return n
 }
 

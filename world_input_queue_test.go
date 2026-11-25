@@ -11,7 +11,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
@@ -213,6 +215,38 @@ func TestProcessInput_MacroPiecesCountAgainstTheCap(t *testing.T) {
 	for _, e := range queued {
 		require.True(t, e.(events.Input).Flags.Has(events.CmdFromClient))
 	}
+}
+
+// A macro saved before set refused macro names inside one (" =1" passed the
+// old check) calls itself. Its pieces carry CmdMacroPiece and never expand a
+// macro, so it runs once and the player's queue drains instead of staying
+// full for good.
+func TestProcessInput_AMacroPieceNeverExpandsAMacro(t *testing.T) {
+	inputQueueFixture(t, 98518, 10)
+	u := users.GetByUserId(98518)
+	u.Macros = map[string]string{`=1`: `=1; =1`}
+	// The pieces run as commands, which need a room and the keywords.
+	mudlog.SetupLogger(nil, `LOW`, ``, false)
+	t.Cleanup(keywords.SeedKeywordsForTest())
+	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{98518: {RoomId: 98518}}, map[string]*rooms.ZoneConfig{}))
+	u.Character.RoomId = 98518
+
+	(&World{}).processInput(98518, `=1`, events.CmdTyped|events.CmdFromClient, 0)
+	pieces := events.DrainQueuedByTypeForTest(`Input`)
+	require.Len(t, pieces, 2, "the line expands once")
+	for _, p := range pieces {
+		require.True(t, p.(events.Input).Flags.Has(events.CmdMacroPiece))
+	}
+
+	// Each piece runs as a plain command, not as the macro again.
+	for _, p := range pieces {
+		in := p.(events.Input)
+		(&World{}).processInput(98518, in.InputText, in.Flags, 0)
+	}
+	for _, e := range events.DrainQueuedByTypeForTest(`Input`) {
+		require.False(t, e.(events.Input).Flags.Has(events.CmdMacroPiece), "a piece expanded the macro again: %v", e)
+	}
+	require.Equal(t, 0, events.PendingInputs(98518), "nothing of the client's is left waiting")
 }
 
 // A macro the engine ran (no CmdFromClient) is not the client's: its pieces

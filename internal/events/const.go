@@ -42,4 +42,8 @@ const (
 	// TryAddToQueue) and runs at most one per tick (World.HandleInputEvents).
 	// An engine-queued command never carries it.
 	CmdFromClient EventFlag = 0b10000000
+
+	// A piece of a macro (world.processInput). It never expands a macro
+	// itself, so a macro cannot call itself or another.
+	CmdMacroPiece EventFlag = 0b1_00000000
 )

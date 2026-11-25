@@ -2,6 +2,7 @@ package events
 
 import (
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/stretchr/testify/require"
@@ -267,6 +268,60 @@ func TestPendingInputs_FreeOnlyTwoBelowTheCap(t *testing.T) {
 	release = 1
 	ProcessEvents()
 	require.Equal(t, []InputQueueChanged{{UserId: 7, Depth: 2}}, noticesFor(t, 7), "two below frees")
+}
+
+// Within one full spell, automatic sends are reported once; a typed line is
+// reported again, at most once a second, so it never vanishes silently
+// because a tick took the spell's one report.
+func TestPendingInputs_TypedRefusalReportedAgainEachSecond(t *testing.T) {
+	pendingFixture(t, 1)
+	clock := time.Unix(1000, 0)
+	refusalClock = func() time.Time { return clock }
+	t.Cleanup(func() { refusalClock = time.Now })
+	refused := func() int {
+		n := 0
+		for _, c := range noticesFor(t, 7) {
+			if c.Refused {
+				n++
+			}
+		}
+		return n
+	}
+	auto := Input{UserId: 7, InputText: "tick", Flags: CmdFromClient}
+
+	TryAddToQueue(auto) // fills
+	noticesFor(t, 7)
+	require.False(t, TryAddToQueue(auto))
+	require.Equal(t, 1, refused(), "the spell's first refusal")
+	TryAddToQueue(auto)
+	require.Equal(t, 0, refused(), "automatic sends stay at one")
+
+	TryAddToQueue(clientLine(7, "look"))
+	require.Equal(t, 1, refused(), "a typed line is reported though the spell's report went")
+	TryAddToQueue(clientLine(7, "look"))
+	require.Equal(t, 0, refused(), "not twice in a second")
+
+	clock = clock.Add(time.Second)
+	TryAddToQueue(auto)
+	require.Equal(t, 0, refused())
+	TryAddToQueue(clientLine(7, "look"))
+	require.Equal(t, 1, refused(), "again a second later")
+}
+
+// QueuedEngineInputs counts a deferred engine command too (a wear waiting
+// for its turn sits with the deferred events between passes), and never a
+// client command.
+func TestQueuedEngineInputs_CountsDeferredCommands(t *testing.T) {
+	pendingFixture(t, 10)
+	RegisterListener(Input{}, func(e Event) ListenerReturn { return CancelAndRequeue })
+
+	AddToQueue(Input{UserId: 7, InputText: "wear !5"})
+	AddToQueue(Input{UserId: 7, InputText: "wear !6", Flags: CmdFromClient})
+	require.Equal(t, 1, QueuedEngineInputs(7, "wear !"))
+	ProcessEvents() // both deferred
+	require.Equal(t, 1, QueuedEngineInputs(7, "wear !"), "the deferred wear still counts")
+	require.Equal(t, 0, QueuedEngineInputs(7, "look"))
+	require.Equal(t, 0, QueuedEngineInputs(8, "wear !"))
 }
 
 // The shipped default is 10 (owner ruling 2026-11-25), and a cap below 1,

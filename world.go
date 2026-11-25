@@ -1123,8 +1123,11 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 		// Must be actual text, blank space doesn't count.
 		user.SetLastInputRound(util.GetRoundCount())
 
-		// Check for macros
-		if user.Macros != nil && len(inputText) == 2 {
+		// Check for macros. A piece of a macro never expands another
+		// (CmdMacroPiece): set refuses one that names a macro, and this
+		// also stops one saved before that check, which would otherwise
+		// call itself and keep the player's queue full for good.
+		if user.Macros != nil && len(inputText) == 2 && !flags.Has(events.CmdMacroPiece) {
 			if macro, ok := user.Macros[inputText]; ok {
 				handled = true
 				readyTurn := util.GetTurnCount()
@@ -1150,7 +1153,7 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 						UserId:    userId,
 						InputText: newCmd,
 						ReadyTurn: readyTurn,
-						Flags:     flags & (events.CmdTyped | events.CmdFromClient),
+						Flags:     flags&(events.CmdTyped|events.CmdFromClient) | events.CmdMacroPiece,
 					})
 
 					readyTurn++

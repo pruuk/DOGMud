@@ -183,7 +183,11 @@ pushed on login, so the client has it before an editor can open; the macro,
 tick and trigger editors (`attachChainCount` in `webclient-pure.html`, rules in
 `static/js/commandchain.js`) show a live "3 of 10 commands" count under each
 commands field, the warning in words past it, and keep the editor open on
-Save (an `onSave` returning false). Without `maxCommands` they use 10, the
+Save (an `onSave` returning false). Each field compares with the chain it
+holds as saved (the trigger's then commands for both the simple and the
+if/else Then field, its else commands for Else), so an unchanged old long
+chain still saves in either layout, as on the server. The macro editor has
+no saved chain: `set =N` checks every macro it stores. Without `maxCommands` they use 10, the
 shipped value; the server enforces the limit either way.
 
 See `docs/superpowers/specs/completed/2026-06-07-web-client-automation-panel-design.md`
@@ -587,7 +591,8 @@ player's client may have `Network.MaxPendingInputs` (10) commands waiting
 - On `Refused` (the first command refused in a full spell) every client, the
   web client too, gets `refusal.InputQueueFull` as one plain line: a refusal
   always prints, and a line typed into the web client's command box would
-  otherwise vanish with only the controls greyed.
+  otherwise vanish with only the controls greyed. A refused typed line is
+  reported again at most once a second within the spell (`internal/events`).
 - `full: false` comes when the queue drops two below the cap
   (`events.freeAt`), not one, so steady input at the cap does not flicker the
   greying.

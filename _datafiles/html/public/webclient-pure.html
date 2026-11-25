@@ -4786,11 +4786,14 @@
             // Put a live "3 of 10 commands" count under a commands field,
             // and the warning in words when the chain is over the limit.
             // Returns { fits(), refresh() }: the editor's Save refuses while
-            // a shown field does not fit (onSave returns false). A chain saved
-            // before the limit, left as it was, still saves (the server keeps
-            // it too, users.chainFits); the warning still shows.
-            function attachChainCount(field) {
-                var saved = field.value;
+            // a shown field does not fit (onSave returns false). saved is the
+            // chain this field's commands were saved as (the macro's, the
+            // tick's, the trigger's then or else commands; "" for a new one).
+            // A chain saved before the limit, sent back unchanged, still saves
+            // (the server keeps it too, users.chainFits), whichever field of
+            // the trigger's two layouts now holds it; the warning still shows.
+            function attachChainCount(field, saved) {
+                saved = String(saved == null ? "" : saved).trim();
                 var note = document.createElement("div");
                 note.className = "auto-chain-count";
                 note.setAttribute("aria-live", "polite");
@@ -4809,10 +4812,9 @@
                 refresh();
                 return {
                     fits: function () {
-                        return !window.CommandChain || field.value === saved || CommandChain.fits(field.value, chainLimit());
+                        // Compared trimmed: the editors send trimmed commands.
+                        return !window.CommandChain || field.value.trim() === saved || CommandChain.fits(field.value, chainLimit());
                     },
-                    // The editor filled the field after attaching: that is the saved chain.
-                    keep: function () { saved = field.value; },
                     refresh: refresh
                 };
             }
@@ -4853,7 +4855,8 @@
 
                 body.appendChild(makeField("Macro Number (1–9)", numInput));
                 body.appendChild(makeField("Commands (semicolon-separated)", cmdInput));
-                var macroChain = attachChainCount(cmdInput);
+                // No saved chain: set =N checks every macro it stores, old or not.
+                var macroChain = attachChainCount(cmdInput, "");
 
                 openAutoModal("Macro Editor", body, function() {
                     if (!macroChain.fits()) return false;
@@ -4940,7 +4943,7 @@
 
                 body.appendChild(makeField("Name", nameInput));
                 body.appendChild(makeField("Commands (semicolon-separated)", cmdsInput));
-                var tickChain = attachChainCount(cmdsInput);
+                var tickChain = attachChainCount(cmdsInput, prefillCmds);
                 body.appendChild(makeField("Every N seconds", secsInput));
                 body.appendChild(enableWrap);
 
@@ -5021,7 +5024,10 @@
                 simpleThenArea.placeholder = "Commands to run (semicolon-separated, $1 $2… for captures)";
                 simpleThenArea.rows = 3;
                 doSection.appendChild(simpleThenArea);
-                var simpleChain = attachChainCount(simpleThenArea);
+                // The simple field and the if/else Then field both hold the
+                // trigger's then commands, so both compare with its saved
+                // then chain, whichever layout it is moved into.
+                var simpleChain = attachChainCount(simpleThenArea, prefillThenCmds);
 
                 // If/else clause container (hidden by default until "+ Add ▾" clicked)
                 var clauseWrap = document.createElement("div");
@@ -5115,8 +5121,8 @@
 
                 clauseWrap.appendChild(makeField("Then", thenArea));
                 clauseWrap.appendChild(makeField("Else (optional)", elseArea));
-                var thenChain = attachChainCount(thenArea);
-                var elseChain = attachChainCount(elseArea);
+                var thenChain = attachChainCount(thenArea, prefillThenCmds);
+                var elseChain = attachChainCount(elseArea, prefillElseCmds);
                 // The simple field hides while the if/else clause shows, and
                 // moves its commands across: recount all three.
                 function refreshChains() { simpleChain.refresh(); thenChain.refresh(); elseChain.refresh(); }
@@ -5229,9 +5235,7 @@
                     simpleThenArea.value = prefillThenCmds || "";
                     rebuildOps("pool"); // default ops loaded for if clause opens later
                 }
-                // The prefilled commands are the saved chains; count them in
-                // whichever mode shows.
-                simpleChain.keep(); thenChain.keep(); elseChain.keep();
+                // Count the prefilled commands in whichever layout shows.
                 refreshChains();
 
                 var title = editingId ? "Edit Trigger" : "New Trigger";
