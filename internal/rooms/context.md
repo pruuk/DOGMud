@@ -989,6 +989,13 @@ sender that sends one message per room excludes by it
 it once per room; `secret` false means nothing is split and no per-listener
 work was done.
 
+The room render's tracking line ("Tracking X... They went <exit>",
+`GetDetails` `TrackingString`) reads the trail through `findMobExit` and
+`findUserExit`, which take the viewer as the tracker and look only among the
+exits it knows (`PermanentExitsKnownTo`, #781 owner ruling 17): a secret exit
+it found carries the trail, one it has not loses it. `findUserExit` reads the
+player visitors (it read the mob visitors until the Task 5c fix round).
+
 `ExitsTo(roomId)` is every exit leading to a room, ranked: plain room or
 mutator exit, then temporary, then secret, A to Z by key within each, as
 `ExitTo{Key, Name, Secret, Temporary}` (`Name` is a temporary exit's title).

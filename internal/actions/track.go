@@ -215,7 +215,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		}
 
 		awardTrack(true)
-		result.Visitors = readRoomTrail(room, detail, actor.GetUserId(), actor.GetMobInstanceId())
+		result.Visitors = readRoomTrail(room, char, detail, actor.GetUserId(), actor.GetMobInstanceId())
 		if actor.IsPlayer() {
 			renderTrailToPlayer(actor, result.Visitors)
 		}
@@ -276,7 +276,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 	// if found, CONTEST against that target, and only then apply condition 86 +
 	// store misc data + populate DirectionExit.
 	if applied, miscKey, miscVal, dirExit, targetUserId, targetMobId, targetName :=
-		lookupAdjacentTrail(room, targetNoun, actor.GetUserId()); applied {
+		lookupAdjacentTrail(room, char, targetNoun, actor.GetUserId()); applied {
 
 		// 🔴 THE OPPOSED CONTEST. A named quarry defends with its own ability to
 		// leave no trail, so a careful mover is genuinely harder to follow than
@@ -400,7 +400,7 @@ func ResolveCharacter(targetUserId, targetMobId int) *characters.Character {
 // an adjacent-room scan.
 //
 // Takes the RESOLVED bands rather than a roll value on purpose — see trailDetail.
-func readRoomTrail(room *rooms.Room, detail trailDetail, excludeUserId int, excludeMobInstId int) []TrackingInfo {
+func readRoomTrail(room *rooms.Room, tracker *characters.Character, detail trailDetail, excludeUserId int, excludeMobInstId int) []TrackingInfo {
 	out := []TrackingInfo{}
 	currentMobs := room.GetMobs()
 	currentUsers := room.GetPlayers()
@@ -425,7 +425,7 @@ func readRoomTrail(room *rooms.Room, detail trailDetail, excludeUserId int, excl
 			NumericStrength: timeLeft,
 		}
 		if detail.SeesExits {
-			info.ExitName = findExitedTrack(room, mId, rooms.VisitorMob)
+			info.ExitName = findExitedTrack(room, tracker, mId, rooms.VisitorMob)
 		}
 		if !detail.SeesAll {
 			if len(out) == 0 {
@@ -458,7 +458,7 @@ func readRoomTrail(room *rooms.Room, detail trailDetail, excludeUserId int, excl
 			NumericStrength: timeLeft,
 		}
 		if detail.SeesExits {
-			info.ExitName = findExitedTrack(room, uId, rooms.VisitorUser)
+			info.ExitName = findExitedTrack(room, tracker, uId, rooms.VisitorUser)
 		}
 		if !detail.SeesAll {
 			if len(out) == 0 {
@@ -571,7 +571,7 @@ func findPresentTargetByNoun(viewer *characters.Character, room *rooms.Room, nou
 // misc-data key/value to set, the exit direction toward the target, and
 // target ids. Exit direction is found by scanning adjacent rooms for the
 // strongest trail.
-func lookupAdjacentTrail(room *rooms.Room, targetNoun string, excludeUserId int) (
+func lookupAdjacentTrail(room *rooms.Room, tracker *characters.Character, targetNoun string, excludeUserId int) (
 	applied bool, miscKey string, miscVal any, dirExit string, targetUserId int, targetMobId int, targetName string,
 ) {
 	// First try users in current room's visitor log.
@@ -595,7 +595,7 @@ func lookupAdjacentTrail(room *rooms.Room, targetNoun string, excludeUserId int)
 				if u == nil || u.Character.Name != pick {
 					continue
 				}
-				return true, "tracking-user", pick, findExitedTrack(room, uId, rooms.VisitorUser), u.UserId, 0, pick
+				return true, "tracking-user", pick, findExitedTrack(room, tracker, uId, rooms.VisitorUser), u.UserId, 0, pick
 			}
 		}
 	}
@@ -618,7 +618,7 @@ func lookupAdjacentTrail(room *rooms.Room, targetNoun string, excludeUserId int)
 				if m == nil || m.Character.Name != pick {
 					continue
 				}
-				return true, "tracking-mob", pick, findExitedTrack(room, mId, rooms.VisitorMob), 0, m.InstanceId, pick
+				return true, "tracking-mob", pick, findExitedTrack(room, tracker, mId, rooms.VisitorMob), 0, m.InstanceId, pick
 			}
 		}
 	}
@@ -648,14 +648,15 @@ func trailStrengthToString(trailStrength float64) string {
 // target, returning the exit name that leads toward it. Lifted from
 // usercommands/skill.track.go (renamed to avoid conflict with the existing
 // package-level function of the same name).
-func findExitedTrack(room *rooms.Room, targetId int, targetType rooms.VisitorType) string {
+//
+// It reads only the exits tracker knows (Room.PermanentExitsKnownTo, #781
+// owner ruling 17): a secret exit the tracker found carries the trail, one it
+// has not loses it. An NPC tracker answers to the same rule by what it found.
+func findExitedTrack(room *rooms.Room, tracker *characters.Character, targetId int, targetType rooms.VisitorType) string {
 	var bestExit string
 	var bestStrength float64
 
-	for exitName, exitInfo := range room.Exits {
-		if exitInfo.Secret {
-			continue
-		}
+	for exitName, exitInfo := range room.PermanentExitsKnownTo(tracker) {
 		testRoom := rooms.LoadRoom(exitInfo.RoomId)
 		if testRoom == nil {
 			continue

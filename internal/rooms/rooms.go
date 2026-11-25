@@ -2957,17 +2957,16 @@ func (r *Room) isInRoom(mobName string, userName string) bool {
 
 }
 
-func (r *Room) findMobExit(mobId int, mobName string) string {
+// findMobExit is the exit of r a mob's trail leaves by, read for tracker:
+// the freshest trail among the exits tracker knows (PermanentExitsKnownTo,
+// #781 owner ruling 17). A secret exit tracker has found carries the trail;
+// one it has not loses it, as every secret exit did before.
+func (r *Room) findMobExit(tracker *characters.Character, mobId int, mobName string) string {
 
 	freshestTime := float64(0)
 	freshestExitName := ``
 
-	for exitName, exitInfo := range r.Exits {
-
-		// Skip secret exits
-		if exitInfo.Secret {
-			continue
-		}
+	for exitName, exitInfo := range r.PermanentExitsKnownTo(tracker) {
 
 		exitRoom := LoadRoom(exitInfo.RoomId)
 		if exitRoom == nil {
@@ -3001,17 +3000,13 @@ func (r *Room) findMobExit(mobId int, mobName string) string {
 
 }
 
-func (r *Room) findUserExit(userId int, userName string) string {
+// findUserExit is findMobExit for a player's trail, read for tracker.
+func (r *Room) findUserExit(tracker *characters.Character, userId int, userName string) string {
 
 	freshestTime := float64(0)
 	freshestExitName := ``
 
-	for exitName, exitInfo := range r.Exits {
-
-		// Skip secret exits
-		if exitInfo.Secret {
-			continue
-		}
+	for exitName, exitInfo := range r.PermanentExitsKnownTo(tracker) {
 
 		exitRoom := LoadRoom(exitInfo.RoomId)
 		if exitRoom == nil {

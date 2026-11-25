@@ -1897,6 +1897,13 @@ Trail-read (passive sniffing) or active tracking on a resolved target.
 **Messaging:** UserActor receives trail feedback or tracking status. MobActor
 silent.
 
+**Secret exits (#781, owner ruling 17):** the exit a trail leaves by
+(`findExitedTrack`, read by the trail scan's exit column and the named
+track's direction) is looked for only among the exits the tracker knows,
+`Room.PermanentExitsKnownTo(tracker)`: a secret exit the tracker found carries
+the trail, one it has not loses it. NPC trackers (`mobcommands` `track`, the
+scout behaviour's `Track`) answer to the same rule by what they found.
+
 `ResolveCharacter(userId, mobInstanceId)` is the character behind a user id
 or else a mob instance id (nil when gone): the active track's quarry, and a
 shot's target for the ruling 15 arrival line (`FireResult`).

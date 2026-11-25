@@ -472,7 +472,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 				} else {
 
-					exitName := r.findMobExit(0, searchMobNameStr)
+					exitName := r.findMobExit(user.Character, 0, searchMobNameStr)
 					if exitName == `` {
 
 						// Always show when trail is lost
@@ -546,7 +546,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 				} else {
 
-					exitName := r.findUserExit(0, searchUserNameStr)
+					exitName := r.findUserExit(user.Character, 0, searchUserNameStr)
 					if exitName == `` {
 
 						// Always show when trail is lost
