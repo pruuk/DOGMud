@@ -61,6 +61,18 @@ buttons.
     unseen (sneaking, hidden), no line prints and nothing is learned. The
     arrival side teaches the exit of the arrival room that leads back the way
     the mover came, when that exit is secret.
+15. **Seeing it used teaches it** (2026-11-25, from the Task 5b review): any
+    line an onlooker sees that names a secret exit because someone used it
+    teaches that exit, the same way ruling 14 does: picking or unlocking its
+    lock, peering through it, shooting through it, a mob trying it and
+    finding it locked. It teaches the exit, not how to pick its lock: the
+    lockpick sequence stays with whoever picked it. Shooting through a locked
+    exit is already refused. Mobs cannot pick locks yet; that behaviour is
+    its own issue.
+16. **Hearing through it does not** (2026-11-25): a sound heard from the next
+    room through a secret exit the listener has not found says "(From
+    nearby)" instead of naming the exit. A listener who knows the exit still
+    reads its name. The AI companion is out of scope: it stays off for good.
 
 ## Facts verified against source (2026-11-22)
 

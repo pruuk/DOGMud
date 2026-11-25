@@ -1986,6 +1986,47 @@ movement paths for the room-wide leave/arrive messages: `go.go`, mob moves in
 - [ ] **Step 4:** Run the tests and null probes, `go test ./internal/usercommands/ ./internal/actions/ ./internal/mobcommands/ -count=1`.
 - [ ] **Step 5:** Commit `feat(go): onlookers learn the secret exit they see used (#781)`.
 
+### Task 5c (added 2026-11-25, owner rulings 15 and 16): seen use teaches, heard sound hides the name
+
+Added after the Task 5b spec review found more lines that name a secret exit
+to onlookers or listeners who had not found it.
+
+**Sites from the review** (line numbers at `0c6149047`; re-grep, they move):
+- Seen use, ruling 15 (teach with `actions.LearnSecretExitWatching` /
+  `LearnSecretExitWatchingNow`, judged by the sight decision of the line):
+  `usercommands/go.go` `unlockExit` (~45, three callers ~153 ~159 ~181);
+  `usercommands/unlock.go` (~112 ~136), `lock.go` (~114 ~137),
+  `picklock.go` (~165 ~283 ~296); `mobcommands/go.go` (~139, "tries to go
+  the ... exit, but it's locked"); the "peers <exit>" lines
+  (`usercommands/look.go` ~220 ~235, `mobcommands/look.go` ~60); shoot
+  narration that names the exit the shot crossed (`{exitname}`).
+- Heard, ruling 16: `rooms.SendTextToExitsExcluding` (`rooms.go` ~760), the
+  `(From <exit>)` prefix. For a secret exit in the listener's room, a player
+  who knows it reads the name, any other reads `(From nearby)`.
+- Out of scope: `modules/aicompanion` (owner: never enabled).
+
+- [ ] **Step 1:** Re-grep every non-test line in `internal/` and `modules/`
+  that sends a room or neighbour line naming an exit (`fg="exit"`,
+  `{exitname}`, the `exit.*Phrase` helpers) and classify each: movement
+  (done in 5b), seen use (ruling 15), heard (ruling 16), mover-only (no
+  change). Report the list.
+- [ ] **Step 2:** Failing tests: (a) a sighted onlooker sees a lock picked or
+  unlocked on a secret exit and learns the exit, and does NOT learn the
+  lock's sequence; (b) the same in the dark learns nothing; (c) a peer and a
+  shot through a secret exit teach a sighted onlooker; (d) a mob trying a
+  locked secret exit teaches a sighted onlooker; (e) a neighbour who has not
+  found the secret exit reads `(From nearby)`, one who has reads the name;
+  an ordinary exit still reads its name for everyone; (f) the actor's own
+  knowledge is unchanged by the rule.
+- [ ] **Step 3:** Hook the existing helpers at each seen-use line; take
+  snapshots only when the exit is secret (Task 5b's cost rule). For the
+  heard prefix, when the listener-room exit is secret, send the named line to
+  the players there who know it and the `(From nearby)` line to the rest,
+  through the existing message exclusion, with no new sight rule. Learning
+  stays off for heard lines.
+- [ ] **Step 4:** Run `go test ./internal/usercommands/ ./internal/actions/ ./internal/mobcommands/ ./internal/rooms/ ./internal/hooks/ . ./internal/guards/ -count=1`, sabotage each new test, update `context.md` files.
+- [ ] **Step 5:** Commit `feat(rooms): seen use teaches a secret exit, heard sound hides it (#781)`.
+
 ### Task 6: The maps and quest guidance use the discovery rule; `GetPathKnown`
 
 **Files:**
