@@ -48,7 +48,7 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	sendMobShootMessages(mob, room, result)
 
-	// Retaliation: the target aggros back onto the shooter (same-room only —
+	// Retaliation: the target aggros back onto the shooter (same-room only:
 	// cross-room aggro on a defender is dropped by the combat handler). Any
 	// damage dealt (hit or partial) provokes retaliation the same way a clean
 	// hit does; only a zero-damage miss from stealth does not.

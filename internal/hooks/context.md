@@ -2652,7 +2652,11 @@ room targeting the shooter", a wider question than "who has engaged me".
 delivered text. Player chatter on its `RoomId` branch arrives unrendered, so
 `roomMessageTextFor` wraps it there for each reader. Both of its branches gate on
 `message.HiddenFromDeafened(user.Deafened)` (`internal/events`'s one
-statement of the rule) before sending, rather than re-deriving it. Every
+statement of the rule) before sending, rather than re-deriving it. The
+`RoomId` branch reads the players in the room at delivery and keeps those
+`message.AddressedTo(userId)` allows (`ExcludeUserIds`, and the
+`OnlyUserIds` allow-list of #781 D43, so a walk-in never reads a line
+addressed to others). Every
 speech and emote room line now reaches this package through
 `internal/actions`'s shared bodies (`Say`, `Shout`, `SendHeard`, `SendSeen`),
 so nothing in `hooks` hides a speaker's name itself.

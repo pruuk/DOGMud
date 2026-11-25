@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
@@ -27,11 +26,18 @@ func TestShout_NextDoorThroughASecretExitReadsNearby(t *testing.T) {
 			// heard is what Nell reads of the shout next door, whichever lane
 			// it takes (a player's rides one RoomId message, a mob's goes per
 			// user).
+			// walkInRead is what a player who walked in after the shout was
+			// queued would be addressed by (D43): never the exit's name.
+			var walkInRead []string
 			heard := func() []string {
 				var got []string
+				walkInRead = nil
 				for _, m := range events.DrainQueuedRoomMessagesForTest(speechNextRoom) {
-					if !slices.Contains(m.ExcludeUserIds, speechNextId) {
+					if m.AddressedTo(speechNextId) {
 						got = append(got, strings.TrimSpace(speechTag.ReplaceAllString(m.Text, "")))
+					}
+					if m.AddressedTo(98899) {
+						walkInRead = append(walkInRead, m.Text)
 					}
 				}
 				for _, m := range events.DrainQueuedMessageEventsForTest(speechNextId) {
@@ -48,6 +54,9 @@ func TestShout_NextDoorThroughASecretExitReadsNearby(t *testing.T) {
 			sc.drain()
 			Shout(sc.speaker(player, sc.lit), "HELP")
 			require.Equal(t, []string{`Someone shouts from the south direction, "HELP"`}, heard(), "one who found it")
+			for _, line := range walkInRead {
+				require.NotContains(t, line, "south", "a walk-in is never addressed by the named line")
+			}
 			sc.drain()
 		})
 	}
@@ -66,7 +75,7 @@ func TestShout_TwoExitsBackGiveOneLineNamingThePlainOne(t *testing.T) {
 				Shout(sc.speaker(player, sc.lit), "HELP")
 				var got []string
 				for _, m := range events.DrainQueuedRoomMessagesForTest(speechNextRoom) {
-					if !slices.Contains(m.ExcludeUserIds, speechNextId) {
+					if m.AddressedTo(speechNextId) {
 						got = append(got, strings.TrimSpace(speechTag.ReplaceAllString(m.Text, "")))
 					}
 				}

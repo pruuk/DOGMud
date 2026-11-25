@@ -68,12 +68,14 @@ func Shout(actor Actor, text string) ShoutResult {
 	//
 	// #781 ruling 16: through a secret exit, a listener who has not found it
 	// hears "Someone shouts from nearby" and learns nothing; one who has
-	// reads the exit's name. The two lines go out with complementary
-	// excludes (Room.HeardThroughSecretExit); an ordinary exit sends one.
+	// reads the exit's name (Room.HeardThroughSecretExit); an ordinary exit
+	// sends one line. A player's queued line names the exit only to the
+	// knowers (an allow-list, so a walk-in reads only "nearby"); a mob's
+	// goes per listener at once, so leaving out the strangers is exact.
 	room.ForEachAdjacentRoom(func(otherRoom *rooms.Room, sourceExit string) {
-		send := func(far string, exclude []int) {
+		send := func(far string, only, exclude []int) {
 			if actor.IsPlayer() {
-				otherRoom.SendTextCommunication(far, append(exclude, actor.GetUserId())...)
+				otherRoom.SendTextCommunicationTo(far, only, append(exclude, actor.GetUserId())...)
 				return
 			}
 			otherRoom.SendText(messaging.CategoryShout, far, exclude...)
@@ -82,15 +84,15 @@ func Shout(actor Actor, text string) ShoutResult {
 			sourceExit, textColor, text)
 		knowers, strangers, secret := otherRoom.HeardThroughSecretExit(sourceExit)
 		if !secret {
-			send(named, nil)
+			send(named, nil, nil)
 			return
 		}
 		if len(knowers) > 0 {
-			send(named, strangers)
+			send(named, knowers, strangers)
 		}
 		if len(strangers) > 0 {
 			send(fmt.Sprintf(`Someone shouts from %s, "<ansi fg="%s">%s</ansi>"`,
-				rooms.HeardFromNearby, textColor, text), knowers)
+				rooms.HeardFromNearby, textColor, text), nil, knowers)
 		}
 	})
 

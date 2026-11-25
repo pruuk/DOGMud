@@ -751,6 +751,17 @@ chatter (`IsCommunication`) and the reader is deafened.
 `internal/hooks/Message_SendMessages.go` applies it on both of its delivery
 branches, and tests read it rather than copy the rule.
 
+`Message.OnlyUserIds []int` (#781 D43) is the allow-list of a `RoomId`
+message: when not empty, only those players may read it, and only while they
+are in the room at delivery, so a player who walks in between queueing and
+delivery reads nothing from it. `ExcludeUserIds` still applies; empty is the
+old message. `Message.AddressedTo(userId) bool` is the one statement of the
+addressing rule (exclude, then allow-list); the RoomId branch of
+`hooks.Message_SendMessage` applies it, keeping the in-room, `IsQuiet` and
+deafen checks. That hook is the only delivery reader of `events.Message`; the
+other readers are `AddToQueue`'s reply window (UserId messages only) and the
+`DrainQueued*ForTest` helpers.
+
 `Condition` also carries `Caster state.ActorRef`, `CasterCrit bool` and
 `CastStart bool` (messaging M6 slice 1): who cast it, which
 `hooks.ApplyConditions` stamps on the record and names in the start lines;

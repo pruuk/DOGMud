@@ -1,13 +1,13 @@
 package rooms
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/mutators"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -38,7 +38,7 @@ func readersOf(roomId int, uids ...int) map[int][]string {
 	got := map[int][]string{}
 	for _, m := range events.DrainQueuedRoomMessagesForTest(roomId) {
 		for _, uid := range uids {
-			if !slices.Contains(m.ExcludeUserIds, uid) {
+			if m.AddressedTo(uid) {
 				got[uid] = append(got[uid], strings.TrimSpace(m.Text))
 			}
 		}
@@ -58,10 +58,11 @@ func TestSendTextToExits_ASecretExitReadsNearbyToAStranger(t *testing.T) {
 		require.True(t, m.IsQuiet, "isQuiet rides on both lines")
 		require.Contains(t, m.ExcludeUserIds, 555, "the caller's excludes ride on both lines")
 	}
+	const walkIn = 97709 // not in the room when the sound was queued
 	got := map[int][]string{}
 	for _, m := range msgs {
-		for _, uid := range []int{kesh.UserId, mira.UserId} {
-			if !slices.Contains(m.ExcludeUserIds, uid) {
+		for _, uid := range []int{kesh.UserId, mira.UserId, walkIn} {
+			if m.AddressedTo(uid) {
 				got[uid] = append(got[uid], strings.TrimSpace(m.Text))
 			}
 		}
@@ -70,6 +71,8 @@ func TestSendTextToExits_ASecretExitReadsNearbyToAStranger(t *testing.T) {
 		"the listener who found the crack reads its name")
 	require.Equal(t, []string{`(From nearby) You hear someone talking.`}, got[mira.UserId],
 		"the listener who has not found it reads nearby")
+	require.Equal(t, []string{`(From nearby) You hear someone talking.`}, got[walkIn],
+		"a walk-in is addressed by the nearby line only (D43)")
 	require.False(t, mira.Character.KnowsSecretExit(3291, "crack"), "hearing teaches nothing")
 }
 
@@ -126,6 +129,33 @@ func TestFindExitTo_APlainExitBackBeatsASecretOne(t *testing.T) {
 	b.ExitsTemp = map[string]exit.TemporaryRoomExit{"rift-1": {RoomId: 3290, Title: "shimmering rift"}}
 	delete(b.Exits, "south")
 	require.Equal(t, "shimmering rift", b.FindExitTo(3290), "a temporary exit beats a secret one and prints its title")
+}
+
+// The fast path keeps ExitsTo's A to Z tie-break among plain exits.
+func TestFindExitTo_PlainExitsTieBreakAToZ(t *testing.T) {
+	r := &Room{RoomId: 3294, Exits: map[string]exit.RoomExit{
+		"zigzag": {RoomId: 3295}, "stair": {RoomId: 3295}, "arch": {RoomId: 3295}, "north": {RoomId: 3296},
+	}}
+	for range 50 {
+		require.Equal(t, "arch", r.FindExitTo(3295))
+	}
+	require.Equal(t, "arch", r.ExitsTo(3295)[0].Name, "the same answer as the ranked list")
+}
+
+// FindExitTo's fast path (plain room exits only) must step aside for an
+// active mutator: a mutator west takes the place of the room's west, so the
+// room's west leads nowhere and the way to the mutator's room is west.
+func TestFindExitTo_AMutatorExitTakesThePlaceOfTheRoomExit(t *testing.T) {
+	r, _ := knownExitsRoom(t, true)
+	r.Exits["west"] = exit.RoomExit{RoomId: 5}
+	require.Equal(t, "west", r.FindExitTo(5), "premise: before the mutator")
+	t.Cleanup(mutators.SeedSpecsForTest(mutators.MutatorSpec{
+		MutatorId: "test-find-exit-to-wall",
+		Exits:     map[string]exit.RoomExit{"west": {RoomId: 9}},
+	}))
+	require.True(t, GetZoneConfig("TestZone").Mutators.Add("test-find-exit-to-wall"), "fixture: the mutator attaches")
+	require.Equal(t, "", r.FindExitTo(5), "the room's west is shadowed")
+	require.Equal(t, "west", r.FindExitTo(9))
 }
 
 // FindKnownExitTo answers a temporary exit by its key, the word `go` and

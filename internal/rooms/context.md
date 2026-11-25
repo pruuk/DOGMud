@@ -98,10 +98,14 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   room's messages only; an ambient say's echo uses it to leave out each
   neighbour's over-budget listeners (#317, `actions.MobActor.EchoExclude`).
   When the neighbour's exit back is secret (#781, owner ruling 16) it asks
-  `HeardThroughSecretExit(exitName)` and sends two messages with
-  complementary excludes: the named line to the players there who know the
-  exit, `(From nearby) ` to the rest (`HeardFromNearby`), each only when
-  someone reads it. An ordinary exit costs one `IsSecretExit` lookup and
+  `HeardThroughSecretExit(exitName)` and sends two messages: the named line
+  addressed to the players there who know the exit
+  (`events.Message.OnlyUserIds`, #781 D43, so a stranger who walks in before
+  delivery cannot read it), `(From nearby) ` to everyone else (excluding the
+  knowers), each only when someone reads it.
+  `SendTextCommunicationTo(txt, onlyUserIds, excludeUserIds...)` is
+  `SendTextCommunication` with that allow-list (a player's shout next door
+  naming a secret exit). An ordinary exit costs one `IsSecretExit` lookup and
   sends one named line, as before. Hearing teaches nothing.
 - **Naming a creature**: `FindByNameSeenBy(viewer, name, flags...)` skips
   every creature `viewer` does not perceive (`characters.Character.Perceives`)
@@ -994,7 +998,11 @@ peer or a shot, `ForEachAdjacentRoom` and so the heard lines),
 `FindKnownExitTo` answers the first a character knows by key, and
 `actions.FollowExitTo` picks by the leader's knowledge. Before the ranking
 `FindExitTo` walked the maps in random order and could name, and teach, a
-secret exit while a plain one also led back.
+secret exit while a plain one also led back. `FindExitTo` runs on every mob
+step, so it first tries `plainExitTo`: when only plain room exits lead there
+(no secret one, no temporary exit there, no active mutator with exits) it
+answers the first A to Z with no list and no allocation, the same answer
+`ExitsTo` gives; otherwise `ExitsTo` decides.
 
 The filters on the same rule: `ExitKnownTo(char, name)`,
 `FindKnownExitByName(char, search)` (every player path that names an exit;

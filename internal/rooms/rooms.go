@@ -243,11 +243,20 @@ func (r *Room) UpdateCorpses(roundNow uint64) {
 // SendTextHidingNames unfiltered, so moderated players still hear quest
 // content (owner ruling 6, sight gates slice 5b).
 func (r *Room) SendTextCommunication(txt string, excludeUserIds ...int) {
+	r.SendTextCommunicationTo(txt, nil, excludeUserIds...)
+}
+
+// SendTextCommunicationTo is SendTextCommunication addressed to onlyUserIds
+// alone when it is not empty (events.Message.OnlyUserIds, #781 D43): the
+// shout next door that names a secret exit goes to the listeners who found
+// it, and a player who walks in before delivery is not one of them.
+func (r *Room) SendTextCommunicationTo(txt string, onlyUserIds []int, excludeUserIds ...int) {
 
 	events.AddToQueue(events.Message{
 		RoomId:          r.RoomId,
 		Text:            txt + "\n",
 		ExcludeUserIds:  excludeUserIds,
+		OnlyUserIds:     onlyUserIds,
 		IsQuiet:         false,
 		IsCommunication: true,
 	})
@@ -757,13 +766,16 @@ func (r *Room) SendTextToExitsExcluding(txt string, isQuiet bool, exclude func(t
 			return
 		}
 		// Each half only when someone reads it, so a room with no knower is
-		// never sent the name at all.
+		// never sent the name at all. The named half is addressed to the
+		// knowers only (OnlyUserIds, D43), so a stranger who walks in before
+		// delivery can read only "nearby".
 		if len(knowers) > 0 {
 			events.AddToQueue(events.Message{
 				RoomId:         tgtRoom.RoomId,
 				Text:           named,
 				IsQuiet:        isQuiet,
-				ExcludeUserIds: slices.Concat(ex, strangers),
+				ExcludeUserIds: ex,
+				OnlyUserIds:    knowers,
 			})
 		}
 		if len(strangers) > 0 {
@@ -2437,10 +2449,44 @@ func (r *Room) GetMobDuplicateIndex(mobInstanceId int) int {
 // so a line could name, and teach, a secret exit while a plain one also led
 // back.
 func (r *Room) FindExitTo(roomId int) string {
+	if name, ok := r.plainExitTo(roomId); ok {
+		return name
+	}
 	if ways := r.ExitsTo(roomId); len(ways) > 0 {
 		return ways[0].Name
 	}
 	return ""
+}
+
+// plainExitTo is FindExitTo's fast path, for every mob step: when the only
+// ways to roomId are plain room exits (no secret one among them, no
+// temporary exit there, no active mutator with exits that could add one or
+// take a room exit's place), the answer is the first of them A to Z, ExitsTo's
+// own answer, found without building and sorting a list. ok is false when any
+// of those is present; ExitsTo then decides.
+func (r *Room) plainExitTo(roomId int) (name string, ok bool) {
+	for key, ex := range r.Exits {
+		if ex.RoomId != roomId {
+			continue
+		}
+		if ex.Secret {
+			return "", false
+		}
+		if name == "" || key < name {
+			name = key
+		}
+	}
+	for _, ex := range r.ExitsTemp {
+		if ex.RoomId == roomId {
+			return "", false
+		}
+	}
+	for mut := range r.ActiveMutators {
+		if spec := mut.GetSpec(); spec != nil && len(spec.Exits) > 0 {
+			return "", false
+		}
+	}
+	return name, true
 }
 
 func (r *Room) FindContainerByName(containerNameSearch string) string {
