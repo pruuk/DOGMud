@@ -505,8 +505,8 @@ func (w *WebMap) HasRoom(roomId int) bool
 func (w *WebMap) Snapshot(visited map[int]struct{}, known SecretExitKnown) []SnapshotRoom
 ```
 
-A secret exit is drawn only when `known` lets it through (nil: none), and is
-then skipped whole rather than drawn unflagged: Zone.Map passes the player's
+A secret exit is drawn only when `known` lets it through (nil: none); one it
+refuses is left out whole, never drawn unflagged. Zone.Map passes the player's
 `SecretExitsKnownTo` (#781: once found, not once the far room is visited), the
 builder's view `AnySecretExit`.
 

@@ -160,6 +160,22 @@ func TestGetPathKnown_TakesOnlyAllowedSecretExits(t *testing.T) {
 	if p, err = GetPathKnown(48001, nil, 48002); err != nil || len(p) != 3 {
 		t.Fatalf("after a cached secret route: %v, %v; want 3 steps", p, err)
 	}
+	// Nor may a filtered route leak into the scripted route's cache.
+	if p, err = GetPath(48001, 48002); err != nil || len(p) != 1 || p[0].exitName != "east" {
+		t.Fatalf("GetPath after filtered searches: %v, %v; want the one secret step east", p, err)
+	}
+}
+
+// A cached step whose exit the map no longer holds is stale: it counts as
+// refused, so GetPathKnown searches again rather than trusting it.
+func TestTakesRefusedSecret_StaleStepIsRefused(t *testing.T) {
+	secretRingWorld(t)
+	if takesRefusedSecret(48001, []pathStep{{exitName: "south", roomId: 48003}}, nil) {
+		t.Fatal("an open step that exists must not count as refused")
+	}
+	if !takesRefusedSecret(48001, []pathStep{{exitName: "gone", roomId: 48002}}, AnySecretExit) {
+		t.Fatal("a step through an exit the map no longer holds must count as refused")
+	}
 }
 
 // Zone.Map draws a secret exit once the player found it (ruling 1), not once
@@ -198,6 +214,9 @@ func TestGetLimitedMap_SecretExitDrawnOnlyOnceFound(t *testing.T) {
 	cfg := Config{ZoomLevel: 1, Width: 21, Height: 11, UserId: 48090}
 	glyphs := func() int { return strings.Count(renderText(m.GetLimitedMap(48001, cfg)), string(SecretSymbol)) }
 	before := glyphs()
+	if before != 0 {
+		t.Fatalf("secret glyphs %d before the find: an unfound secret exit must draw nothing", before)
+	}
 	u.Character.LearnSecretExit(48001, "east")
 	if after := glyphs(); after <= before {
 		t.Fatalf("secret glyphs %d before the find and %d after: a found secret exit must be drawn, an unfound one not", before, after)

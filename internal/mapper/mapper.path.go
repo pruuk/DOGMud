@@ -121,7 +121,8 @@ func (r *mapper) findPath(startRoom, goalRoom int) ([]pathStep, error) {
 	return r.findPathWhere(startRoom, goalRoom, AnySecretExit)
 }
 
-// findPathWhere returns the sequence of ExitName/RoomID steps from startRoom to goalRoom, taking a secret exit only when known lets it through.
+// findPathWhere returns the sequence of ExitName/RoomID steps from startRoom
+// to goalRoom, taking a secret exit only when known lets it through.
 //
 // The search starts in this map and follows exits into other zones' maps
 // (nodeFor), so a route crosses zone borders exactly as it did when one map
@@ -195,7 +196,7 @@ func (r *mapper) findPathWhere(startRoom, goalRoom int, known SecretExitKnown) (
 		}
 		for exitName, exitInfo := range node.Exits {
 			neighbor := exitInfo.RoomId
-			// A secret exit known does not let through is not taken (#781).
+			// Skip a secret exit `known` refuses (#781).
 			if exitInfo.Secret && !known.allows(current.roomId, exitName, neighbor) {
 				continue
 			}
@@ -344,7 +345,9 @@ func GetPathKnown(startRoomId int, known SecretExitKnown, endRoomId ...int) ([]p
 }
 
 // takesRefusedSecret reports whether path, walked from startRoomId, goes
-// through a secret exit known does not let through.
+// through a secret exit known does not let through. A step whose exit the map
+// no longer holds (a stale cached route) counts as refused, so the route is
+// searched again.
 func takesRefusedSecret(startRoomId int, path []pathStep, known SecretExitKnown) bool {
 	m := GetMapper(startRoomId)
 	if m == nil {
@@ -356,7 +359,8 @@ func takesRefusedSecret(startRoomId int, path []pathStep, known SecretExitKnown)
 		if node == nil {
 			return true
 		}
-		if ex, ok := node.Exits[step.exitName]; ok && ex.Secret && !known.allows(at, step.exitName, step.roomId) {
+		ex, ok := node.Exits[step.exitName]
+		if !ok || (ex.Secret && !known.allows(at, step.exitName, step.roomId)) {
 			return true
 		}
 		at = step.roomId
