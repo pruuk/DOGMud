@@ -104,15 +104,19 @@ func TestInputQueue_ADroppedPressFreesItsSlot(t *testing.T) {
 	require.Empty(t, events.DrainQueuedMessagesForTest(u.UserId), "dropped without a word")
 }
 
-// The drop's partner: the same fixture answers a prompt from a typed line, so
-// the checks above can see an answer.
+// The drop's partner: through processInput, the same fixture answers a
+// prompt from a typed line from the client, so the checks above can see an
+// answer, and the button drop takes only a press (not a typed line, and not
+// CmdFromClient, which once shared CmdButton's bit).
 func TestProcessInput_ATypedLineStillAnswersAPrompt(t *testing.T) {
 	u := pressUser(t, 984312)
 	p, ok := u.StartPrompt("mail", "Bob")
 	require.True(t, ok)
 	q := p.Ask("Subject?", nil)
-	_, _ = u.RoutePromptInput("north", true)
-	require.True(t, q.Done)
+	// A finished prompt goes on to run its command, which panics here
+	// (runInputNoWorld catches it); the answer is recorded before that.
+	runInputNoWorld(u.UserId, "north", events.CmdTyped|events.CmdFromClient)
+	require.True(t, q.Done, "the typed line answered the prompt")
 	require.Equal(t, "north", q.Response)
 }
 

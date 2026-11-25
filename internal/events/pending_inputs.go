@@ -114,9 +114,10 @@ func syncInputQueueLocked(userId int, limit int) {
 
 // typedRefusalEvery is how often a refused TYPED line is reported again
 // within one full spell. The first refusal of a spell is always reported;
-// automatic sends (ticks, triggers, buttons) stay at that one, but a line
-// the player typed must not vanish silently because a tick took the spell's
-// one report a while ago.
+// automatic sends (ticks, triggers, the automation rows and chips through
+// Char.Action.Try) stay at that one, but a line the player typed, or a touch
+// button press (CmdTyped too, #781 D52), must not vanish silently because a
+// tick took the spell's one report a while ago.
 const typedRefusalEvery = time.Second
 
 // refusalClock is time.Now, swapped by tests.
