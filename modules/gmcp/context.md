@@ -481,6 +481,24 @@ not dark to them (`buttons.DarkMarks`). A temporary exit that shares a
 permanent exit's name is listed once, as the permanent exit, since that name
 reaches the permanent one (`Room.FindExitByName`).
 
+`Room.Info` is kept current by `gmcp.RoomExitsWatch.go` (#781, spec "Kept
+current"), the `Char.Vitals` watcher's pattern: once a round
+(`roomExitsWatchHandler` on `events.NewRound`) each GMCP user's exit half
+(`buildRoomExitsInfo`, with one `ParticipantSight` read) is turned into a
+string by `roomExitsSignature` (room, dark flag, each `exitsv2` entry's name,
+kind, id, destination and details, the dark marks) and compared with the last
+one sent (`lastSentRoomExits`, recorded in `buildAndSendGMCPPayload` for every
+full `Room.Info`). `Room.Info` is re-sent only on a change: a door unlocked or
+relocking on its timer, a temporary exit coming or going, a secret exit found,
+the light changing, a key or combination gained. A round with no change sends
+nothing. `events.RoomExitsChanged` (a dark mark) sends `Room.Info` at once
+(`roomExitsChangedHandler`). `roomChangeHandler` clears the mover's dark marks
+(`buttons.ClearDarkMarks`, ruling 4); `despawnHandler` forgets the player's
+ids and marks (`buttons.Forget`) and the record (`forgetSentRoomExits`).
+Measured 2026-11-25 (scratch benchmark, 100 GMCP players in lit rooms of seven
+exits, Ryzen desktop): about 0.75 to 0.95 ms for the whole pass, 47
+allocations per player, once every 4-second round.
+
 `Comm.Channel` say goes through `sayDeliveries` (`gmcp.Comm.go`), one payload per listener,
 matching the text lane (`actions.sendSpoken`): `sender` is the name at clear sight, `A figure`
 at shapes, `Someone` at none or when `events.Communication.SpeakerHidden`; a player speaker's
@@ -520,6 +538,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Zone.go` | `Zone` | The `Zone.Map` snapshot the web mapper draws, plus `party` and `full`; sent as a diff (see "Zone.Map is sent as a diff") |
 | `gmcp.ZoneDiff.go` | (none) | `zoneDiff`, the pure decision of what `Zone.Map` to send, and `roomFingerprint` |
 | `gmcp.CharVitalsWatch.go` | `Char.Vitals` | The once-a-round on-change check that keeps `Char.Vitals` current (see "When Char.Vitals is sent") |
+| `gmcp.RoomExitsWatch.go` | `Room.Info` | The once-a-round on-change check that keeps `Room.Info`'s exits, locks, dark flag and dark marks current for the touch buttons (#781) |
 | `gmcp.Party.go` | `Party` | Party roster and member vitals. The full `Party` package goes out on `PartyUpdated` and also to a member on `PlayerSpawn` (and once more the next round): a reconnect inside the zombie window keeps the party, and without the push the fresh client had `Party.Vitals` but no `Members`, so the web client's Vitals window showed the viewer twice (playtest 2026-10-17) |
 | `gmcp.Comm.go` | `Comm` | Channel messages |
 | `gmcp.Item.go` / `gmcp.Item_refs.go` | `Char.Items` | Inventory and equipment, plus item reference data |

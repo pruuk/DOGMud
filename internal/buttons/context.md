@@ -49,6 +49,7 @@ next `Room.Info` issues fresh ones.
 ## Callers
 
 `modules/gmcp` (`gmcp.Room.go` builds the ids and marks into `Room.Info`,
-`gmcp.ButtonPress.go` resolves presses, `gmcp.RoomExitsWatch.go` forgets on
-despawn and clears marks on a room change); `internal/usercommands/go.go`
+forgets on despawn in `despawnHandler` and clears marks on a room change in
+`roomChangeHandler`; `gmcp.RoomExitsWatch.go` rebuilds them every round to
+compare; `gmcp.ButtonPress.go` resolves presses); `internal/usercommands/go.go`
 (dark marks). These callers arrive in plan 2a Tasks 9 to 12.

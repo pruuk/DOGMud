@@ -140,13 +140,13 @@ func TestRoomInfo_ExitsFollowTheSightPassedIn(t *testing.T) {
 	require.Empty(t, info.ExitsV2)
 }
 
-// Ruling 3: `locked` follows the door's real state: lock, unlock, and a
-// relock on its timer.
-func TestRoomInfo_LockedMeansLockedNow(t *testing.T) {
-	// Test binaries load Go timing defaults, not config.yaml, and there an
-	// hour is less than a round; pin the shipped timing so the relock hour is
-	// a real span of rounds (as gamelock_test.go and the rooms KnownExits
-	// test do), and start past RoundCountMinimum as the game does.
+// pinRelockTiming makes a lock's relock hour a real span of rounds and
+// returns the round it set. Test binaries load Go timing defaults, not
+// config.yaml, and there an hour is less than a round; this pins the shipped
+// timing (as gamelock_test.go and the rooms KnownExits test do) and starts
+// past RoundCountMinimum as the game does.
+func pinRelockTiming(t *testing.T) uint64 {
+	t.Helper()
 	c := configs.GetConfig()
 	c.Timing.RoundsPerDay = 900
 	c.Timing.RoundSeconds = 4
@@ -155,6 +155,13 @@ func TestRoomInfo_LockedMeansLockedNow(t *testing.T) {
 	start := uint64(util.RoundCountMinimum) + 1000
 	util.SetRoundCountForTest(start)
 	t.Cleanup(util.ResetRoundCountForTest)
+	return start
+}
+
+// Ruling 3: `locked` follows the door's real state: lock, unlock, and a
+// relock on its timer.
+func TestRoomInfo_LockedMeansLockedNow(t *testing.T) {
+	start := pinRelockTiming(t)
 	viewer, room := exitsFixture(t, 60)
 	north := room.Exits["north"]
 	north.Lock = gamelock.Lock{Difficulty: 5}

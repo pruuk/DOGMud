@@ -41,6 +41,10 @@ func init() {
 	events.RegisterListener(GMCPRoomUpdate{}, g.buildAndSendGMCPPayload)
 	events.RegisterListener(events.SightBandChanged{}, g.sightBandChangedHandler)
 	events.RegisterListener(events.NpcMarkersChanged{}, g.npcMarkersChangedHandler)
+	// Room.Info kept current for the touch buttons (#781): see
+	// gmcp.RoomExitsWatch.go.
+	events.RegisterListener(events.NewRound{}, g.roomExitsWatchHandler)
+	events.RegisterListener(events.RoomExitsChanged{}, g.roomExitsChangedHandler)
 
 }
 
@@ -128,6 +132,11 @@ func (g *GMCPRoomModule) despawnHandler(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
+	// The player left the game: their button ids, dark marks and the record
+	// of the last Room.Info sent go with them (#781).
+	buttons.Forget(evt.UserId)
+	forgetSentRoomExits(evt.UserId)
+
 	room := rooms.LoadRoom(evt.RoomId)
 	if room == nil {
 		return events.Continue
@@ -205,6 +214,9 @@ func (g *GMCPRoomModule) roomChangeHandler(e events.Event) events.ListenerReturn
 		return events.Continue
 	}
 
+	// Leaving a room clears its dark marks (#781, owner ruling 4).
+	buttons.ClearDarkMarks(evt.UserId)
+
 	// Send update to the moved player about their new room.
 	events.AddToQueue(GMCPRoomUpdate{
 		UserId:     evt.UserId,
@@ -250,6 +262,11 @@ func (g *GMCPRoomModule) buildAndSendGMCPPayload(e events.Event) events.Listener
 			requestedId := strings.Join(identifierParts, `.`)
 
 			payload, moduleName := g.GetRoomNode(user, requestedId)
+			// What the touch buttons were just sent, for the round watcher
+			// (gmcp.RoomExitsWatch.go).
+			if p, ok := payload.(GMCPRoomModule_Payload); ok && moduleName == `Room.Info` {
+				recordSentRoomExits(evt.UserId, roomExitsSignature(p.Id, p.Dark, p.ExitsV2, p.DarkMarks))
+			}
 
 			events.AddToQueue(GMCPOut{
 				UserId:  evt.UserId,

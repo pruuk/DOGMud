@@ -5,7 +5,6 @@ import (
 	"iter"
 	"maps"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -85,7 +84,10 @@ func KnownExits(r *Room, c *characters.Character) KnownExitList {
 // (GetDetails and Room.Info read it once for the roster too), so one call
 // asks ParticipantSight once.
 func KnownExitsAt(r *Room, c *characters.Character, sight messaging.SightDecision) KnownExitList {
-	list := KnownExitList{Exits: []KnownExit{}}
+	// Sized up front: Room.Info's round watcher builds this for every GMCP
+	// player every round, and KnownExit is large enough that growing the
+	// slice was most of the cost.
+	list := KnownExitList{Exits: make([]KnownExit, 0, len(r.Exits)+len(r.ExitsTemp))}
 	if sight == messaging.SightNone {
 		list.Dark = true
 		return list
@@ -105,7 +107,15 @@ func KnownExitsAt(r *Room, c *characters.Character, sight messaging.SightDecisio
 	for name, t := range r.ExitsTemp {
 		list.Exits = append(list.Exits, KnownExit{Name: name, Kind: ExitTemporary, RoomId: t.RoomId, Temp: t})
 	}
-	sort.SliceStable(list.Exits, func(i, j int) bool { return knownExitLess(list.Exits[i], list.Exits[j]) })
+	slices.SortStableFunc(list.Exits, func(a, b KnownExit) int {
+		if knownExitLess(a, b) {
+			return -1
+		}
+		if knownExitLess(b, a) {
+			return 1
+		}
+		return 0
+	})
 	return list
 }
 
