@@ -2003,6 +2003,11 @@ to onlookers or listeners who had not found it.
 - Heard, ruling 16: `rooms.SendTextToExitsExcluding` (`rooms.go` ~760), the
   `(From <exit>)` prefix. For a secret exit in the listener's room, a player
   who knows it reads the name, any other reads `(From nearby)`.
+- NPC archer line of fire (`behaviortree/actions_archer.go` ~237,
+  `actShootTarget` uses `room.FindExitTo`): an NPC archer chooses on its own
+  to shoot through an exit, so under ruling 13 it may shoot only through a
+  secret exit it has found (`FindKnownExitTo`). Decision taken without
+  asking (D35), from the Task 7 quality review.
 - Out of scope: `modules/aicompanion` (owner: never enabled).
 
 - [ ] **Step 1:** Re-grep every non-test line in `internal/` and `modules/`
