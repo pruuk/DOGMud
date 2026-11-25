@@ -1152,6 +1152,13 @@ html.layout-column.keyboard-open #dash-drawer {
 /* The window's title bar already names the panel and its close button docks
    it, so the panel's own header would only repeat it ("Game" twice). */
 .winbox.dash-winbox .dash-panel-head { display: none; }
+/* A popped-out panel fills its window (#942). The window's body clips what
+   it holds (overflow: hidden) and gives it no height, so a panel grew as
+   tall as everything in it: a small Comms window showed a channel's oldest
+   messages and could not scroll to the newest, the Game window hid its
+   newest lines and the Map its buttons. At the window's height each panel
+   scrolls inside itself again. */
+.winbox.dash-winbox .dash-panel { height: 100%; }
 
 /* Pop-out windows are for Layout D (wide) only; dashboard.js docks them in
    every other layout. */

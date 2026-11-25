@@ -1,5 +1,9 @@
 # DOGMud Patch Notes
 
+## 2026-11-25: Small fixes
+
+- A panel you pop out into its own window now fits it: a small Comms window shows the newest message instead of the oldest, even while you resize it.
+
 ## 2026-11-25: Commands sent quickly wait their turn
 
 - Commands you send quickly now wait in line and run one after another, a moment apart. Typing fast on telnet used to lose some of them. This covers typed commands, the web client's trigger and tick actions, and every command a macro sends.
