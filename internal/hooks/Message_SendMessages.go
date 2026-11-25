@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -89,10 +88,8 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 				}
 
 				// If this is a quiet message, make sure the player can hear it
-				if message.IsQuiet {
-					if !user.Character.HasConditionFlag(conditions.SuperHearing) {
-						continue
-					}
+				if message.IsQuiet && !user.Character.HearsQuiet() {
+					continue
 				}
 
 				textOut := templates.AnsiParse(roomMessageTextFor(message, user))

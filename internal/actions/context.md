@@ -841,11 +841,12 @@ player's copy goes out through `otherRoom.SendTextCommunication` (still
 deafen-filtered, byte-identical to before), a mob's through plain
 `otherRoom.SendText` (authored, unfiltered). Through a secret exit (#781,
 owner ruling 16) a listener who has not found it reads "Someone shouts from
-nearby" instead of the exit's name, by `Room.HeardThroughSecretExit`; a
-player's queued named line is addressed to the knowers only
-(`Room.SendTextCommunicationTo`, #781 D43), so a walk-in reads only
-"nearby", and a mob's goes per listener at once; nothing is learned. `wakeSleepers` wakes every other
-sleeper in the shouter's own room; next door is out of scope.
+nearby" instead of the exit's name, by `Room.HeardLines`, the split
+`SendTextToExitsExcluding` uses too. A player's queued named line carries
+the allow-list (`Room.SendTextCommunicationTo`, #781 D43), so a walk-in
+reads only "nearby"; a mob's goes per listener at once; nothing is learned.
+`wakeSleepers` wakes every other sleeper in the shouter's own room; next
+door is out of scope.
 
 **`room_lines.go`**: the three senders every speech and emote wrapper calls
 into, never its own room line:

@@ -1406,6 +1406,15 @@ does, on `UserId != 0`), and a player's `Base` is a gaussian roll rather than a
 species baseline, so a player corpse now reports the whole character rather than
 only its trained points. Deliberate.
 
+## Hearing quiet lines
+
+`HearsQuiet()` reports whether the character takes in a quiet line
+(`events.Message.IsQuiet`, a say's echo next door): only with the
+`superhearing` condition flag. It is the one statement of that rule: the
+delivery hook (`hooks.Message_SendMessage`), the ambient budget
+(`ambient.HearsQuiet`) and `rooms.Room.SendTextToExitsExcluding` (which
+skips a neighbour where no player hears quiet lines) all ask it.
+
 ## Mitigation System (Three Channels)
 
 The character package provides three mitigation getter methods that compute

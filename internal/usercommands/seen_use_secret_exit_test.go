@@ -211,8 +211,8 @@ func TestSeenUse_APeerTeachesBothSides(t *testing.T) {
 	})
 }
 
-// #781 (Task 5c fix round): with a plain exit and a secret exit both leading
-// back, a far-side line names the plain one and teaches nothing. Looked
+// #781, the ranked exit back: with a plain exit and a secret exit both
+// leading back, a far-side line names the plain one and teaches nothing. Looked
 // twenty times, since the old pick followed the map's random order.
 func TestSeenUse_APlainExitBackIsNamedAndTeachesNothing(t *testing.T) {
 	t.Cleanup(seedAllRegistries())

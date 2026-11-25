@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
@@ -32,6 +33,19 @@ func heardFixture(t *testing.T, secret bool) (a, b *Room, kesh, mira *users.User
 	return a, b, kesh, mira
 }
 
+// giveKeenEars gives u the superhearing flag, so u hears quiet lines
+// (Character.HearsQuiet).
+func giveKeenEars(t *testing.T, u *users.UserRecord) {
+	t.Helper()
+	const keenEars = 97790
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		keenEars: {ConditionId: keenEars, Name: "Test Keen Ears", TriggerCount: 1000000,
+			Flags: []conditions.Flag{conditions.SuperHearing}},
+	}))
+	require.NoError(t, u.Character.AddCondition(keenEars, true))
+	require.True(t, u.Character.HearsQuiet(), "fixture: keen ears")
+}
+
 // readersOf is the text each of uids reads of the RoomId messages queued for
 // roomId: every message that does not exclude them.
 func readersOf(roomId int, uids ...int) map[int][]string {
@@ -51,6 +65,7 @@ func readersOf(roomId int, uids ...int) map[int][]string {
 // existing exclude list rides on both lines.
 func TestSendTextToExits_ASecretExitReadsNearbyToAStranger(t *testing.T) {
 	a, _, kesh, mira := heardFixture(t, true)
+	giveKeenEars(t, mira) // so the quiet line is not skipped as unheard
 
 	a.SendTextToExits("You hear someone talking.", true, 555)
 	msgs := events.DrainQueuedRoomMessagesForTest(3291)
@@ -80,27 +95,69 @@ func TestSendTextToExits_ASecretExitReadsNearbyToAStranger(t *testing.T) {
 func TestSendTextToExits_AnOrdinaryExitReadsItsNameForEveryone(t *testing.T) {
 	a, _, kesh, mira := heardFixture(t, false)
 
-	a.SendTextToExits("You hear someone talking.", true)
+	a.SendTextToExits("You hear someone talking.", false)
 	got := readersOf(3291, kesh.UserId, mira.UserId)
 	want := []string{`(From <ansi fg="exit">crack</ansi>) You hear someone talking.`}
 	require.Equal(t, want, got[kesh.UserId])
 	require.Equal(t, want, got[mira.UserId])
 }
 
-// The split itself: knowers and strangers at a secret exit; nothing at an
-// ordinary one, where no listener is looked at.
-func TestHeardThroughSecretExit(t *testing.T) {
+// The split itself takes the exit's own secret flag: knowers and strangers
+// at a secret exit; nothing at an ordinary one, where no listener is looked
+// at. HeardLines turns it into the lines to send.
+func TestHeardThroughExit(t *testing.T) {
 	_, b, kesh, mira := heardFixture(t, true)
-	knowers, strangers, secret := b.HeardThroughSecretExit("crack")
+	crack, ok := b.FirstExitTo(3290)
+	require.True(t, ok)
+	require.Equal(t, ExitTo{Key: "crack", Name: "crack", Secret: true}, crack)
+	knowers, strangers, secret := b.HeardThroughExit(crack)
 	require.True(t, secret)
 	require.Equal(t, []int{kesh.UserId}, knowers)
 	require.Equal(t, []int{mira.UserId}, strangers)
+	require.Equal(t, []HeardLine{
+		{Text: "NAMED", Only: []int{kesh.UserId}, Exclude: []int{9, mira.UserId}},
+		{Text: "NEARBY", Exclude: []int{9, kesh.UserId}},
+	}, b.HeardLines(crack, "NAMED", "NEARBY", []int{9}))
 
 	_, b, _, _ = heardFixture(t, false)
-	knowers, strangers, secret = b.HeardThroughSecretExit("crack")
+	crack, _ = b.FirstExitTo(3290)
+	knowers, strangers, secret = b.HeardThroughExit(crack)
 	require.False(t, secret)
 	require.Nil(t, knowers)
 	require.Nil(t, strangers)
+	require.Equal(t, []HeardLine{{Text: "NAMED", Exclude: []int{9}}}, b.HeardLines(crack, "NAMED", "NEARBY", []int{9}))
+}
+
+// The split runs on the exit's own flag, not on the printed name: a
+// temporary exit back whose title happens to equal a secret exit's key is
+// still an ordinary way back, heard by name by everyone.
+func TestHeardLines_ATemporaryExitTitledLikeASecretExitIsOrdinary(t *testing.T) {
+	a, b, kesh, mira := heardFixture(t, true)
+	delete(b.Exits, "crack")
+	b.Exits["crack"] = exit.RoomExit{RoomId: 3299, Secret: true} // a secret exit elsewhere
+	b.ExitsTemp = map[string]exit.TemporaryRoomExit{"rift-9": {RoomId: 3290, Title: "crack"}}
+
+	a.SendTextToExits("You hear someone talking.", false)
+	got := readersOf(3291, kesh.UserId, mira.UserId)
+	want := []string{`(From <ansi fg="exit">crack</ansi>) You hear someone talking.`}
+	require.Equal(t, want, got[kesh.UserId])
+	require.Equal(t, want, got[mira.UserId], "a temporary exit is never secret, whatever its title")
+}
+
+// A quiet line is skipped for a neighbour where no player hears quiet lines
+// (Character.HearsQuiet, the delivery hook's rule): nothing is queued and no
+// split is done. With a keen-eared listener there, it goes as before.
+func TestSendTextToExits_AQuietLineSkipsARoomNobodyHears(t *testing.T) {
+	a, _, kesh, _ := heardFixture(t, true)
+	a.SendTextToExits("You hear someone talking.", true)
+	require.Empty(t, events.DrainQueuedRoomMessagesForTest(3291), "nobody next door hears quiet lines")
+
+	giveKeenEars(t, kesh)
+	a.SendTextToExits("You hear someone talking.", true)
+	require.NotEmpty(t, events.DrainQueuedRoomMessagesForTest(3291), "a keen-eared listener is there")
+
+	a.SendTextToExits("A bell rings.", false)
+	require.NotEmpty(t, events.DrainQueuedRoomMessagesForTest(3291), "a line that is not quiet always goes")
 }
 
 // #781: with a plain exit and a secret exit both leading back, every line
@@ -120,7 +177,7 @@ func TestFindExitTo_APlainExitBackBeatsASecretOne(t *testing.T) {
 		{Key: "crack", Name: "crack", Secret: true},
 	}, b.ExitsTo(3290))
 
-	a.SendTextToExits("You hear someone talking.", true)
+	a.SendTextToExits("You hear someone talking.", false)
 	got := readersOf(3291, kesh.UserId, mira.UserId)
 	want := []string{`(From <ansi fg="exit">south</ansi>) You hear someone talking.`}
 	require.Equal(t, want, got[kesh.UserId], "one line per room, naming the plain exit")
@@ -129,6 +186,29 @@ func TestFindExitTo_APlainExitBackBeatsASecretOne(t *testing.T) {
 	b.ExitsTemp = map[string]exit.TemporaryRoomExit{"rift-1": {RoomId: 3290, Title: "shimmering rift"}}
 	delete(b.Exits, "south")
 	require.Equal(t, "shimmering rift", b.FindExitTo(3290), "a temporary exit beats a secret one and prints its title")
+}
+
+// A mutator whose spec is unknown (a content typo) has a nil spec; the exit
+// readers skip it rather than panic.
+func TestExitReaders_SkipAMutatorWithNoSpec(t *testing.T) {
+	here := &Room{RoomId: 3297, Zone: "SpeclessZone", Exits: map[string]exit.RoomExit{"north": {RoomId: 3298}},
+		Mutators: mutators.MutatorList{{MutatorId: "no-such-mutator"}}}
+	there := &Room{RoomId: 3298, Zone: "SpeclessZone", Exits: map[string]exit.RoomExit{"south": {RoomId: 3297}},
+		Mutators: mutators.MutatorList{{MutatorId: "no-such-mutator"}}}
+	t.Cleanup(SeedRoomsForTest(map[int]*Room{3297: here, 3298: there},
+		map[string]*ZoneConfig{"SpeclessZone": {Name: "SpeclessZone", RoomId: 3297}}))
+	n := 0
+	for range here.ActiveMutators {
+		n++
+	}
+	require.Equal(t, 1, n, "premise: the specless mutator is active")
+
+	info, ok := here.GetExitInfo("north")
+	require.True(t, ok)
+	require.Equal(t, 3298, info.RoomId)
+	visited := map[int]string{}
+	here.ForEachAdjacentRoom(func(other *Room, back ExitTo) { visited[other.RoomId] = back.Name })
+	require.Equal(t, map[int]string{3298: "south"}, visited)
 }
 
 // The fast path keeps ExitsTo's A to Z tie-break among plain exits.
@@ -159,7 +239,8 @@ func TestFindExitTo_AMutatorExitTakesThePlaceOfTheRoomExit(t *testing.T) {
 }
 
 // FindKnownExitTo answers a temporary exit by its key, the word `go` and
-// `shoot` match, never its title (#781 Task 5c, the archer's line of fire).
+// `shoot` match, never its title, so an NPC heading there or an archer
+// shooting there can name it in a command (#781).
 func TestFindKnownExitTo_ATemporaryExitAnswersItsKey(t *testing.T) {
 	t.Cleanup(keywords.SeedKeywordsForTest())
 	r := &Room{RoomId: 3292, ExitsTemp: map[string]exit.TemporaryRoomExit{

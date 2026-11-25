@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -68,31 +69,22 @@ func Shout(actor Actor, text string) ShoutResult {
 	//
 	// #781 ruling 16: through a secret exit, a listener who has not found it
 	// hears "Someone shouts from nearby" and learns nothing; one who has
-	// reads the exit's name (Room.HeardThroughSecretExit); an ordinary exit
-	// sends one line. A player's queued line names the exit only to the
-	// knowers (an allow-list, so a walk-in reads only "nearby"); a mob's
-	// goes per listener at once, so leaving out the strangers is exact.
-	room.ForEachAdjacentRoom(func(otherRoom *rooms.Room, sourceExit string) {
-		send := func(far string, only, exclude []int) {
+	// reads the exit's name; an ordinary exit sends one line
+	// (Room.HeardLines). A player's queued line carries the allow-list, so a
+	// walk-in reads only "nearby"; a mob's goes per listener at once, where
+	// the line's excludes are exact.
+	room.ForEachAdjacentRoom(func(otherRoom *rooms.Room, back rooms.ExitTo) {
+		for _, line := range otherRoom.HeardLines(back,
+			fmt.Sprintf(`Someone shouts from the <ansi fg="exit">%s</ansi> direction, "<ansi fg="%s">%s</ansi>"`,
+				back.Name, textColor, text),
+			fmt.Sprintf(`Someone shouts from %s, "<ansi fg="%s">%s</ansi>"`,
+				rooms.HeardFromNearby, textColor, text),
+			nil) {
 			if actor.IsPlayer() {
-				otherRoom.SendTextCommunicationTo(far, only, append(exclude, actor.GetUserId())...)
-				return
+				otherRoom.SendTextCommunicationTo(line.Text, line.Only, slices.Concat(line.Exclude, []int{actor.GetUserId()})...)
+				continue
 			}
-			otherRoom.SendText(messaging.CategoryShout, far, exclude...)
-		}
-		named := fmt.Sprintf(`Someone shouts from the <ansi fg="exit">%s</ansi> direction, "<ansi fg="%s">%s</ansi>"`,
-			sourceExit, textColor, text)
-		knowers, strangers, secret := otherRoom.HeardThroughSecretExit(sourceExit)
-		if !secret {
-			send(named, nil, nil)
-			return
-		}
-		if len(knowers) > 0 {
-			send(named, knowers, strangers)
-		}
-		if len(strangers) > 0 {
-			send(fmt.Sprintf(`Someone shouts from %s, "<ansi fg="%s">%s</ansi>"`,
-				rooms.HeardFromNearby, textColor, text), nil, knowers)
+			otherRoom.SendText(messaging.CategoryShout, line.Text, line.Exclude...)
 		}
 	})
 

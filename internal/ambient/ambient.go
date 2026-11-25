@@ -17,7 +17,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -116,11 +115,11 @@ func Sees(room *rooms.Room) func(*users.UserRecord) bool {
 }
 
 // HearsQuiet is the Perceives for a quiet line (a say's echo next door):
-// the delivery hook gives a quiet message only to a player with the
-// superhearing flag (hooks/Message_SendMessages.go), so only such a player
-// takes it in and is charged.
+// the delivery hook gives a quiet message only to a player who hears quiet
+// lines (Character.HearsQuiet, the one rule), so only such a player takes it
+// in and is charged.
 func HearsQuiet(u *users.UserRecord) bool {
-	return u.Character.HasConditionFlag(conditions.SuperHearing)
+	return u.Character.HearsQuiet()
 }
 
 // budgetWindow is the budget window in rounds for a room in zone: the knob

@@ -87,6 +87,9 @@ func relocateWatchersVia(t *testing.T, sneaking bool, out, back string) (fromMsg
 	ew.Character.RoomId = exitRoom
 	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{fromWatcher: fw, toWatcher: tw, exitWatcher: ew})
 	defer cleanupUsers()
+	// "You hear someone moving around." is a quiet line, queued only for a
+	// room where someone hears quiet lines.
+	giveKeenEars(t, ew.Character)
 
 	m := &mobs.Mob{InstanceId: instId, Character: *characters.New()}
 	m.Character.Name = "Prowler"

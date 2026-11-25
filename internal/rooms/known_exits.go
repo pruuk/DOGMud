@@ -1,8 +1,10 @@
 package rooms
 
 import (
+	"cmp"
 	"iter"
 	"maps"
+	"slices"
 	"sort"
 	"strings"
 
@@ -248,13 +250,27 @@ func (r *Room) ExitsTo(roomId int) []ExitTo {
 			ways = append(ways, ExitTo{Key: key, Name: name, Temporary: true})
 		}
 	}
-	sort.Slice(ways, func(i, j int) bool {
-		if ri, rj := exitToRank(ways[i]), exitToRank(ways[j]); ri != rj {
-			return ri < rj
+	slices.SortFunc(ways, func(a, b ExitTo) int {
+		if c := cmp.Compare(exitToRank(a), exitToRank(b)); c != 0 {
+			return c
 		}
-		return ways[i].Key < ways[j].Key
+		return cmp.Compare(a.Key, b.Key)
 	})
 	return ways
+}
+
+// FirstExitTo is the first of ExitsTo, the way from r to roomId a line names,
+// and false when no exit leads there. When only plain room exits lead there it
+// is found without building the list (plainExitTo), since FindExitTo, built on
+// it, runs on every mob step.
+func (r *Room) FirstExitTo(roomId int) (ExitTo, bool) {
+	if name, ok := r.plainExitTo(roomId); ok {
+		return ExitTo{Key: name, Name: name}, name != ""
+	}
+	if ways := r.ExitsTo(roomId); len(ways) > 0 {
+		return ways[0], true
+	}
+	return ExitTo{}, false
 }
 
 // FindKnownExitTo is FindExitTo among the exits char knows (ExitKnownTo): the
@@ -264,7 +280,7 @@ func (r *Room) ExitsTo(roomId int) []ExitTo {
 // 13). Every caller puts the answer in a command (`go <exit>`, `shoot
 // <target> <exit>`), so a temporary exit answers with its key, which is what
 // those commands match, never its Title: a rift's title ("x-7 rift") or a
-// coloured portal title matches nothing (#781, Task 5c). The pick is the
+// coloured portal title matches nothing. The pick is the
 // first of ExitsTo that char knows: plain, then temporary, then a found
 // secret exit.
 func (r *Room) FindKnownExitTo(char *characters.Character, roomId int) string {
@@ -281,25 +297,56 @@ func (r *Room) FindKnownExitTo(char *characters.Character, roomId int) string {
 // nearby)", "Someone shouts from nearby" (#781, owner ruling 16).
 const HeardFromNearby = `nearby`
 
-// HeardThroughSecretExit splits the players in r for a sound that came
-// through exitName of r (#781, owner ruling 16): knowers read the exit's name,
+// HeardThroughExit splits the players in r for a sound that came through
+// way, an exit of r (#781, owner ruling 16): knowers read the exit's name,
 // strangers read HeardFromNearby, and nothing is learned from hearing. It is
-// the one split for every heard line: a sender that sends one message per room
-// excludes by it, and the GMCP shout sender reads it per listener. secret is
-// false when exitName is not a secret
-// exit, and then nothing is split: everyone reads the name, and the check
-// costs one exit lookup, with no work per listener.
-func (r *Room) HeardThroughSecretExit(exitName string) (knowers, strangers []int, secret bool) {
-	if !r.IsSecretExit(exitName) {
+// the one split for every heard line; a sender asks it once per room
+// (HeardLines, the GMCP shout sender). secret is way.Secret: an ordinary exit
+// splits nothing, everyone reads the name, and no listener is looked at.
+func (r *Room) HeardThroughExit(way ExitTo) (knowers, strangers []int, secret bool) {
+	if !way.Secret {
 		return nil, nil, false
 	}
 	for _, uid := range r.GetPlayers() {
 		u := users.GetByUserId(uid)
-		if u != nil && r.ExitKnownTo(u.Character, exitName) {
+		if u != nil && r.ExitKnownTo(u.Character, way.Key) {
 			knowers = append(knowers, uid)
 		} else {
 			strangers = append(strangers, uid)
 		}
 	}
 	return knowers, strangers, true
+}
+
+// HeardLine is one line of a sound heard in a room through an exit
+// (HeardLines): its text, the allow-list (events.Message.OnlyUserIds; nil for
+// everyone) and the players it leaves out.
+type HeardLine struct {
+	Text    string
+	Only    []int
+	Exclude []int
+}
+
+// HeardLines is the lines a sound heard in r through way becomes (#781, owner
+// ruling 16), each carrying exclude. Through an ordinary exit: named, for
+// everyone. Through a secret one: named for the players who found it (Only,
+// and Exclude leaves out the rest, for a sender that sends per player at
+// once) and nearby for everyone else (Exclude leaves out the knowers), each
+// only when someone in the room reads it. A sender queued for later delivery
+// sets Only as the message's allow-list, so a player who walks in before
+// delivery can read only the nearby line. It is the one split of every heard
+// sender: SendTextToExitsExcluding and actions.Shout.
+func (r *Room) HeardLines(way ExitTo, named, nearby string, exclude []int) []HeardLine {
+	knowers, strangers, secret := r.HeardThroughExit(way)
+	if !secret {
+		return []HeardLine{{Text: named, Exclude: exclude}}
+	}
+	var lines []HeardLine
+	if len(knowers) > 0 {
+		lines = append(lines, HeardLine{Text: named, Only: knowers, Exclude: slices.Concat(exclude, strangers)})
+	}
+	if len(strangers) > 0 {
+		lines = append(lines, HeardLine{Text: nearby, Exclude: slices.Concat(exclude, knowers)})
+	}
+	return lines
 }

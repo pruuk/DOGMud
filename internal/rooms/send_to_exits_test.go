@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // SendTextToExitsExcluding asks for the excludes once per neighbouring room
@@ -17,6 +18,14 @@ func TestSendTextToExitsExcluding_PerNeighbourExcludes(t *testing.T) {
 	c := &Room{RoomId: 3192, Exits: map[string]exit.RoomExit{"west": {RoomId: 3190}}}
 	defer SeedRoomsForTest(map[int]*Room{3190: a, 3191: b, 3192: c}, map[string]*ZoneConfig{})()
 	defer events.DrainAllQueuedEventsForTest()
+	// A keen-eared listener in each neighbour, since a quiet line skips a
+	// room where nobody hears quiet lines.
+	hb, hc := users.NewTestUser(97761, "hb", "Hb", 97761), users.NewTestUser(97762, "hc", "Hc", 97762)
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{97761: hb, 97762: hc}))
+	b.AddPlayer(97761)
+	c.AddPlayer(97762)
+	giveKeenEars(t, hb)
+	giveKeenEars(t, hc)
 
 	asked := map[int]int{}
 	a.SendTextToExitsExcluding("You hear someone talking.", true, func(tgt *Room) []int {

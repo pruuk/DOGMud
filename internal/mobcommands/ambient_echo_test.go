@@ -52,7 +52,13 @@ func TestAmbientSayEcho_NeighbourWithoutSuperhearingIsNotCharged(t *testing.T) {
 		t.Fatal("fixture: user 2 must not hold the superhearing flag")
 	}
 	TryCommand("ambient", "mob_chatter say Fresh bread!", 100)
-	echoTo(t, 2)
+	// The echo is quiet and nobody in room 2 hears quiet lines, so it is
+	// not queued there at all (Room.SendTextToExitsExcluding).
+	for _, m := range events.DrainQueuedRoomMessagesForTest(2) {
+		if strings.Contains(m.Text, "You hear someone talking.") {
+			t.Fatalf("a quiet echo was queued for a room where nobody hears it: %+v", m)
+		}
+	}
 	if !ambient.AllHaveBudget(rooms.LoadRoom(2)) {
 		t.Fatal("user 2 cannot hear the quiet echo and must not be charged for it")
 	}

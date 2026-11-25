@@ -13,7 +13,7 @@ import (
 // (sorted) alongside how many times each was visited.
 func visitedFrom(r *Room) ([]int, map[int]int) {
 	counts := map[int]int{}
-	r.ForEachAdjacentRoom(func(otherRoom *Room, sourceExit string) {
+	r.ForEachAdjacentRoom(func(otherRoom *Room, _ ExitTo) {
 		counts[otherRoom.RoomId]++
 	})
 	ids := make([]int, 0, len(counts))
@@ -82,13 +82,13 @@ func TestForEachAdjacentRoom(t *testing.T) {
 		defer cleanup()
 
 		got := map[int]string{}
-		origin.ForEachAdjacentRoom(func(otherRoom *Room, sourceExit string) {
-			got[otherRoom.RoomId] = sourceExit
+		origin.ForEachAdjacentRoom(func(otherRoom *Room, back ExitTo) {
+			got[otherRoom.RoomId] = back.Name
 		})
 
 		require.Contains(t, got, 2)
 		assert.Equal(t, "south", got[2],
-			"sourceExit must name the exit leading back to the origin, not the outbound one")
+			"the exit back must be the one leading back to the origin, not the outbound one")
 	})
 
 	// A room wired through two sources must not be shouted at twice.

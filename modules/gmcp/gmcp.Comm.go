@@ -246,18 +246,18 @@ func shoutDeliveries(evt events.Communication, base GMCPCommModule_Payload) []co
 		return nil
 	}
 	deliveries := sayDeliveries(evt, base)
-	room.ForEachAdjacentRoom(func(other *rooms.Room, sourceExit string) {
+	room.ForEachAdjacentRoom(func(other *rooms.Room, back rooms.ExitTo) {
 		// #781 ruling 16: through a secret exit a listener who has not
 		// found it reads "nearby", as the game text does. Split once per
 		// room; an ordinary exit does no per-listener work.
-		knowers, _, secret := other.HeardThroughSecretExit(sourceExit)
+		knowers, _, secret := other.HeardThroughExit(back)
 		for _, uid := range other.GetPlayers() {
 			u := users.GetByUserId(uid)
 			if u == nil || (evt.SourceUserId > 0 && u.Deafened) {
 				continue
 			}
 			p := base
-			heard := sourceExit
+			heard := back.Name
 			if secret && !slices.Contains(knowers, uid) {
 				heard = rooms.HeardFromNearby
 			}

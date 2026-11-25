@@ -1,9 +1,9 @@
 package rooms
 
 // ForEachAdjacentRoom visits every room reachable from r through any exit
-// source — standard exits, temporary exits, and exits contributed by active
-// room mutators — invoking fn with that room and the name of the exit leading
-// back to r.
+// source (standard exits, temporary exits, and exits contributed by active
+// room mutators), invoking fn with that room and the exit there leading back
+// to r.
 //
 // This exists because "walk everything adjacent" was hand-rolled per caller,
 // and the copies drifted: usercommands/shout.go walked all three sources while
@@ -12,12 +12,15 @@ package rooms
 //
 // Rooms reachable through more than one source are visited once. Callers that
 // need the room's own exit set (rather than the way back to r) should walk
-// r.Exits directly — this helper is for outward sound/effect propagation.
+// r.Exits directly; this helper is for outward sound/effect propagation.
 //
-// sourceExit is FindExitTo's ranked pick (#781): a plain exit back beats a
+// back is FirstExitTo's ranked pick (#781): a plain exit back beats a
 // temporary one and both beat a secret one, so two exits back give one visit
-// naming one exit. SendTextToExitsExcluding is built on it too.
-func (r *Room) ForEachAdjacentRoom(fn func(otherRoom *Room, sourceExit string)) {
+// naming one exit. It carries the exit's key, the name a line prints (a
+// temporary exit's title) and whether it is secret, so a heard line splits on
+// the exit itself (HeardLines), never on a printed name.
+// SendTextToExitsExcluding is built on it too.
+func (r *Room) ForEachAdjacentRoom(fn func(otherRoom *Room, back ExitTo)) {
 
 	seen := map[int]struct{}{}
 
@@ -34,15 +37,15 @@ func (r *Room) ForEachAdjacentRoom(fn func(otherRoom *Room, sourceExit string)) 
 			return
 		}
 
-		// Only propagate where there is a way back — a one-way exit into r
+		// Only propagate where there is a way back: a one-way exit into r
 		// gives the far room no direction to attribute the sound to.
-		sourceExit := otherRoom.FindExitTo(r.RoomId)
-		if sourceExit == `` {
+		back, ok := otherRoom.FirstExitTo(r.RoomId)
+		if !ok {
 			return
 		}
 
 		seen[roomId] = struct{}{}
-		fn(otherRoom, sourceExit)
+		fn(otherRoom, back)
 	}
 
 	for _, exitInfo := range r.Exits {
@@ -55,6 +58,9 @@ func (r *Room) ForEachAdjacentRoom(fn func(otherRoom *Room, sourceExit string)) 
 
 	for mut := range r.ActiveMutators {
 		spec := mut.GetSpec()
+		if spec == nil {
+			continue
+		}
 		for _, exitInfo := range spec.Exits {
 			visit(exitInfo.RoomId)
 		}

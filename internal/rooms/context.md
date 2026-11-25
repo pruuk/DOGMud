@@ -97,12 +97,15 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   which asks `exclude` once per such neighbour and puts its answer on that
   room's messages only; an ambient say's echo uses it to leave out each
   neighbour's over-budget listeners (#317, `actions.MobActor.EchoExclude`).
-  When the neighbour's exit back is secret (#781, owner ruling 16) it asks
-  `HeardThroughSecretExit(exitName)` and sends two messages: the named line
-  addressed to the players there who know the exit
-  (`events.Message.OnlyUserIds`, #781 D43, so a stranger who walks in before
-  delivery cannot read it), `(From nearby) ` to everyone else (excluding the
-  knowers), each only when someone reads it.
+  The neighbours and their exit back come from `ForEachAdjacentRoom`, whose
+  callback gets the `ExitTo` (key, printed name, secret flag). A quiet line
+  skips a neighbour where no player hears quiet lines
+  (`Character.HearsQuiet`, the delivery hook's rule) before any split. The
+  lines are `HeardLines(back, named, nearby, exclude)` (#781, owner ruling
+  16): through a secret exit back, the named line addressed to the players
+  there who know it (`events.Message.OnlyUserIds`, #781 D43, so a stranger
+  who walks in before delivery cannot read it) and `(From nearby) ` to
+  everyone else (excluding the knowers), each only when someone reads it.
   `SendTextCommunicationTo(txt, onlyUserIds, excludeUserIds...)` is
   `SendTextCommunication` with that allow-list (a player's shout next door
   naming a secret exit). An ordinary exit costs one `IsSecretExit` lookup and
@@ -982,19 +985,22 @@ needs (the ruling 14 and 15 snapshots).
 
 A sound heard through a secret exit (#781, owner ruling 16) names it only to
 a listener who has found it; any other reads `HeardFromNearby`, "nearby".
-`HeardThroughSecretExit(name)` returns `(knowers, strangers []int, secret
-bool)` over the players in the room, the one split for every heard line: a
-sender that sends one message per room excludes by it
-(`SendTextToExitsExcluding`, `actions.Shout`), and the GMCP shout sender reads
-it once per room; `secret` false means nothing is split and no per-listener
-work was done.
+`HeardThroughExit(way ExitTo)` returns `(knowers, strangers []int, secret
+bool)` over the players in the room, splitting on the exit's own secret flag
+(never on a printed name); `secret` false means nothing is split and no
+listener was looked at. `HeardLines(way, named, nearby, exclude)` turns it
+into the lines to send (`HeardLine{Text, Only, Exclude}`), the one split of
+every heard sender (`SendTextToExitsExcluding`, `actions.Shout`); the GMCP
+shout sender reads `HeardThroughExit` once per room. `FirstExitTo(roomId)`
+is the first of `ExitsTo` as an `ExitTo` (with `FindExitTo`'s fast path);
+`FindExitTo` prints its name.
 
 The room render's tracking line ("Tracking X... They went <exit>",
 `GetDetails` `TrackingString`) reads the trail through `findMobExit` and
 `findUserExit`, which take the viewer as the tracker and look only among the
 exits it knows (`PermanentExitsKnownTo`, #781 owner ruling 17): a secret exit
 it found carries the trail, one it has not loses it. `findUserExit` reads the
-player visitors (it read the mob visitors until the Task 5c fix round).
+player visitors of the rooms next door; `findMobExit` reads the mob visitors.
 
 `ExitsTo(roomId)` is every exit leading to a room, ranked: plain room or
 mutator exit, then temporary, then secret, A to Z by key within each, as

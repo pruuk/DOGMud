@@ -741,52 +741,48 @@ func (r *Room) SendTextToExits(txt string, isQuiet bool, excludeUserIds ...int) 
 // listeners over their ambient budget in each room (#317). Each line starts
 // "(From <exit>)", the exit of the neighbour leading back here; when that exit
 // is secret, a listener who has not found it reads "(From nearby)" instead
-// (#781, owner ruling 16, HeardThroughSecretExit). Hearing teaches nothing.
+// (#781, owner ruling 16, HeardLines). Hearing teaches nothing. A quiet line
+// skips a neighbour where no player hears quiet lines (Character.HearsQuiet).
 func (r *Room) SendTextToExitsExcluding(txt string, isQuiet bool, exclude func(tgt *Room) []int) {
 
 	// One line per neighbouring room, naming the ranked exit back
 	// (ForEachAdjacentRoom, FindExitTo): two exits back used to send two
 	// lines, and the map order could pick a secret one over a plain one.
-	r.ForEachAdjacentRoom(func(tgtRoom *Room, exitName string) {
-		ex := exclude(tgtRoom)
-		named := fmt.Sprintf(`(From <ansi fg="exit">%s</ansi>) `, exitName) + txt + "\n"
-
-		// #781 ruling 16: through a secret exit, a listener who has not
-		// found it reads "(From nearby)"; one who has reads the name. Two
-		// messages with complementary excludes. An ordinary exit costs one
-		// lookup here and reads its name for everyone, as always.
-		knowers, strangers, secret := tgtRoom.HeardThroughSecretExit(exitName)
-		if !secret {
-			events.AddToQueue(events.Message{
-				RoomId:         tgtRoom.RoomId,
-				Text:           named,
-				IsQuiet:        isQuiet,
-				ExcludeUserIds: ex,
-			})
+	r.ForEachAdjacentRoom(func(tgtRoom *Room, back ExitTo) {
+		// A quiet line reaches only a player who hears quiet lines (the
+		// delivery hook's rule, Character.HearsQuiet): a room with none is
+		// skipped before any split.
+		if isQuiet && !tgtRoom.anyoneHearsQuiet() {
 			return
 		}
-		// Each half only when someone reads it, so a room with no knower is
-		// never sent the name at all. The named half is addressed to the
-		// knowers only (OnlyUserIds, D43), so a stranger who walks in before
-		// delivery can read only "nearby".
-		if len(knowers) > 0 {
+
+		// #781 ruling 16: through a secret exit, a listener who has not
+		// found it reads "(From nearby)"; one who has reads the name, and a
+		// walk-in can read only "nearby" (HeardLines, OnlyUserIds).
+		for _, line := range tgtRoom.HeardLines(back,
+			fmt.Sprintf(`(From <ansi fg="exit">%s</ansi>) `, back.Name)+txt+"\n",
+			`(From `+HeardFromNearby+`) `+txt+"\n",
+			exclude(tgtRoom)) {
 			events.AddToQueue(events.Message{
 				RoomId:         tgtRoom.RoomId,
-				Text:           named,
+				Text:           line.Text,
 				IsQuiet:        isQuiet,
-				ExcludeUserIds: ex,
-				OnlyUserIds:    knowers,
-			})
-		}
-		if len(strangers) > 0 {
-			events.AddToQueue(events.Message{
-				RoomId:         tgtRoom.RoomId,
-				Text:           `(From ` + HeardFromNearby + `) ` + txt + "\n",
-				IsQuiet:        isQuiet,
-				ExcludeUserIds: slices.Concat(ex, knowers),
+				ExcludeUserIds: line.Exclude,
+				OnlyUserIds:    line.Only,
 			})
 		}
 	})
+}
+
+// anyoneHearsQuiet reports whether a player in r would take in a quiet line
+// (Character.HearsQuiet, the delivery hook's rule).
+func (r *Room) anyoneHearsQuiet() bool {
+	for _, uid := range r.GetPlayers() {
+		if u := users.GetByUserId(uid); u != nil && u.Character.HearsQuiet() {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *Room) SetLongTermData(key string, value any) {
@@ -1588,6 +1584,9 @@ func (r *Room) GetExitInfo(exitName string) (exitInfo exit.RoomExit, ok bool) {
 	// Do mutators first to allow for ephemeral/temporary "taking over" of exits.
 	for mut := range r.ActiveMutators {
 		spec := mut.GetSpec()
+		if spec == nil {
+			continue
+		}
 		if exitInfo, ok = spec.Exits[exitName]; ok {
 			break
 		}
@@ -2449,13 +2448,8 @@ func (r *Room) GetMobDuplicateIndex(mobInstanceId int) int {
 // so a line could name, and teach, a secret exit while a plain one also led
 // back.
 func (r *Room) FindExitTo(roomId int) string {
-	if name, ok := r.plainExitTo(roomId); ok {
-		return name
-	}
-	if ways := r.ExitsTo(roomId); len(ways) > 0 {
-		return ways[0].Name
-	}
-	return ""
+	way, _ := r.FirstExitTo(roomId)
+	return way.Name
 }
 
 // plainExitTo is FindExitTo's fast path, for every mob step: when the only
