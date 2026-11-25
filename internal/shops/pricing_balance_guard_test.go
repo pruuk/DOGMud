@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Live pricing reads its knobs from config.yaml through
@@ -25,7 +27,7 @@ func TestDefaultPricingConfig_OnlyCalledByPricingConfigFromBalance(t *testing.T)
 	scanned := 0
 	var offenders []string
 	for _, dir := range []string{"internal", "modules"} {
-		err := filepath.WalkDir(filepath.Join(repoRoot, dir), func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(filepath.Join(repoRoot, dir), func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

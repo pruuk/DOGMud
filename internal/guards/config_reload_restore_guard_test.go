@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // #720: a test that loads the shipped config with a bare configs.ReloadConfig
@@ -20,7 +22,7 @@ func TestTestsReloadTheShippedConfigOnlyThroughTheRestoringHelper(t *testing.T) 
 	bareCall := regexp.MustCompile(`\bReloadConfig\(\)`)
 	var offenders []string
 	scanned := 0
-	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+	err := util.WalkDirTolerant(".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

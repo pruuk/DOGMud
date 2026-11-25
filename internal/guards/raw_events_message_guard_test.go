@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // rawEventsMessageAllowed lists the only production files that may construct
@@ -31,11 +33,8 @@ func TestNoRawEventsMessageOutsidePipeline(t *testing.T) {
 	var outside []string
 
 	for _, root := range messagingSurfaceGoRoots {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					return nil
-				}
 				return err
 			}
 			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {

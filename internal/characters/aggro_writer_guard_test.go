@@ -27,6 +27,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // notYetSwept is EMPTY, and it must stay empty. U12b swept all 88 sites. A new
@@ -53,14 +55,8 @@ func directAggroWriters(t *testing.T) map[string][]string {
 	internalDir := internalDirForSweepGuard(t)
 	offenders := map[string][]string{}
 
-	err := filepath.Walk(internalDir, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(internalDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			if os.IsNotExist(err) {
-				// A test elsewhere can create and remove a temp file under
-				// the tree while packages test in parallel; a vanished
-				// entry has nothing to scan.
-				return nil
-			}
 			return err
 		}
 		if info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
@@ -141,14 +137,8 @@ func TestSweepGuardIsNotVacuous(t *testing.T) {
 	internalDir := internalDirForSweepGuard(t)
 
 	scanned := 0
-	err := filepath.Walk(internalDir, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(internalDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			if os.IsNotExist(err) {
-				// A test elsewhere can create and remove a temp file under
-				// the tree while packages test in parallel; a vanished
-				// entry has nothing to scan.
-				return nil
-			}
 			return err
 		}
 		if !info.IsDir() && strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "_test.go") {

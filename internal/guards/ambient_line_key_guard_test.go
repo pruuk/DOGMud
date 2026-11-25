@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // #317 repeat limit (owner 2026-10-31): every ambient line names its
@@ -58,7 +60,7 @@ func TestAmbientLineKeyGuard(t *testing.T) {
 	skip := filepath.Join(root, `internal`, `ambient`) + string(filepath.Separator)
 	scanned, found := 0, 0
 	for _, top := range []string{`internal`, `modules`} {
-		err := filepath.WalkDir(filepath.Join(root, top), func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(filepath.Join(root, top), func(path string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() || !strings.HasSuffix(path, `.go`) || strings.HasSuffix(path, `_test.go`) {
 				return err
 			}

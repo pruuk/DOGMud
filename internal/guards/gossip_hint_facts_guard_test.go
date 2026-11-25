@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"gopkg.in/yaml.v3"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Gossip breadcrumbs. A fact tagged `hint` in facts.yaml (#667 disc line) is
@@ -62,7 +64,7 @@ func loadGossipWorld(t *testing.T, world string) (map[string]gossipFact, []gossi
 		facts[f.Id] = f
 	}
 	var mobs []gossipMob
-	err = filepath.WalkDir(filepath.Join(world, "mobs"), func(path string, d os.DirEntry, err error) error {
+	err = util.WalkDirTolerant(filepath.Join(world, "mobs"), func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".yaml") {
 			return err
 		}

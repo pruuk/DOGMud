@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -41,7 +42,7 @@ func couleeRoomsSpawning(t *testing.T, mob int) []couleeRoom {
 	t.Helper()
 	var out []couleeRoom
 	root := filepath.Join(couleeWorld(t), "rooms")
-	require.NoError(t, filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+	require.NoError(t, util.WalkDirTolerant(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".yaml") {
 			return err
 		}

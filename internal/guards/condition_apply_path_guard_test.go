@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // The discriminator this guard rests on, pinned so the compiler checks it
@@ -372,14 +373,8 @@ func TestPlayerConditionsTravelTheEventPath(t *testing.T) {
 
 	for _, root := range []string{"internal", "modules"} {
 		scanned := 0
-		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		err := util.WalkTolerant(root, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					// A test elsewhere can create and remove a temp file under
-					// the tree while packages test in parallel; a vanished
-					// entry has nothing to scan.
-					return nil
-				}
 				return err
 			}
 			if info.IsDir() {

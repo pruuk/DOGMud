@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // #896: goals and shops save to disk on every change, and their ClearCache
@@ -33,7 +35,7 @@ func TestTestsThatSaveGoalsOrShopsIsolateTheirFolder(t *testing.T) {
 	var offenders []string
 	scanned := 0
 	for _, root := range []string{"internal", "modules"} {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

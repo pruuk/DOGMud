@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // #370: a siphon weapon is a spectral or cursed pull on life-force, so it must
@@ -116,7 +118,7 @@ func TestEverySiphonWeaponCarriesLifeSteal(t *testing.T) {
 	}
 
 	files := 0
-	err := filepath.Walk(filepath.Join(root, "items"), func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(filepath.Join(root, "items"), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

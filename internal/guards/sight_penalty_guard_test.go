@@ -7,13 +7,14 @@ import (
 	"go/token"
 	"io/fs"
 	"maps"
-	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Lighting plan 5b ruling (owner 2026-09-26): every opposed or difficulty
@@ -395,14 +396,10 @@ func walkProductionGoFiles() (*token.FileSet, []sightFile, error) {
 	var err error
 	fset := token.NewFileSet()
 	var files []sightFile
-	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err = util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			if os.IsNotExist(err) {
-				// A test elsewhere can create and remove a temp file under
-				// the tree while packages test in parallel; a vanished
-				// entry has nothing to scan.
-				return nil
-			}
+			// util.WalkDirTolerant has already dropped entries that vanished
+			// mid-walk (#953); anything left is a real error.
 			return err
 		}
 		if d.IsDir() {

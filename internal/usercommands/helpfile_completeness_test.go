@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // helpDataRoot walks up from the test working directory to find the
@@ -150,7 +152,7 @@ func TestHelpFileCompleteness_ModuleCommands(t *testing.T) {
 		admin        bool
 	}
 	var found []moduleCommand
-	err := filepath.WalkDir(modulesDir, func(path string, d fs.DirEntry, err error) error {
+	err := util.WalkDirTolerant(modulesDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

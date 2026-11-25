@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // KNOWN LIMITS of the template check (each is a way a real leak can pass):
@@ -125,11 +127,8 @@ func TestNoDisplayReadsRawConfig(t *testing.T) {
 	scanned := map[string]bool{}
 	fset := token.NewFileSet()
 
-	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err = util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			if os.IsNotExist(err) {
-				return nil
-			}
 			return err
 		}
 		rel, rerr := filepath.Rel(root, path)

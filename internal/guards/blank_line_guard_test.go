@@ -14,6 +14,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // The two doors this guard keeps apart, pinned so the compiler checks them.
@@ -141,11 +142,8 @@ func walkGoCalls(t *testing.T, names map[string]bool) (calls []goCall, files int
 		return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go")
 	}
 	for _, root := range blankLineScanRoots {
-		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		err := util.WalkTolerant(root, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					return nil
-				}
 				return err
 			}
 			if !info.IsDir() && isSource(path) {

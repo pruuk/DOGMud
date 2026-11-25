@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // craftRoomRenderRE matches a call to the crafting-messages room renderers.
@@ -28,11 +30,8 @@ func TestCraftRoomLinesLiveInOneBody(t *testing.T) {
 	const home = "internal/actions/craft_phase_lines.go"
 	inside := 0
 	for _, root := range messagingSurfaceGoRoots {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					return nil
-				}
 				return err
 			}
 			rel := filepath.ToSlash(path)

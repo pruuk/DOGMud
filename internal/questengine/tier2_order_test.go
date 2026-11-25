@@ -2,11 +2,12 @@ package questengine
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func runKills(t *testing.T, questId string, start string, mobs ...int) (*fullMockPlayer, *fullMockActionContext) {
@@ -78,7 +79,7 @@ func TestQuest61StartPointsAtTheBandit(t *testing.T) {
 // The reach-first flag and Pemberton's flagged opener are gone from the data.
 func TestQuest61HasNoReachFirstFlag(t *testing.T) {
 	root := "../../_datafiles/world/dogmud"
-	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+	err := util.WalkDirTolerant(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".yaml") {
 			return err
 		}

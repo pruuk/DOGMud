@@ -90,7 +90,11 @@ package main.
 
 A guard that walks or globs must prove its input is not empty (a floor on
 files scanned, or a probe it must find), so a broken path fails instead of
-passing on zero files. Keep that when adding one.
+passing on zero files. Keep that when adding one. Walk with
+`util.WalkDirTolerant` or `util.WalkTolerant`, never a bare `filepath.Walk` or
+`filepath.WalkDir`: other packages' tests remove temp folders under the repo
+while a guard walks it (#953), and `tolerant_walk_guard_test.go` enforces this
+for every `_test.go` file in the repo.
 
 ## How the tests find the repository root
 

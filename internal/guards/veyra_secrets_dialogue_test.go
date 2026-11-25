@@ -253,12 +253,14 @@ func TestVeyraQuestsAreRetired(t *testing.T) {
 	tokenRe := regexp.MustCompile(`(^|[^0-9A-Za-z_.-])(7[89]|8[0-7])-(start|end)\b`)
 	for _, dir := range []string{"quests", "dialogue", "behaviors"} {
 		root := filepath.Join("_datafiles", "world", "dogmud", dir)
-		require.NoError(t, filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		require.NoError(t, util.WalkTolerant(root, func(path string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() || !strings.HasSuffix(path, ".yaml") {
 				return err
 			}
 			b, rerr := os.ReadFile(path)
-			require.NoError(t, rerr)
+			if rerr != nil {
+				return rerr
+			}
 			if m := tokenRe.FindString(string(b)); m != "" {
 				t.Errorf("%s still names a retired quest token %q", path, strings.TrimSpace(m))
 			}

@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // The menu guard (#375 phase 0): every numbered choice renders and resolves
@@ -56,7 +58,7 @@ func menuGuardViolations(t *testing.T, roots ...string) []string {
 func menuGuardViolationsIn(t *testing.T, roots, flatRoots []string) []string {
 	var out []string
 	for _, root := range roots {
-		_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		_ = util.WalkTolerant(root, func(path string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() {
 				return nil
 			}

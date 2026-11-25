@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // House style for player text held in Go (M6 slice 2, ledger row 55): no em
@@ -130,7 +132,7 @@ func TestGoPlayerStringsHaveNoDashes(t *testing.T) {
 	root := repoRoot(t)
 	scanned := 0
 	for _, top := range []string{"internal", "modules"} {
-		err := filepath.WalkDir(filepath.Join(root, top), func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(filepath.Join(root, top), func(path string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 				return err
 			}

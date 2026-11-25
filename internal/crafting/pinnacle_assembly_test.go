@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -46,7 +47,7 @@ func loadRealRecipes(t *testing.T, root string) map[string]*RecipeSpec {
 	t.Helper()
 	out := map[string]*RecipeSpec{}
 	recipeDir := filepath.Join(root, "recipes")
-	err := filepath.Walk(recipeDir, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(recipeDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -91,7 +92,7 @@ func loadRealItemSpecs(t *testing.T, root string) map[int]*items.ItemSpec {
 	t.Helper()
 	out := map[int]*items.ItemSpec{}
 	itemDir := filepath.Join(root, "items")
-	err := filepath.Walk(itemDir, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(itemDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

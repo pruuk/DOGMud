@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // #896: a test that loads the shipped species roster with a bare
@@ -24,7 +26,7 @@ func TestTestsLoadTheSpeciesRosterOnlyThroughTheRestoringHelper(t *testing.T) {
 	var offenders []string
 	scanned := 0
 	for _, root := range []string{"internal", "modules"} {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

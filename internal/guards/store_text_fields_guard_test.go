@@ -10,6 +10,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // The Kind B stores own their text. Every condition, spell, quest-reward and recipe line is
@@ -48,14 +50,8 @@ func TestStoreTextFieldsAreReadOnlyByTheirStore(t *testing.T) {
 		inside := 0
 		exemptSeen := map[string]bool{}
 		for _, root := range messagingSurfaceGoRoots {
-			err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+			err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 				if err != nil {
-					if os.IsNotExist(err) {
-						// A test elsewhere can create and remove a temp file under
-						// the tree while packages test in parallel; a vanished
-						// entry has nothing to scan.
-						return nil
-					}
 					return err
 				}
 				if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {

@@ -12,6 +12,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // finderViewSites is every function allowed to read a bauble's text as one
@@ -318,11 +320,8 @@ func scanFinderView(fset *token.FileSet, files []finderViewFile) (calls map[stri
 func loadFinderViewFiles(fset *token.FileSet, base string, roots []string) ([]finderViewFile, error) {
 	var files []finderViewFile
 	for _, root := range roots {
-		err := filepath.WalkDir(filepath.Join(base, root), func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(filepath.Join(base, root), func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					return nil
-				}
 				return err
 			}
 			r, rerr := filepath.Rel(base, path)
