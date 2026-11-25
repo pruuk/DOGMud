@@ -1004,6 +1004,11 @@ The round driver reads Combat Phase state instead of legacy `Aggro`:
   "X flees to the <exit> exit!" line is followed by
   `actions.LearnSecretExitWatchingNow` (#781 ruling 14), so an onlooker who read
   it learns a secret exit it names; the mob's lines are `RelocateMob`'s.
+- **A mob attacked from the next room** (`NewRound_DoCombat_unified.go`,
+  not yet in combat) walks to its attacker through
+  `Room.FindKnownExitTo(defChar, atkChar.RoomId)`: a secret exit only once the
+  mob found it (#781, owner ruling 13). With no known exit it does not walk
+  and only queues its `attack`.
 - **`PackFlee`** (`MobDeath_PackFlee.go`) queues `flee` only on packmates for
   which `actions.FleeGate` returns `FleeOK`, and counts only those toward the
   scatter line. That covers the owner ruling that idle packmates stay put

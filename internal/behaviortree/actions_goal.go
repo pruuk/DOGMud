@@ -26,6 +26,7 @@ package behaviortree
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/goals"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -69,7 +70,7 @@ func RunGoalPlanner(mob *mobs.Mob, nowRound uint64) Result {
 	mob.SetTempData(goalPlannerRanRoundKey, nowRound)
 	result := invokePlannerSafely(fn, mob, currentGoal)
 	if result.Command != "" {
-		mob.Command(result.Command)
+		mob.Command(unscriptedRoute(result.Command))
 		// "Planner owns the tick" stamp: record the round on which the
 		// planner actually ISSUED a command. The idle handler reads this
 		// (goalActedRound == GetRoundCount()) to suppress its legacy idle
@@ -124,4 +125,17 @@ func translatePlannerStatus(ps planners.BTreeStatus) Result {
 		return Running
 	}
 	return Failure
+}
+
+// unscriptedRoute marks a planner's pathto as the mob's own errand, so its
+// route takes a secret exit only if the mob found it (#781, owner ruling 13).
+// Every planner command runs through RunGoalPlanner, so this is the one
+// place. A schedule's, a patrol's or a behaviour tree's pathto never comes
+// here and stays scripted.
+func unscriptedRoute(cmd string) string {
+	verb, rest, ok := strings.Cut(cmd, " ")
+	if !ok || verb != "pathto" {
+		return cmd
+	}
+	return "pathto " + mobs.PathtoFoundOnly + " " + rest
 }

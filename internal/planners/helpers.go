@@ -232,7 +232,8 @@ func pickGiftItemFromInventory(mob *mobs.Mob) *items.Item {
 // ─── Exit helpers ─────────────────────────────────────────────────────────────
 
 // pickRandomExit returns a random exit direction name from mob's current room.
-// Returns "" if the mob is nil, the room doesn't exist, or has no exits.
+// Returns "" if the mob is nil, the room doesn't exist, or has no exits the
+// mob knows (a secret exit only once found, #781).
 func pickRandomExit(mob *mobs.Mob) string {
 	if mob == nil {
 		return ""
@@ -242,8 +243,17 @@ func pickRandomExit(mob *mobs.Mob) string {
 		return ""
 	}
 	names := make([]string, 0, len(room.Exits))
-	for name := range room.Exits {
+	for name, ex := range room.Exits {
+		// The survival planner's flee is the mob's own choice, and a mob's
+		// `flee <exit>` honours a secret exit it is named: one only once found
+		// (#781, owner ruling 13). Only a secret exit asks the rule.
+		if ex.Secret && !mob.Character.KnowsSecretExit(room.RoomId, name) {
+			continue
+		}
 		names = append(names, name)
+	}
+	if len(names) == 0 {
+		return ""
 	}
 	return names[util.Rand(len(names))]
 }

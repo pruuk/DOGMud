@@ -319,6 +319,11 @@ func pickRetreatExit(mob *mobs.Mob, room *rooms.Room) string {
 		if info.Lock.IsLocked() {
 			continue
 		}
+		// A walk-away is the mob's own choice (#781, owner ruling 13). Only a
+		// secret exit asks the rule, so an open one costs nothing more.
+		if info.Secret && !mob.Character.KnowsSecretExit(room.RoomId, dir) {
+			continue
+		}
 		if homeId > 0 && info.RoomId == homeId {
 			return dir // prefer heading home
 		}

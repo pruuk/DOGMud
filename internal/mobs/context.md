@@ -355,7 +355,16 @@ gates each follower's own step, the same quote-before-issue rule every other
 mob walker now follows (`mobcommands.wander.go` passes a closure that calls
 `actions.QuoteMobStep`). A follower `canStep` refuses is left behind for that
 tick rather than dragged into a step it cannot pay for; it is not counted a
-wander failure.
+wander failure. The same closure teaches a follower a secret exit the alpha
+took (`actions.LearnSecretExitFollowing`, #781).
+
+### `PathtoFoundOnly` (`pathto.go`, #781)
+
+`PathtoFoundOnly` (`found`) is the word `mobcommands.Pathto` reads as "take
+only the secret exits this mob has found". `behaviortree.RunGoalPlanner` adds
+it to a planner's `pathto`; every other `pathto` (schedules, patrols, trees,
+idle commands, home returns, admin) is a scripted route and takes every
+secret exit (owner ruling 13).
 
 ## Conversation System Integration
 
@@ -1168,6 +1177,7 @@ Mobs with `patrol_id:` set follow waypoint patrols authored in
 | `save.go` / `instance_save.go` | Template and instance persistence |
 | `memory.go` | Memory reporting |
 | `mobs_path.go` | Pathing state (`pathto`) |
+| `pathto.go` | `PathtoFoundOnly`, the `pathto found` word for a planner's errand (#781) |
 | `schedule.go` / `schedule_loader.go` | Daily NPC schedules |
 | `patrol.go` / `patrol_loader.go` | Patrol routes |
 | `sleeper.go` | Sleep state for scheduled NPCs |

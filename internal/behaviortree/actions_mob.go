@@ -309,18 +309,19 @@ func actGoToCallerRoom(params map[string]any, ctx *EvalContext) Result {
 	if myRoom == nil {
 		return Failure
 	}
-	for exitName, info := range myRoom.Exits {
-		if info.RoomId == caller.Character.RoomId {
-			// Movement parity 4b: a tired mob fails the node so a selector
-			// falls through, rather than issuing a step it cannot pay.
-			if !actions.QuoteMobStep(self, exitName).OK() {
-				return Failure
-			}
-			self.Command(fmt.Sprintf("go %s", exitName))
-			return Success
-		}
+	// Heading to a packmate is the mob's own choice: a secret exit only if it
+	// found it (#781, owner ruling 13).
+	exitName := myRoom.FindKnownExitTo(&self.Character, caller.Character.RoomId)
+	if exitName == `` {
+		return Failure
 	}
-	return Failure
+	// Movement parity 4b: a tired mob fails the node so a selector
+	// falls through, rather than issuing a step it cannot pay.
+	if !actions.QuoteMobStep(self, exitName).OK() {
+		return Failure
+	}
+	self.Command(fmt.Sprintf("go %s", exitName))
+	return Success
 }
 
 // actSweepCompanions relocates every player-in-room's live companions to a

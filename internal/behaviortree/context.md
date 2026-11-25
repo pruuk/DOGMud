@@ -413,9 +413,9 @@ are subject to perception-scaled reaction delays (see below).
 
 | Action | Params | Description |
 |--------|--------|-------------|
-| `move` | `direction` (string) | Mob moves in direction. Movement parity 4b: `actMove` quotes the step first (`actions.QuoteMobStep`) and returns `Failure`, issuing nothing, when the mob cannot currently pay for it. `actGoToCallerRoom` (packmate-rescue navigation, `actions_mob.go`) and `actMoveTowardTracked` (scout tracking, `actions_scout.go`) quote the same way and fail the same way; before this slice all three issued a step regardless of cost. |
+| `move` | `direction` (string) | Mob moves in direction. Movement parity 4b: `actMove` quotes the step first (`actions.QuoteMobStep`) and returns `Failure`, issuing nothing, when the mob cannot currently pay for it. `actGoToCallerRoom` (packmate-rescue navigation, `actions_mob.go`; it heads through `Room.FindKnownExitTo`, so a secret exit only once the mob found it, #781 ruling 13) and `actMoveTowardTracked` (scout tracking, `actions_scout.go`) quote the same way and fail the same way; before this slice all three issued a step regardless of cost. |
 | `attack` | none | Mob attacks the triggering player; if none, picks random player in room. |
-| `flee` | none | Flee parity slice 4a: in combat, issues `flee` (the mob's `BeginFlee`/`ResolveFlee` escape, gated, costed, and blockable like a player's). Out of combat, walks instead — issues `go <dir>` via `pickRetreatExit` — because a flee out of combat now refuses; this keeps an out-of-combat authored `do: flee` (e.g. the thief's post-steal escape) working. Movement parity 4b: that walk is quoted first (`actions.QuoteMobStep`, as `move` does) and the node returns Failure, queuing nothing, when the mob cannot pay for the step. |
+| `flee` | none | Flee parity slice 4a: in combat, issues `flee` (the mob's `BeginFlee`/`ResolveFlee` escape, gated, costed, and blockable like a player's). Out of combat, walks instead — issues `go <dir>` via `pickRetreatExit` (unlocked exits the mob knows: a secret exit only once found, #781 ruling 13) — because a flee out of combat now refuses; this keeps an out-of-combat authored `do: flee` (e.g. the thief's post-steal escape) working. Movement parity 4b: that walk is quoted first (`actions.QuoteMobStep`, as `move` does) and the node returns Failure, queuing nothing, when the mob cannot pay for the step. |
 | `cast` | `spell` (string) | Mob casts the named spell. The action only starts the cast; while a mob is fold-casting in combat its round skips the `mob_combat_round` dispatch (`hooks.DoCombat` `continue`s after `handleMobFoldCasting`), so those branches wait until the cast ends. A spell with `min_cast_rounds` (#480) holds the cast open that many rounds and shows its `wait_observer` line each held round, so a boss telegraph is just the cast: its `cast_observer` line is the announce (see the crash-site discharges). Do not add a `send_room_text` beside it: that is plain `room.SendText`, which names the caster in the dark and prints even when the cast fails. |
 
 ### Combat Targeting — instant
@@ -471,7 +471,7 @@ a fold-recall landing on the anchor it stands on collapses in place).
 | Action | Params | Description |
 |--------|--------|-------------|
 | `try_fire` | none | Fire the mob's loaded ranged weapon at its current Aggro target (or CombatMemory target if Aggro just cleared). Issues `shoot <targetName>` or `shoot <targetName> <direction>` for cross-room shots. Returns Failure if no loaded weapon, the shared special-move cooldown is running (`actions.SpecialMoveReady`, which `actions.ExecuteFire` refuses a shot on: a shot waits for that timer, players and mobs alike, owner ruling 2026-10-19), no valid target, the target is not in the mob's room or one exit away, or the mob cannot see clearly into the target's room (`messaging.CanSeeClearly`, the predicate `actions.ExecuteFire` refuses a shot on as TooDarkToAim / Blinded), so the selector falls through to melee instead of spending the round on a refused shot (#265). |
-| `keep_distance` | `min_room_distance` (int, default 1) | Kiting action. If an enemy is in the mob's room, the mob is not already fleeing melee, and (flee parity slice 4a) `actions.FleeGate` does not refuse (rooted, frenzied, knocked down or grappled falls through to fighting instead), retreats toward home by issuing `flee <dir>` — a real flee, gated, costed and blockable like a player kiting archer's disengage — instead of a free `go <dir>`. `dir` still comes from `pickRetreatExit` (unlocked, home first). Returns Success on retreat, Failure if no usable exit found or the flee gate refuses. |
+| `keep_distance` | `min_room_distance` (int, default 1) | Kiting action. If an enemy is in the mob's room, the mob is not already fleeing melee, and (flee parity slice 4a) `actions.FleeGate` does not refuse (rooted, frenzied, knocked down or grappled falls through to fighting instead), retreats toward home by issuing `flee <dir>` — a real flee, gated, costed and blockable like a player kiting archer's disengage — instead of a free `go <dir>`. `dir` still comes from `pickRetreatExit` (unlocked, a secret exit only once found, home first). Returns Success on retreat, Failure if no usable exit found or the flee gate refuses. |
 
 **Archer re-engagement exemption (DoCombat hook):** A mob with a loaded
 ranged weapon and a recent `CombatMemory` entry is allowed one extra btree
@@ -1025,6 +1025,15 @@ Added in the legacy tactics-engine sunset migration:
   target_casting → trip interrupt.
 
 Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`
+
+## Goal planners and secret exits (`actions_goal.go`, #781)
+
+`RunGoalPlanner` (the `try_goal_planner` action and the idle handler's
+fallback) runs every planner command, so it is the one place a planner's
+route is marked as the mob's own errand: `unscriptedRoute` sends a planner's
+`pathto <ids>` as `pathto found <ids>` (`mobs.PathtoFoundOnly`), and that
+route takes only the secret exits the mob found (owner ruling 13). A tree's
+own `pathto`/`move` never comes here and stays scripted.
 
 ## Files
 

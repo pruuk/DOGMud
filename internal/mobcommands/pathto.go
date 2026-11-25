@@ -30,25 +30,20 @@ func Pathto(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		}
 	}
 
-	toRoomIds := []int{}
-
-	for _, roomIdStr := range util.SplitButRespectQuotes(strings.ToLower(rest)) {
-
-		if roomIdStr == `home` {
-			toRoomIds = append(toRoomIds, mob.HomeRoomId)
-			continue
-		}
-
-		if roomIdInt, err := strconv.Atoi(roomIdStr); err == nil {
-			toRoomIds = append(toRoomIds, roomIdInt)
-		}
-	}
+	toRoomIds, foundOnly := pathtoTargets(rest, mob.HomeRoomId)
 
 	if len(toRoomIds) < 1 || toRoomIds[0] == mob.Character.RoomId {
 		return true, nil
 	}
 
-	path, err := mapper.GetPath(mob.Character.RoomId, toRoomIds...)
+	// A planner's errand (`pathto found ...`) takes only the secret exits
+	// this mob found; any other pathto is a scripted route and takes them all
+	// (#781, owner ruling 13).
+	var known mapper.SecretExitKnown = mapper.AnySecretExit
+	if foundOnly {
+		known = mapper.SecretExitsKnownTo(&mob.Character)
+	}
+	path, err := mapper.GetPathKnown(mob.Character.RoomId, known, toRoomIds...)
 	if err != nil {
 		if rest == `home` {
 			mob.SetTempData(`home-impossible`, true)
@@ -73,4 +68,24 @@ func Pathto(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	mob.Path.SetPath(newPath)
 
 	return true, nil
+}
+
+// pathtoTargets reads pathto's words: room ids, `home` (homeRoomId), and
+// mobs.PathtoFoundOnly, which marks an NPC's own errand.
+func pathtoTargets(rest string, homeRoomId int) (toRoomIds []int, foundOnly bool) {
+	toRoomIds = []int{}
+	for _, roomIdStr := range util.SplitButRespectQuotes(strings.ToLower(rest)) {
+		if roomIdStr == mobs.PathtoFoundOnly {
+			foundOnly = true
+			continue
+		}
+		if roomIdStr == `home` {
+			toRoomIds = append(toRoomIds, homeRoomId)
+			continue
+		}
+		if roomIdInt, err := strconv.Atoi(roomIdStr); err == nil {
+			toRoomIds = append(toRoomIds, roomIdInt)
+		}
+	}
+	return toRoomIds, foundOnly
 }
