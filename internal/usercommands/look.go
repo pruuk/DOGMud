@@ -218,6 +218,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("You peer %s.", exit.TowardPhrase(res.ExitName)))
 		if !isSneaking {
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> peers %s.`, user.Character.Name, exit.TowardPhrase(res.ExitName)), []string{user.Character.Name}, user.UserId)
+			// #781 ruling 15: whoever saw the peer learns a secret exit.
+			actions.LearnSecretExitWatchingNow(room, res.ExitName, user.Character)
 		}
 		figures := actions.FiguresSensedIn(user.Character, rooms.LoadRoom(res.ExitRoomId), user.UserId)
 		if len(figures) == 0 {
@@ -233,6 +235,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("You peer %s.", exit.TowardPhrase(res.ExitName)))
 		if !isSneaking {
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> peers %s.`, user.Character.Name, exit.TowardPhrase(res.ExitName)), []string{user.Character.Name}, user.UserId)
+			// #781 ruling 15: whoever saw the peer learns a secret exit.
+			actions.LearnSecretExitWatchingNow(room, res.ExitName, user.Character)
 		}
 
 		lookRoom(user, res.ExitRoomId, secretLook || isSneaking)
@@ -703,6 +707,10 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 				[]string{user.Character.Name},
 				user.UserId,
 			)
+			// #781 ruling 15, the far side of a peer (as ruling 14 teaches
+			// the far side of a move): whoever saw it learns the secret exit
+			// here the line names. The one peering learns nothing by it.
+			actions.LearnSecretExitWatchingNow(room, lookFromName, user.Character)
 		}
 	}
 

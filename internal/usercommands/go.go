@@ -43,6 +43,9 @@ import (
 func unlockExit(user *users.UserRecord, room *rooms.Room, exitName string, exitInfo *exit.RoomExit, playerMsg, roomMsg string) {
 	user.SendText(messaging.CategorySystem, playerMsg)
 	room.SendTextVisual(messaging.CategoryMobEmote, roomMsg, user.UserId)
+	// #781 ruling 15: whoever saw the lock opened learns the secret exit,
+	// judged as the line was. Not the lock's sequence: that is the keyring's.
+	actions.LearnSecretExitWatchingNow(room, exitName, user.Character)
 	room.PlaySound(`change`, `other`)
 	exitInfo.Lock.SetUnlocked()
 	room.SetExitLock(exitName, false)

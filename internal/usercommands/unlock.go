@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -110,6 +111,8 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You use a key to unlock the <ansi fg="exit">%s</ansi> lock.`, exitName))
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName), user.UserId)
+			// #781 ruling 15: onlookers who saw it learn a secret exit.
+			actions.LearnSecretExitWatchingNow(room, exitName, user.Character)
 			notifyLockQuest(user, room, "unlock", ``, exitName)
 		} else if hasBackpackKey {
 
@@ -135,6 +138,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			room.SendTextVisual(messaging.CategoryMobEmote,
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName),
 				user.UserId)
+			actions.LearnSecretExitWatchingNow(room, exitName, user.Character)
 			notifyLockQuest(user, room, "unlock", ``, exitName)
 		} else {
 			user.SendText(messaging.CategoryRefusal, `You do not have the key for that. Maybe you could <ansi fg="command">picklock</ansi> the lock.`)

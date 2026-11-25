@@ -173,6 +173,11 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			Actee:    targetLine,
 			Observer: departLine,
 		}, aud)
+		// #781 ruling 15: whoever saw the shot leave learns the secret exit
+		// it crossed, judged as the line was (the room now).
+		if departLine.Text != "" {
+			actions.LearnSecretExitWatchingNow(room, result.ExitName, &mob.Character)
+		}
 
 		// Target's room sees the shot arrive. The player target is excluded
 		// -- they already got their own line from the send above -- which is
@@ -215,11 +220,18 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				arrivalTokens[movenarration.TokenExitName] = fromDir
 			}
 			roles, _ := renderMoveEvent("shoot", eventKey, ids, arrivalTokens)
+			arrivalLine := lineOrNone(messaging.CategoryHitRanged, roles.ActeeObserver)
 			messaging.SendTrio(messaging.Trio{
 				Actor:    messaging.NoLine,
 				Actee:    messaging.NoLine,
-				Observer: lineOrNone(messaging.CategoryHitRanged, roles.ActeeObserver),
+				Observer: arrivalLine,
 			}, messaging.Audience{ActorName: mob.Character.Name, ActeeId: result.TargetUserId, ActeeName: result.TargetName, Room: tr})
+			// Ruling 15 on the arrival side: whoever saw the shot come in
+			// learns the secret exit here it came through; the target, left
+			// out of that line, does not.
+			if known && arrivalLine.Text != "" {
+				actions.LearnSecretExitWatchingNow(tr, fromDir, actions.ResolveCharacter(result.TargetUserId, result.TargetMobInstanceId))
+			}
 		}
 	}
 

@@ -270,6 +270,9 @@ func clearDefuseTrap(actor Actor, room *rooms.Room, tgt defuseLockTarget) {
 					`<ansi fg="exit">%s</ansi> exit.`,
 				actor.GetName(), tgt.exitName),
 			actor.GetUserId())
+		// #781 ruling 15: whoever saw the trap disarmed learns a secret exit,
+		// judged as the line was.
+		LearnSecretExitWatchingNow(room, tgt.exitName, actor.GetCharacter())
 	}
 }
 

@@ -97,6 +97,12 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   which asks `exclude` once per such neighbour and puts its answer on that
   room's messages only; an ambient say's echo uses it to leave out each
   neighbour's over-budget listeners (#317, `actions.MobActor.EchoExclude`).
+  When the neighbour's exit back is secret (#781, owner ruling 16) it asks
+  `HeardThroughSecretExit(exitName)` and sends two messages with
+  complementary excludes: the named line to the players there who know the
+  exit, `(From nearby) ` to the rest (`HeardFromNearby`), each only when
+  someone reads it. An ordinary exit costs one `IsSecretExit` lookup and
+  sends one named line, as before. Hearing teaches nothing.
 - **Naming a creature**: `FindByNameSeenBy(viewer, name, flags...)` skips
   every creature `viewer` does not perceive (`characters.Character.Perceives`)
   before matching, so a hidden creature cannot be named and does not count
@@ -968,7 +974,16 @@ from northeast, then A to Z.
 
 `IsSecretExit(name)` reports whether a room or mutator exit is secret
 (`GetExitInfo`); a caller asks it before paying for work only a secret exit
-needs (the ruling 14 snapshots).
+needs (the ruling 14 and 15 snapshots).
+
+A sound heard through a secret exit (#781, owner ruling 16) names it only to
+a listener who has found it. `HeardExitName(listener, name)` is the
+per-listener form (the exit's name, or `HeardFromNearby`, "nearby"; the GMCP
+shout's sender uses it). `HeardThroughSecretExit(name)` returns `(knowers,
+strangers []int, secret bool)` over the players in the room, for a sender that
+sends one message per room with excludes (`SendTextToExitsExcluding`,
+`actions.Shout`); `secret` false means nothing is split and no per-listener
+work was done.
 
 The filters on the same rule: `ExitKnownTo(char, name)`,
 `FindKnownExitByName(char, search)` (every player path that names an exit;
@@ -979,7 +994,10 @@ points, ruling 13). `PermanentExitsKnownTo` is an `iter.Seq2[string,
 exit.RoomExit]` over the room and mutator exits char knows, mutators resolved
 once per call; an NPC loop that used to range over `r.Exits` (wandering, a
 walk-away, a forager's roam, the survival planner's flee) ranges over it
-instead, and `FindKnownExitTo` is built on it. Each resolves a
+instead, and `FindKnownExitTo` is built on it. `FindKnownExitTo` answers a
+temporary exit by its key, the word `go` and `shoot` match, because every
+caller puts the answer in a command (`FindExitTo` still answers the title,
+which its callers print). Each resolves a
 name through `permanentExits` (or `GetExitInfo`, the same rule) before
 `exitKnown` judges it, so a secret mutator exit over a plain room exit of the
 same name is hidden from all of them alike. The unfiltered `FindExitByName`,

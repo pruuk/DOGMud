@@ -76,6 +76,21 @@ func TestShoutDeliveries_MobShoutReachesTheDeafenedNextDoor(t *testing.T) {
 	require.Equal(t, map[int]string{9761: `Crier`, 9762: `Crier`, 9763: `Someone (south)`, 9764: `Someone (south)`}, got)
 }
 
+// #781 owner ruling 16: through a secret exit next door, a listener who has
+// not found it reads "Someone (nearby)", as the game text says "from nearby";
+// one who has found it reads the exit.
+func TestShoutDeliveries_ASecretExitReadsNearbyToAStranger(t *testing.T) {
+	shoutFixture(t)
+	there := rooms.LoadRoom(9765)
+	south := there.Exits["south"]
+	south.Secret = true
+	there.Exits["south"] = south
+	users.GetByUserId(9763).Character.LearnSecretExit(9765, "south")
+	got := shoutSenders(events.Communication{SourceMobInstanceId: 761, CommType: `shout`, Name: `Crier`, Message: `HEAR YE`})
+	require.Equal(t, map[int]string{9761: `Crier`, 9762: `Crier`, 9763: `Someone (south)`, 9764: `Someone (nearby)`}, got)
+	require.False(t, users.GetByUserId(9764).Character.KnowsSecretExit(9765, "south"), "hearing teaches nothing")
+}
+
 // A shouter still hidden after shouting is "Someone" in their own room, as
 // say does; the shouter reads their own name.
 func TestShoutDeliveries_HiddenShouterIsSomeone(t *testing.T) {

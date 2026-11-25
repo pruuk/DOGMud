@@ -287,7 +287,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		// opponent, so this belongs on the opposed seam and takes ContestFloor
 		// like every other opposed contest. Mirrors usercommands/go.go's hidden
 		// detection, which resolves the same shape of question.
-		if tgt := trackTargetCharacter(targetUserId, targetMobId); tgt != nil {
+		if tgt := ResolveCharacter(targetUserId, targetMobId); tgt != nil {
 			won := combat.RunContest(
 				CalcDetectionScore(char, room),
 				[]contest.Entry{{Score: CalcSneakScoreVsObserver(tgt, char, room)}},
@@ -375,10 +375,12 @@ func resolveTrailDetail(searchScore float64) trailDetail {
 	return d
 }
 
-// trackTargetCharacter resolves the character behind a trail so the active
-// track has something to contest against. Returns nil when the quarry is gone
-// (logged out, despawned), which the caller treats as an uncontested read.
-func trackTargetCharacter(targetUserId, targetMobId int) *characters.Character {
+// ResolveCharacter is the character behind a user id or, failing that, a mob
+// instance id: the quarry of a trail, so the active track has something to
+// contest against, or a shot's target (FireResult). Returns nil when that one
+// is gone (logged out, despawned), which the track treats as an uncontested
+// read.
+func ResolveCharacter(targetUserId, targetMobId int) *characters.Character {
 	if targetUserId > 0 {
 		if u := users.GetByUserId(targetUserId); u != nil {
 			return u.Character

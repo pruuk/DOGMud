@@ -45,6 +45,14 @@ func LearnSecretExitFollowing(c *characters.Character, room *rooms.Room, exitNam
 // twin). mover is skipped: this rule changes nothing about what the mover
 // knows. An NPC onlooker records on its own instance, as search does.
 //
+// Ruling 15 (2026-11-25) widens it from movement to any line that shows
+// someone using the exit: picking, unlocking or locking its lock, disarming
+// its trap, peering or shooting through it, a mob finding it locked. mover is
+// then the one using it, or, on the far side of a peer or a shot, the party
+// that line leaves out (a shot's target). It records the exit only
+// (Character.LearnSecretExit, the Discoveries record): a lock's sequence lives
+// on the picker's keyring (Character.SetKey) and no onlooker gets it.
+//
 // The snapshots cost light composition per occupant, so a caller on a
 // movement path takes the NPC one only when Room.IsSecretExit says it will
 // be read. A line sent live (judged by the room as it is now) uses

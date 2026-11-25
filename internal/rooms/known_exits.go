@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // ExitKind sorts an exit for the touch controls (#781): the six directions of
@@ -209,17 +210,58 @@ func (r *Room) PermanentExitsKnownTo(char *characters.Character) iter.Seq2[strin
 // exit of r that leads to roomId, or "" when the only way there is a secret
 // exit char has not found. A room exit a mutator exit has taken the place of
 // leads nowhere. An NPC heading for a room on its own uses it (owner ruling
-// 13).
+// 13). Every caller puts the answer in a command (`go <exit>`, `shoot
+// <target> <exit>`), so a temporary exit answers with its key, which is what
+// those commands match, never its Title: a rift's title ("x-7 rift") or a
+// coloured portal title matches nothing (#781, Task 5c).
 func (r *Room) FindKnownExitTo(char *characters.Character, roomId int) string {
 	for exitName, ex := range r.PermanentExitsKnownTo(char) {
 		if ex.RoomId == roomId {
 			return exitName
 		}
 	}
-	for _, ex := range r.ExitsTemp {
+	for key, ex := range r.ExitsTemp {
 		if ex.RoomId == roomId {
-			return ex.Title
+			return key
 		}
 	}
 	return ""
+}
+
+// HeardFromNearby is what a listener reads in place of the name of a secret
+// exit they have not found, for a sound that came through it: "(From
+// nearby)", "Someone shouts from nearby" (#781, owner ruling 16).
+const HeardFromNearby = `nearby`
+
+// HeardExitName is how listener, in r, names the exit exitName of r that a
+// sound came through (#781, owner ruling 16): its name, unless it is a secret
+// exit listener has not found, which reads HeardFromNearby. Nothing is learned
+// from hearing. For a sender that fans out one message per room, see
+// HeardThroughSecretExit.
+func (r *Room) HeardExitName(listener *characters.Character, exitName string) string {
+	if r.IsSecretExit(exitName) && !r.ExitKnownTo(listener, exitName) {
+		return HeardFromNearby
+	}
+	return exitName
+}
+
+// HeardThroughSecretExit splits the players in r for a sound that came
+// through exitName of r, for a sender that sends one message to the room with
+// excludes: knowers read the exit's name, strangers read HeardFromNearby (the
+// same rule as HeardExitName). secret is false when exitName is not a secret
+// exit, and then nothing is split: everyone reads the name, and the check
+// costs one exit lookup, with no work per listener.
+func (r *Room) HeardThroughSecretExit(exitName string) (knowers, strangers []int, secret bool) {
+	if !r.IsSecretExit(exitName) {
+		return nil, nil, false
+	}
+	for _, uid := range r.GetPlayers() {
+		u := users.GetByUserId(uid)
+		if u != nil && r.ExitKnownTo(u.Character, exitName) {
+			knowers = append(knowers, uid)
+		} else {
+			strangers = append(strangers, uid)
+		}
+	}
+	return knowers, strangers, true
 }

@@ -242,6 +242,13 @@ The `internal/mobcommands` package implements the AI command system for non-play
   `Room.IsSecretExit`, asked once per alpha step).
 - `pathto found` stores the flag with the path (`mob.Path.SetPath(path,
   foundOnly)`), so a displaced mob's re-path stays found-only.
+- Seen use teaches (#781, owner ruling 15): `Go`'s "tries to go the <exit>
+  exit, but it's locked." is sent through `actions.SendSeen` there and then
+  (it used to be a queued `emote` command), so the line and
+  `actions.LearnSecretExitWatchingNow` judge each onlooker at one moment. The
+  same hook follows `look`'s peer line and the far room's "is looking into
+  the room from the <exit>", and `shoot`'s `fire_depart` and
+  `arrival_known_*` lines. The mob's own record is unchanged by it.
 
 #### **Routes (`pathto.go`)**
 - `pathto <ids|home>` is a scripted route (schedules, patrols, behaviour

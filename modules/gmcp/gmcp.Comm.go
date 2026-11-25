@@ -237,7 +237,8 @@ func commSpeakerRoom(evt events.Communication) *rooms.Room {
 // shoutDeliveries is who receives a shout over GMCP (spec 2026-11-07): the
 // speaker's room as for say (by sight), and every adjacent room as
 // "Someone (<exit>)", the words the game text uses for a shout heard next
-// door. A player's shout skips deafened listeners next door, as the text
+// door ("Someone (nearby)" through a secret exit the listener has not found,
+// #781 ruling 16). A player's shout skips deafened listeners next door, as the text
 // lane does; an NPC's reaches them.
 func shoutDeliveries(evt events.Communication, base GMCPCommModule_Payload) []commDelivery {
 	room := commSpeakerRoom(evt)
@@ -252,7 +253,9 @@ func shoutDeliveries(evt events.Communication, base GMCPCommModule_Payload) []co
 				continue
 			}
 			p := base
-			p.Sender = `Someone (` + sourceExit + `)`
+			// #781 ruling 16: a secret exit this listener has not found
+			// reads "nearby", as the game text does.
+			p.Sender = `Someone (` + other.HeardExitName(u.Character, sourceExit) + `)`
 			deliveries = append(deliveries, commDelivery{UserId: uid, Payload: p})
 		}
 	})

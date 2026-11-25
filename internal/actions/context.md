@@ -468,6 +468,16 @@ shadowing is following):
 - `LearnSecretExitWatchingNow(room, exitName, mover)`: the same for a line
   sent live (judged by the room as it is now). It asks `Room.IsSecretExit`
   first and only then takes both snapshots, so an ordinary step pays nothing.
+- Owner ruling 15 (seen use teaches) calls it beside every line that shows
+  someone using a secret exit: picking (`tries to pick` included), unlocking
+  or locking its lock (`usercommands` `picklock`, `unlock`, `lock`, and
+  `go`'s `unlockExit`), disarming its trap (`clearDefuseTrap` here), peering
+  through it (both peer lines and the far room's "is looking into the room
+  from the <exit>"), a shot crossing it (`fire_depart` and the
+  `arrival_known_*` lines, player and mob), and a mob finding it locked
+  (`mobcommands.Go`). On a far-side line `mover` is the party the line leaves
+  out (a shot's target). It records the exit only: a lock's sequence is the
+  picker's keyring entry (`Character.SetKey`) and no onlooker gets it.
   Called after `RelocateMob`'s arrive line and `hooks.handlePlayerFlee`'s
   flee line.
 
@@ -828,7 +838,10 @@ then walks every adjacent room
 (`Room.ForEachAdjacentRoom`) with an anonymous line carrying the words: a
 player's copy goes out through `otherRoom.SendTextCommunication` (still
 deafen-filtered, byte-identical to before), a mob's through plain
-`otherRoom.SendText` (authored, unfiltered). `wakeSleepers` wakes every other
+`otherRoom.SendText` (authored, unfiltered). Through a secret exit (#781,
+owner ruling 16) a listener who has not found it reads "Someone shouts from
+nearby" instead of the exit's name, by `Room.HeardThroughSecretExit` and
+complementary excludes; nothing is learned. `wakeSleepers` wakes every other
 sleeper in the shouter's own room; next door is out of scope.
 
 **`room_lines.go`**: the three senders every speech and emote wrapper calls
@@ -845,7 +858,9 @@ into, never its own room line:
   filter; every other line (empty, alias, and every mob emote) goes through
   `Room.SendTextVisualHidingNames` unfiltered (owner ruling 6). A hidden
   actor's emote reaches no one (#274, owner R3, 2026-10-08): silence, not an
-  anonymous line. The player `emote` command tells its own hider so.
+  anonymous line. The player `emote` command tells its own hider so. It
+  returns whether the line went out, for a caller that acts on what
+  onlookers saw (`mobcommands.Go`'s locked-exit line, ruling 15).
 - `sendSpoken(actor, room, cat, line, stillHidden)` (unexported) is what
   `Say` and `Shout` share: every listener hears the words, the speaker's
   name hidden per listener. A player's line goes through
@@ -1878,6 +1893,10 @@ Trail-read (passive sniffing) or active tracking on a resolved target.
 
 **Messaging:** UserActor receives trail feedback or tracking status. MobActor
 silent.
+
+`ResolveCharacter(userId, mobInstanceId)` is the character behind a user id
+or else a mob instance id (nil when gone): the active track's quarry, and a
+shot's target for the ruling 15 arrival line (`FireResult`).
 
 **Progression:** No stat/skill use triggered (scout actions planned as
   skill-less in Phase 1).

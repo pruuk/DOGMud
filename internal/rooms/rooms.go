@@ -727,7 +727,10 @@ func (r *Room) SendTextToExits(txt string, isQuiet bool, excludeUserIds ...int) 
 // neighbouring room: exclude is asked once for each neighbour that has an
 // exit back, the first time one is found, and its answer goes on that
 // room's messages only. An ambient say's echo uses it to leave out the
-// listeners over their ambient budget in each room (#317).
+// listeners over their ambient budget in each room (#317). Each line starts
+// "(From <exit>)", the exit of the neighbour leading back here; when that exit
+// is secret, a listener who has not found it reads "(From nearby)" instead
+// (#781, owner ruling 16, HeardThroughSecretExit). Hearing teaches nothing.
 func (r *Room) SendTextToExitsExcluding(txt string, isQuiet bool, exclude func(tgt *Room) []int) {
 
 	testExitIds := []int{}
@@ -757,12 +760,40 @@ func (r *Room) SendTextToExitsExcluding(txt string, isQuiet bool, exclude func(t
 				excludes[tgtRoom.RoomId] = ex
 			}
 
-			events.AddToQueue(events.Message{
-				RoomId:         tgtRoom.RoomId,
-				Text:           fmt.Sprintf(`(From <ansi fg="exit">%s</ansi>) `, exitName) + txt + "\n",
-				IsQuiet:        isQuiet,
-				ExcludeUserIds: ex,
-			})
+			named := fmt.Sprintf(`(From <ansi fg="exit">%s</ansi>) `, exitName) + txt + "\n"
+
+			// #781 ruling 16: through a secret exit, a listener who has not
+			// found it reads "(From nearby)"; one who has reads the name. Two
+			// messages with complementary excludes. An ordinary exit costs one
+			// lookup here and reads its name for everyone, as always.
+			knowers, strangers, secret := tgtRoom.HeardThroughSecretExit(exitName)
+			if !secret {
+				events.AddToQueue(events.Message{
+					RoomId:         tgtRoom.RoomId,
+					Text:           named,
+					IsQuiet:        isQuiet,
+					ExcludeUserIds: ex,
+				})
+				continue
+			}
+			// Each half only when someone reads it, so a room with no
+			// knower is never sent the name at all.
+			if len(knowers) > 0 {
+				events.AddToQueue(events.Message{
+					RoomId:         tgtRoom.RoomId,
+					Text:           named,
+					IsQuiet:        isQuiet,
+					ExcludeUserIds: slices.Concat(ex, strangers),
+				})
+			}
+			if len(strangers) > 0 {
+				events.AddToQueue(events.Message{
+					RoomId:         tgtRoom.RoomId,
+					Text:           `(From ` + HeardFromNearby + `) ` + txt + "\n",
+					IsQuiet:        isQuiet,
+					ExcludeUserIds: slices.Concat(ex, knowers),
+				})
+			}
 		}
 
 	}

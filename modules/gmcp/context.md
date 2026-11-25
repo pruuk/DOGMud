@@ -474,7 +474,8 @@ speaker's room through `commSpeakerRoom`.
 `Comm.Channel` shout goes through `shoutDeliveries` (owner 2026-11-07): the speaker's room
 exactly as say, then every room from `Room.ForEachAdjacentRoom` with `sender`
 `Someone (<exit>)`, the listener's exit back toward the shouter, as the game text's "from the
-<exit> direction". A player's shout skips deafened listeners next door; an NPC's reaches them.
+<exit> direction"; through a secret exit that listener has not found it is `Someone (nearby)`
+(`Room.HeardExitName`, #781 owner ruling 16). A player's shout skips deafened listeners next door; an NPC's reaches them.
 The web client files `shout` into the Chat window as "<sender> shouts: <words>". Other
 channels are unchanged.
 

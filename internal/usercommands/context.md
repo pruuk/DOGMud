@@ -512,6 +512,17 @@ exit it names, judging players by the snapshot that line was sent against
 for the leave line, right after the send for the arrive line (#781 ruling
 14).
 
+Owner ruling 15 (seen use teaches) hooks `actions.LearnSecretExitWatchingNow`
+beside the other room lines that name a secret exit because someone used it:
+`unlockExit` (go's three unlock paths), `unlock`, `lock` and `picklock` (both
+"picks the <exit> lock" lines and "tries to pick"), the two `look` peer lines
+and `lookRoom`'s "is looking into the room from the <exit>" in the far room
+(the one peering is not in that room and learns nothing), and `shoot`'s
+`fire_depart` and `arrival_known_*` lines (the target, left out of the
+arrival line, is skipped). An onlooker learns the exit only: the lock's
+sequence stays on the picker's keyring. Tests:
+`seen_use_secret_exit_test.go`.
+
 ### Quest log actions (`questlog.go`, `quests.go`; #375 phase 5)
 
 `questlog.go` holds the shared bodies for the `quests` command and the web

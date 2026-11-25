@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/menu"
@@ -163,6 +164,9 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		} else {
 
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> picks the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName), user.UserId)
+			// #781 ruling 15: onlookers who saw it learn a secret exit,
+			// never the sequence, which stays on the picker's keyring.
+			actions.LearnSecretExitWatchingNow(room, exitName, user.Character)
 
 			room.SetExitLock(exitName, false)
 
@@ -281,6 +285,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			room.Containers[containerName] = container
 		} else {
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> picks the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName), user.UserId)
+			actions.LearnSecretExitWatchingNow(room, exitName, user.Character)
 			room.SetExitLock(exitName, false)
 		}
 		notifyLockQuest(user, room, "picklock", containerName, exitName)
@@ -294,6 +299,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> tries to pick the <ansi fg="container">%s</ansi> lock`, user.Character.Name, containerName), user.UserId)
 		} else {
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> tries to pick the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName), user.UserId)
+			actions.LearnSecretExitWatchingNow(room, exitName, user.Character)
 		}
 	}
 

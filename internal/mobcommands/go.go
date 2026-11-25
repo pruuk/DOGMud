@@ -136,7 +136,14 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	exitInfo, _ := room.GetExitInfo(exitName)
 	if exitInfo.Lock.IsLocked() {
 
-		mob.Command(fmt.Sprintf(`emote tries to go the <ansi fg="exit">%s</ansi> exit, but it's locked.`, exitName))
+		// Sent here rather than queued as an `emote` command, so the line
+		// and ruling 15 below judge each onlooker at the same moment.
+		if actions.SendSeen(&actions.MobActor{Mob: mob, Room: room}, messaging.CategoryMobEmote,
+			actions.FormatMobEmoteText(mob.Character.Name, fmt.Sprintf(`tries to go the <ansi fg="exit">%s</ansi> exit, but it's locked.`, exitName)), false) {
+			// #781 ruling 15: whoever saw the mob try the exit learns it
+			// when it is secret, judged as the line was.
+			actions.LearnSecretExitWatchingNow(room, exitName, &mob.Character)
+		}
 
 		return true, nil
 	}

@@ -65,14 +65,33 @@ func Shout(actor Actor, text string) ShoutResult {
 	// line stays player chatter (deafen-filtered, wrapped per reader by the listener);
 	// a mob's is authored and unfiltered. Standard, temporary and
 	// mutator-added exits, each neighbour once.
+	//
+	// #781 ruling 16: through a secret exit, a listener who has not found it
+	// hears "Someone shouts from nearby" and learns nothing; one who has
+	// reads the exit's name. The two lines go out with complementary
+	// excludes (Room.HeardThroughSecretExit); an ordinary exit sends one.
 	room.ForEachAdjacentRoom(func(otherRoom *rooms.Room, sourceExit string) {
-		far := fmt.Sprintf(`Someone shouts from the <ansi fg="exit">%s</ansi> direction, "<ansi fg="%s">%s</ansi>"`,
+		send := func(far string, exclude []int) {
+			if actor.IsPlayer() {
+				otherRoom.SendTextCommunication(far, append(exclude, actor.GetUserId())...)
+				return
+			}
+			otherRoom.SendText(messaging.CategoryShout, far, exclude...)
+		}
+		named := fmt.Sprintf(`Someone shouts from the <ansi fg="exit">%s</ansi> direction, "<ansi fg="%s">%s</ansi>"`,
 			sourceExit, textColor, text)
-		if actor.IsPlayer() {
-			otherRoom.SendTextCommunication(far, actor.GetUserId())
+		knowers, strangers, secret := otherRoom.HeardThroughSecretExit(sourceExit)
+		if !secret {
+			send(named, nil)
 			return
 		}
-		otherRoom.SendText(messaging.CategoryShout, far)
+		if len(knowers) > 0 {
+			send(named, strangers)
+		}
+		if len(strangers) > 0 {
+			send(fmt.Sprintf(`Someone shouts from %s, "<ansi fg="%s">%s</ansi>"`,
+				rooms.HeardFromNearby, textColor, text), knowers)
+		}
 	})
 
 	wakeSleepers(actor, room)
