@@ -52,6 +52,16 @@ type connectionRecord struct {
 	StripAnsi bool     `json:"strip_ansi,omitempty"`
 }
 
+// restoredConnType is the type a restored connection gets from its record: a
+// value this binary does not know restores as ConnHuman.
+func (r connectionRecord) restoredConnType() ConnType {
+	switch r.ConnType {
+	case ConnHuman, ConnAI:
+		return r.ConnType
+	}
+	return ConnHuman
+}
+
 type connectionsState struct {
 	ConnectCounter uint64             `json:"connect_counter"`
 	Records        []connectionRecord `json:"records"`

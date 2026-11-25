@@ -103,7 +103,7 @@ func (c *connectionsCopyoverContributor) CopyoverRestore(dec *copyover.Decoder) 
 		cd := NewConnectionDetails(rec.ConnectionId, conn, nil, nil)
 		cd.SetState(rec.State)
 		cd.clientSettings = rec.ClientSettings
-		cd.SetConnType(rec.ConnType)
+		cd.SetConnType(rec.restoredConnType())
 		cd.SetStripAnsi(rec.StripAnsi)
 
 		netConnections[rec.ConnectionId] = cd

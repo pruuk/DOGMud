@@ -634,8 +634,9 @@ func (cd *ConnectionDetails) SetStripAnsi(strip bool) {
 // nothing.
 //
 // This is the one budget for every path that queues a command for a
-// connection: a typed line (main.go, both read loops) and a GMCP
-// Char.Action.Try (modules/gmcp handleCharOp). The typed path runs on the
+// connection: a typed line (main.go, both read loops), a GMCP
+// Char.Action.Try (modules/gmcp handleCharOp) and each command after the first
+// in a macro (world.go processInput). The typed path runs on the
 // connection goroutine and the GMCP path on MainWorker, so the count is
 // guarded by aiCommandMu.
 func (cd *ConnectionDetails) AIRateLimited() bool {
@@ -643,7 +644,7 @@ func (cd *ConnectionDetails) AIRateLimited() bool {
 		return false
 	}
 	maxPerRound := int(configs.GetNetworkConfig().AICommandsPerRound)
-	if cd.aiCommandAllowed(int64(util.GetRoundCount()), maxPerRound) {
+	if cd.aiCommandAllowed(maxPerRound) {
 		return false
 	}
 	SendTo([]byte(AIRateLimitLine(maxPerRound)), cd.ConnectionId())
@@ -657,10 +658,14 @@ func AIRateLimitLine(maxPerRound int) string {
 }
 
 // aiCommandAllowed counts one command against the round's budget and reports
-// whether it fits. The counter resets when a new round begins.
-func (cd *ConnectionDetails) aiCommandAllowed(currentRound int64, maxPerRound int) bool {
+// whether it fits. The counter resets when a new round begins. The round is
+// read under aiCommandMu: read outside it, a caller holding a stale round
+// could reset the count after a caller with the new round had already
+// started counting it.
+func (cd *ConnectionDetails) aiCommandAllowed(maxPerRound int) bool {
 	cd.aiCommandMu.Lock()
 	defer cd.aiCommandMu.Unlock()
+	currentRound := int64(util.GetRoundCount())
 	if currentRound != cd.aiCommandRound {
 		cd.aiCommandRound = currentRound
 		cd.aiCommandCount = 0

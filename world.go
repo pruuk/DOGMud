@@ -1085,10 +1085,20 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 			if macro, ok := user.Macros[inputText]; ok {
 				handled = true
 				readyTurn := util.GetTurnCount()
+				// The line that named the macro already spent one command
+				// of an AI-port connection's per-round budget, which pays
+				// for the first piece. Every later piece spends one more,
+				// and expansion stops at the first refusal.
+				connDetails := connections.Get(user.ConnectionId())
+				first := true
 				for newCmd := range strings.SplitSeq(macro, `;`) {
 					if newCmd == `` {
 						continue
 					}
+					if !first && connDetails != nil && connDetails.AIRateLimited() {
+						break
+					}
+					first = false
 
 					events.AddToQueue(events.Input{
 						UserId:    userId,
