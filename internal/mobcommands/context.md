@@ -251,7 +251,18 @@ The `internal/mobcommands` package implements the AI command system for non-play
 - `pathto found <ids>` (the word is `mobs.PathtoFoundOnly`) is a planner's
   errand, sent by `behaviortree.RunGoalPlanner`: the route takes only the
   secret exits this mob found (`mapper.SecretExitsKnownTo`). `pathtoTargets`
-  reads the words (#781, owner ruling 13).
+  reads the words first (ids, `foundOnly`, and `homeOnly`, the one-target
+  `home` route `home-impossible` is about, marked or not); `mobs.PathtoCommand`
+  builds them (#781, owner ruling 13).
+- A found-only route that finds no way is remembered in mob temp data
+  `pathto-refused` (`pathtoRefusal`: start room, targets, the mob's
+  discovery count, round), beside `home-impossible`. For
+  `pathtoRefusedRounds` (10, a named constant: no balance knob paces mob path
+  retries) the same start and targets return `errPathtoRefusedRecently`
+  without a search, since a planner resends its `pathto found` every idle tick
+  and a target behind an unfound secret exit fails the uncached
+  `mapper.GetPathKnown` search each time. Learning any discovery, another
+  start or another target searches again at once.
 
 #### **Movement (`go.go`, movement parity 4b)**
 - Before this slice a mob's walk was entirely free (no action points, no

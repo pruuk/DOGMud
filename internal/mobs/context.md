@@ -364,7 +364,10 @@ took (`actions.LearnSecretExitFollowing`, #781).
 only the secret exits this mob has found". `behaviortree.RunGoalPlanner` adds
 it to a planner's `pathto`; every other `pathto` (schedules, patrols, trees,
 idle commands, home returns, admin) is a scripted route and takes every
-secret exit (owner ruling 13).
+secret exit (owner ruling 13). `PathtoCommand(foundOnly bool, targets
+...string) string` builds the line (the one builder beside the one reader,
+`mobcommands.pathtoTargets`); `RunGoalPlanner` and the path walker's re-path
+use it.
 
 ## Conversation System Integration
 
@@ -1181,7 +1184,7 @@ Mobs with `patrol_id:` set follow waypoint patrols authored in
 | `save.go` / `instance_save.go` | Template and instance persistence |
 | `memory.go` | Memory reporting |
 | `mobs_path.go` | Pathing state (`pathto`) |
-| `pathto.go` | `PathtoFoundOnly`, the `pathto found` word for a planner's errand (#781) |
+| `pathto.go` | `PathtoFoundOnly`, the `pathto found` word for a planner's errand, and `PathtoCommand`, the line builder (#781) |
 | `schedule.go` / `schedule_loader.go` | Daily NPC schedules |
 | `patrol.go` / `patrol_loader.go` | Patrol routes |
 | `sleeper.go` | Sleep state for scheduled NPCs |

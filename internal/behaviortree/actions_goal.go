@@ -137,5 +137,5 @@ func unscriptedRoute(cmd string) string {
 	if !ok || verb != "pathto" {
 		return cmd
 	}
-	return "pathto " + mobs.PathtoFoundOnly + " " + rest
+	return mobs.PathtoCommand(true, strings.Fields(rest)...)
 }

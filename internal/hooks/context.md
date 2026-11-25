@@ -757,7 +757,8 @@ slice a mob's step was free and unconditional; now `quoteMobPathStep(mob)
 
 A mob standing off its path (moved by something else) re-paths through its
 remaining waypoints. A path set by `pathto found` (a planner's errand,
-`mob.Path.FoundOnly()`) re-paths as `pathto found <waypoints>`, so it still
+`mob.Path.FoundOnly()`) re-paths as `pathto found <waypoints>`
+(`mobs.PathtoCommand`), so it still
 takes only the secret exits the mob found (#781, owner ruling 13); a
 scripted path re-paths as plain `pathto`.
 

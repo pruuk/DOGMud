@@ -9,15 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type waypointTestStep struct {
-	exit string
-	room int
-}
-
-func (s waypointTestStep) ExitName() string { return s.exit }
-func (s waypointTestStep) RoomId() int      { return s.room }
-func (s waypointTestStep) Waypoint() bool   { return true }
-
 // displacedMob is a mob in room 7121 whose path's current step is room 7122,
 // a waypoint: it has been moved off its path, so advanceMobPath re-paths.
 func displacedMob(t *testing.T, foundOnly bool) *mobs.Mob {
@@ -26,7 +17,7 @@ func displacedMob(t *testing.T, foundOnly bool) *mobs.Mob {
 	m := &mobs.Mob{InstanceId: inst}
 	m.Character = *characters.New()
 	m.Character.RoomId = 7121
-	m.Path.SetPath([]mobs.PathRoom{waypointTestStep{"north", 7122}}, foundOnly)
+	m.Path.SetPath([]mobs.PathRoom{walkerTestStep{exit: "north", room: 7122, waypoint: true}}, foundOnly)
 	m.Path.Next()
 	events.DrainQueuedInputsForTest(inst)
 	t.Cleanup(func() { events.DrainQueuedInputsForTest(inst) })

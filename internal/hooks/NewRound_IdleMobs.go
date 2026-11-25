@@ -4,7 +4,6 @@ package hooks
 import (
 	"slices"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -204,17 +203,13 @@ func advanceMobPath(mob *mobs.Mob) bool {
 	if currentStep != nil && currentStep.RoomId() != mob.Character.RoomId {
 		reDoWaypoints := mob.Path.Waypoints()
 		if len(reDoWaypoints) > 0 {
-			var newCommand strings.Builder
-			newCommand.WriteString(`pathto`)
+			targets := make([]string, len(reDoWaypoints))
+			for i, wpInt := range reDoWaypoints {
+				targets[i] = strconv.Itoa(wpInt)
+			}
 			// A planner's errand stays one: the new route takes only the
 			// secret exits the mob found (#781, owner ruling 13).
-			if mob.Path.FoundOnly() {
-				newCommand.WriteString(` ` + mobs.PathtoFoundOnly)
-			}
-			for _, wpInt := range reDoWaypoints {
-				newCommand.WriteString(` ` + strconv.Itoa(wpInt))
-			}
-			mob.Command(newCommand.String())
+			mob.Command(mobs.PathtoCommand(mob.Path.FoundOnly(), targets...))
 			return true
 		}
 		// if we were unable to come up with a new path, send them home.
