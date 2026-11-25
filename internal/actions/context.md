@@ -354,8 +354,12 @@ wrappers that render the outcome.
 
 - **`FleeGate(c *characters.Character) FleeRefusal`** is every refusal a flee
   can know before it transitions: rooted (`conditions.NoMovement`), no-flee
-  (`conditions.NoFlee`), already disengaging, not in combat, grappled
-  (`IsStandingGrapple`/`IsGroundGrapple`), not standing. It duplicates
+  (`conditions.NoFlee`), already disengaging, not in combat, this round
+  already had an attempt (`FleeRefuseThisRound`, #951: once a round, begun
+  or resolved, whatever the outcome), grappled
+  (`IsStandingGrapple`/`IsGroundGrapple`), not standing. The mob AI that asks
+  it first (companion flee, archer kiting, pack scatter) therefore does
+  something else in a round its flee is spent. It duplicates
   `CombatPhase`'s position veto on purpose, because that veto is registered by
   `internal/hooks`; without the duplicate a flee's outcome in a package that
   does not link `hooks` would silently differ.

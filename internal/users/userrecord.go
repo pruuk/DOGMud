@@ -971,6 +971,12 @@ func (u *UserRecord) GetOnlineInfo() OnlineInfo {
 }
 
 func (u *UserRecord) WimpyCheck() {
+	// A flee is tried at most once a round (#951). Once this round has had
+	// one, wimpy waits for the next hit in a later round rather than queueing
+	// a flee that is only refused, a line for every blow taken.
+	if u.Character.FleeTriedThisRound() {
+		return
+	}
 	if currentWimpy := u.GetConfigOption(`wimpy`); currentWimpy != nil {
 		healthPct := int(math.Floor(float64(u.Character.Health) / float64(u.Character.HealthMax.Value) * 100))
 		if healthPct < currentWimpy.(int) {

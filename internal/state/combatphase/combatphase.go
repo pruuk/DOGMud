@@ -62,7 +62,6 @@ type EngagedData struct {
 // DisengagingData is the state-data type for the Disengaging state.
 type DisengagingData struct {
 	LastTarget state.ActorRef // target at time of flee
-	FleeRound  int            // round flee was initiated
 }
 
 // vetoChain holds the registered veto functions. Each
@@ -134,6 +133,23 @@ type Machine struct {
 	// round is consumed silently. See SpendRoundOnAction.
 	roundSpentByAction bool
 	openingUnspent     bool
+	// fleeRound is the last round a flee attempt began or resolved in (#951).
+	// It outlives Disengaging on purpose: a failed flee returns to Engaged,
+	// and the round it failed in has still had its attempt. 0 means never;
+	// the round counter starts far above it (util.RoundCountMinimum).
+	fleeRound uint64
+}
+
+// MarkFleeRound records round as one that has had a flee attempt: the round
+// the attempt began in (BeginFlee) and the round it resolved in (ResolveFlee
+// in package actions). The caller supplies the round so the machine keeps no
+// clock of its own.
+func (m *Machine) MarkFleeRound(round uint64) { m.fleeRound = round }
+
+// FleeTriedIn reports whether round has already had a flee attempt. A flee
+// is attempted at most once a round, by players and mobs alike.
+func (m *Machine) FleeTriedIn(round uint64) bool {
+	return m.fleeRound != 0 && m.fleeRound == round
 }
 
 // OpeningUnspent reports whether this engagement still carries its ambush

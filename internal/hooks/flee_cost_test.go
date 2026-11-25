@@ -15,7 +15,17 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+// nextFleeRound moves the round clock on one round. A flee is tried at most
+// once a round (#951), so a test that stands for several rounds of fleeing
+// must let each attempt have a round of its own.
+func nextFleeRound(t *testing.T) {
+	t.Helper()
+	util.SetRoundCountForTest(util.GetRoundCount() + 1)
+	t.Cleanup(util.ResetRoundCountForTest)
+}
 
 // Catches the round hook hardcoding includeSkill=true instead of carrying the
 // command's short-payment decision into blocker resolution.
@@ -79,6 +89,7 @@ func TestHandlePlayerFlee_ShortCommandDoesNotProgressSkullduggery(t *testing.T) 
 	// short payment above; restoring to that max would short-pay again.
 	u.Character.StaminaMax.Value = 1000
 	u.Character.Stamina = 1000
+	nextFleeRound(t)
 	if _, err := usercommands.Flee("", u, room, 0); err != nil {
 		t.Fatalf("second Flee returned %v", err)
 	}
@@ -98,6 +109,7 @@ func TestHandlePlayerFlee_ShortCommandDoesNotProgressSkullduggery(t *testing.T) 
 	u.Character.Stamina = 1000
 	u.Character.SetAggro(0, blocker.InstanceId, characters.DefaultAttack)
 	u.Character.CombatPhase.OnRoundTick()
+	nextFleeRound(t)
 	if _, err := usercommands.Flee("", u, room, 0); err != nil {
 		t.Fatalf("third Flee returned %v", err)
 	}
@@ -252,6 +264,7 @@ func TestHandlePlayerFlee_TerminalCancellationRetractsAdmission(t *testing.T) {
 	u.Character.Stamina = 1000
 	u.Character.SetAggro(0, 100, characters.DefaultAttack)
 	u.Character.CombatPhase.OnRoundTick()
+	nextFleeRound(t)
 	if _, err := usercommands.Flee("", u, room, 0); err != nil {
 		t.Fatalf("second Flee returned %v", err)
 	}

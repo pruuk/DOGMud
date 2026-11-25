@@ -1121,6 +1121,32 @@ func TestUserRecord_WimpyCheck(t *testing.T) {
 		// Should not panic
 		u.WimpyCheck()
 	})
+
+	// #951: a flee is tried once a round, so wimpy does not queue a second
+	// one in a round that already had an attempt; the next round it does.
+	t.Run("waits a round after a flee attempt", func(t *testing.T) {
+		util.SetRoundCountForTest(2_000_000)
+		t.Cleanup(util.ResetRoundCountForTest)
+		const userId = 9951
+		c := characters.New()
+		c.Validate()
+		c.HealthMax.Base = 100
+		c.HealthMax.Recalculate()
+		c.Health = 10
+		u := &UserRecord{UserId: userId, Character: c}
+		u.SetConfigOption(`wimpy`, 50)
+		events.DrainQueuedUserInputsForTest(userId)
+
+		c.MarkFleeTriedThisRound()
+		u.WimpyCheck()
+		assert.Empty(t, events.DrainQueuedUserInputsForTest(userId),
+			"wimpy queued a flee in a round that already had one")
+
+		util.SetRoundCountForTest(2_000_001)
+		u.WimpyCheck()
+		assert.Equal(t, []string{"flee"}, events.DrainQueuedUserInputsForTest(userId),
+			"wimpy should flee in the next round")
+	})
 }
 
 // ─── UserLog overflow ─────────────────────────────────────────────────────

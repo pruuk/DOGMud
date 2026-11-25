@@ -117,6 +117,23 @@ Finalizes a `Disengaging` state. Success → `ForceIdle`
 (`TriggerFleeSuccess`). Failure → back to `Engaged` with the last known
 target restored in `EngagedData`.
 
+### Once a round (#951)
+
+```go
+func (m *Machine) MarkFleeRound(round uint64)
+func (m *Machine) FleeTriedIn(round uint64) bool
+```
+
+A flee is attempted at most once a round, by players and mobs alike. The
+machine keeps the last round a flee attempt began or resolved in; it is a
+machine field, not `DisengagingData`, because it must outlive `Disengaging`
+(a failed flee returns to `Engaged` with the round already spent). The caller
+passes the round, so the machine keeps no clock: `Character.MarkFleeTriedThisRound`
+and `Character.FleeTriedThisRound` read `util.GetRoundCount()`, and
+`actions.BeginFlee` (on an accepted transition) and `actions.ResolveFlee` (via
+`settleFlee`, whatever the outcome) mark it. Zero means never; the round
+counter starts at `util.RoundCountMinimum`.
+
 ### Force-idle
 
 ```go
@@ -294,7 +311,6 @@ type EngagedData struct {
 
 type DisengagingData struct {
     LastTarget state.ActorRef  // target at time of flee initiation
-    FleeRound  int             // round flee was initiated
 }
 ```
 
