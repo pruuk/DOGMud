@@ -42,6 +42,8 @@ type pathtoRefusal struct {
 	round      uint64
 }
 
+// covers reports whether r still answers this route: same start, targets and
+// discovery count, and refused fewer than pathtoRefusedRounds rounds ago.
 func (r pathtoRefusal) covers(fromRoomId int, toRoomIds []int, knownCount int, round uint64) bool {
 	return r.fromRoomId == fromRoomId && r.knownCount == knownCount &&
 		slices.Equal(r.toRoomIds, toRoomIds) && round < r.round+pathtoRefusedRounds

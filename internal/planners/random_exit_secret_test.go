@@ -21,7 +21,7 @@ func TestPickRandomExit_TakesOnlyAFoundSecretExit(t *testing.T) {
 	mob := &mobs.Mob{}
 	mob.Character.RoomId = 1
 
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		if got := pickRandomExit(mob); got != "" {
 			t.Fatalf("picked %q: the only exit is an unfound secret", got)
 		}

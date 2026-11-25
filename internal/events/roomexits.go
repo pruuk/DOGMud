@@ -17,6 +17,7 @@ type RoomExitsChanged struct {
 	SecretExitFound bool
 }
 
+// Type names the event for the listener registry.
 func (p RoomExitsChanged) Type() string { return `RoomExitsChanged` }
 
 // UniqueID merges the refreshes queued for one player before the queue runs.

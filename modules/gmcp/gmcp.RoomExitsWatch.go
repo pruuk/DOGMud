@@ -28,7 +28,10 @@ import (
 // the round: events.RoomExitsChanged sends it at once (and Zone.Map on a find).
 
 var (
-	lastSentRoomExits   = map[int]string{}
+	// lastSentRoomExits is the signature of the Room.Info last sent to each
+	// user, by user id. Guarded by lastSentRoomExitsMu.
+	lastSentRoomExits = map[int]string{}
+	// lastSentRoomExitsMu guards lastSentRoomExits.
 	lastSentRoomExitsMu sync.Mutex
 )
 

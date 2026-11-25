@@ -10,6 +10,8 @@ const (
 	MarkLocked = `locked`
 )
 
+// darkMarks is one player's marks: the room they were made in, and direction
+// to mark.
 type darkMarks struct {
 	roomId int
 	marks  map[string]string

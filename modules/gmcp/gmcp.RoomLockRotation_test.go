@@ -1,6 +1,7 @@
 package gmcp
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/gamelock"
@@ -31,12 +32,7 @@ func TestRoomInfo_PickComboFollowsTheLocksRotation(t *testing.T) {
 		return cs[0].HasPickCombo
 	}
 	northCombo := func() bool {
-		for _, d := range roomInfoFor(t, viewer).ExitsV2["north"].Details {
-			if d == `player_has_pick_combo` {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(roomInfoFor(t, viewer).ExitsV2["north"].Details, `player_has_pick_combo`)
 	}
 	require.True(t, chestCombo(), "premise: the chest's rotation 0 combination counts")
 	require.True(t, northCombo(), "premise: north's rotation 0 combination counts")

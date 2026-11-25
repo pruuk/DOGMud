@@ -59,7 +59,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	lockId := ``
 	lockStrength := 0
 	lockTrap := []int{}
-	lock := gamelock.Lock{}
+	var lock gamelock.Lock
 
 	containerName := room.FindVisibleContainerByName(characterOf(user), args[0])
 	exitName, _ := room.FindKnownExitByName(characterOf(user), args[0])

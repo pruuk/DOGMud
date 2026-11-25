@@ -24,14 +24,18 @@ import (
 // (rememberLocks) and taken back when it loads (restoreLocks); ephemeral rooms
 // are skipped, since their ids are reused by unrelated rooms.
 
+// roomLocks is one room's remembered locks, exit name and container name to
+// lock.
 type roomLocks struct {
 	exits      map[string]gamelock.Lock
 	containers map[string]gamelock.Lock
 }
 
 var (
+	// lockMemoryMu guards lockMemory.
 	lockMemoryMu sync.Mutex
-	lockMemory   = map[int]roomLocks{}
+	// lockMemory is each room's remembered locks, by room id.
+	lockMemory = map[int]roomLocks{}
 )
 
 // rememberLocks records the state of every lock on r, replacing any older

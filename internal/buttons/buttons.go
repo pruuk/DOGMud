@@ -24,6 +24,7 @@ var fixedIds = map[string]string{
 	"north": "m1", "south": "m2", "east": "m3", "west": "m4", "up": "m5", "down": "m6",
 }
 
+// fixedDirections is fixedIds turned round, id to direction, for Resolve.
 var fixedDirections = func() map[string]string {
 	out := make(map[string]string, len(fixedIds))
 	for dir, id := range fixedIds {
@@ -47,7 +48,9 @@ type issued struct {
 }
 
 var (
-	mu       sync.Mutex
+	// mu guards issuedTo and marksOf (darkmarks.go).
+	mu sync.Mutex
+	// issuedTo is each player's per-room ids, by user id. Guarded by mu.
 	issuedTo = map[int]*issued{}
 )
 

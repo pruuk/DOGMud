@@ -44,7 +44,7 @@ func TestWanderCandidates_AnUnfoundSecretExitIsNoCandidate(t *testing.T) {
 func TestPickWanderExit_FallbackTakesOnlyAFoundSecretExit(t *testing.T) {
 	room := &rooms.Room{RoomId: 1, Exits: map[string]exit.RoomExit{"north": {RoomId: 100, Secret: true}}}
 	mover := &characters.Character{}
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		if name, _ := pickWanderExit(nil, room, mover); name != "" {
 			t.Fatalf("picked %q: the only exit is an unfound secret", name)
 		}

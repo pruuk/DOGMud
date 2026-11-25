@@ -6,4 +6,5 @@ package refusal
 // next tap is current.
 const StaleButtonLine = `That button was out of date. Try again.`
 
+// StaleButton sends StaleButtonLine.
 func StaleButton(to Recipient) { send(to, StaleButtonLine) }
