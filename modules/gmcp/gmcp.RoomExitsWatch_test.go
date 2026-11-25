@@ -85,6 +85,10 @@ func TestRoomExitsWatch_ResendsOnlyOnARealChange(t *testing.T) {
 		g.roomExitsWatchHandler(events.NewRound{})
 		require.Zero(t, roomInfoUpdates(viewer.UserId), "%s: once sent, not repeated", s.name)
 	}
+	// One more round, drained for Kesh alone: every drain above also took
+	// Kesh's requests, so only a fresh round can show one queued for him.
+	// Never sent a Room.Info, he would be due now if the GMCP gate let him in.
+	g.roomExitsWatchHandler(events.NewRound{})
 	require.Zero(t, roomInfoUpdates(9723), "Kesh has no GMCP connection and is never sent one")
 }
 

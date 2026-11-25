@@ -84,14 +84,13 @@ func KnownExits(r *Room, c *characters.Character) KnownExitList {
 // (GetDetails and Room.Info read it once for the roster too), so one call
 // asks ParticipantSight once.
 func KnownExitsAt(r *Room, c *characters.Character, sight messaging.SightDecision) KnownExitList {
+	if sight == messaging.SightNone {
+		return KnownExitList{Dark: true, Exits: []KnownExit{}}
+	}
 	// Sized up front: Room.Info's round watcher builds this for every GMCP
 	// player every round, and KnownExit is large enough that growing the
 	// slice was most of the cost.
 	list := KnownExitList{Exits: make([]KnownExit, 0, len(r.Exits)+len(r.ExitsTemp))}
-	if sight == messaging.SightNone {
-		list.Dark = true
-		return list
-	}
 	for name, ex := range r.permanentExits() {
 		if !r.exitKnown(c, name, ex) {
 			continue
@@ -107,31 +106,28 @@ func KnownExitsAt(r *Room, c *characters.Character, sight messaging.SightDecisio
 	for name, t := range r.ExitsTemp {
 		list.Exits = append(list.Exits, KnownExit{Name: name, Kind: ExitTemporary, RoomId: t.RoomId, Temp: t})
 	}
-	slices.SortStableFunc(list.Exits, func(a, b KnownExit) int {
-		if knownExitLess(a, b) {
-			return -1
-		}
-		if knownExitLess(b, a) {
-			return 1
-		}
-		return 0
-	})
+	slices.SortStableFunc(list.Exits, knownExitCompare)
 	return list
 }
 
-// knownExitLess orders two known exits for KnownExits: by knownExitRank,
-// then A to Z ignoring case, and a room or mutator exit before a temporary
-// exit of the same name.
-func knownExitLess(a, b KnownExit) bool {
-	ra, rb := knownExitRank(a), knownExitRank(b)
-	if ra != rb {
-		return ra < rb
+// knownExitCompare orders two known exits for KnownExits, as a three-way
+// compare: by knownExitRank, then A to Z ignoring case, and a room or
+// mutator exit before a temporary exit of the same name.
+func knownExitCompare(a, b KnownExit) int {
+	if c := cmp.Compare(knownExitRank(a), knownExitRank(b)); c != 0 {
+		return c
 	}
-	la, lb := strings.ToLower(a.Name), strings.ToLower(b.Name)
-	if la != lb {
-		return la < lb
+	if c := cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name)); c != 0 {
+		return c
 	}
-	return a.Kind != ExitTemporary && b.Kind == ExitTemporary
+	aTemp, bTemp := a.Kind == ExitTemporary, b.Kind == ExitTemporary
+	switch {
+	case !aTemp && bTemp:
+		return -1
+	case aTemp && !bTemp:
+		return 1
+	}
+	return 0
 }
 
 // knownExitRank is k's place in exitOrder; a temporary exit, and any name

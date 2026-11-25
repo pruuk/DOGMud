@@ -140,6 +140,22 @@ func TestKnownExits_TemporaryAndMutatorExitsAreListed(t *testing.T) {
 	}
 }
 
+// A temporary exit named like a named room exit sorts after it: Room.Info
+// keeps the first of a name, and that name reaches the room exit
+// (FindExitByName), so the room exit must come first.
+func TestKnownExits_RoomExitBeforeATemporaryExitOfTheSameName(t *testing.T) {
+	r, c := knownExitsRoom(t, true)
+	r.Exits["out"] = exit.RoomExit{RoomId: 2}
+	r.ExitsTemp = map[string]exit.TemporaryRoomExit{"out": {RoomId: 4, Title: "out"}}
+	got := KnownExits(r, c)
+	if want := []string{"north", "east", "south", "out", "out"}; !equalStrings(knownNames(got), want) {
+		t.Fatalf("known exits %v, want %v", knownNames(got), want)
+	}
+	if got.Exits[3].Kind == ExitTemporary || got.Exits[4].Kind != ExitTemporary {
+		t.Fatalf("the room exit out must come before the temporary out: %v then %v", got.Exits[3].Kind, got.Exits[4].Kind)
+	}
+}
+
 // At no sight nothing is listed and the list says dark.
 func TestKnownExits_DarkListsNothing(t *testing.T) {
 	r, c := knownExitsRoom(t, false)
