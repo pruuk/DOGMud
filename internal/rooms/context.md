@@ -767,6 +767,7 @@ When writing hidden noun descriptions:
 | `biomes.go` | Biome definitions and lookup |
 | `exit`-adjacent: `sign.go` | Room signs |
 | `container.go` | Room containers |
+| `lock_memory.go` | Exit and container lock state kept in memory across an unload within one boot, and `ExitLockAt` (#781) |
 | `corpse.go` / `corpse_roundrobin.go` | Corpses and fair-share corpse looting |
 | `baubles_untaken.go` | Found baubles left lying untaken for `BaubleUntakenHours` (24) vanish: `removeUntakenBaubles`, run from `RoundTick` (rooms with players) and `Prepare` (before a visitor sees the floor); records `baubles.MarkVanished` |
 | `spawninfo.go` / `spawninfo_validate.go` | Room spawn lists and their validation |
@@ -774,7 +775,7 @@ When writing hidden noun descriptions:
 | `instances.go` / `ephemeral.go` | Instanced and ephemeral rooms |
 | `cubegen.go` | Generated cube/maze room structures |
 | `memory.go` | Memory reporting for the admin report |
-| `test_helpers.go` | Test fixtures (`SeedRoomsForTest`, `SeedBiomesForTest`, `UnloadRoomForTest` for a cold room without the unload save, `ForgetRoomsLoadedDuringTest(t)` so a test that looks up an unindexed room such as -1 does not grow `GetAllRoomIds` for later tests) |
+| `test_helpers.go` | Test fixtures (`SeedRoomsForTest`, `SeedBiomesForTest`, `UnloadRoomForTest` for a cold room without the unload save (it remembers lock state as the real unload does), `ForgetRoomsLoadedDuringTest(t)` so a test that looks up an unindexed room such as -1 does not grow `GetAllRoomIds` for later tests) |
 
 ### An indoor biome must be classified for weather prose
 
@@ -877,6 +878,28 @@ exit; its only power is to clear `Lock.TrapConditionIds` on an exit the template
 already defines, and a name that no longer matches an authored exit is a
 silent no-op. Do **not** "simplify" this by removing the `instance:"skip"` tag
 from `Exits`.
+
+### Lock state across an unload (`lock_memory.go`, #781)
+
+Every relock gets a new combination (owner ruling 2026-11-25), and a lock's
+combination comes from its `RotationSeed` and `UnlockedRound`
+(`gamelock.Lock.Rotation`). Neither survives an unload by itself: `Exits` is
+skip-tagged, so a reloaded exit lock comes back at the template's seed, and
+`UnlockedRound` is never saved, so an open exit or container comes back
+locked at the rotation it was opened at. Either would bring back a retired
+combination.
+
+`rememberLocks` records every locked exit's and container's `Lock` when a room
+leaves memory (`removeRoomFromMemory`, `ClearRoomCache`, `UnloadRoomForTest`);
+`restoreLocks`, called from `addRoomToMemory`, takes the record back and puts
+`RotationSeed` and `UnlockedRound` onto the lock of the same name, leaving
+difficulty, traps and interval as loaded. Ephemeral rooms are skipped.
+
+This is session state, not living state: lock solutions die at a restart
+(the boot-rerolled seed, `util.LockSequence`), so the record lives in memory
+only and is never written to disk. `ExitLockAt(roomId, exit)` reads an exit's
+lock without loading the room: the live room, else the record, else
+`templateForCompare`. The mapper uses it (`knowsExitLock`).
 
 ## Dependencies
 - `internal/characters`: Character and mob management

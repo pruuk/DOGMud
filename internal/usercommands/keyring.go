@@ -10,7 +10,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -95,7 +94,7 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			exitName, _ := room.FindExitByName(lockId)
 			exitInfo := room.Exits[exitName]
 
-			actualSequence := util.LockSequence(lockId, int(exitInfo.Lock.Difficulty), exitInfo.Lock.RotationSeed)
+			actualSequence := exitInfo.Lock.Sequence(lockId)
 			diff := len(actualSequence) - len(sequence)/2
 			if diff > 0 {
 				complete = false

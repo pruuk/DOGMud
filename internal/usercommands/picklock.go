@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -58,7 +59,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	lockId := ``
 	lockStrength := 0
 	lockTrap := []int{}
-	lockRotation := uint64(0)
+	lock := gamelock.Lock{}
 
 	containerName := room.FindVisibleContainerByName(characterOf(user), args[0])
 	exitName, _ := room.FindKnownExitByName(characterOf(user), args[0])
@@ -80,7 +81,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		args = args[1:]
 		lockStrength = int(container.Lock.Difficulty)
 		lockTrap = container.Lock.TrapConditionIds
-		lockRotation = container.Lock.RotationSeed
+		lock = container.Lock
 		lockId = fmt.Sprintf(`%d-%s`, room.RoomId, containerName)
 
 	} else if exitName != `` {
@@ -102,7 +103,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 		lockStrength = int(exitInfo.Lock.Difficulty)
 		lockTrap = exitInfo.Lock.TrapConditionIds
-		lockRotation = exitInfo.Lock.RotationSeed
+		lock = exitInfo.Lock
 		lockId = fmt.Sprintf(`%d-%s`, room.RoomId, exitName)
 
 	} else {
@@ -116,7 +117,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	//
 	keyring_sequence := user.Character.GetKey(lockId)
 
-	sequence := util.LockSequence(lockId, lockStrength, lockRotation)
+	sequence := lock.Sequence(lockId)
 
 	// Calculate any presolve from conditions, gear, pet perks, etc.
 	if len(keyring_sequence) == 0 {

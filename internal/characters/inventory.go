@@ -129,15 +129,13 @@ func (c *Character) FindKeyInBackpack(lockId string) (items.Item, bool) {
 }
 
 // HasKey reports whether the key ring holds a physical key for lockId, and
-// whether it holds the lock's combination as it stands now. The combination is
-// judged against the lock's current RotationSeed, the way picklock derives it,
-// so one learned before the lock re-locked (SetLocked bumps the seed) no
-// longer counts, and one learned at the current rotation does.
+// whether it holds the lock's combination as it stands now (Lock.Sequence, the
+// one picklock asks for). Every relock gets a new combination, so one learned
+// before the lock last relocked, by SetLocked or on its timer, no longer
+// counts, and one learned at the current rotation does.
 func (c *Character) HasKey(lockId string, lock gamelock.Lock) (hasKey bool, hasSequence bool) {
 
-	sequence := util.LockSequence(lockId, int(lock.Difficulty), lock.RotationSeed)
-
-	return c.GetKey(`key-`+lockId) != ``, c.GetKey(lockId) == sequence
+	return c.GetKey(`key-`+lockId) != ``, c.GetKey(lockId) == lock.Sequence(lockId)
 }
 
 func (c *Character) KeyCount() int {

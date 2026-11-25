@@ -69,22 +69,42 @@ func RebootLocksForTest() (restore func()) {
 	}
 }
 
-// RebootLocksUntilRotatedForTest reboots the locks (RebootLocksForTest) until
-// each named lock's sequence at rotation 1 differs from its sequence at
-// rotation 0. A short lock has few sequences (a 3-pin lock has 8), so a
+// RebootLocksUntilRotatedForTest is RebootLocksUntilDistinctForTest for
+// rotations 0 and 1, the first SetLocked.
+func RebootLocksUntilRotatedForTest(difficulty int, lockIds ...string) (restore func()) {
+	return RebootLocksUntilDistinctForTest(difficulty, lockIds, 0, 1)
+}
+
+// RebootLocksUntilDistinctForTest reboots the locks (RebootLocksForTest) until
+// each named lock has a different sequence at every one of the given
+// rotations. A short lock has few sequences (a 3-pin lock has 8), so a
 // rotation can land on the same one by chance; a test of what a rotation
 // changes needs it not to. It returns a function that puts the original seed
 // and boot id back. Keyring solutions set before the call are stale after it.
-func RebootLocksUntilRotatedForTest(difficulty int, lockIds ...string) (restore func()) {
+// Two equal rotations always give the same sequence, so they panic rather than
+// reboot forever.
+func RebootLocksUntilDistinctForTest(difficulty int, lockIds []string, rotations ...uint64) (restore func()) {
+	asked := map[uint64]bool{}
+	for _, r := range rotations {
+		if asked[r] {
+			panic("util: RebootLocksUntilDistinctForTest given the same rotation twice; no seed can tell them apart")
+		}
+		asked[r] = true
+	}
 	restore = RebootLocksForTest()
 	for {
-		rotated := true
+		distinct := true
 		for _, id := range lockIds {
-			if LockSequence(id, difficulty, 0) == LockSequence(id, difficulty, 1) {
-				rotated = false
+			seen := map[string]bool{}
+			for _, r := range rotations {
+				s := LockSequence(id, difficulty, r)
+				if seen[s] {
+					distinct = false
+				}
+				seen[s] = true
 			}
 		}
-		if rotated {
+		if distinct {
 			return restore
 		}
 		RebootLocksForTest()

@@ -154,6 +154,7 @@ func ClearRoomCache(roomId int) error {
 	// that state any more, and the pending bytes are a snapshot of a room the
 	// game has forgotten. Dropping it here is the only chance to stop it.
 	CancelPendingInstanceWrite(*room)
+	rememberLocks(room)
 
 	if zoneData, ok := roomManager.zones[room.Zone]; ok {
 		delete(zoneData.RoomIds, roomId)
@@ -688,6 +689,7 @@ func removeRoomFromMemory(r *Room) {
 	}
 
 	SaveRoomInstance(*room)
+	rememberLocks(room)
 
 	// Its fixtures stop lighting it and the item tick stops visiting it
 	// (lighting 5e); a reload mints fresh item UUIDs and re-indexes.
@@ -711,6 +713,10 @@ func addRoomToMemory(room *Room, forceOverWrite ...bool) error {
 	if _, ok := roomManager.rooms[room.RoomId]; ok {
 		return fmt.Errorf(`room %d is already stored in memory`, room.RoomId)
 	}
+
+	// Its locks pick up the rotation and open state they had when the room
+	// last left memory this boot (lock_memory.go).
+	restoreLocks(room)
 
 	// Automatically set the last visitor to now (reset the unload timer)
 	room.lastVisited = util.GetRoundCount()

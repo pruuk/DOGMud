@@ -1238,25 +1238,19 @@ func (r *mapper) drawNode(roomId int) *mapNode {
 }
 
 // knowsExitLock reports whether the user may see past a locked exit on the
-// map: they hold its key, or they know its combination at the lock's current
-// rotation. The rotation lives on the live room (SetLocked bumps it), not on
-// the crawl-time nodeExit, so it is read from the room when that room is in
-// memory, the same memory-hit read the snapshot uses. A room that idle
-// unloading has dropped is not read from disk here; for it only the key
-// counts, since its combination cannot be checked against its rotation.
+// map: they hold its key, or they know its combination as the lock stands
+// now. The lock's state changes at every relock, so it is never taken from
+// the crawl-time nodeExit: rooms.ExitLockAt reads the live room, or for a
+// room idle unloading has dropped the state remembered at the unload, or the
+// template, without loading the room. When no source has the exit, only the
+// key counts.
 func knowsExitLock(user *users.UserRecord, roomId int, exitName string, e nodeExit) bool {
-	lock := gamelock.Lock{Difficulty: uint8(e.LockDifficulty)}
-	live := false
-	if rooms.IsRoomLoaded(roomId) {
-		if room := rooms.LoadRoom(roomId); room != nil { // memory hit, no disk
-			if ex, ok := room.Exits[exitName]; ok {
-				lock = ex.Lock
-				live = true
-			}
-		}
+	lock, known := rooms.ExitLockAt(roomId, exitName)
+	if !known {
+		lock = gamelock.Lock{Difficulty: uint8(e.LockDifficulty)}
 	}
 	hasKey, hasSequence := user.Character.HasKey(e.LockId, lock)
-	return hasKey || (live && hasSequence)
+	return hasKey || (known && hasSequence)
 }
 
 func (r *mapper) getMapNode(roomId int) *mapNode {

@@ -39,18 +39,29 @@ func SeedRoomsForTest(roomMap map[int]*Room, zoneMap map[string]*ZoneConfig) fun
 
 	roomManager = mgr
 
+	// Remembered lock state belongs to the rooms it came from (lock_memory.go).
+	lockMemoryMu.Lock()
+	origLocks := lockMemory
+	lockMemory = map[int]roomLocks{}
+	lockMemoryMu.Unlock()
+
 	return func() {
 		roomManager = orig
+		lockMemoryMu.Lock()
+		lockMemory = origLocks
+		lockMemoryMu.Unlock()
 	}
 }
 
 // UnloadRoomForTest drops a room from the in-memory room cache, as idle-room
 // unloading (RoomMaintenance) does, so the next LoadRoom reads it from disk
-// again. It skips the rest of removeRoomFromMemory on purpose: no instance
+// again. Like that path it remembers the room's lock state (lock_memory.go).
+// It skips the rest of removeRoomFromMemory on purpose: no instance
 // save is written, no mobs are torn down, and the file-path cache keeps its
 // entry, which matches production (an unloaded room's path stays cached).
 // Intended for cross-package tests that need a "cold" room.
 func UnloadRoomForTest(roomId int) {
+	rememberLocks(roomManager.rooms[roomId])
 	delete(roomManager.rooms, roomId)
 }
 

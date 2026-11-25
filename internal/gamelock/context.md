@@ -14,10 +14,11 @@ The `internal/gamelock` package provides a sophisticated locking mechanism for t
 #### Lock
 ```go
 type Lock struct {
-    Difficulty     uint8  `yaml:"difficulty,omitempty"`
-    UnlockedRound  uint64 `yaml:"-"`
-    RelockInterval string `yaml:"relockinterval,omitempty"`
-    TrapConditionIds    []int  `yaml:"trapconditionids,omitempty,flow"`
+    Difficulty       uint8  `yaml:"difficulty,omitempty"`
+    UnlockedRound    uint64 `yaml:"-"`
+    RelockInterval   string `yaml:"relockinterval,omitempty"`
+    TrapConditionIds []int  `yaml:"trapconditionids,omitempty,flow"`
+    RotationSeed     uint64 `yaml:"rotationseed,omitempty"`
 }
 ```
 Represents a game lock with the following features:
@@ -25,6 +26,31 @@ Represents a game lock with the following features:
 - **UnlockedRound**: Game round when lock was opened (not persisted)
 - **RelockInterval**: Time specification for automatic relocking
 - **TrapConditionIds**: Condition IDs applied when lockpicking fails
+- **RotationSeed**: Bumped by every `SetLocked`; one input to `Rotation`
+
+## Every relock gets a new combination (owner ruling 2026-11-25)
+
+A combination a player learned stops working at the lock's next relock,
+whatever caused it: `SetLocked` (the `lock` command, a script, a forager's
+lockbox) or the relock timer running out. The rule lives in two methods, and
+every reader of a combination goes through them:
+
+- **Rotation() uint64**: the rotation the combination is built from now.
+  `RotationSeed` while the lock has never been opened, is open, or was last
+  closed by `SetLocked`. Once the timer has relocked an opened lock, a hash
+  of `RotationSeed` and `UnlockedRound` with the top bit set, so each
+  open-then-timer-relock cycle gets its own rotation and none equals a plain
+  `RotationSeed`. Worked out from state, with no write: `IsLocked` decides a
+  timer relock lazily and a `Lock` is copied by value in many places.
+- **Sequence(lockId string) string**: the combination now,
+  `util.LockSequence(lockId, Difficulty, Rotation())`. `characters.HasKey`,
+  `picklock`, `keyring` and the admin views call it; nothing else calls
+  `util.LockSequence` (guarded in `internal/guards/lock_seed_guard_test.go`).
+
+The lock state behind it outlives a room unload through
+`internal/rooms/lock_memory.go` (exits are template-owned and `UnlockedRound`
+is never saved). A restart makes every combination new anyway, through the
+boot-rerolled lock seed. Tests: `rotation_test.go`.
 
 ### Constants
 - **DefaultRelockTime**: `"1 hour"` - Default relock interval when none specified
@@ -48,6 +74,7 @@ Represents a game lock with the following features:
 
 - **SetLocked()**: Forces lock to locked state
   - Resets UnlockedRound to 0
+  - Bumps RotationSeed, so the combination changes
   - Immediately locks regardless of timing
 
 ## Dependencies
@@ -148,8 +175,11 @@ if lock.IsLocked() {
 ## Data Persistence
 
 ### YAML Serialization
-- **Persistent Fields**: Difficulty, RelockInterval, and TrapConditionIds saved
-- **Transient State**: UnlockedRound not persisted (resets on server restart)
+- **Persistent Fields**: Difficulty, RelockInterval, TrapConditionIds and
+  RotationSeed saved (an exit's lock is template-owned, so its RotationSeed is
+  kept in memory across an unload instead, `rooms/lock_memory.go`)
+- **Transient State**: UnlockedRound not persisted (resets on server restart;
+  kept in memory across a room unload)
 - **Configuration Integration**: Locks defined in room/container YAML files
 
 ### State Management
