@@ -321,7 +321,7 @@ func buildRoomExitsInfo(user *users.UserRecord, room *rooms.Room, sight messagin
 		}
 		if ke.Exit.HasLock() {
 			lockId := fmt.Sprintf(`%d-%s`, room.RoomId, ke.Name)
-			haskey, hascombo := user.Character.HasKey(lockId, int(ke.Exit.Lock.Difficulty))
+			haskey, hascombo := user.Character.HasKey(lockId, ke.Exit.Lock)
 			if haskey {
 				v2.Details = append(v2.Details, `player_has_key`)
 			}
@@ -384,7 +384,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 			if container.HasLock() {
 				c.Locked = true
 				lockId := fmt.Sprintf(`%d-%s`, room.RoomId, name)
-				c.HasKey, c.HasPickCombo = user.Character.HasKey(lockId, int(container.Lock.Difficulty))
+				c.HasKey, c.HasPickCombo = user.Character.HasKey(lockId, container.Lock)
 			}
 
 			payload.Contents.Containers = append(payload.Contents.Containers, c)

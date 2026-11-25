@@ -37,7 +37,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		}
 
 		lockId := fmt.Sprintf(`%d-%s`, room.RoomId, containerName)
-		hasKey, _ := user.Character.HasKey(lockId, int(container.Lock.Difficulty))
+		hasKey, _ := user.Character.HasKey(lockId, container.Lock)
 
 		var backpackKeyItm items.Item = items.Item{}
 		var hasBackpackKey bool = false
@@ -95,7 +95,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		}
 
 		lockId := fmt.Sprintf(`%d-%s`, room.RoomId, exitName)
-		hasKey, _ := user.Character.HasKey(lockId, int(exitInfo.Lock.Difficulty))
+		hasKey, _ := user.Character.HasKey(lockId, exitInfo.Lock)
 
 		var backpackKeyItm items.Item = items.Item{}
 		var hasBackpackKey bool = false

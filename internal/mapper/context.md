@@ -639,7 +639,12 @@ than the screen there. The frame is replaced by plain rules (the
 width and height; nothing in this package changes.
 
 Detail level (visible radius, secret/locked display) scales with
-Perception. This path is text-only and has no awareness of the
+Perception. `GetLimitedMap` crawls past a locked exit only for a player who
+can open it (`knowsExitLock`): a key on the ring, or the combination at the
+lock's current rotation. The rotation is read from the live room when it is
+in memory (a memory hit, like the snapshot's reads), never from the
+crawl-time `nodeExit`, which would go stale when the lock re-locks; for a
+room idle unloading has dropped, only the key counts. This path is text-only and has no awareness of the
 `SnapshotExit` extended flags or `Zone.Map.Party`.
 
 ### (b) Web Leather Map (GMCP `Zone.Map`)

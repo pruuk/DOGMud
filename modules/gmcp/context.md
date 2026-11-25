@@ -468,7 +468,8 @@ call, for every lane including the sub-module requests:
 mutator and temporary exits. Each `exitsv2` entry has `kind` (`compass`,
 `vertical`, `diagonal`, `named`, `temporary`), `id` (the movement button id,
 `internal/buttons`) and `details` (`secret`; `locked` means locked now;
-`player_has_key`, `player_has_pick_combo` on any lock). Top level: `dark`
+`player_has_key`, `player_has_pick_combo` on any lock; the combination counts
+only at the lock's current rotation, `characters.HasKey`). Top level: `dark`
 (the viewer sees nothing; the exit maps are then empty), `moves` (the six T
 directions to their fixed ids, always sent) and `darkmarks` (T direction to
 `wall` or `locked`). The builder reads `rooms.KnownExitsAt` with the sight

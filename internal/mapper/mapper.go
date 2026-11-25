@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -976,8 +977,7 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender {
 
 					user := users.GetByUserId(c.UserId)
 					if user != nil {
-						hasKey, hasSequence := user.Character.HasKey(exitInfo.LockId, exitInfo.LockDifficulty)
-						showLocked = hasKey || hasSequence
+						showLocked = knowsExitLock(user, node.RoomId, exitName, exitInfo)
 					}
 				} else if c.UserId < 0 { // Debug
 					showLocked = true
@@ -1235,6 +1235,28 @@ func (r *mapper) drawNode(roomId int) *mapNode {
 		}
 	}
 	return r.getMapNode(roomId)
+}
+
+// knowsExitLock reports whether the user may see past a locked exit on the
+// map: they hold its key, or they know its combination at the lock's current
+// rotation. The rotation lives on the live room (SetLocked bumps it), not on
+// the crawl-time nodeExit, so it is read from the room when that room is in
+// memory, the same memory-hit read the snapshot uses. A room that idle
+// unloading has dropped is not read from disk here; for it only the key
+// counts, since its combination cannot be checked against its rotation.
+func knowsExitLock(user *users.UserRecord, roomId int, exitName string, e nodeExit) bool {
+	lock := gamelock.Lock{Difficulty: uint8(e.LockDifficulty)}
+	live := false
+	if rooms.IsRoomLoaded(roomId) {
+		if room := rooms.LoadRoom(roomId); room != nil { // memory hit, no disk
+			if ex, ok := room.Exits[exitName]; ok {
+				lock = ex.Lock
+				live = true
+			}
+		}
+	}
+	hasKey, hasSequence := user.Character.HasKey(e.LockId, lock)
+	return hasKey || (live && hasSequence)
 }
 
 func (r *mapper) getMapNode(roomId int) *mapNode {

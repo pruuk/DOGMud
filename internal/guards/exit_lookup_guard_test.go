@@ -91,7 +91,7 @@ var exitReadRegistry = map[string]exitLookupEntry{
 	"internal/usercommands/admin.room.dispatcher.go|adminRoom_Exit":       {plain: 3, why: whyExitAdmin},
 	"internal/usercommands/admin.room.dispatcher.go|adminRoom_SecretExit": {plain: 3, why: whyExitAdmin},
 	"internal/usercommands/admin.room.exits.go|room_Edit_Exits":           {plain: 3, why: whyExitAdmin},
-	"internal/usercommands/go.go|Go":                                      {plain: 3, why: "the exit FindKnownExit resolved, and the far side of the exit the player just walked through (FindExitTo), unlocked behind them"},
+	"internal/usercommands/go.go|Go":                                      {plain: 2, why: "the exit FindKnownExit resolved, and the far side of the exit the player just walked through (FindExitTo), unlocked behind them"},
 	"internal/usercommands/keyring.go|KeyRing":                            {plain: 1, why: "names the door a key the player already holds opens"},
 	"internal/usercommands/lock.go|Lock":                                  {plain: 1, why: whyExitResolved},
 	"internal/usercommands/picklock.go|Picklock":                          {plain: 1, why: whyExitResolved},

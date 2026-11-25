@@ -483,7 +483,8 @@ help and get raise nothing.
 #### **Movement (`go.go`, movement parity 4b)**
 
 `Go` is now a thin wrapper: it keeps the lock gate (pick, key ring, backpack
-key), the quest gate (`actions.QuestGateRefuses`: the quest engine's `room_gate`
+key; the quick pick needs lockpicks and the combination at the exit lock's
+current rotation, `characters.HasKey`), the quest gate (`actions.QuestGateRefuses`: the quest engine's `room_gate`
 triggers, right after the lock gate, so a refused step prints no departure
 line, costs nothing and never arrives; #558), the narration, and the
 exit-message requeue, but the step's price and

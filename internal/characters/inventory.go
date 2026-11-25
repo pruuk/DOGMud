@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -127,11 +128,15 @@ func (c *Character) FindKeyInBackpack(lockId string) (items.Item, bool) {
 	return items.Item{}, false
 }
 
-func (c *Character) HasKey(lockId string, difficulty int) (hasKey bool, hasSequence bool) {
+// HasKey reports whether the key ring holds a physical key for lockId, and
+// whether it holds the lock's combination as it stands now. The combination is
+// judged against the lock's current RotationSeed, the way picklock derives it,
+// so one learned before the lock re-locked (SetLocked bumps the seed) no
+// longer counts, and one learned at the current rotation does.
+func (c *Character) HasKey(lockId string, lock gamelock.Lock) (hasKey bool, hasSequence bool) {
 
-	sequence := util.LockSequence(lockId, difficulty, 0)
+	sequence := util.LockSequence(lockId, int(lock.Difficulty), lock.RotationSeed)
 
-	// Check whether they ahve a key for this lock
 	return c.GetKey(`key-`+lockId) != ``, c.GetKey(lockId) == sequence
 }
 

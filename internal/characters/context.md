@@ -526,7 +526,11 @@ seed made at every boot (`util.LockSequence`), `SetKey` stamps a solution with
 `KeyRingBoot = util.BootID()`, and `DropStaleLockSolutions` removes every
 solution from an older boot. `GetKey`, `SetKey` and `KeyCount` call it, as
 do `users.LoadUser` and the `keyring` command, so a stale solution is never
-read or shown. `HasKey` compares a solution to the current sequence.
+read or shown. `HasKey(lockId, gamelock.Lock)` compares a solution to the
+lock's current sequence, built from the lock's `Difficulty` and
+`RotationSeed` as `picklock` builds it: `SetLocked` bumps the seed, so a
+solution learned before a re-lock stops counting (#781). Callers pass the live
+lock (the exit's or the container's), never a difficulty alone.
 
 ### The let-go lookups (`inventory_let_go.go`, #940)
 

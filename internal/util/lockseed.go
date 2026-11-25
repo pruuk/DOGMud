@@ -68,3 +68,25 @@ func RebootLocksForTest() (restore func()) {
 		lockSeedMu.Unlock()
 	}
 }
+
+// RebootLocksUntilRotatedForTest reboots the locks (RebootLocksForTest) until
+// each named lock's sequence at rotation 1 differs from its sequence at
+// rotation 0. A short lock has few sequences (a 3-pin lock has 8), so a
+// rotation can land on the same one by chance; a test of what a rotation
+// changes needs it not to. It returns a function that puts the original seed
+// and boot id back. Keyring solutions set before the call are stale after it.
+func RebootLocksUntilRotatedForTest(difficulty int, lockIds ...string) (restore func()) {
+	restore = RebootLocksForTest()
+	for {
+		rotated := true
+		for _, id := range lockIds {
+			if LockSequence(id, difficulty, 0) == LockSequence(id, difficulty, 1) {
+				rotated = false
+			}
+		}
+		if rotated {
+			return restore
+		}
+		RebootLocksForTest()
+	}
+}

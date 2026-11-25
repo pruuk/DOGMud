@@ -160,7 +160,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 			lockId := fmt.Sprintf(`%d-%s`, room.RoomId, exitName)
 
-			hasKey, hasSequence := user.Character.HasKey(lockId, int(room.Exits[exitName].Lock.Difficulty))
+			hasKey, hasSequence := user.Character.HasKey(lockId, exitInfo.Lock)
 
 			lockpickItm := items.Item{}
 			// Only look for a lockpick kit if they know the sequence

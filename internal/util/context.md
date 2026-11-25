@@ -221,7 +221,10 @@ which uses a secret seed made at random once per process and never written.
 A lock solution is therefore good only until a restart (owner ruling
 2026-11-18), and `BootID()` names the current seed so a character's keyring
 can drop older solutions (`characters.DropStaleLockSolutions`).
-`RebootLocksForTest` simulates a restart. `Server.Seed` is never a lock seed:
+`RebootLocksForTest` simulates a restart. `RebootLocksUntilRotatedForTest`
+reboots until each named lock's rotation 1 sequence differs from its rotation 0
+one, since a short lock can rotate onto the same sequence by chance (a 3-pin
+lock has 8); a test of what a rotation changes uses it. `Server.Seed` is never a lock seed:
 it is in the shipped config and drives the zodiac calendar (guarded in
 `internal/guards`).
 
@@ -229,6 +232,7 @@ it is in the shipped config and drives the zodiac calendar (guarded in
 func LockSequence(lockIdentifier string, difficulty int, rotation uint64) string
 func BootID() string
 func RebootLocksForTest() (restore func())
+func RebootLocksUntilRotatedForTest(difficulty int, lockIds ...string) (restore func())
 func RandomHex(n int) string
 ```
 
