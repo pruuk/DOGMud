@@ -308,6 +308,44 @@ func TestPendingInputs_TypedRefusalReportedAgainEachSecond(t *testing.T) {
 	require.Equal(t, 1, refused(), "again a second later")
 }
 
+// The once-a-second rule for typed lines is per full spell: a typed line
+// refused in the spell before does not silence one in the next, even inside
+// the same second. Here the new spell's first refusal is automatic, so a
+// typed line right after must still be reported.
+func TestPendingInputs_TypedRefusalClockResetsWithEachSpell(t *testing.T) {
+	pendingFixture(t, 1)
+	clock := time.Unix(2000, 0)
+	refusalClock = func() time.Time { return clock }
+	t.Cleanup(func() { refusalClock = time.Now })
+	refused := func() int {
+		n := 0
+		for _, c := range noticesFor(t, 7) {
+			if c.Refused {
+				n++
+			}
+		}
+		return n
+	}
+	auto := Input{UserId: 7, InputText: "tick", Flags: CmdFromClient}
+
+	TryAddToQueue(clientLine(7, "look")) // fills
+	require.False(t, TryAddToQueue(clientLine(7, "look")))
+	require.Equal(t, 1, refused(), "the first spell's typed refusal")
+
+	ProcessEvents() // the command runs; the queue frees
+	require.Equal(t, 0, PendingInputs(7))
+	noticesFor(t, 7)
+
+	clock = clock.Add(100 * time.Millisecond) // well within a second
+	TryAddToQueue(clientLine(7, "look"))      // a new spell
+	require.False(t, TryAddToQueue(auto))
+	require.Equal(t, 1, refused(), "the new spell's first refusal, automatic")
+	TryAddToQueue(clientLine(7, "look"))
+	require.Equal(t, 1, refused(), "the new spell's first typed refusal is reported")
+	TryAddToQueue(clientLine(7, "look"))
+	require.Equal(t, 0, refused(), "then once a second again")
+}
+
 // QueuedEngineInputs counts a deferred engine command too (a wear waiting
 // for its turn sits with the deferred events between passes), and never a
 // client command.
