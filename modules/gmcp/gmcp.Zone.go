@@ -197,7 +197,7 @@ func (g *GMCPZoneModule) buildAndSend(e events.Event) events.ListenerReturn {
 	// script, another tool) was written against a Zone.Map that is every room,
 	// so it gets the whole map on every update, as before #650, and no state
 	// is kept for it.
-	snap := view.Snapshot(visited)
+	snap := view.Snapshot(visited, mapper.SecretExitsKnownTo(user.Character))
 	var d zoneDiffResult
 	g.zoneMu.Lock()
 	if isWebClientConnection(user.ConnectionId()) {

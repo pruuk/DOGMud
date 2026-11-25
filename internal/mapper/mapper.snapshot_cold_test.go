@@ -131,7 +131,7 @@ func setupZoneMapFixture(t *testing.T) (*mapper, *mapper, map[int]struct{}) {
 // fixture's fog set: zm_a's web map view, which gathers zm_b's rooms from
 // zm_b's own map.
 func zoneMapSnapshot(m *mapper, visited map[int]struct{}) []SnapshotRoom {
-	return m.WebMap().Snapshot(visited)
+	return m.WebMap().Snapshot(visited, nil)
 }
 
 // canonicalSnapshot sorts rooms and exits (Snapshot iterates maps) and returns
@@ -171,7 +171,7 @@ func TestSnapshot_LoadedRoomReadsLiveState(t *testing.T) {
 	live.IsBank = true
 
 	var sq *SnapshotRoom
-	snap := m.Snapshot(visited)
+	snap := m.Snapshot(visited, nil)
 	for i := range snap {
 		if snap[i].RoomId == 9001 {
 			sq = &snap[i]
@@ -191,7 +191,7 @@ func TestSnapshot_WarmPayloadMatchesGolden(t *testing.T) {
 		t.Fatalf("warm Zone.Map payload changed.\n got: %s\nwant: %s", got, zoneMapGolden)
 	}
 	// The zone's own map alone still stops at the border: 9005 is not in it.
-	for _, r := range m.Snapshot(visited) {
+	for _, r := range m.Snapshot(visited, nil) {
 		if r.RoomId == 9005 {
 			t.Fatal("zm_a's own Snapshot drew zm_b's room 9005")
 		}
@@ -277,7 +277,7 @@ func BenchmarkSnapshotCold960(b *testing.B) {
 			rooms.UnloadRoomForTest(rid)
 		}
 		b.StartTimer()
-		if snap := m.Snapshot(visited); len(snap) != len(ids) {
+		if snap := m.Snapshot(visited, nil); len(snap) != len(ids) {
 			b.Fatalf("snapshot rooms = %d, want %d", len(snap), len(ids))
 		}
 	}

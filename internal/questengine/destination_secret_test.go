@@ -10,9 +10,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// Guidance may send a player through a secret exit only once the game
-// discloses it to them: `search` found it, the room beyond is on their map,
-// or they were there recently. Any other secret exit stays out of the route.
+// Guidance may send a player through a secret exit only once they found it
+// (#781, owner ruling 1: one rule everywhere). Being on the player's map or
+// having been there recently no longer counts.
 func TestSecretExitsKnownTo(t *testing.T) {
 	const here, beyond = 61001, 61002
 	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{
@@ -23,7 +23,7 @@ func TestSecretExitsKnownTo(t *testing.T) {
 	u := destUser(here)
 	known := secretExitsKnownTo(u)
 	if known(here, "west", beyond) {
-		t.Fatalf("a secret exit the player has neither found nor walked through must not be used")
+		t.Fatalf("a secret exit the player has not found must not be used")
 	}
 
 	u.Character.AddDiscovery(here, characters.SecretExitDiscoveryKey("west"))
@@ -36,14 +36,14 @@ func TestSecretExitsKnownTo(t *testing.T) {
 
 	v := destUser(here)
 	v.Character.MarkRoomVisited("zk", beyond)
-	if !secretExitsKnownTo(v)(here, "north", beyond) {
-		t.Errorf("a secret exit into a room on the player's map (the map draws it) must be usable")
+	if secretExitsKnownTo(v)(here, "north", beyond) {
+		t.Errorf("the room beyond on the player's map must no longer open an unfound secret exit")
 	}
 
 	w := destUser(here)
 	rooms.LoadRoom(beyond).MarkVisited(w.UserId, rooms.VisitorUser)
-	if !secretExitsKnownTo(w)(here, "north", beyond) {
-		t.Errorf("a secret exit into a room the player was in recently (their exit list shows it) must be usable")
+	if secretExitsKnownTo(w)(here, "north", beyond) {
+		t.Errorf("a recent visit to the room beyond must no longer open an unfound secret exit")
 	}
 }
 

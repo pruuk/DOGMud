@@ -371,27 +371,13 @@ func (e *Engine) ResolveDestination(user *users.UserRecord, questId int, step st
 	return finishDestination(set, user.Character.RoomId, inferred, secretExitsKnownTo(user))
 }
 
-// secretExitsKnownTo is the secret exits guidance may send user through, the
-// ones the game already discloses to that player: `search` found it (a
-// discovery record, actions/search.go), or the room beyond is on their map
-// (Character.VisitedRooms: the web and ASCII maps draw a secret exit once the
-// far room is visited, mapper.snapshot.go), or they were there recently (the
-// room's exit list shows it then, rooms/roomdetails.go). Any other secret
-// exit is left out of the route, in the zone and across a border, so "Head
-// west." never names an exit the player has not found. Mob paths take them
-// all.
+// secretExitsKnownTo is the secret exits guidance may send user through: the
+// ones they found, the one rule every exit list reads (#781, owner ruling 1;
+// mapper.SecretExitsKnownTo). Any other secret exit is left out of the route,
+// in the zone and across a border, so "Head west." never names an exit the
+// player has not found. Mob paths take them all.
 var secretExitsKnownTo = func(user *users.UserRecord) mapper.SecretExitKnown {
-	return func(roomId int, exitName string, toRoomId int) bool {
-		if user.Character.HasDiscovery(roomId, characters.SecretExitDiscoveryKey(exitName)) {
-			return true
-		}
-		to := rooms.LoadRoom(toRoomId)
-		if to == nil {
-			return false
-		}
-		tpl, _ := rooms.OriginalRoomId(toRoomId)
-		return user.Character.HasVisitedRoom(to.Zone, tpl) || to.HasVisited(user.UserId, rooms.VisitorUser)
-	}
+	return mapper.SecretExitsKnownTo(user.Character)
 }
 
 func finishDestination(set destSet, playerRoom int, inferred bool, known mapper.SecretExitKnown) Destination {

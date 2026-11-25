@@ -275,11 +275,11 @@ trigger.
 the map wash; shared with the areas index, do not change it), `Inside`, and
 `Pin`, `NextRoom`, `NextDir` from `mapper.NearestOf` when the player is not
 inside. `Pin` is 0 when the nearest member lies in another zone. The search
-takes a secret exit only when `secretExitsKnownTo(user)` allows it: `search`
-found it (`characters.SecretExitDiscoveryKey`), the room beyond is on the
-player's map (`Character.HasVisitedRoom`), or they were there recently
-(`Room.HasVisited`, what the exit list reads). Mob paths take every secret
-exit.
+takes a secret exit only when `secretExitsKnownTo(user)` allows it: guidance
+sends a player only through secret exits they found
+(`mapper.SecretExitsKnownTo`, built on `Character.KnowsSecretExit`, #781).
+Being on the player's map or a recent visit no longer counts. Mob paths take
+every secret exit.
 
 **Seams.** Package vars the tests stub (`installDestWorld` in
 `destination_test.go`): `liveCopies`, `sightIn`, `templateRoom`, `roomZone`,

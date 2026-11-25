@@ -42,13 +42,13 @@ type SnapshotRoom struct {
 // and ToZone is set when the destination is in a different zone. The exit Kind
 // drives client rendering (normal/long/wrap/vertical).
 //
-// Undiscovered secret exits are omitted entirely, matching GetLimitedMap's
-// behaviour for the ASCII map. See the comment at the gate below.
+// A secret exit is drawn only when known lets it through (the player's
+// SecretExitsKnownTo, #781), as GetLimitedMap draws the ASCII map.
 //
 // This is one zone's map only; the play client's Zone.Map draws WebMap, which
 // adds the explored rooms of the zones this one joins.
-func (r *mapper) Snapshot(visited map[int]struct{}) []SnapshotRoom {
-	return r.snapshotInto(make([]SnapshotRoom, 0, len(visited)), visited, nil, nil)
+func (r *mapper) Snapshot(visited map[int]struct{}, known SecretExitKnown) []SnapshotRoom {
+	return r.snapshotInto(make([]SnapshotRoom, 0, len(visited)), visited, nil, nil, known)
 }
 
 // WebMap is the room set the play client's web map draws from one zone's map:
@@ -128,7 +128,7 @@ func (w *WebMap) RoomIds() []int {
 // view draws, as the one map's Snapshot made it when that map held them all.
 // A room two gathered maps hold (a stale map a forced rebuild left behind) is
 // drawn once, from the first.
-func (w *WebMap) Snapshot(visited map[int]struct{}) []SnapshotRoom {
+func (w *WebMap) Snapshot(visited map[int]struct{}, known SecretExitKnown) []SnapshotRoom {
 	out := make([]SnapshotRoom, 0, len(visited))
 	drawnFrom := make(map[int]*mapper, len(visited))
 	for _, m := range w.maps {
@@ -153,15 +153,15 @@ func (w *WebMap) Snapshot(visited map[int]struct{}) []SnapshotRoom {
 		return nil
 	}
 	for _, m := range w.maps {
-		out = m.snapshotInto(out, visited, far, func(id int) bool { return drawnFrom[id] == m })
+		out = m.snapshotInto(out, visited, far, func(id int) bool { return drawnFrom[id] == m }, known)
 	}
 	return out
 }
 
 // snapshotInto appends this map's visited rooms to out. far looks up an exit's
 // far room outside this map (nil: none), and own (nil: every room) picks which
-// of this map's rooms to draw.
-func (r *mapper) snapshotInto(out []SnapshotRoom, visited map[int]struct{}, far func(int) *mapNode, own func(int) bool) []SnapshotRoom {
+// of this map's rooms to draw. known (nil: none) lets a secret exit be drawn.
+func (r *mapper) snapshotInto(out []SnapshotRoom, visited map[int]struct{}, far func(int) *mapNode, own func(int) bool, known SecretExitKnown) []SnapshotRoom {
 	// Iteration order is nondeterministic; that's fine — the client places rooms
 	// by (x,y,z), not by slice order.
 	for id, n := range r.crawledRooms {
@@ -242,24 +242,18 @@ func (r *mapper) snapshotInto(out []SnapshotRoom, visited map[int]struct{}, far 
 			}
 		}
 
-		for _, e := range n.Exits {
+		for exitName, e := range n.Exits {
 			// Don't render an exit stub toward an ephemeral/instance room.
 			if rooms.IsEphemeralRoomId(e.RoomId) {
 				continue
 			}
-			// A secret exit is not disclosed until the player has been through
-			// it. GetLimitedMap does exactly this for the ASCII map (see the
-			// exitInfo.Secret block there): it skips the exit entirely unless
-			// the room on the far side has been visited. Without the same gate
-			// the web map revealed secret exits the ASCII map hides, which is a
-			// real advantage rather than a cosmetic difference. Skipping the
-			// whole exit (rather than just clearing the Secret flag) is
-			// deliberate: emitting an unflagged stub would still tell the
-			// player a passage is there.
-			if e.Secret {
-				if _, seen := visited[e.RoomId]; !seen {
-					continue
-				}
+			// A secret exit is drawn once the player has found it, the one
+			// rule every exit list reads (#781, owner ruling 1; known is the
+			// player's SecretExitsKnownTo). Skipping the whole exit, rather
+			// than clearing its Secret flag, is deliberate: an unflagged stub
+			// would still tell the player a passage is there.
+			if e.Secret && !known.allows(id, exitName, e.RoomId) {
+				continue
 			}
 			se := SnapshotExit{
 				ToRoomId: e.RoomId,

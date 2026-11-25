@@ -595,7 +595,7 @@ func TestForcedRebuildShowsAnEditInAJoinedZone(t *testing.T) {
 
 		visited := map[int]struct{}{b + 1: {}, b + 2: {}, b + 3: {}, b + 4: {}}
 		var edge *SnapshotExit
-		for _, r := range GetMapper(b + 2).WebMap().Snapshot(visited) {
+		for _, r := range GetMapper(b+2).WebMap().Snapshot(visited, nil) {
 			if r.RoomId != b+4 {
 				continue
 			}

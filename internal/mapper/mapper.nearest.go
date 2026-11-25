@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -76,18 +77,29 @@ func searchesHere(fromZone string, zones []string) bool {
 	return slices.Contains(zones, fromZone)
 }
 
-// SecretExitKnown reports whether quest guidance may send its traveller
-// through the secret exit exitName of roomId, which leads to toRoomId. Only
-// guidance asks: a mob's path (GetPath, `pathto`) takes every secret exit.
-// A nil SecretExitKnown lets none through.
+// SecretExitKnown reports whether a traveller may go through the secret exit
+// exitName of roomId, which leads to toRoomId. Quest guidance, the player's
+// maps (Snapshot, GetLimitedMap) and an NPC's unscripted route (GetPathKnown)
+// ask it, built from SecretExitsKnownTo (#781). A scripted route (GetPath)
+// takes every secret exit. A nil SecretExitKnown lets none through.
 type SecretExitKnown func(roomId int, exitName string, toRoomId int) bool
 
 func (k SecretExitKnown) allows(roomId int, exitName string, toRoomId int) bool {
 	return k != nil && k(roomId, exitName, toRoomId)
 }
 
-// anySecretExit lets every secret exit through, as GetPath does.
-func anySecretExit(int, string, int) bool { return true }
+// AnySecretExit lets every secret exit through: GetPath (a scripted route)
+// and the room builder's map.
+func AnySecretExit(int, string, int) bool { return true }
+
+// SecretExitsKnownTo lets through the secret exits c has found
+// (Character.KnowsSecretExit), the one secret-exit rule (#781, owner rulings 1
+// and 13).
+func SecretExitsKnownTo(c *characters.Character) SecretExitKnown {
+	return func(roomId int, exitName string, _ int) bool {
+		return c.KnowsSecretExit(roomId, exitName)
+	}
+}
 
 // NearestOf is where to head from fromRoomId toward the nearest room in
 // accepts (#375 phase 4: quest destinations). Inside the start room's zone it
