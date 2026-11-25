@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/gamelock"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -423,6 +424,7 @@ func TestGo_ADarkGuessAtAnUnfoundSecretExitMarksAWall(t *testing.T) {
 	t.Cleanup(util.ResetRoundCountForTest)
 	user, room := getTestUserAndRoom(t)
 	t.Cleanup(func() { buttons.Forget(user.UserId) })
+	t.Cleanup(func() { events.DrainQueuedRoomExitsChangedForTest(user.UserId) })
 	secretExit(t, room, "north")
 	north := room.Exits["north"]
 	north.Lock = gamelock.Lock{Difficulty: 10}
@@ -437,4 +439,86 @@ func TestGo_ADarkGuessAtAnUnfoundSecretExitMarksAWall(t *testing.T) {
 		map[string]string{"north": buttons.MarkWall, "west": buttons.MarkWall},
 		buttons.DarkMarks(user.UserId, room.RoomId, true),
 		"the unfound secret exit must mark exactly as the plain wall beside it")
+}
+
+// darkWithDirectionAliases is the fixture for the alias tests: user 1 in a
+// pitch dark room 1 (north to room 2, no west exit), with the shipped
+// direction aliases n and w. Cleanups run in the right order through the
+// returned func, which the caller defers.
+func darkWithDirectionAliases(t *testing.T) (*users.UserRecord, *rooms.Room, func()) {
+	t.Helper()
+	cleanup := seedAllRegistries()
+	cleanupKeywords := keywords.SeedKeywordsForTest(keywords.Aliases{
+		DirectionAliases: map[string]string{"n": "north", "w": "west"},
+	})
+	util.SetRoundCountForTest(1000)
+	user, room := getTestUserAndRoom(t)
+	darkenRoom(t, room)
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(user.Character, room), "premise: the room is dark")
+	return user, room, func() {
+		events.DrainQueuedRoomExitsChangedForTest(user.UserId)
+		buttons.Forget(user.UserId)
+		util.ResetRoundCountForTest()
+		cleanupKeywords()
+		cleanup()
+	}
+}
+
+// The typed short alias reaches the marks through the real dispatcher:
+// TryCommand expands w to west (actions.ExpandAliases), and the bump marks.
+func TestTryCommand_ATypedDirectionAliasInTheDarkMarksAWall(t *testing.T) {
+	user, room, done := darkWithDirectionAliases(t)
+	defer done()
+
+	handled, err := TryCommand("w", "", user.UserId, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+	require.Equal(t, 1, user.Character.RoomId, "premise: there is no west exit")
+	require.Equal(t, map[string]string{"west": buttons.MarkWall},
+		buttons.DarkMarks(user.UserId, room.RoomId, true))
+}
+
+// `go w` answers as `w` does: Go expands a direction alias before it asks
+// whether the word is a compass direction, so the bump line and the mark
+// come either way.
+func TestGo_ADirectionAliasBumpsAndMarksAsTypingItDoes(t *testing.T) {
+	user, room, done := darkWithDirectionAliases(t)
+	defer done()
+	events.DrainQueuedMessagesForTest(user.UserId)
+
+	handled, err := Go("w", user, room, 0)
+	require.True(t, handled, "go w must be handled, as w is")
+	require.NoError(t, err)
+	require.Contains(t, drainedText(user), "You're bumping into walls.")
+	require.Equal(t, map[string]string{"west": buttons.MarkWall},
+		buttons.DarkMarks(user.UserId, room.RoomId, true))
+}
+
+// The alias expansion leaves every other word alone: `go gate` takes a named
+// exit, `go portal` a temporary one, and `go n` still walks north.
+func TestGo_NamedAndTemporaryExitsAreUnchangedByAliasExpansion(t *testing.T) {
+	for _, tc := range []struct{ word, exitName string }{
+		{"gate", "gate"}, {"portal", "portal"}, {"n", "north"},
+	} {
+		t.Run(tc.word, func(t *testing.T) {
+			// seedAllRegistries builds room 1 afresh, so these edits end
+			// with the test.
+			user, room, done := darkWithDirectionAliases(t)
+			defer done()
+			room.ExitsTemp = map[string]exit.TemporaryRoomExit{}
+			switch tc.exitName {
+			case "gate":
+				room.Exits = map[string]exit.RoomExit{"gate": {RoomId: 2}}
+			case "portal":
+				room.Exits = map[string]exit.RoomExit{}
+				require.True(t, room.AddTemporaryExit("portal", exit.TemporaryRoomExit{RoomId: 2, Expires: "1 day"}))
+			}
+
+			handled, err := Go(tc.word, user, room, 0)
+			require.True(t, handled)
+			require.NoError(t, err)
+			require.Equal(t, 2, user.Character.RoomId, "go %s walks through the %s exit", tc.word, tc.exitName)
+			require.Empty(t, buttons.DarkMarks(user.UserId, room.RoomId, true), "a move marks nothing")
+		})
+	}
 }

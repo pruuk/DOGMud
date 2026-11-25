@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -73,6 +74,12 @@ func noteDarkTry(user *users.UserRecord, room *rooms.Room, direction, mark strin
 }
 
 func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+
+	// `go w` answers as typing `w` does: the dispatcher expands w to west
+	// before it calls Go, so a direction alias is expanded here too, before
+	// the compass check below. Any other word (a named or temporary exit)
+	// comes back unchanged.
+	rest = keywords.TryDirectionAlias(rest)
 
 	exitResult := actions.FindKnownExit(room, user.Character, rest)
 	exitName, goRoomId := exitResult.ExitName, exitResult.RoomId

@@ -535,6 +535,15 @@ does, locked or not. Tests: `TestGo_DarkTriesLeaveMarks` and
 `TestGo_ADarkGuessAtAnUnfoundSecretExitMarksAWall` in
 `go_secret_exit_test.go`.
 
+`Go` expands a direction alias (`keywords.TryDirectionAlias`, `w` to `west`)
+before anything else, so `go w` answers as typing `w` does (`TryCommand`
+expands it through `actions.ExpandAliases`): the bump line, `Room.WrongDir`
+and the dark mark. Any other word, a named exit (`go gate`) or a temporary
+one (`go portal`), comes back unchanged. Tests:
+`TestTryCommand_ATypedDirectionAliasInTheDarkMarksAWall`,
+`TestGo_ADirectionAliasBumpsAndMarksAsTypingItDoes`,
+`TestGo_NamedAndTemporaryExitsAreUnchangedByAliasExpansion`.
+
 ### Quest log actions (`questlog.go`, `quests.go`; #375 phase 5)
 
 `questlog.go` holds the shared bodies for the `quests` command and the web
