@@ -36,7 +36,8 @@
  *  10. the Room handler draws the room without mapwhere.js; keeps one entry
  *      per room in allRooms.roomZones; draws no edge for an exit with no map
  *      direction; and a full Zone.Map in the same room keeps the player's
- *      zoom and centre, while one after a step or in a new zone resets.
+ *      zoom and centre, while one after a step, in a new zone (even before
+ *      that zone's Room.Info) or without the current room resets.
  */
 'use strict';
 
@@ -480,6 +481,29 @@ roomInfo(9, 0, 0, 'Elsewhere');
 zoneMap({ zone: 'Elsewhere', cz: 0, party: [], rooms: [room(9, 0)], full: true });
 check('10d: a full map in a new zone resets the zoom', g.zoomLevel === 1, 'zoom=' + g.zoomLevel);
 check('10d: a full map in a new zone centres on its room', g.currentCenterId === 9, 'centre=' + g.currentCenterId);
+// 10e. The new zone's full map arrives BEFORE the step's Room.Info. It draws
+// explored rooms of other zones, so the room being left (1) is on it: only
+// the zone test tells this from a same-room map.
+g = freshMap();
+roomInfo(1, 0);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1)], full: true });
+g.zoomLevel = 0.4;
+g.center = { x: 777, y: 555 };
+zoneMap({ zone: 'Elsewhere', cz: 0, party: [], rooms: [room(1, 0), room(9, 1)], full: true });
+check('10e: a new zone\'s full map before its Room.Info resets the zoom', g.zoomLevel === 1, 'zoom=' + g.zoomLevel);
+check('10e: and does not keep the old centre', !(g.center.x === 777 && g.center.y === 555),
+  'center=' + JSON.stringify(g.center));
+// 10f. A same-room full map that leaves the current room out (the player's
+// room left the map) puts no old view back: the zoom resets. reset() never
+// clears the centre, so the centre is not a signal here.
+g = freshMap();
+roomInfo(1, 0);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1), room(3, 2)], full: true });
+g.zoomLevel = 0.4;
+g.center = { x: 777, y: 555 };
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(2, 1), room(3, 2)], full: true });
+check('10f: a same-room full map without the current room resets the zoom', g.zoomLevel === 1, 'zoom=' + g.zoomLevel);
+check('10f: no room is current', g.currentCenterId == null, 'centre=' + g.currentCenterId);
 
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);
