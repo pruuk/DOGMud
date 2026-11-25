@@ -670,17 +670,20 @@ func cmdSetMacro(user *users.UserRecord, setTarget string, args []string) (bool,
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Macro <ansi fg="command">=%d</ansi> deleted.`, macroNum))
 	} else {
 
-		allComands := strings.Split(setVal, ";")
-		if len(allComands) > 10 {
-			user.SendText(messaging.CategoryRefusal, `Macros are limited to 10 commands.`)
+		// A macro holds at most as many commands as the game will hold
+		// waiting for the player (users.MaxCommandChain), counted as every
+		// sender splits a chain: blank pieces are not commands.
+		if users.CommandChainLength(setVal) > users.MaxCommandChain() {
+			refusal.CommandChainTooLong(user, `macro`, users.MaxCommandChain())
 			return true, nil
 		}
 
+		allComands := strings.Split(setVal, ";")
 		finalMacroCommands := []string{}
 
 		for _, cmd := range allComands {
 
-			if len(cmd) > 0 {
+			if strings.TrimSpace(cmd) != `` {
 				if cmd[0] == '=' {
 					user.SendText(messaging.CategoryRefusal, `You cannot reference macros inside of a macro`)
 					return true, nil

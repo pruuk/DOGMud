@@ -21,6 +21,18 @@ func AutomationLimit(to Recipient, kind string, most int) {
 	send(to, AutomationLimitText(kind, most))
 }
 
+// CommandChainTooLongText answers a macro, tick or trigger holding more
+// commands than one chain may (users.MaxCommandChain, the pending command
+// cap). kind is "macro", "tick" or "trigger". The common long chain is a
+// walking route, so the line suggests splitting it.
+func CommandChainTooLongText(kind string, most int) string {
+	return `A ` + kind + ` can hold at most ` + strconv.Itoa(most) + ` commands. Split a long route into two.`
+}
+
+func CommandChainTooLong(to Recipient, kind string, most int) {
+	send(to, CommandChainTooLongText(kind, most))
+}
+
 // AutomationTooLongText answers a tick or trigger with a field longer than
 // Network.MaxAutomationFieldLength, or a condition with more values than
 // MaxAutomationConditionValues. kind is "tick" or "trigger".

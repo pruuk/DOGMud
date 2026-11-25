@@ -9,7 +9,9 @@ type Network struct {
 	AICommandsPerRound   ConfigInt         `yaml:"AICommandsPerRound"`   // Max commands per game round for AI connections
 	// The most commands one player's client may have waiting to run (typed
 	// lines, web client lines, GMCP Char.Action.Try, each piece of a macro).
-	// Past it a command is refused. See events.TryAddToQueue.
+	// Past it a command is refused. See events.TryAddToQueue. It is also the
+	// most commands one macro, tick or trigger chain may hold
+	// (users.MaxCommandChain).
 	MaxPendingInputs ConfigInt `yaml:"MaxPendingInputs"`
 	// Caps on what GMCP Char.Automation.Set may store in a user save.
 	MaxAutomationTicks           ConfigInt `yaml:"MaxAutomationTicks"`           // ticks per player

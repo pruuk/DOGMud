@@ -1830,6 +1830,23 @@ html.layout-column.keyboard-open #dash-drawer {
   min-height: 52px;
 }
 
+/* The live "3 of 10 commands" count under a commands field in the macro,
+   tick and trigger editors (attachChainCount). Over the limit it turns to
+   words ("Too many commands: ..."), bold, with a left bar: the words and the
+   weight carry it, the colour only adds to them. */
+.auto-chain-count {
+  font-family: var(--font-body);
+  font-size: var(--text);
+  color: var(--text-secondary);
+}
+.auto-chain-count[hidden] { display: none; }
+.auto-chain-count.over {
+  color: var(--vellum);
+  font-weight: var(--bold);
+  border-left: 3px solid var(--madder);
+  padding-left: 6px;
+}
+
 /* "Log in first: ..." above Save, shown when Save is pressed after the
    connection dropped (#819). Light vellum on the editor's dark panel, the
    same as its title (the editor is dark in Light mode too). */

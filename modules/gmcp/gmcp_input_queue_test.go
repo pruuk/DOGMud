@@ -171,6 +171,29 @@ func TestAutomationSet_CapsAreRefusedWithALine(t *testing.T) {
 	require.Contains(t, lines[0], refusal.AutomationTooLongText(`tick`))
 }
 
+// A tick or trigger with more commands than one chain may hold is refused
+// with a line naming the limit, and Char.Automation carries that limit so the
+// editors can count against it.
+func TestAutomationSet_CommandChainLimit(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.Network.MaxPendingInputs = 3
+	configs.SetConfigForTest(t, cfg)
+	u := menuTestUser(t, 9870, 98870, true)
+	events.DrainQueuedMessagesForTest(u.UserId)
+	events.DrainQueuedByTypeForTest(`AutomationChanged`)
+	t.Cleanup(func() { events.DrainQueuedByTypeForTest(`AutomationChanged`) })
+
+	(&GMCPModule{}).handleCharOp(GMCPCharOp{ConnectionId: 98870, Command: `Char.Automation.Set`,
+		Payload: []byte(`{"kind":"trigger","name":"walk","pattern":"*","thenCmds":"n;e;s;w"}`)})
+	require.Empty(t, u.Triggers)
+	require.Empty(t, events.DrainQueuedByTypeForTest(`AutomationChanged`))
+	lines := events.DrainQueuedMessagesForTest(u.UserId)
+	require.Len(t, lines, 1)
+	require.Contains(t, lines[0], refusal.CommandChainTooLongText(`trigger`, 3))
+
+	require.Equal(t, 3, buildAutomationPayload(nil, nil, nil, nil).MaxCommands)
+}
+
 // Zone.Map requests for one player collapse while one waits (owner ruling
 // 2026-11-25): however many are queued, one map is built.
 func TestZoneMap_UpdatesForOnePlayerCollapse(t *testing.T) {

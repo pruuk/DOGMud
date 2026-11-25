@@ -101,6 +101,7 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `RemainsAlreadyRaisedLine` (no send) | Those remains were already animated once; there is nothing left to raise. |
 | `InputQueueFull` / `InputQueueFullLine` (`input.go`; the first command refused in a full spell, to a client other than the web client, sent by `modules/gmcp`) | You're already doing as much as you can. Wait a moment. |
 | `AutomationLimit(u, "triggers", 100)` / `AutomationLimitText` (`input.go`; `Char.Automation.Set` past the count cap) | You can keep at most 100 triggers. Remove one first. |
+| `CommandChainTooLong(u, "trigger", 10)` / `CommandChainTooLongText` (`input.go`; a macro, tick or trigger with more commands than `users.MaxCommandChain`) | A trigger can hold at most 10 commands. Split a long route into two. |
 | `AutomationTooLong(u, "trigger")` / `AutomationTooLongText` (`input.go`; a field past `MaxAutomationFieldLength`) | That trigger is too long to save. Shorten it and try again. |
 | `Failed(u, "", err)` / `FailedText` | That didn't work. The error has been logged. |
 | `Failed(u, "salvage", err)` | That salvage didn't work. The error has been logged. |

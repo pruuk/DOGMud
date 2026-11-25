@@ -127,7 +127,11 @@ func (u *UserRecord) SetTick(t UserTick) (UserTick, error) {
 			}
 		}
 	}
-	if err := u.tickFits(t, at < 0); err != nil {
+	var prev *UserTick
+	if at >= 0 {
+		prev = &u.Ticks[at]
+	}
+	if err := u.tickFits(t, prev); err != nil {
 		return UserTick{}, err
 	}
 	if at >= 0 {
@@ -196,7 +200,11 @@ func (u *UserRecord) SetTrigger(t UserTrigger) (UserTrigger, error) {
 			}
 		}
 	}
-	if err := u.triggerFits(t, at < 0); err != nil {
+	var prev *UserTrigger
+	if at >= 0 {
+		prev = &u.Triggers[at]
+	}
+	if err := u.triggerFits(t, prev); err != nil {
 		return UserTrigger{}, err
 	}
 	if at >= 0 {

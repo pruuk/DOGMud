@@ -96,6 +96,66 @@ func TestSetTrigger_FieldsAreCapped(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// A chain is counted as every sender splits it: blank pieces are not
+// commands.
+func TestCommandChainLength(t *testing.T) {
+	require.Equal(t, 0, CommandChainLength(""))
+	require.Equal(t, 0, CommandChainLength(" ; ;"))
+	require.Equal(t, 3, CommandChainLength("n;e; ;s;"))
+	require.Equal(t, 1, CommandChainLength("say hello there"))
+}
+
+// chainCaps pins the chain limit (the pending input cap) at 3.
+func chainCaps(t *testing.T) {
+	t.Helper()
+	cfg := configs.GetConfig()
+	cfg.Network.MaxPendingInputs = 3
+	configs.SetConfigForTest(t, cfg)
+}
+
+// A tick's commands and each of a trigger's then and else commands hold at
+// most MaxCommandChain, the pending input cap.
+func TestSetAutomation_CommandChainIsCapped(t *testing.T) {
+	chainCaps(t)
+	require.Equal(t, 3, MaxCommandChain())
+
+	u := &UserRecord{}
+	_, err := u.SetTick(UserTick{Name: "ok", Commands: "n;e;s"})
+	require.NoError(t, err)
+	_, err = u.SetTick(UserTick{Name: "x", Commands: "n;e;s;w"})
+	require.ErrorIs(t, err, ErrAutomationTooManyCommands)
+
+	_, err = u.SetTrigger(UserTrigger{Name: "t", ThenCmds: "n;e;s;w"})
+	require.ErrorIs(t, err, ErrAutomationTooManyCommands)
+	_, err = u.SetTrigger(UserTrigger{Name: "t", ThenCmds: "n", ElseCmds: "n;e;s;w"})
+	require.ErrorIs(t, err, ErrAutomationTooManyCommands)
+	require.Len(t, u.Ticks, 1)
+	require.Empty(t, u.Triggers)
+}
+
+// A chain saved before the limit stays saved and can still be switched on or
+// off or renamed; only changing its commands must bring it within the limit.
+func TestSetAutomation_OlderLongChainIsKeptUntilEdited(t *testing.T) {
+	chainCaps(t)
+	long := "n;e;s;w;n"
+	u := &UserRecord{
+		Ticks:    []UserTick{{Id: 1, Name: "route", Commands: long, IntervalSec: 5}},
+		Triggers: []UserTrigger{{Id: 1, Name: "flee", ThenCmds: long, ElseCmds: long}},
+	}
+
+	_, err := u.SetTick(UserTick{Id: 1, Name: "route2", Commands: long, IntervalSec: 5, Enabled: true})
+	require.NoError(t, err, "switching on and renaming keeps the old chain")
+	_, err = u.SetTrigger(UserTrigger{Id: 1, Name: "flee", ThenCmds: long, ElseCmds: long, Enabled: true})
+	require.NoError(t, err)
+
+	_, err = u.SetTick(UserTick{Id: 1, Name: "route2", Commands: long + ";e"})
+	require.ErrorIs(t, err, ErrAutomationTooManyCommands, "an edited chain must fit")
+	require.Equal(t, long, u.Ticks[0].Commands, "the refused edit stores nothing")
+
+	_, err = u.SetTick(UserTick{Id: 1, Name: "route2", Commands: "n;e"})
+	require.NoError(t, err, "shortening it is fine")
+}
+
 // The shipped caps are generous: well above what a player builds by hand.
 func TestAutomationCaps_ShippedDefaults(t *testing.T) {
 	n := configs.Network{}

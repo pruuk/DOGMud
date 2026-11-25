@@ -21,6 +21,13 @@ func TestAutomationLimit(t *testing.T) {
 	fits80(t, AutomationLimitText("triggers", 1000000))
 }
 
+func TestCommandChainTooLong(t *testing.T) {
+	f := &fakeRecipient{}
+	CommandChainTooLong(f, "trigger", 10)
+	assert.Equal(t, `A trigger can hold at most 10 commands. Split a long route into two.`, one(t, f, messaging.CategoryRefusal))
+	fits80(t, CommandChainTooLongText("trigger", 1000))
+}
+
 func TestAutomationTooLong(t *testing.T) {
 	f := &fakeRecipient{}
 	AutomationTooLong(f, "trigger")

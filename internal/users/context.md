@@ -130,6 +130,17 @@ kept is never refused for this), `ErrAutomationTooLong` for any text field
 longer than `MaxAutomationFieldLength` characters or a condition with more
 than `MaxAutomationConditionValues` values. A refusal stores nothing.
 
+One limit holds every command chain (owner follow-up 2026-11-25):
+`MaxCommandChain()` is `Network.MaxPendingInputs`, since a longer chain sent
+at once loses its last commands at the pending-input cap. `CommandChainLength`
+counts a `;` chain as every sender splits it (blank pieces are not commands).
+`SetTick` and `SetTrigger` return `ErrAutomationTooManyCommands` for a tick's
+commands, or a trigger's then or else commands, over it; `set =N` refuses a
+macro over it (`usercommands/set.go`). A chain saved before the limit is kept
+and still fires; switching it on or off or renaming it works, and only an
+edit that changes its commands must bring it within the limit (`chainFits`).
+Its commands past the limit are refused at the queue when it fires.
+
 `Command` and `CommandFlagged` queue a command as the player.
 `CommandFlagged` returns whether it was queued: one carrying
 `events.CmdFromClient` (a GMCP `Char.Action.Try`) is refused while the

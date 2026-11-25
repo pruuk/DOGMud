@@ -171,8 +171,20 @@ to re-push the full `Char.Automation` payload to the client. Unknown
 `MaxAutomationFieldLength` 1000 characters in any text field, condition values
 included, `MaxAutomationConditionValues` 50) with `users.ErrAutomationFull` or
 `ErrAutomationTooLong`, storing nothing. Changing a tick or trigger already
-kept is never refused for the count. `refuseAutomation` sends the player
-`refusal.AutomationLimit` or `refusal.AutomationTooLong` and re-pushes nothing.
+kept is never refused for the count. A tick's commands, or a trigger's then
+or else commands, may hold at most `users.MaxCommandChain()` commands
+(`Network.MaxPendingInputs`), `ErrAutomationTooManyCommands` past it, except a
+chain left unchanged from its save. `refuseAutomation` sends the player
+`refusal.AutomationLimit`, `refusal.CommandChainTooLong` or
+`refusal.AutomationTooLong` and re-pushes nothing.
+
+The `Char.Automation` payload carries `maxCommands` (that same limit). It is
+pushed on login, so the client has it before an editor can open; the macro,
+tick and trigger editors (`attachChainCount` in `webclient-pure.html`, rules in
+`static/js/commandchain.js`) show a live "3 of 10 commands" count under each
+commands field, the warning in words past it, and keep the editor open on
+Save (an `onSave` returning false). Without `maxCommands` they use 10, the
+shipped value; the server enforces the limit either way.
 
 See `docs/superpowers/specs/completed/2026-06-07-web-client-automation-panel-design.md`
 for the full Phase 2–3 design.

@@ -2638,7 +2638,9 @@ Network:
   #   macro expands into. Each player runs at most one such command per
   #   Timing.TurnMs; faster input waits here. Past this many the command is
   #   refused (GMCP clients get Char.Input.Queue, others one line).
-  #   Keep it at or above 10, the longest macro.
+  #   It is also the most commands one chain may hold: a macro, a tick, or a
+  #   trigger's then or else commands (a longer chain would lose its last
+  #   commands here). The web client's editors read it from Char.Automation.
   MaxPendingInputs: 10
   # - MaxAutomationTicks / MaxAutomationTriggers -
   #   How many ticks and triggers one player can keep (web client automation

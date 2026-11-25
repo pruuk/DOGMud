@@ -214,6 +214,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/commandchain.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/questtabs.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mapwhere.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/longpress.js?v={{ .ASSET_VERSION }}"></script>
@@ -4484,7 +4485,9 @@
                     loginMsg.hidden = false;
                     return;
                 }
-                if (typeof _onSave === "function") _onSave();
+                // An editor's onSave returns false to keep the window open
+                // (a command chain over the limit, say), with what was typed.
+                if (typeof _onSave === "function" && _onSave() === false) return;
                 doClose();
             }
 
@@ -4773,6 +4776,47 @@
                 return wrap;
             }
 
+            // The most commands one chain may hold, from the server's
+            // Char.Automation (commandchain.js; a fallback if it is absent).
+            function chainLimit() {
+                var a = GMCPStructs["Char"] && GMCPStructs["Char"].Automation;
+                return window.CommandChain ? CommandChain.limit(a) : 10;
+            }
+
+            // Put a live "3 of 10 commands" count under a commands field,
+            // and the warning in words when the chain is over the limit.
+            // Returns { fits(), refresh() }: the editor's Save refuses while
+            // a shown field does not fit (onSave returns false). A chain saved
+            // before the limit, left as it was, still saves (the server keeps
+            // it too, users.chainFits); the warning still shows.
+            function attachChainCount(field) {
+                var saved = field.value;
+                var note = document.createElement("div");
+                note.className = "auto-chain-count";
+                note.setAttribute("aria-live", "polite");
+                field.insertAdjacentElement("afterend", note);
+                function refresh() {
+                    var max = chainLimit();
+                    var n = window.CommandChain ? CommandChain.count(field.value) : 0;
+                    var over = n > max;
+                    note.hidden = field.style.display === "none";
+                    note.classList.toggle("over", over);
+                    note.textContent = window.CommandChain
+                        ? (over ? CommandChain.warning(max) + " (" + CommandChain.label(n, max) + ")" : CommandChain.label(n, max))
+                        : "";
+                }
+                field.addEventListener("input", refresh);
+                refresh();
+                return {
+                    fits: function () {
+                        return !window.CommandChain || field.value === saved || CommandChain.fits(field.value, chainLimit());
+                    },
+                    // The editor filled the field after attaching: that is the saved chain.
+                    keep: function () { saved = field.value; },
+                    refresh: refresh
+                };
+            }
+
             // Get the next free macro number (1-9) not already in use
             function nextFreeMacroNum(excludeNum) {
                 var a = GMCPStructs["Char"] && GMCPStructs["Char"].Automation;
@@ -4809,8 +4853,10 @@
 
                 body.appendChild(makeField("Macro Number (1–9)", numInput));
                 body.appendChild(makeField("Commands (semicolon-separated)", cmdInput));
+                var macroChain = attachChainCount(cmdInput);
 
                 openAutoModal("Macro Editor", body, function() {
+                    if (!macroChain.fits()) return false;
                     var num = parseInt(numInput.value, 10);
                     if (isNaN(num) || num < 1 || num > 9) {
                         alert("Please enter a number between 1 and 9.");
@@ -4894,11 +4940,13 @@
 
                 body.appendChild(makeField("Name", nameInput));
                 body.appendChild(makeField("Commands (semicolon-separated)", cmdsInput));
+                var tickChain = attachChainCount(cmdsInput);
                 body.appendChild(makeField("Every N seconds", secsInput));
                 body.appendChild(enableWrap);
 
                 var title = editingId ? "Edit Tick" : "New Tick";
                 openAutoModal(title, body, function() {
+                    if (!tickChain.fits()) return false;
                     var name = nameInput.value.trim();
                     if (!name) {
                         alert("Tick name cannot be empty.");
@@ -4973,6 +5021,7 @@
                 simpleThenArea.placeholder = "Commands to run (semicolon-separated, $1 $2… for captures)";
                 simpleThenArea.rows = 3;
                 doSection.appendChild(simpleThenArea);
+                var simpleChain = attachChainCount(simpleThenArea);
 
                 // If/else clause container (hidden by default until "+ Add ▾" clicked)
                 var clauseWrap = document.createElement("div");
@@ -5066,6 +5115,11 @@
 
                 clauseWrap.appendChild(makeField("Then", thenArea));
                 clauseWrap.appendChild(makeField("Else (optional)", elseArea));
+                var thenChain = attachChainCount(thenArea);
+                var elseChain = attachChainCount(elseArea);
+                // The simple field hides while the if/else clause shows, and
+                // moves its commands across: recount all three.
+                function refreshChains() { simpleChain.refresh(); thenChain.refresh(); elseChain.refresh(); }
 
                 // ✕ remove clause button
                 var removeClauseBtn = document.createElement("button");
@@ -5078,6 +5132,7 @@
                     clauseWrap.style.display = "none";
                     addClauseBtn.style.display = "";
                     simpleThenArea.style.display = "";
+                    refreshChains();
                 });
                 clauseWrap.appendChild(removeClauseBtn);
 
@@ -5098,6 +5153,7 @@
                     clauseWrap.style.display = "";
                     clauseWrap.style.cssText = "display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--panel-border);padding-top:6px;margin-top:2px;";
                     rebuildOps("pool");
+                    refreshChains();
                 });
                 doSection.appendChild(addClauseBtn);
                 body.appendChild(doSection);
@@ -5173,9 +5229,15 @@
                     simpleThenArea.value = prefillThenCmds || "";
                     rebuildOps("pool"); // default ops loaded for if clause opens later
                 }
+                // The prefilled commands are the saved chains; count them in
+                // whichever mode shows.
+                simpleChain.keep(); thenChain.keep(); elseChain.keep();
+                refreshChains();
 
                 var title = editingId ? "Edit Trigger" : "New Trigger";
                 openAutoModal(title, body, function() {
+                    // Only the fields on show are saved, so only they must fit.
+                    if (clauseWrap.style.display === "none" ? !simpleChain.fits() : (!thenChain.fits() || !elseChain.fits())) return false;
                     var name = nameInput.value.trim();
                     if (!name) { alert("Trigger name cannot be empty."); return; }
                     var pattern = patInput.value.trim();

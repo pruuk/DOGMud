@@ -222,5 +222,9 @@ func refuseAutomation(u *users.UserRecord, err error, one, many string) {
 		refusal.AutomationLimit(u, many, int(most))
 		return
 	}
+	if errors.Is(err, users.ErrAutomationTooManyCommands) {
+		refusal.CommandChainTooLong(u, one, users.MaxCommandChain())
+		return
+	}
 	refusal.AutomationTooLong(u, one)
 }
