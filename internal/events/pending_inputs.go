@@ -1,6 +1,10 @@
 package events
 
-import "github.com/GoMudEngine/GoMud/internal/configs"
+import (
+	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/configs"
+)
 
 // Each player's client may have at most Network.MaxPendingInputs commands
 // waiting to run (owner ruling 2026-11-25). A command the client sent is an
@@ -28,8 +32,9 @@ import "github.com/GoMudEngine/GoMud/internal/configs"
 
 // InputQueueChanged reports a change in one player's pending inputs to their
 // client (modules/gmcp sends Char.Input.Queue). It is queued only on a
-// transition: Full when the count reaches the cap, not Full when it drops
-// below it again, so a full queue is announced once, not once per command.
+// transition: Full when the count reaches the cap, not Full when it drops to
+// two below it (freeAt), so a full queue is announced once, not once per
+// command, and does not flicker under steady input.
 // Refused is set on the first command refused in a full spell, for a client
 // that reads no GMCP and gets one plain line instead.
 type InputQueueChanged struct {
@@ -67,8 +72,24 @@ func maxPendingInputs() int {
 	return int(configs.GetNetworkConfig().MaxPendingInputs)
 }
 
+// freeAt is the depth at or below which a full queue is reported free
+// again: two below the cap. Input arriving steadily at the cap, paced at one
+// command per tick, swings the depth between cap and cap-1 every tick;
+// freeing at cap-1 would grey and ungrey the client about twenty times a
+// second. Two below the cap means the player has stopped sending and two
+// commands have run (about 100 ms at the shipped TurnMs) before the controls
+// come back. Refusal is still at the cap itself (TryAddToQueue), so the one
+// slot inside the band is still taken.
+func freeAt(limit int) int {
+	if limit < 2 {
+		return 0
+	}
+	return limit - 2
+}
+
 // syncInputQueueLocked queues an InputQueueChanged when userId's count has
-// crossed the cap since the client was last told. qLock must be held.
+// reached the cap, or dropped to freeAt, since the client was last told.
+// qLock must be held.
 func syncInputQueueLocked(userId int, limit int) {
 	depth := pendingInputs[userId]
 	_, full := inputQueueFull[userId]
@@ -76,7 +97,7 @@ func syncInputQueueLocked(userId int, limit int) {
 	case depth >= limit && !full:
 		inputQueueFull[userId] = false
 		reAddToQueue(InputQueueChanged{UserId: userId, Depth: depth, Full: true}, 0, false)
-	case depth < limit && full:
+	case depth <= freeAt(limit) && full:
 		delete(inputQueueFull, userId)
 		reAddToQueue(InputQueueChanged{UserId: userId, Depth: depth}, 0, false)
 	}
@@ -137,6 +158,34 @@ func settleInputQueuesLocked(limit int) {
 	for uid := range inputQueueFull {
 		syncInputQueueLocked(uid, limit)
 	}
+}
+
+// QueuedEngineInputs counts the commands the engine queued for userId (no
+// CmdFromClient) that are queued or deferred and whose text starts with
+// prefix. A command that queues engine commands of its own (gearup's wears)
+// uses it to refuse a repeat while the last batch is still waiting, so the
+// client pace bounds the batches. Read from the queue itself, so it cannot
+// drift.
+func QueuedEngineInputs(userId int, prefix string) int {
+	qLock.Lock()
+	defer qLock.Unlock()
+	match := func(e Event) bool {
+		in, ok := e.(Input)
+		return ok && in.UserId == userId && in.MobInstanceId == 0 &&
+			!in.Flags.Has(CmdFromClient) && strings.HasPrefix(in.InputText, prefix)
+	}
+	n := 0
+	for _, pe := range globalQueue {
+		if match(pe.event) {
+			n++
+		}
+	}
+	for _, r := range requeues {
+		if match(r.evt) {
+			n++
+		}
+	}
+	return n
 }
 
 // PendingInputs returns how many commands userId's client has waiting to

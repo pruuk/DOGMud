@@ -269,13 +269,23 @@ Inputs never count and are never refused.
   helpers that can remove an Input recount too.
 - `InputQueueChanged{UserId, Depth, Full, Refused}` is queued only on a
   change: `Full` when the count reaches the cap, not `Full` when the pass-end
-  rebuild finds it below again, and once per full spell with `Refused` on the
-  first command refused. `modules/gmcp` turns it into `Char.Input.Queue` or one
-  plain line (`refusal.InputQueueFull`).
-- `PendingInputs(userId)` reads the count.
+  rebuild finds it two below the cap (`freeAt`, a dead band so steady input
+  at the cap does not flicker the client; refusal stays at the cap), and
+  once per full spell with `Refused` on the first command refused.
+  `modules/gmcp` turns it into `Char.Input.Queue` and, on `Refused`, one plain
+  line to every client (`refusal.InputQueueFull`).
+- `PendingInputs(userId)` reads the count. `QueuedEngineInputs(userId,
+  prefix)` counts a player's queued engine commands by text prefix, read from
+  the queue (gearup refuses a repeat while its wears wait).
 - The world runs at most one counted Input per player per tick (`TurnMs`;
   `World.clientInputWaits` returns `CancelAndRequeue`), so a full queue drains
   in ten ticks.
+- A deferred event keeps its place: `CancelAndRequeue` carries the event's
+  original `order` (`requeue.order`) and the next pass pushes it back with it
+  (`pushLocked`), for every requeued event. Without that a deferred event got
+  a new place each pass, behind anything queued meanwhile, so a player's
+  waiting commands ran newest first and the oldest could wait forever under
+  steady input.
 
 ### Reply window (#842)
 

@@ -7,17 +7,6 @@ type Network struct {
 	MaxHumanConnections  ConfigInt         `yaml:"MaxHumanConnections"`  // Pool limit for human connections
 	MaxAIConnections     ConfigInt         `yaml:"MaxAIConnections"`     // Pool limit for AI connections
 	AICommandsPerRound   ConfigInt         `yaml:"AICommandsPerRound"`   // Max commands per game round for AI connections
-	// The most commands one player's client may have waiting to run (typed
-	// lines, web client lines, GMCP Char.Action.Try, each piece of a macro).
-	// Past it a command is refused. See events.TryAddToQueue. It is also the
-	// most commands one macro, tick or trigger chain may hold
-	// (users.MaxCommandChain).
-	MaxPendingInputs ConfigInt `yaml:"MaxPendingInputs"`
-	// Caps on what GMCP Char.Automation.Set may store in a user save.
-	MaxAutomationTicks           ConfigInt `yaml:"MaxAutomationTicks"`           // ticks per player
-	MaxAutomationTriggers        ConfigInt `yaml:"MaxAutomationTriggers"`        // triggers per player
-	MaxAutomationFieldLength     ConfigInt `yaml:"MaxAutomationFieldLength"`     // characters in any one text field
-	MaxAutomationConditionValues ConfigInt `yaml:"MaxAutomationConditionValues"` // values in one trigger condition
 	LocalPort            ConfigInt         `yaml:"LocalPort"`            // Port used for admin connections, localhost only
 	HttpPort             ConfigInt         `yaml:"HttpPort"`             // Port used for web requests
 	HttpsPort            ConfigInt         `yaml:"HttpsPort"`            // Port used for web https requests
@@ -50,6 +39,19 @@ type Network struct {
 	TimeoutMods    ConfigBool `yaml:"TimeoutMods"`    // Whether to kick admin/mods when idle too long.
 	ZombieSeconds  ConfigInt  `yaml:"ZombieSeconds"`  // How many seconds a player will be a zombie allowing them to reconnect.
 	LogoutRounds   ConfigInt  `yaml:"LogoutRounds"`   // How many rounds of uninterrupted meditation must be completed to log out.
+
+	// The most commands one player's client may have waiting to run (typed
+	// lines, web client lines, GMCP Char.Action.Try, each piece of a macro).
+	// Past it a command is refused. See events.TryAddToQueue. It is also the
+	// most commands one macro, tick or trigger chain may hold
+	// (users.MaxCommandChain).
+	MaxPendingInputs ConfigInt `yaml:"MaxPendingInputs"`
+
+	// Caps on what GMCP Char.Automation.Set may store in a user save.
+	MaxAutomationTicks           ConfigInt `yaml:"MaxAutomationTicks"`           // ticks per player
+	MaxAutomationTriggers        ConfigInt `yaml:"MaxAutomationTriggers"`        // triggers per player
+	MaxAutomationFieldLength     ConfigInt `yaml:"MaxAutomationFieldLength"`     // characters in any one text field
+	MaxAutomationConditionValues ConfigInt `yaml:"MaxAutomationConditionValues"` // values in one trigger condition
 }
 
 func (n *Network) Validate() {

@@ -50,6 +50,10 @@ type requeue struct {
 	evt      Event
 	priority int
 	fromTick bool
+	// order is the event's place from its first queueing, kept so a
+	// deferred event goes back where it was, ahead of anything queued after
+	// it: a player's waiting commands run oldest first.
+	order uint64
 }
 
 // Event is the common interface for events.
@@ -259,6 +263,13 @@ func isEnteringWorld(userId int) bool {
 // Should only be used when a mutex lock is already held
 // fromTick carries over from the event's first queueing (#696).
 func reAddToQueue(e Event, prio int, fromTick bool) {
+	pushLocked(e, prio, fromTick, 0)
+}
+
+// pushLocked queues e with qLock held. order 0 gives it a new place at the
+// back of its priority; a deferred event passes its original order and goes
+// back where it was (requeue.order).
+func pushLocked(e Event, prio int, fromTick bool, order uint64) {
 
 	// Check for uniqueness if the event implements UniqueEvent.
 	if ue, ok := e.(uniqueEvent); ok {
@@ -271,16 +282,19 @@ func reAddToQueue(e Event, prio int, fromTick bool) {
 		uniqueMap[ue.UniqueID()] = struct{}{}
 	}
 
-	orderCounter++
+	if order == 0 {
+		orderCounter++
+		order = orderCounter
+	}
 	pe := &prioritizedEvent{
 		event:    e,
 		priority: prio,
-		order:    orderCounter,
+		order:    order,
 		fromTick: fromTick,
 	}
 
 	if eventDebugging {
-		fmt.Println(`events.reAddToQueue`, "type:", e.Type(), `priority:`, prio, `order:`, orderCounter)
+		fmt.Println(`events.reAddToQueue`, "type:", e.Type(), `priority:`, prio, `order:`, order)
 	}
 
 	heap.Push(&globalQueue, pe)
@@ -288,7 +302,7 @@ func reAddToQueue(e Event, prio int, fromTick bool) {
 
 // addToRequeue defers e to the next ProcessEvents pass, keeping whether a
 // tick queued it (#696).
-func addToRequeue(e Event, prio int, fromTick bool) {
+func addToRequeue(e Event, prio int, fromTick bool, order uint64) {
 	qLock.Lock()
 	defer qLock.Unlock()
 
@@ -296,6 +310,7 @@ func addToRequeue(e Event, prio int, fromTick bool) {
 		evt:      e,
 		priority: prio,
 		fromTick: fromTick,
+		order:    order,
 	})
 	// A deferred client command is still waiting: it counts again.
 	addPendingLocked(e)
@@ -329,7 +344,9 @@ func ProcessEvents() {
 	// Requeues are a special group that has been deferred to the next processevents loop
 	// They are added back into the event queue at the top of the process events function
 	for _, itm := range requeues {
-		reAddToQueue(itm.evt, itm.priority, itm.fromTick)
+		// Back in its original place (requeue.order), so what waited
+		// longest runs first.
+		pushLocked(itm.evt, itm.priority, itm.fromTick, itm.order)
 	}
 	requeues = requeues[:0]
 
@@ -371,7 +388,7 @@ func ProcessEvents() {
 
 		evtResult = DoListeners(pe.event)
 		if evtResult == CancelAndRequeue {
-			addToRequeue(pe.event, pe.priority, pe.fromTick)
+			addToRequeue(pe.event, pe.priority, pe.fromTick, pe.order)
 		}
 
 		qLock.Lock()

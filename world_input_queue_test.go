@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -117,6 +118,66 @@ func TestInputQueue_DrainsOnePerTickToZero(t *testing.T) {
 	require.Equal(t, 0, events.PendingInputs(uid), "the count returns to zero")
 	pass()
 	require.Equal(t, 0, events.PendingInputs(uid))
+}
+
+// orderFixture wires the world's Input handler into the queue and records
+// the text of each command it runs (Continue), so a test can read the order.
+func orderFixture(t *testing.T, cap int) (w *World, ran *[]string) {
+	t.Helper()
+	cfg := configs.GetConfig()
+	cfg.Network.MaxPendingInputs = configs.ConfigInt(cap)
+	configs.SetConfigForTest(t, cfg)
+
+	restore := events.SwapListenersForTest()
+	t.Cleanup(func() { restore(); events.DrainAllQueuedEventsForTest() })
+	events.DrainAllQueuedEventsForTest()
+
+	w = testWorld()
+	got := []string{}
+	events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
+		r := w.HandleInputEvents(e)
+		if r == events.Continue {
+			got = append(got, e.(events.Input).InputText)
+		}
+		return r
+	})
+	return w, &got
+}
+
+// Waiting commands run oldest first. Four lines arrive in four passes of one
+// tick; over the next ticks they run c1 c2 c3 c4. A deferred command keeps
+// its place in the queue rather than going to the back each pass.
+func TestInputQueue_WaitingCommandsRunInOrder(t *testing.T) {
+	w, ran := orderFixture(t, 10)
+	const uid = 98516
+	for _, c := range []string{"c1", "c2", "c3", "c4"} {
+		events.AddToQueue(inputEventFor(WorldInput{FromId: uid, InputText: c}))
+		w.EventLoop()
+	}
+	for i := 0; i < 4; i++ {
+		util.IncrementTurnCount()
+		w.EventLoop()
+		w.EventLoop()
+	}
+	require.Equal(t, []string{"c1", "c2", "c3", "c4"}, *ran)
+}
+
+// Under steady input (a new line every pass, past the cap) the oldest
+// waiting line still runs each tick: nothing newer overtakes it.
+func TestInputQueue_OldestIsNotStarved(t *testing.T) {
+	w, ran := orderFixture(t, 4)
+	const uid = 98517
+	sent := 0
+	for tick := 0; tick < 5; tick++ {
+		util.IncrementTurnCount()
+		for pass := 0; pass < 3; pass++ {
+			sent++
+			events.AddToQueue(inputEventFor(WorldInput{FromId: uid, InputText: "c" + strconv.Itoa(sent)}))
+			w.EventLoop()
+		}
+	}
+	require.Equal(t, []string{"c1", "c2", "c3", "c4", "c5"}, *ran,
+		"one per tick, oldest first (lines past the cap were refused)")
 }
 
 // inputQueueFixture is a live human-port connection and a user with a

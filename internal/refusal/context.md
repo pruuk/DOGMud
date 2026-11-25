@@ -99,7 +99,8 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `RemainsHoldLootLine` (no send) | Those remains still hold spoils. Clear the loot from them first, then raise what's left. |
 | `RemainsTooFaintLine` (no send) | Those remains are too faint to hold a bound spirit. |
 | `RemainsAlreadyRaisedLine` (no send) | Those remains were already animated once; there is nothing left to raise. |
-| `InputQueueFull` / `InputQueueFullLine` (`input.go`; the first command refused in a full spell, to a client other than the web client, sent by `modules/gmcp`) | You're already doing as much as you can. Wait a moment. |
+| `InputQueueFull` / `InputQueueFullLine` (`input.go`; the first command refused in a full spell, to every client, sent by `modules/gmcp`) | You're already doing as much as you can. Wait a moment. |
+| `StillGearingUp` / `StillGearingUpLine` (`busy.go`; gearup while the last gearup's wears still wait) | You're still putting your gear on. |
 | `AutomationLimit(u, "triggers", 100)` / `AutomationLimitText` (`input.go`; `Char.Automation.Set` past the count cap) | You can keep at most 100 triggers. Remove one first. |
 | `CommandChainTooLong(u, "trigger", 10)` / `CommandChainTooLongText` (`input.go`; a macro, tick or trigger with more commands than `users.MaxCommandChain`) | A trigger can hold at most 10 commands. Split a long route into two. |
 | `AutomationTooLong(u, "trigger")` / `AutomationTooLongText` (`input.go`; a field past `MaxAutomationFieldLength`) | That trigger is too long to save. Shorten it and try again. |

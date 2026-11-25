@@ -27,9 +27,10 @@ func init() {
 }
 
 // inputQueueHandler sends Char.Input.Queue to a GMCP client when the queue
-// fills or frees. A client other than the web client, which is the only one
-// that reads Char.Input.Queue today, gets one plain line on the first command
-// refused in a full spell instead (events.InputQueueChanged.Refused).
+// fills or frees. Every client, the web client too, gets one plain line on
+// the first command refused in a full spell (events.InputQueueChanged.Refused):
+// a refusal always prints, and a line typed into the web client's command box
+// would otherwise vanish with only the touch controls greyed.
 func inputQueueHandler(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.InputQueueChanged)
 	if !ok {
@@ -43,9 +44,7 @@ func inputQueueHandler(e events.Event) events.ListenerReturn {
 	connId := user.ConnectionId()
 
 	if evt.Refused {
-		if !isWebClientConnection(connId) {
-			refusal.InputQueueFull(user)
-		}
+		refusal.InputQueueFull(user)
 		return events.Continue
 	}
 

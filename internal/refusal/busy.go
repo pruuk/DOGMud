@@ -8,6 +8,12 @@ func WhileBusyText(doing string) string {
 
 func WhileBusy(to Recipient, doing string) { send(to, WhileBusyText(doing)) }
 
+// StillGearingUpLine answers gearup (equip all) while the last gearup is
+// still putting things on.
+const StillGearingUpLine = `You're still putting your gear on.`
+
+func StillGearingUp(to Recipient) { send(to, StillGearingUpLine) }
+
 // WhileUnderAttackText answers an action refused while something attacks the
 // player, before they are in combat with it (the in-combat gate is
 // WhileFighting).

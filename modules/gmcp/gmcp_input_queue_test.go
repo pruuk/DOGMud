@@ -37,7 +37,9 @@ func TestInputQueue_GMCPClientIsToldFullAndFree(t *testing.T) {
 
 	inputQueueHandler(events.InputQueueChanged{UserId: u.UserId, Depth: 10, Full: true, Refused: true})
 	require.Empty(t, inputQueueFrames(t, u.UserId), "a refusal adds no frame: full was already sent")
-	require.Empty(t, events.DrainQueuedMessagesForTest(u.UserId), "the web client greys out instead of a line")
+	lines := events.DrainQueuedMessagesForTest(u.UserId)
+	require.Len(t, lines, 1, "a refusal always prints, in the web client too (a typed line would vanish)")
+	require.Contains(t, lines[0], refusal.InputQueueFullLine)
 
 	inputQueueHandler(events.InputQueueChanged{UserId: u.UserId, Depth: 9})
 	require.Equal(t, []GMCPInput_Queue{{Depth: 9, Full: false}}, inputQueueFrames(t, u.UserId))
@@ -131,6 +133,26 @@ func TestActionTry_QueuesAClientCommand(t *testing.T) {
 	events.DrainQueuedByTypeForTest(`Input`)
 	(&GMCPModule{}).handleCharOp(GMCPCharOp{ConnectionId: cd.ConnectionId(), Command: `Char.Action.Try`,
 		Payload: []byte(`{"id":1,"cmd":"look"}`)})
+	queued := events.DrainQueuedByTypeForTest(`Input`)
+	require.Len(t, queued, 1)
+	require.True(t, queued[0].(events.Input).Flags.Has(events.CmdFromClient))
+}
+
+// A Try the readiness probe rejects still runs, so the player sees the real
+// error, and that command is the client's too: it carries CmdFromClient.
+func TestActionTry_RejectedStillQueuesAClientCommand(t *testing.T) {
+	cd, _ := aiLimitFixture(t, 9871, connections.ConnHuman)
+	events.DrainQueuedByTypeForTest(`Input`)
+	events.DrainQueuedByTypeForTest(`GMCPOut`)
+	(&GMCPModule{}).handleCharOp(GMCPCharOp{ConnectionId: cd.ConnectionId(), Command: `Char.Action.Try`,
+		Payload: []byte(`{"id":1,"cmd":"cast no-such-spell-9871"}`)})
+	var status string
+	for _, o := range drainGMCPOut(t) {
+		if o.Module == `Char.Action.Result` {
+			status = o.Payload.(GMCPAction_Result).Status
+		}
+	}
+	require.Equal(t, "rejected", status, "fixture: an unknown spell is rejected")
 	queued := events.DrainQueuedByTypeForTest(`Input`)
 	require.Len(t, queued, 1)
 	require.True(t, queued[0].(events.Input).Flags.Has(events.CmdFromClient))

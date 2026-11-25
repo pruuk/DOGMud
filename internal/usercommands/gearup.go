@@ -7,12 +7,26 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+// gearupWearPrefix starts each wear gearup queues: by item id, so the
+// command finds that very item.
+const gearupWearPrefix = `wear !`
+
 func Gearup(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	if refuseWhileBusy(user, `change equipment`) {
+		return true, nil
+	}
+
+	// Each wear below is its own engine command, outside the player's
+	// pending client commands. A repeat gearup while the last one's wears
+	// still wait would add a whole pack's worth again each time, so it is
+	// refused until they have run (a few milliseconds each).
+	if events.QueuedEngineInputs(user.UserId, gearupWearPrefix) > 0 {
+		refusal.StillGearingUp(user)
 		return true, nil
 	}
 
@@ -36,7 +50,7 @@ func Gearup(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		// Delegate to wear command — it handles pair logic, slot finding,
 		// and displacement automatically. The -1 delay means immediate.
-		user.Command(fmt.Sprintf(`wear !%d`, itm.ItemId), -1)
+		user.Command(fmt.Sprintf(gearupWearPrefix+`%d`, itm.ItemId), -1)
 		wornSomething = true
 	}
 

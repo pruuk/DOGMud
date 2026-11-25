@@ -584,9 +584,13 @@ player's client may have `Network.MaxPendingInputs` (10) commands waiting
 - Sent on `events.InputQueueChanged` without `Refused`, to any GMCP client,
   only when the queue fills (`full: true`) or frees (`full: false`), never once
   per command.
-- On `Refused` (the first command refused in a full spell) a client other than
-  the web client gets `refusal.InputQueueFull` as one plain line; the web client
-  gets nothing more, as it has already greyed out.
+- On `Refused` (the first command refused in a full spell) every client, the
+  web client too, gets `refusal.InputQueueFull` as one plain line: a refusal
+  always prints, and a line typed into the web client's command box would
+  otherwise vanish with only the controls greyed.
+- `full: false` comes when the queue drops two below the cap
+  (`events.freeAt`), not one, so steady input at the cap does not flicker the
+  greying.
 - The web client (`webclient-pure.html` `setInputQueueFull`) puts
   `input-queue-full` on `body` while full: `dashboard.css` greys the touch deck,
   the trigger and tick rows and the macro and alias chips, and the automation

@@ -231,6 +231,44 @@ func TestPendingInputs_NoticesOnlyOnFullAndFree(t *testing.T) {
 	}, noticesFor(t, 7), "drained in heap order, so compared as a set")
 }
 
+// A full queue is reported free only two below the cap, so steady input at
+// the cap (one command run, one arriving, each tick) does not flicker the
+// client between full and free. The refusal itself stays at the cap.
+func TestPendingInputs_FreeOnlyTwoBelowTheCap(t *testing.T) {
+	pendingFixture(t, 4)
+	release := 0
+	RegisterListener(Input{}, func(e Event) ListenerReturn {
+		if release > 0 {
+			release--
+			return Continue
+		}
+		return CancelAndRequeue
+	})
+
+	for i := 0; i < 4; i++ {
+		TryAddToQueue(clientLine(7, "look"))
+	}
+	require.Len(t, noticesFor(t, 7), 1, "full")
+
+	// Steady input at the cap: one runs, one arrives, several times over.
+	for i := 0; i < 5; i++ {
+		release = 1
+		ProcessEvents()
+		require.Equal(t, 3, PendingInputs(7))
+		require.True(t, TryAddToQueue(clientLine(7, "look")), "the slot inside the band is taken")
+		require.Empty(t, noticesFor(t, 7), "no flicker at round %d", i)
+	}
+	require.False(t, TryAddToQueue(clientLine(7, "look")), "refused at the cap")
+	noticesFor(t, 7) // the one refusal notice of this spell
+
+	release = 1
+	ProcessEvents()
+	require.Empty(t, noticesFor(t, 7), "one below the cap is still full")
+	release = 1
+	ProcessEvents()
+	require.Equal(t, []InputQueueChanged{{UserId: 7, Depth: 2}}, noticesFor(t, 7), "two below frees")
+}
+
 // The shipped default is 10 (owner ruling 2026-11-25), and a cap below 1,
 // which would refuse every command, falls back to it.
 func TestPendingInputs_DefaultCap(t *testing.T) {
