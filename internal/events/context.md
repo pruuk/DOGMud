@@ -302,11 +302,15 @@ slots, as `ProcessEvents` does, so a later refresh queues again.
 
 ### Movement Buttons Event (#781)
 
-`roomexits.go` holds `RoomExitsChanged{UserId}`: what a player's movement
-buttons show may have changed outside the once-a-round `Room.Info` check (a
-dark mark was recorded, `internal/buttons`). `modules/gmcp` re-sends
-`Room.Info`. It is a unique event (`UniqueID` is
-`RoomExitsChanged-<userId>`), so refreshes for one player merge.
+`roomexits.go` holds `RoomExitsChanged{UserId, SecretExitFound}`: what a
+player's movement buttons show may have changed outside the once-a-round
+`Room.Info` check (a dark mark was recorded, `internal/buttons`; or, with
+`SecretExitFound`, the player newly found a secret exit,
+`characters.Character.LearnSecretExit`). `modules/gmcp` re-sends `Room.Info`,
+and on a find `Zone.Map` too. It is a unique event (`UniqueID` is
+`RoomExitsChanged-<userId>` for a mark, `RoomExitsChanged-found-<userId>` for
+a find), so refreshes for one player merge, a find apart from a mark: the
+queue keeps the first of a merged pair, and a mark must not swallow a find.
 `DrainQueuedRoomExitsChangedForTest(userId)` (same file) is the test drain,
 shaped like `DrainQueuedNpcMarkersChangedForTest`.
 

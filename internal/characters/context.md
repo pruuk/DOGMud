@@ -2516,6 +2516,10 @@ is by `GetPhysicalMitigation`.
 
 `KnowsSecretExit(roomId, exitName)` is the one secret-exit rule (#781,
 owner rulings 1, 2 and 13): true once the character holds the discovery
-`SecretExitDiscoveryKey(exitName)` for that room. `search` writes it, and
-`LearnSecretExit` writes it for a follower moving behind its leader. A nil
-character knows none. `rooms.KnownExits` and every exit filter call it.
+`SecretExitDiscoveryKey(exitName)` for that room. `LearnSecretExit` is the
+one recorder: `search`, a follower moving behind its leader and an onlooker
+watching the exit used all write through it. A player's new find (the
+character has a user id, and the record was not there) queues
+`events.RoomExitsChanged{UserId, SecretExitFound: true}`, so `modules/gmcp`
+re-sends `Room.Info` and `Zone.Map` at once (#781 Task 11b); a re-find and an
+NPC's find queue nothing. A nil character knows none. `rooms.KnownExits` and every exit filter call it.

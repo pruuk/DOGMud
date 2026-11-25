@@ -24,8 +24,8 @@ import (
 // does (gmcp.CharVitalsWatch.go): it builds the exit half each GMCP client
 // would be sent (buildRoomExitsInfo) and, when its signature differs from the
 // last one actually sent to that user, re-sends Room.Info. A round with no
-// change sends nothing. A dark mark does not wait for the round:
-// events.RoomExitsChanged sends it at once.
+// change sends nothing. A dark mark and a secret exit found do not wait for
+// the round: events.RoomExitsChanged sends it at once (and Zone.Map on a find).
 
 var (
 	lastSentRoomExits   = map[int]string{}
@@ -113,7 +113,13 @@ func (g *GMCPRoomModule) roomExitsWatchHandler(e events.Event) events.ListenerRe
 	return events.Continue
 }
 
-// roomExitsChangedHandler sends Room.Info now: a dark mark was recorded.
+// roomExitsChangedHandler sends Room.Info now: a dark mark was recorded, or
+// the player found a secret exit. A find also re-sends Zone.Map through its
+// one sender (GMCPZoneUpdate, GMCPZoneModule.buildAndSend), since the map
+// draws a secret exit only once found. That sender diffs against what the web
+// client already has (#650), so a find sends the web client the changed room
+// alone (a telnet GMCP client gets the whole map, as on every update). A dark
+// mark changes nothing on the map and sends none.
 func (g *GMCPRoomModule) roomExitsChangedHandler(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.RoomExitsChanged)
 	if !ok || evt.UserId < 1 {
@@ -124,5 +130,8 @@ func (g *GMCPRoomModule) roomExitsChangedHandler(e events.Event) events.Listener
 		return events.Continue
 	}
 	events.AddToQueue(GMCPRoomUpdate{UserId: evt.UserId, Identifier: `Room.Info`})
+	if evt.SecretExitFound {
+		events.AddToQueue(GMCPZoneUpdate{UserId: evt.UserId})
+	}
 	return events.Continue
 }

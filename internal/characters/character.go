@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
@@ -687,10 +688,24 @@ func (c *Character) KnowsSecretExit(roomId int, exitName string) bool {
 	return c.HasDiscovery(roomId, SecretExitDiscoveryKey(exitName))
 }
 
-// LearnSecretExit records that c knows the secret exit exitName of roomId, in
-// the record `search` writes. Recording it twice stores it once.
+// LearnSecretExit records that c knows the secret exit exitName of roomId. It
+// is the one recorder of a secret-exit find: `search`, following a leader
+// through it and watching it used all call it. Recording it twice stores it
+// once.
+//
+// A player's new find queues events.RoomExitsChanged with SecretExitFound, so
+// modules/gmcp re-sends Room.Info and Zone.Map at once rather than at the
+// next round or move (#781 Task 11b). A re-find queues nothing, and so does
+// an NPC's find (no user id).
 func (c *Character) LearnSecretExit(roomId int, exitName string) {
-	c.AddDiscovery(roomId, SecretExitDiscoveryKey(exitName))
+	key := SecretExitDiscoveryKey(exitName)
+	if c.HasDiscovery(roomId, key) {
+		return
+	}
+	c.AddDiscovery(roomId, key)
+	if c.userId > 0 {
+		events.AddToQueue(events.RoomExitsChanged{UserId: c.userId, SecretExitFound: true})
+	}
 }
 
 func (c *Character) HasDiscovery(roomId int, key string) bool {

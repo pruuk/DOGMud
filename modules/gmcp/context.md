@@ -491,8 +491,14 @@ one sent (`lastSentRoomExits`, recorded in `buildAndSendGMCPPayload` for every
 full `Room.Info`). `Room.Info` is re-sent only on a change: a door unlocked or
 relocking on its timer, a temporary exit coming or going, a secret exit found,
 the light changing, a key or combination gained. A round with no change sends
-nothing. `events.RoomExitsChanged` (a dark mark) sends `Room.Info` at once
-(`roomExitsChangedHandler`). `roomChangeHandler` clears the mover's dark marks
+nothing. `events.RoomExitsChanged` (a dark mark, or a secret exit newly
+found) sends `Room.Info` at once (`roomExitsChangedHandler`). On a find
+(`SecretExitFound`) it also queues `GMCPZoneUpdate`, so `Zone.Map` goes out
+through its one sender (`GMCPZoneModule.buildAndSend`): the web client gets a
+partial map of the changed room only (the #650 diff), a telnet GMCP client
+the whole map as on every update. A dark mark sends no `Zone.Map`. Tests in
+`gmcp.SecretExitFound_test.go`, which also checks that the exits line,
+`Room.Info` and `Zone.Map` agree on one find. `roomChangeHandler` clears the mover's dark marks
 (`buttons.ClearDarkMarks`, ruling 4); `despawnHandler` forgets the player's
 ids and marks (`buttons.Forget`) and the record (`forgetSentRoomExits`).
 Measured 2026-11-25 (scratch benchmark, 100 GMCP players in lit rooms of seven

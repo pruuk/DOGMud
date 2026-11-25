@@ -444,7 +444,9 @@ func searchWholeRoom(actor Actor, room *rooms.Room, opts SearchOptions, searchSc
 		}
 		rolledAgainstSomething = true
 		if searchRoll(searchScore, 125.0).Success {
-			char.AddDiscovery(room.RoomId, secretExitDiscoveryKey(exitName))
+			// The one recorder: it also refreshes a player's map and
+			// buttons at once (#781 Task 11b).
+			char.LearnSecretExit(room.RoomId, exitName)
 			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
 			if actor.IsPlayer() {
 				actor.SendText(messaging.CategorySystem,
