@@ -1,8 +1,6 @@
 package actions
 
 import (
-	"sort"
-
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -105,68 +103,24 @@ func NPCMayFollowThrough(c *characters.Character, room *rooms.Room, exitName str
 // FollowExitTo is the exit key of room a follower steps through behind leader,
 // who went from room to toRoomId, or "" when no exit leads there (a
 // teleport). The move does not name its exit, so among the exits that lead
-// there the one leader could have used wins: an exit that is not secret
-// first (it teaches nothing), then a secret one leader knows, and a secret
-// one leader does not know only when nothing else leads there (a scripted mob
-// route takes it). Room and mutator exits (a mutator's takes the place of the
-// room's, Room.GetExitInfo) come before temporary ones, then A to Z. A
-// temporary exit answers with its key, which is what `go` matches, never its
-// title. A nil leader knows no secret exit.
+// there the one leader could have used wins, by Room.ExitsTo's one ranking: a
+// plain room or mutator exit first (it teaches nothing), then a temporary
+// one, then a secret one leader knows, and a secret one leader does not know
+// only when nothing else leads there (a scripted mob route takes it); A to Z
+// within each. It answers the exit's key, which is what `go` matches, never a
+// temporary exit's title. A nil leader knows no secret exit.
 func FollowExitTo(room *rooms.Room, leader *characters.Character, toRoomId int) string {
 	if room == nil {
 		return ""
 	}
-	permanent := map[string]bool{}
-	for name := range room.Exits {
-		permanent[name] = true
-	}
-	for mut := range room.ActiveMutators {
-		if spec := mut.GetSpec(); spec != nil {
-			for name := range spec.Exits {
-				permanent[name] = true
-			}
+	ways := room.ExitsTo(toRoomId)
+	for _, way := range ways {
+		if !way.Secret || room.ExitKnownTo(leader, way.Key) {
+			return way.Key
 		}
 	}
-
-	// Ranks, best first.
-	const (
-		rankPlain = iota
-		rankTemporary
-		rankSecretKnown
-		rankSecretUnknown
-	)
-	type candidate struct {
-		name string
-		rank int
+	if len(ways) > 0 {
+		return ways[0].Key
 	}
-	var found []candidate
-	for name := range permanent {
-		ex, ok := room.GetExitInfo(name)
-		if !ok || ex.RoomId != toRoomId {
-			continue
-		}
-		rank := rankPlain
-		if ex.Secret {
-			rank = rankSecretUnknown
-			if room.ExitKnownTo(leader, name) {
-				rank = rankSecretKnown
-			}
-		}
-		found = append(found, candidate{name: name, rank: rank})
-	}
-	for name, ex := range room.ExitsTemp {
-		if ex.RoomId == toRoomId {
-			found = append(found, candidate{name: name, rank: rankTemporary})
-		}
-	}
-	if len(found) == 0 {
-		return ""
-	}
-	sort.Slice(found, func(i, j int) bool {
-		if found[i].rank != found[j].rank {
-			return found[i].rank < found[j].rank
-		}
-		return found[i].name < found[j].name
-	})
-	return found[0].name
+	return ""
 }

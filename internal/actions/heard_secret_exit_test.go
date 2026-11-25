@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -48,6 +49,34 @@ func TestShout_NextDoorThroughASecretExitReadsNearby(t *testing.T) {
 			Shout(sc.speaker(player, sc.lit), "HELP")
 			require.Equal(t, []string{`Someone shouts from the south direction, "HELP"`}, heard(), "one who found it")
 			sc.drain()
+		})
+	}
+}
+
+// #781: next door with two ways back to the shouter, a plain one and a secret
+// one, hears one line naming the plain exit, every time, and learns nothing.
+func TestShout_TwoExitsBackGiveOneLineNamingThePlainOne(t *testing.T) {
+	for name, player := range map[string]bool{"player": true, "mob": false} {
+		t.Run(name, func(t *testing.T) {
+			sc := newSpeechScene(t)
+			sc.next.Exits["vent"] = exit.RoomExit{RoomId: speechLitRoom, Secret: true}
+			t.Cleanup(func() { delete(sc.next.Exits, "vent") })
+			nell := users.GetByUserId(speechNextId).Character
+			for range 20 {
+				Shout(sc.speaker(player, sc.lit), "HELP")
+				var got []string
+				for _, m := range events.DrainQueuedRoomMessagesForTest(speechNextRoom) {
+					if !slices.Contains(m.ExcludeUserIds, speechNextId) {
+						got = append(got, strings.TrimSpace(speechTag.ReplaceAllString(m.Text, "")))
+					}
+				}
+				for _, m := range events.DrainQueuedMessageEventsForTest(speechNextId) {
+					got = append(got, strings.TrimSpace(speechTag.ReplaceAllString(m.Text, "")))
+				}
+				require.Equal(t, []string{`Someone shouts from the south direction, "HELP"`}, got)
+				sc.drain()
+			}
+			require.False(t, nell.KnowsSecretExit(speechNextRoom, "vent"))
 		})
 	}
 }

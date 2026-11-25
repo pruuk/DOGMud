@@ -725,79 +725,56 @@ func (r *Room) SendTextToExits(txt string, isQuiet bool, excludeUserIds ...int) 
 
 // SendTextToExitsExcluding is SendTextToExits with the excludes named per
 // neighbouring room: exclude is asked once for each neighbour that has an
-// exit back, the first time one is found, and its answer goes on that
-// room's messages only. An ambient say's echo uses it to leave out the
+// exit back, and its answer goes on that room's messages only. The
+// neighbours are ForEachAdjacentRoom's (room, temporary and mutator exits,
+// each room once), so a room with two exits back reads one line, naming the
+// ranked exit back (FindExitTo). An ambient say's echo uses it to leave out the
 // listeners over their ambient budget in each room (#317). Each line starts
 // "(From <exit>)", the exit of the neighbour leading back here; when that exit
 // is secret, a listener who has not found it reads "(From nearby)" instead
 // (#781, owner ruling 16, HeardThroughSecretExit). Hearing teaches nothing.
 func (r *Room) SendTextToExitsExcluding(txt string, isQuiet bool, exclude func(tgt *Room) []int) {
 
-	testExitIds := []int{}
-	for _, rExit := range r.Exits {
-		testExitIds = append(testExitIds, rExit.RoomId)
-	}
-	for _, tExit := range r.ExitsTemp {
-		testExitIds = append(testExitIds, tExit.RoomId)
-	}
+	// One line per neighbouring room, naming the ranked exit back
+	// (ForEachAdjacentRoom, FindExitTo): two exits back used to send two
+	// lines, and the map order could pick a secret one over a plain one.
+	r.ForEachAdjacentRoom(func(tgtRoom *Room, exitName string) {
+		ex := exclude(tgtRoom)
+		named := fmt.Sprintf(`(From <ansi fg="exit">%s</ansi>) `, exitName) + txt + "\n"
 
-	excludes := map[int][]int{}
-	for _, roomId := range testExitIds {
-
-		tgtRoom := LoadRoom(roomId)
-		if tgtRoom == nil {
-			continue
+		// #781 ruling 16: through a secret exit, a listener who has not
+		// found it reads "(From nearby)"; one who has reads the name. Two
+		// messages with complementary excludes. An ordinary exit costs one
+		// lookup here and reads its name for everyone, as always.
+		knowers, strangers, secret := tgtRoom.HeardThroughSecretExit(exitName)
+		if !secret {
+			events.AddToQueue(events.Message{
+				RoomId:         tgtRoom.RoomId,
+				Text:           named,
+				IsQuiet:        isQuiet,
+				ExcludeUserIds: ex,
+			})
+			return
 		}
-
-		for exitName, tExit := range tgtRoom.Exits {
-			if tExit.RoomId != r.RoomId {
-				continue
-			}
-
-			ex, asked := excludes[tgtRoom.RoomId]
-			if !asked {
-				ex = exclude(tgtRoom)
-				excludes[tgtRoom.RoomId] = ex
-			}
-
-			named := fmt.Sprintf(`(From <ansi fg="exit">%s</ansi>) `, exitName) + txt + "\n"
-
-			// #781 ruling 16: through a secret exit, a listener who has not
-			// found it reads "(From nearby)"; one who has reads the name. Two
-			// messages with complementary excludes. An ordinary exit costs one
-			// lookup here and reads its name for everyone, as always.
-			knowers, strangers, secret := tgtRoom.HeardThroughSecretExit(exitName)
-			if !secret {
-				events.AddToQueue(events.Message{
-					RoomId:         tgtRoom.RoomId,
-					Text:           named,
-					IsQuiet:        isQuiet,
-					ExcludeUserIds: ex,
-				})
-				continue
-			}
-			// Each half only when someone reads it, so a room with no
-			// knower is never sent the name at all.
-			if len(knowers) > 0 {
-				events.AddToQueue(events.Message{
-					RoomId:         tgtRoom.RoomId,
-					Text:           named,
-					IsQuiet:        isQuiet,
-					ExcludeUserIds: slices.Concat(ex, strangers),
-				})
-			}
-			if len(strangers) > 0 {
-				events.AddToQueue(events.Message{
-					RoomId:         tgtRoom.RoomId,
-					Text:           `(From ` + HeardFromNearby + `) ` + txt + "\n",
-					IsQuiet:        isQuiet,
-					ExcludeUserIds: slices.Concat(ex, knowers),
-				})
-			}
+		// Each half only when someone reads it, so a room with no knower is
+		// never sent the name at all.
+		if len(knowers) > 0 {
+			events.AddToQueue(events.Message{
+				RoomId:         tgtRoom.RoomId,
+				Text:           named,
+				IsQuiet:        isQuiet,
+				ExcludeUserIds: slices.Concat(ex, strangers),
+			})
 		}
-
-	}
-
+		if len(strangers) > 0 {
+			events.AddToQueue(events.Message{
+				RoomId:         tgtRoom.RoomId,
+				Text:           `(From ` + HeardFromNearby + `) ` + txt + "\n",
+				IsQuiet:        isQuiet,
+				ExcludeUserIds: slices.Concat(ex, knowers),
+			})
+		}
+	})
 }
 
 func (r *Room) SetLongTermData(key string, value any) {
@@ -2453,30 +2430,16 @@ func (r *Room) GetMobDuplicateIndex(mobInstanceId int) int {
 	return 0
 }
 
-// Returns exitName, RoomExit
+// FindExitTo is the exit of r leading to roomId as a line prints it, or ""
+// when none does: the first of ExitsTo, so a plain exit beats a temporary one
+// and both beat a secret one, A to Z within each (#781). A temporary exit
+// answers its Title. Before the ranking it walked the maps in random order,
+// so a line could name, and teach, a secret exit while a plain one also led
+// back.
 func (r *Room) FindExitTo(roomId int) string {
-
-	for exitName, exit := range r.Exits {
-		if exit.RoomId == roomId {
-			return exitName
-		}
+	if ways := r.ExitsTo(roomId); len(ways) > 0 {
+		return ways[0].Name
 	}
-
-	for _, exit := range r.ExitsTemp {
-		if exit.RoomId == roomId {
-			return exit.Title
-		}
-	}
-
-	for mut := range r.ActiveMutators {
-		spec := mut.GetSpec()
-		for exitName, exit := range spec.Exits {
-			if exit.RoomId == roomId {
-				return exitName
-			}
-		}
-	}
-
 	return ""
 }
 
@@ -3009,7 +2972,10 @@ func (r *Room) findUserExit(userId int, userName string) string {
 			continue
 		}
 
-		for uId, timeLeft := range exitRoom.Visitors(VisitorMob) {
+		// The player visitors: this read the mob visitors and looked their
+		// instance ids up as user ids, so it tracked a player only when some
+		// mob's instance id happened to match their user id.
+		for uId, timeLeft := range exitRoom.Visitors(VisitorUser) {
 
 			if userId > 0 && userId != uId {
 				continue

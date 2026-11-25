@@ -450,7 +450,8 @@ shadowing is following):
   shadower steps through. The move names no exit, so the one the leader could
   have used wins (plain, then temporary, then a secret one the leader knows,
   then any secret one), so a follower never learns a secret exit the leader
-  did not take.
+  did not take. The order is `Room.ExitsTo`'s, the one ranking `FindExitTo`
+  and `FindKnownExitTo` share; this adds only the leader's knowledge.
 - `LearnSecretExitWatching(room, exitName, mover, players, npcs)` (owner
   ruling 14): an onlooker who reads a movement line naming a secret exit
   learns it. `players` is the `rooms.VisualSnapshot` the line was delivered

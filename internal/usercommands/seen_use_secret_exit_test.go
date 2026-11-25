@@ -211,6 +211,34 @@ func TestSeenUse_APeerTeachesBothSides(t *testing.T) {
 	})
 }
 
+// #781 (Task 5c fix round): with a plain exit and a secret exit both leading
+// back, a far-side line names the plain one and teaches nothing. Looked
+// twenty times, since the old pick followed the map's random order.
+func TestSeenUse_APlainExitBackIsNamedAndTeachesNothing(t *testing.T) {
+	t.Cleanup(seedAllRegistries())
+	user, room := getTestUserAndRoom(t)
+	lamp := room.Lamp
+	room.Lamp = rooms.LampPtr(100)
+	t.Cleanup(func() { room.Lamp = lamp })
+	watcher, skeleton, room2 := moveOnlookersTo2(t)
+	secretExit(t, room2, "alcove")
+	alcove := room2.Exits["alcove"]
+	alcove.RoomId = 1 // a second, secret way back to the square
+	room2.Exits["alcove"] = alcove
+
+	for range 20 {
+		events.DrainQueuedMessagesForTest(2)
+		_, err := Look("north", user, room, 0)
+		require.NoError(t, err)
+		got := drainedText(watcher)
+		require.Contains(t, got, "is looking into the room from the", "premise: the far-side line")
+		require.Contains(t, got, "south", "the plain exit back is named")
+		require.NotContains(t, got, "alcove")
+	}
+	require.False(t, watcher.Character.KnowsSecretExit(2, "alcove"), "nothing is taught")
+	require.False(t, skeleton.Character.KnowsSecretExit(2, "alcove"), "nothing is taught (NPC)")
+}
+
 // (c): a shot through a secret exit teaches whoever sees it leave, and on the
 // far side whoever sees it come in, but not its target, who is left out of
 // that line, nor the shooter (f).
@@ -234,6 +262,25 @@ func TestSeenUse_AShotTeachesBothSides(t *testing.T) {
 		sendShootMessages(user, room, shot)
 		require.True(t, skeleton.Character.KnowsSecretExit(1, "north"), "the NPC who saw the shot leave")
 		require.False(t, target.Character.KnowsSecretExit(1, "north"), "the target was not there to see it")
+	})
+	t.Run("leaving, a player onlooker", func(t *testing.T) {
+		t.Cleanup(seedAllRegistries())
+		user, room := getTestUserAndRoom(t)
+		secretExit(t, room, "north")
+		user.Character.LearnSecretExit(1, "north")
+		skeleton := mobs.GetInstance(100)
+		room.RemoveMob(100)
+		skeleton.Character.RoomId = 2
+		rooms.LoadRoom(2).AddMob(100)
+		watcher := users.GetByUserId(2)
+		events.DrainQueuedMessagesForTest(2)
+
+		atSkeleton := shot
+		atSkeleton.TargetUserId, atSkeleton.TargetMobInstanceId = 0, 100
+		atSkeleton.TargetName, atSkeleton.IsTargetMob = "Skeleton", true
+		sendShootMessages(user, room, atSkeleton)
+		require.Contains(t, drainedText(watcher), "fires", "premise: Bobrick read the departure line")
+		require.True(t, watcher.Character.KnowsSecretExit(1, "north"), "the player who saw the shot leave")
 	})
 	t.Run("arriving", func(t *testing.T) {
 		t.Cleanup(seedAllRegistries())

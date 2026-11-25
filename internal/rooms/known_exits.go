@@ -206,6 +206,57 @@ func (r *Room) PermanentExitsKnownTo(char *characters.Character) iter.Seq2[strin
 	}
 }
 
+// ExitTo is one exit of a room leading to a given room (ExitsTo).
+type ExitTo struct {
+	Key       string // the map key: what `go` and `shoot` match
+	Name      string // what a line prints: Key, or a temporary exit's Title
+	Secret    bool
+	Temporary bool
+}
+
+// exitToRank is ExitsTo's order: plain room or mutator exits, then temporary
+// ones, then secret ones.
+func exitToRank(e ExitTo) int {
+	switch {
+	case e.Secret:
+		return 2
+	case e.Temporary:
+		return 1
+	}
+	return 0
+}
+
+// ExitsTo is every exit of r that leads to roomId, best first: a plain room
+// or mutator exit (permanentExits, so a mutator exit takes the place of the
+// room exit of its name), then a temporary exit, then a secret one, A to Z by
+// key within each. It is the one ranking of "the way from r to roomId":
+// FindExitTo prints the first, and actions.FollowExitTo picks among them by
+// what a leader knows (#781).
+func (r *Room) ExitsTo(roomId int) []ExitTo {
+	var ways []ExitTo
+	for key, ex := range r.permanentExits() {
+		if ex.RoomId == roomId {
+			ways = append(ways, ExitTo{Key: key, Name: key, Secret: ex.Secret})
+		}
+	}
+	for key, ex := range r.ExitsTemp {
+		if ex.RoomId == roomId {
+			name := ex.Title
+			if name == "" {
+				name = key
+			}
+			ways = append(ways, ExitTo{Key: key, Name: name, Temporary: true})
+		}
+	}
+	sort.Slice(ways, func(i, j int) bool {
+		if ri, rj := exitToRank(ways[i]), exitToRank(ways[j]); ri != rj {
+			return ri < rj
+		}
+		return ways[i].Key < ways[j].Key
+	})
+	return ways
+}
+
 // FindKnownExitTo is FindExitTo among the exits char knows (ExitKnownTo): the
 // exit of r that leads to roomId, or "" when the only way there is a secret
 // exit char has not found. A room exit a mutator exit has taken the place of
@@ -213,16 +264,13 @@ func (r *Room) PermanentExitsKnownTo(char *characters.Character) iter.Seq2[strin
 // 13). Every caller puts the answer in a command (`go <exit>`, `shoot
 // <target> <exit>`), so a temporary exit answers with its key, which is what
 // those commands match, never its Title: a rift's title ("x-7 rift") or a
-// coloured portal title matches nothing (#781, Task 5c).
+// coloured portal title matches nothing (#781, Task 5c). The pick is the
+// first of ExitsTo that char knows: plain, then temporary, then a found
+// secret exit.
 func (r *Room) FindKnownExitTo(char *characters.Character, roomId int) string {
-	for exitName, ex := range r.PermanentExitsKnownTo(char) {
-		if ex.RoomId == roomId {
-			return exitName
-		}
-	}
-	for key, ex := range r.ExitsTemp {
-		if ex.RoomId == roomId {
-			return key
+	for _, way := range r.ExitsTo(roomId) {
+		if !way.Secret || r.ExitKnownTo(char, way.Key) {
+			return way.Key
 		}
 	}
 	return ""
@@ -233,22 +281,12 @@ func (r *Room) FindKnownExitTo(char *characters.Character, roomId int) string {
 // nearby)", "Someone shouts from nearby" (#781, owner ruling 16).
 const HeardFromNearby = `nearby`
 
-// HeardExitName is how listener, in r, names the exit exitName of r that a
-// sound came through (#781, owner ruling 16): its name, unless it is a secret
-// exit listener has not found, which reads HeardFromNearby. Nothing is learned
-// from hearing. For a sender that fans out one message per room, see
-// HeardThroughSecretExit.
-func (r *Room) HeardExitName(listener *characters.Character, exitName string) string {
-	if r.IsSecretExit(exitName) && !r.ExitKnownTo(listener, exitName) {
-		return HeardFromNearby
-	}
-	return exitName
-}
-
 // HeardThroughSecretExit splits the players in r for a sound that came
-// through exitName of r, for a sender that sends one message to the room with
-// excludes: knowers read the exit's name, strangers read HeardFromNearby (the
-// same rule as HeardExitName). secret is false when exitName is not a secret
+// through exitName of r (#781, owner ruling 16): knowers read the exit's name,
+// strangers read HeardFromNearby, and nothing is learned from hearing. It is
+// the one split for every heard line: a sender that sends one message per room
+// excludes by it, and the GMCP shout sender reads it per listener. secret is
+// false when exitName is not a secret
 // exit, and then nothing is split: everyone reads the name, and the check
 // costs one exit lookup, with no work per listener.
 func (r *Room) HeardThroughSecretExit(exitName string) (knowers, strangers []int, secret bool) {

@@ -29,7 +29,6 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	hit := result.MoveResult.Hit
-	partial := !hit && result.MoveResult.Damage > 0
 	// Dealt is true on a clean hit AND on a defended shot that still drew
 	// blood. A partial draws evidence just like a hit does (the victim's own
 	// message names the shooter), so it reveals the same way. Only a true
@@ -46,6 +45,38 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if result.CrossRoom && dealt {
 		mob.Character.CancelCombatConditions()
 	}
+
+	sendMobShootMessages(mob, room, result)
+
+	// Retaliation: the target aggros back onto the shooter (same-room only —
+	// cross-room aggro on a defender is dropped by the combat handler). Any
+	// damage dealt (hit or partial) provokes retaliation the same way a clean
+	// hit does; only a zero-damage miss from stealth does not.
+	if !result.CrossRoom && (dealt || !result.IsSneaking) {
+		if result.IsTargetMob {
+			if target := mobs.GetInstance(result.TargetMobInstanceId); target != nil && !target.Character.IsInCombat() {
+				targeting.Commit(&target.Character, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
+			}
+		} else if result.TargetUserId > 0 {
+			if u := users.GetByUserId(result.TargetUserId); u != nil && !u.Character.IsInCombat() {
+				targeting.Commit(u.Character, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
+			}
+		}
+	}
+
+	// U6b Task 11: the counter renders AFTER the move's own outcome.
+	actions.DispatchCounterMessages(&actions.MobActor{Mob: mob, Room: room}, result.Counter)
+
+	return true, nil
+}
+
+// sendMobShootMessages narrates an executed mob shot to its target and the
+// rooms that see it, and teaches onlookers a secret exit the shot crossed
+// (#781 ruling 15). Split out of Fire so the narration can be driven with a
+// fixed FireResult, as usercommands.sendShootMessages is.
+func sendMobShootMessages(mob *mobs.Mob, room *rooms.Room, result actions.FireResult) {
+	hit := result.MoveResult.Hit
+	partial := !hit && result.MoveResult.Damage > 0
 
 	mobName := fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, mob.Character.Name)
 	weapon := fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, result.WeaponName)
@@ -234,25 +265,4 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			}
 		}
 	}
-
-	// Retaliation: the target aggros back onto the shooter (same-room only —
-	// cross-room aggro on a defender is dropped by the combat handler). Any
-	// damage dealt (hit or partial) provokes retaliation the same way a clean
-	// hit does; only a zero-damage miss from stealth does not.
-	if !result.CrossRoom && (dealt || !result.IsSneaking) {
-		if result.IsTargetMob {
-			if target := mobs.GetInstance(result.TargetMobInstanceId); target != nil && !target.Character.IsInCombat() {
-				targeting.Commit(&target.Character, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
-			}
-		} else if result.TargetUserId > 0 {
-			if u := users.GetByUserId(result.TargetUserId); u != nil && !u.Character.IsInCombat() {
-				targeting.Commit(u.Character, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
-			}
-		}
-	}
-
-	// U6b Task 11: the counter renders AFTER the move's own outcome.
-	actions.DispatchCounterMessages(&actions.MobActor{Mob: mob, Room: room}, result.Counter)
-
-	return true, nil
 }

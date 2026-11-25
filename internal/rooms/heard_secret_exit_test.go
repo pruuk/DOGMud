@@ -84,16 +84,48 @@ func TestSendTextToExits_AnOrdinaryExitReadsItsNameForEveryone(t *testing.T) {
 	require.Equal(t, want, got[mira.UserId])
 }
 
-// HeardExitName is the per-listener form (the GMCP shout's sender): the name
-// for a knower or an ordinary exit, nearby for a stranger at a secret one.
-func TestHeardExitName(t *testing.T) {
+// The split itself: knowers and strangers at a secret exit; nothing at an
+// ordinary one, where no listener is looked at.
+func TestHeardThroughSecretExit(t *testing.T) {
 	_, b, kesh, mira := heardFixture(t, true)
-	require.Equal(t, "crack", b.HeardExitName(kesh.Character, "crack"))
-	require.Equal(t, HeardFromNearby, b.HeardExitName(mira.Character, "crack"))
+	knowers, strangers, secret := b.HeardThroughSecretExit("crack")
+	require.True(t, secret)
+	require.Equal(t, []int{kesh.UserId}, knowers)
+	require.Equal(t, []int{mira.UserId}, strangers)
 
-	_, b, kesh, mira = heardFixture(t, false)
-	require.Equal(t, "crack", b.HeardExitName(kesh.Character, "crack"))
-	require.Equal(t, "crack", b.HeardExitName(mira.Character, "crack"))
+	_, b, _, _ = heardFixture(t, false)
+	knowers, strangers, secret = b.HeardThroughSecretExit("crack")
+	require.False(t, secret)
+	require.Nil(t, knowers)
+	require.Nil(t, strangers)
+}
+
+// #781: with a plain exit and a secret exit both leading back, every line
+// names the plain one: FindExitTo ranks plain, then temporary, then secret,
+// A to Z, whatever order the maps walk in. A room with two exits back reads
+// one heard line.
+func TestFindExitTo_APlainExitBackBeatsASecretOne(t *testing.T) {
+	a, b, kesh, mira := heardFixture(t, true)
+	b.Exits["south"] = exit.RoomExit{RoomId: 3290}
+	b.Exits["alcove"] = exit.RoomExit{RoomId: 3290, Secret: true}
+	for range 50 {
+		require.Equal(t, "south", b.FindExitTo(3290))
+	}
+	require.Equal(t, []ExitTo{
+		{Key: "south", Name: "south"},
+		{Key: "alcove", Name: "alcove", Secret: true},
+		{Key: "crack", Name: "crack", Secret: true},
+	}, b.ExitsTo(3290))
+
+	a.SendTextToExits("You hear someone talking.", true)
+	got := readersOf(3291, kesh.UserId, mira.UserId)
+	want := []string{`(From <ansi fg="exit">south</ansi>) You hear someone talking.`}
+	require.Equal(t, want, got[kesh.UserId], "one line per room, naming the plain exit")
+	require.Equal(t, want, got[mira.UserId])
+
+	b.ExitsTemp = map[string]exit.TemporaryRoomExit{"rift-1": {RoomId: 3290, Title: "shimmering rift"}}
+	delete(b.Exits, "south")
+	require.Equal(t, "shimmering rift", b.FindExitTo(3290), "a temporary exit beats a secret one and prints its title")
 }
 
 // FindKnownExitTo answers a temporary exit by its key, the word `go` and

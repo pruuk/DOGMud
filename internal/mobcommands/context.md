@@ -248,7 +248,10 @@ The `internal/mobcommands` package implements the AI command system for non-play
   `actions.LearnSecretExitWatchingNow` judge each onlooker at one moment. The
   same hook follows `look`'s peer line and the far room's "is looking into
   the room from the <exit>", and `shoot`'s `fire_depart` and
-  `arrival_known_*` lines. The mob's own record is unchanged by it.
+  `arrival_known_*` lines. The mob's own record is unchanged by it. `Fire`'s
+  narration is `sendMobShootMessages(mob, room, result)`, split out so a test
+  can drive it with a fixed `FireResult`, as `usercommands.sendShootMessages`
+  is; `Fire` keeps the reveal, retaliation and counter.
 
 #### **Routes (`pathto.go`)**
 - `pathto <ids|home>` is a scripted route (schedules, patrols, behaviour

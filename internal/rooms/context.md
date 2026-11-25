@@ -977,13 +977,24 @@ from northeast, then A to Z.
 needs (the ruling 14 and 15 snapshots).
 
 A sound heard through a secret exit (#781, owner ruling 16) names it only to
-a listener who has found it. `HeardExitName(listener, name)` is the
-per-listener form (the exit's name, or `HeardFromNearby`, "nearby"; the GMCP
-shout's sender uses it). `HeardThroughSecretExit(name)` returns `(knowers,
-strangers []int, secret bool)` over the players in the room, for a sender that
-sends one message per room with excludes (`SendTextToExitsExcluding`,
-`actions.Shout`); `secret` false means nothing is split and no per-listener
+a listener who has found it; any other reads `HeardFromNearby`, "nearby".
+`HeardThroughSecretExit(name)` returns `(knowers, strangers []int, secret
+bool)` over the players in the room, the one split for every heard line: a
+sender that sends one message per room excludes by it
+(`SendTextToExitsExcluding`, `actions.Shout`), and the GMCP shout sender reads
+it once per room; `secret` false means nothing is split and no per-listener
 work was done.
+
+`ExitsTo(roomId)` is every exit leading to a room, ranked: plain room or
+mutator exit, then temporary, then secret, A to Z by key within each, as
+`ExitTo{Key, Name, Secret, Temporary}` (`Name` is a temporary exit's title).
+It is the one ranking of "the way from here to there": `FindExitTo` prints
+the first (every line naming the exit back: arrive lines, the far side of a
+peer or a shot, `ForEachAdjacentRoom` and so the heard lines),
+`FindKnownExitTo` answers the first a character knows by key, and
+`actions.FollowExitTo` picks by the leader's knowledge. Before the ranking
+`FindExitTo` walked the maps in random order and could name, and teach, a
+secret exit while a plain one also led back.
 
 The filters on the same rule: `ExitKnownTo(char, name)`,
 `FindKnownExitByName(char, search)` (every player path that names an exit;
@@ -994,7 +1005,7 @@ points, ruling 13). `PermanentExitsKnownTo` is an `iter.Seq2[string,
 exit.RoomExit]` over the room and mutator exits char knows, mutators resolved
 once per call; an NPC loop that used to range over `r.Exits` (wandering, a
 walk-away, a forager's roam, the survival planner's flee) ranges over it
-instead, and `FindKnownExitTo` is built on it. `FindKnownExitTo` answers a
+instead. `FindKnownExitTo` is built on `ExitsTo` and answers a
 temporary exit by its key, the word `go` and `shoot` match, because every
 caller puts the answer in a command (`FindExitTo` still answers the title,
 which its callers print). Each resolves a

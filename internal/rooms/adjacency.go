@@ -14,9 +14,9 @@ package rooms
 // need the room's own exit set (rather than the way back to r) should walk
 // r.Exits directly — this helper is for outward sound/effect propagation.
 //
-// Note this is deliberately not SendTextToExits: that helper covers only Exits
-// and ExitsTemp, and hard-codes its message format, which is why callers
-// needing mutator exits or custom wording rolled their own loops.
+// sourceExit is FindExitTo's ranked pick (#781): a plain exit back beats a
+// temporary one and both beat a secret one, so two exits back give one visit
+// naming one exit. SendTextToExitsExcluding is built on it too.
 func (r *Room) ForEachAdjacentRoom(fn func(otherRoom *Room, sourceExit string)) {
 
 	seen := map[int]struct{}{}

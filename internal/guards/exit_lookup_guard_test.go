@@ -83,7 +83,6 @@ const (
 var exitReadRegistry = map[string]exitLookupEntry{
 	"internal/actions/defuse.go|resolveDefuseLockTarget":                  {plain: 1, why: whyExitResolved},
 	"internal/actions/flee.go|fleeExit":                                   {plain: 1, why: "a mob's own preferred flee exit; a player's flee passes none (usercommands/flee.go)"},
-	"internal/actions/follow_secret.go|FollowExitTo":                      {plain: 1, why: "picks the exit to a room a leader already walked to, ranking a secret one by whether the leader knows it"},
 	"internal/actions/follow_secret.go|LearnSecretExitFollowing":          {plain: 1, why: "asks whether the exit the leader took is secret, to teach it"},
 	"internal/actions/look.go|ResolveLook":                                {plain: 2, why: whyExitResolved},
 	"internal/actions/look.go|ShotExitClosed":                             {plain: 1, why: "the exit ExecuteFire / resolveShootTarget resolved with FindKnownExitByName"},
