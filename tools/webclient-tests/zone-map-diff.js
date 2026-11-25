@@ -32,7 +32,11 @@
  *   9. Room.Info again in the same room (its exits changed, #781) leaves a
  *      moved map where it is but still draws the room's new exit; a found
  *      exit sent by a partial Zone.Map is drawn too; a temporary exit is no
- *      map edge; a new room still centres.
+ *      map edge; a new room still centres;
+ *  10. the Room handler draws the room without mapwhere.js; keeps one entry
+ *      per room in allRooms.roomZones; draws no edge for an exit with no map
+ *      direction; and a full Zone.Map in the same room keeps the player's
+ *      zoom and centre, while one after a step or in a new zone resets.
  */
 'use strict';
 
@@ -42,8 +46,8 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..', '..', '_datafiles', 'html', 'public');
 const html = fs.readFileSync(path.join(ROOT, 'webclient-pure.html'), 'utf8');
 const js = fs.readFileSync(path.join(ROOT, 'static', 'js', 'gmcp.js'), 'utf8');
-// The Room handler asks MapWhere.recentre whether to move the map (#781).
-global.MapWhere = require(path.join(ROOT, 'static', 'js', 'mapwhere.js'));
+// The Room handler asks window.MapWhere.recentre whether to move the map (#781).
+const MapWhereApi = require(path.join(ROOT, 'static', 'js', 'mapwhere.js'));
 
 // ---------------------------------------------------------------- extraction
 function sliceBalanced(src, startIdx, open, close) {
@@ -106,7 +110,7 @@ global.document = {
   querySelectorAll: () => [],
   addEventListener: () => {},
 };
-global.window = { addEventListener: () => {}, devicePixelRatio: 1 };
+global.window = { addEventListener: () => {}, devicePixelRatio: 1, MapWhere: MapWhereApi };
 global.requestAnimationFrame = (fn) => fn();
 global.GMCPStructs = {};
 global.companionGlue = null;
@@ -416,6 +420,66 @@ check('9b: the found exit is on the map', exitIds(g, 1) === '2', 'exits=' + exit
 check('9b: the map stays where the player put it', g.center.x === 777 && g.center.y === 555,
   'center=' + JSON.stringify(g.center));
 check('9b: room 1 is still the current room', g.currentCenterId === 1, 'centre=' + g.currentCenterId);
+
+console.log('SCENARIO 10: the Room handler without mapwhere.js, one entry per room, no-direction exits, a full map in the same room');
+// 10a. mapwhere.js failed to load: the room is still drawn and centred once.
+g = freshMap();
+delete global.window.MapWhere;
+let threw = null;
+try {
+  roomInfoExits(1, 0, {});
+  g.center = { x: 777, y: 555 };
+  roomInfoExits(1, 0, { east: { num: 2, dx: 1, dy: 0, dz: 0, kind: 'compass' } });
+} catch (e) { threw = e; }
+global.window.MapWhere = MapWhereApi;
+check('10a: without mapwhere.js the handler does not throw', threw === null, String(threw));
+check('10a: without mapwhere.js the room is drawn with its exit', !!g.rooms.get(1) && exitIds(g, 1) === '2',
+  'rooms=' + ids(g));
+check('10a: without mapwhere.js the same room does not move the map', !!g.center && g.center.x === 777 && g.center.y === 555,
+  'center=' + JSON.stringify(g.center));
+// 10b. Room.Info again and again in one room keeps one entry, the latest.
+g = freshMap();
+roomInfoExits(1, 0, {});
+roomInfoExits(1, 0, {});
+roomInfoExits(1, 0, { east: { num: 2, dx: 1, dy: 0, dz: 0, kind: 'compass' } });
+roomInfoExits(2, 1, {});
+const zr = globalThis.allRooms.roomZones['Thornwall/z:0'];
+check('10b: one entry per room', zr.map(r => r.RoomId).join(',') === '1,2', 'entries=' + zr.map(r => r.RoomId).join(','));
+check('10b: the entry is the latest Room.Info', zr[0].Exits.map(e => e.RoomId).join(',') === '2',
+  'exits=' + JSON.stringify(zr[0].Exits));
+// 10c. A named exit with no map direction has delta 0, 0, 0: no edge, no
+// token at the room's own place (mapper.go drops it too).
+g = freshMap();
+roomInfoExits(1, 0, { east: { num: 2, dx: 1, dy: 0, dz: 0, kind: 'compass' },
+  trapdoor: { num: 7, dx: 0, dy: 0, dz: 0, kind: 'named' } });
+check('10c: an exit with no map direction is no edge', exitIds(g, 1) === '2', 'exits=' + exitIds(g, 1));
+check('10c: an exit with no map direction adds no room', !g.rooms.get(7), 'rooms=' + ids(g));
+// 10d. A full Zone.Map in the same room keeps the view the player chose.
+g = freshMap();
+roomInfo(1, 0);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1), room(3, 2)], full: true });
+g.zoomLevel = 0.4;
+g.center = { x: 777, y: 555 };
+zoneMap({ zone: 'Thornwall', cz: 0, party: [],
+  rooms: [room(1, 0, { exits: [{ to: 2, dx: 1, dy: 0, dz: 0, kind: 'compass' }] }), room(2, 1), room(3, 2)], full: true });
+check('10d: a full map in the same room keeps the zoom', g.zoomLevel === 0.4, 'zoom=' + g.zoomLevel);
+check('10d: a full map in the same room keeps the centre', g.center.x === 777 && g.center.y === 555,
+  'center=' + JSON.stringify(g.center));
+check('10d: room 1 is still the current room', g.currentCenterId === 1, 'centre=' + g.currentCenterId);
+check('10d: the full map drew the new exit', exitIds(g, 1) === '2', 'exits=' + exitIds(g, 1));
+// A step, then a full map: reset and centre as before.
+roomInfo(2, 1);
+g.zoomLevel = 0.4;
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1), room(3, 2)], full: true });
+check('10d: a full map after a step resets the zoom', g.zoomLevel === 1, 'zoom=' + g.zoomLevel);
+check('10d: a full map after a step centres on the new room',
+  g.currentCenterId === 2 && g.center.x === g.rooms.get(2).room.x * g.spacing, 'center=' + JSON.stringify(g.center));
+// A new zone: reset as before.
+g.zoomLevel = 0.4;
+roomInfo(9, 0, 0, 'Elsewhere');
+zoneMap({ zone: 'Elsewhere', cz: 0, party: [], rooms: [room(9, 0)], full: true });
+check('10d: a full map in a new zone resets the zoom', g.zoomLevel === 1, 'zoom=' + g.zoomLevel);
+check('10d: a full map in a new zone centres on its room', g.currentCenterId === 9, 'centre=' + g.currentCenterId);
 
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);

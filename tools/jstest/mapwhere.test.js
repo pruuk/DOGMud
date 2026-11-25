@@ -44,7 +44,7 @@ check('recentre: the first Room.Info centres', MW.recentre(null, 5), true);
 check('recentre: a new room centres', MW.recentre(5, 6), true);
 check('recentre: the same room again does not', MW.recentre(5, 5), false);
 check('the Room handler asks recentre before it moves the map',
-    /var newRoom = MapWhere\.recentre\(allRooms\.lastRoomId, obj\.Info\.num\);\s*allRooms\.lastRoomId = obj\.Info\.num;/.test(page), true);
+    /var newRoom = window\.MapWhere\s*\?\s*window\.MapWhere\.recentre\(allRooms\.lastRoomId, obj\.Info\.num\)\s*:\s*allRooms\.lastRoomId !== obj\.Info\.num;\s*allRooms\.lastRoomId = obj\.Info\.num;/.test(page), true);
 check('only a new room centres the map', /if \( newRoom \) \{\s*gr\.centerOnRoom\(r\.RoomId\);\s*\}/.test(page), true);
 check('centerOnRoom is called once in the page', (page.match(/gr\.centerOnRoom\(/g) || []).length, 1);
 var roomHandler = page.slice(page.indexOf('"Room": function() {'), page.indexOf('"Companion.Relay.Request"'));

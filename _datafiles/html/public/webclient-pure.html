@@ -919,7 +919,11 @@
                     // change (#781). The room is still updated below, so an
                     // exit it gained is drawn; only a new room moves the map,
                     // so a map the player moved stays where it is (D48).
-                    var newRoom = MapWhere.recentre(allRooms.lastRoomId, obj.Info.num);
+                    // If mapwhere.js did not load, the same test inline, so
+                    // the room is still drawn.
+                    var newRoom = window.MapWhere
+                        ? window.MapWhere.recentre(allRooms.lastRoomId, obj.Info.num)
+                        : allRooms.lastRoomId !== obj.Info.num;
                     allRooms.lastRoomId = obj.Info.num;
 
                     var r = {
@@ -965,12 +969,24 @@
                         var exitInfo = obj.Info.exitsv2[p];
                         // Only add these rooms if there is no z delta, since it's a 2D rendering.
                         // A temporary exit (a gangplank, a portal) is no map edge (#781).
-                        if ( exitInfo.dz == 0 && exitInfo.kind !== "temporary" ) {
+                        // An exit with no map direction (delta 0, 0, 0) is
+                        // none either; the server's mapper drops it too.
+                        if ( exitInfo.dz == 0 && exitInfo.kind !== "temporary"
+                                && !(exitInfo.dx == 0 && exitInfo.dy == 0) ) {
                             r.Exits.push( { RoomId: exitInfo.num, x: exitInfo.dx+parseInt(coords[1]), y: exitInfo.dy+parseInt(coords[2]), Text: "" } );
                         }
                     }
 
-                    allRooms.roomZones[zoneKey].push(r);
+                    // One entry per room: Room.Info comes again in the same
+                    // room (its exits, its Contents pushes), and the list is
+                    // replayed on every return to the zone.
+                    var zoneRooms = allRooms.roomZones[zoneKey];
+                    var at = zoneRooms.findIndex(function (z) { return z.RoomId === r.RoomId; });
+                    if ( at >= 0 ) {
+                        zoneRooms[at] = r;
+                    } else {
+                        zoneRooms.push(r);
+                    }
                     // A room a Zone.Map already drew keeps that version: this
                     // Room.Info shape has no name, tags or exit metadata, and
                     // since #650 no Zone.Map follows a step into a known room
