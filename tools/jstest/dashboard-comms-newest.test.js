@@ -46,15 +46,20 @@ El.prototype.closest = function (sel) {
     return this.classList.contains(sel.replace('.', '')) ? this : null;
 };
 
-// A channel window: 100 lines of 20px in a box clientHeight high.
+// A channel window: 100 lines of 20px in a box clientHeight high. Like a
+// browser, it keeps scrollTop between 0 and scrollHeight - clientHeight.
 function Win(name, active) {
     El.call(this, ['chat-window', 'tab-content'].concat(active ? ['active'] : []));
     this.name = name;
     this.scrollHeight = 2000;
     this.clientHeight = 300;
-    this.scrollTop = 0;
+    this.top = 0;
 }
 Win.prototype = Object.create(El.prototype);
+Object.defineProperty(Win.prototype, 'scrollTop', {
+    get: function () { return Math.min(this.top, this.scrollHeight - this.clientHeight); },
+    set: function (v) { this.top = Math.max(0, Math.min(v, this.scrollHeight - this.clientHeight)); }
+});
 
 var say = new Win('say', true);
 var chat = new Win('chat', false);
@@ -95,7 +100,7 @@ D._watchComms();
 function fire(type, target) {
     listeners[type].forEach(function (fn) { fn({ target: target }); });
 }
-function atNewest(w) { return w.scrollTop === w.scrollHeight; }
+function atNewest(w) { return w.scrollTop === w.scrollHeight - w.clientHeight; }
 
 check('every channel window is watched for size', observed.length, 2);
 
@@ -128,6 +133,29 @@ say.scrollTop = 0;
 fire('scroll', say);
 resizeCallback();
 check('a hidden channel scroll is ignored', atNewest(chat), true);
+
+// The panel shrinks in steps (dragging a pop-out window's edge, or its own
+// animation). The scroll event from our jump to the newest line arrives a
+// frame late, after the box shrank again, so it reads short of the bottom.
+// It moved down, not up: the reader is still following the newest line.
+// Measured in headless Chrome 2026-11-25: a popped-out Comms shrinking by
+// animation stopped 122px short of its newest line.
+chat.clientHeight = 300;
+chat.scrollTop = chat.scrollHeight;
+fire('scroll', chat);
+chat.clientHeight = 250;
+resizeCallback();                // jumps to 1750, the newest at this size
+chat.clientHeight = 200;         // shrinks again before that scroll event lands
+fire('scroll', chat);            // reads 1750 of 1800: short of the bottom
+resizeCallback();
+check('a panel shrinking in steps keeps the newest message in view', atNewest(chat), true);
+
+// A reader who scrolls up while the panel shrinks is still left alone.
+chat.scrollTop = 1000;
+fire('scroll', chat);
+chat.clientHeight = 150;
+resizeCallback();
+check('a reader who scrolled up during a shrink stays put', chat.scrollTop, 1000);
 
 // A click that is not on a channel button does nothing.
 chat.scrollTop = 50;
