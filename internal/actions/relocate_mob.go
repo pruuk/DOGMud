@@ -91,12 +91,15 @@ func ClearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 // slice 6, owner ruling D1); the movement sounds play for both, as they do
 // on the player path.
 func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.Room, sneaking bool) {
-	enterPhrase := exit.EntryPhrase(dest.FindExitTo(from.RoomId), false)
+	backExit := dest.FindExitTo(from.RoomId)
+	enterPhrase := exit.EntryPhrase(backExit, false)
 
 	// #456, owner ruling 2026-10-09: a mover is seen by the light they carry
 	// on their own way out, so the exit line is judged by the room before
 	// the move. The entry line keeps being judged after it.
 	departSnap := from.VisualSnapshot()
+	// The NPCs' view at the same moment, for ruling 14 below.
+	departNPCs := from.MobVisualSnapshot()
 
 	// #512: a mob's own move stops its craft or salvage, as a player's does,
 	// and before it leaves, so the stop is told to the room it is leaving.
@@ -120,6 +123,11 @@ func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.R
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> %s.`, mob.Character.Name, enterPhrase),
 			),
 			`You hear footsteps approaching.`)
+
+		// #781 ruling 14: an onlooker who read either line learns the
+		// secret exit it names, judged as that line was.
+		LearnSecretExitWatching(from, exitName, &mob.Character, departSnap, departNPCs)
+		LearnSecretExitWatching(dest, backExit, &mob.Character, dest.VisualSnapshot(), dest.MobVisualSnapshot())
 
 		dest.SendTextToExits(`You hear someone moving around.`, true, from.GetPlayers(rooms.FindAll)...)
 	}

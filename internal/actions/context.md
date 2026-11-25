@@ -391,6 +391,8 @@ wrappers that render the outcome.
   line is judged by `from` before the move (`Room.VisualSnapshot`, then
   `SendTextVisualWithAudioToSnapshot`), so a mob is seen leaving by the light
   it carries out with it (#456); the entry line is judged after the move.
+  Beside each line `LearnSecretExitWatching` teaches its onlookers the secret
+  exit it names (#781 ruling 14).
 - **`ClearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int)`**
   moved here from the (still unexported at the call site) `mobcommands`
   version; retargets or releases players and mobs in `room` that were
@@ -448,6 +450,17 @@ shadowing is following):
   have used wins (plain, then temporary, then a secret one the leader knows,
   then any secret one), so a follower never learns a secret exit the leader
   did not take.
+- `LearnSecretExitWatching(room, exitName, mover, players, npcs)` (owner
+  ruling 14): an onlooker who reads a movement line naming a secret exit
+  learns it. `players` is the `rooms.VisualSnapshot` the line was delivered
+  against and `npcs` the `rooms.MobVisualSnapshot` taken at the same moment,
+  so learning follows the line's own per-reader decision with no second sight
+  rule: `SightFull` and `SightShapes` learn (a shapes-only line still names
+  the exit), `SightNone` does not, and only readers in the room now and in the
+  snapshot count. The mover is skipped. Called beside the leave and arrive
+  lines of `usercommands.Go` and `RelocateMob` (the arrive line's exit is the
+  one leading back, `""` for "arrives", which teaches nothing) and beside the
+  flee line of `hooks.handlePlayerFlee`.
 
 **Cost:**
 

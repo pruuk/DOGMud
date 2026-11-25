@@ -502,7 +502,9 @@ fails if this file prices or detects a step itself again. The departure line
 `room.VisualSnapshot()` just before `rooms.MoveToRoom` and sends with
 `SendTextVisualWithAudioToSnapshot`, so a mover is seen leaving by the light
 they carry out (#456, owner ruling 2026-10-09). Arrival lines are judged
-after the move.
+after the move. Beside each line `actions.LearnSecretExitWatching` teaches
+the players and NPCs who read it the secret exit it names, from the same
+snapshot (#781 ruling 14).
 
 ### Quest log actions (`questlog.go`, `quests.go`; #375 phase 5)
 

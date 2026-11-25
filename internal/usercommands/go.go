@@ -258,6 +258,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		// carry on their own way out, so the departure line below is judged
 		// by the room before the move. Arrivals keep being judged after it.
 		departSnap := room.VisualSnapshot()
+		// The NPCs' view at the same moment: an onlooker who sees the leave
+		// line learns a secret exit it names (#781, ruling 14).
+		departNPCs := room.MobVisualSnapshot()
 
 		if err := rooms.MoveToRoom(user.UserId, destRoom.RoomId); err != nil {
 			// An instance not opened for the player is an ordinary refusal
@@ -316,6 +319,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						`You hear someone leave the room.`,
 						user.UserId)
 				}
+				// #781 ruling 14: whoever read the leave line learns the
+				// secret exit it names, judged as the line was.
+				actions.LearnSecretExitWatching(room, exitName, user.Character, departSnap, departNPCs)
 
 				// Tell everyone if the pet is following
 				if user.Character.Pet.Exists() {
@@ -345,6 +351,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						user.UserId)
 
 				}
+				// #781 ruling 14: whoever read the arrive line learns the
+				// secret exit it names, the one here leading back ("arrives"
+				// names none). Judged as the line was, by the room now.
+				actions.LearnSecretExitWatching(destRoom, enterFromExit, user.Character, destRoom.VisualSnapshot(), destRoom.MobVisualSnapshot())
 
 				destRoom.SendTextToExits(`You hear someone moving around.`, true, room.GetPlayers(rooms.FindAll)...)
 			}

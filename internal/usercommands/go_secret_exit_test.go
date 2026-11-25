@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -217,4 +218,131 @@ func TestGo_FollowersLearnTheSecretExitTheLeaderTakes(t *testing.T) {
 	require.True(t, member.Character.KnowsSecretExit(1, "north"), "the party member walked behind the leader")
 	require.Contains(t, events.DrainQueuedUserInputsForTest(2), "north", "the member's follow step is queued")
 	require.True(t, companion.Character.KnowsSecretExit(1, "north"), "the companion walked behind its owner")
+}
+
+// moveOnlookersTo2 puts Bobrick and the skeleton (mob 100) in room 2, lit at
+// the faces band, for an arrival test.
+func moveOnlookersTo2(t *testing.T) (*users.UserRecord, *mobs.Mob, *rooms.Room) {
+	t.Helper()
+	room1, room2 := rooms.LoadRoom(1), rooms.LoadRoom(2)
+	lamp := room2.Lamp
+	room2.Lamp = rooms.LampPtr(60)
+	t.Cleanup(func() { room2.Lamp = lamp })
+	watcher, skeleton := users.GetByUserId(2), mobs.GetInstance(100)
+	require.NotNil(t, skeleton)
+	room1.RemovePlayer(2)
+	watcher.Character.RoomId = 2
+	room2.AddPlayer(2)
+	room1.RemoveMob(100)
+	skeleton.Character.RoomId = 2
+	room2.AddMob(100)
+	return watcher, skeleton, room2
+}
+
+// Owner ruling 14 (#781): a player and an NPC who watch someone leave through
+// a secret exit learn it.
+func TestGo_OnlookersLearnTheSecretExitTheyWatchSomeoneLeaveBy(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	user, room := getTestUserAndRoom(t)
+	secretExit(t, room, "north")
+	user.Character.LearnSecretExit(1, "north")
+	watcher, skeleton := users.GetByUserId(2), mobs.GetInstance(100)
+	require.Equal(t, messaging.SightFull, room.ParticipantSight(2), "fixture: the square is lit")
+	require.False(t, watcher.Character.KnowsSecretExit(1, "north"), "premise")
+	require.False(t, skeleton.Character.KnowsSecretExit(1, "north"), "premise")
+	events.DrainQueuedMessagesForTest(2)
+
+	handled, err := Go("north", user, room, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+	require.Equal(t, 2, user.Character.RoomId)
+	got := drainedText(watcher)
+	require.Contains(t, got, "leaves", "premise: the watcher read the leave line")
+	require.Contains(t, got, "north", "premise: the line names the exit")
+	require.True(t, watcher.Character.KnowsSecretExit(1, "north"), "the watcher saw the exit used")
+	require.True(t, skeleton.Character.KnowsSecretExit(1, "north"), "the NPC onlooker saw it too")
+}
+
+// Ruling 14: onlookers who watch someone arrive learn the secret exit the
+// arrive line names, the one in their room leading back. The mover's own
+// knowledge is not changed by it.
+func TestGo_OnlookersLearnTheSecretExitTheyWatchSomeoneArriveBy(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	user, room := getTestUserAndRoom(t)
+	watcher, skeleton, room2 := moveOnlookersTo2(t)
+	secretExit(t, room2, "south")
+	require.Equal(t, messaging.SightFull, room2.ParticipantSight(2), "fixture: room 2 is lit")
+	events.DrainQueuedMessagesForTest(2)
+
+	handled, err := Go("north", user, room, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+	require.Equal(t, 2, user.Character.RoomId)
+	got := drainedText(watcher)
+	require.Contains(t, got, "enters from", "premise: the watcher read the arrive line")
+	require.Contains(t, got, "south", "premise: the line names the exit")
+	require.True(t, watcher.Character.KnowsSecretExit(2, "south"), "the watcher saw the exit used")
+	require.True(t, skeleton.Character.KnowsSecretExit(2, "south"), "the NPC onlooker saw it too")
+	require.False(t, user.Character.KnowsSecretExit(2, "south"), "the mover's own knowledge is not this rule's")
+}
+
+// Ruling 14: an onlooker who cannot see the mover (a pitch-dark room) hears
+// the move and learns nothing, leaving or arriving.
+func TestGo_OnlookersInTheDarkLearnNothing(t *testing.T) {
+	t.Run("leaving", func(t *testing.T) {
+		cleanup := seedAllRegistries()
+		defer cleanup()
+		user, room := getTestUserAndRoom(t)
+		secretExit(t, room, "north")
+		user.Character.LearnSecretExit(1, "north")
+		darkenRoom(t, room)
+		watcher, skeleton := users.GetByUserId(2), mobs.GetInstance(100)
+		require.Equal(t, messaging.SightNone, room.ParticipantSight(2), "fixture: the square is dark")
+		events.DrainQueuedMessagesForTest(2)
+
+		handled, err := Go("north", user, room, 0)
+		require.True(t, handled)
+		require.NoError(t, err)
+		require.Equal(t, 2, user.Character.RoomId)
+		require.Contains(t, drainedText(watcher), "You hear someone leave the room.", "premise: the sound line")
+		require.False(t, watcher.Character.KnowsSecretExit(1, "north"))
+		require.False(t, skeleton.Character.KnowsSecretExit(1, "north"))
+	})
+	t.Run("arriving", func(t *testing.T) {
+		cleanup := seedAllRegistries()
+		defer cleanup()
+		user, room := getTestUserAndRoom(t)
+		watcher, skeleton, room2 := moveOnlookersTo2(t)
+		secretExit(t, room2, "south")
+		darkenRoom(t, room2)
+		require.Equal(t, messaging.SightNone, room2.ParticipantSight(2), "fixture: room 2 is dark")
+		events.DrainQueuedMessagesForTest(2)
+
+		handled, err := Go("north", user, room, 0)
+		require.True(t, handled)
+		require.NoError(t, err)
+		require.Equal(t, 2, user.Character.RoomId)
+		require.Contains(t, drainedText(watcher), "You hear someone enter the room.", "premise: the sound line")
+		require.False(t, watcher.Character.KnowsSecretExit(2, "south"))
+		require.False(t, skeleton.Character.KnowsSecretExit(2, "south"))
+	})
+}
+
+// Ruling 14 touches secret exits only: watching someone use an ordinary exit
+// records nothing.
+func TestGo_WatchingAnOrdinaryExitRecordsNothing(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	user, room := getTestUserAndRoom(t)
+	watcher, skeleton := users.GetByUserId(2), mobs.GetInstance(100)
+	events.DrainQueuedMessagesForTest(2)
+
+	handled, err := Go("north", user, room, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+	require.Contains(t, drainedText(watcher), "leaves", "premise: the watcher read the leave line")
+	require.Empty(t, watcher.Character.Discoveries)
+	require.Empty(t, skeleton.Character.Discoveries)
 }

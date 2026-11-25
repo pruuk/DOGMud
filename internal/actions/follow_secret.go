@@ -4,7 +4,10 @@ import (
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // LearnSecretExitFollowing records that c, moving through exitName of room
@@ -23,6 +26,52 @@ func LearnSecretExitFollowing(c *characters.Character, room *rooms.Room, exitNam
 	}
 	if ex, ok := room.GetExitInfo(exitName); ok && ex.Secret {
 		c.LearnSecretExit(room.RoomId, exitName)
+	}
+}
+
+// LearnSecretExitWatching records that every onlooker in room who saw a
+// movement line naming exitName of room now knows that exit when it is
+// secret (#781, owner ruling 14: an onlooker who sees the mover learns the
+// exit). Call it beside the line: "X leaves towards the <exit> exit" in the
+// room left, "X enters from the <exit>" in the room entered (exitName is
+// then the exit there leading back, "" when the line just says "arrives",
+// which names nothing and teaches nothing), "X flees to the <exit> exit!".
+//
+// Who saw it is the decision the line itself was delivered at, never a
+// second sight rule: players is the VisualSnapshot the line was sent
+// against (room.VisualSnapshot() at the send, for a line judged by the room
+// as it is now), npcs the MobVisualSnapshot taken at the same moment. An
+// onlooker learns at SightFull and at SightShapes (a shapes-only reader's
+// line still names the exit: only names become "a figure"); one at
+// SightNone read the sound line, or nothing, and learns nothing. Like the
+// line, it reaches only those in room now AND in the snapshot. mover is
+// skipped: this rule changes nothing about what the mover knows. An NPC
+// onlooker records on its own instance, as search does.
+func LearnSecretExitWatching(room *rooms.Room, exitName string, mover *characters.Character, players rooms.VisualSnapshot, npcs rooms.MobVisualSnapshot) {
+	if room == nil {
+		return
+	}
+	if ex, ok := room.GetExitInfo(exitName); !ok || !ex.Secret {
+		return
+	}
+	saw := func(d messaging.SightDecision) bool { return d != messaging.SightNone }
+	for _, uid := range room.GetPlayers() {
+		d, ok := players[uid]
+		if !ok || !saw(d) {
+			continue
+		}
+		if u := users.GetByUserId(uid); u != nil && u.Character != mover {
+			u.Character.LearnSecretExit(room.RoomId, exitName)
+		}
+	}
+	for _, miid := range room.GetMobs() {
+		d, ok := npcs[miid]
+		if !ok || !saw(d) {
+			continue
+		}
+		if m := mobs.GetInstance(miid); m != nil && &m.Character != mover {
+			m.Character.LearnSecretExit(room.RoomId, exitName)
+		}
 	}
 }
 

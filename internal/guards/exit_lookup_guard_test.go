@@ -85,6 +85,7 @@ var exitReadRegistry = map[string]exitLookupEntry{
 	"internal/actions/flee.go|fleeExit":                                   {plain: 1, why: "a mob's own preferred flee exit; a player's flee passes none (usercommands/flee.go)"},
 	"internal/actions/follow_secret.go|FollowExitTo":                      {plain: 1, why: "picks the exit to a room a leader already walked to, ranking a secret one by whether the leader knows it"},
 	"internal/actions/follow_secret.go|LearnSecretExitFollowing":          {plain: 1, why: "asks whether the exit the leader took is secret, to teach it"},
+	"internal/actions/follow_secret.go|LearnSecretExitWatching":           {plain: 1, why: "asks whether the exit a movement line named is secret, to teach its onlookers (ruling 14)"},
 	"internal/actions/look.go|ResolveLook":                                {plain: 2, why: whyExitResolved},
 	"internal/actions/look.go|ShotExitClosed":                             {plain: 1, why: "the exit ExecuteFire / resolveShootTarget resolved with FindKnownExitByName"},
 	"internal/actions/scan.go|Scan":                                       {plain: 1, why: "the lock of an exit Scan already took only when it is not secret"},

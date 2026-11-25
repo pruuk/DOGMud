@@ -20,7 +20,10 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   (`messaging.SendTrio`'s `ObserverSound`, the spell-disruption senders in
   `internal/hooks`); `txt` must name nobody.
   `VisualSnapshot()` returns a `VisualSnapshot` (user id to
-  `messaging.SightDecision`) of what every player in the room can see now;
+  `messaging.SightDecision`) of what every player in the room can see now
+  (`MobVisualSnapshot()` is the same decision for the NPCs, by instance id:
+  the senders reach players only, and `actions.LearnSecretExitWatching` reads
+  it to act on what an NPC onlooker saw, #781 ruling 14);
   `SendTextVisualToSnapshot(snap, cat, txt, names, excludeUserIds...)`
   delivers a line to exactly the players in the room now who were in the
   snapshot, each at their recorded decision, names hidden at shapes. Owner

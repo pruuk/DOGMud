@@ -415,6 +415,29 @@ func (r *Room) VisualSnapshot() VisualSnapshot {
 	return snap
 }
 
+// MobVisualSnapshot is VisualSnapshot for the NPCs in a room: instance id to
+// the sight decision a visual line would have been judged at then, by the
+// same visualDecision. The visual senders reach players only; this is for a
+// caller that acts on what an NPC onlooker saw of a line sent to the room
+// (actions.LearnSecretExitWatching, #781 ruling 14). Take it at the moment
+// the room's VisualSnapshot is taken, or the line is sent.
+type MobVisualSnapshot map[int]messaging.SightDecision
+
+// MobVisualSnapshot records, for every NPC in the room now, the sight decision
+// a visual line sent now would be judged at for it, with this room as the
+// lighting.
+func (r *Room) MobVisualSnapshot() MobVisualSnapshot {
+	snap := MobVisualSnapshot{}
+	for _, miid := range r.GetMobs() {
+		m := mobs.GetInstance(miid)
+		if m == nil {
+			continue
+		}
+		snap[miid] = visualDecision(&m.Character, r)
+	}
+	return snap
+}
+
 // SendTextVisualToSnapshot delivers a sight-gated line to exactly the players
 // who are in the room now AND were in snap, each judged at the decision snap
 // recorded for them rather than at the room as it is now (the owner rule on

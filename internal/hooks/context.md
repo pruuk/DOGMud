@@ -1000,7 +1000,10 @@ The round driver reads Combat Phase state instead of legacy `Aggro`:
   fires the `mob_flee` behaviour event. Before this slice a mob's `Flee`
   resolved instantly in `mobcommands.Flee` with no round-later step at all.
   A mob still casting never reaches it, but `mobcommands.Flee` drops the
-  cast when it begins the flee, as the player's command does.
+  cast when it begins the flee, as the player's command does. The player's
+  "X flees to the <exit> exit!" line is followed by
+  `actions.LearnSecretExitWatching` (#781 ruling 14), so an onlooker who read
+  it learns a secret exit it names; the mob's lines are `RelocateMob`'s.
 - **`PackFlee`** (`MobDeath_PackFlee.go`) queues `flee` only on packmates for
   which `actions.FleeGate` returns `FleeOK`, and counts only those toward the
   scatter line. That covers the owner ruling that idle packmates stay put
