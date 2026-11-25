@@ -28,4 +28,11 @@ func TestWireFreeze_GMCPJSONFieldNames(t *testing.T) {
 	assert.Contains(t, keysOf(questEnums{}), "conditions")
 	assert.Contains(t, keysOf(questEnums{}), "statusConditions")
 	assert.Contains(t, keysOf(GMCPCondition{}), "duration_cur")
+	// Room.Info (#781): the touch controls read these.
+	for _, k := range []string{"num", "exits", "exitsv2", "dark", "moves", "darkmarks"} {
+		assert.Contains(t, keysOf(GMCPRoomModule_Payload{}), k)
+	}
+	for _, k := range []string{"num", "dx", "dy", "dz", "details", "kind", "id"} {
+		assert.Contains(t, keysOf(GMCPRoomModule_Payload_Contents_ExitInfo{}), k)
+	}
 }

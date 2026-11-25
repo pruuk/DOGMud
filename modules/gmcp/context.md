@@ -463,6 +463,16 @@ call, for every lane including the sub-module requests:
 - **Map (owner ruling R5):** `go.go` maps a room only through `actions.MarkRoomMappedIfSeen`, so
   a room walked in the dark stays off `Zone.Map` until seen; rooms already mapped stay.
 
+`Room.Info` exits come from `rooms.KnownExits` through `buildRoomExitsInfo`
+(#781): only exits the viewer knows (a secret exit once found), room,
+mutator and temporary exits. Each `exitsv2` entry has `kind` (`compass`,
+`vertical`, `diagonal`, `named`, `temporary`), `id` (the movement button id,
+`internal/buttons`) and `details` (`secret`; `locked` means locked now;
+`player_has_key`, `player_has_pick_combo` on any lock). Top level: `dark`
+(the viewer sees nothing; the exit maps are then empty), `moves` (the six T
+directions to their fixed ids, always sent) and `darkmarks` (T direction to
+`wall` or `locked`).
+
 `Comm.Channel` say goes through `sayDeliveries` (`gmcp.Comm.go`), one payload per listener,
 matching the text lane (`actions.sendSpoken`): `sender` is the name at clear sight, `A figure`
 at shapes, `Someone` at none or when `events.Communication.SpeakerHidden`; a player speaker's
