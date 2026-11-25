@@ -23,3 +23,18 @@ func TestRoomExitsChanged_FindsAndMarksMergeApartPerPlayer(t *testing.T) {
 		DrainQueuedRoomExitsChangedForTest(71))
 	require.Equal(t, []RoomExitsChanged{{UserId: 72, SecretExitFound: true}}, DrainQueuedRoomExitsChangedForTest(0))
 }
+
+// IsQueued answers by the merge key: pending until drained (or popped), a
+// mark apart from a find, and never for an event that does not merge.
+func TestIsQueued_ReadsTheMergeKey(t *testing.T) {
+	DrainQueuedRoomExitsChangedForTest(0)
+	t.Cleanup(func() { DrainQueuedRoomExitsChangedForTest(0) })
+	require.False(t, IsQueued(RoomExitsChanged{UserId: 73}))
+	AddToQueue(RoomExitsChanged{UserId: 73})
+	require.True(t, IsQueued(RoomExitsChanged{UserId: 73}))
+	require.False(t, IsQueued(RoomExitsChanged{UserId: 73, SecretExitFound: true}))
+	require.False(t, IsQueued(RoomExitsChanged{UserId: 74}))
+	DrainQueuedRoomExitsChangedForTest(73)
+	require.False(t, IsQueued(RoomExitsChanged{UserId: 73}))
+	require.False(t, IsQueued(Message{UserId: 73}), "a message never merges")
+}

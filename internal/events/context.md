@@ -366,6 +366,11 @@ func (l RedrawPrompt) UniqueID() string {
 }
 ```
 
+`IsQueued(e)` (`events.go`) reports whether a unique event with `e`'s
+`UniqueID` is waiting, the same test `AddToQueue` merges on; a non-unique
+event is never reported. `modules/gmcp` `pressButton` reads it so a flood of
+stale presses sends one refusal line (#781).
+
 ## Event Flags
 
 ### Command Behavior Flags
@@ -380,8 +385,12 @@ const (
     CmdBlockInputUntilComplete EventFlag = CmdBlockInput | CmdUnBlockInput
     CmdFollowStep              EventFlag = 0b00100000  // Party member's step after the leader: no light-notice check first (#620)
     CmdTyped                   EventFlag = 0b01000000  // A line the player typed; only a typed line may answer a menu or prompt (#375)
+    CmdButton                  EventFlag = 0b10000000  // A touch button press (with CmdTyped); never answers a prompt (#781, D13)
 )
 ```
+
+`CmdButton` is set only by `modules/gmcp` `pressButton`; `world.processInput`
+drops a `CmdButton` line silently while a prompt is open.
 
 ### Flag Usage
 ```go

@@ -35,4 +35,9 @@ const (
 	// typed line may answer a menu or a prompt; an engine-queued command
 	// (follow steps, scripts, user.Command) always runs as a command (#375).
 	CmdTyped EventFlag = 0b01000000
+
+	// A touch button press (#781), set only by modules/gmcp pressButton,
+	// always with CmdTyped: it runs as typing does, but a button is never an
+	// answer, so world.processInput drops it while a prompt is open (D13).
+	CmdButton EventFlag = 0b10000000
 )

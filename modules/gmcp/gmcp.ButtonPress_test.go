@@ -35,11 +35,12 @@ func pressFixture(t *testing.T) (*users.UserRecord, map[string]string) {
 	return viewer, ids
 }
 
-// Ruling 7: a press goes through the normal input queue as the typed line,
-// at the current turn (the one-command-per-turn limit applies; a ReadyTurn at
-// or below 0 would bypass it, so the turn count is moved off 0 first; there
-// is no setter, and one more turn harms no other test), flagged typed so a
-// menu or the pager treats it as typing.
+// Ruling 7: a press goes through the same per-user input queue as typing, as
+// the typed line, at the current turn (a ReadyTurn at or below 0 would bypass
+// the queue's one-input-per-pass limit, so the turn count is moved off 0
+// first; there is no setter, and one more turn harms no other test), flagged
+// typed so a menu or the pager treats it as typing, and flagged a button so
+// it never answers a prompt.
 func TestPressButton_QueuesTheTypedLine(t *testing.T) {
 	if util.GetTurnCount() == 0 {
 		util.IncrementTurnCount()
@@ -54,6 +55,7 @@ func TestPressButton_QueuesTheTypedLine(t *testing.T) {
 	require.Equal(t, "go northeast", got[1].InputText)
 	for _, in := range got {
 		require.True(t, in.Flags.Has(events.CmdTyped), "a press is typed input")
+		require.True(t, in.Flags.Has(events.CmdButton), "a press is marked a button, never a prompt's answer")
 		require.Equal(t, util.GetTurnCount(), in.ReadyTurn, "a press waits its turn like typing")
 		require.NotZero(t, in.ReadyTurn, "ReadyTurn 0 would bypass the per-turn limit")
 	}
@@ -100,15 +102,22 @@ func TestPressButton_RefusesStaleIds(t *testing.T) {
 	}
 }
 
-// A press flood: each stale press is refused, but the Room.Info re-send is
-// queued once per player while one is pending.
-func TestPressButton_StaleFloodSendsRoomInfoOnce(t *testing.T) {
+// A press flood: while one Room.Info re-send is pending, more stale presses
+// add neither a line nor a re-send. Once it has gone, the next stale press
+// is refused again.
+func TestPressButton_StaleFloodSendsOneLineAndRoomInfoOnce(t *testing.T) {
 	viewer, _ := pressFixture(t)
 	for range 50 {
 		pressButton(viewer, "xdeadbeef")
 	}
 	require.Empty(t, queuedInputs(viewer.UserId))
-	require.Len(t, events.DrainQueuedMessagesForTest(viewer.UserId), 50)
+	msgs := events.DrainQueuedMessagesForTest(viewer.UserId)
+	require.Len(t, msgs, 1)
+	require.Contains(t, msgs[0], refusal.StaleButtonLine)
+	require.Len(t, events.DrainQueuedRoomExitsChangedForTest(viewer.UserId), 1)
+
+	pressButton(viewer, "xdeadbeef")
+	require.Len(t, events.DrainQueuedMessagesForTest(viewer.UserId), 1, "refused again once Room.Info went")
 	require.Len(t, events.DrainQueuedRoomExitsChangedForTest(viewer.UserId), 1)
 }
 
@@ -137,13 +146,21 @@ func TestHandleCharOp_ButtonPress(t *testing.T) {
 	require.Len(t, got, 1)
 	require.Equal(t, "south", got[0].InputText)
 
+	const noPlayer = ^uint64(0)
+	require.Zero(t, userIdForConnection(noPlayer), "premise: no player holds this connection")
+	events.DrainQueuedByTypeForTest(`Input`)
+	events.DrainQueuedByTypeForTest(`Message`)
+	events.DrainQueuedRoomExitsChangedForTest(0)
 	for _, op := range []GMCPCharOp{
 		{ConnectionId: viewer.ConnectionId(), Command: `Char.Button.Press`, Payload: []byte(`{"id":2}`)},
 		{ConnectionId: viewer.ConnectionId(), Command: `Char.Button.Press`, Payload: []byte(`north`)},
-		{ConnectionId: 1, Command: `Char.Button.Press`, Payload: []byte(`{"id":"m2"}`)},
+		{ConnectionId: noPlayer, Command: `Char.Button.Press`, Payload: []byte(`{"id":"m2"}`)},
+		{ConnectionId: noPlayer, Command: `Char.Button.Press`, Payload: []byte(`{"id":"xdeadbeef"}`)},
 	} {
 		gmcpModule.handleCharOp(op)
-		require.Empty(t, queuedInputs(viewer.UserId), "%s", op.Payload)
-		require.Empty(t, events.DrainQueuedMessagesForTest(viewer.UserId), "%s", op.Payload)
+		// Nothing for anyone: no input, no line, no refresh.
+		require.Empty(t, events.DrainQueuedByTypeForTest(`Input`), "%d %s", op.ConnectionId, op.Payload)
+		require.Empty(t, events.DrainQueuedByTypeForTest(`Message`), "%d %s", op.ConnectionId, op.Payload)
+		require.Empty(t, events.DrainQueuedRoomExitsChangedForTest(0), "%d %s", op.ConnectionId, op.Payload)
 	}
 }

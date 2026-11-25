@@ -47,14 +47,66 @@ func TestButtons_EveryIssuedMovementIdRoundTrips(t *testing.T) {
 		if verb == "go" {
 			word = rest
 		}
-		got, _ := room.FindKnownExitByName(user.Character, word)
+		got, gotRoom := room.FindKnownExitByName(user.Character, word)
 		require.Equal(t, name, got, "%s: %q must reach the exit it was issued for", name, line)
+		require.Equal(t, issuedFor(t, known, name).RoomId, gotRoom, "%s: %q must lead where the button says", name, line)
 	}
 	for dir, id := range buttons.FixedIds() {
 		line, ok := buttons.Resolve(user.UserId, room.RoomId, id)
 		require.True(t, ok)
 		require.Equal(t, dir, line)
 		require.True(t, isKnownCommandLine(user, room, line), "the dark's %s must parse", dir)
+	}
+}
+
+// issuedFor is the exit a button named name stands for: the first of that
+// name in known, the one buttons.MovementIds and Room.Info keep when a
+// temporary exit shares a permanent exit's name.
+func issuedFor(t *testing.T, known rooms.KnownExitList, name string) rooms.KnownExit {
+	t.Helper()
+	for _, ke := range known.Exits {
+		if ke.Name == name {
+			return ke
+		}
+	}
+	t.Fatalf("no known exit %q", name)
+	return rooms.KnownExit{}
+}
+
+// Guard 1, a shared name: a temporary exit keyed like a room exit gets no
+// button of its own, and the one button leads where typing the name does.
+// With the room exit known, that is the room exit; with it an unfound
+// secret, typing reaches the temporary exit, and so does the button.
+func TestButtons_ASharedNameLeadsWhereTypingDoes(t *testing.T) {
+	for name, tc := range map[string]struct {
+		secret   bool
+		wantRoom int
+	}{
+		"room exit known":             {secret: false, wantRoom: 2},
+		"room exit an unfound secret": {secret: true, wantRoom: 3},
+	} {
+		t.Run(name, func(t *testing.T) {
+			cleanup := seedAllRegistries()
+			defer cleanup()
+			user, room := getTestUserAndRoom(t)
+			t.Cleanup(func() { buttons.Forget(user.UserId) })
+			origExits, origTemp := room.Exits, room.ExitsTemp
+			room.Exits = map[string]exit.RoomExit{"out": {RoomId: 2, Secret: tc.secret}}
+			room.ExitsTemp = nil
+			t.Cleanup(func() { room.Exits, room.ExitsTemp = origExits, origTemp })
+			require.True(t, room.AddTemporaryExit("out", exit.TemporaryRoomExit{RoomId: 3}))
+
+			known := rooms.KnownExits(room, user.Character)
+			ids := buttons.MovementIds(user.UserId, room, known)
+			require.Len(t, ids, 1, "one button for the shared name")
+			line, ok := buttons.Resolve(user.UserId, room.RoomId, ids["out"])
+			require.True(t, ok)
+			require.Equal(t, "go out", line)
+			_, rest := SplitInput(line)
+			_, typedRoom := room.FindKnownExitByName(user.Character, rest)
+			require.Equal(t, tc.wantRoom, typedRoom, "premise: where typing goes")
+			require.Equal(t, typedRoom, issuedFor(t, known, "out").RoomId, "the button leads where typing does")
+		})
 	}
 }
 

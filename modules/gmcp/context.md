@@ -598,17 +598,22 @@ Inbound `Char.Button.Press {"id": "..."}` is deferred to MainWorker through
 does nothing. `pressButton` resolves the id with `buttons.Resolve` (a fixed id
 `m1`..`m6` is its bare direction in any room; a per-room id is `go <exit>`
 only in the room it was issued for, to the player it was issued to) and queues
-the line as typed input (`CommandFlagged(line, events.CmdTyped)`, the current
-turn), so it obeys everything typing does: the one-command-per-turn queue,
-combat, conditions, quest gates, dark marks, and a menu or page stop treats it
-as typing. A stale id (never issued, another player's, another room's, empty
-or overlong) answers `refusal.StaleButton`, one line that never repeats the
-id, and queues `events.RoomExitsChanged`, which re-sends `Room.Info`; that
-event merges per player while queued, so a flood of stale presses builds
-`Room.Info` once. Nothing happens while a prompt is open: a prompt takes the
-next typed line as its answer, and a button is never an answer. Guard 1
-(round trip) for movement ids is
-`internal/usercommands/button_roundtrip_test.go`.
+the line as typed input (`CommandFlagged(line, events.CmdTyped|events.CmdButton)`,
+the current turn) through the same per-user input queue as typing, so it obeys
+everything typing does: combat, conditions, quest gates, dark marks, and a
+menu or page stop treats it as typing. A stale id (never issued, another
+player's, another room's, empty or overlong) answers `refusal.StaleButton`,
+one line that never repeats the id, and queues `events.RoomExitsChanged`,
+which re-sends `Room.Info`. That event merges per player while queued, and a
+stale press that finds one waiting (`events.IsQueued`) adds no second line, so
+a flood of stale presses reads one line and builds `Room.Info` once. A press
+never answers a prompt (D13): `pressButton` does nothing while one is open,
+and `world.processInput` drops a `CmdButton` line silently if a prompt opened
+after the press was queued (its `InputDone` still fires; tests in
+`world_button_press_test.go`). A game menu needs no such drop: `RouteMenuInput`
+has no free-text case, so an `AcceptText` menu takes free text only as a
+prompt question. Guard 1 (round trip) for movement ids, destination included,
+is `internal/usercommands/button_roundtrip_test.go`.
 
 ## Char.Input.Done: a typed line is finished (`gmcp.InputDone.go`, web client plan 6)
 
