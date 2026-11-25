@@ -97,29 +97,30 @@ func TestUnloadAndReload_KeepsOpenLocksOpen(t *testing.T) {
 	require.False(t, again.Containers["chest"].Lock.IsLocked(), "an open chest came back locked after a reload")
 }
 
-// ExitLockAt reads an exit's lock without loading the room: live, then
-// remembered, then the template.
-func TestExitLockAt_LiveThenRememberedThenTemplate(t *testing.T) {
+// ExitLockAt reads an exit's lock and never touches disk: live, then
+// remembered, then the caller's difficulty at rotation 0.
+func TestExitLockAt_LiveThenRememberedThenDifficulty(t *testing.T) {
 	lockMemoryRoom(t)
+	templateCached := func() bool {
+		templateCacheMu.RLock()
+		defer templateCacheMu.RUnlock()
+		_, ok := templateCache[lockMemoryRoomId]
+		return ok
+	}
 
-	lock, ok := ExitLockAt(lockMemoryRoomId, "north")
-	require.True(t, ok, "the template has the exit")
-	require.Equal(t, uint64(0), lock.RotationSeed)
+	lock := ExitLockAt(lockMemoryRoomId, "north", 6)
+	require.Equal(t, gamelock.Lock{Difficulty: 6}, lock, "a room never loaded is read as the caller's difficulty at rotation 0")
 	require.False(t, IsRoomLoaded(lockMemoryRoomId), "ExitLockAt loaded the room")
+	require.False(t, templateCached(), "ExitLockAt read the template")
 
 	room := LoadRoom(lockMemoryRoomId)
 	room.SetExitLock("north", false)
 	room.SetExitLock("north", true)
-	lock, ok = ExitLockAt(lockMemoryRoomId, "north")
-	require.True(t, ok)
-	require.Equal(t, uint64(1), lock.RotationSeed, "the live room's lock was not read")
+	require.Equal(t, uint64(1), ExitLockAt(lockMemoryRoomId, "north", 6).RotationSeed, "the live room's lock was not read")
 
 	removeRoomFromMemory(room)
-	lock, ok = ExitLockAt(lockMemoryRoomId, "north")
-	require.True(t, ok)
-	require.Equal(t, uint64(1), lock.RotationSeed, "the lock remembered at the unload was not read")
+	InvalidateTemplateCache(lockMemoryRoomId) // the unload's save may cache it; ExitLockAt must not
+	require.Equal(t, uint64(1), ExitLockAt(lockMemoryRoomId, "north", 6).RotationSeed, "the lock remembered at the unload was not read")
 	require.False(t, IsRoomLoaded(lockMemoryRoomId), "ExitLockAt loaded the room")
-
-	_, ok = ExitLockAt(lockMemoryRoomId, "south")
-	require.False(t, ok, "an exit no source has was reported")
+	require.False(t, templateCached(), "ExitLockAt read the template")
 }

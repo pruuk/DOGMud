@@ -641,13 +641,13 @@ width and height; nothing in this package changes.
 Detail level (visible radius, secret/locked display) scales with
 Perception. `GetLimitedMap` crawls past a locked exit only for a player who
 can open it (`knowsExitLock`): a key on the ring, or the combination as the
-lock stands now. The lock comes from `rooms.ExitLockAt`, never from the
-crawl-time `nodeExit`, which would go stale at the next relock: the live room
-when it is in memory, else the state remembered when idle unloading dropped
-it, else the shared read-only template (`templateForCompare`, read from disk
-once if not yet cached); the room is never loaded. Only when no source has
-the exit does the key alone count. This path is text-only and has no
-awareness of the `SnapshotExit` extended flags or `Zone.Map.Party`.
+lock stands now. The lock comes from `rooms.ExitLockAt`, which never touches
+disk: the live room when it is in memory, else the state remembered when idle
+unloading dropped it, else the crawl-time `nodeExit` difficulty at rotation 0.
+That last is the template's lock because no room template sets
+`rotationseed` on an exit (`internal/guards/exit_rotationseed_guard_test.go`).
+This path is text-only and has no awareness of the `SnapshotExit` extended
+flags or `Zone.Map.Party`.
 
 ### (b) Web Leather Map (GMCP `Zone.Map`)
 

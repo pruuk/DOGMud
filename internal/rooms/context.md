@@ -897,9 +897,12 @@ difficulty, traps and interval as loaded. Ephemeral rooms are skipped.
 
 This is session state, not living state: lock solutions die at a restart
 (the boot-rerolled seed, `util.LockSequence`), so the record lives in memory
-only and is never written to disk. `ExitLockAt(roomId, exit)` reads an exit's
-lock without loading the room: the live room, else the record, else
-`templateForCompare`. The mapper uses it (`knowsExitLock`).
+only and is never written to disk. `ExitLockAt(roomId, exit, difficulty)`
+reads an exit's lock and never touches disk: the live room, else the record,
+else a lock of the caller's difficulty at rotation 0, which is the template's
+because no template sets `rotationseed` on an exit
+(`internal/guards/exit_rotationseed_guard_test.go`). The mapper uses it
+(`knowsExitLock`).
 
 ## Dependencies
 - `internal/characters`: Character and mob management

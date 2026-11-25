@@ -10,7 +10,6 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -1239,18 +1238,13 @@ func (r *mapper) drawNode(roomId int) *mapNode {
 
 // knowsExitLock reports whether the user may see past a locked exit on the
 // map: they hold its key, or they know its combination as the lock stands
-// now. The lock's state changes at every relock, so it is never taken from
-// the crawl-time nodeExit: rooms.ExitLockAt reads the live room, or for a
-// room idle unloading has dropped the state remembered at the unload, or the
-// template, without loading the room. When no source has the exit, only the
-// key counts.
+// now. The lock's state changes at every relock, so only its difficulty is
+// taken from the crawl-time nodeExit: rooms.ExitLockAt reads the live room,
+// or for a room idle unloading has dropped the state remembered at the
+// unload, or else that difficulty at rotation 0, and never touches disk.
 func knowsExitLock(user *users.UserRecord, roomId int, exitName string, e nodeExit) bool {
-	lock, known := rooms.ExitLockAt(roomId, exitName)
-	if !known {
-		lock = gamelock.Lock{Difficulty: uint8(e.LockDifficulty)}
-	}
-	hasKey, hasSequence := user.Character.HasKey(e.LockId, lock)
-	return hasKey || (known && hasSequence)
+	hasKey, hasSequence := user.Character.HasKey(e.LockId, rooms.ExitLockAt(roomId, exitName, uint8(e.LockDifficulty)))
+	return hasKey || hasSequence
 }
 
 func (r *mapper) getMapNode(roomId int) *mapNode {

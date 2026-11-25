@@ -99,26 +99,25 @@ func restoreLocks(r *Room) {
 	}
 }
 
-// ExitLockAt returns the lock on a room's exit as it stands now, without
-// loading the room from disk: the live room's when it is in memory, else the
-// state remembered when it unloaded, else the template's (templateForCompare,
-// the shared read-only template, read from disk only on its first use). In
-// play the template is rarely reached: a room that has been loaded and left
-// memory this boot is remembered. ok is false when no source has the exit.
-func ExitLockAt(roomId int, exitName string) (lock gamelock.Lock, ok bool) {
+// ExitLockAt returns the lock on a room's exit as it stands now, and never
+// touches disk (the mapper calls it on the game loop): the live room's lock
+// when the room is in memory, else the state remembered when it unloaded,
+// else a lock of the given difficulty (the caller's crawl-time copy) at
+// rotation 0. A room with no record has not been loaded and unloaded this
+// boot, so its exit locks are as the template has them, and no template sets
+// rotationseed on an exit (guarded in internal/guards,
+// exit_rotationseed_guard_test.go).
+func ExitLockAt(roomId int, exitName string, difficulty uint8) gamelock.Lock {
 	if r := getRoomFromMemory(roomId); r != nil {
-		ex, ok := r.Exits[exitName]
-		return ex.Lock, ok
+		if ex, ok := r.Exits[exitName]; ok {
+			return ex.Lock
+		}
 	}
 	lockMemoryMu.Lock()
 	l, remembered := lockMemory[roomId].exits[exitName]
 	lockMemoryMu.Unlock()
 	if remembered {
-		return l, true
+		return l
 	}
-	if tpl := templateForCompare(roomId); tpl != nil {
-		ex, ok := tpl.Exits[exitName]
-		return ex.Lock, ok
-	}
-	return gamelock.Lock{}, false
+	return gamelock.Lock{Difficulty: difficulty}
 }
