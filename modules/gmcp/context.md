@@ -543,7 +543,11 @@ while it is `true`; telnet clients with GMCP can read the same signal.
 - `Char.Action.Try` (`gmcp.CharOp.go`): while `MenuOrPromptOpen()` is true the
   queued action is not run; the module replies `Char.Action.Result` with status
   `deferred` and reason `menu open`. Every exit from that handler must reply,
-  or the client parks its action queue.
+  or the client parks its action queue. On an AI-port connection each Try
+  first spends one command from the same per-round budget typed lines use
+  (`connections.ConnectionDetails.AIRateLimited`); a Try over the budget is
+  not run, the connection gets the typed path's drop line, and the reply is
+  status `rejected`, reason `rate limit`. Other ports have no budget.
 
 ## Char.Input.Done: a typed line is finished (`gmcp.InputDone.go`, web client plan 6)
 

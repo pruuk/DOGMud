@@ -753,6 +753,30 @@ See `internal/web/clientip.go` for the resolution rules — in short,
 `Network.TrustedProxies` (loopback by default), and only its rightmost
 non-proxy hop is used.
 
+### AI port command budget
+
+```go
+func (cd *ConnectionDetails) AIRateLimited() bool // spend one command; true = drop it
+func AIRateLimitLine(maxPerRound int) string       // the line a dropped command sends
+```
+
+A connection accepted on the AI port (`ConnType() == ConnAI`) may queue at
+most `Network.AICommandsPerRound` commands per round. `AIRateLimited` is the
+one check: it counts the command against the round (the count resets when
+`util.GetRoundCount()` moves on), and when the budget is spent it sends
+`AIRateLimitLine` and returns true so the caller drops the command. Any other
+connection type returns false and spends nothing. Every path that queues a
+command for a connection calls it: both typed-line loops in `main.go`
+(`handleTelnetConnection` and `resumeRestoredConnection`) and GMCP
+`Char.Action.Try` (`modules/gmcp`, `gmcp.CharOp.go`). Those run on different
+goroutines (connection reader and MainWorker), so the count is guarded by
+`aiCommandMu`. A new path that turns client input into a queued command must
+call `AIRateLimited` too, not keep a count of its own.
+
+Copyover keeps the connection's type and ANSI stripping (`connectionRecord`
+`ConnType` / `StripAnsi`), so an AI-port connection is still one after a hot
+restart.
+
 ## Shutdown and Cleanup
 
 ### Graceful Shutdown
@@ -864,6 +888,7 @@ connections.Broadcast(announcement, johnConnectionId)
 - `net` - Network connection handling and address management
 - `sync` - Thread synchronization and atomic operations
 - `github.com/gorilla/websocket` - WebSocket protocol implementation
+- `internal/configs` - `Network.AICommandsPerRound` for the AI port command budget
 - `internal/mudlog` - Logging system for connection events and debugging
 - `internal/term` - Terminal control codes and telnet protocol handling
 

@@ -44,6 +44,12 @@ type connectionRecord struct {
 	State          ConnectState   `json:"state"`
 	Fd             int            `json:"fd"`
 	ClientSettings ClientSettings `json:"client_settings"`
+	// ConnType and StripAnsi carry the listening port's settings across the
+	// handoff, so a connection from the AI port stays an AI connection (its
+	// per-round command budget, its plain-text output). Absent in a record
+	// from an older binary, which restores as a human connection, as before.
+	ConnType  ConnType `json:"conn_type,omitempty"`
+	StripAnsi bool     `json:"strip_ansi,omitempty"`
 }
 
 type connectionsState struct {

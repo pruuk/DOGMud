@@ -1037,21 +1037,14 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 		// If they have pressed enter (submitted their input), and nothing else has handled/aborted
 		if clientInput.EnterPressed {
 
-			// AI rate limiting: enforce commands-per-round limit
-			if connDetails.ConnType() == connections.ConnAI {
-				netCfg := configs.GetNetworkConfig()
-				currentRound := int64(util.GetRoundCount())
-				if !connDetails.AICommandAllowed(currentRound, int(netCfg.AICommandsPerRound)) {
-					connections.SendTo(
-						[]byte(fmt.Sprintf("Command dropped: AI rate limit (%d/round). Wait for the next round.\r\n", netCfg.AICommandsPerRound)),
-						connDetails.ConnectionId(),
-					)
-					clientInput.Reset()
-					if userObject != nil {
-						userObject.SetUnsentText(``, ``)
-					}
-					continue
+			// AI rate limiting: the AI port's per-round command budget, shared
+			// with GMCP Char.Action.Try (see ConnectionDetails.AIRateLimited).
+			if connDetails.AIRateLimited() {
+				clientInput.Reset()
+				if userObject != nil {
+					userObject.SetUnsentText(``, ``)
 				}
+				continue
 			}
 
 			// Update config after enter presses
@@ -1256,6 +1249,14 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 		}
 
 		if clientInput.EnterPressed {
+			// The same AI per-round budget as handleTelnetConnection: a
+			// connection restored across a copyover keeps its port's type.
+			if connDetails.AIRateLimited() {
+				clientInput.Reset()
+				userObject.SetUnsentText(``, ``)
+				continue
+			}
+
 			c = configs.GetConfig()
 
 			if time.Since(lastInput) < time.Duration(c.Timing.TurnMs)*time.Millisecond {

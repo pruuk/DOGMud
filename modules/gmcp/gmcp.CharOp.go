@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
@@ -110,6 +111,13 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 		u := users.GetByUserId(uid)
 		if u == nil {
 			sendActionResult(uid, req.Id, "rejected", "no character")
+			break
+		}
+		// A Try spends the AI port's per-round command budget exactly as a
+		// typed line does, from the same counter; a refused Try is dropped
+		// with the same line the typed path sends. Other ports are unlimited.
+		if cd := connections.Get(evt.ConnectionId); cd != nil && cd.AIRateLimited() {
+			sendActionResult(uid, req.Id, "rejected", "rate limit")
 			break
 		}
 		// Belt and suspenders for the client's pause (#375): a queued action

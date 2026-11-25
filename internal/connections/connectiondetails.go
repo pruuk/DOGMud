@@ -2,6 +2,7 @@ package connections
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"regexp"
 	"slices"
@@ -10,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -153,6 +155,7 @@ type ConnectionDetails struct {
 	clientSettings    ClientSettings
 	heartbeat         *heartbeatManager
 	stripAnsi         bool
+	aiCommandMu       sync.Mutex // guards aiCommandCount and aiCommandRound (see AIRateLimited)
 	aiCommandCount    int
 	aiCommandRound    int64
 
@@ -624,9 +627,40 @@ func (cd *ConnectionDetails) SetStripAnsi(strip bool) {
 	cd.stripAnsi = strip
 }
 
-// AICommandAllowed checks whether an AI connection is allowed to send another command this round.
-// Returns true if the command is allowed. Resets the counter when a new round begins.
-func (cd *ConnectionDetails) AICommandAllowed(currentRound int64, maxPerRound int) bool {
+// AIRateLimited spends one command from an AI-port connection's per-round
+// budget (Network.AICommandsPerRound) and reports whether the command must be
+// refused. A refused command is dropped and the connection is sent
+// AIRateLimitLine. A connection on any other port is never limited and spends
+// nothing.
+//
+// This is the one budget for every path that queues a command for a
+// connection: a typed line (main.go, both read loops) and a GMCP
+// Char.Action.Try (modules/gmcp handleCharOp). The typed path runs on the
+// connection goroutine and the GMCP path on MainWorker, so the count is
+// guarded by aiCommandMu.
+func (cd *ConnectionDetails) AIRateLimited() bool {
+	if cd.ConnType() != ConnAI {
+		return false
+	}
+	maxPerRound := int(configs.GetNetworkConfig().AICommandsPerRound)
+	if cd.aiCommandAllowed(int64(util.GetRoundCount()), maxPerRound) {
+		return false
+	}
+	SendTo([]byte(AIRateLimitLine(maxPerRound)), cd.ConnectionId())
+	return true
+}
+
+// AIRateLimitLine is what an AI-port connection is sent when a command is
+// dropped by AIRateLimited.
+func AIRateLimitLine(maxPerRound int) string {
+	return fmt.Sprintf("Command dropped: AI rate limit (%d/round). Wait for the next round.\r\n", maxPerRound)
+}
+
+// aiCommandAllowed counts one command against the round's budget and reports
+// whether it fits. The counter resets when a new round begins.
+func (cd *ConnectionDetails) aiCommandAllowed(currentRound int64, maxPerRound int) bool {
+	cd.aiCommandMu.Lock()
+	defer cd.aiCommandMu.Unlock()
 	if currentRound != cd.aiCommandRound {
 		cd.aiCommandRound = currentRound
 		cd.aiCommandCount = 0
