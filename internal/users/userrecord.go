@@ -111,10 +111,32 @@ type UserTick struct {
 }
 
 // SetTick creates (Id==0 → next id, append) or updates (matching Id) a tick,
-// enforcing a 1-second interval floor. Returns the stored tick.
-func (u *UserRecord) SetTick(t UserTick) UserTick {
+// enforcing a 1-second interval floor. Returns the stored tick, or an error
+// (ErrAutomationFull, ErrAutomationTooLong) and stores nothing when it is
+// past a cap (automation_limits.go).
+func (u *UserRecord) SetTick(t UserTick) (UserTick, error) {
 	if t.IntervalSec < 1 {
 		t.IntervalSec = 1
+	}
+	at := -1
+	if t.Id != 0 {
+		for i := range u.Ticks {
+			if u.Ticks[i].Id == t.Id {
+				at = i
+				break
+			}
+		}
+	}
+	var prev *UserTick
+	if at >= 0 {
+		prev = &u.Ticks[at]
+	}
+	if err := u.tickFits(t, prev); err != nil {
+		return UserTick{}, err
+	}
+	if at >= 0 {
+		u.Ticks[at] = t
+		return t, nil
 	}
 	if t.Id == 0 {
 		maxId := 0
@@ -124,17 +146,9 @@ func (u *UserRecord) SetTick(t UserTick) UserTick {
 			}
 		}
 		t.Id = maxId + 1
-		u.Ticks = append(u.Ticks, t)
-		return t
-	}
-	for i := range u.Ticks {
-		if u.Ticks[i].Id == t.Id {
-			u.Ticks[i] = t
-			return t
-		}
 	}
 	u.Ticks = append(u.Ticks, t)
-	return t
+	return t, nil
 }
 
 // RemoveTick deletes the tick with the given id, if present.
@@ -173,8 +187,30 @@ type UserTrigger struct {
 }
 
 // SetTrigger creates (Id==0 → next id, append) or updates (matching Id) a trigger.
-// Returns the stored trigger.
-func (u *UserRecord) SetTrigger(t UserTrigger) UserTrigger {
+// Returns the stored trigger, or an error (ErrAutomationFull,
+// ErrAutomationTooLong) and stores nothing when it is past a cap
+// (automation_limits.go).
+func (u *UserRecord) SetTrigger(t UserTrigger) (UserTrigger, error) {
+	at := -1
+	if t.Id != 0 {
+		for i := range u.Triggers {
+			if u.Triggers[i].Id == t.Id {
+				at = i
+				break
+			}
+		}
+	}
+	var prev *UserTrigger
+	if at >= 0 {
+		prev = &u.Triggers[at]
+	}
+	if err := u.triggerFits(t, prev); err != nil {
+		return UserTrigger{}, err
+	}
+	if at >= 0 {
+		u.Triggers[at] = t
+		return t, nil
+	}
 	if t.Id == 0 {
 		maxId := 0
 		for _, ex := range u.Triggers {
@@ -183,17 +219,9 @@ func (u *UserRecord) SetTrigger(t UserTrigger) UserTrigger {
 			}
 		}
 		t.Id = maxId + 1
-		u.Triggers = append(u.Triggers, t)
-		return t
-	}
-	for i := range u.Triggers {
-		if u.Triggers[i].Id == t.Id {
-			u.Triggers[i] = t
-			return t
-		}
 	}
 	u.Triggers = append(u.Triggers, t)
-	return t
+	return t, nil
 }
 
 // RemoveTrigger deletes the trigger with the given id, if present.
@@ -414,17 +442,24 @@ func (u *UserRecord) PlaySound(soundId string, category string) {
 
 func (u *UserRecord) Command(inputTxt string, waitSeconds ...float64) {
 
-	readyTurn := util.GetTurnCount()
-	if len(waitSeconds) > 0 {
-		readyTurn += uint64(float64(configs.GetTimingConfig().SecondsToTurns(1)) * waitSeconds[0])
-	}
-
 	events.AddToQueue(events.Input{
 		UserId:    u.UserId,
 		InputText: inputTxt,
-		ReadyTurn: readyTurn,
+		ReadyTurn: commandReadyTurn(waitSeconds),
 	})
 
+}
+
+// commandReadyTurn is the turn a command waiting waitSeconds (none: now) is
+// ready. A wait of zero or less means now: gearup and wimpy's flee pass -1
+// for "at once", and a negative wait converted to uint64 wrapped, so on a
+// fresh boot (turn count below one second's turns) the command never ran.
+func commandReadyTurn(waitSeconds []float64) uint64 {
+	readyTurn := util.GetTurnCount()
+	if len(waitSeconds) > 0 && waitSeconds[0] > 0 {
+		readyTurn += uint64(float64(configs.GetTimingConfig().SecondsToTurns(1)) * waitSeconds[0])
+	}
+	return readyTurn
 }
 
 func (u *UserRecord) BlockInput() {
@@ -439,18 +474,18 @@ func (u *UserRecord) InputBlocked() bool {
 	return u.inputBlocked
 }
 
-func (u *UserRecord) CommandFlagged(inputTxt string, flagData events.EventFlag, waitSeconds ...float64) {
+// CommandFlagged queues inputTxt as Command does, with flagData, and reports
+// whether it was queued: a command carrying events.CmdFromClient is refused
+// while the player's pending inputs are at the cap (events.TryAddToQueue).
+func (u *UserRecord) CommandFlagged(inputTxt string, flagData events.EventFlag, waitSeconds ...float64) bool {
 
-	readyTurn := util.GetTurnCount()
-	if len(waitSeconds) > 0 {
-		readyTurn += uint64(float64(configs.GetTimingConfig().SecondsToTurns(1)) * waitSeconds[0])
-	}
+	readyTurn := commandReadyTurn(waitSeconds)
 
 	if flagData&events.CmdBlockInput == events.CmdBlockInput {
 		u.BlockInput()
 	}
 
-	events.AddToQueue(events.Input{
+	return events.TryAddToQueue(events.Input{
 		UserId:    u.UserId,
 		InputText: inputTxt,
 		ReadyTurn: readyTurn,

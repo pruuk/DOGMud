@@ -247,6 +247,50 @@ text or opens a menu (highest today 50) and below the prompt redraw at 100.
 fails if anything else queues at or above it. `modules/gmcp` pushes it as
 `Char.Input.Done`. It never carries the line's text (spec 2026-11-14, R7).
 
+### Pending client commands (`pending_inputs.go`, owner rulings 2026-11-25)
+
+A command a player's client sent is an `Input` carrying `CmdFromClient`: a
+typed line (telnet or web client, `world.inputEventFor`), a GMCP
+`Char.Action.Try` (`modules/gmcp`, through `UserRecord.CommandFlagged`), or a
+piece of a macro one of those named (`world.processInput`). Each player may
+have at most `Network.MaxPendingInputs` (ships 10) waiting; engine-queued
+Inputs never count and are never refused.
+
+- `TryAddToQueue(e, prio...) bool` is `AddToQueue` reporting whether `e` was
+  queued: false for a unique event already waiting, or a counted `Input` past
+  the cap. `AddToQueue` calls it and ignores the answer.
+- The count (`pendingInputs`, under `qLock`) goes up as a counted Input is
+  queued, down as `ProcessEvents` pops it (before its listeners run, so a
+  macro's line frees its slot for its pieces), and up again on
+  `CancelAndRequeue` (`addToRequeue`). At the end of every pass it is rebuilt
+  from the deferred events (`settleInputQueuesLocked`), so a count that ever
+  went wrong is right within one pass and no player can be shut out. A player
+  who disconnects needs nothing: their commands still pop. The `Drain...ForTest`
+  helpers that can remove an Input recount too.
+- `InputQueueChanged{UserId, Depth, Full, Refused}` is queued only on a
+  change: `Full` when the count reaches the cap, not `Full` when the pass-end
+  rebuild finds it two below the cap (`freeAt`, a dead band so steady input
+  at the cap does not flicker the client; refusal stays at the cap), and
+  once per full spell with `Refused` on the first command refused; within the
+  spell a refused `CmdTyped` line is reported again at most once a second
+  (`typedRefusalEvery`), so a typed line never vanishes because an earlier
+  automatic send took the report. Web client tick and trigger lines are text
+  frames, so they count as typed here; only `Char.Action.Try` is not.
+  `modules/gmcp` turns it into `Char.Input.Queue` and, on `Refused`, one plain
+  line to every client (`refusal.InputQueueFull`).
+- `PendingInputs(userId)` reads the count. `QueuedEngineInputs(userId,
+  prefix)` counts a player's queued engine commands by text prefix, read from
+  the queue (gearup refuses a repeat while its wears wait).
+- The world runs at most one counted Input per player per tick (`TurnMs`;
+  `World.clientInputWaits` returns `CancelAndRequeue`), so a full queue drains
+  in ten ticks.
+- A deferred event keeps its place: `CancelAndRequeue` carries the event's
+  original `order` (`requeue.order`) and the next pass pushes it back with it
+  (`pushLocked`), for every requeued event. Without that a deferred event got
+  a new place each pass, behind anything queued meanwhile, so a player's
+  waiting commands ran newest first and the oldest could wait forever under
+  steady input.
+
 ### Reply window (#842)
 
 `OpenReply(userId)` and `CloseReply(userId)` keep a per-user count under
@@ -385,7 +429,9 @@ const (
     CmdBlockInputUntilComplete EventFlag = CmdBlockInput | CmdUnBlockInput
     CmdFollowStep              EventFlag = 0b00100000  // Party member's step after the leader: no light-notice check first (#620)
     CmdTyped                   EventFlag = 0b01000000  // A line the player typed; only a typed line may answer a menu or prompt (#375)
-    CmdButton                  EventFlag = 0b10000000  // A touch button press (with CmdTyped); never answers a prompt (#781, D13)
+    CmdFromClient              EventFlag = 0b10000000  // A command the player's client sent: counts against MaxPendingInputs, one per tick (pending_inputs.go)
+    CmdMacroPiece              EventFlag = 0b1_00000000 // A piece of a macro: never expands a macro itself, so no macro can call itself
+    CmdButton                  EventFlag = 0b10_00000000 // A touch button press (with CmdTyped and CmdFromClient); never answers a prompt (#781, D13)
 )
 ```
 

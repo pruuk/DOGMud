@@ -166,6 +166,30 @@ After processing, either handler emits `events.AutomationChanged{UserId}`
 to re-push the full `Char.Automation` payload to the client. Unknown
 `kind` values are silently ignored.
 
+`users.SetTick` / `SetTrigger` refuse past the caps in `config.yaml`
+(`Network.MaxAutomationTicks` 50, `MaxAutomationTriggers` 100,
+`MaxAutomationFieldLength` 1000 characters in any text field, condition values
+included, `MaxAutomationConditionValues` 50) with `users.ErrAutomationFull` or
+`ErrAutomationTooLong`, storing nothing. Changing a tick or trigger already
+kept is never refused for the count. A tick's commands, or a trigger's then
+or else commands, may hold at most `users.MaxCommandChain()` commands
+(`Network.MaxPendingInputs`), `ErrAutomationTooManyCommands` past it, except a
+chain left unchanged from its save. `refuseAutomation` sends the player
+`refusal.AutomationLimit`, `refusal.CommandChainTooLong` or
+`refusal.AutomationTooLong` and re-pushes nothing.
+
+The `Char.Automation` payload carries `maxCommands` (that same limit). It is
+pushed on login, so the client has it before an editor can open; the macro,
+tick and trigger editors (`attachChainCount` in `webclient-pure.html`, rules in
+`static/js/commandchain.js`) show a live "3 of 10 commands" count under each
+commands field, the warning in words past it, and keep the editor open on
+Save (an `onSave` returning false). Each field compares with the chain it
+holds as saved (the trigger's then commands for both the simple and the
+if/else Then field, its else commands for Else), so an unchanged old long
+chain still saves in either layout, as on the server. The macro editor has
+no saved chain: `set =N` checks every macro it stores. Without `maxCommands` they use 10, the
+shipped value; the server enforces the limit either way.
+
 See `docs/superpowers/specs/completed/2026-06-07-web-client-automation-panel-design.md`
 for the full Phase 2–3 design.
 
@@ -555,6 +579,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Action.go` | `Action` | Clickable action affordances |
 | `gmcp.Menu.go` | `Char.Menu` | Whether a game menu or prompt is open (`{open}`); see "Char.Menu" above |
 | `gmcp.InputDone.go` | `Char.Input.Done` | A typed web client line is done: its number and whether a menu or prompt is open (`{seq, menu}`); see "Char.Input.Done" below |
+| `gmcp.InputQueue.go` | `Char.Input.Queue` | The player's pending client commands filled or freed (`{depth, full}`); see "Char.Input.Queue" below |
 | `gmcp.Commands.go` | `Commands` | Command state, modes, cooldowns |
 | `gmcp.Behavior.go` | `Behavior` | Behaviour-tree state (admin/builder tooling) |
 | `gmcp.Build.go` | `Build` | The admin web building tools' data feed. The whole builder is off (owner 2026-10-28, #375 phase 6 postponed until more big arcs land): `refuseWebBuilder` refuses every `Build.*` message in `handleBuildOp` before dispatch. The handlers stay for its return; the loop door in `buildQuestUpdate` is dormant until then |
@@ -589,7 +614,40 @@ while it is `true`; telnet clients with GMCP can read the same signal.
 - `Char.Action.Try` (`gmcp.CharOp.go`): while `MenuOrPromptOpen()` is true the
   queued action is not run; the module replies `Char.Action.Result` with status
   `deferred` and reason `menu open`. Every exit from that handler must reply,
-  or the client parks its action queue.
+  or the client parks its action queue. On an AI-port connection each Try
+  first spends one command from the same per-round budget typed lines use
+  (`connections.ConnectionDetails.AIRateLimited`); a Try over the budget is
+  not run, the connection gets the typed path's drop line, and the reply is
+  status `rejected`, reason `rate limit`. Other ports have no budget.
+- A Try that runs queues its command with `events.CmdFromClient`
+  (`UserRecord.CommandFlagged`), so it counts against the player's pending
+  inputs and runs at the client pace. Refused at the cap, the reply is status
+  `deferred`, reason `queue full` (`actionQueueFullReason`), and the client
+  tries it again later.
+
+## Char.Input.Queue: the pending command queue filled or freed (`gmcp.InputQueue.go`)
+
+Payload: `{"depth": n, "full": true|false}`. Owner rulings 2026-11-25: each
+player's client may have `Network.MaxPendingInputs` (10) commands waiting
+(`internal/events` `pending_inputs.go`).
+
+- Sent on `events.InputQueueChanged` without `Refused`, to any GMCP client,
+  only when the queue fills (`full: true`) or frees (`full: false`), never once
+  per command.
+- On `Refused` (the first command refused in a full spell) every client, the
+  web client too, gets `refusal.InputQueueFull` as one plain line: a refusal
+  always prints, and a line typed into the web client's command box would
+  otherwise vanish with only the controls greyed. A refused typed line is
+  reported again at most once a second within the spell (`internal/events`).
+- `full: false` comes when the queue drops two below the cap
+  (`events.freeAt`), not one, so steady input at the cap does not flicker the
+  greying.
+- The web client (`webclient-pure.html` `setInputQueueFull`) puts
+  `input-queue-full` on `body` while full: `dashboard.css` greys the touch deck,
+  the trigger and tick rows and the macro and alias chips, and the automation
+  list's click handler sends nothing from a row or chip (the on/off switches
+  still work). A closed socket clears it. Held by
+  `tools/jstest/webclient-input-queue.test.js`.
 
 ## Char.Button.Press: a touch button (`gmcp.ButtonPress.go`, #781)
 
@@ -760,7 +818,11 @@ Completed tabs; `done` rows are the Completed tab and carry a name only.
   `GMCPZoneResync{ConnectionId}` (it runs on the connection goroutine), and
   `zoneResyncHandler` on MainWorker resolves the user, deletes its `zoneSent`
   entry and queues `GMCPZoneUpdate`, so the next map is full. A connection
-  with no logged-in user is ignored.
+  with no logged-in user is ignored. Repeated requests collapse (owner ruling
+  2026-11-25): `GMCPZoneUpdate` is unique per user and `GMCPZoneResync` per
+  connection, and `zoneResyncHandler` answers a player at most once per tick
+  (`resyncTurn`, cleared on despawn); a request in a tick already answered
+  waits for the next (`CancelAndRequeue`) rather than being dropped.
 - **`GMCPZoneUpdate` is unique per user** (`UniqueID` is
   `GMCPZoneUpdate-<userId>`), so requests queued for one player in one tick
   merge into one snapshot build and one send (a secret exit found while

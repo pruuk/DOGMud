@@ -2,9 +2,13 @@ package gmcp
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -52,7 +56,10 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 				if err := json.Unmarshal(evt.Payload, &decoded); err == nil {
 					if uid := userIdForConnection(evt.ConnectionId); uid > 0 {
 						if u := users.GetByUserId(uid); u != nil {
-							u.SetTick(decoded)
+							if _, err := u.SetTick(decoded); err != nil {
+								refuseAutomation(u, err, `tick`, `ticks`)
+								break
+							}
 							events.AddToQueue(events.AutomationChanged{UserId: uid})
 						}
 					}
@@ -62,7 +69,10 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 				if err := json.Unmarshal(evt.Payload, &decoded); err == nil {
 					if uid := userIdForConnection(evt.ConnectionId); uid > 0 {
 						if u := users.GetByUserId(uid); u != nil {
-							u.SetTrigger(decoded)
+							if _, err := u.SetTrigger(decoded); err != nil {
+								refuseAutomation(u, err, `trigger`, `triggers`)
+								break
+							}
 							events.AddToQueue(events.AutomationChanged{UserId: uid})
 						}
 					}
@@ -112,6 +122,13 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 			sendActionResult(uid, req.Id, "rejected", "no character")
 			break
 		}
+		// A Try spends the AI port's per-round command budget exactly as a
+		// typed line does, from the same counter; a refused Try is dropped
+		// with the same line the typed path sends. Other ports are unlimited.
+		if cd := connections.Get(evt.ConnectionId); cd != nil && cd.AIRateLimited() {
+			sendActionResult(uid, req.Id, "rejected", "rate limit")
+			break
+		}
 		// Belt and suspenders for the client's pause (#375): a queued action
 		// never runs while a menu or prompt is open.
 		if u.MenuOrPromptOpen() {
@@ -121,14 +138,24 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 		room := rooms.LoadRoom(u.Character.RoomId)
 		actor := actions.NewUserActorInRoom(u, room)
 		result := actions.ActionReadiness(actor, req.Cmd)
+		// A Try is a command from the player's client: it counts against
+		// their pending inputs and runs at the client pace. Refused at the
+		// cap, it is answered "deferred", so the client tries it again later.
 		switch result.Status {
 		case actions.ActionReady:
-			u.Command(req.Cmd)
+			if !u.CommandFlagged(req.Cmd, events.CmdFromClient) {
+				sendActionResult(uid, req.Id, "deferred", actionQueueFullReason)
+				break
+			}
 			sendActionResult(uid, req.Id, "fired", "")
 		case actions.ActionDeferred:
 			sendActionResult(uid, req.Id, "deferred", result.Reason)
 		case actions.ActionRejected:
-			u.Command(req.Cmd) // run normally so the player sees the real error message
+			// Run normally so the player sees the real error message.
+			if !u.CommandFlagged(req.Cmd, events.CmdFromClient) {
+				sendActionResult(uid, req.Id, "deferred", actionQueueFullReason)
+				break
+			}
 			sendActionResult(uid, req.Id, "rejected", result.Reason)
 		}
 
@@ -195,4 +222,24 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 	}
 
 	return events.Continue
+}
+
+// refuseAutomation tells the player why a tick or trigger was not saved
+// (users.ErrAutomationFull, users.ErrAutomationTooLong). Nothing changed, so
+// no Char.Automation is re-sent. one and many name the kind ("trigger",
+// "triggers").
+func refuseAutomation(u *users.UserRecord, err error, one, many string) {
+	if errors.Is(err, users.ErrAutomationFull) {
+		most := configs.GetNetworkConfig().MaxAutomationTriggers
+		if one == `tick` {
+			most = configs.GetNetworkConfig().MaxAutomationTicks
+		}
+		refusal.AutomationLimit(u, many, int(most))
+		return
+	}
+	if errors.Is(err, users.ErrAutomationTooManyCommands) {
+		refusal.CommandChainTooLong(u, one, users.MaxCommandChain())
+		return
+	}
+	refusal.AutomationTooLong(u, one)
 }

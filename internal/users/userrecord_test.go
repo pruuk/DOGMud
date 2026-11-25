@@ -4,7 +4,7 @@ import "testing"
 
 func TestUserTicks_SetAssignsIdAndUpdates(t *testing.T) {
 	u := &UserRecord{}
-	a := u.SetTick(UserTick{Name: "sip", Commands: "drink health", IntervalSec: 30, Enabled: true})
+	a, _ := u.SetTick(UserTick{Name: "sip", Commands: "drink health", IntervalSec: 30, Enabled: true})
 	if a.Id == 0 || len(u.Ticks) != 1 {
 		t.Fatalf("create failed: %+v", u.Ticks)
 	}
@@ -13,7 +13,7 @@ func TestUserTicks_SetAssignsIdAndUpdates(t *testing.T) {
 	if len(u.Ticks) != 1 || u.Ticks[0].Name != "sip2" {
 		t.Fatalf("update should not duplicate: %+v", u.Ticks)
 	}
-	b := u.SetTick(UserTick{Name: "fast", IntervalSec: 0})
+	b, _ := u.SetTick(UserTick{Name: "fast", IntervalSec: 0})
 	if b.IntervalSec != 1 {
 		t.Fatalf("interval floor not applied: %d", b.IntervalSec)
 	}
@@ -27,7 +27,7 @@ func TestUserTicks_SetAssignsIdAndUpdates(t *testing.T) {
 
 func TestUserTriggers_SetAssignsIdAndUpdates(t *testing.T) {
 	u := &UserRecord{}
-	a := u.SetTrigger(UserTrigger{Name: "heal", Pattern: "*bleeding*", ThenCmds: "cast heal", Enabled: true})
+	a, _ := u.SetTrigger(UserTrigger{Name: "heal", Pattern: "*bleeding*", ThenCmds: "cast heal", Enabled: true})
 	if a.Id == 0 || len(u.Triggers) != 1 {
 		t.Fatalf("create failed: %+v", u.Triggers)
 	}

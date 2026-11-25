@@ -39,6 +39,19 @@ type Network struct {
 	TimeoutMods    ConfigBool `yaml:"TimeoutMods"`    // Whether to kick admin/mods when idle too long.
 	ZombieSeconds  ConfigInt  `yaml:"ZombieSeconds"`  // How many seconds a player will be a zombie allowing them to reconnect.
 	LogoutRounds   ConfigInt  `yaml:"LogoutRounds"`   // How many rounds of uninterrupted meditation must be completed to log out.
+
+	// The most commands one player's client may have waiting to run (typed
+	// lines, web client lines, GMCP Char.Action.Try, each piece of a macro).
+	// Past it a command is refused. See events.TryAddToQueue. It is also the
+	// most commands one macro, tick or trigger chain may hold
+	// (users.MaxCommandChain).
+	MaxPendingInputs ConfigInt `yaml:"MaxPendingInputs"`
+
+	// Caps on what GMCP Char.Automation.Set may store in a user save.
+	MaxAutomationTicks           ConfigInt `yaml:"MaxAutomationTicks"`           // ticks per player
+	MaxAutomationTriggers        ConfigInt `yaml:"MaxAutomationTriggers"`        // triggers per player
+	MaxAutomationFieldLength     ConfigInt `yaml:"MaxAutomationFieldLength"`     // characters in any one text field
+	MaxAutomationConditionValues ConfigInt `yaml:"MaxAutomationConditionValues"` // values in one trigger condition
 }
 
 func (n *Network) Validate() {
@@ -65,6 +78,27 @@ func (n *Network) Validate() {
 
 	if n.AICommandsPerRound < 1 {
 		n.AICommandsPerRound = 3 // default
+	}
+
+	// A cap below 1 would refuse every command, so it falls back instead.
+	if n.MaxPendingInputs < 1 {
+		n.MaxPendingInputs = 10 // default
+	}
+
+	if n.MaxAutomationTicks < 1 {
+		n.MaxAutomationTicks = 50 // default
+	}
+
+	if n.MaxAutomationTriggers < 1 {
+		n.MaxAutomationTriggers = 100 // default
+	}
+
+	if n.MaxAutomationFieldLength < 1 {
+		n.MaxAutomationFieldLength = 1000 // default
+	}
+
+	if n.MaxAutomationConditionValues < 1 {
+		n.MaxAutomationConditionValues = 50 // default
 	}
 
 	if n.HttpPort < 0 {

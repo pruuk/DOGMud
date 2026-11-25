@@ -69,6 +69,8 @@ var reported = [];
 global.displayReport = { connected: function (cols) { reported.push(cols); }, columns: function () {} };
 global.debugLog = function () {};
 global.stopAutomation = function () {};
+// onclose clears the full command queue (webclient-input-queue.test.js).
+global.setInputQueueFull = function () {};
 global.companionGlue = null;
 var musicStops = 0;
 global.MusicPlayer = { stopAll: function () { musicStops++; } };

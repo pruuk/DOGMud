@@ -130,10 +130,11 @@ func (g GMCPAutomationModule) sendAutomation(userId int) {
 func buildAutomationPayload(macros map[string]string, aliases map[string]string, ticks []users.UserTick, triggers []users.UserTrigger) GMCPAutomation_Payload {
 
 	payload := GMCPAutomation_Payload{
-		Macros:   make([]GMCPAutomation_Macro, 0, len(macros)),
-		Aliases:  make([]GMCPAutomation_Alias, 0, len(aliases)),
-		Ticks:    make([]GMCPAutomation_Tick, 0, len(ticks)),
-		Triggers: make([]GMCPAutomation_Trigger, 0, len(triggers)),
+		Macros:      make([]GMCPAutomation_Macro, 0, len(macros)),
+		Aliases:     make([]GMCPAutomation_Alias, 0, len(aliases)),
+		Ticks:       make([]GMCPAutomation_Tick, 0, len(ticks)),
+		Triggers:    make([]GMCPAutomation_Trigger, 0, len(triggers)),
+		MaxCommands: users.MaxCommandChain(),
 	}
 
 	macroKeys := make([]string, 0, len(macros))
@@ -238,4 +239,9 @@ type GMCPAutomation_Payload struct {
 	Aliases  []GMCPAutomation_Alias   `json:"aliases"`
 	Ticks    []GMCPAutomation_Tick    `json:"ticks"`
 	Triggers []GMCPAutomation_Trigger `json:"triggers"`
+	// MaxCommands is the most commands one chain (a macro, a tick, a
+	// trigger's then or else commands) may hold, users.MaxCommandChain. The
+	// tick and trigger editors count against it. Char.Automation is pushed
+	// on login, so it is known before an editor can open.
+	MaxCommands int `json:"maxCommands"`
 }

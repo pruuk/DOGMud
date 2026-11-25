@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 type GMCPZoneModule struct {
@@ -24,6 +25,10 @@ type GMCPZoneModule struct {
 	// cheap insurance.
 	zoneMu   sync.Mutex
 	zoneSent map[int]*zoneSentState
+	// resyncTurn is the tick in which each player's last Zone.Map.Resync was
+	// answered: one per tick, as for any client request. Guarded by zoneMu,
+	// cleared on PlayerDespawn.
+	resyncTurn map[int]uint64
 }
 
 // GMCPZoneUpdate asks the system to (re)send the explored-zone map snapshot.
@@ -34,11 +39,11 @@ type GMCPZoneUpdate struct {
 func (g GMCPZoneUpdate) Type() string { return `GMCPZoneUpdate` }
 
 // UniqueID merges the requests queued for one player before the queue runs
-// (a find while following plus the move, say), so the snapshot is built once
-// and a telnet GMCP client is not sent two whole maps. Nothing is lost:
-// every producer (a room change, a sight change, a resync, a secret exit
-// found) carries only the user id, and buildAndSend reads the player's room,
-// visited rooms, found exits and party when it runs, not when it was queued.
+// (a find while following plus the move, or a run of Zone.Map.Resync), so
+// the snapshot is built once. Nothing is lost: every producer (a room
+// change, a sight change, a resync, a secret exit found) carries only the
+// user id, and buildAndSend reads the player's room, visited rooms, found
+// exits and party when it runs, not when it was queued.
 func (g GMCPZoneUpdate) UniqueID() string {
 	return `GMCPZoneUpdate-` + strconv.Itoa(g.UserId)
 }
@@ -88,10 +93,19 @@ type GMCPZoneResync struct {
 
 func (g GMCPZoneResync) Type() string { return `GMCPZoneResync` }
 
+// UniqueID keeps one waiting resync per connection: requests that arrive
+// while one waits are the same request.
+func (g GMCPZoneResync) UniqueID() string {
+	return `GMCPZoneResync-` + strconv.FormatUint(g.ConnectionId, 10)
+}
+
 // zoneResyncHandler answers a client whose map was wiped by something other
 // than a full Zone.Map (for example Room.Info naming a floor that the
 // server's cz does not). It forgets what was sent and queues an update, so
-// the next Zone.Map is whole and the two cannot stay out of step.
+// the next Zone.Map is whole and the two cannot stay out of step. A player
+// gets at most one answer per tick (TurnMs); a request in the same tick
+// waits for the next one rather than being dropped, so a client whose map
+// was wiped again is still answered.
 func (g *GMCPZoneModule) zoneResyncHandler(e events.Event) events.ListenerReturn {
 	evt, ok := e.(GMCPZoneResync)
 	if !ok {
@@ -102,7 +116,16 @@ func (g *GMCPZoneModule) zoneResyncHandler(e events.Event) events.ListenerReturn
 	if uid <= 0 {
 		return events.Continue
 	}
+	turn := util.GetTurnCount()
 	g.zoneMu.Lock()
+	if last, ok := g.resyncTurn[uid]; ok && last == turn {
+		g.zoneMu.Unlock()
+		return events.CancelAndRequeue
+	}
+	if g.resyncTurn == nil {
+		g.resyncTurn = map[int]uint64{}
+	}
+	g.resyncTurn[uid] = turn
 	delete(g.zoneSent, uid)
 	g.zoneMu.Unlock()
 	events.AddToQueue(GMCPZoneUpdate{UserId: uid})
@@ -119,6 +142,7 @@ func (g *GMCPZoneModule) zoneDespawnHandler(e events.Event) events.ListenerRetur
 	}
 	g.zoneMu.Lock()
 	delete(g.zoneSent, evt.UserId)
+	delete(g.resyncTurn, evt.UserId)
 	g.zoneMu.Unlock()
 	return events.Continue
 }

@@ -50,6 +50,10 @@ type requeue struct {
 	evt      Event
 	priority int
 	fromTick bool
+	// order is the event's place from its first queueing, kept so a
+	// deferred event goes back where it was, ahead of anything queued after
+	// it: a player's waiting commands run oldest first.
+	order uint64
 }
 
 // Event is the common interface for events.
@@ -136,9 +140,29 @@ func (pq *priorityQueue) Pop() any {
 // The caller can optionally pass a priority value.
 // If omitted, the default priority is 0.
 func AddToQueue(e Event, priority ...int) {
+	TryAddToQueue(e, priority...)
+}
+
+// TryAddToQueue is AddToQueue reporting whether e was queued. It is not
+// queued when it is a unique event already waiting, or a command a player's
+// client sent (CmdFromClient) while that player already has
+// Network.MaxPendingInputs waiting (see pending_inputs.go).
+func TryAddToQueue(e Event, priority ...int) bool {
+
+	pendingUser := clientInputUser(e)
+	limit := 0
+	if pendingUser > 0 {
+		limit = maxPendingInputs()
+	}
 
 	qLock.Lock()
 	defer qLock.Unlock()
+
+	if pendingUser > 0 && pendingInputs[pendingUser] >= limit {
+		in, _ := e.(Input)
+		refuseInputLocked(pendingUser, limit, in.Flags.Has(CmdTyped))
+		return false
+	}
 
 	prio := 0
 	if len(priority) > 0 {
@@ -161,7 +185,7 @@ func AddToQueue(e Event, priority ...int) {
 		uid := ue.UniqueID()
 		// If we already have an entry for this uniqueID, skip it!
 		if _, exists := uniqueMap[uid]; exists {
-			return
+			return false
 		}
 
 		uniqueMap[ue.UniqueID()] = struct{}{}
@@ -180,6 +204,12 @@ func AddToQueue(e Event, priority ...int) {
 	}
 
 	heap.Push(&globalQueue, pe)
+
+	if pendingUser > 0 {
+		pendingInputs[pendingUser]++
+		syncInputQueueLocked(pendingUser, limit)
+	}
+	return true
 }
 
 // IsQueued reports whether a unique event with e's UniqueID is waiting in the
@@ -248,6 +278,13 @@ func isEnteringWorld(userId int) bool {
 // Should only be used when a mutex lock is already held
 // fromTick carries over from the event's first queueing (#696).
 func reAddToQueue(e Event, prio int, fromTick bool) {
+	pushLocked(e, prio, fromTick, 0)
+}
+
+// pushLocked queues e with qLock held. order 0 gives it a new place at the
+// back of its priority; a deferred event passes its original order and goes
+// back where it was (requeue.order).
+func pushLocked(e Event, prio int, fromTick bool, order uint64) {
 
 	// Check for uniqueness if the event implements UniqueEvent.
 	if ue, ok := e.(uniqueEvent); ok {
@@ -260,16 +297,19 @@ func reAddToQueue(e Event, prio int, fromTick bool) {
 		uniqueMap[ue.UniqueID()] = struct{}{}
 	}
 
-	orderCounter++
+	if order == 0 {
+		orderCounter++
+		order = orderCounter
+	}
 	pe := &prioritizedEvent{
 		event:    e,
 		priority: prio,
-		order:    orderCounter,
+		order:    order,
 		fromTick: fromTick,
 	}
 
 	if eventDebugging {
-		fmt.Println(`events.reAddToQueue`, "type:", e.Type(), `priority:`, prio, `order:`, orderCounter)
+		fmt.Println(`events.reAddToQueue`, "type:", e.Type(), `priority:`, prio, `order:`, order)
 	}
 
 	heap.Push(&globalQueue, pe)
@@ -277,7 +317,7 @@ func reAddToQueue(e Event, prio int, fromTick bool) {
 
 // addToRequeue defers e to the next ProcessEvents pass, keeping whether a
 // tick queued it (#696).
-func addToRequeue(e Event, prio int, fromTick bool) {
+func addToRequeue(e Event, prio int, fromTick bool, order uint64) {
 	qLock.Lock()
 	defer qLock.Unlock()
 
@@ -285,7 +325,10 @@ func addToRequeue(e Event, prio int, fromTick bool) {
 		evt:      e,
 		priority: prio,
 		fromTick: fromTick,
+		order:    order,
 	})
+	// A deferred client command is still waiting: it counts again.
+	addPendingLocked(e)
 }
 
 // ProcessEvents runs the event loop until the queue is empty.
@@ -308,12 +351,17 @@ func ProcessEvents() {
 		}()
 	}
 
+	// Read before qLock, as TryAddToQueue does.
+	inputLimit := maxPendingInputs()
+
 	qLock.Lock()
 
 	// Requeues are a special group that has been deferred to the next processevents loop
 	// They are added back into the event queue at the top of the process events function
 	for _, itm := range requeues {
-		reAddToQueue(itm.evt, itm.priority, itm.fromTick)
+		// Back in its original place (requeue.order), so what waited
+		// longest runs first.
+		pushLocked(itm.evt, itm.priority, itm.fromTick, itm.order)
 	}
 	requeues = requeues[:0]
 
@@ -336,6 +384,10 @@ func ProcessEvents() {
 			delete(uniqueMap, ue.UniqueID())
 		}
 
+		// A client command leaves the player's pending count as it pops,
+		// before it runs (pending_inputs.go).
+		takePendingLocked(pe.event)
+
 		// #842: a typed line's reply ends as its InputDone pops. Closed here,
 		// still under qLock, so nothing queued once it has popped (by its own
 		// listeners included) is marked as the reply.
@@ -351,7 +403,7 @@ func ProcessEvents() {
 
 		evtResult = DoListeners(pe.event)
 		if evtResult == CancelAndRequeue {
-			addToRequeue(pe.event, pe.priority, pe.fromTick)
+			addToRequeue(pe.event, pe.priority, pe.fromTick, pe.order)
 		}
 
 		qLock.Lock()
@@ -361,6 +413,10 @@ func ProcessEvents() {
 
 	// The pass that ran the login bursts is over (EnteringWorld).
 	clear(enteringWorld)
+
+	// Only deferred events remain: rebuild each player's pending count from
+	// them and tell the clients whose queue filled or freed.
+	settleInputQueuesLocked(inputLimit)
 
 	qLock.Unlock()
 }
@@ -576,6 +632,7 @@ func DrainQueuedInputsForTest(instanceId int) []string {
 	}
 	globalQueue = remaining
 	heap.Init(&globalQueue)
+	recountPendingInputsLocked()
 	return found
 }
 
@@ -600,6 +657,7 @@ func DrainQueuedUserInputsForTest(userId int) []string {
 	}
 	globalQueue = remaining
 	heap.Init(&globalQueue)
+	recountPendingInputsLocked()
 	return found
 }
 
@@ -1026,6 +1084,11 @@ func DrainAllQueuedEventsForTest() int {
 	}
 	globalQueue = priorityQueue{}
 	heap.Init(&globalQueue)
+	// Pending client commands (pending_inputs.go) follow the queue, and no
+	// client is left marked full.
+	recountPendingInputsLocked()
+	clear(inputQueueFull)
+	clear(typedRefusalAt)
 	return n
 }
 
@@ -1052,6 +1115,7 @@ func DrainQueuedByTypeForTest(typeName string) []Event {
 	}
 	globalQueue = remaining
 	heap.Init(&globalQueue)
+	recountPendingInputsLocked()
 	return found
 }
 

@@ -214,6 +214,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/commandchain.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/questtabs.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mapwhere.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/longpress.js?v={{ .ASSET_VERSION }}"></script>
@@ -1192,6 +1193,12 @@
                 // It also ends the answer the screen reader is reading at once.
                 screenReader.done(d.seq);
             },
+            "Char.Input.Queue": function() {
+                // The server holds as many of our commands as it will
+                // (full), or has room again. Sent only when that changes.
+                var q = ((GMCPStructs["Char"] || {}).Input || {}).Queue || {};
+                setInputQueueFull(q.full === true);
+            },
             "Char.Mutation": function() {
                 var m = (GMCPStructs["Char"] || {}).Mutation;
                 if (m && m.name) { mutationRevealEnqueue(m); }
@@ -2033,6 +2040,17 @@
         var queueSettleTimer = null;    // fallback so the queue never holds forever if no round push arrives
         var menuOpen = false;           // a game menu or prompt is open (Char.Menu, #375): queue, don't send
         var automationReady = false;    // this session's Char.Automation has arrived: ticks/triggers may run
+        var inputQueueFull = false;     // the server holds as many of our commands as it will (Char.Input.Queue)
+
+        // While the server's queue of our commands is full, the controls
+        // that send commands (touch deck, trigger and tick rows, macro and
+        // alias chips) are greyed out (body.input-queue-full in
+        // dashboard.css) and clicking them sends nothing. A new connection
+        // starts empty.
+        function setInputQueueFull(full) {
+            inputQueueFull = full === true;
+            if (document.body) document.body.classList.toggle("input-queue-full", inputQueueFull);
+        }
 
         // Queue an action that would have fired immediately (a tick, or a
         // trigger with no queue mode) while a menu is open. It keeps all its
@@ -2282,6 +2300,13 @@
             // nothing useful (or send text to the login prompt), so say why
             // and stop. The rows can still show from the last session.
             if (e.target.closest(".auto-tog, .auto-row, .auto-chip") && automationNeedsLogin()) {
+                e.stopPropagation();
+                return;
+            }
+            // The server's queue of our commands is full: a row or chip
+            // sends nothing until it frees. Switching an entry on or off is
+            // not a command and still works.
+            if (inputQueueFull && e.target.closest(".auto-row, .auto-chip") && !e.target.closest(".auto-tog")) {
                 e.stopPropagation();
                 return;
             }
@@ -3404,6 +3429,7 @@
 
             socket.onclose = function(event) {
                 stopAutomation(); // nothing fires at the login prompts (#375)
+                setInputQueueFull(false); // the next connection's queue starts empty
                 // Logged out: hide the companion key button and its form.
                 if (companionGlue) { companionGlue.disconnected(); }
 
@@ -4489,7 +4515,9 @@
                     loginMsg.hidden = false;
                     return;
                 }
-                if (typeof _onSave === "function") _onSave();
+                // An editor's onSave returns false to keep the window open
+                // (a command chain over the limit, say), with what was typed.
+                if (typeof _onSave === "function" && _onSave() === false) return;
                 doClose();
             }
 
@@ -4778,6 +4806,49 @@
                 return wrap;
             }
 
+            // The most commands one chain may hold, from the server's
+            // Char.Automation (commandchain.js; a fallback if it is absent).
+            function chainLimit() {
+                var a = GMCPStructs["Char"] && GMCPStructs["Char"].Automation;
+                return window.CommandChain ? CommandChain.limit(a) : 10;
+            }
+
+            // Put a live "3 of 10 commands" count under a commands field,
+            // and the warning in words when the chain is over the limit.
+            // Returns { fits(), refresh() }: the editor's Save refuses while
+            // a shown field does not fit (onSave returns false). saved is the
+            // chain this field's commands were saved as (the macro's, the
+            // tick's, the trigger's then or else commands; "" for a new one).
+            // A chain saved before the limit, sent back unchanged, still saves
+            // (the server keeps it too, users.chainFits), whichever field of
+            // the trigger's two layouts now holds it; the warning still shows.
+            function attachChainCount(field, saved) {
+                saved = String(saved == null ? "" : saved).trim();
+                var note = document.createElement("div");
+                note.className = "auto-chain-count";
+                note.setAttribute("aria-live", "polite");
+                field.insertAdjacentElement("afterend", note);
+                function refresh() {
+                    var max = chainLimit();
+                    var n = window.CommandChain ? CommandChain.count(field.value) : 0;
+                    var over = n > max;
+                    note.hidden = field.style.display === "none";
+                    note.classList.toggle("over", over);
+                    note.textContent = window.CommandChain
+                        ? (over ? CommandChain.warning(max) + " (" + CommandChain.label(n, max) + ")" : CommandChain.label(n, max))
+                        : "";
+                }
+                field.addEventListener("input", refresh);
+                refresh();
+                return {
+                    fits: function () {
+                        // Compared trimmed: the editors send trimmed commands.
+                        return !window.CommandChain || field.value.trim() === saved || CommandChain.fits(field.value, chainLimit());
+                    },
+                    refresh: refresh
+                };
+            }
+
             // Get the next free macro number (1-9) not already in use
             function nextFreeMacroNum(excludeNum) {
                 var a = GMCPStructs["Char"] && GMCPStructs["Char"].Automation;
@@ -4814,8 +4885,11 @@
 
                 body.appendChild(makeField("Macro Number (1–9)", numInput));
                 body.appendChild(makeField("Commands (semicolon-separated)", cmdInput));
+                // No saved chain: set =N checks every macro it stores, old or not.
+                var macroChain = attachChainCount(cmdInput, "");
 
                 openAutoModal("Macro Editor", body, function() {
+                    if (!macroChain.fits()) return false;
                     var num = parseInt(numInput.value, 10);
                     if (isNaN(num) || num < 1 || num > 9) {
                         alert("Please enter a number between 1 and 9.");
@@ -4899,11 +4973,13 @@
 
                 body.appendChild(makeField("Name", nameInput));
                 body.appendChild(makeField("Commands (semicolon-separated)", cmdsInput));
+                var tickChain = attachChainCount(cmdsInput, prefillCmds);
                 body.appendChild(makeField("Every N seconds", secsInput));
                 body.appendChild(enableWrap);
 
                 var title = editingId ? "Edit Tick" : "New Tick";
                 openAutoModal(title, body, function() {
+                    if (!tickChain.fits()) return false;
                     var name = nameInput.value.trim();
                     if (!name) {
                         alert("Tick name cannot be empty.");
@@ -4978,6 +5054,10 @@
                 simpleThenArea.placeholder = "Commands to run (semicolon-separated, $1 $2… for captures)";
                 simpleThenArea.rows = 3;
                 doSection.appendChild(simpleThenArea);
+                // The simple field and the if/else Then field both hold the
+                // trigger's then commands, so both compare with its saved
+                // then chain, whichever layout it is moved into.
+                var simpleChain = attachChainCount(simpleThenArea, prefillThenCmds);
 
                 // If/else clause container (hidden by default until "+ Add ▾" clicked)
                 var clauseWrap = document.createElement("div");
@@ -5071,6 +5151,11 @@
 
                 clauseWrap.appendChild(makeField("Then", thenArea));
                 clauseWrap.appendChild(makeField("Else (optional)", elseArea));
+                var thenChain = attachChainCount(thenArea, prefillThenCmds);
+                var elseChain = attachChainCount(elseArea, prefillElseCmds);
+                // The simple field hides while the if/else clause shows, and
+                // moves its commands across: recount all three.
+                function refreshChains() { simpleChain.refresh(); thenChain.refresh(); elseChain.refresh(); }
 
                 // ✕ remove clause button
                 var removeClauseBtn = document.createElement("button");
@@ -5083,6 +5168,7 @@
                     clauseWrap.style.display = "none";
                     addClauseBtn.style.display = "";
                     simpleThenArea.style.display = "";
+                    refreshChains();
                 });
                 clauseWrap.appendChild(removeClauseBtn);
 
@@ -5103,6 +5189,7 @@
                     clauseWrap.style.display = "";
                     clauseWrap.style.cssText = "display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--panel-border);padding-top:6px;margin-top:2px;";
                     rebuildOps("pool");
+                    refreshChains();
                 });
                 doSection.appendChild(addClauseBtn);
                 body.appendChild(doSection);
@@ -5178,9 +5265,13 @@
                     simpleThenArea.value = prefillThenCmds || "";
                     rebuildOps("pool"); // default ops loaded for if clause opens later
                 }
+                // Count the prefilled commands in whichever layout shows.
+                refreshChains();
 
                 var title = editingId ? "Edit Trigger" : "New Trigger";
                 openAutoModal(title, body, function() {
+                    // Only the fields on show are saved, so only they must fit.
+                    if (clauseWrap.style.display === "none" ? !simpleChain.fits() : (!thenChain.fits() || !elseChain.fits())) return false;
                     var name = nameInput.value.trim();
                     if (!name) { alert("Trigger name cannot be empty."); return; }
                     var pattern = patInput.value.trim();

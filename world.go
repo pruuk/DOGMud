@@ -57,6 +57,12 @@ type World struct {
 	eventRequeue          []events.Event
 	userInputEventTracker map[int]struct{}
 	mobInputEventTracker  map[int]struct{}
+	// clientInputTurn is the turn in which each player last ran a command
+	// their client sent (events.CmdFromClient): one per tick (TurnMs), the
+	// pace telnet always had, for every client. userInputEventTracker is
+	// cleared every event pass (1 ms), so it cannot hold this. Cleared each
+	// turn, when every entry has gone stale; nil until first used.
+	clientInputTurn map[int]uint64
 }
 
 func NewWorld(osSignalChan chan os.Signal) *World {
@@ -125,6 +131,12 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
+	// A command the player's client sent waits for the next tick if one
+	// already ran this tick; it stays in the player's pending inputs.
+	if w.clientInputWaits(input, turnCt) {
+		return events.CancelAndRequeue
+	}
+
 	// 0 and below, process immediately and don't count towards limit
 	if input.ReadyTurn <= 0 {
 
@@ -140,6 +152,7 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 
 		}
 
+		w.noteClientInputRan(input, turnCt)
 		w.processInput(input.UserId, input.InputText, input.Flags, input.Seq)
 
 		return events.Continue
@@ -183,11 +196,35 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 
 	}
 
+	w.noteClientInputRan(input, turnCt)
 	w.processInput(input.UserId, input.InputText, input.Flags, input.Seq)
 
 	w.userInputEventTracker[input.UserId] = struct{}{}
 
 	return events.Continue
+}
+
+// clientInputWaits reports whether input, a command the player's client sent
+// (events.CmdFromClient), must wait for the next tick because that player
+// already ran one this tick. Engine-queued commands never wait here.
+func (w *World) clientInputWaits(input events.Input, turnCt uint64) bool {
+	if !input.Flags.Has(events.CmdFromClient) {
+		return false
+	}
+	last, ok := w.clientInputTurn[input.UserId]
+	return ok && last == turnCt
+}
+
+// noteClientInputRan records that the player ran a command their client sent
+// this tick (clientInputWaits).
+func (w *World) noteClientInputRan(input events.Input, turnCt uint64) {
+	if !input.Flags.Has(events.CmdFromClient) {
+		return
+	}
+	if w.clientInputTurn == nil {
+		w.clientInputTurn = map[int]uint64{}
+	}
+	w.clientInputTurn[input.UserId] = turnCt
 }
 
 // Checks whether their level is too high for a guide
@@ -895,6 +932,9 @@ loop:
 
 			turnCt := util.IncrementTurnCount()
 
+			// A new tick: no player has run a client command in it yet.
+			clear(w.clientInputTurn)
+
 			events.AddToQueue(events.NewTurn{TurnNumber: turnCt, TimeNow: time.Now()})
 
 			// After a full round of turns, we can do a round tick.
@@ -978,14 +1018,17 @@ loop:
 	}
 }
 
-// inputEventFor is the event a connection line becomes: typed, ready now, and
-// carrying the web client's line number for the done marker (plan 6).
+// inputEventFor is the event a connection line becomes: typed, from the
+// player's client (so it counts against their pending inputs and runs one
+// per tick), ready now, and carrying the web client's line number for the
+// done marker (plan 6). A line refused at the cap gets no done marker; the
+// web client settles a wait whose marker never comes (hotinput.js).
 func inputEventFor(wi WorldInput) events.Input {
 	return events.Input{
 		UserId:    wi.FromId,
 		InputText: wi.InputText,
 		ReadyTurn: util.GetTurnCount(),
-		Flags:     events.CmdTyped,
+		Flags:     events.CmdTyped | events.CmdFromClient,
 		Seq:       wi.Seq,
 	}
 }
@@ -1088,21 +1131,37 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 		// Must be actual text, blank space doesn't count.
 		user.SetLastInputRound(util.GetRoundCount())
 
-		// Check for macros
-		if user.Macros != nil && len(inputText) == 2 {
+		// Check for macros. A piece of a macro never expands another
+		// (CmdMacroPiece): set refuses one that names a macro, and this
+		// also stops one saved before that check, which would otherwise
+		// call itself and keep the player's queue full for good.
+		if user.Macros != nil && len(inputText) == 2 && !flags.Has(events.CmdMacroPiece) {
 			if macro, ok := user.Macros[inputText]; ok {
 				handled = true
 				readyTurn := util.GetTurnCount()
+				// The line that named the macro already spent one command
+				// of an AI-port connection's per-round budget, which pays
+				// for the first piece. Every later piece spends one more,
+				// and expansion stops at the first refusal.
+				connDetails := connections.Get(user.ConnectionId())
+				first := true
 				for newCmd := range strings.SplitSeq(macro, `;`) {
 					if newCmd == `` {
 						continue
 					}
+					if !first && connDetails != nil && connDetails.AIRateLimited() {
+						break
+					}
+					first = false
 
+					// Each piece of a macro the client named counts
+					// against the player's pending inputs; one past the
+					// cap is refused there (events.TryAddToQueue).
 					events.AddToQueue(events.Input{
 						UserId:    userId,
 						InputText: newCmd,
 						ReadyTurn: readyTurn,
-						Flags:     flags & events.CmdTyped,
+						Flags:     flags&(events.CmdTyped|events.CmdFromClient) | events.CmdMacroPiece,
 					})
 
 					readyTurn++

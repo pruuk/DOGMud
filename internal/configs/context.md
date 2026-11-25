@@ -96,6 +96,12 @@ Network:
   TimeoutMods: false
   ZombieSeconds: 60
   LogoutRounds: 10
+  AICommandsPerRound: 3            # AI port only
+  MaxPendingInputs: 10             # commands one player's client may have waiting (events.TryAddToQueue)
+  MaxAutomationTicks: 50           # web automation caps (users.SetTick / SetTrigger)
+  MaxAutomationTriggers: 100
+  MaxAutomationFieldLength: 1000
+  MaxAutomationConditionValues: 50
 ```
 
 ### GamePlay Configuration

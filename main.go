@@ -834,7 +834,6 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 
 	var userObject *users.UserRecord
 	var sug suggestions.Suggestions
-	lastInput := time.Now()
 	c := configs.GetConfig()
 
 	for {
@@ -1037,79 +1036,57 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 		// If they have pressed enter (submitted their input), and nothing else has handled/aborted
 		if clientInput.EnterPressed {
 
-			// AI rate limiting: enforce commands-per-round limit
-			if connDetails.ConnType() == connections.ConnAI {
-				netCfg := configs.GetNetworkConfig()
-				currentRound := int64(util.GetRoundCount())
-				if !connDetails.AICommandAllowed(currentRound, int(netCfg.AICommandsPerRound)) {
-					connections.SendTo(
-						[]byte(fmt.Sprintf("Command dropped: AI rate limit (%d/round). Wait for the next round.\r\n", netCfg.AICommandsPerRound)),
-						connDetails.ConnectionId(),
-					)
-					clientInput.Reset()
-					if userObject != nil {
-						userObject.SetUnsentText(``, ``)
-					}
-					continue
+			// AI rate limiting: the AI port's per-round command budget, shared
+			// with GMCP Char.Action.Try (see ConnectionDetails.AIRateLimited).
+			if connDetails.AIRateLimited() {
+				clientInput.Reset()
+				if userObject != nil {
+					userObject.SetUnsentText(``, ``)
 				}
+				continue
 			}
 
 			// Update config after enter presses
 			// No need to update it every loop
 			c = configs.GetConfig()
 
-			if time.Since(lastInput) < time.Duration(c.Timing.TurnMs)*time.Millisecond {
-				/*
-					connections.SendTo(
-						[]byte("Slow down! You're typing too fast! "+time.Since(lastInput).String()+"\n"),
-						connDetails.ConnectionId(),
-					)
-				*/
+			// Every line goes to the world, however fast it came: the world
+			// runs one per player per tick and holds the rest in the
+			// player's pending inputs (Network.MaxPendingInputs), which
+			// refuses past its cap. Lines inside TurnMs were once dropped
+			// here without a word.
+			_, suggested := userObject.GetUnsentText()
 
-				// Reset the buffer for future commands.
-				clientInput.Reset()
+			if len(suggested) > 0 {
+				// solidify it in the render for UX reasons
 
-				// Capturing and resetting the unsent text is purely to allow us to
-				// Keep updating the prompt without losing the typed in text.
-				userObject.SetUnsentText(``, ``)
+				clientInput.Buffer = append(clientInput.Buffer, []byte(suggested)...)
+				sug.Clear()
+				userObject.SetUnsentText(string(clientInput.Buffer), ``)
 
-			} else {
+				// Read-locked for the same reason as the redraw above; the
+				// lock is released before the blocking SendTo.
+				util.RLockMud()
+				pTxt := userObject.CommandPromptBody()
+				util.RUnlockMud()
 
-				_, suggested := userObject.GetUnsentText()
+				sendPromptFromConnection(clientInput.ConnectionId, pTxt)
 
-				if len(suggested) > 0 {
-					// solidify it in the render for UX reasons
-
-					clientInput.Buffer = append(clientInput.Buffer, []byte(suggested)...)
-					sug.Clear()
-					userObject.SetUnsentText(string(clientInput.Buffer), ``)
-
-					// Read-locked for the same reason as the redraw above; the
-					// lock is released before the blocking SendTo.
-					util.RLockMud()
-					pTxt := userObject.CommandPromptBody()
-					util.RUnlockMud()
-
-					sendPromptFromConnection(clientInput.ConnectionId, pTxt)
-
-				}
-
-				wi := WorldInput{
-					FromId:    userObject.UserId,
-					InputText: string(clientInput.Buffer),
-				}
-
-				// Buffer should be processed as an in-game command
-				worldManager.SendInput(wi)
-				// Reset the buffer for future commands.
-				clientInput.Reset()
-
-				// Capturing and resetting the unsent text is purely to allow us to
-				// Keep updating the prompt without losing the typed in text.
-				userObject.SetUnsentText(``, ``)
-
-				lastInput = time.Now()
 			}
+
+			wi := WorldInput{
+				FromId:    userObject.UserId,
+				InputText: string(clientInput.Buffer),
+			}
+
+			// Buffer should be processed as an in-game command
+			worldManager.SendInput(wi)
+			// Reset the buffer for future commands.
+			clientInput.Reset()
+
+			// Capturing and resetting the unsent text is purely to allow us to
+			// Keep updating the prompt without losing the typed in text.
+			userObject.SetUnsentText(``, ``)
 
 			time.Sleep(time.Duration(10) * time.Millisecond)
 			//	time.Sleep(time.Duration(util.TurnMs) * time.Millisecond)
@@ -1169,7 +1146,6 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 	}
 
 	var sug suggestions.Suggestions
-	lastInput := time.Now()
 	c := configs.GetConfig()
 
 	for {
@@ -1256,33 +1232,37 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 		}
 
 		if clientInput.EnterPressed {
+			// The same AI per-round budget as handleTelnetConnection: a
+			// connection restored across a copyover keeps its port's type.
+			if connDetails.AIRateLimited() {
+				clientInput.Reset()
+				userObject.SetUnsentText(``, ``)
+				continue
+			}
+
 			c = configs.GetConfig()
 
-			if time.Since(lastInput) < time.Duration(c.Timing.TurnMs)*time.Millisecond {
-				clientInput.Reset()
-				userObject.SetUnsentText(``, ``)
-			} else {
-				_, suggested := userObject.GetUnsentText()
-				if len(suggested) > 0 {
-					clientInput.Buffer = append(clientInput.Buffer, []byte(suggested)...)
-					sug.Clear()
-					userObject.SetUnsentText(string(clientInput.Buffer), ``)
-					// Read-locked against the world tick; released before SendTo.
-					util.RLockMud()
-					pTxt := userObject.CommandPromptBody()
-					util.RUnlockMud()
-					sendPromptFromConnection(clientInput.ConnectionId, pTxt)
-				}
-
-				wi := WorldInput{
-					FromId:    userObject.UserId,
-					InputText: string(clientInput.Buffer),
-				}
-				worldManager.SendInput(wi)
-				clientInput.Reset()
-				userObject.SetUnsentText(``, ``)
-				lastInput = time.Now()
+			// As handleTelnetConnection: every line goes to the world, which
+			// paces and caps it (Network.MaxPendingInputs).
+			_, suggested := userObject.GetUnsentText()
+			if len(suggested) > 0 {
+				clientInput.Buffer = append(clientInput.Buffer, []byte(suggested)...)
+				sug.Clear()
+				userObject.SetUnsentText(string(clientInput.Buffer), ``)
+				// Read-locked against the world tick; released before SendTo.
+				util.RLockMud()
+				pTxt := userObject.CommandPromptBody()
+				util.RUnlockMud()
+				sendPromptFromConnection(clientInput.ConnectionId, pTxt)
 			}
+
+			wi := WorldInput{
+				FromId:    userObject.UserId,
+				InputText: string(clientInput.Buffer),
+			}
+			worldManager.SendInput(wi)
+			clientInput.Reset()
+			userObject.SetUnsentText(``, ``)
 
 			time.Sleep(time.Duration(10) * time.Millisecond)
 		}
