@@ -45,6 +45,7 @@ type InputQueueChanged struct {
 	Refused bool
 }
 
+// Type names the event for the listener registry.
 func (e InputQueueChanged) Type() string { return `InputQueueChanged` }
 
 var (
@@ -139,14 +140,17 @@ func refuseInputLocked(userId int, limit int, typed bool) {
 	reAddToQueue(InputQueueChanged{UserId: userId, Depth: pendingInputs[userId], Full: true, Refused: true}, 0, false)
 }
 
-// addPendingLocked and takePendingLocked move one player's count by one.
-// qLock must be held.
+// addPendingLocked adds one to the count of the player e belongs to, when e
+// is a counted client command. qLock must be held.
 func addPendingLocked(e Event) {
 	if uid := clientInputUser(e); uid > 0 {
 		pendingInputs[uid]++
 	}
 }
 
+// takePendingLocked takes one from the count of the player e belongs to,
+// when e is a counted client command, and forgets a count that reaches
+// zero. qLock must be held.
 func takePendingLocked(e Event) {
 	uid := clientInputUser(e)
 	if uid < 1 {

@@ -77,7 +77,7 @@ func tryAction(t *testing.T, connId uint64, actionId int) (status string, queued
 	(&GMCPModule{}).handleCharOp(GMCPCharOp{
 		ConnectionId: connId,
 		Command:      `Char.Action.Try`,
-		Payload:      []byte(`{"id":` + strconv.Itoa(actionId) +`,"cmd":"look"}`),
+		Payload:      []byte(`{"id":` + strconv.Itoa(actionId) + `,"cmd":"look"}`),
 	})
 
 	for _, o := range drainGMCPOut(t) {

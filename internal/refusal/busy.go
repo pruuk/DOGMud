@@ -12,6 +12,7 @@ func WhileBusy(to Recipient, doing string) { send(to, WhileBusyText(doing)) }
 // still putting things on.
 const StillGearingUpLine = `You're still putting your gear on.`
 
+// StillGearingUp sends StillGearingUpLine.
 func StillGearingUp(to Recipient) { send(to, StillGearingUpLine) }
 
 // WhileUnderAttackText answers an action refused while something attacks the

@@ -22,6 +22,7 @@ type GMCPInput_Queue struct {
 // tries the action again later.
 const actionQueueFullReason = `queue full`
 
+// init registers inputQueueHandler for events.InputQueueChanged.
 func init() {
 	events.RegisterListener(events.InputQueueChanged{}, inputQueueHandler)
 }

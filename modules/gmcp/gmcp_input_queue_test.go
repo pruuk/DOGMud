@@ -89,7 +89,7 @@ func TestInputQueue_FramesOnlyOnTransitions(t *testing.T) {
 		events.DrainQueuedByTypeForTest(`InputQueueChanged`)
 	})
 
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		events.AddToQueue(events.Input{UserId: u.UserId, InputText: "look", Flags: events.CmdFromClient})
 	}
 	for _, e := range events.DrainQueuedByTypeForTest(`InputQueueChanged`) {
@@ -111,7 +111,7 @@ func TestActionTry_FullQueueIsDeferred(t *testing.T) {
 	require.Equal(t, 1, queued)
 
 	// Fill the queue, then Try again.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		events.AddToQueue(events.Input{UserId: 9865, InputText: "look", Flags: events.CmdFromClient})
 	}
 	events.DrainQueuedByTypeForTest(`GMCPOut`)
@@ -222,7 +222,7 @@ func TestZoneMap_UpdatesForOnePlayerCollapse(t *testing.T) {
 	events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`)
 	t.Cleanup(func() { events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`) })
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		events.AddToQueue(GMCPZoneUpdate{UserId: 9868})
 	}
 	events.AddToQueue(GMCPZoneUpdate{UserId: 9869})
@@ -251,7 +251,7 @@ func TestZoneMap_ResyncIsAnsweredOncePerTick(t *testing.T) {
 	require.Equal(t, events.Continue, g.zoneResyncHandler(req), "the next tick answers it")
 	require.Len(t, events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`), 1)
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		events.AddToQueue(req)
 	}
 	require.Len(t, events.DrainQueuedByTypeForTest(`GMCPZoneResync`), 1, "one waiting request per connection")

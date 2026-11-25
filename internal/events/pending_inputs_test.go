@@ -47,7 +47,7 @@ func noticesFor(t *testing.T, userId int) []InputQueueChanged {
 func TestPendingInputs_CapPlusOneLeavesCapQueued(t *testing.T) {
 	pendingFixture(t, 10)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		require.True(t, TryAddToQueue(clientLine(7, "look")), "command %d fits", i+1)
 	}
 	require.False(t, TryAddToQueue(clientLine(7, "look")), "the eleventh is refused")
@@ -60,7 +60,7 @@ func TestPendingInputs_CapPlusOneLeavesCapQueued(t *testing.T) {
 func TestPendingInputs_AnotherPlayerIsUnaffected(t *testing.T) {
 	pendingFixture(t, 3)
 
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		TryAddToQueue(clientLine(7, "look"))
 	}
 	require.Equal(t, 3, PendingInputs(7))
@@ -77,7 +77,7 @@ func TestPendingInputs_EngineCommandsDoNotCount(t *testing.T) {
 	TryAddToQueue(clientLine(7, "look"))
 	require.False(t, TryAddToQueue(clientLine(7, "look")))
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		require.True(t, TryAddToQueue(Input{UserId: 7, InputText: "emote"}), "an engine command for a full player")
 		require.True(t, TryAddToQueue(Input{UserId: 7, InputText: "say", Flags: CmdTyped}), "typed but not from the client")
 		require.True(t, TryAddToQueue(Input{MobInstanceId: 7, InputText: "north", Flags: CmdFromClient}), "a mob")
@@ -92,13 +92,13 @@ func TestPendingInputs_DrainsToZero(t *testing.T) {
 	ran := 0
 	RegisterListener(Input{}, func(e Event) ListenerReturn { ran++; return Continue })
 
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		TryAddToQueue(clientLine(7, "look"))
 	}
 	ProcessEvents()
 	require.Equal(t, 4, ran)
 	require.Equal(t, 0, PendingInputs(7))
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		require.True(t, TryAddToQueue(clientLine(7, "look")))
 	}
 }
@@ -116,10 +116,10 @@ func TestPendingInputs_RequeuedCommandsKeepTheirPlace(t *testing.T) {
 		return Continue
 	})
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		TryAddToQueue(clientLine(7, "look"))
 	}
-	for pass := 0; pass < 3; pass++ {
+	for pass := range 3 {
 		ProcessEvents()
 		require.Equal(t, 3, PendingInputs(7), "pass %d", pass)
 		require.False(t, TryAddToQueue(clientLine(7, "look")), "still full on pass %d", pass)
@@ -157,7 +157,7 @@ func TestPendingInputs_AMacroOfCapPiecesFits(t *testing.T) {
 	queued := 0
 	RegisterListener(Input{}, func(e Event) ListenerReturn {
 		if in := e.(Input); in.InputText == "=1" {
-			for i := 0; i < 10; i++ {
+			for range 10 {
 				if TryAddToQueue(clientLine(7, "piece")) {
 					queued++
 				}
@@ -206,7 +206,7 @@ func TestPendingInputs_NoticesOnlyOnFullAndFree(t *testing.T) {
 	TryAddToQueue(clientLine(7, "look"))
 	require.Equal(t, []InputQueueChanged{{UserId: 7, Depth: 2, Full: true}}, noticesFor(t, 7))
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		TryAddToQueue(clientLine(7, "look"))
 	}
 	require.Equal(t, []InputQueueChanged{{UserId: 7, Depth: 2, Full: true, Refused: true}}, noticesFor(t, 7),
@@ -246,13 +246,13 @@ func TestPendingInputs_FreeOnlyTwoBelowTheCap(t *testing.T) {
 		return CancelAndRequeue
 	})
 
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		TryAddToQueue(clientLine(7, "look"))
 	}
 	require.Len(t, noticesFor(t, 7), 1, "full")
 
 	// Steady input at the cap: one runs, one arrives, several times over.
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		release = 1
 		ProcessEvents()
 		require.Equal(t, 3, PendingInputs(7))

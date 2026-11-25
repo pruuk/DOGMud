@@ -101,7 +101,7 @@ func TestInputQueue_DrainsOnePerTickToZero(t *testing.T) {
 	pass := func() { w.EventLoop() }
 
 	const uid = 98513
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		events.AddToQueue(inputEventFor(WorldInput{FromId: uid, InputText: "look"}))
 	}
 	require.Equal(t, 3, events.PendingInputs(uid))
@@ -156,7 +156,7 @@ func TestInputQueue_WaitingCommandsRunInOrder(t *testing.T) {
 		events.AddToQueue(inputEventFor(WorldInput{FromId: uid, InputText: c}))
 		w.EventLoop()
 	}
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		util.IncrementTurnCount()
 		w.EventLoop()
 		w.EventLoop()
@@ -170,9 +170,9 @@ func TestInputQueue_OldestIsNotStarved(t *testing.T) {
 	w, ran := orderFixture(t, 4)
 	const uid = 98517
 	sent := 0
-	for tick := 0; tick < 5; tick++ {
+	for range 5 {
 		util.IncrementTurnCount()
-		for pass := 0; pass < 3; pass++ {
+		for range 3 {
 			sent++
 			events.AddToQueue(inputEventFor(WorldInput{FromId: uid, InputText: "c" + strconv.Itoa(sent)}))
 			w.EventLoop()
