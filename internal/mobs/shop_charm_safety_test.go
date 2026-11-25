@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Charm's protection for shopkeepers is not written anywhere in charm's own
@@ -39,7 +41,7 @@ func TestShopMobsCannotBeCharmed(t *testing.T) {
 
 	var shopMobs, unprotected []string
 
-	err := filepath.Walk(mobsDir, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(mobsDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

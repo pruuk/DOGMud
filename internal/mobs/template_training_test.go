@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // After U10b-0 Phase A, no mob TEMPLATE may carry authored stat training.
@@ -41,7 +42,7 @@ func TestNoMobTemplateCarriesAuthoredTraining(t *testing.T) {
 	trainingLine := regexp.MustCompile(`\btraining:\s*(-?\d+)`)
 
 	var offenders []string
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

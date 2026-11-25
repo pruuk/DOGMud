@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // A defence name declared as a Go string literal outside this package is
@@ -61,7 +63,7 @@ func repoRoot(t *testing.T) string {
 
 func scanForDefenceLiterals(t *testing.T, root string) (hits []string, scanned int) {
 	for _, base := range []string{"internal", "modules"} {
-		err := filepath.WalkDir(filepath.Join(root, base), func(path string, d os.DirEntry, err error) error {
+		err := util.WalkDirTolerant(filepath.Join(root, base), func(path string, d os.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // secondPersonWord matches the reader being addressed. "you're" matches too:
@@ -240,7 +241,7 @@ func TestBehaviorRoomLinesDoNotAddressEveryoneAsYou(t *testing.T) {
 	}
 	root := filepath.Join(configs.GetFilePathsConfig().DataFiles.String(), `behaviors`)
 	var paths []string
-	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+	err := util.WalkDirTolerant(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

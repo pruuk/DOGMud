@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	yamlv2 "gopkg.in/yaml.v2"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // keeperMobFields is the slice of a mob file this guard reads.
@@ -31,7 +33,7 @@ type keeperMobFields struct {
 func TestShopkeepersAndInnkeepersAreNonCombatant(t *testing.T) {
 	root := shippedWorldRoot + "/mobs"
 	checked := 0
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

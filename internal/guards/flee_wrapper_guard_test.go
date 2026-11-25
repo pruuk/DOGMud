@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // TestFleeWrappersDoNotReFork: the flee rules live in actions.BeginFlee and
@@ -34,7 +36,7 @@ func TestFleeResolutionStaysInActions(t *testing.T) {
 	allowed := []string{"internal/actions/", "internal/combat/", "internal/state/combatphase/"}
 	checked := 0
 	for _, root := range []string{"internal", "modules"} {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

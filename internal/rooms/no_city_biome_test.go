@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // TestNoDogmudRoomOrZoneDefaultsToCityBiome guards plan 3c-2b's deletion of
@@ -29,7 +31,7 @@ func TestNoDogmudRoomOrZoneDefaultsToCityBiome(t *testing.T) {
 	var badRooms []string
 	var badZones []string
 
-	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+	err := util.WalkDirTolerant(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

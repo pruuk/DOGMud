@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Words and tags need a space between them. A tag is invisible, so
@@ -45,7 +47,7 @@ func TestProseTagSpacing(t *testing.T) {
 		if _, err := os.Stat(base); err != nil {
 			t.Fatalf("%s: %v; the guard would check nothing there", base, err)
 		}
-		err := filepath.WalkDir(base, func(path string, de os.DirEntry, err error) error {
+		err := util.WalkDirTolerant(base, func(path string, de os.DirEntry, err error) error {
 			if err != nil || de.IsDir() || filepath.Ext(path) != ".yaml" {
 				return err
 			}

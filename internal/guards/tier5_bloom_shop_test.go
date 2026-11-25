@@ -9,6 +9,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/shops"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 const bloomWaferId = 40108
@@ -37,7 +38,7 @@ func TestBloomWaferShelfIsCapped(t *testing.T) {
 	tier10 := regexp.MustCompile(`(?m)^rarity_tier:\s*10\s*$`)
 	found := map[string]bool{}
 	root := filepath.Join(repoRoot(t), "_datafiles", "world", "dogmud", "items")
-	if err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+	if err := util.WalkDirTolerant(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
 		}
@@ -61,7 +62,7 @@ func TestBloomWaferHasOneShelf(t *testing.T) {
 	spawn := regexp.MustCompile(`(?m)^\s*-\s*mobid:\s*9802\s*$`)
 	var found []string
 	root := filepath.Join(repoRoot(t), "_datafiles", "world", "dogmud", "rooms")
-	if err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+	if err := util.WalkDirTolerant(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
 		}

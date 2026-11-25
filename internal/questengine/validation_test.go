@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -100,7 +101,7 @@ func TestDialogueSelfReference(t *testing.T) {
 	}
 
 	var yamlFiles []string
-	err := filepath.Walk(dataPath, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(dataPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

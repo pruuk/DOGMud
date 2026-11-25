@@ -11,6 +11,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/templates"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -59,7 +60,7 @@ func TestOnTheGroundTemplateRenderedOnlyByRenderGround(t *testing.T) {
 	modulesDir := filepath.Join(internalDir, "..", "modules")
 	for _, dir := range []string{internalDir, modulesDir} {
 		scanned := 0
-		err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(dir, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

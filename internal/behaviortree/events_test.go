@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -23,7 +24,7 @@ func firedEventsFromSource(t *testing.T) map[string]bool {
 	chdirRepoRootForTest(t)
 	fired := map[string]bool{}
 	for _, root := range []string{"internal", "modules"} {
-		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		err := util.WalkTolerant(root, func(path string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 				return nil
 			}
@@ -80,7 +81,7 @@ func TestEventVocabulary_CoversAllLiveBehaviorYAML(t *testing.T) {
 			walkEvents(*n.Child, file)
 		}
 	}
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() || filepath.Ext(path) != ".yaml" {
 			return nil
 		}

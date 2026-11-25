@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // TestItemDropChance_YAMLAbsentVersusZero pins #585: an authored
@@ -78,7 +80,7 @@ func TestItemDropChance_ShippedZeroLoadsAsNever(t *testing.T) {
 	root := filepath.Join(repoRootForTest(t), "_datafiles", "world")
 	zeroKey := regexp.MustCompile(`(?m)^itemdropchance:\s*0\s*$`)
 	checked := 0
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

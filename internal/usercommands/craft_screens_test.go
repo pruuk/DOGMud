@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -332,7 +333,7 @@ func shippedRecipes(t *testing.T) []*crafting.RecipeSpec {
 	t.Helper()
 	root := filepath.Join("..", "..", "_datafiles", "world", "dogmud")
 	specs := map[int]*items.ItemSpec{}
-	require.NoError(t, filepath.Walk(filepath.Join(root, "items"), func(path string, info os.FileInfo, err error) error {
+	require.NoError(t, util.WalkTolerant(filepath.Join(root, "items"), func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".yaml") {
 			return err
 		}
@@ -354,7 +355,7 @@ func shippedRecipes(t *testing.T) []*crafting.RecipeSpec {
 	t.Cleanup(items.SeedItemsForTest(specs))
 
 	recipes := []*crafting.RecipeSpec{}
-	require.NoError(t, filepath.Walk(filepath.Join(root, "recipes"), func(path string, info os.FileInfo, err error) error {
+	require.NoError(t, util.WalkTolerant(filepath.Join(root, "recipes"), func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".yaml") {
 			return err
 		}

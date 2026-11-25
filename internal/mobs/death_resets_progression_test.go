@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Skill and stat progression must not survive a mob's death.
@@ -98,7 +99,7 @@ func TestDeathDeletesInstance_RespawnReadsFromTemplate(t *testing.T) {
 
 func anyFileUnder(root string) bool {
 	found := false
-	_ = filepath.Walk(root, func(_ string, info os.FileInfo, err error) error {
+	_ = util.WalkTolerant(root, func(_ string, info os.FileInfo, err error) error {
 		if err == nil && info != nil && !info.IsDir() {
 			found = true
 		}

@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Skill weight knee (owner 2026-10-31): a skill rank's contribution to any
@@ -42,7 +44,7 @@ func TestSkillWeightReaderGuard(t *testing.T) {
 	skip := filepath.Join(root, `internal`, `configs`) + string(filepath.Separator)
 	scanned := 0
 	for _, top := range []string{`internal`, `modules`} {
-		err := filepath.WalkDir(filepath.Join(root, top), func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(filepath.Join(root, top), func(path string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() || !strings.HasSuffix(path, `.go`) || strings.HasSuffix(path, `_test.go`) {
 				return err
 			}

@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Web client base, ruling 1: all wrapping goes through one place and follows
@@ -373,7 +375,7 @@ func wrapGuardParse(t *testing.T) (*token.FileSet, []wrapGuardFile, *wrapConstIn
 	consts := newWrapConstIndex()
 	var files []wrapGuardFile
 	for _, root := range []string{"internal", "modules"} {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

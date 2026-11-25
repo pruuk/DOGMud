@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -215,7 +216,7 @@ func f() {
 func TestInputDonePriority_NothingElseQueuesAtOrAbove(t *testing.T) {
 	sources := map[string]string{}
 	for _, root := range []string{"internal", "modules", "."} {
-		_ = filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		_ = util.WalkDirTolerant(root, func(p string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return nil
 			}

@@ -5,11 +5,12 @@ import (
 	"go/parser"
 	"go/token"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // durableWriteExemptions lists the packages allowed to call os.WriteFile
@@ -97,14 +98,8 @@ func TestLivingStateWritesAreDurable(t *testing.T) {
 	fset := token.NewFileSet()
 	scanned := 0
 
-	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err = util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			if os.IsNotExist(err) {
-				// A test elsewhere can create and remove a temp file under
-				// the tree while packages test in parallel; a vanished
-				// entry has nothing to scan.
-				return nil
-			}
 			return err
 		}
 		if d.IsDir() {
@@ -194,14 +189,8 @@ func TestNoHandRolledTempRename(t *testing.T) {
 	fset := token.NewFileSet()
 	scanned := 0
 
-	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err = util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			if os.IsNotExist(err) {
-				// A test elsewhere can create and remove a temp file under
-				// the tree while packages test in parallel; a vanished
-				// entry has nothing to scan.
-				return nil
-			}
 			return err
 		}
 		if d.IsDir() {

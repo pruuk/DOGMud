@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // #680: Character.Size() (internal/characters/size.go) is the one reader of
@@ -16,7 +18,7 @@ func TestSpeciesSizeReadOnlyInSize(t *testing.T) {
 	root := repoRoot(t)
 	var bad []string
 	for _, dir := range []string{"internal", "modules"} {
-		filepath.Walk(filepath.Join(root, dir), func(path string, info os.FileInfo, err error) error {
+		util.WalkTolerant(filepath.Join(root, dir), func(path string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 				return nil
 			}

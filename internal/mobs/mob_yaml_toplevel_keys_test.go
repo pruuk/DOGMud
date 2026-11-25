@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // TestMobYAML_NoUnknownTopLevelKeys guards against the class of bug that shipped
@@ -37,7 +39,7 @@ func TestMobYAML_NoUnknownTopLevelKeys(t *testing.T) {
 
 	var offenses []string
 
-	err := filepath.Walk(mobsDir, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(mobsDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/conditionrename"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Slice 2 of the conditions unification renamed every Go identifier and every
@@ -77,14 +78,8 @@ func TestNoIdentifierSaysBuff(t *testing.T) {
 	var offenses []offense
 	scanned := 0
 
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			if os.IsNotExist(err) {
-				// behaviortree tests write temp crate files under gitignored
-				// internal/**/_datafiles/, which can vanish mid-walk while
-				// packages test in parallel (spec: "flake seen 2026-09-14").
-				return nil
-			}
 			return err
 		}
 		if d.IsDir() {
@@ -108,9 +103,6 @@ func TestNoIdentifierSaysBuff(t *testing.T) {
 
 		src, rerr := os.ReadFile(path)
 		if rerr != nil {
-			if os.IsNotExist(rerr) {
-				return nil
-			}
 			return rerr
 		}
 		scanned++
@@ -256,9 +248,8 @@ func TestNoTemplateReadsABuffField(t *testing.T) {
 	scanFile := func(path string) error {
 		src, rerr := os.ReadFile(path)
 		if rerr != nil {
-			if os.IsNotExist(rerr) {
-				return nil
-			}
+			// A file removed after the walk listed it is dropped by
+			// util.WalkDirTolerant (#953), which calls this.
 			return rerr
 		}
 
@@ -316,11 +307,8 @@ func TestNoTemplateReadsABuffField(t *testing.T) {
 		t.Fatalf("no _datafiles/world/*/templates directories found under %s", root)
 	}
 	for _, tplRoot := range worldTemplateRoots {
-		err := filepath.WalkDir(tplRoot, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(tplRoot, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					return nil
-				}
 				return err
 			}
 			if d.IsDir() {
@@ -338,11 +326,8 @@ func TestNoTemplateReadsABuffField(t *testing.T) {
 
 	// _datafiles/html/** : the admin panel and the web/Mudlet client pages.
 	htmlRoot := filepath.Join(root, "_datafiles", "html")
-	err := filepath.WalkDir(htmlRoot, func(path string, d fs.DirEntry, err error) error {
+	err := util.WalkDirTolerant(htmlRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			if os.IsNotExist(err) {
-				return nil
-			}
 			return err
 		}
 		if d.IsDir() {

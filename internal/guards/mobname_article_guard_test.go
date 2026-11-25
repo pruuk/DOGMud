@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // mobnameArticlePattern matches an article written directly before a mobname
@@ -20,7 +22,7 @@ func TestDogmudContentHasNoArticleBeforeMobnameTag(t *testing.T) {
 	repo := repoRoot(t)
 	root := filepath.Join(repo, "_datafiles", "world", "dogmud")
 	scanned := 0
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // surfaceScope classifies WHY a registered key spelling is player-facing text,
@@ -383,14 +385,8 @@ func messagingSurfaceCandidateKeysInFile(path string) (map[string]bool, error) {
 // spelling found, the set of repo-relative files it appeared in.
 func messagingSurfaceWalk(worldDir string) (map[string]map[string]bool, error) {
 	keyFiles := map[string]map[string]bool{}
-	err := filepath.WalkDir(worldDir, func(path string, d fs.DirEntry, err error) error {
+	err := util.WalkDirTolerant(worldDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			if os.IsNotExist(err) {
-				// A test elsewhere can create and remove a temp file under
-				// the tree while packages test in parallel; a vanished
-				// entry has nothing to scan.
-				return nil
-			}
 			return err
 		}
 		if d.IsDir() {
@@ -451,14 +447,8 @@ var messagingSurfaceYAMLTagRE = regexp.MustCompile(`yaml:"([a-z_][a-z0-9_]*)`)
 func messagingSurfaceGoYAMLTagKeys() (map[string]bool, error) {
 	keys := map[string]bool{}
 	for _, rootName := range messagingSurfaceGoRoots {
-		err := filepath.WalkDir(rootName, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(rootName, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					// A test elsewhere can create and remove a temp file under
-					// the tree while packages test in parallel; a vanished
-					// entry has nothing to scan.
-					return nil
-				}
 				return err
 			}
 			if d.IsDir() {
@@ -1155,14 +1145,8 @@ func narrationWalk() (map[string]narrationCandidateSite, error) {
 	sites := map[string]narrationCandidateSite{}
 	fset := token.NewFileSet()
 	for _, root := range narrationGoRoots {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					// A test elsewhere can create and remove a temp file under
-					// the tree while packages test in parallel; a vanished
-					// entry has nothing to scan.
-					return nil
-				}
 				return err
 			}
 			if d.IsDir() {
@@ -1600,14 +1584,8 @@ func TestEveryTrioLiteralNamesAllThreeRoles(t *testing.T) {
 
 	for _, root := range messagingSurfaceGoRoots {
 		fset := token.NewFileSet()
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					// A test elsewhere can create and remove a temp file under
-					// the tree while packages test in parallel; a vanished
-					// entry has nothing to scan.
-					return nil
-				}
 				return err
 			}
 			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
@@ -1717,14 +1695,8 @@ func TestRemoteRoomIsPairedWithRemoteObserver(t *testing.T) {
 
 	for _, root := range messagingSurfaceGoRoots {
 		fset := token.NewFileSet()
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					// A test elsewhere can create and remove a temp file under
-					// the tree while packages test in parallel; a vanished
-					// entry has nothing to scan.
-					return nil
-				}
 				return err
 			}
 			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {

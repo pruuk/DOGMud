@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // CI and make run named tests with `go test -run "<pattern>" ... <pkg>`. An
@@ -76,7 +78,7 @@ func testNamesIn(t *testing.T, pkg string) []string {
 		}
 	}
 	if pkg == "./..." {
-		err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(".", func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

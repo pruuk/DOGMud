@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // refusableAcquires are the calls that can refuse an item (too much to
@@ -68,7 +70,7 @@ func discardedAcquires(t *testing.T, src map[string]string) []string {
 		return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go")
 	}
 	for _, root := range []string{"internal", "modules"} {
-		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		err := util.WalkTolerant(root, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
