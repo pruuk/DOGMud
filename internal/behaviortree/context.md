@@ -450,7 +450,7 @@ are subject to perception-scaled reaction delays (see below).
 |--------|--------|-------------|
 | `try_forage` | none | Invoke `actions.Forage` (instant). Success on item found, Failure on miss/cooldown/wrong-biome. Requires mob to have forager profile for the current biome. |
 | `try_salvage` | `item_uuid` (optional string) | Invoke `actions.Salvage` (instant). Default mode targets first eligible corpse in room (mob death items); optional `item_uuid` param targets a specific item. |
-| `wander_territory` | none | Delegates to territory-aware movement (delayed). Uses forager profile neighbor list to pick an adjacent room within home territory. Failure without forager profile. |
+| `wander_territory` | none | Delegates to territory-aware movement (delayed). Uses forager profile neighbor list to pick an adjacent room within home territory, among the exits the mob knows (`Room.PermanentExitsKnownTo`: a secret exit only once found, #781 ruling 13; the territory is authored, the pick is not). Failure without forager profile. |
 
 ### Forager Storage — multi-tick (chunk 2.10-followups)
 

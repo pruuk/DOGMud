@@ -277,8 +277,22 @@ func TestKnownExitFilters_MutatorExitTakesThePlaceOfTheRoomExit(t *testing.T) {
 			t.Fatal("GetRandomKnownExit picked the shadowed room west")
 		}
 	}
+	for name, ex := range r.PermanentExitsKnownTo(c) {
+		if name == "west" {
+			t.Errorf("PermanentExitsKnownTo yielded the shadowed west (to %d)", ex.RoomId)
+		}
+	}
 
 	c.LearnSecretExit(1, "west")
+	westTo := 0
+	for name, ex := range r.PermanentExitsKnownTo(c) {
+		if name == "west" {
+			westTo = ex.RoomId
+		}
+	}
+	if westTo != 9 {
+		t.Errorf("PermanentExitsKnownTo west leads to %d, want the mutator's 9", westTo)
+	}
 	if ke := knownExit(t, KnownExits(r, c), "west"); ke.RoomId != 9 {
 		t.Errorf("KnownExits west leads to %d, want the mutator's 9", ke.RoomId)
 	}

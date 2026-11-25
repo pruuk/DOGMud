@@ -755,6 +755,12 @@ slice a mob's step was free and unconditional; now `quoteMobPathStep(mob)
   hands the mob back to the idle command, schedule and patrol fallbacks
   instead of parking it on an impossible step forever.
 
+A mob standing off its path (moved by something else) re-paths through its
+remaining waypoints. A path set by `pathto found` (a planner's errand,
+`mob.Path.FoundOnly()`) re-paths as `pathto found <waypoints>`, so it still
+takes only the secret exits the mob found (#781, owner ruling 13); a
+scripted path re-paths as plain `pathto`.
+
 `mobPathStepWaiting(mob) bool` re-runs `quoteMobPathStep` and reports the
 middle case above (a step the walker would take that is affordable-later,
 not-affordable-now). The patrol executor's `applyPatrolPlan` (`WantsPath`

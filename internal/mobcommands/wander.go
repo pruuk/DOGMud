@@ -39,7 +39,9 @@ func hasLootItems(floor []items.Item) bool {
 func pickWanderExit(exitOptions []string, room *rooms.Room, mover *characters.Character) (string, int) {
 	if len(exitOptions) > 0 {
 		picked := exitOptions[util.Rand(len(exitOptions))]
-		if ex, ok := room.Exits[picked]; ok {
+		// GetExitInfo, so a candidate means the exit wanderCandidates judged
+		// (an active mutator's takes the place of the room's).
+		if ex, ok := room.GetExitInfo(picked); ok {
 			return picked, ex.RoomId
 		}
 	}
@@ -47,16 +49,11 @@ func pickWanderExit(exitOptions []string, room *rooms.Room, mover *characters.Ch
 }
 
 // wanderCandidates is the exits of room whose far room wants accepts, among
-// the exits mover knows: a secret exit only once found (#781, ruling 13).
-// It reads room.Exits, as pickWanderExit does, and asks the one rule
-// (Character.KnowsSecretExit) only of a secret exit, so an open exit costs
-// nothing more on this hot path.
+// the exits mover knows: a secret exit only once found (#781, ruling 13,
+// Room.PermanentExitsKnownTo, which resolves the room's mutators once).
 func wanderCandidates(room *rooms.Room, mover *characters.Character, wants func(dest *rooms.Room) bool) []string {
 	out := []string{}
-	for exitName, ex := range room.Exits {
-		if ex.Secret && !mover.KnowsSecretExit(room.RoomId, exitName) {
-			continue
-		}
+	for exitName, ex := range room.PermanentExitsKnownTo(mover) {
 		dest := rooms.LoadRoom(ex.RoomId)
 		if dest == nil || !wants(dest) {
 			continue
@@ -64,6 +61,25 @@ func wanderCandidates(room *rooms.Room, mover *characters.Character, wants func(
 		out = append(out, exitName)
 	}
 	return out
+}
+
+// packFollowerStep is MovePackFollowers' canStep for packmates following their
+// alpha through exitName of room: each pays its own step (movement parity 4b),
+// and one that goes learns a secret exit the alpha took (#781, ruling 2's NPC
+// analogue, D17). Whether the exit is secret is asked once per alpha step, so
+// an open exit costs the followers nothing more.
+func packFollowerStep(room *rooms.Room, exitName string) func(f *mobs.Mob) bool {
+	secretExit := room.IsSecretExit(exitName)
+	return func(f *mobs.Mob) bool {
+		if !actions.QuoteMobStep(f, exitName).OK() {
+			return false
+		}
+		if secretExit {
+			actions.LearnSecretExitFollowing(&f.Character, room, exitName)
+		}
+		ambient.CountMove(room.RoomId, ambient.MoveIdle)
+		return true
+	}
 }
 
 func Wander(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
@@ -137,21 +153,7 @@ func Wander(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				// before it moves a follower, so a true here is a follower
 				// that goes, and telemetry counts it.
 				if mob.IsPackAlpha && len(preMoveRoomMobs) > 0 {
-					// Asked once per alpha step, so an open exit costs the
-					// followers nothing more.
-					secretExit := room.IsSecretExit(exitName)
-					mobs.MovePackFollowers(mob, exitName, preMoveRoomMobs, func(f *mobs.Mob) bool {
-						if !actions.QuoteMobStep(f, exitName).OK() {
-							return false
-						}
-						// A packmate walking behind its alpha learns a secret
-						// exit the alpha took (#781, ruling 2's NPC analogue).
-						if secretExit {
-							actions.LearnSecretExitFollowing(&f.Character, room, exitName)
-						}
-						ambient.CountMove(room.RoomId, ambient.MoveIdle)
-						return true
-					})
+					mobs.MovePackFollowers(mob, exitName, preMoveRoomMobs, packFollowerStep(room, exitName))
 				}
 
 			}

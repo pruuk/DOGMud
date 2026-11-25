@@ -595,8 +595,10 @@ func npcWanderTerritoryNeighbor(
 	if room == nil {
 		return
 	}
+	// The territory is authored, the pick is not: a random roam is the mob's
+	// own choice, so a secret exit only once found (#781, owner ruling 13).
 	var candidates []string
-	for dir, exit := range room.Exits {
+	for dir, exit := range room.PermanentExitsKnownTo(&mob.Character) {
 		if containsInt(p.TerritoryRooms, exit.RoomId) {
 			candidates = append(candidates, dir)
 		}

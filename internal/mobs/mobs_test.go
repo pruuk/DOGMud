@@ -1366,7 +1366,7 @@ func TestPathQueue(t *testing.T) {
 			testPathRoom{"east", 2, true},
 			testPathRoom{"south", 3, false},
 		}
-		pq.SetPath(path)
+		pq.SetPath(path, false)
 		assert.Equal(t, 3, pq.Len())
 
 		r := pq.Next()
@@ -1379,7 +1379,7 @@ func TestPathQueue(t *testing.T) {
 
 	t.Run("clear", func(t *testing.T) {
 		var pq PathQueue
-		pq.SetPath([]PathRoom{testPathRoom{"n", 1, false}})
+		pq.SetPath([]PathRoom{testPathRoom{"n", 1, false}}, false)
 		pq.Next()
 		pq.Clear()
 		assert.Equal(t, 0, pq.Len())
@@ -1393,7 +1393,7 @@ func TestPathQueue(t *testing.T) {
 			testPathRoom{"east", 2, false},
 			testPathRoom{"south", 3, true},
 		}
-		pq.SetPath(path)
+		pq.SetPath(path, false)
 		wp := pq.Waypoints()
 		assert.Equal(t, []int{1, 3}, wp)
 	})
@@ -1404,7 +1404,7 @@ func TestPathQueue(t *testing.T) {
 			testPathRoom{"north", 1, true},
 			testPathRoom{"east", 2, false},
 		}
-		pq.SetPath(path)
+		pq.SetPath(path, false)
 		pq.Next() // move north (waypoint) to current
 		wp := pq.Waypoints()
 		assert.Contains(t, wp, 1) // current is a waypoint

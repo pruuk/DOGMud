@@ -973,8 +973,13 @@ needs (the ruling 14 snapshots).
 The filters on the same rule: `ExitKnownTo(char, name)`,
 `FindKnownExitByName(char, search)` (every player path that names an exit;
 `internal/guards/exit_lookup_guard_test.go` registers the unfiltered
-`FindExitByName` callers), `FindKnownExitTo(char, roomId)` and
-`GetRandomKnownExit(char)` (NPC choice points, ruling 13). Each resolves a
+`FindExitByName` callers), `FindKnownExitTo(char, roomId)`,
+`GetRandomKnownExit(char)` and `PermanentExitsKnownTo(char)` (NPC choice
+points, ruling 13). `PermanentExitsKnownTo` is an `iter.Seq2[string,
+exit.RoomExit]` over the room and mutator exits char knows, mutators resolved
+once per call; an NPC loop that used to range over `r.Exits` (wandering, a
+walk-away, a forager's roam, the survival planner's flee) ranges over it
+instead, and `FindKnownExitTo` is built on it. Each resolves a
 name through `permanentExits` (or `GetExitInfo`, the same rule) before
 `exitKnown` judges it, so a secret mutator exit over a plain room exit of the
 same name is hidden from all of them alike. The unfiltered `FindExitByName`,

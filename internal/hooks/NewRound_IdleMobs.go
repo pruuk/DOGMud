@@ -206,6 +206,11 @@ func advanceMobPath(mob *mobs.Mob) bool {
 		if len(reDoWaypoints) > 0 {
 			var newCommand strings.Builder
 			newCommand.WriteString(`pathto`)
+			// A planner's errand stays one: the new route takes only the
+			// secret exits the mob found (#781, owner ruling 13).
+			if mob.Path.FoundOnly() {
+				newCommand.WriteString(` ` + mobs.PathtoFoundOnly)
+			}
 			for _, wpInt := range reDoWaypoints {
 				newCommand.WriteString(` ` + strconv.Itoa(wpInt))
 			}

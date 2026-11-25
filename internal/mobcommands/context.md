@@ -235,10 +235,13 @@ The `internal/mobcommands` package implements the AI command system for non-play
 - **Secret exits** (#781, owner ruling 13): wandering is the mob's own choice,
   so `wander`, `wander loot`, `wander players` (`wanderCandidates`) and the
   random fallback (`pickWanderExit`, `Room.GetRandomKnownExit`) take a secret
-  exit only once the mob found it (`Character.KnowsSecretExit`). Only a secret
-  exit asks the rule. Packmates moved behind the alpha learn a secret exit it
-  took (`actions.LearnSecretExitFollowing`, in the `canStep` closure, asked
-  only when `Room.IsSecretExit`).
+  exit only once the mob found it (`Room.PermanentExitsKnownTo`, the rooms
+  known-exit rule, mutators resolved once per call). Packmates moved behind
+  the alpha learn a secret exit it took (`packFollowerStep`, the `canStep`
+  closure, calls `actions.LearnSecretExitFollowing` only when
+  `Room.IsSecretExit`, asked once per alpha step).
+- `pathto found` stores the flag with the path (`mob.Path.SetPath(path,
+  foundOnly)`), so a displaced mob's re-path stays found-only.
 
 #### **Routes (`pathto.go`)**
 - `pathto <ids|home>` is a scripted route (schedules, patrols, behaviour

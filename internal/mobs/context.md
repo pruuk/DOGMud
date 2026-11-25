@@ -389,12 +389,16 @@ as `rooms.NpcMarker`).
 type PathQueue struct {
     roomQueue   []PathRoom
     currentRoom PathRoom
+    foundOnly   bool // set by `pathto found` (#781)
 }
 
-// Path management
-func (p *PathQueue) SetPath(path []PathRoom) {
+// Path management. foundOnly marks a planner's errand route (`pathto found`,
+// PathtoFoundOnly): FoundOnly() reports it, Clear() resets it, and the path
+// walker's re-path (hooks.advanceMobPath) asks for `pathto found` again.
+func (p *PathQueue) SetPath(path []PathRoom, foundOnly bool) {
     p.roomQueue = path
     p.currentRoom = nil
+    p.foundOnly = foundOnly
 }
 
 func (p *PathQueue) Next() PathRoom {

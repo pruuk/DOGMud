@@ -1,6 +1,7 @@
 package rooms
 
 import (
+	"iter"
 	"maps"
 	"sort"
 	"strings"
@@ -140,8 +141,10 @@ func (r *Room) exitKnown(char *characters.Character, exitName string, ex exit.Ro
 // permanentExits is every room and mutator exit of r by name. The first
 // active mutator holding a name takes the place of the room exit and of later
 // mutators, GetExitInfo's rule. Every known-exit filter resolves a name
-// through it, so a secret mutator exit over a plain room exit of the same
-// name is hidden from all of them alike.
+// through it (ExitKnownTo and IsSecretExit through GetExitInfo, the same
+// rule for one name; NPC loops through PermanentExitsKnownTo), so a secret
+// mutator exit over a plain room exit of the same name is hidden from all of
+// them alike.
 func (r *Room) permanentExits() map[string]exit.RoomExit {
 	all := make(map[string]exit.RoomExit, len(r.Exits))
 	maps.Copy(all, r.Exits)
@@ -183,14 +186,33 @@ func (r *Room) ExitKnownTo(char *characters.Character, exitName string) bool {
 	return ok
 }
 
+// PermanentExitsKnownTo yields every room and mutator exit of r that char
+// knows, by the name permanentExits settles on: ExitKnownTo's rule over the
+// whole set, with the room's mutators resolved once per call rather than once
+// per exit. Temporary exits are not included. An NPC choice point that loops
+// over a room's exits on its own (wandering, a walk-away, a forager's roam, a
+// planner's flee) iterates it instead of r.Exits (owner ruling 13).
+func (r *Room) PermanentExitsKnownTo(char *characters.Character) iter.Seq2[string, exit.RoomExit] {
+	return func(yield func(string, exit.RoomExit) bool) {
+		for name, ex := range r.permanentExits() {
+			if !r.exitKnown(char, name, ex) {
+				continue
+			}
+			if !yield(name, ex) {
+				return
+			}
+		}
+	}
+}
+
 // FindKnownExitTo is FindExitTo among the exits char knows (ExitKnownTo): the
 // exit of r that leads to roomId, or "" when the only way there is a secret
 // exit char has not found. A room exit a mutator exit has taken the place of
 // leads nowhere. An NPC heading for a room on its own uses it (owner ruling
 // 13).
 func (r *Room) FindKnownExitTo(char *characters.Character, roomId int) string {
-	for exitName, ex := range r.permanentExits() {
-		if ex.RoomId == roomId && r.exitKnown(char, exitName, ex) {
+	for exitName, ex := range r.PermanentExitsKnownTo(char) {
+		if ex.RoomId == roomId {
 			return exitName
 		}
 	}

@@ -243,13 +243,10 @@ func pickRandomExit(mob *mobs.Mob) string {
 		return ""
 	}
 	names := make([]string, 0, len(room.Exits))
-	for name, ex := range room.Exits {
-		// The survival planner's flee is the mob's own choice, and a mob's
-		// `flee <exit>` honours a secret exit it is named: one only once found
-		// (#781, owner ruling 13). Only a secret exit asks the rule.
-		if ex.Secret && !mob.Character.KnowsSecretExit(room.RoomId, name) {
-			continue
-		}
+	// The survival planner's flee is the mob's own choice, and a mob's
+	// `flee <exit>` honours a secret exit it is named: one only once found
+	// (#781, owner ruling 13).
+	for name := range room.PermanentExitsKnownTo(&mob.Character) {
 		names = append(names, name)
 	}
 	if len(names) == 0 {

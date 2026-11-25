@@ -41,7 +41,7 @@ func walkerWorld(t *testing.T, stamina, staminaMax int) *mobs.Mob {
 	m.Character.RoomId = 7101
 	m.Character.StaminaMax.Value = staminaMax
 	m.Character.Stamina = stamina
-	m.Path.SetPath([]mobs.PathRoom{walkerTestStep{"north", 7102}})
+	m.Path.SetPath([]mobs.PathRoom{walkerTestStep{"north", 7102}}, false)
 	events.DrainQueuedInputsForTest(7150)
 	t.Cleanup(func() { events.DrainQueuedInputsForTest(7150) })
 	return m

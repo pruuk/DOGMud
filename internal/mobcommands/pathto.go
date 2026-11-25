@@ -65,7 +65,7 @@ func Pathto(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		newPath[idx] = p
 	}
 
-	mob.Path.SetPath(newPath)
+	mob.Path.SetPath(newPath, foundOnly)
 
 	return true, nil
 }
