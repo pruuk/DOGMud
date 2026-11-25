@@ -29,8 +29,9 @@ func TestLearnSecretExitWatching(t *testing.T) {
 		}},
 	}, map[string]*rooms.ZoneConfig{}))
 	seeded := map[int]*users.UserRecord{}
-	for _, uid := range []int{full, shapes, blind, late} {
-		u := users.NewTestUser(uid, "u", "U", 0)
+	names := map[int]string{full: "Fulsight", shapes: "Shapira", blind: "Blindwell", late: "Latecomb"}
+	for uid, name := range names {
+		u := users.NewTestUser(uid, name, name, 0)
 		u.Character.RoomId = roomId
 		seeded[uid] = u
 	}
@@ -110,4 +111,43 @@ func TestRelocateMob_OnlookersLearnTheSecretExitTheySeeUsed(t *testing.T) {
 	require.True(t, watchTo.Character.KnowsSecretExit(to, "hollow"), "the player saw the mob enter from it")
 	require.True(t, seerTo.Character.KnowsSecretExit(to, "hollow"), "the NPC saw the mob enter from it")
 	require.Empty(t, mover.Character.Discoveries, "the mover's own knowledge is not this rule's")
+}
+
+// Ruling 14 needs a line to read: a sneaking mob sends no leave or arrive
+// line (ruling D1), so its onlookers on both sides learn nothing.
+func TestRelocateMob_ASneakingMoverTeachesNothing(t *testing.T) {
+	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
+	const from, to, instId, npcFrom, npcTo, wFrom, wTo = 99511, 99512, 98511, 98512, 98513, 99521, 99522
+	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{
+		from: {RoomId: from, Zone: "test", Lamp: rooms.LampPtr(60), Exits: map[string]exit.RoomExit{"crack": {RoomId: to, Secret: true}}},
+		to:   {RoomId: to, Zone: "test", Lamp: rooms.LampPtr(60), Exits: map[string]exit.RoomExit{"hollow": {RoomId: from, Secret: true}}},
+	}, map[string]*rooms.ZoneConfig{}))
+	watchFrom := users.NewTestUser(wFrom, "Wenfrom", "Wenfrom", 0)
+	watchFrom.Character.RoomId = from
+	watchTo := users.NewTestUser(wTo, "Wento", "Wento", 0)
+	watchTo.Character.RoomId = to
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{wFrom: watchFrom, wTo: watchTo}))
+	fromRoom, toRoom := rooms.LoadRoom(from), rooms.LoadRoom(to)
+	fromRoom.AddPlayer(wFrom)
+	toRoom.AddPlayer(wTo)
+	place := func(id int, r *rooms.Room) *mobs.Mob {
+		m := &mobs.Mob{InstanceId: id, Character: *characters.New()}
+		m.Character.Name = "Mob"
+		m.Character.RoomId = r.RoomId
+		mobs.SetInstanceForTest(id, m)
+		t.Cleanup(func() { mobs.SetInstanceForTest(id, nil) })
+		r.AddMob(id)
+		return m
+	}
+	mover, seerFrom, seerTo := place(instId, fromRoom), place(npcFrom, fromRoom), place(npcTo, toRoom)
+	require.Equal(t, messaging.SightFull, fromRoom.ParticipantSight(wFrom), "fixture: lit")
+	require.Equal(t, messaging.SightFull, toRoom.ParticipantSight(wTo), "fixture: lit")
+
+	RelocateMob(mover, fromRoom, "crack", toRoom, true)
+
+	require.Equal(t, to, mover.Character.RoomId, "fixture: the mob moved")
+	require.False(t, watchFrom.Character.KnowsSecretExit(from, "crack"))
+	require.False(t, seerFrom.Character.KnowsSecretExit(from, "crack"))
+	require.False(t, watchTo.Character.KnowsSecretExit(to, "hollow"))
+	require.False(t, seerTo.Character.KnowsSecretExit(to, "hollow"))
 }

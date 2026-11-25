@@ -3,6 +3,7 @@ package rooms
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"slices"
 	"strconv"
 	"strings"
@@ -438,6 +439,52 @@ func (r *Room) MobVisualSnapshot() MobVisualSnapshot {
 	return snap
 }
 
+// SnapshotReaders yields each player who is in the room now AND was in snap,
+// with the decision snap recorded for them, skipping excludeUserIds. A
+// player who has left since, or arrived since, was not there to see the
+// moment snap records. It is the one reader filter of the ToSnapshot senders
+// and of actions.LearnSecretExitWatching.
+func (r *Room) SnapshotReaders(snap VisualSnapshot, excludeUserIds ...int) iter.Seq2[*users.UserRecord, messaging.SightDecision] {
+	return func(yield func(*users.UserRecord, messaging.SightDecision) bool) {
+		for _, uid := range r.GetPlayers() {
+			if excluded(uid, excludeUserIds) {
+				continue
+			}
+			decision, ok := snap[uid]
+			if !ok {
+				continue
+			}
+			u := users.GetByUserId(uid)
+			if u == nil {
+				continue
+			}
+			if !yield(u, decision) {
+				return
+			}
+		}
+	}
+}
+
+// MobSnapshotReaders is SnapshotReaders for the NPCs: each mob in the room
+// now AND in snap, with the decision snap recorded for it.
+func (r *Room) MobSnapshotReaders(snap MobVisualSnapshot) iter.Seq2[*mobs.Mob, messaging.SightDecision] {
+	return func(yield func(*mobs.Mob, messaging.SightDecision) bool) {
+		for _, miid := range r.GetMobs() {
+			decision, ok := snap[miid]
+			if !ok {
+				continue
+			}
+			m := mobs.GetInstance(miid)
+			if m == nil {
+				continue
+			}
+			if !yield(m, decision) {
+				return
+			}
+		}
+	}
+}
+
 // SendTextVisualToSnapshot delivers a sight-gated line to exactly the players
 // who are in the room now AND were in snap, each judged at the decision snap
 // recorded for them rather than at the room as it is now (the owner rule on
@@ -446,18 +493,7 @@ func (r *Room) MobVisualSnapshot() MobVisualSnapshot {
 // describes. names are hidden from a player recorded at SightShapes, as
 // SendTextVisualHidingNames does.
 func (r *Room) SendTextVisualToSnapshot(snap VisualSnapshot, cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
-	for _, uid := range r.GetPlayers() {
-		if excluded(uid, excludeUserIds) {
-			continue
-		}
-		decision, ok := snap[uid]
-		if !ok {
-			continue
-		}
-		u := users.GetByUserId(uid)
-		if u == nil {
-			continue
-		}
+	for u, decision := range r.SnapshotReaders(snap, excludeUserIds...) {
 		deliverVisual(u, decision, cat, txt, names, false)
 	}
 }
@@ -533,18 +569,7 @@ func (r *Room) SendTextVisualWithAudio(cat messaging.Category, visualTxt string,
 // judged by the room before they left with it. Take the snapshot before the
 // move, move, then send.
 func (r *Room) SendTextVisualWithAudioToSnapshot(snap VisualSnapshot, cat messaging.Category, visualTxt string, audioTxt string, excludeUserIds ...int) {
-	for _, uid := range r.GetPlayers() {
-		if excluded(uid, excludeUserIds) {
-			continue
-		}
-		decision, ok := snap[uid]
-		if !ok {
-			continue
-		}
-		u := users.GetByUserId(uid)
-		if u == nil {
-			continue
-		}
+	for u, decision := range r.SnapshotReaders(snap, excludeUserIds...) {
 		deliverVisualElseAudio(u, decision, cat, visualTxt, audioTxt)
 	}
 }

@@ -98,8 +98,13 @@ func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.R
 	// on their own way out, so the exit line is judged by the room before
 	// the move. The entry line keeps being judged after it.
 	departSnap := from.VisualSnapshot()
-	// The NPCs' view at the same moment, for ruling 14 below.
-	departNPCs := from.MobVisualSnapshot()
+	// The NPCs' view at the same moment, for ruling 14 below, taken only
+	// when the leave line will be sent and names a secret exit: it costs
+	// light composition per occupant on the mob-wander path.
+	var departNPCs rooms.MobVisualSnapshot
+	if !sneaking && from.IsSecretExit(exitName) {
+		departNPCs = from.MobVisualSnapshot()
+	}
 
 	// #512: a mob's own move stops its craft or salvage, as a player's does,
 	// and before it leaves, so the stop is told to the room it is leaving.
@@ -117,17 +122,17 @@ func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.R
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> leaves %s.`, mob.Character.Name, exit.DeparturePhrase(exitName)),
 			),
 			`You hear footsteps moving away.`)
+		// #781 ruling 14: an onlooker who read the line learns the secret
+		// exit it names, judged as the line was.
+		LearnSecretExitWatching(from, exitName, &mob.Character, departSnap, departNPCs)
 
 		dest.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
 			fmt.Sprintf(string(c.EnterRoomMessageWrapper),
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> %s.`, mob.Character.Name, enterPhrase),
 			),
 			`You hear footsteps approaching.`)
-
-		// #781 ruling 14: an onlooker who read either line learns the
-		// secret exit it names, judged as that line was.
-		LearnSecretExitWatching(from, exitName, &mob.Character, departSnap, departNPCs)
-		LearnSecretExitWatching(dest, backExit, &mob.Character, dest.VisualSnapshot(), dest.MobVisualSnapshot())
+		// Ruling 14 for the arrive line: the exit here leading back.
+		LearnSecretExitWatchingNow(dest, backExit, &mob.Character)
 
 		dest.SendTextToExits(`You hear someone moving around.`, true, from.GetPlayers(rooms.FindAll)...)
 	}

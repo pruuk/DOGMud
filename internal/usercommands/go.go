@@ -259,8 +259,13 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		// by the room before the move. Arrivals keep being judged after it.
 		departSnap := room.VisualSnapshot()
 		// The NPCs' view at the same moment: an onlooker who sees the leave
-		// line learns a secret exit it names (#781, ruling 14).
-		departNPCs := room.MobVisualSnapshot()
+		// line learns a secret exit it names (#781, ruling 14). Taken only
+		// when that line will be sent and the exit is secret, since it costs
+		// light composition per occupant.
+		var departNPCs rooms.MobVisualSnapshot
+		if !isSneaking && room.IsSecretExit(exitName) {
+			departNPCs = room.MobVisualSnapshot()
+		}
 
 		if err := rooms.MoveToRoom(user.UserId, destRoom.RoomId); err != nil {
 			// An instance not opened for the player is an ordinary refusal
@@ -323,17 +328,22 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				// secret exit it names, judged as the line was.
 				actions.LearnSecretExitWatching(room, exitName, user.Character, departSnap, departNPCs)
 
+				// The arrive line is judged by the room as it is now; one
+				// snapshot of it serves both the line and ruling 14 below, so
+				// the two cannot judge a reader differently.
+				arriveSnap := destRoom.VisualSnapshot()
+
 				// Tell everyone if the pet is following
 				if user.Character.Pet.Exists() {
 
 					user.SendText(messaging.CategoryRoomExit, fmt.Sprintf(`%s follows you.`, user.Character.Pet.DisplayName()))
 
-					// SendTextVisualWithAudio, not SendText: the named line is
+					// A visual-with-audio sender, not SendText: the named line is
 					// pure sight and used to reach a player in a pitch dark
 					// cave complete with a compass direction. The room EXIT
 					// lines above were already sight-gated, so entry and exit
 					// disagreed about the same event.
-					destRoom.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
+					destRoom.SendTextVisualWithAudioToSnapshot(arriveSnap, messaging.CategoryRoomEntry,
 						fmt.Sprintf(string(c.EnterRoomMessageWrapper),
 							fmt.Sprintf(`<ansi fg="username">%s</ansi> and %s %s.`, user.Character.Name, user.Character.Pet.DisplayName(), exit.EntryPhrase(enterFromExit, true)),
 						),
@@ -343,7 +353,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				} else {
 
 					// Tell the new room they have arrived
-					destRoom.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
+					destRoom.SendTextVisualWithAudioToSnapshot(arriveSnap, messaging.CategoryRoomEntry,
 						fmt.Sprintf(string(c.EnterRoomMessageWrapper),
 							fmt.Sprintf(`<ansi fg="username">%s</ansi> %s.`, user.Character.Name, exit.EntryPhrase(enterFromExit, false)),
 						),
@@ -353,8 +363,11 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				}
 				// #781 ruling 14: whoever read the arrive line learns the
 				// secret exit it names, the one here leading back ("arrives"
-				// names none). Judged as the line was, by the room now.
-				actions.LearnSecretExitWatching(destRoom, enterFromExit, user.Character, destRoom.VisualSnapshot(), destRoom.MobVisualSnapshot())
+				// names none). Players are judged by arriveSnap, as the line
+				// was; the NPCs' view is taken only for a secret exit.
+				if destRoom.IsSecretExit(enterFromExit) {
+					actions.LearnSecretExitWatching(destRoom, enterFromExit, user.Character, arriveSnap, destRoom.MobVisualSnapshot())
+				}
 
 				destRoom.SendTextToExits(`You hear someone moving around.`, true, room.GetPlayers(rooms.FindAll)...)
 			}

@@ -5,9 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // LearnSecretExitFollowing records that c, moving through exitName of room
@@ -39,40 +37,44 @@ func LearnSecretExitFollowing(c *characters.Character, room *rooms.Room, exitNam
 //
 // Who saw it is the decision the line itself was delivered at, never a
 // second sight rule: players is the VisualSnapshot the line was sent
-// against (room.VisualSnapshot() at the send, for a line judged by the room
-// as it is now), npcs the MobVisualSnapshot taken at the same moment. An
-// onlooker learns at SightFull and at SightShapes (a shapes-only reader's
-// line still names the exit: only names become "a figure"); one at
-// SightNone read the sound line, or nothing, and learns nothing. Like the
-// line, it reaches only those in room now AND in the snapshot. mover is
-// skipped: this rule changes nothing about what the mover knows. An NPC
-// onlooker records on its own instance, as search does.
+// against, npcs the MobVisualSnapshot taken at the same moment. An onlooker
+// learns at SightFull and at SightShapes (a shapes-only reader's line still
+// names the exit: only names become "a figure"); one at SightNone read the
+// sound line, or nothing, and learns nothing. Like the line, it reaches only
+// those in room now AND in the snapshot (Room.SnapshotReaders and its mob
+// twin). mover is skipped: this rule changes nothing about what the mover
+// knows. An NPC onlooker records on its own instance, as search does.
+//
+// The snapshots cost light composition per occupant, so a caller on a
+// movement path takes the NPC one only when Room.IsSecretExit says it will
+// be read. A line sent live (judged by the room as it is now) uses
+// LearnSecretExitWatchingNow instead.
 func LearnSecretExitWatching(room *rooms.Room, exitName string, mover *characters.Character, players rooms.VisualSnapshot, npcs rooms.MobVisualSnapshot) {
-	if room == nil {
+	if room == nil || !room.IsSecretExit(exitName) {
 		return
 	}
-	if ex, ok := room.GetExitInfo(exitName); !ok || !ex.Secret {
-		return
-	}
-	saw := func(d messaging.SightDecision) bool { return d != messaging.SightNone }
-	for _, uid := range room.GetPlayers() {
-		d, ok := players[uid]
-		if !ok || !saw(d) {
-			continue
-		}
-		if u := users.GetByUserId(uid); u != nil && u.Character != mover {
+	for u, d := range room.SnapshotReaders(players) {
+		if d != messaging.SightNone && u.Character != mover {
 			u.Character.LearnSecretExit(room.RoomId, exitName)
 		}
 	}
-	for _, miid := range room.GetMobs() {
-		d, ok := npcs[miid]
-		if !ok || !saw(d) {
-			continue
-		}
-		if m := mobs.GetInstance(miid); m != nil && &m.Character != mover {
+	for m, d := range room.MobSnapshotReaders(npcs) {
+		if d != messaging.SightNone && &m.Character != mover {
 			m.Character.LearnSecretExit(room.RoomId, exitName)
 		}
 	}
+}
+
+// LearnSecretExitWatchingNow is LearnSecretExitWatching for a line sent live,
+// judged by the room as it is now (SendTextVisualWithAudio,
+// SendTextVisualHidingNames): call it right after the send. It asks whether
+// the exit is secret first and only then takes both snapshots, so an
+// ordinary step pays nothing for ruling 14.
+func LearnSecretExitWatchingNow(room *rooms.Room, exitName string, mover *characters.Character) {
+	if room == nil || !room.IsSecretExit(exitName) {
+		return
+	}
+	LearnSecretExitWatching(room, exitName, mover, room.VisualSnapshot(), room.MobVisualSnapshot())
 }
 
 // NPCMayFollowThrough reports whether the NPC c, stepping behind its leader

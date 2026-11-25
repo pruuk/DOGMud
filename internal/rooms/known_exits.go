@@ -162,6 +162,15 @@ func (r *Room) permanentExits() map[string]exit.RoomExit {
 	return all
 }
 
+// IsSecretExit reports whether exitName is a secret room or mutator exit of r
+// (GetExitInfo, so a mutator's exit takes the place of the room's). No such
+// exit, or a temporary one: false. A caller asks it before paying for a
+// snapshot only a secret exit needs (actions.LearnSecretExitWatching).
+func (r *Room) IsSecretExit(exitName string) bool {
+	ex, ok := r.GetExitInfo(exitName)
+	return ok && ex.Secret
+}
+
 // ExitKnownTo reports whether char knows the exit exitName of r: any
 // temporary exit, any room or mutator exit that is not secret, and a secret
 // one once found (Character.KnowsSecretExit). No such exit: false. NPC choice

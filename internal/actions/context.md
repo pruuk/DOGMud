@@ -391,8 +391,9 @@ wrappers that render the outcome.
   line is judged by `from` before the move (`Room.VisualSnapshot`, then
   `SendTextVisualWithAudioToSnapshot`), so a mob is seen leaving by the light
   it carries out with it (#456); the entry line is judged after the move.
-  Beside each line `LearnSecretExitWatching` teaches its onlookers the secret
-  exit it names (#781 ruling 14).
+  Beside each line `LearnSecretExitWatching` (leave) and
+  `LearnSecretExitWatchingNow` (arrive) teach its onlookers the secret exit
+  it names (#781 ruling 14).
 - **`ClearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int)`**
   moved here from the (still unexported at the call site) `mobcommands`
   version; retargets or releases players and mobs in `room` that were
@@ -457,10 +458,18 @@ shadowing is following):
   so learning follows the line's own per-reader decision with no second sight
   rule: `SightFull` and `SightShapes` learn (a shapes-only line still names
   the exit), `SightNone` does not, and only readers in the room now and in the
-  snapshot count. The mover is skipped. Called beside the leave and arrive
-  lines of `usercommands.Go` and `RelocateMob` (the arrive line's exit is the
-  one leading back, `""` for "arrives", which teaches nothing) and beside the
-  flee line of `hooks.handlePlayerFlee`.
+  snapshot count (`Room.SnapshotReaders`, `Room.MobSnapshotReaders`). The
+  mover is skipped. Called beside the leave lines of `usercommands.Go` and
+  `RelocateMob` and the arrive line of `usercommands.Go` (the arrive line's
+  exit is the one leading back, `""` for "arrives", which teaches nothing).
+  The snapshots cost light composition per occupant, so those callers take
+  the NPC one only when `Room.IsSecretExit` says it will be read and the line
+  is sent (not sneaking).
+- `LearnSecretExitWatchingNow(room, exitName, mover)`: the same for a line
+  sent live (judged by the room as it is now). It asks `Room.IsSecretExit`
+  first and only then takes both snapshots, so an ordinary step pays nothing.
+  Called after `RelocateMob`'s arrive line and `hooks.handlePlayerFlee`'s
+  flee line.
 
 **Cost:**
 

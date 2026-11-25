@@ -26,7 +26,11 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   it to act on what an NPC onlooker saw, #781 ruling 14);
   `SendTextVisualToSnapshot(snap, cat, txt, names, excludeUserIds...)`
   delivers a line to exactly the players in the room now who were in the
-  snapshot, each at their recorded decision, names hidden at shapes. Owner
+  snapshot, each at their recorded decision, names hidden at shapes. That
+  reader filter is `SnapshotReaders(snap, excludeUserIds...)`, an
+  `iter.Seq2` of user and decision, with `MobSnapshotReaders(snap)` its NPC
+  twin; both ToSnapshot senders and `actions.LearnSecretExitWatching` range
+  over it. Owner
   rule (2026-10-05): a line announcing a change to the room's light lands
   with the state everyone was in BEFORE the change, so take the snapshot
   first, make the change, then send. Its sound twin,
@@ -961,6 +965,10 @@ once `char.KnowsSecretExit` (ruling 1). Each `KnownExit` carries `Name`,
 3), `RoomId` and the `Exit` or `Temp` record. At no sight it is `Dark` and
 empty. Order: north, east, south, west, up, down, the diagonals clockwise
 from northeast, then A to Z.
+
+`IsSecretExit(name)` reports whether a room or mutator exit is secret
+(`GetExitInfo`); a caller asks it before paying for work only a secret exit
+needs (the ruling 14 snapshots).
 
 The filters on the same rule: `ExitKnownTo(char, name)`,
 `FindKnownExitByName(char, search)` (every player path that names an exit;

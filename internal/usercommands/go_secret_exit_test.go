@@ -330,6 +330,37 @@ func TestGo_OnlookersInTheDarkLearnNothing(t *testing.T) {
 	})
 }
 
+// Ruling 14 needs a line to read: a sneaking mover sends no leave or arrive
+// line, so Bobrick, left behind, and the skeleton waiting in room 2 learn
+// nothing about the secret exits on either side.
+func TestGo_ASneakingMoverTeachesNothing(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	user, room := getTestUserAndRoom(t)
+	secretExit(t, room, "north")
+	user.Character.LearnSecretExit(1, "north")
+	watcher, skeleton := users.GetByUserId(2), mobs.GetInstance(100)
+	room2 := rooms.LoadRoom(2)
+	lamp := room2.Lamp
+	room2.Lamp = rooms.LampPtr(60)
+	t.Cleanup(func() { room2.Lamp = lamp })
+	secretExit(t, room2, "south")
+	room.RemoveMob(100)
+	skeleton.Character.RoomId = 2
+	room2.AddMob(100)
+	user.Character.SetMiscData(`sneaking`, true)
+	t.Cleanup(func() { user.Character.SetMiscData(`sneaking`, nil) })
+	events.DrainQueuedMessagesForTest(2)
+
+	handled, err := Go("north", user, room, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+	require.Equal(t, 2, user.Character.RoomId, "fixture: the move happened")
+	require.NotContains(t, drainedText(watcher), "leaves", "premise: no leave line for a sneak")
+	require.False(t, watcher.Character.KnowsSecretExit(1, "north"))
+	require.False(t, skeleton.Character.KnowsSecretExit(2, "south"))
+}
+
 // Ruling 14 touches secret exits only: watching someone use an ordinary exit
 // records nothing.
 func TestGo_WatchingAnOrdinaryExitRecordsNothing(t *testing.T) {
