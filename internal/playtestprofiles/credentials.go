@@ -1,17 +1,16 @@
 package playtestprofiles
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 const (
 	usernameMaxAttempts = 8
-	passwordHexLen      = 12
+	passwordHexLen      = 12 // hex digits; util.RandomHex takes bytes, half this
 )
 
 // GenerateCredentials creates a unique username and plaintext password, hashes
@@ -25,11 +24,7 @@ func GenerateCredentials(u *users.UserRecord, profileID string) (username, passw
 	// with underscores substituted for the separators.
 	base := "pt_" + sanitizeProfileToken(profileID)
 	for range usernameMaxAttempts {
-		suffix, genErr := randomHex(3)
-		if genErr != nil {
-			return "", "", genErr
-		}
-		candidate := base + "_" + suffix
+		candidate := base + "_" + util.RandomHex(3)
 		// BannedNames is a policy on names a player chooses (shipped config
 		// bans "*admin*"), and login of an existing account never re-checks
 		// it. The harness picks this name itself, so skipping the banned
@@ -52,10 +47,7 @@ func GenerateCredentials(u *users.UserRecord, profileID string) (username, passw
 	if username == "" {
 		return "", "", fmt.Errorf("playtestprofiles: could not allocate unique username for %q", profileID)
 	}
-	password, err = randomPassword()
-	if err != nil {
-		return "", "", err
-	}
+	password = util.RandomHex(passwordHexLen / 2)
 	u.Username = username
 	if err := u.SetPassword(password); err != nil {
 		return "", "", fmt.Errorf("playtestprofiles: set password: %w", err)
@@ -78,23 +70,4 @@ func sanitizeProfileToken(profileID string) string {
 		return "profile"
 	}
 	return out
-}
-
-func randomHex(nBytes int) (string, error) {
-	buf := make([]byte, nBytes)
-	if _, err := rand.Read(buf); err != nil {
-		return "", fmt.Errorf("playtestprofiles: random: %w", err)
-	}
-	return hex.EncodeToString(buf), nil
-}
-
-func randomPassword() (string, error) {
-	raw, err := randomHex(passwordHexLen / 2)
-	if err != nil {
-		return "", err
-	}
-	if len(raw) > 16 {
-		raw = raw[:16]
-	}
-	return raw, nil
 }

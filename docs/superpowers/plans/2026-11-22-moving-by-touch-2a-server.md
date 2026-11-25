@@ -2990,12 +2990,17 @@ func TestMovementIds_PerRoomIdsAreStableThenStale(t *testing.T) {
 	if _, ok := Resolve(1, 5, first["portal"]); ok {
 		t.Error("the portal is gone, its id must be stale")
 	}
-	MovementIds(1, &rooms.Room{RoomId: 6}, list("south"))
+	inSix := MovementIds(1, &rooms.Room{RoomId: 6}, list("south", "out"))
 	if _, ok := Resolve(1, 5, first["northeast"]); ok {
-		t.Error("after moving, an old per-room id must be stale")
+		t.Error("moving must replace the whole set: an old per-room id must be stale")
 	}
 	if _, ok := Resolve(1, 6, first["northeast"]); ok {
-		t.Error("an old per-room id must not resolve in the new room")
+		t.Error("moving must replace the whole set: an old per-room id must not resolve in the new room")
+	}
+	// Ids issued for room 6 while the player stands in room 5 (a press that
+	// lands after a move but before the next Room.Info) are stale.
+	if _, ok := Resolve(1, 5, inSix["out"]); ok {
+		t.Error("an id issued for room 6 must not resolve while the player stands in room 5")
 	}
 }
 
@@ -3023,6 +3028,18 @@ func TestMovementIds_TwoPlayersGetDifferentIds(t *testing.T) {
 	b := MovementIds(2, &rooms.Room{RoomId: 5}, list("northeast"))
 	if a["northeast"] == b["northeast"] {
 		t.Fatalf("two players got the same per-room id %q", a["northeast"])
+	}
+}
+
+// A nil room issues nothing and keeps the ids already held.
+func TestMovementIds_NilRoomIssuesNothing(t *testing.T) {
+	t.Cleanup(func() { Forget(1) })
+	held := MovementIds(1, &rooms.Room{RoomId: 5}, list("northeast"))
+	if got := MovementIds(1, nil, list("north", "northeast")); len(got) != 0 {
+		t.Fatalf("a nil room issued %v", got)
+	}
+	if line, ok := Resolve(1, 5, held["northeast"]); !ok || line != "go northeast" {
+		t.Fatalf("a nil room changed the ids held: %q %v", line, ok)
 	}
 }
 
@@ -3127,12 +3144,11 @@ Expected: FAIL, `no Go files in ...internal/buttons` / `undefined: StaleButtonLi
 package buttons
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"maps"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // fixedIds are the T directions' ids (owner ruling 8). They are the same in
@@ -3174,9 +3190,13 @@ var (
 // per-room id. Per-room ids are issued here, replacing the player's last set:
 // an exit that is still known in the same room keeps its id, so a resend does
 // not make a tap stale. In the dark known lists no exits, so no per-room id
-// survives (the fixed ids come from FixedIds).
+// survives (the fixed ids come from FixedIds). A nil room issues nothing and
+// leaves the ids held as they were.
 func MovementIds(userId int, room *rooms.Room, known rooms.KnownExitList) map[string]string {
 	ids := map[string]string{}
+	if room == nil {
+		return ids
+	}
 	others := []string{}
 	for _, ke := range known.Exits {
 		if _, dup := ids[ke.Name]; dup {
@@ -3214,12 +3234,11 @@ func issue(userId, roomId int, names []string) map[string]string {
 	return maps.Clone(next.byName)
 }
 
-// newId is an opaque per-room id: "x" and eight random hex digits. It encodes
-// no room, destination or exit.
+// newId is an opaque per-room id: "x" and eight random hex digits from
+// crypto/rand. It encodes no room, destination or exit. (Built: util.RandomHex
+// is the lock seed's helper, exported rather than copied.)
 func newId() string {
-	b := make([]byte, 4)
-	_, _ = rand.Read(b) // crypto/rand.Read never fails (Go 1.24+)
-	return `x` + hex.EncodeToString(b)
+	return `x` + util.RandomHex(4)
 }
 
 // Resolve turns a pressed id into the line the player would have typed: a
@@ -3393,7 +3412,7 @@ Expected: `ok`.
 
 - [ ] **Step 8: Prove the tests can fail**
 
-In `issue`, delete the `if prev != nil && prev.roomId == roomId { id = prev.byName[name] }` lines: `TestMovementIds_PerRoomIdsAreStableThenStale` FAILS ("a resend in the same room changed the ids"). Restore. In `Resolve` delete `|| is.roomId != roomId`: the same test FAILS on "after moving". Restore. In `DarkMarks` change `if !dark || dm.roomId != roomId {` to `if dm.roomId != roomId {`: `TestDarkMarks` FAILS ("a lit room shows"). Restore; PASS.
+In `issue`, delete the `if prev != nil && prev.roomId == roomId { id = prev.byName[name] }` lines: `TestMovementIds_PerRoomIdsAreStableThenStale` FAILS ("a resend in the same room changed the ids"). Restore. In `Resolve` delete `|| is.roomId != roomId`: the same test FAILS on "an id issued for room 6 must not resolve while the player stands in room 5" (the "whole set" checks stay green, because `issue` replaces the set on a move; only a press that lands after a move but before the next `Room.Info` reaches the room check). Restore. In `MovementIds` disable the `room == nil` return: `TestMovementIds_NilRoomIssuesNothing` FAILS (nil pointer). Restore. In `DarkMarks` change `if !dark || dm.roomId != roomId {` to `if dm.roomId != roomId {`: `TestDarkMarks` FAILS ("a lit room shows"). Restore; PASS.
 
 - [ ] **Step 9: Write `internal/buttons/context.md` and update the others**
 

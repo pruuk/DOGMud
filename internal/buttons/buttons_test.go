@@ -62,13 +62,13 @@ func TestMovementIds_PerRoomIdsAreStableThenStale(t *testing.T) {
 	}
 	inSix := MovementIds(1, &rooms.Room{RoomId: 6}, list("south", "out"))
 	if _, ok := Resolve(1, 5, first["northeast"]); ok {
-		t.Error("after moving, an old per-room id must be stale")
+		t.Error("moving must replace the whole set: an old per-room id must be stale")
 	}
 	if _, ok := Resolve(1, 6, first["northeast"]); ok {
-		t.Error("an old per-room id must not resolve in the new room")
+		t.Error("moving must replace the whole set: an old per-room id must not resolve in the new room")
 	}
-	// A press that lands after a move but before the next Room.Info: the ids
-	// held were issued for the room just left, so they are stale here.
+	// Ids issued for room 6 while the player stands in room 5 (a press that
+	// lands after a move but before the next Room.Info) are stale.
 	if _, ok := Resolve(1, 5, inSix["out"]); ok {
 		t.Error("an id issued for room 6 must not resolve while the player stands in room 5")
 	}
@@ -98,6 +98,18 @@ func TestMovementIds_TwoPlayersGetDifferentIds(t *testing.T) {
 	b := MovementIds(2, &rooms.Room{RoomId: 5}, list("northeast"))
 	if a["northeast"] == b["northeast"] {
 		t.Fatalf("two players got the same per-room id %q", a["northeast"])
+	}
+}
+
+// A nil room issues nothing and keeps the ids already held.
+func TestMovementIds_NilRoomIssuesNothing(t *testing.T) {
+	t.Cleanup(func() { Forget(1) })
+	held := MovementIds(1, &rooms.Room{RoomId: 5}, list("northeast"))
+	if got := MovementIds(1, nil, list("north", "northeast")); len(got) != 0 {
+		t.Fatalf("a nil room issued %v", got)
+	}
+	if line, ok := Resolve(1, 5, held["northeast"]); !ok || line != "go northeast" {
+		t.Fatalf("a nil room changed the ids held: %q %v", line, ok)
 	}
 }
 

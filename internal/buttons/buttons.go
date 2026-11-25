@@ -56,9 +56,13 @@ var (
 // per-room id. Per-room ids are issued here, replacing the player's last set:
 // an exit that is still known in the same room keeps its id, so a resend does
 // not make a tap stale. In the dark known lists no exits, so no per-room id
-// survives (the fixed ids come from FixedIds).
+// survives (the fixed ids come from FixedIds). A nil room issues nothing and
+// leaves the ids held as they were.
 func MovementIds(userId int, room *rooms.Room, known rooms.KnownExitList) map[string]string {
 	ids := map[string]string{}
+	if room == nil {
+		return ids
+	}
 	others := []string{}
 	for _, ke := range known.Exits {
 		if _, dup := ids[ke.Name]; dup {

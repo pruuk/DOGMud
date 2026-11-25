@@ -233,9 +233,10 @@ func RandomHex(n int) string
 ```
 
 `RandomHex(n)` is `n` bytes from `crypto/rand` as hex, panicking if the
-system has no randomness. It makes the lock seed and boot id, and the touch
-buttons' per-room ids (`internal/buttons`); reach for it before writing
-another random-hex helper.
+system has no randomness. It makes the lock seed and boot id, the touch
+buttons' per-room ids (`internal/buttons`) and the playtest harness's
+usernames and passwords (`internal/playtestprofiles`); reach for it before
+writing another random-hex helper.
 
 ## Display helpers
 

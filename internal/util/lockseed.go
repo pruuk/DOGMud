@@ -25,7 +25,8 @@ var (
 )
 
 // RandomHex returns n bytes from crypto/rand as 2n hex digits: the lock seed
-// and boot id here, and the touch buttons' per-room ids (internal/buttons).
+// and boot id here, the touch buttons' per-room ids (internal/buttons) and
+// the playtest harness's credentials (internal/playtestprofiles).
 // It panics if the system has no randomness, since a guessable secret would
 // defeat the point.
 func RandomHex(n int) string {
