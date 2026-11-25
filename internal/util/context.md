@@ -229,7 +229,13 @@ it is in the shipped config and drives the zodiac calendar (guarded in
 func LockSequence(lockIdentifier string, difficulty int, rotation uint64) string
 func BootID() string
 func RebootLocksForTest() (restore func())
+func RandomHex(n int) string
 ```
+
+`RandomHex(n)` is `n` bytes from `crypto/rand` as hex, panicking if the
+system has no randomness. It makes the lock seed and boot id, and the touch
+buttons' per-room ids (`internal/buttons`); reach for it before writing
+another random-hex helper.
 
 ## Display helpers
 

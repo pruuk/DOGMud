@@ -17,19 +17,21 @@ var (
 	// lockSeedMu guards lockSeed and bootID.
 	lockSeedMu sync.RWMutex
 	// lockSeed is this process's secret lock seed.
-	lockSeed = randomHex(32)
+	lockSeed = RandomHex(32)
 	// bootID names this process's lock seed without revealing it. A
 	// character's keyring records it beside the solutions it learned, so a
 	// later process can tell they are stale (characters.DropStaleLockSolutions).
-	bootID = randomHex(8)
+	bootID = RandomHex(8)
 )
 
-// randomHex returns n random bytes as hex. It panics if the system has no
-// randomness, since a guessable lock seed would defeat the point.
-func randomHex(n int) string {
+// RandomHex returns n bytes from crypto/rand as 2n hex digits: the lock seed
+// and boot id here, and the touch buttons' per-room ids (internal/buttons).
+// It panics if the system has no randomness, since a guessable secret would
+// defeat the point.
+func RandomHex(n int) string {
 	b := make([]byte, n)
 	if _, err := rand.Read(b); err != nil {
-		panic("util: no system randomness for the lock seed: " + err.Error())
+		panic("util: no system randomness: " + err.Error())
 	}
 	return hex.EncodeToString(b)
 }
@@ -57,7 +59,7 @@ func BootID() string {
 func RebootLocksForTest() (restore func()) {
 	lockSeedMu.Lock()
 	oldSeed, oldBoot := lockSeed, bootID
-	lockSeed, bootID = randomHex(32), randomHex(8)
+	lockSeed, bootID = RandomHex(32), RandomHex(8)
 	lockSeedMu.Unlock()
 	return func() {
 		lockSeedMu.Lock()

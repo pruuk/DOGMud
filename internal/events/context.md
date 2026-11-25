@@ -300,6 +300,16 @@ Test helper (same file): `DrainQueuedNpcMarkersChangedForTest(userId)` removes
 and returns the queued events for one user (0 for all) and frees their unique
 slots, as `ProcessEvents` does, so a later refresh queues again.
 
+### Movement Buttons Event (#781)
+
+`roomexits.go` holds `RoomExitsChanged{UserId}`: what a player's movement
+buttons show may have changed outside the once-a-round `Room.Info` check (a
+dark mark was recorded, `internal/buttons`). `modules/gmcp` re-sends
+`Room.Info`. It is a unique event (`UniqueID` is
+`RoomExitsChanged-<userId>`), so refreshes for one player merge.
+`DrainQueuedRoomExitsChangedForTest(userId)` (same file) is the test drain,
+shaped like `DrainQueuedNpcMarkersChangedForTest`.
+
 ### Talk Next-Offer Event (#375 phase 2)
 
 `TalkNextOffer{UserId, MobInstanceId, FinalToken}` (`eventtypes.go`) brings the

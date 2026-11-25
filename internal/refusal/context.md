@@ -99,6 +99,7 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `RemainsHoldLootLine` (no send) | Those remains still hold spoils. Clear the loot from them first, then raise what's left. |
 | `RemainsTooFaintLine` (no send) | Those remains are too faint to hold a bound spirit. |
 | `RemainsAlreadyRaisedLine` (no send) | Those remains were already animated once; there is nothing left to raise. |
+| `StaleButton(u)` / `StaleButtonLine` (`button.go`, #781) | That button was out of date. Try again. (a touch button id not issued to this player for this room; `modules/gmcp` re-sends `Room.Info` with it) |
 | `Failed(u, "", err)` / `FailedText` | That didn't work. The error has been logged. |
 | `Failed(u, "salvage", err)` | That salvage didn't work. The error has been logged. |
 
