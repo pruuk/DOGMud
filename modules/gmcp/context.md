@@ -495,8 +495,9 @@ nothing. `events.RoomExitsChanged` (a dark mark, or a secret exit newly
 found) sends `Room.Info` at once (`roomExitsChangedHandler`). On a find
 (`SecretExitFound`) it also queues `GMCPZoneUpdate`, so `Zone.Map` goes out
 through its one sender (`GMCPZoneModule.buildAndSend`): the web client gets a
-partial map of the changed room only (the #650 diff), a telnet GMCP client
-the whole map as on every update. A dark mark sends no `Zone.Map`. Tests in
+partial map (the #650 diff), normally the changed room alone, or the full map
+when it is the first map or follows a resync; a telnet GMCP client gets the
+whole map as on every update. A dark mark sends no `Zone.Map`. Tests in
 `gmcp.SecretExitFound_test.go`, which also checks that the exits line,
 `Room.Info` and `Zone.Map` agree on one find. `roomChangeHandler` clears the mover's dark marks
 (`buttons.ClearDarkMarks`, ruling 4); `despawnHandler` forgets the player's
@@ -735,6 +736,17 @@ Completed tabs; `done` rows are the Completed tab and carry a name only.
   `zoneResyncHandler` on MainWorker resolves the user, deletes its `zoneSent`
   entry and queues `GMCPZoneUpdate`, so the next map is full. A connection
   with no logged-in user is ignored.
+- **`GMCPZoneUpdate` is unique per user** (`UniqueID` is
+  `GMCPZoneUpdate-<userId>`), so requests queued for one player in one tick
+  merge into one snapshot build and one send (a secret exit found while
+  following, plus the move). Keeping only the first loses nothing: every
+  producer (`roomChangeHandler`, `sightBandChangedHandler`,
+  `zoneResyncHandler`, `roomExitsChangedHandler`) carries only the user id,
+  and `buildAndSend` reads the player's room, visited rooms, found exits and
+  party when it runs. A resync that merges into a request already queued
+  still gets a full map, because that request runs after the resync deleted
+  `zoneSent`. The builder's `sendZoneMapFull` sends its own `GMCPOut` and
+  never goes through `GMCPZoneUpdate`.
 - **Emit only on change where you can.** These push on room change and round
   boundaries; adding an unconditional per-round emit to a large payload is a
   bandwidth regression that will not show up in a local test.

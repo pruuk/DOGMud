@@ -2,6 +2,7 @@ package gmcp
 
 import (
 	"sort"
+	"strconv"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -31,6 +32,16 @@ type GMCPZoneUpdate struct {
 }
 
 func (g GMCPZoneUpdate) Type() string { return `GMCPZoneUpdate` }
+
+// UniqueID merges the requests queued for one player before the queue runs
+// (a find while following plus the move, say), so the snapshot is built once
+// and a telnet GMCP client is not sent two whole maps. Nothing is lost:
+// every producer (a room change, a sight change, a resync, a secret exit
+// found) carries only the user id, and buildAndSend reads the player's room,
+// visited rooms, found exits and party when it runs, not when it was queued.
+func (g GMCPZoneUpdate) UniqueID() string {
+	return `GMCPZoneUpdate-` + strconv.Itoa(g.UserId)
+}
 
 type GMCPZoneModule_Payload struct {
 	Zone     string                `json:"zone"`

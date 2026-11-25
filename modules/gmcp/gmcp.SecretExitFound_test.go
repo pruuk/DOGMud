@@ -3,12 +3,14 @@ package gmcp
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -90,16 +92,10 @@ func zoneUpdates(userId int) int {
 	return n
 }
 
-// #781 Task 11b and the spec's "the exits line, Zone.Map and Room.Info
-// agree" check, on one find: a new find queues one refresh, which sends
-// Room.Info and Zone.Map at once (not at the next round or move), and the
-// exits line, Room.Info and Zone.Map all show the exit. The Zone.Map is the
-// changed study alone, not the whole map.
-func TestSecretExitFound_ExitsLineRoomInfoAndZoneMapAgreeAtOnce(t *testing.T) {
-	u, study := foundFixture(t)
-	g := &GMCPZoneModule{zoneSent: map[int]*zoneSentState{}}
-
-	// Before: the web client holds the whole map, and nothing shows west.
+// sendInitialMap gives u's web client the whole map, before any find, and
+// checks nothing shows the west exit yet.
+func sendInitialMap(t *testing.T, g *GMCPZoneModule, u *users.UserRecord, study *rooms.Room) {
+	t.Helper()
 	g.buildAndSend(GMCPZoneUpdate{UserId: u.UserId})
 	before := drainZoneMaps(t, u.UserId)
 	require.Len(t, before, 1)
@@ -107,22 +103,114 @@ func TestSecretExitFound_ExitsLineRoomInfoAndZoneMapAgreeAtOnce(t *testing.T) {
 	require.False(t, studyExitTo(before[0], 9787), "an unfound secret exit is not drawn")
 	require.NotContains(t, roomInfoFor(t, u).ExitsV2, "west")
 	require.NotContains(t, rooms.GetDetails(study, u).VisibleExits, "west")
+}
 
-	u.Character.LearnSecretExit(9785, "west")
+// runFindRefresh plays the queue after a find, as MainWorker would: the one
+// queued RoomExitsChanged goes to the handler, and the GMCPRoomUpdate and
+// GMCPZoneUpdate it queued (the drained events themselves, not ones the test
+// builds) go to their senders. It returns the Room.Info and Zone.Map sent.
+func runFindRefresh(t *testing.T, g *GMCPZoneModule, u *users.UserRecord) (GMCPRoomModule_Payload, GMCPZoneModule_Payload) {
+	t.Helper()
 	queued := events.DrainQueuedRoomExitsChangedForTest(u.UserId)
 	require.Len(t, queued, 1, "a find queues one refresh")
+	require.True(t, queued[0].SecretExitFound)
 	(&GMCPRoomModule{}).roomExitsChangedHandler(queued[0])
-	require.Equal(t, 1, roomInfoUpdates(u.UserId), "Room.Info goes out at once")
-	require.Equal(t, 1, zoneUpdates(u.UserId), "Zone.Map goes out at once")
 
-	g.buildAndSend(GMCPZoneUpdate{UserId: u.UserId})
-	after := drainZoneMaps(t, u.UserId)
-	require.Len(t, after, 1)
-	require.False(t, after[0].Full, "a find sends what changed, not the whole map")
-	require.Equal(t, []int{9785}, zoneMapRoomIds(after[0]), "only the study changed")
-	require.True(t, studyExitTo(after[0], 9787), "Zone.Map draws the found exit")
-	require.Contains(t, roomInfoFor(t, u).ExitsV2, "west", "Room.Info lists it")
+	roomUpdates := events.DrainQueuedByTypeForTest(`GMCPRoomUpdate`)
+	require.Len(t, roomUpdates, 1, "Room.Info goes out at once")
+	zoneReqs := events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`)
+	require.Len(t, zoneReqs, 1, "Zone.Map goes out at once")
+	(&GMCPRoomModule{}).buildAndSendGMCPPayload(roomUpdates[0])
+	g.buildAndSend(zoneReqs[0])
+
+	var info *GMCPRoomModule_Payload
+	var zone *GMCPZoneModule_Payload
+	for _, e := range events.DrainQueuedByTypeForTest(`GMCPOut`) {
+		o := e.(GMCPOut)
+		require.Equal(t, u.UserId, o.UserId)
+		switch o.Module {
+		case `Room.Info`:
+			p := o.Payload.(GMCPRoomModule_Payload)
+			require.Nil(t, info, "one Room.Info")
+			info = &p
+		case `Zone.Map`:
+			p := o.Payload.(GMCPZoneModule_Payload)
+			require.Nil(t, zone, "one Zone.Map")
+			zone = &p
+		}
+	}
+	require.NotNil(t, info, "Room.Info was sent")
+	require.NotNil(t, zone, "Zone.Map was sent")
+	return *info, *zone
+}
+
+// requireAllShowWest is the spec's "the exits line, Zone.Map and Room.Info
+// agree" check, after one find. The map is a partial (the #650 diff); here,
+// with the whole map already sent, that is the changed study alone.
+func requireAllShowWest(t *testing.T, u *users.UserRecord, study *rooms.Room, info GMCPRoomModule_Payload, zone GMCPZoneModule_Payload) {
+	t.Helper()
+	require.False(t, zone.Full, "a find sends a partial map, not the whole map")
+	require.Equal(t, []int{9785}, zoneMapRoomIds(zone), "only the study changed")
+	require.True(t, studyExitTo(zone, 9787), "Zone.Map draws the found exit")
+	require.Contains(t, info.ExitsV2, "west", "Room.Info lists it")
 	require.Contains(t, rooms.GetDetails(study, u).VisibleExits, "west", "the exits line lists it")
+}
+
+// #781 Task 11b and the spec's "the exits line, Zone.Map and Room.Info
+// agree" check, on one find: a new find queues one refresh, which sends
+// Room.Info and Zone.Map at once (not at the next round or move), and the
+// exits line, Room.Info and Zone.Map all show the exit.
+func TestSecretExitFound_ExitsLineRoomInfoAndZoneMapAgreeAtOnce(t *testing.T) {
+	u, study := foundFixture(t)
+	g := &GMCPZoneModule{zoneSent: map[int]*zoneSentState{}}
+	sendInitialMap(t, g, u, study)
+
+	u.Character.LearnSecretExit(9785, "west")
+	info, zone := runFindRefresh(t, g, u)
+	requireAllShowWest(t, u, study, info, zone)
+}
+
+// End to end: a real `search` (actions.Search, through the player's own
+// actor) finds the exit, and the events it queued produce a Room.Info and a
+// Zone.Map that show it. The roll is pinned from outside actions by the
+// shared seeded dice (util.SetRandForTest, the hook
+// TestSearch_AFoundSecretExitIsNotRolledAgain uses), with a perception the
+// study's one secret exit cannot resist under that seed.
+func TestSecretExitFound_ARealSearchRefreshesTheMapAndButtons(t *testing.T) {
+	u, study := foundFixture(t)
+	g := &GMCPZoneModule{zoneSent: map[int]*zoneSentState{}}
+	sendInitialMap(t, g, u, study)
+	t.Cleanup(util.SetRandForTest(630))
+	u.Character.Stats.Perception.ValueAdj = 100000
+
+	result := actions.Search(actions.NewUserActorInRoom(u, study), actions.SearchOptions{})
+	require.Equal(t, []string{"west"}, result.HiddenExitsFound, "the search finds the exit")
+	info, zone := runFindRefresh(t, g, u)
+	requireAllShowWest(t, u, study, info, zone)
+}
+
+// Two Zone.Map requests for one player in one tick (a find while following,
+// plus the move) merge into one, so the snapshot is built and sent once.
+// Another player's request is kept.
+func TestGMCPZoneUpdate_TwoInOneTickSendOnce(t *testing.T) {
+	u, study := foundFixture(t)
+	g := &GMCPZoneModule{zoneSent: map[int]*zoneSentState{}}
+	sendInitialMap(t, g, u, study)
+
+	u.Character.LearnSecretExit(9785, "west")
+	events.DrainQueuedRoomExitsChangedForTest(u.UserId)
+	events.AddToQueue(GMCPZoneUpdate{UserId: u.UserId})
+	events.AddToQueue(GMCPZoneUpdate{UserId: u.UserId})
+	events.AddToQueue(GMCPZoneUpdate{UserId: 9789})
+	reqs := events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`)
+	require.ElementsMatch(t, []events.Event{GMCPZoneUpdate{UserId: u.UserId}, GMCPZoneUpdate{UserId: 9789}}, reqs)
+
+	for _, r := range reqs {
+		g.buildAndSend(r)
+	}
+	maps := drainZoneMaps(t, u.UserId)
+	require.Len(t, maps, 1, "one send")
+	require.True(t, studyExitTo(maps[0], 9787))
 }
 
 // A dark mark refreshes Room.Info alone: the map draws no marks, so it is not

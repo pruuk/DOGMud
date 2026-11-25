@@ -117,9 +117,10 @@ func (g *GMCPRoomModule) roomExitsWatchHandler(e events.Event) events.ListenerRe
 // the player found a secret exit. A find also re-sends Zone.Map through its
 // one sender (GMCPZoneUpdate, GMCPZoneModule.buildAndSend), since the map
 // draws a secret exit only once found. That sender diffs against what the web
-// client already has (#650), so a find sends the web client the changed room
-// alone (a telnet GMCP client gets the whole map, as on every update). A dark
-// mark changes nothing on the map and sends none.
+// client already has, so a find sends the web client a partial map (the #650
+// diff), normally the changed room alone; the first map, or one after a
+// resync, is full. A telnet GMCP client gets the whole map, as on every
+// update. A dark mark changes nothing on the map and sends none.
 func (g *GMCPRoomModule) roomExitsChangedHandler(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.RoomExitsChanged)
 	if !ok || evt.UserId < 1 {

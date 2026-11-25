@@ -8,11 +8,18 @@ import (
 
 // #781 Task 11b: a `search` that finds a secret exit records it through the
 // one recorder (Character.LearnSecretExit), so the player's map and buttons
-// refresh at once: one RoomExitsChanged marked as a find. Searching again
-// reports the exit but queues nothing, and an NPC's find queues nothing.
+// refresh at once: one RoomExitsChanged marked as a find. An NPC's find
+// queues nothing.
+//
+// The re-search half pins search's own short-circuit, not the recorder's:
+// search skips an exit the character already found (HasDiscovery, before any
+// roll) and never reaches LearnSecretExit for it, which the roll count shows.
+// Its "queues nothing" check holds while either guard stands. The recorder's
+// own guard against a re-find is pinned in internal/characters
+// (secret_exit_test.go).
 func TestSearch_ANewSecretExitFindRefreshesThePlayerAtOnce(t *testing.T) {
 	const userId = 9782
-	pinSearchRoll(t, true)
+	rolls := pinSearchRoll(t, true)
 	events.DrainQueuedRoomExitsChangedForTest(0)
 	t.Cleanup(func() { events.DrainQueuedRoomExitsChangedForTest(0) })
 
@@ -29,11 +36,15 @@ func TestSearch_ANewSecretExitFindRefreshesThePlayerAtOnce(t *testing.T) {
 	}
 
 	actor.char.Cooldowns = nil // a second search must actually run
+	rollsBefore := len(rolls.difficulties)
 	if again := Search(actor, SearchOptions{}); len(again.HiddenExitsFound) != 1 {
 		t.Fatalf("a re-search still reports the exit: %+v", again)
 	}
+	if n := len(rolls.difficulties) - rollsBefore; n != 0 {
+		t.Errorf("search skips a found exit before rolling or recording, but rolled %d times", n)
+	}
 	if got := events.DrainQueuedRoomExitsChangedForTest(0); len(got) != 0 {
-		t.Errorf("a re-find queues nothing, got %+v", got)
+		t.Errorf("search skips a found exit before recording, so a re-search queues nothing, got %+v", got)
 	}
 
 	mob := newSearchMobActor("Prowler", newSecretExitRoom(9783), 7783)
