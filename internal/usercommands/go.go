@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
+	"github.com/GoMudEngine/GoMud/internal/buttons"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/conversationadapter"
@@ -54,6 +55,22 @@ func unlockExit(user *users.UserRecord, room *rooms.Room, exitName string, exitI
 // PartyFollowLostLine is what a party member reads when the leader leaves
 // and the member cannot see them go (owner ruling 2026-10-17).
 const PartyFollowLostLine = `You can't see where the party leader went, so you stay here.`
+
+// noteDarkTry records a dark mark when the player, seeing nothing here, tried
+// direction and was answered mark (#781, owner ruling 4): a cross after
+// "You're bumping into walls.", a padlock after the locked line. Typed and
+// tapped tries both come through Go, so both mark. Room.Info carries the
+// marks; RoomExitsChanged sends it now rather than at the next round. A guess
+// at a secret exit the player has not found never reaches the locked line
+// (FindKnownExit hides it), so it marks a cross as a wall does.
+func noteDarkTry(user *users.UserRecord, room *rooms.Room, direction, mark string) {
+	if messaging.ParticipantSight(user.Character, room) != messaging.SightNone {
+		return
+	}
+	if buttons.RecordDarkMark(user.UserId, room.RoomId, direction, mark) {
+		events.AddToQueue(events.RoomExitsChanged{UserId: user.UserId})
+	}
+}
 
 func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
@@ -186,6 +203,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 				if exitInfo.Lock.IsLocked() {
 					user.SendText(messaging.CategoryRefusal, `That way is locked. You need a <ansi fg="item">key</ansi>, or <ansi fg="command">pick</ansi> the lock with <ansi fg="item">lockpicks</ansi>.`)
+					noteDarkTry(user, room, exitName, buttons.MarkLocked)
 					// Send GMCP message
 					if f, ok := GetExportedFunction(`SendGMCPEvent`); ok {
 						if gmcpSendFunc, ok := f.(func(int, string, any)); ok { // make sure the func definition is `func(int, string, any)`
@@ -646,6 +664,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 		if rest == "north" || rest == "south" || rest == "east" || rest == "west" || rest == "up" || rest == "down" || rest == "northwest" || rest == "northeast" || rest == "southwest" || rest == "southeast" {
 			user.SendText(messaging.CategoryRefusal, "You're bumping into walls.")
+			noteDarkTry(user, room, rest, buttons.MarkWall)
 
 			// Send GMCP message
 			if f, ok := GetExportedFunction(`SendGMCPEvent`); ok {

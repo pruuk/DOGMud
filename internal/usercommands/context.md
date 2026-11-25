@@ -523,6 +523,18 @@ arrival line, is skipped). An onlooker learns the exit only: the lock's
 sequence stays on the picker's keyring. Tests:
 `seen_use_secret_exit_test.go`.
 
+Dark marks (#781 owner ruling 4): in the dark (`messaging.ParticipantSight`
+is `SightNone`), a T direction that answers "You're bumping into walls." or
+the locked line is recorded as a dark mark, `buttons.MarkWall` or
+`buttons.MarkLocked`, through `noteDarkTry` and `buttons.RecordDarkMark`.
+Typed and tapped tries both run `Go`, so both mark. A new mark queues
+`events.RoomExitsChanged` so `Room.Info` goes out at once. A guess at a
+secret exit the player has not found never reaches the locked line
+(`actions.FindKnownExit` hides it), so it marks a wall exactly as no exit
+does, locked or not. Tests: `TestGo_DarkTriesLeaveMarks` and
+`TestGo_ADarkGuessAtAnUnfoundSecretExitMarksAWall` in
+`go_secret_exit_test.go`.
+
 ### Quest log actions (`questlog.go`, `quests.go`; #375 phase 5)
 
 `questlog.go` holds the shared bodies for the `quests` command and the web

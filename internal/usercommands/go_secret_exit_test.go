@@ -5,14 +5,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buttons"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -376,4 +379,62 @@ func TestGo_WatchingAnOrdinaryExitRecordsNothing(t *testing.T) {
 	require.Contains(t, drainedText(watcher), "leaves", "premise: the watcher read the leave line")
 	require.Empty(t, watcher.Character.Discoveries)
 	require.Empty(t, skeleton.Character.Discoveries)
+}
+
+// Ruling 4: a T direction tried in the dark is marked, typed or tapped (both
+// run Go): a cross after the bump line, a padlock after the locked line, and
+// Room.Info goes out at once. A lit room marks nothing.
+func TestGo_DarkTriesLeaveMarks(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	util.SetRoundCountForTest(1000)
+	t.Cleanup(util.ResetRoundCountForTest)
+	user, room := getTestUserAndRoom(t)
+	t.Cleanup(func() { buttons.Forget(user.UserId) })
+	orig := room.Exits["north"]
+	locked := orig
+	locked.Lock = gamelock.Lock{Difficulty: 10}
+	room.Exits["north"] = locked
+	t.Cleanup(func() { room.Exits["north"] = orig })
+
+	_, _ = Go("west", user, room, 0)
+	require.Empty(t, buttons.DarkMarks(user.UserId, room.RoomId, true), "a lit bump marks nothing")
+
+	darkenRoom(t, room)
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(user.Character, room), "premise: the room is dark")
+	events.DrainQueuedRoomExitsChangedForTest(user.UserId)
+
+	_, _ = Go("west", user, room, 0)
+	_, _ = Go("north", user, room, 0)
+	require.Equal(t, 1, user.Character.RoomId, "premise: the locked door held")
+	require.Equal(t,
+		map[string]string{"west": buttons.MarkWall, "north": buttons.MarkLocked},
+		buttons.DarkMarks(user.UserId, room.RoomId, true))
+	require.NotEmpty(t, events.DrainQueuedRoomExitsChangedForTest(user.UserId), "Room.Info must go out at once")
+}
+
+// Task 4's rule reaches the marks: a guess in the dark at a secret exit the
+// player has not found marks a cross, as a wall does, even when that exit is
+// locked. A padlock there would tell them a door stands in the wall.
+func TestGo_ADarkGuessAtAnUnfoundSecretExitMarksAWall(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	util.SetRoundCountForTest(1000)
+	t.Cleanup(util.ResetRoundCountForTest)
+	user, room := getTestUserAndRoom(t)
+	t.Cleanup(func() { buttons.Forget(user.UserId) })
+	secretExit(t, room, "north")
+	north := room.Exits["north"]
+	north.Lock = gamelock.Lock{Difficulty: 10}
+	room.Exits["north"] = north
+	darkenRoom(t, room)
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(user.Character, room), "premise: the room is dark")
+
+	_, _ = Go("north", user, room, 0)
+	_, _ = Go("west", user, room, 0)
+	require.Equal(t, 1, user.Character.RoomId, "premise: the guess went nowhere")
+	require.Equal(t,
+		map[string]string{"north": buttons.MarkWall, "west": buttons.MarkWall},
+		buttons.DarkMarks(user.UserId, room.RoomId, true),
+		"the unfound secret exit must mark exactly as the plain wall beside it")
 }
