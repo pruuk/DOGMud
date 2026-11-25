@@ -73,6 +73,10 @@ buttons.
     room through a secret exit the listener has not found says "(From
     nearby)" instead of naming the exit. A listener who knows the exit still
     reads its name. The AI companion is out of scope: it stays off for good.
+17. **Trackers follow through what they found** (2026-11-25): a trail
+    through a secret exit the tracker has found reads like any other ("They
+    went north"); through one the tracker has not found, the trail is lost
+    there as before. Same one rule: you use the exits you know.
 
 ## Facts verified against source (2026-11-22)
 
