@@ -63,8 +63,9 @@ func (l Lock) timerRelocked() bool {
 // lazily), so the rotation is worked out from the lock's state instead: once
 // the timer has relocked an opened lock, the rotation mixes RotationSeed with
 // the round it was opened, so each open-then-relock cycle gets its own. The
-// mixed value has its top bit set, so it never equals a plain RotationSeed
-// that SetLocked could reach. A lock still open keeps RotationSeed.
+// mixed value has its top bit set, which keeps it apart from the small seeds
+// SetLocked counts up through; SetUnlocked folds it into RotationSeed, so a
+// seed may carry the top bit too. A lock still open keeps RotationSeed.
 func (l Lock) Rotation() uint64 {
 	if !l.timerRelocked() {
 		return l.RotationSeed
@@ -85,8 +86,13 @@ func (l Lock) Sequence(lockId string) string {
 	return util.LockSequence(lockId, int(l.Difficulty), l.Rotation())
 }
 
+// SetUnlocked opens the lock and starts its relock timer. A timer relock's
+// rotation is worked out from UnlockedRound, which opening overwrites, so it
+// is folded into RotationSeed first: the lock keeps the combination it was
+// opened at, and one retired by the timer relock stays retired.
 func (l *Lock) SetUnlocked() {
 	if l.Difficulty > 0 {
+		l.RotationSeed = l.Rotation()
 		l.UnlockedRound = util.GetRoundCount()
 	}
 }

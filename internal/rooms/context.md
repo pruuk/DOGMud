@@ -889,8 +889,10 @@ skip-tagged, so a reloaded exit lock comes back at the template's seed, and
 locked at the rotation it was opened at. Either would bring back a retired
 combination.
 
-`rememberLocks` records every locked exit's and container's `Lock` when a room
-leaves memory (`removeRoomFromMemory`, `ClearRoomCache`, `UnloadRoomForTest`);
+`rememberLocks` records the `Lock` of every exit and container that has a
+lock, open or not, when a room leaves memory (`removeRoomFromMemory`,
+`ClearRoomCache`, so also every forced `addRoomToMemory` from `BuildRoom`,
+`ConnectRoom` and `SaveRoomTemplate`, and `UnloadRoomForTest`);
 `restoreLocks`, called from `addRoomToMemory`, takes the record back and puts
 `RotationSeed` and `UnlockedRound` onto the lock of the same name, leaving
 difficulty, traps and interval as loaded. Ephemeral rooms are skipped.
@@ -902,7 +904,10 @@ reads an exit's lock and never touches disk: the live room, else the record,
 else a lock of the caller's difficulty at rotation 0, which is the template's
 because no template sets `rotationseed` on an exit
 (`internal/guards/exit_rotationseed_guard_test.go`). The mapper uses it
-(`knowsExitLock`).
+(`knowsExitLock`). `SaveRoomTemplate` keeps that true: builders save the live
+room, so it writes the file from `templateLocksAtRest`, a copy with every exit
+lock at `RotationSeed` 0 (the `Exits` map is shared with the live room, which
+keeps its rotation).
 
 ## Dependencies
 - `internal/characters`: Character and mob management

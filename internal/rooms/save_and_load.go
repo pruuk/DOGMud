@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/casing"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -271,6 +272,25 @@ func LoadRoomTemplate(roomId int) *Room {
 	return retRoom
 }
 
+// templateLocksAtRest is r as its template file holds it: every exit lock at
+// RotationSeed 0. Callers save the live room, whose exit locks carry the
+// rotation play gave them; that is session state (lock_memory.go), and no
+// template may set an exit's rotationseed (internal/guards,
+// exit_rotationseed_guard_test.go). The Exits map is shared with the live
+// room, so the zeroing happens on a copy of it.
+func templateLocksAtRest(r Room) Room {
+	if len(r.Exits) == 0 {
+		return r
+	}
+	exits := make(map[string]exit.RoomExit, len(r.Exits))
+	for name, ex := range r.Exits {
+		ex.Lock.RotationSeed = 0
+		exits[name] = ex
+	}
+	r.Exits = exits
+	return r
+}
+
 // See C. UPDATING EXISTING ROOM TEMPLATES
 func SaveRoomTemplate(roomTpl Room) error {
 
@@ -292,7 +312,7 @@ func SaveRoomTemplate(roomTpl Room) error {
 	// block scalars. Without it a builder save collapses authored prose into
 	// single enormous lines. See internal/rooms/prose_wrap.go for why folded
 	// scalars are the only style that round-trips the value unchanged.
-	data, err := marshalRoomTemplate(roomTpl)
+	data, err := marshalRoomTemplate(templateLocksAtRest(roomTpl))
 	if err != nil {
 		return err
 	}

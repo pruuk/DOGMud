@@ -16,9 +16,10 @@ import (
 const lockMemoryRoomId = 100
 
 // lockMemoryRoom writes a template on disk for room 100 with a locked north
-// exit and a locked chest, in a fresh room manager, with the shipped timing
-// pinned so a relock interval is a real span of rounds.
-func lockMemoryRoom(t *testing.T) {
+// exit and a locked chest, and one for room 101 beyond it, in a fresh room
+// manager, with the shipped timing pinned so a relock interval is a real span
+// of rounds. It returns room 100's template path.
+func lockMemoryRoom(t *testing.T) string {
 	t.Helper()
 	c := configs.GetConfig()
 	c.Timing.RoundsPerDay = 900
@@ -50,6 +51,75 @@ func lockMemoryRoom(t *testing.T) {
 	require.NoError(t, os.WriteFile(templatePath, data, 0644))
 	require.NoError(t, os.MkdirAll(filepath.Join(tempDir, "rooms.instances", "test_zone"), 0755))
 	roomManager.roomIdToFileCache[lockMemoryRoomId] = "test_zone/100.yaml"
+
+	beyond, err := yaml.Marshal(&Room{RoomId: 101, Zone: "test_zone", Title: "Beyond", Description: "The room past the lock."})
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(filepath.Join(tempDir, "rooms", "test_zone", "101.yaml"), beyond, 0644))
+	roomManager.roomIdToFileCache[101] = "test_zone/101.yaml"
+	t.Cleanup(func() { InvalidateTemplateCache(101) })
+	return templatePath
+}
+
+// rotatedLockRoom loads room 100 and relocks its north exit once, so the exit
+// lock is at RotationSeed 1.
+func rotatedLockRoom(t *testing.T) *Room {
+	t.Helper()
+	room := LoadRoom(lockMemoryRoomId)
+	require.NotNil(t, room)
+	room.SetExitLock("north", false)
+	room.SetExitLock("north", true)
+	require.Equal(t, uint64(1), room.Exits["north"].Lock.RotationSeed, "premise: the relock rotated the lock")
+	return room
+}
+
+// A builder save marshals the live room. Its template file holds every exit
+// lock at rotation 0 (no template may set an exit's rotationseed), and the
+// live room, which shares the Exits map, keeps its rotation; so does the room
+// SaveRoomTemplate puts in memory in its place (addRoomToMemory with force,
+// through ClearRoomCache and restoreLocks).
+func TestSaveRoomTemplate_KeepsExitRotationOutOfTheFileAndInPlay(t *testing.T) {
+	templatePath := lockMemoryRoom(t)
+	room := rotatedLockRoom(t)
+
+	require.NoError(t, SaveRoomTemplate(*room))
+
+	raw, err := os.ReadFile(templatePath)
+	require.NoError(t, err)
+	var saved struct {
+		Exits map[string]struct {
+			Lock map[string]any `yaml:"lock"`
+		} `yaml:"exits"`
+	}
+	require.NoError(t, yaml.Unmarshal(raw, &saved))
+	require.Contains(t, saved.Exits, "north", "premise: the saved template has the exit")
+	require.NotContains(t, saved.Exits["north"].Lock, "rotationseed", "the template file carries the exit's play rotation:\n%s", raw)
+
+	require.Equal(t, uint64(1), room.Exits["north"].Lock.RotationSeed, "saving zeroed the live room's exit rotation")
+	inPlay := LoadRoom(lockMemoryRoomId)
+	require.NotSame(t, room, inPlay, "premise: SaveRoomTemplate put a new room in memory")
+	require.Equal(t, uint64(1), inPlay.Exits["north"].Lock.RotationSeed, "the room SaveRoomTemplate put in memory lost the exit's rotation")
+
+	// A save of a room read fresh from the template file (as ConnectRoom
+	// does) shares nothing with the live room; the rotation reaches the new
+	// room only through ClearRoomCache's record and restoreLocks.
+	fresh := LoadRoomTemplate(lockMemoryRoomId)
+	require.NotNil(t, fresh)
+	require.Equal(t, uint64(0), fresh.Exits["north"].Lock.RotationSeed, "premise: the template file is at rotation 0")
+	require.NoError(t, SaveRoomTemplate(*fresh))
+	require.Equal(t, uint64(1), LoadRoom(lockMemoryRoomId).Exits["north"].Lock.RotationSeed, "a template save put the exit lock back at rotation 0")
+}
+
+// ConnectRoom builds its room from the template file and puts it in memory in
+// place of the live one; the exit lock keeps its rotation.
+func TestConnectRoom_KeepsExitRotation(t *testing.T) {
+	lockMemoryRoom(t)
+	rotatedLockRoom(t)
+
+	require.NoError(t, ConnectRoom(lockMemoryRoomId, 101, "east"))
+
+	inPlay := LoadRoom(lockMemoryRoomId)
+	require.Contains(t, inPlay.Exits, "east", "premise: the exit was built")
+	require.Equal(t, uint64(1), inPlay.Exits["north"].Lock.RotationSeed, "connecting a room put its exit lock back at the template's rotation")
 }
 
 // Room.Exits is instance:"skip", so a reloaded room's exit locks come from

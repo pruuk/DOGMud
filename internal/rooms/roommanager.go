@@ -1071,7 +1071,10 @@ func ConnectRoom(fromRoomId int, toRoomId int, exitName string, mapDirection ...
 	fromRoom.Exits[exitName] = newExit
 
 	SaveRoomTemplate(*fromRoom)
-	roomManager.rooms[fromRoom.RoomId] = fromRoom
+	// Through addRoomToMemory, as BuildRoom does, so the room it replaces
+	// hands its lock state on (ClearRoomCache remembers, restoreLocks puts
+	// it back; lock_memory.go).
+	addRoomToMemory(fromRoom, true)
 
 	return nil
 }

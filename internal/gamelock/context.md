@@ -39,9 +39,13 @@ every reader of a combination goes through them:
   `RotationSeed` while the lock has never been opened, is open, or was last
   closed by `SetLocked`. Once the timer has relocked an opened lock, a hash
   of `RotationSeed` and `UnlockedRound` with the top bit set, so each
-  open-then-timer-relock cycle gets its own rotation and none equals a plain
-  `RotationSeed`. Worked out from state, with no write: `IsLocked` decides a
-  timer relock lazily and a `Lock` is copied by value in many places.
+  open-then-timer-relock cycle gets its own rotation, apart from the small
+  seeds `SetLocked` counts up through. Worked out from state, with no write:
+  `IsLocked` decides a timer relock lazily and a `Lock` is copied by value in
+  many places.
+- **SetUnlocked()** folds the current `Rotation()` into `RotationSeed` before
+  it overwrites `UnlockedRound`, so a lock opened after a timer relock keeps
+  that relock's combination instead of falling back to the one before it.
 - **Sequence(lockId string) string**: the combination now,
   `util.LockSequence(lockId, Difficulty, Rotation())`. `characters.HasKey`,
   `picklock`, `keyring` and the admin views call it; nothing else calls
@@ -68,6 +72,7 @@ boot-rerolled lock seed. Tests: `rotation_test.go`.
     pins the fix)
 
 - **SetUnlocked()**: Marks lock as unlocked
+  - Folds the current Rotation() into RotationSeed (see above)
   - Sets UnlockedRound to current game round
   - Only applies to locks with difficulty > 0
   - Starts the relock timer

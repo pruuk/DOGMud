@@ -62,6 +62,27 @@ func TestPicklock_ATimerRelockNeedsAFreshPick(t *testing.T) {
 	require.True(t, room.Exits["north"].Lock.IsLocked(), "picklock opened the relocked lock with the old combination")
 }
 
+// A learned the combination before the timer relocked the lock; B picks the
+// new one, which opens it. The opened lock keeps B's combination: B has it
+// and A's stays retired (SetUnlocked folds the timer rotation in).
+func TestPicklock_OpeningAfterATimerRelockKeepsThePickersCombination(t *testing.T) {
+	picker, room, lockId, preOpen := timerRelockedNorth(t)
+	t.Cleanup(picker.ClearPrompt)
+	other := users.GetByUserId(2)
+	require.NotNil(t, other, "fixture: Bobrick is user 2")
+	other.Character.SetKey(lockId, preOpen)
+	picker.Character.SetKey(lockId, room.Exits["north"].Lock.Sequence(lockId))
+
+	_, err := Picklock("north", picker, room, 0)
+	require.NoError(t, err)
+	require.False(t, room.Exits["north"].Lock.IsLocked(), "premise: the fresh pick opened the lock")
+
+	_, pickerHas := picker.Character.HasKey(lockId, room.Exits["north"].Lock)
+	_, otherHas := other.Character.HasKey(lockId, room.Exits["north"].Lock)
+	require.True(t, pickerHas, "the picker's fresh combination stopped counting once the lock opened")
+	require.False(t, otherHas, "the combination retired by the timer relock counts again once the lock opened")
+}
+
 func TestGoAndPicklock_AFreshPickAfterATimerRelockWorks(t *testing.T) {
 	t.Run("go", func(t *testing.T) {
 		user, room, lockId, _ := timerRelockedNorth(t)
