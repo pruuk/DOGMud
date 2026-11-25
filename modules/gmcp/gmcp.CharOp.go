@@ -132,6 +132,21 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 			sendActionResult(uid, req.Id, "rejected", result.Reason)
 		}
 
+	case `Char.Button.Press`:
+		// A touch button (#781): the id only, never a command. A payload
+		// that is not {"id": "<string>"} does nothing.
+		var req struct {
+			Id string `json:"id"`
+		}
+		if err := json.Unmarshal(evt.Payload, &req); err != nil {
+			break
+		}
+		if uid := userIdForConnection(evt.ConnectionId); uid > 0 {
+			if u := users.GetByUserId(uid); u != nil {
+				pressButton(u, req.Id)
+			}
+		}
+
 	case `Char.Quests.Focus`:
 		var req struct {
 			Id int `json:"id"`

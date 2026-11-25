@@ -6,7 +6,8 @@ import (
 )
 
 // RoomExitsChanged says what a player's movement buttons show may have
-// changed outside the once-a-round check (#781): a dark mark was recorded, or
+// changed outside the once-a-round check (#781): a dark mark was recorded, the
+// player pressed a button whose id was stale (modules/gmcp pressButton), or
 // the player found a secret exit (SecretExitFound, queued by
 // characters.Character.LearnSecretExit on a new find only). modules/gmcp
 // answers with Room.Info, and on a find with Zone.Map too, since the map

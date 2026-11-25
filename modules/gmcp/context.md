@@ -491,8 +491,8 @@ one sent (`lastSentRoomExits`, recorded in `buildAndSendGMCPPayload` for every
 full `Room.Info`). `Room.Info` is re-sent only on a change: a door unlocked or
 relocking on its timer, a temporary exit coming or going, a secret exit found,
 the light changing, a key or combination gained. A round with no change sends
-nothing. `events.RoomExitsChanged` (a dark mark, or a secret exit newly
-found) sends `Room.Info` at once (`roomExitsChangedHandler`). On a find
+nothing. `events.RoomExitsChanged` (a dark mark, a stale button press, or a
+secret exit newly found) sends `Room.Info` at once (`roomExitsChangedHandler`). On a find
 (`SecretExitFound`) it also queues `GMCPZoneUpdate`, so `Zone.Map` goes out
 through its one sender (`GMCPZoneModule.buildAndSend`): the web client gets a
 partial map (the #650 diff), normally the changed room alone, or the full map
@@ -560,6 +560,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Build.go` | `Build` | The admin web building tools' data feed. The whole builder is off (owner 2026-10-28, #375 phase 6 postponed until more big arcs land): `refuseWebBuilder` refuses every `Build.*` message in `handleBuildOp` before dispatch. The handlers stay for its return; the loop door in `buildQuestUpdate` is dormant until then |
 | `gmcp.Delete_refs.go` | `Build` | The boot doors' checks for `Build.Room.Delete`, `Build.Item.Delete` and `Build.Mob.Delete`: `questRefsWithoutRoom` / `questRefsWithoutItem` / `questRefsWithoutMob` run the quest loop with the id gone and `dialogueRefsWithoutItem` the dialogue door, each returning only what the delete adds. `roomQuestRefs` backs `buildDeps.questRefs` (the room delete refuses, naming each quest and where); `itemQuestRefs` backs `refIterators.questRefs` in the item reference scan, which no longer walks quest rewards itself; `mobQuestRefs` backs `mobRefIterators.questRefs` in the mob scan, which no longer walks quest triggers itself (and covers a step `destination:` block's `mob`) |
 | `gmcp.CharOp.go` | — | `GMCPCharOp` + `handleCharOp`: inbound state-touching `Char.*` ops, deferred to MainWorker |
+| `gmcp.ButtonPress.go` | `Char.Button.Press` (inbound) | `pressButton`: a touch button id run as typed input; see "Char.Button.Press" above |
 | `gmcp.Relay.go` | `Companion.Relay.*` | The companion key relay: installs `companionai.SetRelaySender`, forwards inbound relay messages to `companionai.RelayInbound` |
 | `gmcp.Game.go` | `Game` | Game-level metadata |
 | `gmcp.World.go` | `World` | World-level state (weather, time) |
@@ -589,6 +590,25 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   queued action is not run; the module replies `Char.Action.Result` with status
   `deferred` and reason `menu open`. Every exit from that handler must reply,
   or the client parks its action queue.
+
+## Char.Button.Press: a touch button (`gmcp.ButtonPress.go`, #781)
+
+Inbound `Char.Button.Press {"id": "..."}` is deferred to MainWorker through
+`GMCPCharOp` like the other `Char.*` ops; a payload that is not a string `id`
+does nothing. `pressButton` resolves the id with `buttons.Resolve` (a fixed id
+`m1`..`m6` is its bare direction in any room; a per-room id is `go <exit>`
+only in the room it was issued for, to the player it was issued to) and queues
+the line as typed input (`CommandFlagged(line, events.CmdTyped)`, the current
+turn), so it obeys everything typing does: the one-command-per-turn queue,
+combat, conditions, quest gates, dark marks, and a menu or page stop treats it
+as typing. A stale id (never issued, another player's, another room's, empty
+or overlong) answers `refusal.StaleButton`, one line that never repeats the
+id, and queues `events.RoomExitsChanged`, which re-sends `Room.Info`; that
+event merges per player while queued, so a flood of stale presses builds
+`Room.Info` once. Nothing happens while a prompt is open: a prompt takes the
+next typed line as its answer, and a button is never an answer. Guard 1
+(round trip) for movement ids is
+`internal/usercommands/button_roundtrip_test.go`.
 
 ## Char.Input.Done: a typed line is finished (`gmcp.InputDone.go`, web client plan 6)
 

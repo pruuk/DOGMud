@@ -304,7 +304,8 @@ slots, as `ProcessEvents` does, so a later refresh queues again.
 
 `roomexits.go` holds `RoomExitsChanged{UserId, SecretExitFound}`: what a
 player's movement buttons show may have changed outside the once-a-round
-`Room.Info` check (a dark mark was recorded, `internal/buttons`; or, with
+`Room.Info` check (a dark mark was recorded, `internal/buttons`; a button
+press was stale, `modules/gmcp` `pressButton`; or, with
 `SecretExitFound`, the player newly found a secret exit,
 `characters.Character.LearnSecretExit`). `modules/gmcp` re-sends `Room.Info`,
 and on a find `Zone.Map` too. It is a unique event (`UniqueID` is
