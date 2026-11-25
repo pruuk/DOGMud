@@ -4225,6 +4225,26 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 EOF
 ```
 
+### Task 11b (added 2026-11-25, from the Task 6 spec review): a new find refreshes the map and buttons at once
+
+Gap: a player who finds a secret exit (`search`, following, watching it used,
+ruling 14/15) sees it on the exits line at once, but `Zone.Map` is only
+re-sent on a room change, a sight change, a resync or a builder event, so the
+web map lags until the next move; `Room.Info` waits for the round watcher.
+
+- [ ] **Step 1:** Where a player's discovery is newly recorded (the one
+  recorder, `Character.LearnSecretExit`, or its callers if the characters
+  package cannot queue events), queue `events.RoomExitsChanged{UserId}` only
+  when the record is new (a re-find queues nothing).
+- [ ] **Step 2:** The `RoomExitsChanged` handler in `modules/gmcp` also
+  re-sends `Zone.Map` for that player (through the existing Zone.Map sender,
+  no second builder), merged per player by the event's `UniqueID`.
+- [ ] **Step 3:** Tests: a `search` find queues one event and the handler
+  sends `Room.Info` and `Zone.Map` that both show the exit (the spec's "exits
+  line, Zone.Map and Room.Info agree" check, on one find); a re-find queues
+  nothing; an NPC find queues nothing. Sabotage each.
+- [ ] **Step 4:** Commit `feat(gmcp): a new find re-sends the map and buttons at once (#781)`.
+
 ---
 
 ### Task 12: The press handler (`Char.Button.Press`) and guard 1
