@@ -15,7 +15,7 @@
 //   slotShows             what the slot under the game text holds
 //   fieldOf               where the player is typing (plan 1b)
 //   rowFade / scrollLeftToShow  a phone's sideways-scrolling sub-tab row (plan 1c)
-//   moves / cells / levelAfter / tap / render  moving by touch (plan 2b)
+//   moves / cells / levelAfter / tap / render / focusAfter  moving by touch (plan 2b)
 //   lineIcon              a stroke-path icon (the deck and dashboard.js's tab bar)
 // Tested by tools/jstest/touchdeck.test.js, touchdeck-moves.test.js and touch-targets.test.js.
 
@@ -419,6 +419,10 @@
         return (c.kind === 'move' && ((!c.lit && !c.dark) || !c.id)) || (c.kind === 'other' && !c.lit);
     }
 
+    // Back's and More's words; touch-targets.test.js checks they fit their
+    // heavy-edged buttons at both sizes.
+    var BACK_LABEL = '‹ Back', MORE_LABEL = 'More ›';
+
     // Draws cells into the deck element, replacing what it held. Text goes
     // in as textContent, never as markup (an exit name is server data). Each
     // button carries its cell's index in data-cell for the click handler
@@ -450,13 +454,31 @@
                 b.appendChild(svgIcon(doc, 'eye', 'deck-icon'));
                 b.appendChild(textEl(doc, 'deck-name', 'Dark'));
             } else if (c.kind === 'back') {
-                b.appendChild(textEl(doc, 'deck-name', '‹ Back'));
+                b.appendChild(textEl(doc, 'deck-name', BACK_LABEL));
             } else if (c.kind === 'more') {
-                b.appendChild(textEl(doc, 'deck-name', 'More ›'));
+                b.appendChild(textEl(doc, 'deck-name', MORE_LABEL));
             }
             if (c.locked || c.mark === 'locked') b.appendChild(svgIcon(doc, 'lock', 'deck-lock'));
             deck.appendChild(b);
         });
+    }
+
+    // Which cell takes the focus after a redraw, when the focus was on cell
+    // `cell` inside the deck (render rebuilds every button, so the focused
+    // one is gone; keyboard and screen reader users would land on the page
+    // body). Opening the list focuses Back, closing it the exits button;
+    // otherwise the same cell while it is still a live button, else the
+    // first live button. -1 when the deck has none.
+    function focusAfter(list, cell, levelWas, level) {
+        function live(i) { var c = list[i]; return !!c && c.kind !== 'empty' && !disabledOf(c); }
+        var i, want = cell;
+        if (levelWas !== level) {
+            var kind = level === 'exits' ? 'back' : 'other';
+            for (i = 0; i < list.length; i++) if (list[i].kind === kind) { want = i; break; }
+        }
+        if (live(want)) return want;
+        for (i = 0; i < list.length; i++) if (live(i)) return i;
+        return -1;
     }
 
     return {
@@ -466,7 +488,7 @@
         rowFade: rowFade, scrollLeftToShow: scrollLeftToShow,
         moves: moves, T_DIRS: T_DIRS, DIAGONALS: DIAGONALS, NAME_LETTERS: NAME_LETTERS,
         cells: cells, levelAfter: levelAfter, tap: tap, DOUBLE_TAP_MS: DOUBLE_TAP_MS, DARK_LINE: DARK_LINE,
-        render: render, lineIcon: lineIcon,
+        render: render, lineIcon: lineIcon, focusAfter: focusAfter, BACK_LABEL: BACK_LABEL, MORE_LABEL: MORE_LABEL,
         BTN: BTN, GAP: GAP, SMALL_BTN: SMALL_BTN, SMALL_GAP: SMALL_GAP, PAD: PAD
     };
 }));

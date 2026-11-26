@@ -7,7 +7,7 @@
 - Tap "exits" for the other ways out, such as northeast or a named path. Back returns to the arrows, and so does every step you take.
 - A portal that leads into your own instance, or one your party opened, has a button named for its zone.
 - In the dark the arrows turn grey and you can still try every way. A cross marks a wall you walked into, and a padlock a locked door you found.
-- In a fight the arrows fade: you cannot walk away from a fight.
+- In a fight the arrows fade: you cannot walk away. Type flee to escape.
 - To show the buttons on any screen, or to hide them, open Settings and choose Touch controls.
 
 ## 2026-11-26: Shorter names for a few ways out

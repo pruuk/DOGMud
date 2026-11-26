@@ -91,15 +91,28 @@ check('a deck button sets no size of its own', btnRule !== '' && !/(^|[;{\s])(wi
 
 // Owner ruling 18: the longest exit name fits its button at both sizes.
 // JetBrains Mono's letters are 0.6em wide; a named button has a 1px edge
-// each side. Task 11 of plan 2b measures it in the browser too.
+// each side, Back and More a 2px one (dashboard.css .deck-back, .deck-more).
+// Task 11 of plan 2b measures it in the browser too.
 var gomud = fs.readFileSync(path.join(js, '..', 'css', 'gomud.css'), 'utf8');
 var labelPx = Number((/--deck-label:\s*(\d+)px;/.exec(gomud) || [])[1]);
 var tight = Number((/#touch-deck\.deck-small \.deck-name \{[^}]*letter-spacing:\s*(-?[\d.]+)px/.exec(css) || [])[1]);
-var LETTER = 0.6 * labelPx, EDGES = 2;
+var heavyTight = Number((/#touch-deck\.deck-small \.deck-back \.deck-name,\s*#touch-deck\.deck-small \.deck-more \.deck-name \{[^}]*letter-spacing:\s*(-?[\d.]+)px/.exec(css) || [])[1]);
+var heavyEdge = Number((/\.deck-back,\s*\.deck-more \{[^}]*border:\s*(\d+)px solid/.exec(css) || [])[1]);
+var LETTER = 0.6 * labelPx, EDGES = 2, HEAVY_EDGES = 2 * heavyEdge;
+// Whether a label of n letters, with spacing px between letters, fits
+// inside a button btn px wide with edges px of border in all.
+function fits(n, spacing, btn, edges) { return !isNaN(spacing) && n * (LETTER + spacing) <= btn - edges; }
 check('the deck name size is read from --deck-label', labelPx > 0);
-check('a ' + TD.NAME_LETTERS + '-letter name fits a ' + TD.BTN + 'px button', TD.NAME_LETTERS * LETTER <= TD.BTN - EDGES);
+check('the Back and More edge is read', heavyEdge > 0);
+check('a ' + TD.NAME_LETTERS + '-letter name fits a ' + TD.BTN + 'px button', fits(TD.NAME_LETTERS, 0, TD.BTN, EDGES));
 check('a ' + TD.NAME_LETTERS + '-letter name fits a ' + TD.SMALL_BTN + 'px button with the small spacing',
-    !isNaN(tight) && TD.NAME_LETTERS * (LETTER + tight) <= TD.SMALL_BTN - EDGES);
-check('the fit check can fail: seven letters do not fit at the small size', 7 * (LETTER + tight) > TD.SMALL_BTN - EDGES);
+    fits(TD.NAME_LETTERS, tight, TD.SMALL_BTN, EDGES));
+check('the fit check can fail: seven letters do not fit at the small size', !fits(7, tight, TD.SMALL_BTN, EDGES));
+[TD.BACK_LABEL, TD.MORE_LABEL].forEach(function (label) {
+    check('"' + label + '" fits its heavy-edged ' + TD.BTN + 'px button', fits(label.length, 0, TD.BTN, HEAVY_EDGES));
+    check('"' + label + '" fits its heavy-edged ' + TD.SMALL_BTN + 'px button with its small spacing',
+        fits(label.length, heavyTight, TD.SMALL_BTN, HEAVY_EDGES));
+});
+check('the heavy fit check can fail: the name spacing alone leaves Back 0.2px too wide', !fits(TD.BACK_LABEL.length, tight, TD.SMALL_BTN, HEAVY_EDGES));
 
 process.exit(failures ? 1 : 0);

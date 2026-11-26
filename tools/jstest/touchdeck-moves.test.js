@@ -286,4 +286,17 @@ check('two portals to one zone: the same label, the player\'s own first and name
     [words(deck.children[1]), deck.children[1].attrs['aria-label'], words(deck.children[2]), deck.children[2].attrs['aria-label']],
     ['arena', 'Go arena (yours)', 'arena', 'Go arena']);
 
+// --- focusAfter: focus survives a redraw ---------------------------------
+// render rebuilds every button, so the focused one is gone; dashboard.js
+// applyDeck focuses the cell focusAfter names (keyboard and screen reader).
+
+check('the same cell keeps the focus when it is still a button', TD.focusAfter(top, 6, 'top', 'top'), 6);
+var noWest = TD.cells(TD.moves(info(5243, { up: ex('vertical', 'm5') }), ''), PHONE, 'top', 0);
+check('a cell that is now disabled hands the focus to the first button', TD.focusAfter(noWest, 6, 'top', 'top'), 0);
+check('a cell that is now an empty slot does too (Tower Top: up, north, down are dim, so the exits button)', TD.focusAfter(top, 4, 'top', 'top'), 3);
+check('opening the list focuses Back', TD.focusAfter(list, 3, 'top', 'exits'), 0);
+check('closing the list focuses the exits button', TD.focusAfter(top, 0, 'exits', 'top'), 3);
+check('no button left: nothing to focus', TD.focusAfter(TD.cells(null, PHONE, 'top', 0), 6, 'top', 'top'), -1);
+check('Back and More read as render draws them', [TD.BACK_LABEL, TD.MORE_LABEL], ['‹ Back', 'More ›']);
+
 process.exit(failures ? 1 : 0);

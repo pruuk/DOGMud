@@ -167,6 +167,7 @@
     _deckState: { level: "top", page: 0, guardUntil: 0 },
     _deckCells: [],
     _deckSig: "",
+    _deckDrawnLevel: "top",
     _deckPress: null,
     _deckSay: null,
 
@@ -686,9 +687,20 @@
       deck.classList.toggle("deck-dark", model.dark);
       var sig = JSON.stringify(cells);
       if (sig !== this._deckSig || deck.childElementCount !== cells.length) {
+        // render rebuilds every button, so a focused one would drop the
+        // keyboard and screen reader focus to the page: hand it on
+        // (touchdeck.js focusAfter).
+        var had = active && active !== deck && deck.contains(active) && active.getAttribute
+          ? active.getAttribute("data-cell") : null;
+        var levelWas = this._deckDrawnLevel;
         this._deckSig = sig;
         this._deckCells = cells;
+        this._deckDrawnLevel = this._deckState.level;
         TD.render(deck, cells, document);
+        if (had !== null) {
+          var to = deck.children[TD.focusAfter(cells, Number(had), levelWas, this._deckState.level)];
+          if (to && to.focus) to.focus();
+        }
       }
     },
 

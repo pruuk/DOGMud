@@ -1,12 +1,13 @@
-// dashboard-deck.test.js: dashboard.js keeps the deck's movement state and
-// sends a tap's id (touch arc plan 2b, #781).
+// dashboard-deck.test.js: dashboard.js keeps the deck's movement state,
+// draws it and sends a tap's id (touch arc plan 2b, #781).
 //
 // Run:  node tools/jstest/dashboard-deck.test.js
 //
-// Loads the real static/js/dashboard.js and touchdeck.js. applyDeck is
-// replaced by one that lays the cells out at the S21's shape, since drawing
-// is touchdeck.js render's job (touchdeck-moves.test.js). Dependency free,
-// exits non-zero on failure.
+// Loads the real static/js/dashboard.js and touchdeck.js and runs the real
+// applyDeck against a small fake DOM: the deck redraws only when a cell
+// changes, takes the small and dark classes, and keeps the keyboard focus
+// across a redraw. What each cell looks like is touchdeck.js render's job
+// (touchdeck-moves.test.js). Dependency free, exits non-zero on failure.
 'use strict';
 
 var fs = require('fs');
@@ -25,24 +26,80 @@ function check(name, got, want) {
     console.log('FAIL ' + name + '\n  got ' + g + ', want ' + w);
 }
 
-var win = { TouchDeck: TD };
-var sandbox = {
-    window: win,
-    document: {
-        getElementById: function () { return null; },
-        addEventListener: function () {},
-        querySelectorAll: function () { return []; }
-    },
-    console: console
+// --- a small fake DOM -------------------------------------------------------
+
+var doc;
+function FakeEl(tag, ns) {
+    var self = this;
+    this.tagName = tag; this.ns = ns || ''; this.children = []; this.attrs = {};
+    this.dataset = {}; this.className = ''; this.textContent = ''; this.disabled = false; this.type = '';
+    this.parentNode = null; this.hidden = false;
+    var props = {};
+    this.style = { setProperty: function (k, v) { props[k] = v; }, getPropertyValue: function (k) { return props[k] || ''; } };
+    var cls = {};
+    this.classList = {
+        add: function (c) { cls[c] = true; }, remove: function (c) { delete cls[c]; },
+        toggle: function (c, on) { if (on === undefined ? !cls[c] : on) cls[c] = true; else delete cls[c]; },
+        contains: function (c) { return !!cls[c]; }
+    };
+    this.focus = function () { doc.activeElement = self; };
+}
+FakeEl.prototype.appendChild = function (c) { c.parentNode = this; this.children.push(c); return c; };
+FakeEl.prototype.removeChild = function (c) {
+    this.children.splice(this.children.indexOf(c), 1);
+    c.parentNode = null;
+    if (doc.activeElement === c || (doc.activeElement && c.contains(doc.activeElement))) doc.activeElement = doc.body;
+    return c;
 };
+FakeEl.prototype.contains = function (el) { for (var e = el; e; e = e.parentNode) if (e === this) return true; return false; };
+FakeEl.prototype.setAttribute = function (k, v) { this.attrs[k] = String(v); };
+FakeEl.prototype.getAttribute = function (k) { return Object.prototype.hasOwnProperty.call(this.attrs, k) ? this.attrs[k] : null; };
+FakeEl.prototype.addEventListener = function () {};
+Object.defineProperty(FakeEl.prototype, 'firstChild', { get: function () { return this.children[0] || null; } });
+Object.defineProperty(FakeEl.prototype, 'childElementCount', { get: function () { return this.children.length; } });
+
+var parent = new FakeEl('main');
+var col = new FakeEl('div');
+col.clientWidth = 346;   // 344 inside the slot's borders: six 48px columns
+col.clientHeight = 600;
+var other = new FakeEl('input');   // focus somewhere else on the page
+doc = {
+    body: new FakeEl('body'),
+    activeElement: null,
+    documentElement: new FakeEl('html'),
+    getElementById: function (id) {
+        if (id === 'dashboard') return { parentNode: parent };
+        if (id === 'dash-col-center') return col;
+        return null;
+    },
+    createElement: function (t) { return new FakeEl(t); },
+    createElementNS: function (ns, t) { return new FakeEl(t, ns); },
+    addEventListener: function () {},
+    querySelectorAll: function () { return []; }
+};
+doc.activeElement = doc.body;
+
+// Count real renders: the deck redraws only when a cell changes.
+var renders = 0;
+var TDwin = Object.create(TD);
+TDwin.render = function (deck, cells, d) { renders++; return TD.render(deck, cells, d); };
+var win = {
+    TouchDeck: TDwin,
+    matchMedia: function () { return { matches: true }; },          // a touch screen
+    localStorage: { getItem: function () { return 'always'; }, setItem: function () {} },
+    innerWidth: 360, innerHeight: 800
+};
+var sandbox = { window: win, document: doc, console: console };
 vm.createContext(sandbox);
 vm.runInContext(SRC, sandbox, { filename: 'dashboard.js' });
 var D = win.Dashboard;
 
-var SHAPE = TD.shape(344, 600, true, false);
-D.applyDeck = function () {
-    D._deckCells = TD.cells(TD.moves(D._moves, D._deckMode), SHAPE, D._deckState.level, D._deckState.page);
-};
+var deck = new FakeEl('div');
+var slot = new FakeEl('div');
+slot.appendChild(deck);
+D._slot = slot;
+D._deck = deck;
+
 var pressed = [], said = [];
 D.setDeckSender(function (id) { pressed.push(id); }, function (t) { said.push(t); });
 
@@ -56,58 +113,77 @@ function e(kind, id) { return { num: 1, dx: 0, dy: 0, dz: 0, details: [], kind: 
 function at(kind, pred) {
     return D._deckCells.findIndex(function (c) { return c.kind === kind && (!pred || pred(c)); });
 }
+function focused() { return deck.contains(doc.activeElement) ? doc.activeElement.getAttribute('data-cell') : 'outside'; }
 var tower = room(5243, { west: e('compass', 'm4'), shrine: e('named', 'xaaaa0001'), ledge: e('named', 'xaaaa0002') });
+var WEST = function (c) { return c.dir === 'west'; };
+
+// --- the real applyDeck ------------------------------------------------------
 
 D.setMoves(tower);
-D._deckTap(at('move', function (c) { return c.dir === 'west'; }));
-D._deckTap(at('move', function (c) { return c.dir === 'west'; }));
+check('the deck shows and draws one child per cell', [slot.dataset.shows, deck.children.length, renders], ['deck', 12, 1]);
+check('a 48px deck is not small, a lit room not dark', [deck.classList.contains('deck-small'), deck.classList.contains('deck-dark')], [false, false]);
+D.applyDeck();
+check('nothing changed: no redraw', renders, 1);
+col.clientWidth = 330;   // too narrow for six 48px buttons
+D.applyDeck();
+check('44px buttons: the deck takes deck-small', deck.classList.contains('deck-small'), true);
+col.clientWidth = 346;
+D.applyDeck();
+check('48px again: deck-small goes', deck.classList.contains('deck-small'), false);
+
+// --- taps and the level ------------------------------------------------------
+
+D._deckTap(at('move', WEST));
+D._deckTap(at('move', WEST));
 check('a lit arrow sends its fixed id, and a quick second tap sends again (ruling 8)', pressed, ['m4', 'm4']);
+
+// Focus survives a redraw (keyboard and screen reader users).
+deck.children[at('move', WEST)].focus();
+D.setDeckMode('combat');
+check('a redraw keeps the focus on the same button', focused(), String(at('move', WEST)));
+D.setDeckMode('');
+doc.activeElement = other;
+D.setDeckMode('combat');
+check('a redraw takes no focus from outside the deck', doc.activeElement === other, true);
+D.setDeckMode('');
+
+deck.children[at('other')].focus();
 D._deckTap(at('other'));
 check('the exits button opens the list', D._deckState.level, 'exits');
+check('opening the list focuses Back', focused(), String(at('back')));
 D._deckState.guardUntil = 0;   // the list's hold (D11) is touchdeck-moves.test.js's; tap the list now
 D._deckTap(at('exit', function (c) { return c.label === 'shrine'; }));
 D._deckTap(at('exit', function (c) { return c.label === 'shrine'; }));
 check('an exit sends its id once for a quick double tap', pressed.slice(2), ['xaaaa0001']);
 D.setMoves(tower);
 check('Room.Info again in the same room keeps the list open', D._deckState.level, 'exits');
-check('the tap hold survives a Room.Info (plan 2b D11)', D._deckState.guardUntil > 0, true);
-D.setMoves(room(5346, { north: e('compass', 'm1') }));
+D.setMoves(room(5346, { north: e('compass', 'm1'), gate: e('named', 'xbbbb0001') }));
 check('after a move the deck returns to the T', D._deckState.level, 'top');
-check('the hold survives the move too, so the second tap cannot walk again', D._deckState.guardUntil > 0, true);
+check('returning to the T focuses the exits button', focused(), String(at('other')));
+D._deckTap(at('move', function (c) { return c.dir === 'north'; }));
+check('the exit\'s hold survives the move: a second tap now walks nowhere (plan 2b D11)', pressed.slice(3), []);
 D._deckState.guardUntil = 0;
+D._deckTap(at('move', function (c) { return c.dir === 'north'; }));
+check('once the hold ends the arrow walks', pressed.slice(3), ['m1']);
+
+deck.children[at('move', function (c) { return c.dir === 'north'; })].focus();
+D.setMoves(room(5347, { up: e('vertical', 'm5') }));
+check('a button that is gone hands the focus to the first button', focused(), String(at('move', function (c) { return c.dir === 'up'; })));
+
 D.setDeckMode('combat');
 check('combat reaches the cells', D._deckCells[1].combat, true);
 D.setMoves(room(6418, {}, { dark: true, darkmarks: { north: 'wall' } }));
+check('a pitch-dark room: the deck takes deck-dark', deck.classList.contains('deck-dark'), true);
 D._deckTap(at('dark'));
 check('the Dark tile writes its line through the page', said, [TD.DARK_LINE]);
 D.setMoves(null);
 check('a closed connection leaves only empty slots', D._deckCells.every(function (c) { return c.kind === 'empty'; }), true);
+check('and the deck is light again', deck.classList.contains('deck-dark'), false);
 
 // --- the tab bar draws its icons with touchdeck.js lineIcon -----------------
 // One stroke-path icon builder for the client (unify rule): the phone tab
 // bar's round tabs (makeTabBar) and the deck's icons share TouchDeck.lineIcon.
 
-function FakeEl(tag, ns) {
-    this.tagName = tag; this.ns = ns || ''; this.children = []; this.attrs = {};
-    this.dataset = {}; this.style = {}; this.className = ''; this.textContent = '';
-    var cls = {};
-    this.classList = {
-        add: function (c) { cls[c] = true; }, remove: function (c) { delete cls[c]; },
-        toggle: function (c, on) { if (on === undefined ? !cls[c] : on) cls[c] = true; else delete cls[c]; },
-        contains: function (c) { return !!cls[c]; }
-    };
-}
-FakeEl.prototype.appendChild = function (c) { this.children.push(c); return c; };
-FakeEl.prototype.setAttribute = function (k, v) { this.attrs[k] = String(v); };
-FakeEl.prototype.addEventListener = function () {};
-var parent = new FakeEl('body');
-sandbox.document = {
-    getElementById: function (id) { return id === 'dashboard' ? { parentNode: parent } : null; },
-    createElement: function (t) { return new FakeEl(t); },
-    createElementNS: function (ns, t) { return new FakeEl(t, ns); },
-    addEventListener: function () {},
-    querySelectorAll: function () { return []; }
-};
 D._buildPhone();
 var bar = D._phoneTabs.el;
 var tabs = bar.children.filter(function (c) { return c.tagName === 'button'; });
