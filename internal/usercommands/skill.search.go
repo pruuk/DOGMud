@@ -34,10 +34,10 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// on. Quest spots are not rolled then, and the step is answered below.
 	//
 	// The cause is told apart as `look` tells it (actions.ResolveLook and
-	// noSightRefusal, #364): light helps a searcher in the dark and does
+	// NoSightLine, #364): light helps a searcher in the dark and does
 	// nothing for a blinded one, so the blinded one is not told to find light.
 	lookKind := actions.ResolveLook(actor, ``).Kind
-	sightLine, dark := noSightRefusal(lookKind)
+	sightLine, dark := actions.NoSightLine(lookKind)
 	if lookKind == actions.LookTooDark {
 		sightLine = searchTooDarkLine
 	}

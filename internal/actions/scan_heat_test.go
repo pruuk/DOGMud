@@ -183,8 +183,10 @@ func TestScan_HeatAndLookCountTheRostersOccupants(t *testing.T) {
 					t.Errorf("scan named %s through heat: %q", name, sent)
 				}
 			}
-			if c.blinded && !strings.Contains(sent, "too dark to make anything out") {
-				t.Errorf("a blinded scan should make nothing out: %q", sent)
+			// A blinded scanner sees nothing here, so scan says what look
+			// says and names no exit (owner ruling 2026-11-26).
+			if c.blinded && (!strings.Contains(sent, "You can't see anything!") || strings.Contains(sent, "north")) {
+				t.Errorf("a blinded scan should read as a blinded look and name no exit: %q", sent)
 			}
 
 			// look <exit> asks the same two questions: may heat show this

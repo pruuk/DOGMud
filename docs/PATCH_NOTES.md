@@ -12,6 +12,7 @@
 - Seeing someone use a secret exit teaches it to you: walking through it, working its lock or trap, looking or shooting through it. You learn the exit, not the combination of its lock.
 - A sound that reaches you through a secret exit you have not found comes "from nearby". Once you find the exit, you see which way the sound came from.
 - `track` follows a trail through a secret exit only if you have found that exit.
+- `scan` looks through a secret exit once you have found it. In total darkness, or while blinded, `scan` tells you it is too dark to see, as `look` does, and names no exits. Creatures scanning in the dark see nothing either.
 - Creatures wander, chase, shoot and run errands only through secret exits they have found. Patrols and daily routes keep their usual ways.
 - A door or chest gets a new combination each time it locks again, also when it locks again by itself. A combination you learned before then stops working.
 - A door you unlock stays unlocked after everyone leaves the area, until it locks again by itself.

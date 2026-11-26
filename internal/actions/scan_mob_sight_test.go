@@ -54,7 +54,6 @@ func TestScan_MobSightingsFollowTheScannersSight(t *testing.T) {
 		{"both rooms bright: a sighting", 90, 90, 1},
 		{"next room dim: a shape still counts (D8)", 90, 35, 1},
 		{"next room dark: nobody", 90, -50, 0},
-		{"own room too dark to see out: nobody", 10, 90, 0},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			result := scanMobSightings(t, c.here, c.there)
@@ -63,6 +62,11 @@ func TestScan_MobSightingsFollowTheScannersSight(t *testing.T) {
 			require.Empty(t, result.Sightings[0].Players)
 		})
 	}
+	// A mob that sees nothing in its own room scans nothing, the same rule a
+	// player's scan follows (owner ruling 2026-11-26).
+	t.Run("own room too dark to see: no exit", func(t *testing.T) {
+		require.Empty(t, scanMobSightings(t, 10, 90).Sightings)
+	})
 }
 
 // The structured result lists whom the roster would list: no hidden player,

@@ -17,7 +17,7 @@ func Exits(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// "Exits: None" would not be true: answer as look does. ResolveLook only
 	// words it (dark or blinded); ExitsDark decides.
 	if details.ExitsDark {
-		if line, refused := noSightRefusal(actions.ResolveLook(actions.NewUserActorInRoom(user, room), ``).Kind); refused {
+		if line, refused := actions.NoSightLine(actions.ResolveLook(actions.NewUserActorInRoom(user, room), ``).Kind); refused {
 			user.SendText(messaging.CategoryRefusal, line)
 			return true, nil
 		}

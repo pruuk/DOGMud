@@ -136,7 +136,9 @@ func TestScan_RoomTitleOnlyWhenTheLightSeesOut(t *testing.T) {
 	}{
 		{"light sees out: the title", 90, false, true, `<ansi fg="exit">north</ansi> (<ansi fg="room-title">` + scanLockTitle + `</ansi>): <ansi fg="mobname">Midroad Scout</ansi>`},
 		{"too dark to see out, no heat: no title", 30, false, false, `<ansi fg="exit">north</ansi>: too dark to make anything out`},
-		{"own room too dark: no title", 10, false, false, `<ansi fg="exit">north</ansi>: too dark to make anything out`},
+		// Seeing nothing here, scan reads as look and names no exit (owner
+		// ruling 2026-11-26).
+		{"own room too dark: no title, no exit", 10, false, false, `It is too dark to see. You need light, or eyes that do not need it.`},
 		{"too dark to see out, heat: figures, no title", 30, true, false, `<ansi fg="exit">north</ansi>: <ansi fg="combat-anon">a figure</ansi>`},
 	} {
 		t.Run(c.name, func(t *testing.T) {

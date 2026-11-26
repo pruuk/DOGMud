@@ -65,7 +65,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			`You run your hands over your <ansi fg="item">%s</ansi>.`, res.TouchItem.DisplayNameFor(user.UserId)))
 		return true, nil
 	}
-	if line, refused := noSightRefusal(res.Kind); refused {
+	if line, refused := actions.NoSightLine(res.Kind); refused {
 		user.SendText(messaging.CategoryRefusal, line)
 		return true, nil
 	}
@@ -613,20 +613,6 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 // lookShapeOnlyLine is what a looker below clear sight reads of what they
 // looked at: a corpse, or a figure (`look figure`, owner ruling 2026-10-17).
 const lookShapeOnlyLine = `You can make out no more than its shape.`
-
-// noSightRefusal words the refusal of a looker who sees nothing here. A
-// looker in the dark is told that light, or other eyes,
-// would help; a blinded one is not, since light would not (#364). refused is
-// false for every kind that sees something.
-func noSightRefusal(kind actions.LookKind) (line string, refused bool) {
-	switch kind {
-	case actions.LookBlind:
-		return `You can't see anything!`, true
-	case actions.LookTooDark:
-		return `It is too dark to see. You need light, or eyes that do not need it.`, true
-	}
-	return ``, false
-}
 
 // floorItemNamedInFull finds a floor item the words name in full, as more
 // than one word ("arch lantern"). A multi-word full name is specific: it

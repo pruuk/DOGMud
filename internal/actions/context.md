@@ -711,6 +711,11 @@ pet that is not the giver's own companion. The guard
 `RemoveItem` call and every floor drop (`Room.AddItem`) with a pinned count
 per function, so a new way out fails CI until it is decided.
 
+`NoSightLine(kind LookKind) (line string, refused bool)` (`look.go`) words
+the refusal for `LookBlind` and `LookTooDark`, for `look`, `scan`, `search`
+and the exits line alike (moved from `usercommands.noSightRefusal` 2026-11-26
+so `Scan` can use it).
+
 **`look.go`** (new file, slice 5a): `ResolveLook(actor Actor, lookAt string)
 LookResolution` (`:49`) is the shared look body, in the player's exact order:
 sight first, then no-target (the room), then a creature (resolved with the
@@ -1362,8 +1367,14 @@ type DefuseResult struct {
 Sweeps the rooms one step away for occupants (`scan.go`).
 
 **Mechanics:**
-- **Adjacent rooms:** one `ScanSighting` per non-secret exit in
-  `room.Exits` whose room loads.
+- **No sight here (owner ruling 2026-11-26, #781):** a scanner whose own
+  room `ResolveLook(actor, "")` reads as `LookTooDark` or `LookBlind` scans
+  nothing and names no exit, as look names none: a player reads
+  `NoSightLine`, a mob gets no sightings. Infravision is sight here, so a
+  heat-sensing scanner in an unlit room still senses through (O6).
+- **Adjacent rooms:** one `ScanSighting` per exit in `room.Exits` the
+  scanner knows (`Room.ExitKnownTo`: a secret exit once found) whose room
+  loads.
 - **Locked exits (#427, owner ruling 2026-10-07):** a locked door blocks
   scan as it blocks look, by sight and by heat. The sighting stays, with
   `Locked` true and `Mobs` / `Players` empty, so a mob caller (the

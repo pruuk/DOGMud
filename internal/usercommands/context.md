@@ -45,10 +45,12 @@ The `internal/usercommands` package implements the complete command system for p
   3b-3, ruling 7; `fitOnlineEntries`, which cut the zone and then the name
   to "...", is gone). Login runs `online` (OnLoginCommands), so the same
   holds there.
-  `exits` (`exits.go`) renders the exits line from `rooms.GetDetails`, which
-  reads `rooms.KnownExits`. The exits line lists nothing at no sight (#781),
-  so `GetDetails` sets `ExitsDark`: then `exits` answers with look's no-sight
-  line (`noSightRefusal`), and `lookRoom` leaves the exits line out when
+  `Exits` (`exits.go`) renders the exits line from `rooms.GetDetails`, which
+  reads `rooms.KnownExits`; it is not in the command map (upstream dropped
+  `exits` in #291), so no player can type it, and `look` shows the exits line
+  instead. The exits line lists nothing at no sight (#781), so `GetDetails`
+  sets `ExitsDark`: then `Exits` answers with look's no-sight line
+  (`actions.NoSightLine`), and `lookRoom` leaves the exits line out when
   peering into a pitch-dark room, as the roster is, instead of "Exits: None".
   Every verb that names an exit (`go` and the bare exit word in `TryCommand`
   and `fallbackRoute`, `look`, `lock`, `unlock`, `picklock`, `shoot`)
