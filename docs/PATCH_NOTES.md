@@ -1,5 +1,9 @@
 # DOGMud Patch Notes
 
+## 2026-11-26: The Windwarden's Dilemma points the way
+
+- Once you choose a side in The Windwarden's Dilemma, the map and quest log now point you to what you were asked to find: Sylara's carved wolf totem in the Kill Ground, or Rhett's windstone samples on the Rocky Shelf. Once it is in your pack, they point you back to whoever asked for it. If you were already partway through, you pick up right where you were.
+
 ## 2026-11-25: Small fixes
 
 - You can start one flee each round. A second `flee` started in the same round is refused and costs nothing. Monsters follow the same rule.

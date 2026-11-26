@@ -17,18 +17,45 @@ steps:
       ridge approach, hear what siding with each would mean, and choose
       a side."
     hint: "Rhett camps at the Ridge Approach, seven rooms east of Thornwall's Old Citadel Plaza. Sylara keeps the Stone Circle, south twice from there, then east. Type talk rhett."
-  # sided: the choice is made in talk, after each side's warning (R28).
-  # Hearing either side's stand topic grants it (the topic_heard triggers
-  # below; the topic sets the 11-branch flag). Old saves that chose a side
-  # before this step existed hold the flag without it; their side's terms
-  # topic stays open to them, so they hear it and stand again, and the
-  # hand-ins gate on this step.
-  - id: sided
-    # destination: the side chosen decides the place (3082 totem or 3032 samples)
-    destination: {zone: Ironwind Steppe}
-    description: "You have chosen a side in the dispute over the stone
-      circle. Do what they asked of you to prove it."
-    hint: "Sylara wants her carved wolf totem from the Kill Ground, deep in the wolf runs to the south. Rhett wants windstone samples from the Rocky Shelf, south of his camp."
+  # Each side has its own two steps, fetch then return, so the map always has
+  # one place to point at (#958; owner ruling 2026-11-25: split the old
+  # `sided` step). The choice is made in talk, after each side's warning
+  # (R28): hearing a side's stand topic grants that side's fetch step (the
+  # topic_heard triggers below; the topic sets the 11-branch flag), and
+  # picking up the item grants its return step.
+  #
+  # Steps are ordered, and holding a later step counts as holding every
+  # earlier one (Character.HasQuest). Sylara's steps come first, so a Rhett
+  # player skips past them and "holds" them, while a Sylara player never
+  # holds Rhett's. Every gate on these steps also checks the 11-branch flag,
+  # so neither side can reach the other's topics or triggers.
+  #
+  # Old saves resting on the retired `sided` step are moved onto their side's
+  # steps at load (Character.MigrateQuest11SidedStep). Saves that chose a side
+  # before any sided step existed hold the flag on `start`; their side's terms
+  # topic stays open to them, so they hear it and stand again.
+  - id: sylara
+    destination: {room: 3082}
+    description: "You have sided with Windwarden Sylara. The wolves dragged
+      her carved wolf totem into their kill ground. Search the bones there
+      and bring it back to her."
+    hint: "From the Stone Circle, go west three times to the Southern Sagebrush Flats, south twice to the Sandy Creek Bend, east to the Creek Basin Crossing, then south six times to the Kill Ground. Type get totem from bones."
+  - id: totem
+    destination: {mob: 241}
+    description: "You have Sylara's carved wolf totem. Take it back to her at
+      the stone circle."
+    hint: "From the Kill Ground, go north six times to the Creek Basin Crossing, west to the Sandy Creek Bend, north twice to the Southern Sagebrush Flats, then east three times to the Stone Circle. Type talk sylara."
+  - id: rhett
+    destination: {room: 3032}
+    description: "You have sided with Geomancer Rhett. He wants windstone
+      samples chipped from the exposed veins on the Rocky Shelf, just south
+      of his camp."
+    hint: "The Rocky Shelf is one room south of Rhett's camp at the Ridge Approach. Type get sample from veins."
+  - id: samples
+    destination: {mob: 242}
+    description: "You have the windstone samples. Take them back to Rhett at
+      his camp."
+    hint: "Go north from the Rocky Shelf to Rhett's camp at the Ridge Approach. Type talk rhett."
   - id: end
     description: "You have made your choice and completed the task.
       The consequences remain to be seen."
@@ -37,24 +64,46 @@ rewards:
     remember."
   gold: 10
 triggers:
-  # sided: hearing Windwarden Sylara's "stand_with_sylara" topic (moved
-  # from the topic's grantsQuest, #375 phase 3b).
+  # sylara: hearing Windwarden Sylara's "stand_with_sylara" topic (the
+  # topic sets the flag first, so the flag check sees it).
   - event: topic_heard
     mob: 241
     topic: stand_with_sylara
     conditions:
       has: ["11-start"]
-      missing: ["11-sided"]
+      missing: ["11-sylara"]
+      has_flag: {"11-branch": "sylara"}
     actions:
-      - grant: "11-sided"
+      - grant: "11-sylara"
 
-  # sided: hearing Geomancer Rhett's "stand_with_rhett" topic (moved from
-  # the topic's grantsQuest, #375 phase 3b).
+  # totem: the carved wolf totem reaches the pack. A plain item_gain, so a
+  # totem already held when the step starts counts too.
+  - event: item_gain
+    item: 40033
+    conditions:
+      has: ["11-sylara"]
+      missing: ["11-totem"]
+      has_flag: {"11-branch": "sylara"}
+    actions:
+      - grant: "11-totem"
+
+  # rhett: hearing Geomancer Rhett's "stand_with_rhett" topic.
   - event: topic_heard
     mob: 242
     topic: stand_with_rhett
     conditions:
       has: ["11-start"]
-      missing: ["11-sided"]
+      missing: ["11-rhett"]
+      has_flag: {"11-branch": "rhett"}
     actions:
-      - grant: "11-sided"
+      - grant: "11-rhett"
+
+  # samples: the windstone samples reach the pack.
+  - event: item_gain
+    item: 40032
+    conditions:
+      has: ["11-rhett"]
+      missing: ["11-samples"]
+      has_flag: {"11-branch": "rhett"}
+    actions:
+      - grant: "11-samples"

@@ -589,6 +589,9 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 	// A renamed quest step keeps the player on it (#375 phase 2): renames
 	// come from the step-id manifest, quests/step-ids.txt.
 	loadedUser.Character.RenameQuestSteps(quests.StepRenames())
+	// Quest 11's `sided` step split by side (#958); which step a save moves
+	// to depends on its flag and pack, so it is not a manifest rename.
+	loadedUser.Character.MigrateQuest11SidedStep()
 	// A retired current step is left as is and logged: it needs a content
 	// decision (spec 5.5).
 	for _, tok := range loadedUser.Character.RetiredQuestSteps(quests.StepRetired()) {
