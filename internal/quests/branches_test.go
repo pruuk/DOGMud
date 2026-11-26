@@ -312,6 +312,10 @@ func TestQuest_ValidateBranches(t *testing.T) {
 		{"branched first step", func(q *Quest) { q.Steps[0].Branch = "sylara" }, `first step "start" cannot be branched`},
 		{"branched last step", func(q *Quest) { q.Steps[5].Branch = "rhett" }, `last step "end" cannot be branched`},
 		{"repeatable", func(q *Quest) { q.Repeatable = true }, `a repeatable quest cannot branch`},
+		{"branch value not one word", func(q *Quest) {
+			q.Flags[0].Values = []string{"sylara", "rhett and kael"}
+			q.Steps[3].Branch, q.Steps[4].Branch = "rhett and kael", "rhett and kael"
+		}, `branch "rhett and kael" is not one word`},
 		{"flag value no step uses", func(q *Quest) {
 			q.Flags[0].Values = append(q.Flags[0].Values, "kael")
 		}, `value "kael" of branch flag "branch" is the branch of no step`},

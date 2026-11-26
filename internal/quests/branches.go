@@ -3,6 +3,7 @@ package quests
 import (
 	"fmt"
 	"slices"
+	"unicode"
 )
 
 // Quest branches (#958). A step may carry `branch: <value>`, a value of one of
@@ -26,8 +27,8 @@ import (
 // flag arguments read a player's quest flags by registered key
 // ("<questId>-<key>", see flagKey); nil reads every flag as unset.
 
-// validateBranches refuses a branch that is not a value of exactly one
-// declared flag, branched steps on more than one flag, a value of that flag
+// validateBranches refuses a branch that is not one word (letters, digits, _
+// and -), a branch that is not a value of exactly one declared flag, branched steps on more than one flag, a value of that flag
 // no step branches on, a branched first or last step, and branches on a
 // repeatable quest (a repeat clears tokens, not
 // flags, so a second run would be locked to the first run's side).
@@ -36,6 +37,9 @@ func (r *Quest) validateBranches() error {
 	for i, s := range r.Steps {
 		if s.Branch == `` {
 			continue
+		}
+		if !oneWord(s.Branch) {
+			return fmt.Errorf("step %q: branch %q is not one word; a branch value uses only letters, digits, _ and - (the walkthrough names paths by it)", s.Id, s.Branch)
 		}
 		if r.Repeatable {
 			return fmt.Errorf("step %q has branch %q, but a repeatable quest cannot branch (a repeat clears steps, not flags, so the next run would be locked to this run's side)", s.Id, s.Branch)
@@ -76,6 +80,16 @@ func (r *Quest) validateBranches() error {
 		}
 	}
 	return nil
+}
+
+// oneWord reports whether v is one word of letters, digits, _ and -.
+func oneWord(v string) bool {
+	for _, c := range v {
+		if !unicode.IsLetter(c) && !unicode.IsDigit(c) && c != '_' && c != '-' {
+			return false
+		}
+	}
+	return v != ``
 }
 
 // branchCache is what Validate works out once about a quest's fork, so the
