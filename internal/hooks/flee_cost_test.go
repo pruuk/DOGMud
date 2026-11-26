@@ -18,9 +18,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// nextFleeRound moves the round clock on one round. A flee is tried at most
-// once a round (#951), so a test that stands for several rounds of fleeing
-// must let each attempt have a round of its own.
+// nextFleeRound moves the round clock on one round. A flee may be started
+// once every round (#951), so a test that stands for several rounds of
+// fleeing must start each attempt in a round of its own.
 func nextFleeRound(t *testing.T) {
 	t.Helper()
 	util.SetRoundCountForTest(util.GetRoundCount() + 1)

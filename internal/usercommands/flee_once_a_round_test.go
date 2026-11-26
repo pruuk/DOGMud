@@ -9,17 +9,18 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// nextFleeRound moves the round clock on one round. A flee is tried at most
-// once a round (#951), so a test that stands for several rounds of fleeing
-// must let each attempt have a round of its own.
+// nextFleeRound moves the round clock on one round. A flee may be started
+// once every round (#951), so a test that stands for several rounds of
+// fleeing must start each attempt in a round of its own.
 func nextFleeRound(t *testing.T) {
 	t.Helper()
 	util.SetRoundCountForTest(util.GetRoundCount() + 1)
 	t.Cleanup(util.ResetRoundCountForTest)
 }
 
-// #951: a second flee in the round a flee already failed in is refused with
-// its own line and costs nothing; the next round's flee goes ahead.
+// #951: a second flee in the round a flee was started in (and here also
+// failed in) is refused with its own line and costs nothing; the next
+// round's flee goes ahead.
 func TestFlee_SecondAttemptInARoundIsRefusedWithItsLine(t *testing.T) {
 	util.SetRoundCountForTest(2_000_000)
 	t.Cleanup(util.ResetRoundCountForTest)

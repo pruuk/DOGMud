@@ -14,9 +14,10 @@ import (
 
 // #951: a flee could be attempted more than once in a combat round. Once an
 // attempt resolved (a failed flee returns the fleer to the fight), nothing
-// stopped a new one before the next round. A flee is now attempted at most
-// once a round, by players and mobs alike, whatever the first attempt's
-// outcome: the round it began in and the round it resolved in both count.
+// stopped a new one before the next round. A flee may now be started once
+// every round, by players and mobs alike, whatever the first attempt's
+// outcome. Only the round a flee starts in counts (owner ruling on #956): the
+// round it resolves in stays free for a new flee.
 
 const fleeOnceRound uint64 = 2_000_000
 
@@ -106,9 +107,10 @@ func TestBeginFlee_OnceARound_SecondAttemptAfterAFailureIsRefused(t *testing.T) 
 	}
 }
 
-// The usual cadence: a flee begun in one round resolves on the next. The
-// round it resolved in has had its attempt, so the next flee waits a round.
-func TestBeginFlee_OnceARound_TheResolvingRoundCountsToo(t *testing.T) {
+// The usual cadence: a flee started in round N resolves in round N+1. Only
+// the starting round counts, so N+1 stays free: a new flee started right
+// after the failure is accepted, and a third in N+1 is refused.
+func TestBeginFlee_OnceARound_TheResolvingRoundStaysFree(t *testing.T) {
 	seedFleeConditions(t)
 	for _, side := range fleeOnceActors {
 		t.Run(side.name, func(t *testing.T) {
@@ -120,12 +122,11 @@ func TestBeginFlee_OnceARound_TheResolvingRoundCountsToo(t *testing.T) {
 			}
 			setFleeRound(t, fleeOnceRound+1)
 			failFlee(t, actor, room)
-			assertRefusedThisRound(t, actor)
-
-			setFleeRound(t, fleeOnceRound+2)
 			if b := BeginFlee(actor, ``); !b.Accepted {
-				t.Fatalf("flee in the round after the resolution refused: %+v", b)
+				t.Fatalf("flee started in the round the last one resolved in = %+v, want accepted", b)
 			}
+			failFlee(t, actor, room)
+			assertRefusedThisRound(t, actor)
 		})
 	}
 }

@@ -354,9 +354,10 @@ wrappers that render the outcome.
 
 - **`FleeGate(c *characters.Character) FleeRefusal`** is every refusal a flee
   can know before it transitions: rooted (`conditions.NoMovement`), no-flee
-  (`conditions.NoFlee`), already disengaging, not in combat, this round
-  already had an attempt (`FleeRefuseThisRound`, #951: once a round, begun
-  or resolved, whatever the outcome), grappled
+  (`conditions.NoFlee`), already disengaging, not in combat, a flee
+  already started this round (`FleeRefuseThisRound`, #951: a flee may be
+  started once every round, whatever the outcome; only the starting round
+  counts, so the round a flee resolves in stays free), grappled
   (`IsStandingGrapple`/`IsGroundGrapple`), not standing. The mob AI that asks
   it first (companion flee, archer kiting, pack scatter) therefore does
   something else in a round its flee is spent. It duplicates

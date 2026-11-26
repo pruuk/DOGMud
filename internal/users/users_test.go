@@ -1122,8 +1122,8 @@ func TestUserRecord_WimpyCheck(t *testing.T) {
 		u.WimpyCheck()
 	})
 
-	// #951: a flee is tried once a round, so wimpy does not queue a second
-	// one in a round that already had an attempt; the next round it does.
+	// #951: a flee may be started once every round, so wimpy does not queue
+	// a second one in the round a flee was started; the next round it does.
 	t.Run("waits a round after a flee attempt", func(t *testing.T) {
 		util.SetRoundCountForTest(2_000_000)
 		t.Cleanup(util.ResetRoundCountForTest)

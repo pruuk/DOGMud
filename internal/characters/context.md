@@ -1583,13 +1583,13 @@ func (c *Character) IsDisengaging() bool
     // true when Combat Phase == Disengaging (flee in progress)
 
 func (c *Character) MarkFleeTriedThisRound()
-    // records util.GetRoundCount() on CombatPhase as a round that had a flee
-    // attempt (#951); actions.BeginFlee and actions.ResolveFlee call it
+    // records util.GetRoundCount() on CombatPhase as the round a flee was
+    // started in (#951); actions.BeginFlee calls it on an accepted flee
 
 func (c *Character) FleeTriedThisRound() bool
-    // true when the current round already had a flee attempt, begun or
-    // resolved; actions.FleeGate refuses a second (FleeRefuseThisRound) and
-    // UserRecord.WimpyCheck waits for a later round
+    // true when a flee was already started in the current round (the round
+    // it resolves in does not count); actions.FleeGate refuses a second
+    // (FleeRefuseThisRound) and UserRecord.WimpyCheck waits for a later round
 
 func (c *Character) EngagedTarget() state.ActorRef
     // current target when Engaged; zero when not Engaged

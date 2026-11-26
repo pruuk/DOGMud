@@ -971,9 +971,9 @@ func (u *UserRecord) GetOnlineInfo() OnlineInfo {
 }
 
 func (u *UserRecord) WimpyCheck() {
-	// A flee is tried at most once a round (#951). Once this round has had
-	// one, wimpy waits for the next hit in a later round rather than queueing
-	// a flee that is only refused, a line for every blow taken.
+	// A flee may be started once every round (#951). In the round one was
+	// started, wimpy waits for the next hit in a later round rather than
+	// queueing a flee that is only refused, a line for every blow taken.
 	if u.Character.FleeTriedThisRound() {
 		return
 	}

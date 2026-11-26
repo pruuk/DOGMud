@@ -124,15 +124,16 @@ func (m *Machine) MarkFleeRound(round uint64)
 func (m *Machine) FleeTriedIn(round uint64) bool
 ```
 
-A flee is attempted at most once a round, by players and mobs alike. The
-machine keeps the last round a flee attempt began or resolved in; it is a
-machine field, not `DisengagingData`, because it must outlive `Disengaging`
-(a failed flee returns to `Engaged` with the round already spent). The caller
-passes the round, so the machine keeps no clock: `Character.MarkFleeTriedThisRound`
-and `Character.FleeTriedThisRound` read `util.GetRoundCount()`, and
-`actions.BeginFlee` (on an accepted transition) and `actions.ResolveFlee` (via
-`settleFlee`, whatever the outcome) mark it. Zero means never; the round
-counter starts at `util.RoundCountMinimum`.
+A flee may be started once every round, by players and mobs alike (owner
+ruling on #956). The machine keeps the last round a flee was started in; only
+that round counts, so the round a flee resolves in stays free for a new one.
+It is a machine field, not `DisengagingData`, because it must outlive
+`Disengaging` (an attempt that ends early, by a failure settled the same round
+or a target death, has still used its round). The caller passes the round, so
+the machine keeps no clock: `Character.MarkFleeTriedThisRound` and
+`Character.FleeTriedThisRound` read `util.GetRoundCount()`, and
+`actions.BeginFlee` marks it on an accepted transition. Zero means never; the
+round counter starts at `util.RoundCountMinimum`.
 
 ### Force-idle
 

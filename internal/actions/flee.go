@@ -27,8 +27,9 @@ const (
 	FleeRefuseGrappled
 	FleeRefuseProne
 	FleeRefuseNotReady
-	// FleeRefuseThisRound: this round has already had this fleer's attempt,
-	// begun or resolved (#951). A flee is tried at most once a round.
+	// FleeRefuseThisRound: this fleer already started a flee this round
+	// (#951). A flee may be started once every round; only the round it
+	// starts in counts, not the round it resolves in.
 	FleeRefuseThisRound
 )
 
@@ -101,7 +102,7 @@ func BeginFlee(actor Actor, preferredExit string) FleeBegin {
 		c.CancelFleeAdmission()
 		return FleeBegin{Refusal: fleeVetoReason(c)}
 	}
-	// The attempt has begun: this round has had it (#951).
+	// The attempt has started: this round has had its flee (#951).
 	c.MarkFleeTriedThisRound()
 
 	bal := configs.GetBalanceConfig()
@@ -215,12 +216,7 @@ func ResolveFlee(actor Actor, room *rooms.Room) FleeOutcome {
 	return out
 }
 
-// settleFlee ends a resolved attempt. The round it resolved in has had its
-// attempt too, whatever the outcome (#951): a flee begun one round and failed
-// the next leaves that next round spent, so a fleer tries at most once a
-// round.
 func settleFlee(c *characters.Character, success bool) {
-	c.MarkFleeTriedThisRound()
 	if c.CombatPhase != nil {
 		c.CombatPhase.ResolveFlee(success)
 	}

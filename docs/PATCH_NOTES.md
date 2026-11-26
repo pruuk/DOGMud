@@ -6,7 +6,7 @@
 - The game holds up to ten of your commands at a time. Past that, a command is not taken and you see "You're already doing as much as you can. Wait a moment." The web client also greys out its trigger, tick, macro and alias buttons until there is room again.
 - You can keep up to 50 ticks and 100 triggers, and each of their fields can be up to 1,000 characters long. A tick or trigger past that is not saved, and the game tells you why.
 - A macro, a tick and a trigger can each run up to ten commands, the same number the game holds for you. The macro, tick and trigger editors count your commands as you type ("3 of 10 commands") and will not save a longer list. For a long walking route, split it into two. A tick or trigger you saved earlier with more commands is kept and still runs, but only its first ten commands are taken; shorten it the next time you edit it.
-- You can try to flee once a round. A second `flee` in the same round, even after a failed attempt, is refused and costs nothing; try again next round. Monsters follow the same rule.
+- You can start one flee each round. A second `flee` started in the same round is refused and costs nothing. Monsters follow the same rule.
 
 ## 2026-11-22: Pothole Coulee teachers offer their own trades
 

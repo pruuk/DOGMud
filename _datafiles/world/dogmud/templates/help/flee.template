@@ -9,8 +9,8 @@ Your chance of escaping depends on how fast you are relative to
 each attacker. A quicker combatant has a much better chance of
 breaking away. You cannot flee while grappled or prone.
 
-You can try to flee once a round. If an attempt fails, wait for the
-next round before you try again.
+You can start one flee each round. A flee is decided in the round after
+you start it, and if it fails you can try again right away.
 
 ::rows
 <ansi fg="magenta-bold">See also:</ansi>  <ansi fg="command">help grapple</ansi>, <ansi fg="command">help combat</ansi>
