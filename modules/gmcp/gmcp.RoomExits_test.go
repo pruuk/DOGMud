@@ -184,3 +184,29 @@ func TestRoomInfo_DarkMarksRideOnlyInTheDark(t *testing.T) {
 	require.NotNil(t, p.DarkMarks)
 	require.Empty(t, p.DarkMarks)
 }
+
+// Owner ruling 18 and R2: an instance portal's button reads its zone, not
+// the number, and is wired to that portal's own key; a second portal the
+// viewer may enter gets a button too, and only the viewer's own carries the
+// own_portal detail the client sorts first by. (Neither destination is an
+// instance room here, so the viewer may enter both; the refusal case is
+// rooms.TestForDeck_*.)
+func TestRoomInfo_InstancePortalsAreLabelledByZoneAndTheViewersOwnIsMarked(t *testing.T) {
+	viewer, room := exitsFixture(t, 60)
+	own := exit.InstancePortalKey("arena", viewer.UserId)
+	theirs := exit.InstancePortalKey("arena", viewer.UserId+1)
+	require.True(t, room.AddTemporaryExit(own, exit.TemporaryRoomExit{RoomId: 9721, UserId: viewer.UserId}))
+	require.True(t, room.AddTemporaryExit(theirs, exit.TemporaryRoomExit{RoomId: 9721, UserId: viewer.UserId + 1}))
+
+	p := roomInfoFor(t, viewer)
+	for _, key := range []string{own, theirs} {
+		require.Equal(t, "arena", p.ExitsV2[key].Label, key)
+		line, ok := buttons.Resolve(viewer.UserId, 9720, p.ExitsV2[key].Id)
+		require.True(t, ok, key)
+		require.Equal(t, "go "+key, line)
+	}
+	require.Contains(t, p.ExitsV2[own].Details, "own_portal")
+	require.NotContains(t, p.ExitsV2[theirs].Details, "own_portal")
+	require.Empty(t, p.ExitsV2["out"].Label, "an exit shown by its own name sends no label")
+	require.NotContains(t, p.ExitsV2["portal"].Details, "own_portal", "a plain temporary exit is nobody's portal")
+}

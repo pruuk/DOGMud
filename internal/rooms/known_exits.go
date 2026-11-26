@@ -357,3 +357,57 @@ func (r *Room) HeardLines(way ExitTo, named, nearby string, exclude []int) []Hea
 	}
 	return lines
 }
+
+// ForDeck is the part of known the touch deck offers userId, and the label
+// of each offered button whose text is not its exit's name, by exit name
+// (#781, owner ruling 18 and the plan review's R2: every exit the player may
+// legally enter gets a button). An exit is offered under its own name,
+// except a player's instance portal (exit.InstancePortalZone): it is
+// labelled with its zone, without the number, and offered only to a player
+// MayEnterInstance lets through, so a party member's portal is offered
+// beside the player's own. known is not changed: the exits line and
+// Room.Info's exit maps still list every exit. A room with no portal (nearly
+// every room) returns known itself and nil labels, since Room.Info's round
+// watcher calls this for every GMCP player every round.
+func ForDeck(known KnownExitList, userId int) (KnownExitList, map[string]string) {
+	var labels map[string]string
+	for _, ke := range known.Exits {
+		if _, portal := deckPortalZone(ke); portal {
+			labels = map[string]string{}
+			break
+		}
+	}
+	if labels == nil {
+		return known, nil
+	}
+	deck := KnownExitList{Dark: known.Dark, Exits: make([]KnownExit, 0, len(known.Exits))}
+	for _, ke := range known.Exits {
+		zone, portal := deckPortalZone(ke)
+		if !portal {
+			deck.Exits = append(deck.Exits, ke)
+			continue
+		}
+		if !MayEnterInstance(userId, ke.RoomId) {
+			continue
+		}
+		deck.Exits = append(deck.Exits, ke)
+		labels[ke.Name] = zone
+	}
+	return deck, labels
+}
+
+// IsOwnPortal reports whether ke is userId's own instance portal, the one
+// the deck lists first among portals to one zone (plan 2b D3).
+func IsOwnPortal(ke KnownExit, userId int) bool {
+	_, portal := deckPortalZone(ke)
+	return portal && ke.Temp.UserId == userId
+}
+
+// deckPortalZone is exit.InstancePortalZone for a known exit; only a
+// temporary exit can be a player's instance portal.
+func deckPortalZone(ke KnownExit) (string, bool) {
+	if ke.Kind != ExitTemporary {
+		return "", false
+	}
+	return exit.InstancePortalZone(ke.Name, ke.Temp)
+}

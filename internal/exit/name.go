@@ -2,6 +2,8 @@ package exit
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -42,4 +44,27 @@ func CheckName(name string) error {
 		return fmt.Errorf("exit %q is %d letters; a named exit is at most %d letters so it fits a deck button (owner ruling 18)", name, n, MaxNameLetters)
 	}
 	return nil
+}
+
+// InstancePortalKey is the exit key of the portal a player opens into their
+// own instance of zone (behaviortree actOpenInstancePortal): "<zone>-<userId>".
+// It is exempt from MaxNameLetters (owner ruling 18): the touch deck labels
+// it with InstancePortalZone instead.
+func InstancePortalKey(zone string, userId int) string {
+	return zone + "-" + strconv.Itoa(userId)
+}
+
+// InstancePortalZone reports the zone of a player's instance portal: a
+// temporary exit whose key is InstancePortalKey of some zone and of the
+// exit's own UserId. Any other exit: false. The touch deck's button reads
+// the zone ("arena"), never the number (owner ruling 18).
+func InstancePortalZone(key string, t TemporaryRoomExit) (string, bool) {
+	if t.UserId <= 0 {
+		return "", false
+	}
+	zone, ok := strings.CutSuffix(key, "-"+strconv.Itoa(t.UserId))
+	if !ok || zone == "" {
+		return "", false
+	}
+	return zone, true
 }

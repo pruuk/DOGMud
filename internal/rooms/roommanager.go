@@ -386,6 +386,19 @@ func GetAllZoneRoomsIds(zoneName string) []int {
 // caller treats it as an ordinary refusal and does not report a fault.
 var ErrInstanceAccessDenied = errors.New("instance access denied")
 
+// MayEnterInstance reports whether userId may enter roomId: any room outside
+// an instance, an ephemeral room no instance holds, or a room of an instance
+// that authorized them (the opener and their party when it opened).
+// MoveToRoom refuses on it, and the touch deck offers an instance portal only
+// when it holds (rooms.ForDeck, owner ruling 18).
+func MayEnterInstance(userId int, roomId int) bool {
+	if !IsEphemeralRoomId(roomId) {
+		return true
+	}
+	inst := instanceRegistry.FindByRoomId(roomId)
+	return inst == nil || inst.IsAuthorized(userId)
+}
+
 func MoveToRoom(userId int, toRoomId int, isSpawn ...bool) error {
 
 	user := users.GetByUserId(userId)
@@ -453,15 +466,11 @@ func MoveToRoom(userId int, toRoomId int, isSpawn ...bool) error {
 	}
 
 	// Instance access control: block unauthorized entry to instanced zones
-	if IsEphemeralRoomId(toRoomId) {
-		if inst := instanceRegistry.FindByRoomId(toRoomId); inst != nil {
-			if !inst.IsAuthorized(userId) {
-				if user != nil {
-					user.SendText(messaging.CategoryError, `<ansi fg="red">The portal's energy pushes you back. It wasn't opened for you.</ansi>`)
-				}
-				return ErrInstanceAccessDenied
-			}
+	if !MayEnterInstance(userId, toRoomId) {
+		if user != nil {
+			user.SendText(messaging.CategoryError, `<ansi fg="red">The portal's energy pushes you back. It wasn't opened for you.</ansi>`)
 		}
+		return ErrInstanceAccessDenied
 	}
 
 	// r.prepare locks, so do it before the upcoming lock
