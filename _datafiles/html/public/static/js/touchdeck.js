@@ -4,7 +4,9 @@
 // The deck is a block of buttons above the command box. On a phone it sits
 // in the slot under the game text, which holds the deck or the open tab
 // (dashboard.js). Buttons only ever come from the server (the roadmap's sync
-// rule), so in plan 1a the deck draws empty slots.
+// rule): plan 2b draws the movement buttons from Room.Info and sends back
+// only their ids (Char.Button.Press); the command slots stay empty until
+// spec 3.
 //
 // Pure functions, loaded by the page and by node for the tests:
 //   readPref / writePref  the Touch controls setting on this device
@@ -13,7 +15,8 @@
 //   slotShows             what the slot under the game text holds
 //   fieldOf               where the player is typing (plan 1b)
 //   rowFade / scrollLeftToShow  a phone's sideways-scrolling sub-tab row (plan 1c)
-// Tested by tools/jstest/touchdeck.test.js and touch-targets.test.js.
+//   moves / cells / levelAfter / tap / render  moving by touch (plan 2b)
+// Tested by tools/jstest/touchdeck.test.js, touchdeck-moves.test.js and touch-targets.test.js.
 
 (function (root, factory) {
     var api = factory();
@@ -313,6 +316,132 @@
         return r;
     }
 
+    var SVG_NS = 'http://www.w3.org/2000/svg';
+
+    // Line icons as stroke paths, like the tab bar's (dashboard.js
+    // PANEL_TABS), never emoji (brand). Drawn from the approved mockup: the
+    // ISO 7001 style stairs (ruling 10), the padlock (ruling 3) and the
+    // closed eye of the Dark tile (ruling 11).
+    var ICONS = {
+        'stairs-up': { box: 26, paths: ['M3 22h5v-5h5v-5h5V7h5', 'M16 4h6v6'] },
+        'stairs-down': { box: 26, paths: ['M3 7h5v5h5v5h5v5h5', 'M22 16v6h-6'] },
+        lock: { box: 12, paths: ['M3 5.5h6a1 1 0 0 1 1 1v3.5a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1z',
+                                 'M4 5.5V4a2 2 0 0 1 4 0v1.5'] },
+        eye: { box: 26, paths: ['M3 12c3 4 7 6 10 6s7-2 10-6', 'M6 16l-2 3M10 18l-1 3.5M16 18l1 3.5M20 16l2 3'] }
+    };
+
+    function svgIcon(doc, name, cls) {
+        var d = ICONS[name], svg = doc.createElementNS(SVG_NS, 'svg');
+        svg.setAttribute('viewBox', '0 0 ' + d.box + ' ' + d.box);
+        svg.setAttribute('class', cls);
+        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('focusable', 'false');
+        d.paths.forEach(function (p) {
+            var path = doc.createElementNS(SVG_NS, 'path');
+            path.setAttribute('d', p);
+            svg.appendChild(path);
+        });
+        return svg;
+    }
+
+    function textEl(doc, cls, text) {
+        var e = doc.createElement('span');
+        e.className = cls;
+        e.textContent = text;
+        return e;
+    }
+
+    // Kinds are told apart by shape, edge and marks (CSS), never by colour
+    // alone. Every button but the pitch-dark ones wears the site's brass
+    // (.brass, gomud.css; owner ruling R1 on plan 2b).
+    function classOf(c) {
+        var k = ['deck-btn'];
+        if (!c.dark && c.kind !== 'dark') k.push('brass');
+        if (c.kind === 'move') {
+            k.push('deck-move');
+            if (c.dark) k.push('deck-blind'); else if (!c.lit) k.push('deck-dim');
+            if (c.mark === 'wall') k.push('deck-mark-wall');
+            if (c.combat && !c.dark) k.push('deck-combat');
+        } else if (c.kind === 'other') {
+            k.push('deck-other');
+            if (!c.lit) k.push('deck-dim');
+            if (c.combat) k.push('deck-combat');
+        } else if (c.kind === 'exit') {
+            k.push('deck-exit');
+            if (c.combat) k.push('deck-combat');
+        } else if (c.kind === 'dark') {
+            k.push('deck-darktile');
+        } else if (c.kind === 'back') {
+            k.push('deck-back');
+        } else if (c.kind === 'more') {
+            k.push('deck-more');
+        }
+        return k.join(' ');
+    }
+
+    // A screen reader's words for a button, plain (dogmud-player-copy).
+    function ariaOf(c) {
+        switch (c.kind) {
+        case 'move':
+            if (!c.dark && !c.lit) return 'No way ' + c.dir;
+            if (c.mark === 'wall') return 'Go ' + c.dir + ' (you hit a wall there)';
+            if (c.locked || c.mark === 'locked') return 'Go ' + c.dir + ' (locked)';
+            return 'Go ' + c.dir;
+        case 'other': return c.lit ? 'Other exits' : 'No other exits';
+        case 'exit': return 'Go ' + (c.arrow ? c.name : c.label) + (c.own ? ' (yours)' : '') + (c.locked ? ' (locked)' : '');
+        case 'dark': return 'Too dark to see the exits';
+        case 'back': return 'Back to the directions';
+        case 'more': return 'More exits';
+        }
+        return '';
+    }
+
+    // A lit room's arrow with no exit that way, and the exits button with
+    // no other exits, take no tap. In the dark all six arrows do (ruling 4).
+    function disabledOf(c) {
+        return (c.kind === 'move' && !c.lit && !c.dark) || (c.kind === 'other' && !c.lit);
+    }
+
+    // Draws cells into the deck element, replacing what it held. Text goes
+    // in as textContent, never as markup (an exit name is server data). Each
+    // button carries its cell's index in data-cell for the click handler
+    // (dashboard.js).
+    function render(deck, list, doc) {
+        while (deck.firstChild) deck.removeChild(deck.firstChild);
+        list.forEach(function (c, i) {
+            if (c.kind === 'empty') {
+                deck.appendChild(textEl(doc, 'deck-slot', ''));
+                return;
+            }
+            var b = doc.createElement('button');
+            b.type = 'button';
+            b.className = classOf(c);
+            b.setAttribute('data-cell', String(i));
+            b.setAttribute('aria-label', ariaOf(c));
+            if (disabledOf(c)) b.disabled = true;
+            if (c.icon) b.appendChild(svgIcon(doc, c.icon, 'deck-icon'));
+            if (c.arrow) {
+                b.appendChild(textEl(doc, 'deck-arrow', c.arrow));
+                b.appendChild(textEl(doc, 'deck-letter', c.label));
+            } else if (c.kind === 'exit') {
+                b.appendChild(textEl(doc, 'deck-name', c.label));
+            }
+            if (c.kind === 'other') {
+                b.appendChild(textEl(doc, 'deck-name', '⋯'));
+                b.appendChild(textEl(doc, 'deck-name', 'exits'));
+            } else if (c.kind === 'dark') {
+                b.appendChild(svgIcon(doc, 'eye', 'deck-icon'));
+                b.appendChild(textEl(doc, 'deck-name', 'Dark'));
+            } else if (c.kind === 'back') {
+                b.appendChild(textEl(doc, 'deck-name', '‹ Back'));
+            } else if (c.kind === 'more') {
+                b.appendChild(textEl(doc, 'deck-name', 'More ›'));
+            }
+            if (c.locked || c.mark === 'locked') b.appendChild(svgIcon(doc, 'lock', 'deck-lock'));
+            deck.appendChild(b);
+        });
+    }
+
     return {
         KEY: KEY, AUTOMATIC_SHOWS: AUTOMATIC_SHOWS,
         readPref: readPref, writePref: writePref, deckOn: deckOn,
@@ -320,6 +449,7 @@
         rowFade: rowFade, scrollLeftToShow: scrollLeftToShow,
         moves: moves, T_DIRS: T_DIRS, DIAGONALS: DIAGONALS, NAME_LETTERS: NAME_LETTERS,
         cells: cells, levelAfter: levelAfter, tap: tap, DOUBLE_TAP_MS: DOUBLE_TAP_MS, DARK_LINE: DARK_LINE,
+        render: render,
         BTN: BTN, GAP: GAP, SMALL_BTN: SMALL_BTN, SMALL_GAP: SMALL_GAP, PAD: PAD
     };
 }));

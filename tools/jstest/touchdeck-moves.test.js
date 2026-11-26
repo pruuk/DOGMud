@@ -181,4 +181,71 @@ check('More turns the page', TD.tap({ level: 'exits', page: 0, lastId: '', lastA
 check('the Dark tile says what to do', TD.tap(st, dk[3], 1000).say, 'It is too dark to see the way. Light a torch or cast glow.');
 check('an empty slot does nothing', TD.tap(st, top[4], 1000), { level: 'top', page: 0, lastId: '', lastAt: 0, send: '', say: '' });
 
+// --- render: the buttons drawn --------------------------------------------
+
+function FakeEl(tag, ns) {
+    this.tagName = tag; this.ns = ns || ''; this.children = []; this.attrs = {};
+    this.className = ''; this.textContent = ''; this.disabled = false; this.type = '';
+}
+FakeEl.prototype.appendChild = function (c) { this.children.push(c); return c; };
+FakeEl.prototype.removeChild = function (c) { this.children.splice(this.children.indexOf(c), 1); return c; };
+Object.defineProperty(FakeEl.prototype, 'firstChild', { get: function () { return this.children[0] || null; } });
+FakeEl.prototype.setAttribute = function (k, v) { this.attrs[k] = String(v); };
+var doc = {
+    createElement: function (t) { return new FakeEl(t); },
+    createElementNS: function (ns, t) { return new FakeEl(t, ns); }
+};
+function words(el) { return el.textContent + el.children.map(words).join(''); }
+function has(el, cls) { return (' ' + el.className + ' ').indexOf(' ' + cls + ' ') !== -1; }
+function svgs(el) { return el.children.filter(function (c) { return c.tagName === 'svg'; }).map(function (c) { return c.attrs['class']; }); }
+
+var deck = new FakeEl('div');
+deck.appendChild(new FakeEl('span'));            // the old empty slots go
+TD.render(deck, top, doc);
+check('one child per cell', deck.children.length, 12);
+check('an empty cell is a slot, not a button', [deck.children[4].tagName, deck.children[4].className], ['span', 'deck-slot']);
+var west = deck.children[6], north = deck.children[1], up = deck.children[0], other = deck.children[3];
+check('a lit arrow is a button with its cell index', [west.tagName, west.type, west.attrs['data-cell'], west.disabled], ['button', 'button', '6', false]);
+check('it shows the arrow and its letter', words(west), '←W');
+check('it reads plainly to a screen reader', west.attrs['aria-label'], 'Go west');
+check('a movement button is square-edged by class', has(west, 'deck-move'), true);
+check('R1: lit, dim, exits buttons wear the site brass', [has(west, 'brass'), has(north, 'brass'), has(other, 'brass')], [true, true, true]);
+check('a dim arrow is disabled and says so', [north.disabled, has(north, 'deck-dim'), north.attrs['aria-label']], [true, true, 'No way north']);
+check('up draws the stairs pictogram, not a letter', [svgs(up), words(up)], [['deck-icon'], '']);
+check('the exits button: dashed by class, live, its words', [has(other, 'deck-other'), other.disabled, words(other)], [true, false, '⋯exits']);
+
+TD.render(deck, TD.cells(TD.moves(barracks, ''), PHONE, 'top', 0), doc);
+var down = deck.children[2];
+check('frame 4: a locked door carries the padlock', svgs(down), ['deck-icon', 'deck-lock']);
+check('frame 4: and says it is locked', down.attrs['aria-label'], 'Go down (locked)');
+check('frame 4: no other exits: the exits button is dim and disabled', [deck.children[3].disabled, has(deck.children[3], 'deck-dim')], [true, true]);
+
+TD.render(deck, dk, doc);
+check('frame 5: dark arrows are tappable in the dark style',
+    [deck.children[7].disabled, has(deck.children[7], 'deck-blind')], [false, true]);
+check('frame 5: the wall mark is a class (drawn by CSS)', has(deck.children[1], 'deck-mark-wall'), true);
+check('frame 5: a locked door felt in the dark carries the padlock', svgs(deck.children[6]), ['deck-lock']);
+check('frame 5: the Dark tile: closed eye and its word', [svgs(deck.children[3]), words(deck.children[3])], [['deck-icon'], 'Dark']);
+check('R1: the pitch-dark buttons are olive grey, not brass', [has(deck.children[7], 'brass'), has(deck.children[3], 'brass')], [false, false]);
+
+TD.render(deck, TD.cells(TD.moves(tower, 'combat'), PHONE, 'top', 0), doc);
+check('frame 6: combat dims by class and keeps the button live',
+    [has(deck.children[6], 'deck-combat'), deck.children[6].disabled], [true, false]);
+
+TD.render(deck, list, doc);
+check('frame 2: Back and the names', [words(deck.children[0]), words(deck.children[1]), words(deck.children[2])], ['‹ Back', 'ledge', 'shrine']);
+check('frame 2: a name is a deck-name span (12px in CSS)', deck.children[1].children[0].className, 'deck-name');
+check('an exit name reaches the page as text, never markup', (function () {
+    var evil = TD.cells(TD.moves(info(3, { '<b>x': ex('named', 'x12345678') }), ''), PHONE, 'exits', 0);
+    TD.render(deck, evil, doc);
+    return deck.children[1].children[0].textContent;
+}()), '<b>x');
+TD.render(deck, page0, doc);
+check('More reads More', words(deck.children[11]), 'More ›');
+check('Back and More wear the brass too', [has(deck.children[0], 'brass'), has(deck.children[11], 'brass')], [true, true]);
+TD.render(deck, TD.cells(TD.moves(portals, ''), PHONE, 'exits', 0), doc);
+check('two portals to one zone: the same label, the player\'s own first and named so for a screen reader',
+    [words(deck.children[1]), deck.children[1].attrs['aria-label'], words(deck.children[2]), deck.children[2].attrs['aria-label']],
+    ['arena', 'Go arena (yours)', 'arena', 'Go arena']);
+
 process.exit(failures ? 1 : 0);
