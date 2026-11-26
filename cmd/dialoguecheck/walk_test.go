@@ -240,6 +240,76 @@ func TestParseReport_ReadsDeletionsAndBranchRewrites(t *testing.T) {
 	}, p.Branches)
 }
 
+// forkedInput is quest 11's shape (#958): Kael (9300) offers quest 54;
+// Sylara's (9301) and Rhett's (9302) stand topics set the branch flag and,
+// through topic_heard triggers, grant each side's fetch step; picking up the
+// side's item grants its return step; each NPC takes their side's hand-in.
+// Rhett's camp topic is for his side only while Sylara's totem is not held.
+func forkedInput() Input {
+	q := quests.Quest{
+		QuestId: 54, Name: "Forked",
+		Flags: []quests.QuestFlagDef{{Key: "branch", Values: []string{"sylara", "rhett"}}},
+		Steps: []quests.QuestStep{{Id: "start"},
+			{Id: "sylara", Branch: "sylara"}, {Id: "totem", Branch: "sylara"},
+			{Id: "rhett", Branch: "rhett"}, {Id: "samples", Branch: "rhett"}, {Id: "end"}},
+		Triggers: []quests.TriggerDef{
+			{Event: "topic_heard", Mob: 9301, Topic: "stand",
+				Conditions: quests.Conditions{Has: []string{"54-start"}, Missing: []string{"54-sylara"}},
+				Actions:    []quests.ActionDef{{Grant: "54-sylara"}}},
+			{Event: "item_gain", Item: 901,
+				Conditions: quests.Conditions{Has: []string{"54-sylara"}, Missing: []string{"54-totem"}},
+				Actions:    []quests.ActionDef{{Grant: "54-totem"}}},
+			{Event: "topic_heard", Mob: 9302, Topic: "stand",
+				Conditions: quests.Conditions{Has: []string{"54-start"}, Missing: []string{"54-rhett"}},
+				Actions:    []quests.ActionDef{{Grant: "54-rhett"}}},
+			{Event: "item_gain", Item: 902,
+				Conditions: quests.Conditions{Has: []string{"54-rhett"}, Missing: []string{"54-samples"}},
+				Actions:    []quests.ActionDef{{Grant: "54-samples"}}},
+		},
+	}
+	kael := &dialogue.DialogueFile{MobId: 9300, Topics: []dialogue.Topic{
+		{Key: "offer", Kind: dialogue.KindOffer, Quest: 54, Label: "Forked", Text: "t",
+			Gates: dialogue.Gates{QuestExcluded: []string{"54-start"}}, Effects: dialogue.Effects{GrantsQuest: "54-start"}},
+	}}
+	side := func(mob int, value, need string) *dialogue.DialogueFile {
+		return &dialogue.DialogueFile{MobId: mob, Topics: []dialogue.Topic{
+			{Key: "stand", Kind: dialogue.KindInfo, Label: "Stand", Text: "t",
+				Gates:   dialogue.Gates{QuestRequired: []string{"54-start"}},
+				Effects: dialogue.Effects{SetsQuestFlag: &dialogue.QuestFlagSet{Key: "54-branch", Value: value}}},
+			{Key: "hand_in", Kind: dialogue.KindHandIn, Quest: 54, Label: "Forked", Text: "t",
+				Gates: dialogue.Gates{QuestRequired: []string{need}, QuestExcluded: []string{"54-end"}}, Effects: dialogue.Effects{GrantsQuest: "54-end"}},
+		}}
+	}
+	rhett := side(9302, "rhett", "54-samples")
+	rhett.Topics = append(rhett.Topics, dialogue.Topic{Key: "camp", Kind: dialogue.KindInfo, Label: "Camp", Text: "t",
+		Gates: dialogue.Gates{QuestRequired: []string{"54-rhett"}, QuestExcluded: []string{"54-totem"}}})
+	return Input{
+		Quests: []quests.Quest{q},
+		Files: []dlgFile{{Folder: "steppe", File: kael}, {Folder: "steppe", File: side(9301, "sylara", "54-totem")},
+			{Folder: "steppe", File: rhett}},
+		WorldItems: map[int][]string{901: {"room 1 floor"}, 902: {"room 2 floor"}},
+	}
+}
+
+// The walk reads the quest's path order (#958): a Rhett player never holds
+// Sylara's steps, so his camp topic opens, and each side finishes with its
+// own side.
+func TestWalk_BranchedQuestFollowsEachPath(t *testing.T) {
+	w := newWalker(forkedInput())
+	w.fixpoint()
+	w.check()
+	require.Empty(t, ofClass(w.findings, ClassUnreachable))
+	require.Empty(t, ofClass(w.findings, ClassDeadEnd))
+	require.True(t, w.reach[54][node{idx: 5, chain: true, side: "rhett"}], "Rhett's side ends: %v", w.reach[54])
+	require.True(t, w.reach[54][node{idx: 5, chain: true, side: "sylara"}], "Sylara's side ends: %v", w.reach[54])
+
+	// The control: a gate no path meets is still unreachable.
+	in := forkedInput()
+	camp := &in.Files[2].File.Topics[2]
+	camp.QuestRequired = []string{"54-samples", "54-totem"}
+	require.Contains(t, strings.Join(ofClass(Walk(in), ClassUnreachable), "\n"), `topic "camp"`)
+}
+
 func TestReport_ZoneFilterHidesOtherZonesAndSetsTheExitStatus(t *testing.T) {
 	fs := []Finding{
 		{Class: ClassDeadEnd, Zones: []string{"zone_b"}, Text: "elsewhere"},
