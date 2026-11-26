@@ -102,4 +102,83 @@ var serverDiagonals = Object.keys(ranks).filter(function (k) { return TD.DIAGONA
     .sort(function (a, b) { return ranks[a] - ranks[b]; });
 check('the client\'s diagonal order is the server\'s exitOrder', TD.DIAGONALS, serverDiagonals);
 
+// --- cells: the deck laid out ---------------------------------------------
+
+var PHONE = TD.shape(344, 600, true, false);      // 2 x 6 at 48px (S21)
+var SIDE = TD.shape(0, 300, false, true);         // 4 x 3: a phone on its side
+var TABLET = TD.shape(788, 1000, false, false);   // 2 x 13
+function kinds(cs) { return cs.map(function (c) { return c.kind === 'move' ? c.dir : c.kind; }); }
+
+var top = TD.cells(TD.moves(tower, ''), PHONE, 'top', 0);
+check('frame 1: the T on the left, the exits button beside it, the rest empty', kinds(top),
+    ['up', 'north', 'down', 'other', 'empty', 'empty', 'west', 'south', 'east', 'empty', 'empty', 'empty']);
+check('frame 1: exits is live (two named exits)', top[3].lit, true);
+check('up and down draw the stairs; compass shows an arrow and its letter',
+    [top[0].icon, top[1].arrow + top[1].label, top[2].icon], ['stairs-up', '↑N', 'stairs-down']);
+check('frame 4: exits dims when the room has none', TD.cells(TD.moves(barracks, ''), PHONE, 'top', 0)[3].lit, false);
+check('frame 6: combat reaches every movement cell',
+    TD.cells(TD.moves(tower, 'combat'), PHONE, 'top', 0).filter(function (c) { return c.combat; }).length, 7);
+check('a wider deck keeps the T and the exits slot where they are',
+    kinds(TD.cells(TD.moves(tower, ''), TABLET, 'top', 0)).slice(0, 4), ['up', 'north', 'down', 'other']);
+check('frame 9: on its side, the exits button sits under the T',
+    kinds(TD.cells(TD.moves(tower, ''), SIDE, 'top', 0)).slice(0, 7), ['up', 'north', 'down', 'west', 'south', 'east', 'other']);
+
+var dk = TD.cells(TD.moves(dark, ''), PHONE, 'top', 0);
+check('frame 5: dark: the exits slot is the Dark tile', dk[3].kind, 'dark');
+check('frame 5: dark: every T cell is dark and keeps its id',
+    dk.filter(function (c) { return c.kind === 'move' && c.dark && c.id; }).length, 6);
+check('frame 5: the wall mark north, the padlock mark west', [dk[1].mark, dk[6].mark], ['wall', 'locked']);
+check('dark: the list never opens', TD.cells(TD.moves(dark, ''), PHONE, 'exits', 0)[3].kind, 'dark');
+
+var list = TD.cells(TD.moves(tower, ''), PHONE, 'exits', 0);
+check('frame 2: the list replaces the deck: Back top-left, then the exits', kinds(list).slice(0, 4), ['back', 'exit', 'exit', 'empty']);
+check('frame 2: labels in order', [list[1].label, list[2].label], ['ledge', 'shrine']);
+check('frame 2: no More when they fit', list.some(function (c) { return c.kind === 'more'; }), false);
+check('frame 3: diagonals in the list keep arrow and letters',
+    TD.cells(TD.moves(junction, ''), PHONE, 'exits', 0).slice(1, 3).map(function (c) { return c.arrow + c.label; }), ['↗NE', '↙SW']);
+check('no room has more than two today, so an empty list falls back to the T',
+    TD.cells(TD.moves(barracks, ''), PHONE, 'exits', 0)[0].kind, 'move');
+
+var many = {};
+for (var i = 0; i < 15; i++) many['p' + (i < 10 ? '0' : '') + i] = ex('named', 'x' + (10000000 + i));
+var big = TD.moves(info(2, many), '');
+var page0 = TD.cells(big, PHONE, 'exits', 0);
+check('More bottom-right only when the list does not fit', page0[11].kind, 'more');
+check('page 1 holds ten (twelve slots less Back and More)', page0.filter(function (c) { return c.kind === 'exit'; }).length, 10);
+var page1 = TD.cells(big, PHONE, 'exits', 1);
+check('page 2 holds the other five', page1.filter(function (c) { return c.kind === 'exit'; }).map(function (c) { return c.label; }),
+    ['p10', 'p11', 'p12', 'p13', 'p14']);
+check('More after the last page goes back to the first', TD.cells(big, PHONE, 'exits', 2)[1].label, 'p00');
+
+// --- levelAfter: the deck returns to the T after a move ---------------------
+
+var mt = TD.moves(tower, '');
+check('after a move the deck returns to the T', TD.levelAfter('exits', 5243, 5346, TD.moves(info(5346, {}), '')), 'top');
+check('the same room again keeps the list open', TD.levelAfter('exits', 5243, 5243, mt), 'exits');
+check('the room going dark closes the list', TD.levelAfter('exits', 5243, 5243, TD.moves(info(5243, {}, { dark: true }), '')), 'top');
+check('no other exits left closes the list', TD.levelAfter('exits', 5243, 5243, TD.moves(info(5243, { west: ex('compass', 'm4') }), '')), 'top');
+check('the T stays the T', TD.levelAfter('top', 5243, 5243, mt), 'top');
+
+// --- tap ------------------------------------------------------------------
+
+var st = { level: 'top', page: 0, lastId: '', lastAt: 0 };
+check('a lit arrow sends its fixed id', TD.tap(st, top[6], 1000).send, 'm4');
+check('a dim arrow sends nothing', TD.tap(st, top[1], 1000).send, '');
+check('a dark arrow sends its fixed id (all six tappable)', TD.tap(st, dk[1], 1000).send, 'm1');
+check('a combat-dimmed arrow still sends (the server says why)',
+    TD.tap(st, TD.cells(TD.moves(tower, 'combat'), PHONE, 'top', 0)[6], 1000).send, 'm4');
+var r1 = TD.tap(st, top[6], 1000), r2 = TD.tap(r1, top[6], 1100);
+check('ruling 8: a fast double tap on the T sends twice', [r1.send, r2.send], ['m4', 'm4']);
+var opened = TD.tap(st, top[3], 1000);
+check('the exits button opens the list at its first page', [opened.level, opened.page], ['exits', 0]);
+check('a dim exits button does nothing', TD.tap(st, TD.cells(TD.moves(barracks, ''), PHONE, 'top', 0)[3], 1000).level, 'top');
+var e1 = TD.tap(opened, list[2], 2000);
+check('an exit sends its per-room id', e1.send, 'xa1b2c3d4');
+check('a second tap on it within half a second is ignored', TD.tap(e1, list[2], 2000 + TD.DOUBLE_TAP_MS - 1).send, '');
+check('after half a second it counts again', TD.tap(e1, list[2], 2000 + TD.DOUBLE_TAP_MS).send, 'xa1b2c3d4');
+check('Back returns to the T', TD.tap(opened, list[0], 3000).level, 'top');
+check('More turns the page', TD.tap({ level: 'exits', page: 0, lastId: '', lastAt: 0 }, page0[11], 1000).page, 1);
+check('the Dark tile says what to do', TD.tap(st, dk[3], 1000).say, 'It is too dark to see the way. Light a torch or cast glow.');
+check('an empty slot does nothing', TD.tap(st, top[4], 1000), { level: 'top', page: 0, lastId: '', lastAt: 0, send: '', say: '' });
+
 process.exit(failures ? 1 : 0);

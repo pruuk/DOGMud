@@ -223,12 +223,103 @@
         return m;
     }
 
+    // A second tap on the same other-exit button within this long is
+    // ignored (roadmap fat-finger rules). The six T buttons never ignore a
+    // tap: a fast double tap walks twice, like typing (owner ruling 8).
+    var DOUBLE_TAP_MS = 500;
+
+    // The Dark tile's line (spec 2b, States).
+    var DARK_LINE = 'It is too dark to see the way. Light a torch or cast glow.';
+
+    // The deck's cells for one model, in slot order (row by row), for a
+    // shape from shape(). level: 'top' (the T) or 'exits' (the other-exits
+    // list, which replaces the whole deck: Back top-left, More bottom-right
+    // only when the list does not fit). page: which page of the list.
+    // kind: 'empty', 'move', 'other', 'dark', 'back', 'exit' or 'more'.
+    function cells(model, s, level, page) {
+        var n = s.rows * s.cols, out = [], i;
+        for (i = 0; i < n; i++) out.push({ kind: 'empty' });
+        if (!model || !model.ready) return out;
+        if (level === 'exits' && !model.dark && model.others.length) {
+            var more = model.others.length > n - 1;
+            var per = more ? n - 2 : n - 1;
+            var pages = Math.ceil(model.others.length / per);
+            var p = (((page || 0) % pages) + pages) % pages;
+            out[0] = { kind: 'back' };
+            model.others.slice(p * per, p * per + per).forEach(function (o, k) {
+                out[1 + k] = {
+                    kind: 'exit', id: o.id, name: o.name, label: o.label, arrow: o.arrow,
+                    locked: o.locked, own: o.own, combat: model.combat
+                };
+            });
+            if (more) out[n - 1] = { kind: 'more' };
+            return out;
+        }
+        T_DIRS.forEach(function (dir) {
+            var t = model.t[dir], at = T_PLACE[dir], a = own(ARROWS, dir) ? ARROWS[dir] : null;
+            out[at[0] * s.cols + at[1]] = {
+                kind: 'move', dir: dir, id: t.id,
+                arrow: a ? a[0] : '', label: a ? a[1] : '', icon: a ? '' : STAIRS[dir],
+                lit: t.lit, locked: t.locked, mark: t.mark, dark: model.dark, combat: model.combat
+            };
+        });
+        // The other-exits slot: beside the T on a two-row deck, under it in
+        // a sideways phone's three-column side column (mockup frame 9).
+        var slot = s.cols >= 4 ? 3 : 2 * s.cols;
+        out[slot] = model.dark ? { kind: 'dark' }
+            : { kind: 'other', lit: model.others.length > 0, combat: model.combat };
+        return out;
+    }
+
+    // The level after a Room.Info: the T after a move (another room), in
+    // the dark, or once the room has no other exits; otherwise as it was,
+    // so a door unlocking while the list is open keeps it open.
+    function levelAfter(level, lastNum, num, model) {
+        if (level !== 'exits' || lastNum !== num) return 'top';
+        if (!model.ready || model.dark || !model.others.length) return 'top';
+        return 'exits';
+    }
+
+    // What a tap on cell c does. st: { level, page, lastId, lastAt }; now in
+    // ms. Returns the next state with send (an id for Char.Button.Press, or
+    // '') and say (a line for the game window, or '').
+    function tap(st, c, now) {
+        var r = { level: st.level, page: st.page, lastId: st.lastId, lastAt: st.lastAt, send: '', say: '' };
+        if (!c) return r;
+        switch (c.kind) {
+        case 'move':
+            if ((c.lit || c.dark) && c.id) r.send = c.id;
+            break;
+        case 'exit':
+            if (!c.id || (c.id === st.lastId && now - st.lastAt < DOUBLE_TAP_MS)) break;
+            r.send = c.id;
+            r.lastId = c.id;
+            r.lastAt = now;
+            break;
+        case 'other':
+            if (c.lit) { r.level = 'exits'; r.page = 0; }
+            break;
+        case 'back':
+            r.level = 'top';
+            r.page = 0;
+            break;
+        case 'more':
+            r.page = (st.page || 0) + 1;
+            break;
+        case 'dark':
+            r.say = DARK_LINE;
+            break;
+        }
+        return r;
+    }
+
     return {
         KEY: KEY, AUTOMATIC_SHOWS: AUTOMATIC_SHOWS,
         readPref: readPref, writePref: writePref, deckOn: deckOn,
         shape: shape, slotShows: slotShows, fieldOf: fieldOf,
         rowFade: rowFade, scrollLeftToShow: scrollLeftToShow,
         moves: moves, T_DIRS: T_DIRS, DIAGONALS: DIAGONALS, NAME_LETTERS: NAME_LETTERS,
+        cells: cells, levelAfter: levelAfter, tap: tap, DOUBLE_TAP_MS: DOUBLE_TAP_MS, DARK_LINE: DARK_LINE,
         BTN: BTN, GAP: GAP, SMALL_BTN: SMALL_BTN, SMALL_GAP: SMALL_GAP, PAD: PAD
     };
 }));
