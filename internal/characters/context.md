@@ -505,6 +505,25 @@ It survives save, load and restart.
 - `QuestOpen(q)`: true for a non-repeatable (its gates decide), and for a
   repeatable only off cooldown and under its cap. It backs
   `dialogue.PlayerState.QuestOpen`.
+- `HasQuest(t)` is true for the current step and the steps passed before it on
+  the player's own path of a branched quest (`quests.IsTokenPassedOnPath`),
+  and never for a step of another side (#958). `GiveQuestToken` moves forward
+  only on that path (`quests.IsTokenAfterOnPath`), so it refuses a step of the
+  other side, and a side's step while no side is chosen (the branch flag
+  unset). A quest with no branched steps behaves as a straight line. Both read
+  the player's flags through `GetQuestFlag`.
+- `QuestBranchMismatches() []string` lists, sorted, the held and shelved
+  quests whose branched step disagrees with the branch flag ("progress
+  11-rhett (flag 11-branch=sylara)"). Such a save keeps moving on its step's
+  side.
+- `MigrateQuestProgress() (dropped []int, mismatches []string)` is the one
+  migration `users.LoadUser` and `UserRecord.SwapToAlt` run (through
+  `users.logQuestMigration`, which logs what it returns): `DropRetiredQuests`,
+  then `RenameQuestSteps`, then `MigrateQuest11SidedStep` (`migrations.go`: a
+  save on quest 11's retired `sided` step moves to its side's fetch step, or
+  return step when it carries the item, or back to `start` with no side; the
+  shelf too), then `QuestBranchMismatches`. Each part is idempotent, so no
+  marker.
 - `RenameQuestSteps(renames)` runs at load (`users.LoadUser`, with
   `quests.StepRenames()` from `quests/step-ids.txt`) so saved progress follows a
   renamed step id. It follows rename chains and ignores a rename that changes

@@ -168,6 +168,49 @@ func (c *Character) MigrateQuestFlags() {
 	// the player will pick a branch when they next interact.
 }
 
+// Quest 11's retired `sided` step and the item each side fetches (#958).
+const (
+	quest11Id          = 11
+	quest11SidedStep   = `sided`
+	quest11TotemItemId = 40033 // carved wolf totem, Sylara's side
+	quest11SampleItem  = 40032 // windstone samples, Rhett's side
+)
+
+// MigrateQuest11SidedStep moves a save resting on quest 11's retired `sided`
+// step onto its side's own steps (#958, owner ruling 2026-11-25): the fetch
+// step, or the return step when the save already carries the item. A save on
+// `sided` with no side (no path granted it one) goes back to `start`, where
+// the terms and the stand are open to it. Both the active and the shelved
+// step move. It touches only the `sided` step, so it needs no marker and
+// running it again does nothing.
+func (c *Character) MigrateQuest11SidedStep() {
+	next := quest11SidedNext(c.GetQuestFlag("11-branch"), c.CarriesItem)
+	if c.QuestProgress[quest11Id] == quest11SidedStep {
+		c.QuestProgress[quest11Id] = next
+	}
+	if c.ShelvedQuests[quest11Id] == quest11SidedStep {
+		c.ShelvedQuests[quest11Id] = next
+	}
+}
+
+// quest11SidedNext picks the step a `sided` save moves to from its branch flag
+// and whether it carries that side's item.
+func quest11SidedNext(branch string, carries func(int) bool) string {
+	switch branch {
+	case `sylara`:
+		if carries(quest11TotemItemId) {
+			return `totem`
+		}
+		return `sylara`
+	case `rhett`:
+		if carries(quest11SampleItem) {
+			return `samples`
+		}
+		return `rhett`
+	}
+	return `start`
+}
+
 // MigrateLegacyPotions replaces removed alchemy items and recipes
 // with their current equivalents.
 // 30010 (healing poultice) → 30036 (healing salve)

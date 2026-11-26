@@ -24,7 +24,7 @@ import (
 // linearPlayer mirrors characters.Character's quest progress, which is ONE
 // current step per quest, not a set of tokens: HasQuest(t) holds for the
 // current step and every step before it (characters.HasQuest via
-// quests.IsTokenAfter), and a grant only moves the step forward
+// quests.IsTokenPassedOnPath), and a grant only moves the step forward
 // (characters.GiveQuestToken). That is why "do these two in any order" cannot
 // work in this engine: doing the later one first marks the earlier one done.
 type linearPlayer struct {

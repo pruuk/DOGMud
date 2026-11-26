@@ -37,10 +37,13 @@ nouns:
     looks out of place among the carnage. It is clearly not prey
     remains. Someone might want this back.
 containers:
-  bones:
-    items:
-      - itemid: 40033
+  bones: {}
 spawninfo:
+# Quest 11's totem refills, so every player who sides with Sylara can fetch it
+# (#958 playtest: a one-off container item stayed gone until the next wipe).
+- itemid: 40033
+  container: bones
+  respawnrate: 5 real minutes
 - mobid: 205
 - mobid: 215
 - mobid: 233

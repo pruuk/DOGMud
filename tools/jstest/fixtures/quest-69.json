@@ -1,0 +1,162 @@
+{
+  "questid": 69,
+  "name": "The Gallery Cipher",
+  "description": "Scholar Dross can prove the Grand Temple's eastern inscription predates the city's official founding, if he can read the cipher hidden in the processional reliefs. The key is in the Noble Quarter gallery, behind a guide who steers visitors away from it.",
+  "steps": [
+    {
+      "id": "start",
+      "description": "Dross needs a rubbing of the hand-position cipher worked into the processional relief figures in the Grand Temple nave.",
+      "hint": "The processional reliefs run along the north wall of the Grand Temple Sanctuary, south twice from the Temple Courtyard. Type search there.",
+      "destination": {
+        "room": 5901
+      }
+    },
+    {
+      "id": "rubbing",
+      "description": "You took the cipher rubbing from the reliefs. Dross can read part of it, but the key to the full sequence is in the Noble Quarter gallery.",
+      "hint": "Take the rubbing to Scholar Dross at the Grand Temple. Type talk dross.",
+      "destination": {
+        "room": 5916,
+        "mob": [
+          9360
+        ]
+      }
+    },
+    {
+      "id": "gallery",
+      "description": "Dross sent you to the gallery. The guide, Ferrol, steers visitors to the bloodline portraits and away from the older paintings, and away from the keeper.",
+      "hint": "Keeper Lysha keeps the Art Gallery in the Noble Quarter, north of the Administrative Office. Type talk lysha.",
+      "destination": {
+        "room": 6007,
+        "mob": [
+          9371
+        ]
+      }
+    },
+    {
+      "id": "reading",
+      "description": "Keeper Lysha read the third panel against your rubbing: the eight-pointed structure stands at a site inland of the present docks. She gave you her annotated reading.",
+      "hint": "Bring Lysha's reading and your rubbing back to Scholar Dross at the Grand Temple. Type talk dross.",
+      "destination": {
+        "room": 5916,
+        "mob": [
+          9360
+        ]
+      }
+    },
+    {
+      "id": "end",
+      "description": "Dross has his proof: the founding the city celebrates is not the first, and the date is wrong by something close to a century. The truth is provable. Whether anyone with power will hear it is another matter.",
+      "destination": {}
+    }
+  ],
+  "rewards": {
+    "gold": 70,
+    "actor": "Dross lays the rubbing and the reading side by side and goes very quiet, which for him is remarkable. \"It holds,\" he says. \"Every line of it holds.\" He has a proof now that no honest examiner could dismiss, and he is, you both understand, a man no one with power has ever been obliged to honestly examine. Still. It is known now, and you are one of the few who know it.",
+    "observer": "The traveller has the look of someone who has read something that cannot be un-read.",
+    "rep_faction": "temple_np",
+    "rep_amount": 10
+  },
+  "triggers": [
+    {
+      "event": "command",
+      "room": 5901,
+      "command": "search",
+      "conditions": {
+        "has": [
+          "69-rubbing"
+        ],
+        "missing": [
+          "69-end"
+        ],
+        "missing_item": 40115
+      },
+      "actions": [
+        {
+          "give_item": 40115
+        },
+        {
+          "actor": "You press a fresh sheet to the processional relief and work the charcoal across it again. The hands come up in the same precise row, the same counted sequence."
+        },
+        {
+          "observer": "{actor} takes a careful charcoal rubbing of the old processional reliefs."
+        }
+      ]
+    },
+    {
+      "event": "command",
+      "room": 5901,
+      "command": "search",
+      "conditions": {
+        "has": [
+          "69-start"
+        ],
+        "missing": [
+          "69-rubbing"
+        ]
+      },
+      "actions": [
+        {
+          "give_item": 40115
+        },
+        {
+          "grant": "69-rubbing"
+        },
+        {
+          "actor": "You press paper to the processional relief and work charcoal across it. The figures come up under your hand, and the longer you look, the less devotional they seem. Each hand is positioned too precisely to be art. Read along the row, they are a sequence: a number, set into stone by someone who wanted it kept where it could not be edited out."
+        },
+        {
+          "observer": "{actor} takes a careful charcoal rubbing of the old processional reliefs."
+        }
+      ]
+    },
+    {
+      "event": "topic_heard",
+      "mob": 9360,
+      "topic": "q69_gallery",
+      "conditions": {
+        "has": [
+          "69-rubbing"
+        ],
+        "missing": [
+          "69-gallery"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "69-gallery"
+        }
+      ]
+    },
+    {
+      "event": "topic_heard",
+      "mob": 9371,
+      "topic": "q69_lysha",
+      "conditions": {
+        "has": [
+          "69-gallery"
+        ],
+        "missing": [
+          "69-reading"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "69-reading"
+        }
+      ]
+    },
+    {
+      "event": "quest_granted",
+      "quest_token": "69-end",
+      "conditions": {
+        "has_item": 40115
+      },
+      "actions": [
+        {
+          "consume_item": 40115
+        }
+      ]
+    }
+  ]
+}

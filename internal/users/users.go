@@ -580,15 +580,9 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 	// A renamed talk topic stays heard (#375): renames come from the
 	// topic-key manifest, dialogue/topic-keys.txt.
 	loadedUser.Character.RenameHeardTopics(dialogue.HeardRenames())
-	// A quest retired whole (every step id under "# retired" in
-	// quests/step-ids.txt) has nothing left to resume, so it is dropped
-	// before the step checks below (#375 phase 7: quest 29 Two Roads).
-	for _, qid := range loadedUser.Character.DropRetiredQuests(quests.RetiredQuests()) {
-		mudlog.Info("LoadUser", "user", loadedUser.Username, "dropped retired quest", qid)
-	}
-	// A renamed quest step keeps the player on it (#375 phase 2): renames
-	// come from the step-id manifest, quests/step-ids.txt.
-	loadedUser.Character.RenameQuestSteps(quests.StepRenames())
+	// Retired quests, renamed steps and quest 11's split step, from the
+	// step-id manifest, quests/step-ids.txt (SwapToAlt runs the same).
+	logQuestMigration("LoadUser", loadedUser.Username, loadedUser.Character)
 	// A retired current step is left as is and logged: it needs a content
 	// decision (spec 5.5).
 	for _, tok := range loadedUser.Character.RetiredQuestSteps(quests.StepRetired()) {
@@ -626,6 +620,20 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 	loadedUser.connectionTime = time.Now()
 
 	return loadedUser, nil
+}
+
+// logQuestMigration runs Character.MigrateQuestProgress on a character coming
+// into play and logs what it reports under caller: each quest dropped as
+// retired, and each branched step whose flag names the other side (it keeps
+// moving on its step's side, #958).
+func logQuestMigration(caller, username string, c *characters.Character) {
+	dropped, mismatches := c.MigrateQuestProgress()
+	for _, qid := range dropped {
+		mudlog.Info(caller, "user", username, "dropped retired quest", qid)
+	}
+	for _, tok := range mismatches {
+		mudlog.Warn(caller, "user", username, "quest branch flag disagrees with step", tok)
+	}
 }
 
 // Loads all user recvords and runs against a function.

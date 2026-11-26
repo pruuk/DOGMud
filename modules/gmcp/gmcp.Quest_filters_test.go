@@ -10,8 +10,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/quests"
 )
 
-// questBuilderJS is the quest editor; its EVENT_FILTERS lists are the only
-// trigger fields it reads back on save.
+// questBuilderJS is the quest editor; its EVENT_FILTERS lists are the trigger
+// fields it has controls for (a field with no control survives a save).
 const questBuilderJS = "../../_datafiles/html/public/static/js/quests.js"
 
 // builderEventFilters parses EVENT_FILTERS out of the quest editor.

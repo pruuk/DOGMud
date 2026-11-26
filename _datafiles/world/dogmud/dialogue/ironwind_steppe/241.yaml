@@ -9,8 +9,21 @@ opener:
     about who is after the crystal."
   # Quest 11: the sided variants come before the unsided one, because a
   # flag map cannot say "no side yet" (#611). Old saves may hold a side
-  # without the 11-sided step.
+  # while still on 11-start. The totem variant comes before the fetch one,
+  # because holding 11-totem counts as holding 11-sylara.
   variants:
+  - questRequired:
+    - 11-totem
+    questExcluded:
+    - 11-end
+    questFlagRequired:
+      11-branch: sylara
+    # Only while the totem is carried: a player who dropped it gets the
+    # fetch variant below and is sent back to the bones.
+    carriesItem: 40033
+    text: "You have it. I can feel the wolf spirit stirring in your pack. Give it
+      to me."
+    hints: "Choose a line below to give Sylara her totem."
   - questRequired:
     - 11-start
     questExcluded:
@@ -35,7 +48,8 @@ opener:
   - questRequired:
     - 11-start
     questExcluded:
-    - 11-sided
+    - 11-sylara
+    - 11-rhett
     - 11-end
     text: "So you carry the question now. Then hear what standing with me would cost
       you, before you decide."
@@ -124,6 +138,10 @@ topics:
   questExcluded:
   - 11-start
   - 11-end
+  # A player who chose Rhett and set the quest aside takes it back from Rhett
+  # or Kael; Sylara does not pitch her side to them again.
+  questFlagExcluded:
+    11-branch: rhett
   grantsQuest: 11-start
   moodChange: neutral
 # R28: the side is chosen here, after the must-hear warning.
@@ -141,9 +159,11 @@ topics:
   # Open to anyone holding 11-start (11-end counts) who has not sided with
   # Rhett: no side yet, or Sylara's side. So the old saves that finished
   # unsided hear it before late_stand_with_sylara, and a save that chose her
-  # side before the sided step existed (flag set, no 11-sided, terms never
-  # heard) can hear it and then stand again. A save at 11-end holds 11-sided
-  # too (HasQuest counts later steps), so 11-sided cannot close this topic.
+  # side before the side steps existed (flag set, still on 11-start, terms
+  # never heard) can hear it and then stand again. Every save that holds
+  # 11-end also holds 11-start (HasQuest counts earlier steps), a player holds
+  # only the steps on their own side, and an unsided 11-end save holds only
+  # start, so no side step can close this topic.
   questRequired:
   - 11-start
   questExcluded:
@@ -168,7 +188,7 @@ topics:
   questRequired:
   - 11-start
   questExcluded:
-  - 11-sided
+  - 11-sylara
   - 11-end
   questFlagExcluded:
     11-branch: rhett
@@ -212,8 +232,12 @@ topics:
     Ask me about it when you are ready."
   hints: "She takes the totem with both hands and presses it to her chest. For a
     moment her composure cracks."
+  # 11-totem, the return step: picking up the totem moves a carrying player
+  # there (the item_gain trigger of quest 11), including one who already held
+  # the totem when the fetch step began. The flag keeps the hand-in on
+  # Sylara's side; a Rhett player never holds 11-totem anyway.
   questRequired:
-  - 11-sided
+  - 11-totem
   questExcluded:
   - 11-end
   questFlagRequired:

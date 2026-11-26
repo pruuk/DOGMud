@@ -19,9 +19,12 @@ import (
 // Walk drives every quest in w through the real trigger engine and the real
 // dialogue topics, from its offer to its hand-in (spec 7), and reports what
 // cannot be completed: walk-dead-end, walk-no-source, walk-unspawned,
-// walk-no-spell (a spell_landed Way no state on the path holds a spell for).
-// Findings share questloop's shape and keys. A quest with no offer is skipped: the
-// start rule reports it.
+// walk-no-spell (a spell_landed Way no state on the path holds a spell for),
+// walk-branch-flag (a branched quest's path that finishes with its branch
+// flag on another side). A branched quest is walked once per path (#958);
+// a finding names its path in Msg, never in its key. Findings share
+// questloop's shape and keys. A quest with no offer is skipped: the start
+// rule reports it.
 func Walk(w questloop.World, src questloop.Sources) []questloop.Finding {
 	// Sorted by id, so the engine's trigger order (and so every firing) does
 	// not depend on the order the caller lists the quests in.
@@ -34,25 +37,22 @@ func Walk(w questloop.World, src questloop.Sources) []questloop.Finding {
 	slices.SortStableFunc(qs, func(a, b *quests.Quest) int { return cmp.Compare(a.QuestId, b.QuestId) })
 	w.Quests = qs
 
+	// Every quest is registered once, and the walk player reads the same
+	// quests for its step order; no path walk changes either.
 	eng := NewEngine()
-	steps := map[int][]string{}
+	byId := map[int]*quests.Quest{}
 	for _, q := range w.Quests {
-		if q == nil {
-			continue
-		}
 		eng.RegisterQuest(q)
-		for _, s := range q.Steps {
-			steps[q.QuestId] = append(steps[q.QuestId], s.Id)
-		}
+		byId[q.QuestId] = q
 	}
 	ways := questloop.WaysInto(w) // external grants included (w.External)
 	env := newWalkEnv(eng, src, w.Quests, w.Dialogue)
 	var out []questloop.Finding
 	for _, q := range w.Quests {
-		if q == nil || len(q.Steps) == 0 {
+		if len(q.Steps) == 0 {
 			continue
 		}
-		out = append(out, walkQuest(env, q, steps, ways)...)
+		out = append(out, walkQuest(env, q, byId, ways)...)
 	}
 	// Stable, so that when one Way is reported twice under one key the first
 	// report (the skip probe runs before the Way's own step) is the one kept.
@@ -62,13 +62,65 @@ func Walk(w questloop.World, src questloop.Sources) []questloop.Finding {
 
 func stepToken(q *quests.Quest, i int) string { return fmt.Sprintf("%d-%s", q.QuestId, q.Steps[i].Id) }
 
-// stepIndex is the index of p's current step in q, or -1 before the offer.
-func stepIndex(p *walkPlayer, q *quests.Quest) int {
-	cur, ok := p.progress[q.QuestId]
+// walkPath is one path of a quest the walk follows (quests.Paths): the
+// indexes in q.Steps of its steps, in order, and its side (blank for a quest
+// with no branched steps). Walk positions count along the path.
+type walkPath struct {
+	q     *quests.Quest
+	steps []quests.QuestStep
+	idx   []int
+	side  string
+	// key is the branch flag's registered key, blank when the quest has no
+	// branched steps.
+	key string
+}
+
+// newWalkPath is the walk of steps, one of q.Paths(), on side.
+func newWalkPath(q *quests.Quest, steps []quests.QuestStep, side string) walkPath {
+	wp := walkPath{q: q, steps: steps, side: side, key: q.BranchFlagKey()}
+	for _, s := range steps {
+		wp.idx = append(wp.idx, slices.IndexFunc(q.Steps, func(x quests.QuestStep) bool { return x.Id == s.Id }))
+	}
+	return wp
+}
+
+// token is the token of the path's step at position n.
+func (wp walkPath) token(n int) string { return stepToken(wp.q, wp.idx[n]) }
+
+// pos is the position on the path of p's current step: -1 before the offer,
+// and -2 on a step off the path (another side's).
+func (wp walkPath) pos(p *walkPlayer) int {
+	cur, ok := p.progress[wp.q.QuestId]
 	if !ok {
 		return -1
 	}
-	return p.index(q.QuestId, cur)
+	for n, s := range wp.steps {
+		if s.Id == cur {
+			return n
+		}
+	}
+	return -2
+}
+
+// msg names the path in a branched quest's finding message. The key never
+// carries it, so a finding keeps its key whichever path found it.
+func (wp walkPath) msg(s string) string {
+	if wp.key == "" {
+		return s
+	}
+	return onPaths(s, []string{wp.side})
+}
+
+// ways is the Ways into the path's step at position n that lie on the path
+// (questloop.Way.OnPath): a Way requiring another side's step is that side's.
+func (wp walkPath) ways(all map[string][]questloop.Way, n int) []questloop.Way {
+	var out []questloop.Way
+	for _, wy := range all[wp.token(n)] {
+		if wy.OnPath(wp.q, wp.steps) {
+			out = append(out, wy)
+		}
+	}
+	return out
 }
 
 // walkTrail records every step a firing put the player on, so a firing that
@@ -281,12 +333,11 @@ func (env *walkEnv) hear(p *walkPlayer) {
 	}
 }
 
-func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[string][]questloop.Way) []questloop.Finding {
-	var out []questloop.Finding
-	dead := func(where, msg string) {
-		out = append(out, questloop.Finding{Rule: "walk-dead-end", QuestId: q.QuestId, Where: where, Msg: msg})
-	}
-
+// walkQuest walks q from its offer to its hand-in, once per path
+// (quests.Paths): a quest with no branched steps has one path, all of its
+// steps; a branched quest is walked once per side, over the real quest, each
+// walk trying only the Ways that lie on its path.
+func walkQuest(env *walkEnv, q *quests.Quest, byId map[int]*quests.Quest, ways map[string][]questloop.Way) []questloop.Finding {
 	var offer *questloop.Way
 	for _, wy := range ways[stepToken(q, 0)] {
 		if wy.Topic != nil && wy.Topic.Kind == dialogue.KindOffer {
@@ -301,20 +352,40 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 
 	// Source checks need no walk state: every Way into every step, once,
 	// so a step after a dead one is still checked.
-	last := len(q.Steps) - 1
+	var out []questloop.Finding
 	out = append(out, env.checkWay(q, *offer)...)
-	out = append(out, env.checkChained(q, ways, 1, last)...)
+	out = append(out, env.checkChained(q, ways, 1, len(q.Steps)-1)...)
 
-	p := newWalkPlayer(steps)
+	sides := q.Sides()
+	for k, steps := range q.Paths() {
+		out = append(out, env.walkOnePath(newWalkPath(q, steps, sides[k]), *offer, byId, ways)...)
+	}
+	return out
+}
+
+// walkOnePath walks one path of q from the offer to the hand-in.
+func (env *walkEnv) walkOnePath(wp walkPath, offer questloop.Way, byId map[int]*quests.Quest, ways map[string][]questloop.Way) []questloop.Finding {
+	q := wp.q
+	var out []questloop.Finding
+	dead := func(where, msg string) {
+		out = append(out, questloop.Finding{Rule: "walk-dead-end", QuestId: q.QuestId, Where: where, Msg: wp.msg(msg)})
+	}
+	last := len(wp.steps) - 1
+
+	p := newWalkPlayer(byId)
 	env.hear(p)
-	trail := fireWay(env, p, *offer, q.QuestId)
-	if !trail[stepToken(q, 0)] {
+	trail := fireWay(env, p, offer, q.QuestId)
+	if !trail[wp.token(0)] {
 		dead(offer.Where, "the offer cannot be taken")
 		return out
 	}
-	cur := stepIndex(p, q)
-	if k := skipped(trail, q, 0, cur); k >= 0 {
-		dead(offer.Where, fmt.Sprintf("skips to %d-%s, passing %s", q.QuestId, p.progress[q.QuestId], stepToken(q, k)))
+	cur := wp.pos(p)
+	if cur < 0 {
+		dead(offer.Where, fmt.Sprintf("puts the player on %d-%s, off this path", q.QuestId, p.progress[q.QuestId]))
+		return out
+	}
+	if k := wp.skipped(trail, 0, cur); k >= 0 {
+		dead(offer.Where, fmt.Sprintf("skips to %d-%s, passing %s", q.QuestId, p.progress[q.QuestId], wp.token(k)))
 	}
 
 	// The walk carries every distinct state forward, not only the first Way
@@ -333,25 +404,34 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 			continue // passed through by a chain, never rested on
 		}
 		i := c + 1
-		tok, want := stepToken(q, i), q.Steps[i].Id
+		tok, want := wp.token(i), wp.steps[i].Id
+		into := wp.ways(ways, i)
 
 		for _, p := range states {
+			// A step of this side opens once the branch flag names it. A
+			// player may set it apart from the grant (a "choose" topic), so
+			// the walk takes it from a setter that grants nothing of this
+			// quest (meetFlag); a setter that also grants a step is a Way,
+			// and a flag it sets after its grant still fails the walk.
+			if wp.steps[i].Branch != "" {
+				env.meetFlag(p, wp.key, wp.side, q.QuestId)
+			}
 			env.hear(p)
 			// Skip probe: a Way into a later step must not fire from here,
 			// or a player can jump over step i. A Way that also grants step
 			// i is the step's own Way and is judged below.
 			for j := i + 1; j <= last; j++ {
-				for _, wy := range ways[stepToken(q, j)] {
-					if wy.Reward || ownGranted(wy, q.QuestId) || isTreeGrant(wy) || sharesWay(ways[tok], wy) || !env.itemsHeldEarly(p, wy, q.QuestId) {
+				for _, wy := range wp.ways(ways, j) {
+					if wy.Reward || ownGranted(wy, q.QuestId) || isTreeGrant(wy) || sharesWay(into, wy) || !env.itemsHeldEarly(p, wy, q.QuestId) {
 						continue
 					}
 					cl := p.clone()
 					env.probing = true
 					tr := fireWay(env, cl, wy, q.QuestId)
 					env.probing = false
-					if got := stepIndex(cl, q); got > i && skipped(tr, q, i, got) >= 0 {
+					if got := wp.pos(cl); got > i && wp.skipped(tr, i, got) >= 0 {
 						dead(wy.Where, fmt.Sprintf("skips to %d-%s from %d-%s, passing %s",
-							q.QuestId, cl.progress[q.QuestId], q.QuestId, q.Steps[c].Id, tok))
+							q.QuestId, cl.progress[q.QuestId], q.QuestId, wp.steps[c].Id, tok))
 					}
 				}
 			}
@@ -368,7 +448,7 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 		// of a spell is reported as walk-no-spell, not as a dead end.
 		otherFail := map[string]bool{}
 		var failOrder []string
-		for _, wy := range ways[tok] {
+		for _, wy := range into {
 			if wy.Reward {
 				continue
 			}
@@ -382,8 +462,8 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 				cl := p.clone()
 				env.spellRefused = false
 				tr := fireWay(env, cl, wy, q.QuestId)
-				got := stepIndex(cl, q)
-				k := skipped(tr, q, i, got)
+				got := wp.pos(cl) // below 0 off the path: no way on along it
+				k := wp.skipped(tr, i, got)
 				switch {
 				case got < i:
 					if !failed[wy.Where] {
@@ -394,7 +474,7 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 						otherFail[wy.Where] = true
 					}
 				case k >= 0:
-					dead(wy.Where, fmt.Sprintf("skips to %d-%s, passing %s", q.QuestId, cl.progress[q.QuestId], stepToken(q, k)))
+					dead(wy.Where, fmt.Sprintf("skips to %d-%s, passing %s", q.QuestId, cl.progress[q.QuestId], wp.token(k)))
 				default:
 					worked[wy.Where] = true
 					// A quest_granted chain may have carried the player past
@@ -412,7 +492,7 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 			case worked[where]:
 			case !otherFail[where]:
 				out = append(out, questloop.Finding{Rule: "walk-no-spell", QuestId: q.QuestId, Where: where,
-					Msg: fmt.Sprintf("does not reach %s: it needs a spell that lands (%s), and no spell a player holds on this path (starters, teach_spell, spellid rewards) does", tok, spellWant(ways[tok], where))})
+					Msg: wp.msg(fmt.Sprintf("does not reach %s: it needs a spell that lands (%s), and no spell a player holds on this path (starters, teach_spell, spellid rewards) does", tok, spellWant(into, where)))})
 			default:
 				dead(where, "does not reach "+tok)
 			}
@@ -425,7 +505,26 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 			return out
 		}
 	}
-	return out
+	return append(out, wp.checkSide(rest[last].list())...)
+}
+
+// checkSide reports a branched path whose walk ended with the branch flag
+// off its side: the side the player took is not the side the flag records,
+// and every later reader of the flag (dialogue, the quest log after a
+// restart) would see the other side. One finding per path, from the first
+// such state.
+func (wp walkPath) checkSide(finished []*walkPlayer) []questloop.Finding {
+	if wp.key == "" {
+		return nil
+	}
+	for _, p := range finished {
+		if v := p.flags[wp.key]; v != wp.side {
+			return []questloop.Finding{{Rule: "walk-branch-flag", QuestId: wp.q.QuestId,
+				Where: "step " + wp.steps[len(wp.steps)-1].Id,
+				Msg:   wp.msg(fmt.Sprintf("finishes with %s=%q; a walk of this path must end with it set to %q", wp.key, v, wp.side))}}
+		}
+	}
+	return nil
 }
 
 // spellWant names what the spell_landed Way at where asks a spell for.
@@ -526,11 +625,11 @@ func (env *walkEnv) itemsHeldEarly(p *walkPlayer, wy questloop.Way, own int) boo
 	return true
 }
 
-// skipped is the first step from index from to index to that the trail never
-// put the player on, or -1 when the firing passed through every one.
-func skipped(trail walkTrail, q *quests.Quest, from, to int) int {
+// skipped is the first path position from from to to whose step the trail
+// never put the player on, or -1 when the firing passed through every one.
+func (wp walkPath) skipped(trail walkTrail, from, to int) int {
 	for k := from; k <= to; k++ {
-		if !trail[stepToken(q, k)] {
+		if !trail[wp.token(k)] {
 			return k
 		}
 	}
@@ -892,16 +991,71 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 	return env.eng.Notify(t.Event, d, p, &trailCtx{walkCtx{p: p}, trail}).Handled
 }
 
+// dedupeFindings keeps the first finding of each key. When the same key was
+// found with the same text on more than one path of a branched quest, the
+// kept message names every such path (onPaths); the key never does. A later
+// finding whose text differs is dropped and the first kept unchanged, so the
+// message never names a path its text is not true of.
 func dedupeFindings(fs []questloop.Finding) []questloop.Finding {
-	seen := map[string]bool{}
+	at := map[string]int{}
+	paths := map[string][]string{}
 	var out []questloop.Finding
 	for _, f := range fs {
-		if !seen[f.Key()] {
-			seen[f.Key()] = true
+		k := f.Key()
+		fText, ps := splitPaths(f.Msg)
+		n, seen := at[k]
+		if !seen {
+			at[k] = len(out)
+			paths[k] = ps
 			out = append(out, f)
+			continue
 		}
+		text, _ := splitPaths(out[n].Msg)
+		if len(ps) == 0 || len(paths[k]) == 0 || text != fText {
+			continue // a different defect text: the first stands as it is
+		}
+		for _, p := range ps {
+			if !slices.Contains(paths[k], p) {
+				paths[k] = append(paths[k], p)
+			}
+		}
+		out[n].Msg = onPaths(text, paths[k])
 	}
 	return out
+}
+
+// onPaths names the paths a branched walk finding was found on, after its
+// text: " (on the sylara path)", " (on the sylara and rhett paths)".
+func onPaths(text string, paths []string) string {
+	switch len(paths) {
+	case 0:
+		return text
+	case 1:
+		return text + " (on the " + paths[0] + " path)"
+	}
+	return text + " (on the " + strings.Join(paths[:len(paths)-1], ", ") + " and " + paths[len(paths)-1] + " paths)"
+}
+
+// splitPaths undoes onPaths: the text and the paths it names, or the whole
+// message and none for a finding that names no path.
+func splitPaths(msg string) (string, []string) {
+	const open = " (on the "
+	i := strings.LastIndex(msg, open)
+	if i < 0 {
+		return msg, nil
+	}
+	inner, ok := strings.CutSuffix(msg[i+len(open):], " paths)")
+	if !ok {
+		if inner, ok = strings.CutSuffix(msg[i+len(open):], " path)"); !ok {
+			return msg, nil
+		}
+		return msg[:i], []string{inner}
+	}
+	head, last, ok := strings.Cut(inner, " and ")
+	if !ok {
+		return msg, nil
+	}
+	return msg[:i], append(strings.Split(head, ", "), last)
 }
 
 // checkWay reports a Way's needs the world cannot meet (spec 7.2): an item

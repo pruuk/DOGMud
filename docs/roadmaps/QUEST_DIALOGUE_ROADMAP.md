@@ -65,7 +65,7 @@ Every phase spec re-verifies the facts it builds on; this table is the starting 
   giver's topics as one unit. Designing this in now is cheaper than retrofitting it.
 - **Steps stay an ordered list; progress stays one step id per quest.** A character saves only
   its current step id (`QuestProgress map[int]string`), compared by list position
-  (`IsTokenAfter`). Chains are declared quest to quest (a "next quest" field); steps keep their
+  (`IsTokenAfterOnPath`, on the player's path since #958). Chains are declared quest to quest (a "next quest" field); steps keep their
   order inside each quest. Renaming or removing a shipped step id strands players on it, so
   step ids are covered by the stable-id manifest guard.
 - **Docs ship with each phase.** Every phase updates the `context.md` of each package it

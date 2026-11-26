@@ -1,6 +1,10 @@
 package questloop
 
 import (
+	"slices"
+	"strconv"
+	"strings"
+
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 )
@@ -38,6 +42,50 @@ type ExternalGrant struct {
 	Topics []string
 	// ItemId is set for an item questtoken.
 	ItemId int
+}
+
+// OnPath reports whether wy belongs to path, one path of quest q
+// (q.Paths()): every step of q the Way requires lies on it. A Way that
+// requires a step of another side can only be taken by a player on that
+// side, so a walk of path skips it, as one-action does (requiresOnPath). A
+// Way requiring no step of q (an external grant, a reward) is on every path,
+// and every Way is on the one path of a quest with no branched steps.
+func (wy Way) OnPath(q *quests.Quest, path []quests.QuestStep) bool {
+	return requiresOnPath(q, wayRequires(wy.Trigger, wy.Topic), path)
+}
+
+// wayRequires is the quest tokens a trigger's conditions (has) or a topic's
+// gates (quest_required) require.
+func wayRequires(t *quests.TriggerDef, tp *dialogue.Topic) []string {
+	switch {
+	case t != nil:
+		return t.Conditions.Has
+	case tp != nil:
+		return tp.QuestRequired
+	}
+	return nil
+}
+
+// requiresOnPath is the one test of whether a Way fits a path of a branched
+// quest (#958), read by one-action and, through Way.OnPath, the
+// walkthrough: every token in req that names a step of q names a step on
+// path. Other quests' tokens, and tokens naming no step of q, are not about
+// the path.
+func requiresOnPath(q *quests.Quest, req []string, path []quests.QuestStep) bool {
+	prefix := strconv.Itoa(q.QuestId) + "-"
+	for _, tok := range req {
+		step, ok := strings.CutPrefix(tok, prefix)
+		if !ok {
+			continue
+		}
+		if _, known := q.Step(step); !known {
+			continue
+		}
+		if !slices.ContainsFunc(path, func(s quests.QuestStep) bool { return s.Id == step }) {
+			return false
+		}
+	}
+	return true
 }
 
 // WaysInto maps each token ("53-firstkill") to every Way that grants it, the

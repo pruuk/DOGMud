@@ -113,13 +113,8 @@ func ApplyOverlays(u *users.UserRecord, startRoom int, o Overlays, world WorldCh
 			return err
 		}
 	}
-	for _, token := range o.SetQuestTokens {
-		if !u.Character.GiveQuestToken(token) {
-			if !u.Character.HasQuest(token) && !u.Character.IsQuestDone(token) {
-				return fmt.Errorf("playtestprofiles: could not grant quest token %q", token)
-			}
-		}
-	}
+	// Flags before tokens: a branched quest's side step is granted only once
+	// the branch flag names that side (#958, Character.GiveQuestToken).
 	for k, v := range o.SetQuestFlags {
 		if world.FlagOK != nil {
 			if err := world.FlagOK(k, v); err != nil {
@@ -127,6 +122,13 @@ func ApplyOverlays(u *users.UserRecord, startRoom int, o Overlays, world WorldCh
 			}
 		}
 		u.Character.SetQuestFlag(k, v)
+	}
+	for _, token := range o.SetQuestTokens {
+		if !u.Character.GiveQuestToken(token) {
+			if !u.Character.HasQuest(token) && !u.Character.IsQuestDone(token) {
+				return fmt.Errorf("playtestprofiles: could not grant quest token %q", token)
+			}
+		}
 	}
 	if o.SetGold != nil {
 		if *o.SetGold < 0 {

@@ -29,6 +29,11 @@
   function sectionTitle(t) { return ce("h3", { text: t }); }
   function markDirty() { Panel.dirty = true; }
   function toInt(v) { var n = Math.round(parseFloat(v)); return isNaN(n) ? 0 : n; }
+  // QM (questmerge.js): every gather overlays its controls on a deep copy of
+  // the object the editor loaded, so a field with no control survives a save.
+  var QM = window.QuestMerge;
+  // orUndef is a control's empty value as undefined, which merge deletes.
+  function orUndef(v) { return v ? v : undefined; }
 
   var Panel = {
     rows: [],
@@ -39,7 +44,7 @@
     dirty: false,
     saving: false,
     deleting: false,
-    zoneRows: [],       // Build.Zones rows (map-target assist)
+    zoneRows: [],       // Build.Zones rows (room picker assist)
     mobRows: [],        // Build.Mobs rows (mob pickers)
     roomsByZone: {},    // zone -> Build.Rooms rows
     _pendingRoomZone: "",
@@ -178,7 +183,7 @@
     return wrap;
   }
 
-  // map-target assist: the numeric input is authoritative; the zone+room
+  // room picker assist: the numeric input is authoritative; the zone+room
   // dropdowns just fill it (no client-side room→zone reverse lookup exists).
   function roomAssist(numEl) {
     var zoneSel = ce("select", {});
@@ -267,8 +272,8 @@
     give_item:     [{ k: "give_item", kind: "item", label: "Item" }],
     give_gold:     [{ k: "give_gold", kind: "num", label: "Gold" }],
     charge_gold:   [{ k: "charge_gold", kind: "num", label: "Gold" }],
-    actor:         [{ k: "actor", kind: "text", label: "Text (player only)" }],
-    observer:      [{ k: "observer", kind: "text", label: "Text (whole room)" }],
+    actor:         [{ k: "actor", kind: "longtext", label: "Text (player only)" }],
+    observer:      [{ k: "observer", kind: "longtext", label: "Text (whole room)" }],
     teach_spell:   [{ k: "teach_spell", kind: "spell", label: "Spell" }],
     teleport:      [{ k: "teleport", kind: "room", label: "Room" }],
     give_mutation: [{ k: "give_mutation", kind: "bool", label: "Roll a random mutation" }],
@@ -294,6 +299,9 @@
   function kindInput(kind, val) {
     if (kind === "bool") return boolInput(val);
     if (kind === "text") return textInput(val);
+    // longtext: player-facing prose that runs over lines. A text input drops
+    // line breaks and readKind trims, so a one-line control would flatten it.
+    if (kind === "longtext") return textArea(val);
     if (kind === "target" || kind === "reason") {
       var sel = ce("select", {});
       [""].concat(kind === "target" ? TARGET_KINDS : GAIN_REASONS).forEach(function (k) {
@@ -313,6 +321,7 @@
     if (input && input.read) return input.read();
     if (kind === "bool") return !!input.checked;
     if (NUMERIC_KINDS[kind]) return toInt(input.value);
+    if (kind === "longtext") return input.value;
     return input.value.trim();
   }
 
@@ -322,7 +331,7 @@
     function row(l) {
       l = l || {};
       var delay = numInput(l.delay);
-      var text = textInput(l.text);
+      var text = textArea(l.text);
       text.style.minWidth = "260px";
       var speaker = numInput(l.speaker, "q-mob-dl");
       var emote = boolInput(l.emote);
@@ -337,11 +346,8 @@
       wrap.appendChild(rm);
       rm.addEventListener("click", function () { box.removeChild(wrap); markDirty(); });
       wrap._line = function () {
-        var out = { text: text.value };
-        if (toInt(delay.value)) out.delay = toInt(delay.value);
-        if (toInt(speaker.value)) out.speaker = toInt(speaker.value);
-        if (emote.checked) out.emote = true;
-        return out;
+        return QM.merge(l, { text: text.value, delay: orUndef(toInt(delay.value)),
+          speaker: orUndef(toInt(speaker.value)), emote: orUndef(emote.checked) });
       };
       box.insertBefore(wrap, addBtn);
     }
@@ -379,7 +385,7 @@
       body.appendChild(field("Mob (speaker)", mob));
       var lines = sayLines(src.lines);
       body.appendChild(field("Lines", lines.el));
-      return function () { return { npc_say: { mob: toInt(mob.value), lines: lines.get() } }; };
+      return function () { return { npc_say: QM.merge(src, { mob: toInt(mob.value), lines: lines.get() }) }; };
     }
     if (type === "sequence") {
       var sq = a.sequence || {};
@@ -387,16 +393,14 @@
       body.appendChild(field("Delay between lines (seconds)", delayB));
       var sqLines = sayLines(sq.lines);
       body.appendChild(field("Lines", sqLines.el));
-      var lockMsg = textInput(sq.lock_message);
+      var lockMsg = textArea(sq.lock_message);
       body.appendChild(field("Lock message (blocks movement while running; empty = no lock)", lockMsg));
       body.appendChild(ce("div", { style: "font-size:10px;color:var(--gold-dim);margin-top:6px;", text: "On complete, actions run after the last line (a sequence cannot nest another sequence):" }));
       var onC = actionList(sq.on_complete, body, false);
       return function () {
-        var out = { delay_between: toInt(delayB.value), lines: sqLines.get() };
         var oc = onC.get();
-        if (oc.length) out.on_complete = oc;
-        if (lockMsg.value.trim()) out.lock_message = lockMsg.value.trim();
-        return { sequence: out };
+        return { sequence: QM.merge(sq, { delay_between: toInt(delayB.value), lines: sqLines.get(),
+          on_complete: oc.length ? oc : undefined, lock_message: orUndef(lockMsg.value) }) };
       };
     }
     if (type === "declare_bounty") {
@@ -428,14 +432,14 @@
       var reason = textInput(db.reason);
       body.appendChild(field("Reason", reason));
       return function () {
-        var out = { issuer: { type: isType.value, id: isId.value.trim() }, condition: cond.value.trim() };
-        if (tp.checked) out.target_player = true;
-        if (tType.value) out.target = { type: tType.value, id: toInt(tId.value) };
-        if (toInt(exp.value)) out.expiry_rounds = toInt(exp.value);
-        if (toInt(gOv.value)) out.gold_override = toInt(gOv.value);
-        if (toInt(rOv.value)) out.rep_override = toInt(rOv.value);
-        if (reason.value.trim()) out.reason = reason.value.trim();
-        return { declare_bounty: out };
+        return { declare_bounty: QM.merge(db, {
+          issuer: QM.merge(issuer, { type: isType.value, id: isId.value.trim() }),
+          condition: cond.value.trim(),
+          target_player: orUndef(tp.checked),
+          target: tType.value ? QM.merge(target, { type: tType.value, id: toInt(tId.value) }) : undefined,
+          expiry_rounds: orUndef(toInt(exp.value)), gold_override: orUndef(toInt(gOv.value)),
+          rep_override: orUndef(toInt(rOv.value)), reason: orUndef(reason.value.trim())
+        }) };
       };
     }
 
@@ -455,7 +459,7 @@
       if (nested) {
         var inner = {};
         readers.forEach(function (r) { inner[r.f.k] = readKind(r.f.kind, r.input); });
-        out[type] = inner;
+        out[type] = QM.merge(a[type], inner);
       } else {
         readers.forEach(function (r) { out[r.f.k] = readKind(r.f.kind, r.input); });
       }
@@ -472,7 +476,7 @@
       if (!type) type = "actor";
       collapsible(box, function () { return "action: " + type; }, function (body) {
         var gather = buildActionBody(type, a, body, allowSequence);
-        return { gather: gather };
+        return { gather: function () { return QM.merge(a, gather()); } };
       }, true);
     }
     (actions || []).forEach(actionRow);
@@ -490,11 +494,12 @@
       var spec = ACTION_FORMS[type];
       if (spec === "custom" || (spec.length && spec[0].nest)) stub[type] = {};
       else if (spec.length && spec[0].kind === "bool") stub[spec[0].k] = true;
-      else stub[spec[0].k] = spec[0].kind === "num" || NUMERIC_KINDS[spec[0].kind] ? 0 : " ";
-      // Render with the explicit type (stub values may be zero/empty).
+      else stub[spec[0].k] = spec[0].kind === "num" || NUMERIC_KINDS[spec[0].kind] ? 0 : "";
+      // Render with the explicit type: the stub's values are empty, and a
+      // text kind is read untrimmed, so a seed other than "" would be saved.
       collapsible(box, function () { return "action: " + type; }, function (body) {
         var gather = buildActionBody(type, stub, body, allowSequence);
-        return { gather: gather };
+        return { gather: function () { return QM.merge({}, gather()); } };
       }, true);
       markDirty();
     });
@@ -511,9 +516,10 @@
 
   // ---- triggers ---------------------------------------------------------
 
-  // The trigger fields each event offers. Only listed fields are read back
-  // on save, so a field missing here is dropped from the quest file. Every
-  // event takes area and zone; count and label are refused on room_gate,
+  // The trigger fields each event offers. Only listed fields get a control;
+  // a field missing here survives a save untouched (questmerge.js), except
+  // that a filter another event offers is cleared when the event changes.
+  // Every event takes area and zone; count and label are refused on room_gate,
   // look_at, search_at and item_give (a partial count would swallow the
   // command);
   // distinct and explored_line are room_enter's (an explore step). Kept in
@@ -538,7 +544,7 @@
     command: "text", quest_token: "token", noun: "text",
     effect: "text", topic: "text", target: "target", reason: "reason",
     area: "text", zone: "text", count: "num", label: "text",
-    distinct: "text", explored_line: "text", held_line: "text" };
+    distinct: "text", explored_line: "longtext", held_line: "longtext" };
   // Fields that shape the trigger rather than filter its event get their own
   // label in the form.
   var FIELD_LABELS = {
@@ -630,22 +636,35 @@
       var acts = actionList(t.actions, body, true);
 
       return { gather: function () {
-        var out = { event: evSel.value, actions: acts.get() };
+        var filters = {};
         for (var fk in filterReaders) {
-          out[fk] = readKind(filterReaders[fk].kind, filterReaders[fk].input);
+          filters[fk] = readKind(filterReaders[fk].kind, filterReaders[fk].input);
         }
-        var c = {};
-        if (has.get().length) c.has = has.get();
-        if (missing.get().length) c.missing = missing.get();
-        if (inRoom.read()) c.in_room = inRoom.read();
-        if (toInt(hasItem.value)) c.has_item = toInt(hasItem.value);
-        if (toInt(missItem.value)) c.missing_item = toInt(missItem.value);
-        var hf = hasFlag.get(); if (Object.keys(hf).length) c.has_flag = hf;
-        var mf = missFlag.get(); if (Object.keys(mf).length) c.missing_flag = mf;
-        if (toInt(hasGold.value)) c.has_gold = toInt(hasGold.value);
-        if (toInt(hasMw.value)) c.has_masterwork = toInt(hasMw.value);
-        if (Object.keys(c).length) out.conditions = c;
-        return out;
+        // Filters another event offers go with the old event, but only when
+        // the event was changed: a loaded trigger keeps a filter the editor
+        // has no control for on its event (quest 28's command_issued noun).
+        var offered = EVENT_FILTERS[evSel.value] || [];
+        var dropped = [];
+        for (var ev in evSel.value === t.event ? {} : EVENT_FILTERS) {
+          EVENT_FILTERS[ev].forEach(function (f) {
+            if (offered.indexOf(f) < 0 && dropped.indexOf(f) < 0) dropped.push(f);
+          });
+        }
+        var hasTokens = has.get(), missTokens = missing.get();
+        var hf = hasFlag.get(), mf = missFlag.get();
+        var c = {
+          has: hasTokens.length ? hasTokens : undefined,
+          missing: missTokens.length ? missTokens : undefined,
+          in_room: orUndef(inRoom.read()),
+          has_item: orUndef(toInt(hasItem.value)),
+          missing_item: orUndef(toInt(missItem.value)),
+          has_flag: Object.keys(hf).length ? hf : undefined,
+          missing_flag: Object.keys(mf).length ? mf : undefined,
+          has_gold: orUndef(toInt(hasGold.value)),
+          has_masterwork: orUndef(toInt(hasMw.value))
+        };
+        return QM.trigger(t, { event: evSel.value, actions: acts.get(), filters: filters,
+          dropped: dropped, conditions: c });
       } };
     }, true);
   }
@@ -740,8 +759,19 @@
     // ---- steps ----
     insp.appendChild(sectionTitle("Steps"));
     insp.appendChild(ce("div", { style: "font-size:11px;color:var(--gold-dim);margin:2px 0 6px;",
-      text: "Step order is the progression order. Map target: where the minimap marker points during the step. 0 = infer it from a room_enter trigger gated on this step; a room id = point there; the no-marker box = deliberately draw NO marker for this step (action steps with no travel destination)." }));
+      text: "Step order is the order within a path. A step with a branch belongs to that side only; leave the branch blank for a step every side takes. A new step's destination comes from its triggers, or is set in the quest's YAML file; the destination shown under each step is read only here." }));
     var stepBox = ce("div", {});
+    // gatherFlags reads the flag rows as the form stands; before the flag rows
+    // exist (the steps are built first) it answers with the loaded flags.
+    var flagBox = null;
+    function gatherFlags() {
+      if (!flagBox) return q.flags || [];
+      var flags = [];
+      Array.prototype.forEach.call(flagBox.children, function (r) {
+        if (r._gather) { var f = r._gather(); if (f.key) flags.push(f); }
+      });
+      return flags;
+    }
     insp.appendChild(stepBox);
     function stepRow(s) {
       s = s || {};
@@ -752,15 +782,34 @@
         body.appendChild(field("Description (quest log, after this step is granted)", sd));
         var hint = textArea(s.hint);
         body.appendChild(field("Hint (the quest log's nudge)", hint));
-        var noMarker = boolInput(s.map_target === -1);
-        var mt = numInput(s.map_target > 0 ? s.map_target : 0);
-        var assist = roomAssist(mt);
-        body.appendChild(field("No marker for this step", noMarker,
-          "writes map_target: -1: suppresses the marker AND trigger inference; for action steps (craft, kill, command) with no travel destination"));
-        body.appendChild(field("Map target room (0 = infer from triggers)", ce("span", {}, [mt, assist])));
+        // Branch: a value of one of this quest's flags, read from the flag
+        // rows as they stand now (refilled when the picker opens). A loaded
+        // value no flag offers stays selectable, so a save does not lose it.
+        var branch = ce("select", {});
+        function fillBranch() {
+          // The loaded branch only seeds the first fill; after that the
+          // picker's own value stands, so choosing "(none)" sticks.
+          var keep = branch.options.length ? branch.value : (s.branch || "");
+          var vals = QM.branchValues(gatherFlags());
+          if (keep && vals.indexOf(keep) < 0) vals.push(keep);
+          branch.innerHTML = "";
+          [""].concat(vals).forEach(function (v) {
+            var o = ce("option", { value: v, text: v || "(none: every side)" });
+            if (v === keep) o.selected = true;
+            branch.appendChild(o);
+          });
+        }
+        fillBranch();
+        branch.addEventListener("focus", fillBranch);
+        branch.addEventListener("mousedown", fillBranch);
+        branch.addEventListener("change", markDirty);
+        body.appendChild(field("Branch (the side this step belongs to)", branch,
+          "a value of one of this quest's flags; blank = every side takes the step"));
+        body.appendChild(ce("div", { style: "font-size:11px;color:var(--gold-dim);margin-top:6px;",
+          text: QM.destinationText(s.destination) }));
         return { gather: function () {
-          return { id: id.value.trim(), description: sd.value, hint: hint.value,
-            map_target: noMarker.checked ? -1 : toInt(mt.value) };
+          return QM.step(s, { id: id.value.trim(), description: sd.value, hint: hint.value,
+            branch: branch.value });
         } };
       }, true);
     }
@@ -805,7 +854,7 @@
     insp.appendChild(sectionTitle("Flags (branch tracking)"));
     insp.appendChild(ce("div", { style: "font-size:11px;color:var(--gold-dim);margin:2px 0 6px;",
       text: "Declare every flag this quest's triggers or NPC dialogue set/gate on: an undeclared reference is refused at save. Dialogue setsQuestFlag keys must match these (full key: " + q.questid + "-<key>)." }));
-    var flagBox = ce("div", {});
+    flagBox = ce("div", {});
     insp.appendChild(flagBox);
     function flagRow(f) {
       f = f || {};
@@ -817,7 +866,7 @@
         var fd = textInput(f.description);
         body.appendChild(field("Description", fd));
         return { gather: function () {
-          return { key: key.value.trim(), values: vals.get(), description: fd.value.trim() };
+          return QM.merge(f, { key: key.value.trim(), values: vals.get(), description: fd.value.trim() });
         } };
       });
     }
@@ -854,26 +903,25 @@
     function gatherFile() {
       var steps = [];
       Array.prototype.forEach.call(stepBox.children, function (r) { if (r._gather) steps.push(r._gather()); });
-      var flags = [];
-      Array.prototype.forEach.call(flagBox.children, function (r) {
-        if (r._gather) { var f = r._gather(); if (f.key) flags.push(f); }
-      });
       var triggers = [];
       Array.prototype.forEach.call(trigBox.children, function (r) { if (r._gather) triggers.push(r._gather()); });
-      return {
+      // Overlay the controls on the quest as loaded, so a field with no
+      // control (a step's destination, repeat_limit, rewards.summary and
+      // surprise, anything added later) survives the save.
+      return QM.merge(q, {
         questid: q.questid, name: name.value.trim(), description: desc.value,
         secret: secret.checked, repeatable: repeatable.checked,
         cooldown_rounds: toInt(cooldown.value),
-        steps: steps, flags: flags, triggers: triggers,
-        rewards: {
+        steps: steps, flags: gatherFlags(), triggers: triggers,
+        rewards: QM.merge(q.rewards, {
           gold: toInt(rGold.value), itemid: toInt(rItem.value), conditionid: toInt(rCondition.value),
           spellid: rSpell.value.trim(), skillinfo: rSkill.get(), stat_info: rStat.get(),
           recipe_info: rRecipe.get().join(","), item_info: rItems.get(),
           actor: rPmsg.value, observer: rRmsg.value,
           roomid: toInt(rRoom.value), questid: rChain.value.trim(),
           rep_faction: rFaction.value.trim(), rep_amount: toInt(rRep.value)
-        }
-      };
+        })
+      });
     }
   };
 

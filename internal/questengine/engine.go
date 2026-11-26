@@ -198,8 +198,8 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 func (e *Engine) fire(eventType string, t *indexedTrigger, details EventDetails, player PlayerState, ctx ActionContext, guard *EvalGuard, onFire func()) NotifyResult {
 	result := NotifyResult{}
 
-	// Condition evaluation
-	if !EvalConditions(t.def.Conditions, player) {
+	// Condition evaluation, and the side gate (#958)
+	if !e.triggerOpen(t, player) {
 		return result
 	}
 
@@ -397,6 +397,58 @@ func nounMatches(n string, d EventDetails, tier nounTier) bool {
 		return n == d.RoomNoun || slices.Contains(util.NounNumberVariants(d.RoomNoun), n)
 	}
 	return false
+}
+
+// triggerOpen reports whether t may fire for player: its conditions pass and
+// none of its actions grants a branched step, of any quest, off the player's
+// side (#958). A trigger that would grant the other side's step is skipped
+// whole, before it speaks, pays or takes the command; refusing only the grant
+// would still run the rest. Every firing path (fire) and the talk menu's dry
+// run (WouldFire) read this one gate.
+//
+// A set_flag on the branch flag earlier in the same action list lands before
+// the grant does, so for the grant it stands in for the player's flag (it
+// counts only while the player holds no branched step, as the flag does).
+func (e *Engine) triggerOpen(t *indexedTrigger, player PlayerState) bool {
+	if !EvalConditions(t.def.Conditions, player) {
+		return false
+	}
+	for i, a := range t.def.Actions {
+		if a.Grant == "" {
+			continue
+		}
+		questId, step := quests.TokenToParts(a.Grant)
+		q := e.quests[questId]
+		if q == nil {
+			continue
+		}
+		flag := player.GetQuestFlag
+		if key := q.BranchFlagKey(); key != "" {
+			if v, ok := flagSetBefore(t.def.Actions[:i], key); ok {
+				flag = func(k string) string {
+					if k == key {
+						return v
+					}
+					return player.GetQuestFlag(k)
+				}
+			}
+		}
+		if !q.GrantOnPath(step, player.HasQuest, flag) {
+			return false
+		}
+	}
+	return true
+}
+
+// flagSetBefore is the value the last set_flag of key in actions sets, and
+// whether any does.
+func flagSetBefore(actions []ActionDef, key string) (string, bool) {
+	for _, a := range slices.Backward(actions) {
+		if f := a.SetFlag; f != nil && f.Key == key {
+			return f.Value, true
+		}
+	}
+	return "", false
 }
 
 // executeActions runs a trigger's actions in order, with panic recovery per

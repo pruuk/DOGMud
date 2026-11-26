@@ -308,6 +308,98 @@ Every branching quest MUST have:
    only eligible topics, so no ordering or dismissal topic is needed.
 5. Opener variants with `questFlagRequired` for path-specific openers
 6. Mid-quest opener variants for cross-NPC visits during the OTHER quest
+7. If the sides have steps of their own, `branch:` on each of those steps
+   (next section), so the engine, the validator and the quest log treat each
+   side as its own line
+
+### Branches: steps that belong to one side (#958)
+
+A step may carry `branch: <value>`, a value of one of the quest's declared
+flags. Quest 11 (trimmed):
+
+```yaml
+flags:
+  - key: branch
+    values: [sylara, rhett]
+steps:
+  - id: start
+  - id: sylara          # Sylara's fetch step
+    branch: sylara
+  - id: totem           # her return step
+    branch: sylara
+  - id: rhett
+    branch: rhett
+  - id: samples
+    branch: rhett
+  - id: end
+```
+
+**A player's path** is the steps in file order, keeping the unbranched steps
+and the steps of the player's side (`quests.Quest.Path`). The side is the
+`branch` of the player's current step when that step is branched, and only
+otherwise the value of the branch flag. A quest with no branched steps has one
+path of all its steps and behaves as it always did.
+
+**Off-path steps are never held and never granted.**
+- `Character.HasQuest` is true for the current step and the steps before it
+  on the player's path. A Rhett player does not "hold" `11-sylara`, even
+  though it sits earlier in the file.
+- `GiveQuestToken` refuses a step off the player's path.
+- The trigger engine skips a whole trigger that would grant an off-path
+  branched step, before any action runs (`Engine.triggerOpen`, shared with the
+  talk menu's `WouldFire`). So a branch-entry trigger needs no flag condition:
+  the other side's player never sees its text, items or gold. The one-action
+  rule still refuses a flag condition on a trigger, so do not add one.
+- A set_flag of the branch flag earlier in the same trigger counts for the
+  grant after it. Otherwise the side's flag must already be set when the grant
+  runs (a topic's `setsQuestFlag` lands before the `topic_heard` trigger it
+  fires). A grant of a side's step with the flag unset and no branched step
+  held is refused.
+- The quest log (`quests` command, GMCP Char quest payload) counts only the
+  player's own side: `Quest.StepProgress`.
+
+**Hand-ins require the side's last step before `end`** (quest 11: `11-totem`
+or `11-samples`), not the fetch step. The pickup trigger moves a player who
+carries the item to the return step, so the hand-in always has that step to
+require. Require the other side's step and the quest cannot finish on this
+side.
+
+**`Quest.Validate` refuses (boot panic):**
+- a branch that is not one word (letters, digits, `_`, `-`);
+- a branch that is not a value of exactly one declared flag;
+- branched steps that use two different flags (one fork per quest);
+- a value of the branch flag that no step branches on (every value is a side
+  with its own steps; record any other choice in a separate flag);
+- a branched first or last step;
+- a branched quest that is `repeatable` (a repeat clears steps, not flags).
+
+Code that edits `Steps` or `Flags` of an already validated quest calls
+`Validate` again: it fills the cache the path helpers read.
+
+**Findings for a branched quest** (keys never name a path):
+- `one-action <qid> step <id>:prev` etc. are checked per path: a way into a
+  step must require the step before it on a path that holds the step, and
+  lie on that path. Where paths join (`end`), each side's last step needs a
+  way on, or `one-action <qid> step end from <prev id>:none` names the side
+  left with no way.
+- `walk-dead-end` and the other walk rules run once per path. Their message
+  ends "(on the sylara path)", or names every path with the same text. The
+  walk tries only the ways whose required steps lie on the path, so the
+  other side's hand-in is not reported as a dead end.
+- `walk-branch-flag <qid> step <last>`: a path walked to its end with the
+  branch flag on another side. Cause: a trigger sets the flag after its
+  grant, or never.
+- The step-order model of `cmd/dialoguecheck` reads the same path helpers; a
+  stuck side is reported as "on the <side> side".
+
+Old saves: `Character.MigrateQuestProgress` runs on every load
+(`users.LoadUser`, `UserRecord.SwapToAlt`); a retired step is moved onto the
+side's steps there (`MigrateQuest11SidedStep`). A save whose branched step and
+flag name different sides keeps moving on its step's side and is logged.
+
+The playtest overlay sets quest flags before quest tokens, so a side step in
+`SetQuestTokens` has its flag. The web quest builder keeps `branch:` and
+every other step field it has no control for, and has a Branch picker.
 
 ### Quest reward YAML keys
 

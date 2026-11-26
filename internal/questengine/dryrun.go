@@ -9,15 +9,15 @@ import (
 // WouldFire reports whether Notify(eventType, d, player, ...) would fire at
 // least one trigger, without running anything: no action executes, no token
 // is granted, no text is sent and no quest_granted chain is followed. It uses
-// the same match step as Notify (fieldMatches, then EvalConditions) against
-// the player's current state.
+// the same match step as Notify (fieldMatches, then triggerOpen: conditions
+// and the side gate) against the player's current state.
 //
 // It answers for the first trigger to fire only. A trigger that would become
 // eligible only after an earlier one's actions changed the player's state is
 // not seen, which is the right answer for a gate asked before the event.
 func (e *Engine) WouldFire(eventType string, d EventDetails, player PlayerState) bool {
 	for _, t := range e.fieldMatches(eventType, d) {
-		if EvalConditions(t.def.Conditions, player) {
+		if e.triggerOpen(t, player) {
 			return true
 		}
 	}

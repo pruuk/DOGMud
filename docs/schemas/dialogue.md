@@ -194,8 +194,10 @@ token.** Example: `grantsQuest: 10-start` needs
 is offered again. The boot refuses either omission.
 
 **Quest tokens use the format `{questId}-{stepId}`** and must name a real
-step. `HasQuest()` is true on that step or any later one, so use
-`questExcluded` to hide a topic once a quest moves past a point.
+step. `HasQuest()` is true on that step or any later one on the player's own
+path, so use `questExcluded` to hide a topic once a quest moves past a point.
+In a quest with branched steps (section 5) a step of the other side is never
+held, however early it sits in the file.
 
 **`grantsQuest` fires the quest event handler,** which pays every reward in
 the quest YAML. No separate reward mechanism is needed.
@@ -252,9 +254,25 @@ topic is needed. Give each NPC an opener variant per branch during the active
 phase, so a wrong-path player hears a closing line instead of the default
 opener, which often hints at the quest.
 
+### Branched steps
+
+When each side has steps of its own, mark them `branch: <value>` in the quest
+YAML (a value of the branch flag; quest 11 has `sylara`, `totem` on Sylara's
+side and `rhett`, `samples` on Rhett's). A player's path is the unbranched
+steps plus the steps of their side. `HasQuest` (so `questRequired` and
+`questExcluded`) reads that path: the current step and the steps before it on
+the path are held, and a step of the other side never is. A quest trigger
+that would grant the other side's step is skipped whole for this player, and a
+topic's `grantsQuest` of such a step is refused. A
+hand-in requires the side's last step before `end` (`questRequired: [11-totem]`),
+and the topic that picks a side sets the flag before the grant it fires. The
+authoring skill's "Branches" section has the validator's refusals.
+
 ### Checklist for Branching Quests
 
 1. Flag declared in the quest YAML with every value.
 2. `setsQuestFlag` on each branch's committing topic.
 3. `questFlagRequired` or `questFlagExcluded` on every branch topic.
 4. Opener variants per branch for the active and finished phases.
+5. If the sides have steps of their own, `branch:` on each, and each hand-in
+   requires its side's last step.

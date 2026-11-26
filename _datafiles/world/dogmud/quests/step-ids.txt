@@ -21,8 +21,11 @@
 102-end
 102-start
 11-end
-11-sided
+11-rhett
+11-samples
 11-start
+11-sylara
+11-totem
 12-end
 12-ritual
 12-start
@@ -372,6 +375,10 @@
 1000000-end
 1000000-givegold
 1000000-start
+# Quest 11's `sided` step split per side (#958): sylara, totem, rhett, samples.
+# Which one a save moves to depends on its branch flag and what it carries, so
+# Character.MigrateQuest11SidedStep moves it at load, not a rename line.
+11-sided
 # Quest 21 Newcomer's Path (#375 phase 7 tier 5): a flag on quest 30 now, so
 # users.LoadUser drops it from saves (quests.RetiredQuests).
 21-end

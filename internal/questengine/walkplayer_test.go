@@ -3,11 +3,26 @@ package questengine
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/stretchr/testify/require"
 )
 
-func walkQuests() map[int][]string {
-	return map[int][]string{53: {"start", "firstkill", "end"}, 34: {"start", "end"}}
+// stepQuests builds plain quests (no branched steps) from step ids, for the
+// walk player.
+func stepQuests(steps map[int][]string) map[int]*quests.Quest {
+	out := map[int]*quests.Quest{}
+	for id, ids := range steps {
+		q := &quests.Quest{QuestId: id}
+		for _, s := range ids {
+			q.Steps = append(q.Steps, quests.QuestStep{Id: s})
+		}
+		out[id] = q
+	}
+	return out
+}
+
+func walkQuests() map[int]*quests.Quest {
+	return stepQuests(map[int][]string{53: {"start", "firstkill", "end"}, 34: {"start", "end"}})
 }
 
 func TestWalkPlayer_StepOrderSemantics(t *testing.T) {
@@ -30,13 +45,35 @@ func TestWalkPlayer_StepOrderSemantics(t *testing.T) {
 }
 
 // A quest is entered only at "start", or at the only step of a one-step
-// quest, as quests.IsTokenAfter allows: not at whatever step comes first.
+// quest, as quests.IsTokenAfterOnPath allows: not at whatever step comes first.
 func TestWalkPlayer_EntersOnlyAtStart(t *testing.T) {
-	p := newWalkPlayer(map[int][]string{60: {"begin", "end"}, 61: {"end"}})
+	p := newWalkPlayer(stepQuests(map[int][]string{60: {"begin", "end"}, 61: {"end"}}))
 	p.grant("60-begin")
 	require.False(t, p.HasQuest("60-begin"), "a first step not named start cannot be entered")
 	p.grant("61-end")
 	require.True(t, p.HasQuest("61-end"), "a one-step quest is entered at its only step")
+}
+
+// The walk player reads Character's path rule with its own flags (#958): a
+// side's step is granted only once the flag names that side, and a player on
+// one side never holds the other side's steps.
+func TestWalkPlayer_FollowsThePath(t *testing.T) {
+	w := forkedWalkWorld()
+	p := newWalkPlayer(map[int]*quests.Quest{54: w.Quests[0]})
+	p.grant("54-start")
+	p.grant("54-rhett")
+	require.Equal(t, "start", p.progress[54], "no side's step before the flag names the side")
+
+	p.flags["54-branch"] = "rhett"
+	p.grant("54-sylara")
+	require.Equal(t, "start", p.progress[54], "never the other side's step")
+	p.grant("54-rhett")
+	p.grant("54-samples")
+	require.Equal(t, "samples", p.progress[54])
+	require.True(t, p.HasQuest("54-rhett"))
+	require.True(t, p.HasQuest("54-start"))
+	require.False(t, p.HasQuest("54-totem"), "a Rhett player never holds Sylara's steps")
+	require.False(t, p.HasQuest("54-sylara"))
 }
 
 func TestWalkPlayer_SetHeldAndClone(t *testing.T) {
