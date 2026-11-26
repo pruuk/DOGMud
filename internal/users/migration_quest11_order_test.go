@@ -66,6 +66,22 @@ func TestSwapToAlt_MigratesQuest11SidedStep(t *testing.T) {
 	require.Equal(t, "rhett", u.Character.QuestProgress[11], "the swapped-in alt lands on its side's step")
 }
 
+// A copyover reloads online players through loadUserById, not LoadUser, so it
+// must run the same quest migration or a player online on 11-sided across a
+// copyover deploy holds a step the quest no longer has.
+func TestCopyoverReload_MigratesQuest11SidedStep(t *testing.T) {
+	withUserDataDir(t)
+	seedBranchedQuest11(t)
+	u := NewTestUser(97414, "q11copy", "Copyover", 97414)
+	u.Character.QuestProgress = map[int]string{11: "sided"}
+	u.Character.QuestFlags = map[string]string{"11-branch": "sylara"}
+	require.NoError(t, SaveUser(u))
+
+	got, err := loadUserById(u.UserId)
+	require.NoError(t, err)
+	require.Equal(t, "sylara", got.Character.QuestProgress[11], "the reloaded player lands on its side's step")
+}
+
 // With a user index on disk (every normal boot) only LoadUser meets the save:
 // MigrateQuest11SidedStep puts it on its side's step, which the step
 // migration then keeps.

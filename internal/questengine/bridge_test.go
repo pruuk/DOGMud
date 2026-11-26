@@ -69,7 +69,7 @@ func TestGameBridge_HasQuest_False_DifferentStep(t *testing.T) {
 	// Quest 3 is at "start", not "end".
 	u.Character.QuestProgress = map[int]string{3: "start"}
 	b := questengine.NewGameBridge(u, 1)
-	// "3-end" requires IsTokenPassedOnPath logic with quest data — but
+	// "3-end" requires IsTokenPassedOnPath logic with quest data, but
 	// "start" != "end" so the direct equality check fails,
 	// and IsTokenPassedOnPath needs quest data which won't be loaded in tests.
 	// We only verify that it doesn't panic and returns a bool.

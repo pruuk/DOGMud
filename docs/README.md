@@ -244,6 +244,7 @@ than reading an old result:
 | [`../internal/actions/drink_bloom_clean_test.go`](../internal/actions/drink_bloom_clean_test.go) | A purge that reaches addiction zero ends the withdrawal and says so; a wafer is taken, not drunk |
 | [`../internal/usercommands/shoot_quest_gate_test.go`](../internal/usercommands/shoot_quest_gate_test.go) | A shot through a `room_gate` reads as a shot through a locked door and answers for no name behind it |
 | [`../internal/quests/engine_flags.go`](../internal/quests/engine_flags.go) | Quest flag values only Go code sets, which the dialogue walker counts as set |
+| [`../internal/quests/branches.go`](../internal/quests/branches.go) | Quest branches (#958): a step's `branch:` side, the player's path through a branched quest, and the path-aware step order every reader uses |
 | [`../internal/usercommands/start_newcomer_test.go`](../internal/usercommands/start_newcomer_test.go) | The newcomer marker is a flag on quest 30 |
 | [`../internal/usercommands/mutations_order_test.go`](../internal/usercommands/mutations_order_test.go) | The `mutations` list reads the same every time |
 | [`../tools/playtest/scenarios/375-p7-tier5-second.yaml`](../tools/playtest/scenarios/375-p7-tier5-second.yaml) | Second pass of the tier 5 playtest: quest 65, quest 70 after each ending of 68, and the Bloom chain from Odile to the cure; goals `second-*.yaml` beside the first run's |
