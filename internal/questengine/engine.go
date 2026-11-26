@@ -443,8 +443,8 @@ func (e *Engine) triggerOpen(t *indexedTrigger, player PlayerState) bool {
 // flagSetBefore is the value the last set_flag of key in actions sets, and
 // whether any does.
 func flagSetBefore(actions []ActionDef, key string) (string, bool) {
-	for i := len(actions) - 1; i >= 0; i-- {
-		if f := actions[i].SetFlag; f != nil && f.Key == key {
+	for _, a := range slices.Backward(actions) {
+		if f := a.SetFlag; f != nil && f.Key == key {
 			return f.Value, true
 		}
 	}

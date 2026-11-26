@@ -96,6 +96,7 @@ func (c *Character) QuestBranchMismatches() []string {
 	return out
 }
 
+// questBranchMismatches appends the mismatches in one map, labelled where.
 func (c *Character) questBranchMismatches(where string, progress map[int]string, out []string) []string {
 	for qid, step := range progress {
 		q := quests.GetQuestById(qid)
