@@ -491,8 +491,12 @@ call, for every lane including the sub-module requests:
 (#781): only exits the viewer knows (a secret exit once found), room,
 mutator and temporary exits. Each `exitsv2` entry has `kind` (`compass`,
 `vertical`, `diagonal`, `named`, `temporary`), `id` (the movement button id,
-`internal/buttons`) and `details` (`secret`; `locked` means locked now;
-`player_has_key`, `player_has_pick_combo` on any lock; the combination counts
+`internal/buttons`), `label` (only when the button text is not the exit's name:
+an instance portal's zone, from `rooms.ForDeck`; a portal the viewer may not
+enter keeps no `id`) and `details` (`secret`; `locked` means locked now;
+`player_has_key`, `player_has_pick_combo` on any lock; `own_portal`, the
+viewer's own instance portal, `rooms.IsOwnPortal`, which the deck lists first
+among portals to one zone; the combination counts
 only at the lock's current rotation, `characters.HasKey`). Top level: `dark`
 (the viewer sees nothing; the exit maps are then empty), `moves` (the six T
 directions to their fixed ids, always sent) and `darkmarks` (T direction to

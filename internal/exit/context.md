@@ -21,6 +21,10 @@ The `internal/exit` package provides data structures for managing room exits in 
   return exit constant tests,
   and `internal/guards/exit_name_length_guard_test.go`. The instance portal
   exit keyed `<zone>-<userId>` is exempt by the same ruling.
+  `InstancePortalKey(zone, userId)` builds that key (the one place, read by
+  `actOpenInstancePortal`), and `InstancePortalZone(key, t)` reads the zone
+  back when the key ends in the exit's own `UserId`; the touch deck labels
+  the portal's button with it (`rooms.ForDeck`).
 - **phrase.go**: Narration phrasing for an exit name, so up and down read as
   directions (#430). `FromPhrase(name)` gives "from above" / "from below" /
   `from the <exit>` (coloured); `TowardPhrase(name)` gives "up" / "down" /

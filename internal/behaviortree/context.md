@@ -1065,7 +1065,8 @@ actions have no text to fall back on. It also holds `add_temp_exit`
 `exit.MaxNameLetters` letters, because a player taps it on a deck button
 (owner ruling 18, 2026-11-26). The instance portal key `<zone>-<userId>`
 that `open_instance_portal` opens is exempt by the same ruling: its button is
-wired to that player's exit and its label leaves the number off. Trees load lazily, so
+wired to that player's exit and its label leaves the number off. The key comes
+from `exit.InstancePortalKey`. Trees load lazily, so
 `TestShippedBehaviorTrees_AllCompile` (`roundtrip_test.go`) compiles every
 shipped behavior file through its subject's loader to turn a refused tree
 into a CI failure rather than a runtime log line.

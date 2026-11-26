@@ -84,6 +84,9 @@ All colours come from the palette spec. The roles that define the brand:
 - **Two sizes:** text 16px and titles 20px (`--text`, `--title`), 14px and
   18px on upright phones. The command box and every field a player types in
   are always 16px (`--cmd`): iOS zooms the page on anything smaller.
+- **Touch deck names** (owner and Malia, 2026-11-26, touch arc ruling 18):
+  names and letters on the deck's buttons are 12px (`--deck-label`), so a
+  six-letter exit name fits a 44px button. Nothing else uses this size.
 - **Site bars:** top bar 20px and footer 16px (`--nav-text`, `--foot-text`),
   16px and 14px on phones (under 768px wide or 500px tall).
 - **No italics.** Regular weight for body text and every button. One bold
@@ -123,8 +126,10 @@ All colours come from the palette spec. The roles that define the brand:
   movement square; contextual commands rounded; other exits dashed edge;
   Back and More heavy square edge. Flee looks like any other command. A
   small **◢** in the corner marks a button that opens a deeper level or does
-  more on a long press. Labels at the client's text size, JetBrains Mono,
-  regular weight. Red only for warnings; green and blue never carry meaning.
+  more on a long press. Arrows at the title size, names and letters at 12px
+  (`--deck-label`), JetBrains Mono, regular weight. In a pitch-dark room the
+  movement buttons turn olive grey with a dashed edge (touch arc spec 2,
+  ruling 11). Red only for warnings; green and blue never carry meaning.
 - **The Map on touch screens** (Calabe, 2026-11-15): no Fit, Center, zoom
   or Legend row on any touch screen, phone or tablet, either way up. The
   map follows the player's room on every step, and the row took most of a

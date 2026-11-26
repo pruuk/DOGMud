@@ -1016,7 +1016,14 @@ once `char.KnowsSecretExit` (ruling 1). Each `KnownExit` carries `Name`,
 `ExitTemporary`, see `ExitKindOf`), `LockedNow` (`Lock.IsLocked()`, ruling
 3), `RoomId` and the `Exit` or `Temp` record. At no sight it is `Dark` and
 empty. Order: north, east, south, west, up, down, the diagonals clockwise
-from northeast, then A to Z.
+from northeast, then A to Z. `ForDeck(known, userId)` is the part the touch
+deck offers, with each button's label (owner ruling 18): every exit under its
+own name, except a player's instance portal, labelled with its zone; any
+temporary exit into an instance (a portal, or a rift) is offered only when
+`MayEnterInstance`, so a party member's portal is offered beside the player's
+own. `IsOwnPortal(ke, userId)` names the player's own. `known` is left whole
+for the exits line. `MayEnterInstance(userId, roomId)` is the one instance
+access rule; `MoveToRoom` refuses on it.
 
 `IsSecretExit(name)` reports whether a room or mutator exit is secret
 (`GetExitInfo`); a caller asks it before paying for work only a secret exit
