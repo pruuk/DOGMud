@@ -1,6 +1,7 @@
 package events
 
 import (
+	"slices"
 	"strconv"
 	"time"
 
@@ -215,8 +216,16 @@ type ChannelMessage struct {
 func (c ChannelMessage) Type() string { return `ChannelMessage` }
 
 type Message struct {
-	UserId          int
-	ExcludeUserIds  []int
+	UserId         int
+	ExcludeUserIds []int
+	// OnlyUserIds, when not empty, is the allow-list of a RoomId message:
+	// only these players may read it, and only while they are in the room at
+	// delivery (#781 D43). A player who walks in between queueing and
+	// delivery is in no allow-list, so a line meant for a few (the name of a
+	// secret exit, for those who found it) never reaches them. Empty: every
+	// player in the room, as before. ExcludeUserIds still applies. Read it
+	// through AddressedTo.
+	OnlyUserIds     []int
 	RoomId          int
 	Text            string
 	IsQuiet         bool // whether it can only be heard by superior "hearing"
@@ -235,6 +244,18 @@ func (m Message) Type() string { return `Message` }
 // applies it on both of its branches and tests read it rather than copy it.
 func (m Message) HiddenFromDeafened(deafened bool) bool {
 	return m.IsCommunication && deafened
+}
+
+// AddressedTo reports whether the player userId, found in the room at
+// delivery, is one m is addressed to: not in ExcludeUserIds and, when
+// OnlyUserIds is set, in it. The one statement of the RoomId addressing rule;
+// hooks/Message_SendMessages.go applies it and tests read it rather than copy
+// it. The room check, IsQuiet and the deafen filter stay with the deliverer.
+func (m Message) AddressedTo(userId int) bool {
+	if slices.Contains(m.ExcludeUserIds, userId) {
+		return false
+	}
+	return len(m.OnlyUserIds) == 0 || slices.Contains(m.OnlyUserIds, userId)
 }
 
 type Communication struct {

@@ -116,13 +116,19 @@ func (r *mapper) nodeFor(roomId int) *mapNode {
 	return m.crawledRooms[roomId]
 }
 
-// FindPath returns the sequence of ExitName/RoomID steps from startRoom to goalRoom.
+// findPath is findPathWhere taking every secret exit.
+func (r *mapper) findPath(startRoom, goalRoom int) ([]pathStep, error) {
+	return r.findPathWhere(startRoom, goalRoom, AnySecretExit)
+}
+
+// findPathWhere returns the sequence of ExitName/RoomID steps from startRoom
+// to goalRoom, taking a secret exit only when known lets it through.
 //
 // The search starts in this map and follows exits into other zones' maps
 // (nodeFor), so a route crosses zone borders exactly as it did when one map
 // crawled the whole connected world. Scores start empty and grow as rooms are
 // reached: the cost is the rooms the search touches, not the size of a map.
-func (r *mapper) findPath(startRoom, goalRoom int) ([]pathStep, error) {
+func (r *mapper) findPathWhere(startRoom, goalRoom int, known SecretExitKnown) ([]pathStep, error) {
 
 	if startRoom == goalRoom {
 		return nil, ErrPathDestMatch
@@ -190,6 +196,10 @@ func (r *mapper) findPath(startRoom, goalRoom int) ([]pathStep, error) {
 		}
 		for exitName, exitInfo := range node.Exits {
 			neighbor := exitInfo.RoomId
+			// Skip a secret exit `known` refuses (#781).
+			if exitInfo.Secret && !known.allows(current.roomId, exitName, neighbor) {
+				continue
+			}
 			tentativeG := gScore[current.roomId] + 1 // uniform cost
 
 			if g, reached := gScore[neighbor]; reached && tentativeG >= g {
@@ -290,6 +300,72 @@ func GetPath(startRoomId int, endRoomId ...int) ([]pathStep, error) {
 	}
 
 	return finalPath, nil
+}
+
+// GetPathKnown is GetPath for a traveller who takes a secret exit only when
+// known lets it through: an NPC's unscripted route, such as a planner's
+// errand (#781, owner ruling 13). The shared path cache holds GetPath's
+// every-exit routes, so a cached route is used when it takes no secret exit
+// known refuses; otherwise the route is searched again, uncached, without
+// those exits. When GetPath finds no route, none exists without secret exits
+// either, and its answer is returned as is.
+func GetPathKnown(startRoomId int, known SecretExitKnown, endRoomId ...int) ([]pathStep, error) {
+	path, err := GetPath(startRoomId, endRoomId...)
+	if err != nil || !takesRefusedSecret(startRoomId, path, known) {
+		return path, err
+	}
+
+	start := time.Now()
+	defer func() {
+		util.TrackTime(`mapper.GetPathKnown()`, time.Since(start).Seconds())
+	}()
+
+	m := GetMapper(startRoomId)
+	if m == nil {
+		return []pathStep{}, fmt.Errorf("%d => %d (mapper not found): %w", startRoomId, endRoomId, ErrPathNotFound)
+	}
+
+	rNow := startRoomId
+	finalPath := []pathStep{}
+	for _, roomId := range endRoomId {
+		if rNow == roomId {
+			continue
+		}
+		p, err := m.findPathWhere(rNow, roomId, known)
+		if err != nil {
+			return []pathStep{}, fmt.Errorf("%d => %d: %w", rNow, roomId, ErrPathNotFound)
+		}
+		finalPath = append(finalPath, p...)
+		rNow = roomId
+	}
+	if len(finalPath) == 0 {
+		return finalPath, ErrPathDestMatch
+	}
+	return finalPath, nil
+}
+
+// takesRefusedSecret reports whether path, walked from startRoomId, goes
+// through a secret exit known does not let through. A step whose exit the map
+// no longer holds (a stale cached route) counts as refused, so the route is
+// searched again.
+func takesRefusedSecret(startRoomId int, path []pathStep, known SecretExitKnown) bool {
+	m := GetMapper(startRoomId)
+	if m == nil {
+		return true
+	}
+	at := startRoomId
+	for _, step := range path {
+		node := m.nodeFor(at)
+		if node == nil {
+			return true
+		}
+		ex, ok := node.Exits[step.exitName]
+		if !ok || (ex.Secret && !known.allows(at, step.exitName, step.roomId)) {
+			return true
+		}
+		at = step.roomId
+	}
+	return false
 }
 
 // firstHop extracts the next room + exit direction from a computed path.

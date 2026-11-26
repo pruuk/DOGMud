@@ -206,7 +206,7 @@ func nextZoneHop(fromZone, toZone string) (zoneLink, bool) {
 	if toZone == "" {
 		return zoneLink{}, false
 	}
-	return nearestZoneHop(fromZone, []string{toZone}, anySecretExit)
+	return nearestZoneHop(fromZone, []string{toZone}, AnySecretExit)
 }
 
 // nearestZoneHop is nextZoneHop toward whichever of toZones is the fewest
@@ -275,7 +275,7 @@ func crossZoneHop(fromRoomId int, fromZone, toZone string) (nextRoomId int, exit
 	if !ok {
 		return 0, "", false
 	}
-	return hopToward(fromRoomId, fromZone, link.toZone, anySecretExit)
+	return hopToward(fromRoomId, fromZone, link.toZone, AnySecretExit)
 }
 
 // hopToward is the first step from fromRoomId (in fromZone) toward nextZone,

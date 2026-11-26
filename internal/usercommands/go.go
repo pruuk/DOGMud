@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
+	"github.com/GoMudEngine/GoMud/internal/buttons"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/conversationadapter"
@@ -15,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -43,6 +45,9 @@ import (
 func unlockExit(user *users.UserRecord, room *rooms.Room, exitName string, exitInfo *exit.RoomExit, playerMsg, roomMsg string) {
 	user.SendText(messaging.CategorySystem, playerMsg)
 	room.SendTextVisual(messaging.CategoryMobEmote, roomMsg, user.UserId)
+	// #781 ruling 15: whoever saw the lock opened learns the secret exit,
+	// judged as the line was. Not the lock's sequence: that is the keyring's.
+	actions.LearnSecretExitWatchingNow(room, exitName, user.Character)
 	room.PlaySound(`change`, `other`)
 	exitInfo.Lock.SetUnlocked()
 	room.SetExitLock(exitName, false)
@@ -52,9 +57,31 @@ func unlockExit(user *users.UserRecord, room *rooms.Room, exitName string, exitI
 // and the member cannot see them go (owner ruling 2026-10-17).
 const PartyFollowLostLine = `You can't see where the party leader went, so you stay here.`
 
+// noteDarkTry records a dark mark when the player, seeing nothing here, tried
+// direction and was answered mark (#781, owner ruling 4): a cross after
+// "You're bumping into walls.", a padlock after the locked line. Typed and
+// tapped tries both come through Go, so both mark. Room.Info carries the
+// marks; RoomExitsChanged sends it now rather than at the next round. A guess
+// at a secret exit the player has not found never reaches the locked line
+// (FindKnownExit hides it), so it marks a cross as a wall does.
+func noteDarkTry(user *users.UserRecord, room *rooms.Room, direction, mark string) {
+	if messaging.ParticipantSight(user.Character, room) != messaging.SightNone {
+		return
+	}
+	if buttons.RecordDarkMark(user.UserId, room.RoomId, direction, mark) {
+		events.AddToQueue(events.RoomExitsChanged{UserId: user.UserId})
+	}
+}
+
 func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
-	exitResult := actions.FindExit(room, rest)
+	// `go w` answers as typing `w` does: the dispatcher expands w to west
+	// before it calls Go, so a direction alias is expanded here too, before
+	// the compass check below. Any other word (a named or temporary exit)
+	// comes back unchanged.
+	rest = keywords.TryDirectionAlias(rest)
+
+	exitResult := actions.FindKnownExit(room, user.Character, rest)
 	exitName, goRoomId := exitResult.ExitName, exitResult.RoomId
 
 	// If no valid exit, check if it's a recognized cardinal direction (handled below
@@ -133,7 +160,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 			lockId := fmt.Sprintf(`%d-%s`, room.RoomId, exitName)
 
-			hasKey, hasSequence := user.Character.HasKey(lockId, int(room.Exits[exitName].Lock.Difficulty))
+			hasKey, hasSequence := user.Character.HasKey(lockId, exitInfo.Lock)
 
 			lockpickItm := items.Item{}
 			// Only look for a lockpick kit if they know the sequence
@@ -183,6 +210,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 				if exitInfo.Lock.IsLocked() {
 					user.SendText(messaging.CategoryRefusal, `That way is locked. You need a <ansi fg="item">key</ansi>, or <ansi fg="command">pick</ansi> the lock with <ansi fg="item">lockpicks</ansi>.`)
+					noteDarkTry(user, room, exitName, buttons.MarkLocked)
 					// Send GMCP message
 					if f, ok := GetExportedFunction(`SendGMCPEvent`); ok {
 						if gmcpSendFunc, ok := f.(func(int, string, any)); ok { // make sure the func definition is `func(int, string, any)`
@@ -213,8 +241,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			// it must not answer a prompt or menu opened in between (#375).
 			// CmdFromClient too: the engine's re-run is not a client command,
 			// so it neither counts against the pending inputs nor waits for
-			// the client pace.
-			user.CommandFlagged(rest, (flags&^(events.CmdTyped|events.CmdFromClient))|events.CmdIsRequeue|events.CmdBlockInputUntilComplete, 1)
+			// the client pace. CmdButton too: a pressed step re-runs as a
+			// typed one does, not dropped by a prompt opened in between.
+			user.CommandFlagged(rest, (flags&^(events.CmdTyped|events.CmdFromClient|events.CmdButton))|events.CmdIsRequeue|events.CmdBlockInputUntilComplete, 1)
 			return true, nil
 		}
 
@@ -261,6 +290,14 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		// carry on their own way out, so the departure line below is judged
 		// by the room before the move. Arrivals keep being judged after it.
 		departSnap := room.VisualSnapshot()
+		// The NPCs' view at the same moment: an onlooker who sees the leave
+		// line learns a secret exit it names (#781, ruling 14). Taken only
+		// when that line will be sent and the exit is secret, since it costs
+		// light composition per occupant.
+		var departNPCs rooms.MobVisualSnapshot
+		if !isSneaking && room.IsSecretExit(exitName) {
+			departNPCs = room.MobVisualSnapshot()
+		}
 
 		if err := rooms.MoveToRoom(user.UserId, destRoom.RoomId); err != nil {
 			// An instance not opened for the player is an ordinary refusal
@@ -319,18 +356,26 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						`You hear someone leave the room.`,
 						user.UserId)
 				}
+				// #781 ruling 14: whoever read the leave line learns the
+				// secret exit it names, judged as the line was.
+				actions.LearnSecretExitWatching(room, exitName, user.Character, departSnap, departNPCs)
+
+				// The arrive line is judged by the room as it is now; one
+				// snapshot of it serves both the line and ruling 14 below, so
+				// the two cannot judge a reader differently.
+				arriveSnap := destRoom.VisualSnapshot()
 
 				// Tell everyone if the pet is following
 				if user.Character.Pet.Exists() {
 
 					user.SendText(messaging.CategoryRoomExit, fmt.Sprintf(`%s follows you.`, user.Character.Pet.DisplayName()))
 
-					// SendTextVisualWithAudio, not SendText: the named line is
+					// A visual-with-audio sender, not SendText: the named line is
 					// pure sight and used to reach a player in a pitch dark
 					// cave complete with a compass direction. The room EXIT
 					// lines above were already sight-gated, so entry and exit
 					// disagreed about the same event.
-					destRoom.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
+					destRoom.SendTextVisualWithAudioToSnapshot(arriveSnap, messaging.CategoryRoomEntry,
 						fmt.Sprintf(string(c.EnterRoomMessageWrapper),
 							fmt.Sprintf(`<ansi fg="username">%s</ansi> and %s %s.`, user.Character.Name, user.Character.Pet.DisplayName(), exit.EntryPhrase(enterFromExit, true)),
 						),
@@ -340,13 +385,20 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				} else {
 
 					// Tell the new room they have arrived
-					destRoom.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
+					destRoom.SendTextVisualWithAudioToSnapshot(arriveSnap, messaging.CategoryRoomEntry,
 						fmt.Sprintf(string(c.EnterRoomMessageWrapper),
 							fmt.Sprintf(`<ansi fg="username">%s</ansi> %s.`, user.Character.Name, exit.EntryPhrase(enterFromExit, false)),
 						),
 						`You hear someone enter the room.`,
 						user.UserId)
 
+				}
+				// #781 ruling 14: whoever read the arrive line learns the
+				// secret exit it names, the one here leading back ("arrives"
+				// names none). Players are judged by arriveSnap, as the line
+				// was; the NPCs' view is taken only for a secret exit.
+				if destRoom.IsSecretExit(enterFromExit) {
+					actions.LearnSecretExitWatching(destRoom, enterFromExit, user.Character, arriveSnap, destRoom.MobVisualSnapshot())
 				}
 
 				destRoom.SendTextToExits(`You hear someone moving around.`, true, room.GetPlayers(rooms.FindAll)...)
@@ -373,6 +425,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 								}
 								actions.BreakOffMenuToFollow(partyUser, user.Character, user.UserId, room)
 								partyUser.SendText(messaging.CategoryRoomExit, `You follow the party leader.`)
+								// A member walking behind the leader through a
+								// secret exit learns it (#781, owner ruling 2),
+								// so their own step passes the known-exit rule.
+								actions.LearnSecretExitFollowing(partyUser.Character, room, exitName)
 								// CmdFollowStep: the room they leave has just
 								// lost the leader's light, which they walk on
 								// with, so it must not be announced (#620).
@@ -397,6 +453,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 					// Companions interrupt casting to follow owner — Activity
 					// cascade (Activity_Cascades.go movement interrupt) handles
 					// the machine transition; no direct field manipulation needed.
+					// A companion moving with its owner through a secret
+					// exit learns it (#781, owner ruling 13).
+					actions.LearnSecretExitFollowing(&mob.Character, room, exitName)
 					mob.Command(rest)
 				}
 			}
@@ -616,6 +675,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 		if rest == "north" || rest == "south" || rest == "east" || rest == "west" || rest == "up" || rest == "down" || rest == "northwest" || rest == "northeast" || rest == "southwest" || rest == "southeast" {
 			user.SendText(messaging.CategoryRefusal, "You're bumping into walls.")
+			noteDarkTry(user, room, rest, buttons.MarkWall)
 
 			// Send GMCP message
 			if f, ok := GetExportedFunction(`SendGMCPEvent`); ok {

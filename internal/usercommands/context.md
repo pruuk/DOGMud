@@ -45,6 +45,20 @@ The `internal/usercommands` package implements the complete command system for p
   3b-3, ruling 7; `fitOnlineEntries`, which cut the zone and then the name
   to "...", is gone). Login runs `online` (OnLoginCommands), so the same
   holds there.
+  `Exits` (`exits.go`) renders the exits line from `rooms.GetDetails`, which
+  reads `rooms.KnownExits`; it is not in the command map (upstream dropped
+  `exits` in #291), so no player can type it, and `look` shows the exits line
+  instead. The exits line lists nothing at no sight (#781), so `GetDetails`
+  sets `ExitsDark`: then `Exits` answers with look's no-sight line
+  (`actions.NoSightLine`), and `lookRoom` leaves the exits line out when
+  peering into a pitch-dark room, as the roster is, instead of "Exits: None".
+  Every verb that names an exit (`go` and the bare exit word in `TryCommand`
+  and `fallbackRoute`, `look`, `lock`, `unlock`, `picklock`, `shoot`)
+  resolves it with `Room.FindKnownExitByName(characterOf(user), ...)` or
+  `actions.FindKnownExit`: an unfound secret exit answers "You're bumping
+  into walls." for a compass word and "not recognized" otherwise, exactly as
+  no exit (#781, owner ruling 1). `keyring` keeps `FindExitByName`, registered
+  in `internal/guards/exit_lookup_guard_test.go`.
 - **Inventory**: `inventory`, `get`, `drop`, `give`, `put` - Item management
 - **Quaff** (`quaff.go`, drink path unification 2026-09-28, renamed in #375
   phase 7): `Quaff` is a wrapper over `actions.Quaff`, which holds every potion
@@ -471,7 +485,8 @@ help and get raise nothing.
 #### **Movement (`go.go`, movement parity 4b)**
 
 `Go` is now a thin wrapper: it keeps the lock gate (pick, key ring, backpack
-key), the quest gate (`actions.QuestGateRefuses`: the quest engine's `room_gate`
+key; the quick pick needs lockpicks and the combination at the exit lock's
+current rotation, `characters.HasKey`), the quest gate (`actions.QuestGateRefuses`: the quest engine's `room_gate`
 triggers, right after the lock gate, so a refused step prints no departure
 line, costs nothing and never arrives; #558), the narration, and the
 exit-message requeue, but the step's price and
@@ -490,7 +505,47 @@ fails if this file prices or detects a step itself again. The departure line
 `room.VisualSnapshot()` just before `rooms.MoveToRoom` and sends with
 `SendTextVisualWithAudioToSnapshot`, so a mover is seen leaving by the light
 they carry out (#456, owner ruling 2026-10-09). Arrival lines are judged
-after the move.
+after the move: `Go` takes `destRoom.VisualSnapshot()` once (`arriveSnap`)
+and sends them with `SendTextVisualWithAudioToSnapshot`. Beside each line
+`actions.LearnSecretExitWatching` teaches the players who read it the secret
+exit it names, judging players by the snapshot that line was sent against
+(`departSnap`, `arriveSnap`). NPC onlookers are judged by a
+`MobVisualSnapshot` of the same room, taken only when the exit is secret
+(`Room.IsSecretExit`) and the line is sent (no sneak): beside `departSnap`
+for the leave line, right after the send for the arrive line (#781 ruling
+14).
+
+Owner ruling 15 (seen use teaches) hooks `actions.LearnSecretExitWatchingNow`
+beside the other room lines that name a secret exit because someone used it:
+`unlockExit` (go's three unlock paths), `unlock`, `lock` and `picklock` (both
+"picks the <exit> lock" lines and "tries to pick"), the two `look` peer lines
+and `lookRoom`'s "is looking into the room from the <exit>" in the far room
+(the one peering is not in that room and learns nothing), and `shoot`'s
+`fire_depart` and `arrival_known_*` lines (the target, left out of the
+arrival line, is skipped). An onlooker learns the exit only: the lock's
+sequence stays on the picker's keyring. Tests:
+`seen_use_secret_exit_test.go`.
+
+Dark marks (#781 owner ruling 4): in the dark (`messaging.ParticipantSight`
+is `SightNone`), a T direction that answers "You're bumping into walls." or
+the locked line is recorded as a dark mark, `buttons.MarkWall` or
+`buttons.MarkLocked`, through `noteDarkTry` and `buttons.RecordDarkMark`.
+Typed and tapped tries both run `Go`, so both mark. A new mark queues
+`events.RoomExitsChanged` so `Room.Info` goes out at once. A guess at a
+secret exit the player has not found never reaches the locked line
+(`actions.FindKnownExit` hides it), so it marks a wall exactly as no exit
+does, locked or not. Tests: `TestGo_DarkTriesLeaveMarks` and
+`TestGo_ADarkGuessAtAnUnfoundSecretExitMarksAWall` in
+`go_secret_exit_test.go`.
+
+`Go` expands a direction alias (`keywords.TryDirectionAlias`, `w` to `west`)
+before anything else, so `go w` answers as typing `w` does (`TryCommand`
+expands it through `actions.ExpandAliases`): the bump line, `Room.WrongDir`
+and the dark mark. Any other word, a named exit (`go gate`) or a temporary
+one (`go portal`), comes back unchanged. Tests:
+`TestTryCommand_ATypedDirectionAliasInTheDarkMarksAWall`,
+`TestGo_ADirectionAliasBumpsAndMarksAsTypingItDoes`,
+`TestGo_NamedAndTemporaryExitsAreUnchangedByAliasExpansion`.
 
 ### Quest log actions (`questlog.go`, `quests.go`; #375 phase 5)
 

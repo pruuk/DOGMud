@@ -930,13 +930,12 @@ func handleAggroAndAssist(atk, def actions.Actor, cfg *configs.Config) {
 		if !defChar.IsInCombat() {
 			if atkChar.RoomId != defChar.RoomId {
 				if mobRoom := rooms.LoadRoom(defChar.RoomId); mobRoom != nil {
-					for exitName, exitInfo := range mobRoom.Exits {
-						if exitInfo.RoomId == atkChar.RoomId {
-							defMob.Command(fmt.Sprintf(`go %s`, exitName))
-							if actionStr := defMob.GetAngryCommand(); actionStr != `` {
-								defMob.Command(actionStr)
-							}
-							break
+					// Going after the attacker is the mob's own choice: a
+					// secret exit only if it found it (#781, owner ruling 13).
+					if exitName := mobRoom.FindKnownExitTo(defChar, atkChar.RoomId); exitName != `` {
+						defMob.Command(fmt.Sprintf(`go %s`, exitName))
+						if actionStr := defMob.GetAngryCommand(); actionStr != `` {
+							defMob.Command(actionStr)
 						}
 					}
 				}

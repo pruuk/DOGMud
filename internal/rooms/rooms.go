@@ -3,6 +3,7 @@ package rooms
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"slices"
 	"strconv"
 	"strings"
@@ -242,11 +243,20 @@ func (r *Room) UpdateCorpses(roundNow uint64) {
 // SendTextHidingNames unfiltered, so moderated players still hear quest
 // content (owner ruling 6, sight gates slice 5b).
 func (r *Room) SendTextCommunication(txt string, excludeUserIds ...int) {
+	r.SendTextCommunicationTo(txt, nil, excludeUserIds...)
+}
+
+// SendTextCommunicationTo is SendTextCommunication addressed to onlyUserIds
+// alone when it is not empty (events.Message.OnlyUserIds, #781 D43): the
+// shout next door that names a secret exit goes to the listeners who found
+// it, and a player who walks in before delivery is not one of them.
+func (r *Room) SendTextCommunicationTo(txt string, onlyUserIds []int, excludeUserIds ...int) {
 
 	events.AddToQueue(events.Message{
 		RoomId:          r.RoomId,
 		Text:            txt + "\n",
 		ExcludeUserIds:  excludeUserIds,
+		OnlyUserIds:     onlyUserIds,
 		IsQuiet:         false,
 		IsCommunication: true,
 	})
@@ -415,6 +425,75 @@ func (r *Room) VisualSnapshot() VisualSnapshot {
 	return snap
 }
 
+// MobVisualSnapshot is VisualSnapshot for the NPCs in a room: instance id to
+// the sight decision a visual line would have been judged at then, by the
+// same visualDecision. The visual senders reach players only; this is for a
+// caller that acts on what an NPC onlooker saw of a line sent to the room
+// (actions.LearnSecretExitWatching, #781 ruling 14). Take it at the moment
+// the room's VisualSnapshot is taken, or the line is sent.
+type MobVisualSnapshot map[int]messaging.SightDecision
+
+// MobVisualSnapshot records, for every NPC in the room now, the sight decision
+// a visual line sent now would be judged at for it, with this room as the
+// lighting.
+func (r *Room) MobVisualSnapshot() MobVisualSnapshot {
+	snap := MobVisualSnapshot{}
+	for _, miid := range r.GetMobs() {
+		m := mobs.GetInstance(miid)
+		if m == nil {
+			continue
+		}
+		snap[miid] = visualDecision(&m.Character, r)
+	}
+	return snap
+}
+
+// SnapshotReaders yields each player who is in the room now AND was in snap,
+// with the decision snap recorded for them, skipping excludeUserIds. A
+// player who has left since, or arrived since, was not there to see the
+// moment snap records. It is the one reader filter of the ToSnapshot senders
+// and of actions.LearnSecretExitWatching.
+func (r *Room) SnapshotReaders(snap VisualSnapshot, excludeUserIds ...int) iter.Seq2[*users.UserRecord, messaging.SightDecision] {
+	return func(yield func(*users.UserRecord, messaging.SightDecision) bool) {
+		for _, uid := range r.GetPlayers() {
+			if excluded(uid, excludeUserIds) {
+				continue
+			}
+			decision, ok := snap[uid]
+			if !ok {
+				continue
+			}
+			u := users.GetByUserId(uid)
+			if u == nil {
+				continue
+			}
+			if !yield(u, decision) {
+				return
+			}
+		}
+	}
+}
+
+// MobSnapshotReaders is SnapshotReaders for the NPCs: each mob in the room
+// now AND in snap, with the decision snap recorded for it.
+func (r *Room) MobSnapshotReaders(snap MobVisualSnapshot) iter.Seq2[*mobs.Mob, messaging.SightDecision] {
+	return func(yield func(*mobs.Mob, messaging.SightDecision) bool) {
+		for _, miid := range r.GetMobs() {
+			decision, ok := snap[miid]
+			if !ok {
+				continue
+			}
+			m := mobs.GetInstance(miid)
+			if m == nil {
+				continue
+			}
+			if !yield(m, decision) {
+				return
+			}
+		}
+	}
+}
+
 // SendTextVisualToSnapshot delivers a sight-gated line to exactly the players
 // who are in the room now AND were in snap, each judged at the decision snap
 // recorded for them rather than at the room as it is now (the owner rule on
@@ -423,18 +502,7 @@ func (r *Room) VisualSnapshot() VisualSnapshot {
 // describes. names are hidden from a player recorded at SightShapes, as
 // SendTextVisualHidingNames does.
 func (r *Room) SendTextVisualToSnapshot(snap VisualSnapshot, cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
-	for _, uid := range r.GetPlayers() {
-		if excluded(uid, excludeUserIds) {
-			continue
-		}
-		decision, ok := snap[uid]
-		if !ok {
-			continue
-		}
-		u := users.GetByUserId(uid)
-		if u == nil {
-			continue
-		}
+	for u, decision := range r.SnapshotReaders(snap, excludeUserIds...) {
 		deliverVisual(u, decision, cat, txt, names, false)
 	}
 }
@@ -510,18 +578,7 @@ func (r *Room) SendTextVisualWithAudio(cat messaging.Category, visualTxt string,
 // judged by the room before they left with it. Take the snapshot before the
 // move, move, then send.
 func (r *Room) SendTextVisualWithAudioToSnapshot(snap VisualSnapshot, cat messaging.Category, visualTxt string, audioTxt string, excludeUserIds ...int) {
-	for _, uid := range r.GetPlayers() {
-		if excluded(uid, excludeUserIds) {
-			continue
-		}
-		decision, ok := snap[uid]
-		if !ok {
-			continue
-		}
-		u := users.GetByUserId(uid)
-		if u == nil {
-			continue
-		}
+	for u, decision := range r.SnapshotReaders(snap, excludeUserIds...) {
 		deliverVisualElseAudio(u, decision, cat, visualTxt, audioTxt)
 	}
 }
@@ -677,48 +734,55 @@ func (r *Room) SendTextToExits(txt string, isQuiet bool, excludeUserIds ...int) 
 
 // SendTextToExitsExcluding is SendTextToExits with the excludes named per
 // neighbouring room: exclude is asked once for each neighbour that has an
-// exit back, the first time one is found, and its answer goes on that
-// room's messages only. An ambient say's echo uses it to leave out the
-// listeners over their ambient budget in each room (#317).
+// exit back, and its answer goes on that room's messages only. The
+// neighbours are ForEachAdjacentRoom's (room, temporary and mutator exits,
+// each room once), so a room with two exits back reads one line, naming the
+// ranked exit back (FindExitTo). An ambient say's echo uses it to leave out the
+// listeners over their ambient budget in each room (#317). Each line starts
+// "(From <exit>)", the exit of the neighbour leading back here; when that exit
+// is secret, a listener who has not found it reads "(From nearby)" instead
+// (#781, owner ruling 16, HeardLines). Hearing teaches nothing. A quiet line
+// skips a neighbour where no player hears quiet lines (Character.HearsQuiet).
 func (r *Room) SendTextToExitsExcluding(txt string, isQuiet bool, exclude func(tgt *Room) []int) {
 
-	testExitIds := []int{}
-	for _, rExit := range r.Exits {
-		testExitIds = append(testExitIds, rExit.RoomId)
-	}
-	for _, tExit := range r.ExitsTemp {
-		testExitIds = append(testExitIds, tExit.RoomId)
-	}
-
-	excludes := map[int][]int{}
-	for _, roomId := range testExitIds {
-
-		tgtRoom := LoadRoom(roomId)
-		if tgtRoom == nil {
-			continue
+	// One line per neighbouring room, naming the ranked exit back
+	// (ForEachAdjacentRoom, FindExitTo): two exits back used to send two
+	// lines, and the map order could pick a secret one over a plain one.
+	r.ForEachAdjacentRoom(func(tgtRoom *Room, back ExitTo) {
+		// A quiet line reaches only a player who hears quiet lines (the
+		// delivery hook's rule, Character.HearsQuiet): a room with none is
+		// skipped before any split.
+		if isQuiet && !tgtRoom.anyoneHearsQuiet() {
+			return
 		}
 
-		for exitName, tExit := range tgtRoom.Exits {
-			if tExit.RoomId != r.RoomId {
-				continue
-			}
-
-			ex, asked := excludes[tgtRoom.RoomId]
-			if !asked {
-				ex = exclude(tgtRoom)
-				excludes[tgtRoom.RoomId] = ex
-			}
-
+		// #781 ruling 16: through a secret exit, a listener who has not
+		// found it reads "(From nearby)"; one who has reads the name, and a
+		// walk-in can read only "nearby" (HeardLines, OnlyUserIds).
+		for _, line := range tgtRoom.HeardLines(back,
+			fmt.Sprintf(`(From <ansi fg="exit">%s</ansi>) `, back.Name)+txt+"\n",
+			`(From `+HeardFromNearby+`) `+txt+"\n",
+			exclude(tgtRoom)) {
 			events.AddToQueue(events.Message{
 				RoomId:         tgtRoom.RoomId,
-				Text:           fmt.Sprintf(`(From <ansi fg="exit">%s</ansi>) `, exitName) + txt + "\n",
+				Text:           line.Text,
 				IsQuiet:        isQuiet,
-				ExcludeUserIds: ex,
+				ExcludeUserIds: line.Exclude,
+				OnlyUserIds:    line.Only,
 			})
 		}
+	})
+}
 
+// anyoneHearsQuiet reports whether a player in r would take in a quiet line
+// (Character.HearsQuiet, the delivery hook's rule).
+func (r *Room) anyoneHearsQuiet() bool {
+	for _, uid := range r.GetPlayers() {
+		if u := users.GetByUserId(uid); u != nil && u.Character.HearsQuiet() {
+			return true
+		}
 	}
-
+	return false
 }
 
 func (r *Room) SetLongTermData(key string, value any) {
@@ -1520,6 +1584,9 @@ func (r *Room) GetExitInfo(exitName string) (exitInfo exit.RoomExit, ok bool) {
 	// Do mutators first to allow for ephemeral/temporary "taking over" of exits.
 	for mut := range r.ActiveMutators {
 		spec := mut.GetSpec()
+		if spec == nil {
+			continue
+		}
 		if exitInfo, ok = spec.Exits[exitName]; ok {
 			break
 		}
@@ -1540,31 +1607,35 @@ func (r *Room) GetRandomExit() (exitName string, roomId int) {
 // (nil keeps every one). Secret and locked exits are excluded before keep is
 // asked. Flee passes the fleeing player's quest gate check (#588).
 func (r *Room) GetRandomExitWhere(keep func(exitName string, roomId int) bool) (exitName string, roomId int) {
+	return r.randomExit(func(_ string, ex exit.RoomExit) bool { return !ex.Secret }, keep)
+}
+
+// GetRandomKnownExit is GetRandomExit for a mover who may take the secret
+// exits it has found (#781, owner ruling 13: an NPC's own wandering). Locked
+// exits stay out, as in GetRandomExit.
+func (r *Room) GetRandomKnownExit(char *characters.Character) (exitName string, roomId int) {
+	return r.randomExit(func(name string, ex exit.RoomExit) bool {
+		return r.exitKnown(char, name, ex)
+	}, nil)
+}
+
+// randomExit picks uniformly among the unlocked room and mutator exits allowed
+// accepts and keep (nil keeps every one) accepts. A name means the exit
+// permanentExits settles on (an active mutator's takes the place of the
+// room's), so allowed judges the exit a mover would actually take.
+func (r *Room) randomExit(allowed func(exitName string, ex exit.RoomExit) bool, keep func(exitName string, roomId int) bool) (exitName string, roomId int) {
 
 	allExits := map[string]int{}
 
-	for exitName, exit := range r.Exits {
-		if exit.Secret {
+	for exitName, ex := range r.permanentExits() {
+		if !allowed(exitName, ex) {
 			continue
 		}
-		if exit.Lock.IsLocked() {
+		if ex.Lock.IsLocked() {
 			continue
 		}
 
-		allExits[exitName] = exit.RoomId
-	}
-
-	for mut := range r.ActiveMutators {
-		spec := mut.GetSpec()
-		for exitName, exit := range spec.Exits {
-			if exit.Secret {
-				continue
-			}
-			if exit.Lock.IsLocked() {
-				continue
-			}
-			allExits[exitName] = exit.RoomId
-		}
+		allExits[exitName] = ex.RoomId
 	}
 
 	if keep != nil {
@@ -2370,31 +2441,46 @@ func (r *Room) GetMobDuplicateIndex(mobInstanceId int) int {
 	return 0
 }
 
-// Returns exitName, RoomExit
+// FindExitTo is the exit of r leading to roomId as a line prints it, or ""
+// when none does: the first of ExitsTo, so a plain exit beats a temporary one
+// and both beat a secret one, A to Z within each (#781). A temporary exit
+// answers its Title. Before the ranking it walked the maps in random order,
+// so a line could name, and teach, a secret exit while a plain one also led
+// back.
 func (r *Room) FindExitTo(roomId int) string {
+	way, _ := r.FirstExitTo(roomId)
+	return way.Name
+}
 
-	for exitName, exit := range r.Exits {
-		if exit.RoomId == roomId {
-			return exitName
+// plainExitTo is FindExitTo's fast path, for every mob step: when the only
+// ways to roomId are plain room exits (no secret one among them, no
+// temporary exit there, no active mutator with exits that could add one or
+// take a room exit's place), the answer is the first of them A to Z, ExitsTo's
+// own answer, found without building and sorting a list. ok is false when any
+// of those is present; ExitsTo then decides.
+func (r *Room) plainExitTo(roomId int) (name string, ok bool) {
+	for key, ex := range r.Exits {
+		if ex.RoomId != roomId {
+			continue
+		}
+		if ex.Secret {
+			return "", false
+		}
+		if name == "" || key < name {
+			name = key
 		}
 	}
-
-	for _, exit := range r.ExitsTemp {
-		if exit.RoomId == roomId {
-			return exit.Title
+	for _, ex := range r.ExitsTemp {
+		if ex.RoomId == roomId {
+			return "", false
 		}
 	}
-
 	for mut := range r.ActiveMutators {
-		spec := mut.GetSpec()
-		for exitName, exit := range spec.Exits {
-			if exit.RoomId == roomId {
-				return exitName
-			}
+		if spec := mut.GetSpec(); spec != nil && len(spec.Exits) > 0 {
+			return "", false
 		}
 	}
-
-	return ""
+	return name, true
 }
 
 func (r *Room) FindContainerByName(containerNameSearch string) string {
@@ -2675,24 +2761,39 @@ func (r *Room) NounNamedBy(phrase string) string {
 }
 
 func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomId int) {
+	return r.findExitByName(exitNameSearch, func(string, exit.RoomExit) bool { return true })
+}
+
+// FindKnownExitByName is FindExitByName limited to the exits char knows
+// (ExitKnownTo): a secret exit char has not found matches no word, by name,
+// alias or prefix, as if it were not there, so a guess at it answers exactly
+// as no exit does (#781, owner ruling 1). Every player path that names an
+// exit uses it (internal/guards/exit_lookup_guard_test.go). A nil char knows
+// no secret exit.
+func (r *Room) FindKnownExitByName(char *characters.Character, exitNameSearch string) (exitName string, exitRoomId int) {
+	return r.findExitByName(exitNameSearch, func(name string, ex exit.RoomExit) bool {
+		return r.exitKnown(char, name, ex)
+	})
+}
+
+// findExitByName is FindExitByName over the room and mutator exits usable
+// accepts. A name means the exit permanentExits settles on (an active
+// mutator's takes the place of the room's, GetExitInfo's rule), and usable
+// judges that exit. Temporary exits are never secret and are always searched.
+func (r *Room) findExitByName(exitNameSearch string, usable func(name string, ex exit.RoomExit) bool) (exitName string, exitRoomId int) {
+
+	permanent := r.permanentExits()
 
 	// Check for direction aliases from keywords.yaml first
 	fullDirection := keywords.TryDirectionAlias(exitNameSearch)
 	if fullDirection != exitNameSearch {
 		// A direction alias was found, check if this exact direction exists
-		if exitInfo, ok := r.Exits[fullDirection]; ok {
+		if exitInfo, ok := permanent[fullDirection]; ok && usable(fullDirection, exitInfo) {
 			return fullDirection, exitInfo.RoomId
 		}
 		// Check temporary exits
 		if tempExit, ok := r.ExitsTemp[fullDirection]; ok {
 			return fullDirection, tempExit.RoomId
-		}
-		// Check mutator exits
-		for mut := range r.ActiveMutators {
-			spec := mut.GetSpec()
-			if exitInfo, ok := spec.Exits[fullDirection]; ok {
-				return fullDirection, exitInfo.RoomId
-			}
 		}
 		// Direction alias used but exit doesn't exist
 		return ``, 0
@@ -2700,21 +2801,16 @@ func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomI
 
 	// Build list of all exits for fuzzy matching
 	exitNames := []string{}
-	for exitName := range r.Exits {
-		exitNames = append(exitNames, exitName)
+	usableExits := map[string]exit.RoomExit{}
+	for exitName, exitInfo := range permanent {
+		if usable(exitName, exitInfo) {
+			usableExits[exitName] = exitInfo
+			exitNames = append(exitNames, exitName)
+		}
 	}
 
 	for exitName := range r.ExitsTemp {
 		exitNames = append(exitNames, exitName)
-	}
-
-	mutatorExits := map[string]exit.RoomExit{}
-	for mut := range r.ActiveMutators {
-		spec := mut.GetSpec()
-		for exitName, exitInfo := range spec.Exits {
-			mutatorExits[exitName] = exitInfo
-			exitNames = append(exitNames, exitName)
-		}
 	}
 
 	// Use fuzzy matching for all exits
@@ -2741,16 +2837,12 @@ func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomI
 		return "", 0
 	}
 
-	if exitInfo, ok := r.Exits[exactMatch]; ok {
+	if exitInfo, ok := usableExits[exactMatch]; ok {
 		return exactMatch, exitInfo.RoomId
 	}
 
 	if exitInfo, ok := r.ExitsTemp[exactMatch]; ok {
 		return exitInfo.Title, exitInfo.RoomId
-	}
-
-	if exitInfo, ok := mutatorExits[exactMatch]; ok {
-		return exactMatch, exitInfo.RoomId
 	}
 
 	return "", 0
@@ -2859,17 +2951,16 @@ func (r *Room) isInRoom(mobName string, userName string) bool {
 
 }
 
-func (r *Room) findMobExit(mobId int, mobName string) string {
+// findMobExit is the exit of r a mob's trail leaves by, read for tracker:
+// the freshest trail among the exits tracker knows (PermanentExitsKnownTo,
+// #781 owner ruling 17). A secret exit tracker has found carries the trail;
+// one it has not loses it, as every secret exit did before.
+func (r *Room) findMobExit(tracker *characters.Character, mobId int, mobName string) string {
 
 	freshestTime := float64(0)
 	freshestExitName := ``
 
-	for exitName, exitInfo := range r.Exits {
-
-		// Skip secret exits
-		if exitInfo.Secret {
-			continue
-		}
+	for exitName, exitInfo := range r.PermanentExitsKnownTo(tracker) {
 
 		exitRoom := LoadRoom(exitInfo.RoomId)
 		if exitRoom == nil {
@@ -2903,24 +2994,23 @@ func (r *Room) findMobExit(mobId int, mobName string) string {
 
 }
 
-func (r *Room) findUserExit(userId int, userName string) string {
+// findUserExit is findMobExit for a player's trail, read for tracker.
+func (r *Room) findUserExit(tracker *characters.Character, userId int, userName string) string {
 
 	freshestTime := float64(0)
 	freshestExitName := ``
 
-	for exitName, exitInfo := range r.Exits {
-
-		// Skip secret exits
-		if exitInfo.Secret {
-			continue
-		}
+	for exitName, exitInfo := range r.PermanentExitsKnownTo(tracker) {
 
 		exitRoom := LoadRoom(exitInfo.RoomId)
 		if exitRoom == nil {
 			continue
 		}
 
-		for uId, timeLeft := range exitRoom.Visitors(VisitorMob) {
+		// The player visitors: this read the mob visitors and looked their
+		// instance ids up as user ids, so it tracked a player only when some
+		// mob's instance id happened to match their user id.
+		for uId, timeLeft := range exitRoom.Visitors(VisitorUser) {
 
 			if userId > 0 && userId != uId {
 				continue

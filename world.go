@@ -1105,6 +1105,16 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 		return
 	}
 
+	// A touch button is never an answer (#781, D13). pressButton refuses a
+	// press while a prompt is open, but a line queued ahead of the press may
+	// have opened one since; the press is dropped without a word. The
+	// deferred InputDone above still fires, and the press's place in the
+	// player's pending inputs was freed when the queue popped it
+	// (events.CmdFromClient), so a dropped press holds no slot.
+	if flags.Has(events.CmdButton) && user.GetPrompt() != nil {
+		return
+	}
+
 	// Then to an open command prompt. Only a typed line answers it; the
 	// rules live in RoutePromptInput, where they are unit tested.
 	inputText, hadPrompt := user.RoutePromptInput(inputText, typed)

@@ -27,6 +27,20 @@ const (
 	LookFigure                         // a player at shapes names a figure by the aim word (`look figure`, `look 2.shape`)
 )
 
+// NoSightLine words the refusal of a looker who sees nothing here, for look,
+// scan and search alike. A looker in the dark is told that light, or other
+// eyes, would help; a blinded one is not, since light would not (#364).
+// refused is false for every kind that sees something.
+func NoSightLine(kind LookKind) (line string, refused bool) {
+	switch kind {
+	case LookBlind:
+		return `You can't see anything!`, true
+	case LookTooDark:
+		return `It is too dark to see. You need light, or eyes that do not need it.`, true
+	}
+	return ``, false
+}
+
 // LookResolution carries every sight rule of both looks (slice 5a).
 type LookResolution struct {
 	Kind  LookKind
@@ -135,10 +149,10 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 		return res
 	}
 
-	exitName, exitRoomId := room.FindExitByName(lookAt)
+	exitName, exitRoomId := room.FindKnownExitByName(char, lookAt)
 	if exitName == `` {
 		if alias := keywords.TryDirectionAlias(lookAt); alias != lookAt {
-			if exitName, exitRoomId = room.FindExitByName(alias); exitName != `` {
+			if exitName, exitRoomId = room.FindKnownExitByName(char, alias); exitName != `` {
 				res.LookAt = alias
 			}
 		}

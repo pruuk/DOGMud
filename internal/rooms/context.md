@@ -20,10 +20,17 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   (`messaging.SendTrio`'s `ObserverSound`, the spell-disruption senders in
   `internal/hooks`); `txt` must name nobody.
   `VisualSnapshot()` returns a `VisualSnapshot` (user id to
-  `messaging.SightDecision`) of what every player in the room can see now;
+  `messaging.SightDecision`) of what every player in the room can see now
+  (`MobVisualSnapshot()` is the same decision for the NPCs, by instance id:
+  the senders reach players only, and `actions.LearnSecretExitWatching` reads
+  it to act on what an NPC onlooker saw, #781 ruling 14);
   `SendTextVisualToSnapshot(snap, cat, txt, names, excludeUserIds...)`
   delivers a line to exactly the players in the room now who were in the
-  snapshot, each at their recorded decision, names hidden at shapes. Owner
+  snapshot, each at their recorded decision, names hidden at shapes. That
+  reader filter is `SnapshotReaders(snap, excludeUserIds...)`, an
+  `iter.Seq2` of user and decision, with `MobSnapshotReaders(snap)` its NPC
+  twin; both ToSnapshot senders and `actions.LearnSecretExitWatching` range
+  over it. Owner
   rule (2026-10-05): a line announcing a change to the room's light lands
   with the state everyone was in BEFORE the change, so take the snapshot
   first, make the change, then send. Its sound twin,
@@ -90,6 +97,19 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   which asks `exclude` once per such neighbour and puts its answer on that
   room's messages only; an ambient say's echo uses it to leave out each
   neighbour's over-budget listeners (#317, `actions.MobActor.EchoExclude`).
+  The neighbours and their exit back come from `ForEachAdjacentRoom`, whose
+  callback gets the `ExitTo` (key, printed name, secret flag). A quiet line
+  skips a neighbour where no player hears quiet lines
+  (`Character.HearsQuiet`, the delivery hook's rule) before any split. The
+  lines are `HeardLines(back, named, nearby, exclude)` (#781, owner ruling
+  16): through a secret exit back, the named line addressed to the players
+  there who know it (`events.Message.OnlyUserIds`, #781 D43, so a stranger
+  who walks in before delivery cannot read it) and `(From nearby) ` to
+  everyone else (excluding the knowers), each only when someone reads it.
+  `SendTextCommunicationTo(txt, onlyUserIds, excludeUserIds...)` is
+  `SendTextCommunication` with that allow-list (a player's shout next door
+  naming a secret exit). An ordinary exit costs one `IsSecretExit` lookup and
+  sends one named line, as before. Hearing teaches nothing.
 - **Naming a creature**: `FindByNameSeenBy(viewer, name, flags...)` skips
   every creature `viewer` does not perceive (`characters.Character.Perceives`)
   before matching, so a hidden creature cannot be named and does not count
@@ -735,6 +755,7 @@ When writing hidden noun descriptions:
 | `save_and_load.go` | Room YAML + instance-save persistence, `restoreSkipTaggedFields` |
 | `prose_wrap.go` | Re-folds long prose into wrapped `>` block scalars on template save |
 | `roomdetails.go` | Assembled per-look detail payload |
+| `known_exits.go` | `KnownExits` and the known-exit filters: the one rule for the exits a character knows (#781) |
 | `npcmarker.go` | The `NpcMarker` hook: the viewer's talk marker before an NPC's name (#375) |
 | `zoneconfig.go` | Per-zone `zone-config.yaml` (including `non_cartesian` and the `instance_gold` opt-in) |
 | `zone_lifecycle.go` | Zone create/delete lifecycle |
@@ -746,6 +767,7 @@ When writing hidden noun descriptions:
 | `biomes.go` | Biome definitions and lookup |
 | `exit`-adjacent: `sign.go` | Room signs |
 | `container.go` | Room containers |
+| `lock_memory.go` | Exit and container lock state kept in memory across an unload within one boot, and `ExitLockAt` (#781) |
 | `corpse.go` / `corpse_roundrobin.go` | Corpses and fair-share corpse looting |
 | `baubles_untaken.go` | Found baubles left lying untaken for `BaubleUntakenHours` (24) vanish: `removeUntakenBaubles`, run from `RoundTick` (rooms with players) and `Prepare` (before a visitor sees the floor); records `baubles.MarkVanished` |
 | `spawninfo.go` / `spawninfo_validate.go` | Room spawn lists and their validation |
@@ -753,7 +775,7 @@ When writing hidden noun descriptions:
 | `instances.go` / `ephemeral.go` | Instanced and ephemeral rooms |
 | `cubegen.go` | Generated cube/maze room structures |
 | `memory.go` | Memory reporting for the admin report |
-| `test_helpers.go` | Test fixtures (`SeedRoomsForTest`, `SeedBiomesForTest`, `UnloadRoomForTest` for a cold room without the unload save, `ForgetRoomsLoadedDuringTest(t)` so a test that looks up an unindexed room such as -1 does not grow `GetAllRoomIds` for later tests) |
+| `test_helpers.go` | Test fixtures (`SeedRoomsForTest`, `SeedBiomesForTest`, `UnloadRoomForTest` for a cold room without the unload save (it remembers lock state as the real unload does), `ForgetRoomsLoadedDuringTest(t)` so a test that looks up an unindexed room such as -1 does not grow `GetAllRoomIds` for later tests) |
 
 ### An indoor biome must be classified for weather prose
 
@@ -857,6 +879,36 @@ already defines, and a name that no longer matches an authored exit is a
 silent no-op. Do **not** "simplify" this by removing the `instance:"skip"` tag
 from `Exits`.
 
+### Lock state across an unload (`lock_memory.go`, #781)
+
+Every relock gets a new combination (owner ruling 2026-11-25), and a lock's
+combination comes from its `RotationSeed` and `UnlockedRound`
+(`gamelock.Lock.Rotation`). Neither survives an unload by itself: `Exits` is
+skip-tagged, so a reloaded exit lock comes back at the template's seed, and
+`UnlockedRound` is never saved, so an open exit or container comes back
+locked at the rotation it was opened at. Either would bring back a retired
+combination.
+
+`rememberLocks` records the `Lock` of every exit and container that has a
+lock, open or not, when a room leaves memory (`removeRoomFromMemory`,
+`ClearRoomCache`, so also every forced `addRoomToMemory` from `BuildRoom`,
+`ConnectRoom` and `SaveRoomTemplate`, and `UnloadRoomForTest`);
+`restoreLocks`, called from `addRoomToMemory`, takes the record back and puts
+`RotationSeed` and `UnlockedRound` onto the lock of the same name, leaving
+difficulty, traps and interval as loaded. Ephemeral rooms are skipped.
+
+This is session state, not living state: lock solutions die at a restart
+(the boot-rerolled seed, `util.LockSequence`), so the record lives in memory
+only and is never written to disk. `ExitLockAt(roomId, exit, difficulty)`
+reads an exit's lock and never touches disk: the live room, else the record,
+else a lock of the caller's difficulty at rotation 0, which is the template's
+because no template sets `rotationseed` on an exit
+(`internal/guards/exit_rotationseed_guard_test.go`). The mapper uses it
+(`knowsExitLock`). `SaveRoomTemplate` keeps that true: builders save the live
+room, so it writes the file from `templateLocksAtRest`, a copy with every exit
+lock at `RotationSeed` 0 (the `Exits` map is shared with the live room, which
+keeps its rotation).
+
 ## Dependencies
 - `internal/characters`: Character and mob management
 - `internal/items`: Item system integration
@@ -944,3 +996,81 @@ a template in the file-path cache or a room in memory, then advances the
 counter. `loadAllRoomZones` raises the counter above the highest template on
 disk and logs once when it had to. Both guards matter on a host where
 `/mud-config` is read-only and the counter cannot persist across restarts.
+
+## Known exits (#781)
+
+`KnownExits(room, char) KnownExitList` is the one answer to which exits a
+character knows in a room (owner ruling 6). It covers `Exits`, active
+mutator exits (the first active mutator with a name takes the place of the
+room exit, `GetExitInfo`'s rule) and `ExitsTemp`; a secret exit is listed
+once `char.KnowsSecretExit` (ruling 1). Each `KnownExit` carries `Name`,
+`Kind` (`ExitCompass`, `ExitVertical`, `ExitDiagonal`, `ExitNamed`,
+`ExitTemporary`, see `ExitKindOf`), `LockedNow` (`Lock.IsLocked()`, ruling
+3), `RoomId` and the `Exit` or `Temp` record. At no sight it is `Dark` and
+empty. Order: north, east, south, west, up, down, the diagonals clockwise
+from northeast, then A to Z.
+
+`IsSecretExit(name)` reports whether a room or mutator exit is secret
+(`GetExitInfo`); a caller asks it before paying for work only a secret exit
+needs (the ruling 14 and 15 snapshots).
+
+A sound heard through a secret exit (#781, owner ruling 16) names it only to
+a listener who has found it; any other reads `HeardFromNearby`, "nearby".
+`HeardThroughExit(way ExitTo)` returns `(knowers, strangers []int, secret
+bool)` over the players in the room, splitting on the exit's own secret flag
+(never on a printed name); `secret` false means nothing is split and no
+listener was looked at. `HeardLines(way, named, nearby, exclude)` turns it
+into the lines to send (`HeardLine{Text, Only, Exclude}`), the one split of
+every heard sender (`SendTextToExitsExcluding`, `actions.Shout`); the GMCP
+shout sender reads `HeardThroughExit` once per room. `FirstExitTo(roomId)`
+is the first of `ExitsTo` as an `ExitTo` (with `FindExitTo`'s fast path);
+`FindExitTo` prints its name.
+
+The room render's tracking line ("Tracking X... They went <exit>",
+`GetDetails` `TrackingString`) reads the trail through `findMobExit` and
+`findUserExit`, which take the viewer as the tracker and look only among the
+exits it knows (`PermanentExitsKnownTo`, #781 owner ruling 17): a secret exit
+it found carries the trail, one it has not loses it. `findUserExit` reads the
+player visitors of the rooms next door; `findMobExit` reads the mob visitors.
+
+`ExitsTo(roomId)` is every exit leading to a room, ranked: plain room or
+mutator exit, then temporary, then secret, A to Z by key within each, as
+`ExitTo{Key, Name, Secret, Temporary}` (`Name` is a temporary exit's title).
+It is the one ranking of "the way from here to there": `FindExitTo` prints
+the first (every line naming the exit back: arrive lines, the far side of a
+peer or a shot, `ForEachAdjacentRoom` and so the heard lines),
+`FindKnownExitTo` answers the first a character knows by key, and
+`actions.FollowExitTo` picks by the leader's knowledge. Before the ranking
+`FindExitTo` walked the maps in random order and could name, and teach, a
+secret exit while a plain one also led back. `FindExitTo` runs on every mob
+step, so it first tries `plainExitTo`: when only plain room exits lead there
+(no secret one, no temporary exit there, no active mutator with exits) it
+answers the first A to Z with no list and no allocation, the same answer
+`ExitsTo` gives; otherwise `ExitsTo` decides.
+
+The filters on the same rule: `ExitKnownTo(char, name)`,
+`FindKnownExitByName(char, search)` (every player path that names an exit;
+`internal/guards/exit_lookup_guard_test.go` registers the unfiltered
+`FindExitByName` callers), `FindKnownExitTo(char, roomId)`,
+`GetRandomKnownExit(char)` and `PermanentExitsKnownTo(char)` (NPC choice
+points, ruling 13). `PermanentExitsKnownTo` is an `iter.Seq2[string,
+exit.RoomExit]` over the room and mutator exits char knows, mutators resolved
+once per call; an NPC loop that used to range over `r.Exits` (wandering, a
+walk-away, a forager's roam, the survival planner's flee) ranges over it
+instead. `FindKnownExitTo` is built on `ExitsTo` and answers a
+temporary exit by its key, the word `go` and `shoot` match, because every
+caller puts the answer in a command (`FindExitTo` still answers the title,
+which its callers print). Each resolves a
+name through `permanentExits` (or `GetExitInfo`, the same rule) before
+`exitKnown` judges it, so a secret mutator exit over a plain room exit of the
+same name is hidden from all of them alike. The unfiltered `FindExitByName`,
+`FindExitTo` and `GetRandomExit` keep their old answers for mob moves,
+scripted routes and flee; `FindExitByName` and `GetRandomExit` share the
+merge, so a mutator exit takes the place of the room exit there too.
+
+`GetDetails` fills `VisibleExits` and `TemporaryExits` from `KnownExitsAt`
+(`KnownExits` with the sight `GetDetails` already read for the roster; the
+gmcp `Room.Info` builder calls it the same way), so
+the exits line follows the same rule. At no sight both are empty and
+`ExitsDark` is set, so no exits line reads "None": `exits` gives look's
+no-sight line and `lookRoom` leaves the line out.

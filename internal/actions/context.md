@@ -396,6 +396,9 @@ wrappers that render the outcome.
   line is judged by `from` before the move (`Room.VisualSnapshot`, then
   `SendTextVisualWithAudioToSnapshot`), so a mob is seen leaving by the light
   it carries out with it (#456); the entry line is judged after the move.
+  Beside each line `LearnSecretExitWatching` (leave) and
+  `LearnSecretExitWatchingNow` (arrive) teach its onlookers the secret exit
+  it names (#781 ruling 14).
 - **`ClearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int)`**
   moved here from the (still unexported at the call site) `mobcommands`
   version; retargets or releases players and mobs in `room` that were
@@ -422,6 +425,67 @@ detection contests, through this file. `usercommands.Go` and
 placement and call these bodies once, right before relocating.
 `move_wrapper_guard_test.go` (internal/guards) greps both wrapper files for a
 second price or detection implementation.
+
+**Known exits (#781).** `FindKnownExit(room, char, name)` (`go.go`) is
+`FindExit` for a mover who knows only some exits (`Room.FindKnownExitByName`):
+a secret exit the mover has not found is not found. Every player path uses it
+or `FindKnownExitByName` (`ResolveLook`, `ShotSight`, `ExecuteFire`,
+`resolveDefuseLockTarget` here; `go`, `lock`, `unlock`, `picklock`, `shoot`
+in `usercommands`), so an unfound secret exit is not looked, shot or walked
+through. Mob moves keep `FindExit` (`QuoteMobStep`, `mobcommands.Go`), since
+a scripted route takes its secret exits; `internal/guards/exit_lookup_guard_test.go`
+registers every unfiltered lookup with its reason, and every read of an exit
+by its key (`GetExitInfo`, `Exits[...]`) in this package, `usercommands` and
+`parser`.
+
+Following through secret exits (`follow_secret.go`, #781 rulings 2 and 13;
+shadowing is following):
+- `LearnSecretExitFollowing(c, room, exitName)`: a follower moving behind its
+  leader through a secret exit learns it, when the follow step is issued so
+  the step passes the follower's own rule. Called by the party follow and
+  companion loops in `usercommands.Go`, the player branch of
+  `modules/follow`, and the player shadower in
+  `hooks/RoomChange_ShadowFollow.go`.
+- `NPCMayFollowThrough(c, room, exitName, leaderUserId)`: an NPC takes an
+  exit it knows; at a secret one it has not found it learns it and goes on
+  behind a mob leader (plan D17) or the player who charmed it, and any other
+  NPC following a player stops. `modules/follow` ends the follow there, the
+  shadow hook drops the shadow quietly (`DropShadow`).
+- `FollowExitTo(room, leader, toRoomId)`: the exit key a follower or
+  shadower steps through. The move names no exit, so the one the leader could
+  have used wins (plain, then temporary, then a secret one the leader knows,
+  then any secret one), so a follower never learns a secret exit the leader
+  did not take. The order is `Room.ExitsTo`'s, the one ranking `FindExitTo`
+  and `FindKnownExitTo` share; this adds only the leader's knowledge.
+- `LearnSecretExitWatching(room, exitName, mover, players, npcs)` (owner
+  ruling 14): an onlooker who reads a movement line naming a secret exit
+  learns it. `players` is the `rooms.VisualSnapshot` the line was delivered
+  against and `npcs` the `rooms.MobVisualSnapshot` taken at the same moment,
+  so learning follows the line's own per-reader decision with no second sight
+  rule: `SightFull` and `SightShapes` learn (a shapes-only line still names
+  the exit), `SightNone` does not, and only readers in the room now and in the
+  snapshot count (`Room.SnapshotReaders`, `Room.MobSnapshotReaders`). The
+  mover is skipped. Called beside the leave lines of `usercommands.Go` and
+  `RelocateMob` and the arrive line of `usercommands.Go` (the arrive line's
+  exit is the one leading back, `""` for "arrives", which teaches nothing).
+  The snapshots cost light composition per occupant, so those callers take
+  the NPC one only when `Room.IsSecretExit` says it will be read and the line
+  is sent (not sneaking).
+- `LearnSecretExitWatchingNow(room, exitName, mover)`: the same for a line
+  sent live (judged by the room as it is now). It asks `Room.IsSecretExit`
+  first and only then takes both snapshots, so an ordinary step pays nothing.
+- Owner ruling 15 (seen use teaches) calls it beside every line that shows
+  someone using a secret exit: picking (`tries to pick` included), unlocking
+  or locking its lock (`usercommands` `picklock`, `unlock`, `lock`, and
+  `go`'s `unlockExit`), disarming its trap (`clearDefuseTrap` here), peering
+  through it (both peer lines and the far room's "is looking into the room
+  from the <exit>"), a shot crossing it (`fire_depart` and the
+  `arrival_known_*` lines, player and mob), and a mob finding it locked
+  (`mobcommands.Go`). On a far-side line `mover` is the party the line leaves
+  out (a shot's target). It records the exit only: a lock's sequence is the
+  picker's keyring entry (`Character.SetKey`) and no onlooker gets it.
+  Called after `RelocateMob`'s arrive line and `hooks.handlePlayerFlee`'s
+  flee line.
 
 **Cost:**
 
@@ -647,6 +711,11 @@ pet that is not the giver's own companion. The guard
 `RemoveItem` call and every floor drop (`Room.AddItem`) with a pinned count
 per function, so a new way out fails CI until it is decided.
 
+`NoSightLine(kind LookKind) (line string, refused bool)` (`look.go`) words
+the refusal for `LookBlind` and `LookTooDark`, for `look`, `scan`, `search`
+and the exits line alike (moved from `usercommands.noSightRefusal` 2026-11-26
+so `Scan` can use it).
+
 **`look.go`** (new file, slice 5a): `ResolveLook(actor Actor, lookAt string)
 LookResolution` (`:49`) is the shared look body, in the player's exact order:
 sight first, then no-target (the room), then a creature (resolved with the
@@ -780,8 +849,14 @@ then walks every adjacent room
 (`Room.ForEachAdjacentRoom`) with an anonymous line carrying the words: a
 player's copy goes out through `otherRoom.SendTextCommunication` (still
 deafen-filtered, byte-identical to before), a mob's through plain
-`otherRoom.SendText` (authored, unfiltered). `wakeSleepers` wakes every other
-sleeper in the shouter's own room; next door is out of scope.
+`otherRoom.SendText` (authored, unfiltered). Through a secret exit (#781,
+owner ruling 16) a listener who has not found it reads "Someone shouts from
+nearby" instead of the exit's name, by `Room.HeardLines`, the split
+`SendTextToExitsExcluding` uses too. A player's queued named line carries
+the allow-list (`Room.SendTextCommunicationTo`, #781 D43), so a walk-in
+reads only "nearby"; a mob's goes per listener at once; nothing is learned.
+`wakeSleepers` wakes every other sleeper in the shouter's own room; next
+door is out of scope.
 
 **`room_lines.go`**: the three senders every speech and emote wrapper calls
 into, never its own room line:
@@ -797,7 +872,9 @@ into, never its own room line:
   filter; every other line (empty, alias, and every mob emote) goes through
   `Room.SendTextVisualHidingNames` unfiltered (owner ruling 6). A hidden
   actor's emote reaches no one (#274, owner R3, 2026-10-08): silence, not an
-  anonymous line. The player `emote` command tells its own hider so.
+  anonymous line. The player `emote` command tells its own hider so. It
+  returns whether the line went out, for a caller that acts on what
+  onlookers saw (`mobcommands.Go`'s locked-exit line, ruling 15).
 - `sendSpoken(actor, room, cat, line, stillHidden)` (unexported) is what
   `Say` and `Shout` share: every listener hears the words, the speaker's
   name hidden per listener. A player's line goes through
@@ -1290,8 +1367,14 @@ type DefuseResult struct {
 Sweeps the rooms one step away for occupants (`scan.go`).
 
 **Mechanics:**
-- **Adjacent rooms:** one `ScanSighting` per non-secret exit in
-  `room.Exits` whose room loads.
+- **No sight here (owner ruling 2026-11-26, #781):** a scanner whose own
+  room `ResolveLook(actor, "")` reads as `LookTooDark` or `LookBlind` scans
+  nothing and names no exit, as look names none: a player reads
+  `NoSightLine`, a mob gets no sightings. Infravision is sight here, so a
+  heat-sensing scanner in an unlit room still senses through (O6).
+- **Adjacent rooms:** one `ScanSighting` per exit in `room.Exits` the
+  scanner knows (`Room.ExitKnownTo`: a secret exit once found) whose room
+  loads.
 - **Locked exits (#427, owner ruling 2026-10-07):** a locked door blocks
   scan as it blocks look, by sight and by heat. The sighting stays, with
   `Locked` true and `Mobs` / `Players` empty, so a mob caller (the
@@ -1830,6 +1913,17 @@ Trail-read (passive sniffing) or active tracking on a resolved target.
 
 **Messaging:** UserActor receives trail feedback or tracking status. MobActor
 silent.
+
+**Secret exits (#781, owner ruling 17):** the exit a trail leaves by
+(`findExitedTrack`, read by the trail scan's exit column and the named
+track's direction) is looked for only among the exits the tracker knows,
+`Room.PermanentExitsKnownTo(tracker)`: a secret exit the tracker found carries
+the trail, one it has not loses it. NPC trackers (`mobcommands` `track`, the
+scout behaviour's `Track`) answer to the same rule by what they found.
+
+`ResolveCharacter(userId, mobInstanceId)` is the character behind a user id
+or else a mob instance id (nil when gone): the active track's quarry, and a
+shot's target for the ruling 15 arrival line (`FireResult`).
 
 **Progression:** No stat/skill use triggered (scout actions planned as
   skill-less in Phase 1).

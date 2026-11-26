@@ -1,0 +1,45 @@
+# PROBER seat: you stand in the Old Watercourse, a dark sewer channel. There
+# is a hidden door here that you have not found. Your job is to learn where
+# it is, or get through it, WITHOUT finding it with `search` first, and then
+# to check that finding it works. You carry a hooded lantern; do not equip
+# it until a goal says so. Quote every game line VERBATIM, and for every
+# comparison give both answers side by side.
+ephemeral:
+  profile: early
+  start_room: 6418
+  overlays:
+    grant_items: [20097]
+    grant_skills:
+      search: 3
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    In the dark, type each of these and quote every answer: `north`, `n`,
+    `go north`, `go n`, `nort`, `south`, `s`, `go south`, `east`, `west`,
+    `up`, `down`, `look`, `look north`, `look south`. Say whether
+    ANY answer for north differs from the same answer for south (south has
+    no exit at all).
+  - >-
+    Still in the dark, try to get through or learn of the north wall with
+    other verbs: `unlock north`, `lock north`, `pick north`, `picklock north`,
+    `search north`, `look wall`, `defuse north`. Compare each with the same
+    verb toward south. Quote both.
+  - >-
+    Type `equip lantern` so you can see. Repeat the first goal's list in the
+    light and compare north with south again. Read the room description and
+    the exits line closely and say what, if anything, hints at a door.
+  - >-
+    Type `search` and `search wall`, waiting for the cooldown between tries,
+    until you get "You found a secret exit" (stop after 12 tries and say
+    so). Quote the find line, then `look` and its Exits line.
+  - >-
+    Walk `north`, quote the room you reach, then `south` back. Type `look`
+    again and quote its Exits line. Walk away west and come back east, and say whether
+    the north exit is still listed.
+  - >-
+    Type `unequip lantern` (or remove it) to be in the dark again. Type
+    `north` and quote it. Then try anything else you can think of that might
+    reveal a hidden way you have not found, or tell a hidden door from a
+    wall in the dark. Report exactly what you typed and what printed.

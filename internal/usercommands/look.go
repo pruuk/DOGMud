@@ -65,7 +65,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			`You run your hands over your <ansi fg="item">%s</ansi>.`, res.TouchItem.DisplayNameFor(user.UserId)))
 		return true, nil
 	}
-	if line, refused := noSightRefusal(res.Kind); refused {
+	if line, refused := actions.NoSightLine(res.Kind); refused {
 		user.SendText(messaging.CategoryRefusal, line)
 		return true, nil
 	}
@@ -218,6 +218,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("You peer %s.", exit.TowardPhrase(res.ExitName)))
 		if !isSneaking {
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> peers %s.`, user.Character.Name, exit.TowardPhrase(res.ExitName)), []string{user.Character.Name}, user.UserId)
+			// #781 ruling 15: whoever saw the peer learns a secret exit.
+			actions.LearnSecretExitWatchingNow(room, res.ExitName, user.Character)
 		}
 		figures := actions.FiguresSensedIn(user.Character, rooms.LoadRoom(res.ExitRoomId), user.UserId)
 		if len(figures) == 0 {
@@ -233,6 +235,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("You peer %s.", exit.TowardPhrase(res.ExitName)))
 		if !isSneaking {
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> peers %s.`, user.Character.Name, exit.TowardPhrase(res.ExitName)), []string{user.Character.Name}, user.UserId)
+			// #781 ruling 15: whoever saw the peer learns a secret exit.
+			actions.LearnSecretExitWatchingNow(room, res.ExitName, user.Character)
 		}
 
 		lookRoom(user, res.ExitRoomId, secretLook || isSneaking)
@@ -610,20 +614,6 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 // looked at: a corpse, or a figure (`look figure`, owner ruling 2026-10-17).
 const lookShapeOnlyLine = `You can make out no more than its shape.`
 
-// noSightRefusal words the refusal of a looker who sees nothing here. A
-// looker in the dark is told that light, or other eyes,
-// would help; a blinded one is not, since light would not (#364). refused is
-// false for every kind that sees something.
-func noSightRefusal(kind actions.LookKind) (line string, refused bool) {
-	switch kind {
-	case actions.LookBlind:
-		return `You can't see anything!`, true
-	case actions.LookTooDark:
-		return `It is too dark to see. You need light, or eyes that do not need it.`, true
-	}
-	return ``, false
-}
-
 // floorItemNamedInFull finds a floor item the words name in full, as more
 // than one word ("arch lantern"). A multi-word full name is specific: it
 // outranks a room noun or a carried item that only one of its words matches.
@@ -703,6 +693,10 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 				[]string{user.Character.Name},
 				user.UserId,
 			)
+			// #781 ruling 15, the far side of a peer (as ruling 14 teaches
+			// the far side of a move): whoever saw it learns the secret exit
+			// here the line names. The one peering learns nothing by it.
+			actions.LearnSecretExitWatchingNow(room, lookFromName, user.Character)
 		}
 	}
 
@@ -923,8 +917,13 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 		user.SendText(messaging.CategoryRoomDescription, textOut)
 	}
 
-	textOut, _ = templates.Process("descriptions/exits", details, user.UserId)
-	user.SendText(messaging.CategoryRoomDescription, textOut)
+	// Peering into a pitch-dark room lists none of its exits (rooms.KnownExits,
+	// #781). The line is left out, as the roster is, rather than reading
+	// "Exits: None", which would not be true.
+	if !details.ExitsDark {
+		textOut, _ = templates.Process("descriptions/exits", details, user.UserId)
+		user.SendText(messaging.CategoryRoomDescription, textOut)
+	}
 
 }
 

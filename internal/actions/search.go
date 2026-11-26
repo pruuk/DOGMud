@@ -432,12 +432,10 @@ func searchWholeRoom(actor Actor, room *rooms.Room, opts SearchOptions, searchSc
 		// that `search`'s own multiplier was solved on at the time.
 		//
 		// ⚠️ It is still REPORTED, which is where this deliberately differs from
-		// the container and noun tiers that `continue` outright. A found
-		// container is reachable afterwards through `get`, but a secret exit
-		// stays out of the room's exit list until the player VISITS the room
-		// beyond it (roomdetails.go gates on HasVisited, not on a discovery). So
-		// skipping it silently would leave someone who found it and did not walk
-		// through with no way to be reminded of the name. Reporting costs
+		// the container and noun tiers that `continue` outright. Since #781 the
+		// discovery itself puts the exit in the room's exit list
+		// (rooms.KnownExits), and the report reminds a player who searches
+		// again of the name they found. Reporting costs
 		// nothing they have not already earned; the roll and the award are what
 		// close the farm.
 		if char.HasDiscovery(room.RoomId, secretExitDiscoveryKey(exitName)) {
@@ -446,7 +444,9 @@ func searchWholeRoom(actor Actor, room *rooms.Room, opts SearchOptions, searchSc
 		}
 		rolledAgainstSomething = true
 		if searchRoll(searchScore, 125.0).Success {
-			char.AddDiscovery(room.RoomId, secretExitDiscoveryKey(exitName))
+			// The one recorder: it also refreshes a player's map and
+			// buttons at once (#781 Task 11b).
+			char.LearnSecretExit(room.RoomId, exitName)
 			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
 			if actor.IsPlayer() {
 				actor.SendText(messaging.CategorySystem,

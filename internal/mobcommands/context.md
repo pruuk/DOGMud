@@ -232,6 +232,47 @@ The `internal/mobcommands` package implements the AI command system for non-play
   pack followers moved through the same exit are each gated the same way
   (`mobs.MovePackFollowers`'s `canStep` argument — see
   `internal/mobs/context.md`).
+- **Secret exits** (#781, owner ruling 13): wandering is the mob's own choice,
+  so `wander`, `wander loot`, `wander players` (`wanderCandidates`) and the
+  random fallback (`pickWanderExit`, `Room.GetRandomKnownExit`) take a secret
+  exit only once the mob found it (`Room.PermanentExitsKnownTo`, the rooms
+  known-exit rule, mutators resolved once per call). Packmates moved behind
+  the alpha learn a secret exit it took (`packFollowerStep`, the `canStep`
+  closure, calls `actions.LearnSecretExitFollowing` only when
+  `Room.IsSecretExit`, asked once per alpha step).
+- `pathto found` stores the flag with the path (`mob.Path.SetPath(path,
+  foundOnly)`), so a displaced mob's re-path stays found-only.
+- Seen use teaches (#781, owner ruling 15): `Go`'s "tries to go the <exit>
+  exit, but it's locked." is sent through `actions.SendSeen` there and then
+  (it used to be a queued `emote` command), so the line and
+  `actions.LearnSecretExitWatchingNow` judge each onlooker at one moment. The
+  same hook follows `look`'s peer line and the far room's "is looking into
+  the room from the <exit>", and `shoot`'s `fire_depart` and
+  `arrival_known_*` lines. The mob's own record is unchanged by it. `Fire`'s
+  narration is `sendMobShootMessages(mob, room, result)`, split out so a test
+  can drive it with a fixed `FireResult`, as `usercommands.sendShootMessages`
+  is; `Fire` keeps the reveal, retaliation and counter.
+
+#### **Routes (`pathto.go`)**
+- `pathto <ids|home>` is a scripted route (schedules, patrols, behaviour
+  trees, idle commands, home returns, admin `command`) and takes every secret
+  exit (`mapper.GetPathKnown` with `mapper.AnySecretExit`, the same route as
+  `mapper.GetPath`).
+- `pathto found <ids>` (the word is `mobs.PathtoFoundOnly`) is a planner's
+  errand, sent by `behaviortree.RunGoalPlanner`: the route takes only the
+  secret exits this mob found (`mapper.SecretExitsKnownTo`). `pathtoTargets`
+  reads the words first (ids, `foundOnly`, and `homeOnly`, the one-target
+  `home` route `home-impossible` is about, marked or not); `mobs.PathtoCommand`
+  builds them (#781, owner ruling 13).
+- A found-only route that finds no way is remembered in mob temp data
+  `pathto-refused` (`pathtoRefusal`: start room, targets, the mob's
+  discovery count, round), beside `home-impossible`. For
+  `pathtoRefusedRounds` (10, a named constant: no balance knob paces mob path
+  retries) the same start and targets return `errPathtoRefusedRecently`
+  without a search, since a planner resends its `pathto found` every idle tick
+  and a target behind an unfound secret exit fails the uncached
+  `mapper.GetPathKnown` search each time. Learning any discovery, another
+  start or another target searches again at once.
 
 #### **Movement (`go.go`, movement parity 4b)**
 - Before this slice a mob's walk was entirely free (no action points, no

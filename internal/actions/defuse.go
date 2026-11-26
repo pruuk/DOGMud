@@ -215,7 +215,7 @@ func resolveDefuseLockTarget(actor Actor, room *rooms.Room, noun string) defuseL
 	}
 
 	// Try exits.
-	exitName, _ := room.FindExitByName(noun)
+	exitName, _ := room.FindKnownExitByName(actor.GetCharacter(), noun)
 	if exitName != "" {
 		exitInfo, ok := room.GetExitInfo(exitName)
 		if ok {
@@ -270,6 +270,9 @@ func clearDefuseTrap(actor Actor, room *rooms.Room, tgt defuseLockTarget) {
 					`<ansi fg="exit">%s</ansi> exit.`,
 				actor.GetName(), tgt.exitName),
 			actor.GetUserId())
+		// #781 ruling 15: whoever saw the trap disarmed learns a secret exit,
+		// judged as the line was.
+		LearnSecretExitWatchingNow(room, tgt.exitName, actor.GetCharacter())
 	}
 }
 

@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -65,14 +66,26 @@ func Shout(actor Actor, text string) ShoutResult {
 	// line stays player chatter (deafen-filtered, wrapped per reader by the listener);
 	// a mob's is authored and unfiltered. Standard, temporary and
 	// mutator-added exits, each neighbour once.
-	room.ForEachAdjacentRoom(func(otherRoom *rooms.Room, sourceExit string) {
-		far := fmt.Sprintf(`Someone shouts from the <ansi fg="exit">%s</ansi> direction, "<ansi fg="%s">%s</ansi>"`,
-			sourceExit, textColor, text)
-		if actor.IsPlayer() {
-			otherRoom.SendTextCommunication(far, actor.GetUserId())
-			return
+	//
+	// #781 ruling 16: through a secret exit, a listener who has not found it
+	// hears "Someone shouts from nearby" and learns nothing; one who has
+	// reads the exit's name; an ordinary exit sends one line
+	// (Room.HeardLines). A player's queued line carries the allow-list, so a
+	// walk-in reads only "nearby"; a mob's goes per listener at once, where
+	// the line's excludes are exact.
+	room.ForEachAdjacentRoom(func(otherRoom *rooms.Room, back rooms.ExitTo) {
+		for _, line := range otherRoom.HeardLines(back,
+			fmt.Sprintf(`Someone shouts from the <ansi fg="exit">%s</ansi> direction, "<ansi fg="%s">%s</ansi>"`,
+				back.Name, textColor, text),
+			fmt.Sprintf(`Someone shouts from %s, "<ansi fg="%s">%s</ansi>"`,
+				rooms.HeardFromNearby, textColor, text),
+			nil) {
+			if actor.IsPlayer() {
+				otherRoom.SendTextCommunicationTo(line.Text, line.Only, slices.Concat(line.Exclude, []int{actor.GetUserId()})...)
+				continue
+			}
+			otherRoom.SendText(messaging.CategoryShout, line.Text, line.Exclude...)
 		}
-		otherRoom.SendText(messaging.CategoryShout, far)
 	})
 
 	wakeSleepers(actor, room)

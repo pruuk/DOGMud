@@ -1165,7 +1165,7 @@ func sendZoneMapFull(uid int, zone string) {
 		visited[id] = struct{}{}
 	}
 
-	snap := view.Snapshot(visited)
+	snap := view.Snapshot(visited, mapper.AnySecretExit)
 	for i := range snap {
 		if r := rooms.LoadRoom(snap[i].RoomId); r != nil && r.Zone != zone {
 			snap[i].Foreign = true

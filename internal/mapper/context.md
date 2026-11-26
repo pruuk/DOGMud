@@ -192,6 +192,9 @@ code writes such as "Party Member" (`TestEveryMultiWordLegendHasSlugAlias`).
 
 `GetLimitedMap` is the player-facing one — the visible radius scales with
 Perception. `GetFullMap` is unbounded and used by admin tooling.
+`GetLimitedMap` draws a secret exit only once `Config.UserId`'s player found
+it (`SecretExitsKnownTo`, #781); a debug render (`UserId` below zero) draws
+them all.
 
 `GetLimitedMap` walks every room reachable from the player, across zone
 borders, as it did when one map held the connected world. It reads a room
@@ -212,6 +215,7 @@ Trashheap, whose tie order varies run to run on either tree.
 
 ```go
 func GetPath(startRoomId int, endRoomId ...int) ([]pathStep, error)
+func GetPathKnown(startRoomId int, known SecretExitKnown, endRoomId ...int) ([]pathStep, error) // #781, see "The secret-exit filter"
 func NextStep(fromRoomId, toRoomId int) (nextRoomId int, exitName string, found bool)
 
 func (p pathStep) ExitName() string
@@ -251,18 +255,38 @@ area, an NPC's rooms, a zone). `zones` lists every zone the set touches.
 through (nil: never), in the zone (`nearestIn`) and across a border (the zone
 graph marks a secret link, `zoneLink.secret`; `nearestZoneHop` and
 `hopToward` skip one `known` refuses). The quest engine passes the player's
-own knowledge (`questengine.secretExitsKnownTo`): `search` found the exit, or
-the room beyond is on their map, or they were there recently, which is when
-the game already discloses that exit to them. Mob routing (`GetPath`,
-`pathto`, `NextStep` and its `crossZoneHop` fallback) takes every secret exit,
-as before. On shipped data, from room 6323 (The Hedge-Gap Trail, root of
-Cascade Pass Road) 1,179 of 1,228 one-room destinations used to route first
-through its secret west exit; with the exit unknown none does, and only the
-49 other rooms of Cascade Pass Road (20 rooms) and the Eastern Highlands (30)
-beyond it get a direction: that pocket joins the rest of the world only
-through this secret passage (5441 east in Kingsbarrow Vale, 6323 west back).
-A player who walked in through it has 5441 on their map, so their guidance
-uses it.
+own knowledge (`questengine.secretExitsKnownTo`, which is
+`SecretExitsKnownTo(user.Character)`): the secret exits they found (#781,
+owner ruling 1). Having the room beyond on their map or a recent visit no
+longer counts. Scripted mob routing (`GetPath`, `pathto`, `NextStep` and its
+`crossZoneHop` fallback) takes every secret exit, as before; an NPC's
+unscripted route uses `GetPathKnown` (see below). On shipped data, from room
+6323 (The Hedge-Gap Trail, root of Cascade Pass Road) 1,179 of 1,228 one-room
+destinations used to route first through its secret west exit; with the exit
+unknown none does, and only the 49 other rooms of Cascade Pass Road (20
+rooms) and the Eastern Highlands (30) beyond it get a direction: that pocket
+joins the rest of the world only through this secret passage (5441 east in
+Kingsbarrow Vale, 6323 west back). A player who walked in through it learned
+it (following or `search`), so their guidance uses it.
+
+**The secret-exit filter.** `SecretExitsKnownTo(c *characters.Character)
+SecretExitKnown` is the one filter, built on `Character.KnowsSecretExit`
+(#781); `AnySecretExit` lets every secret exit through. The player's maps
+read it: `Snapshot(visited, known)` and `WebMap.Snapshot(visited, known)`
+draw a secret exit only when `known` allows (Zone.Map passes the player's
+`SecretExitsKnownTo`, the builder's map `AnySecretExit`), and
+`GetLimitedMap` uses the player's found exits (`Config.UserId` below zero, a
+debug render, draws them all; no such player draws none).
+
+```go
+func GetPathKnown(startRoomId int, known SecretExitKnown, endRoomId ...int) ([]pathStep, error)
+```
+
+`GetPath` (scripted routes) takes every secret exit. `GetPathKnown` is an
+NPC's unscripted route: it takes a secret exit only when `known` allows. It
+reuses `GetPath`'s cached route when that route takes no refused secret exit
+(`takesRefusedSecret`), and otherwise searches again, uncached, with
+`findPathWhere`; when `GetPath` finds no route it returns that answer.
 
 - **Start zone.** Only when the start room's zone is in `zones`
   (`searchesHere`), it runs `nearestIn` on that zone's mapper: a
@@ -475,11 +499,16 @@ type SnapshotExit struct {
 ### Method
 
 ```go
-func (r *mapper) Snapshot(visited map[int]struct{}) []SnapshotRoom
+func (r *mapper) Snapshot(visited map[int]struct{}, known SecretExitKnown) []SnapshotRoom
 func (r *mapper) WebMap() *WebMap
 func (w *WebMap) HasRoom(roomId int) bool
-func (w *WebMap) Snapshot(visited map[int]struct{}) []SnapshotRoom
+func (w *WebMap) Snapshot(visited map[int]struct{}, known SecretExitKnown) []SnapshotRoom
 ```
+
+A secret exit is drawn only when `known` lets it through (nil: none); one it
+refuses is left out whole, never drawn unflagged. Zone.Map passes the player's
+`SecretExitsKnownTo` (#781: once found, not once the far room is visited), the
+builder's view `AnySecretExit`.
 
 **The play client draws `WebMap`, not one zone's `Snapshot`** (#375 phase 4
 Task 18). The owner's 2026-07-30 rule is that the web map shows every room
@@ -610,8 +639,15 @@ than the screen there. The frame is replaced by plain rules (the
 width and height; nothing in this package changes.
 
 Detail level (visible radius, secret/locked display) scales with
-Perception. This path is text-only and has no awareness of the
-`SnapshotExit` extended flags or `Zone.Map.Party`.
+Perception. `GetLimitedMap` crawls past a locked exit only for a player who
+can open it (`knowsExitLock`): a key on the ring, or the combination as the
+lock stands now. The lock comes from `rooms.ExitLockAt`, which never touches
+disk: the live room when it is in memory, else the state remembered when idle
+unloading dropped it, else the crawl-time `nodeExit` difficulty at rotation 0.
+That last is the template's lock because no room template sets
+`rotationseed` on an exit (`internal/guards/exit_rotationseed_guard_test.go`).
+This path is text-only and has no awareness of the `SnapshotExit` extended
+flags or `Zone.Map.Party`.
 
 ### (b) Web Leather Map (GMCP `Zone.Map`)
 

@@ -9,8 +9,9 @@ import (
 
 // Each player's client may have at most Network.MaxPendingInputs commands
 // waiting to run (owner ruling 2026-11-25). A command the client sent is an
-// Input carrying CmdFromClient: a typed line, a GMCP Char.Action.Try, or a
-// piece of a macro one of those named. Engine-queued Inputs never count.
+// Input carrying CmdFromClient: a typed line, a GMCP Char.Action.Try or
+// Char.Button.Press, or a piece of a macro one of those named. Engine-queued
+// Inputs never count.
 //
 // The count lives here, beside the queue it counts, under qLock:
 //
@@ -113,9 +114,10 @@ func syncInputQueueLocked(userId int, limit int) {
 
 // typedRefusalEvery is how often a refused TYPED line is reported again
 // within one full spell. The first refusal of a spell is always reported;
-// automatic sends (ticks, triggers, buttons) stay at that one, but a line
-// the player typed must not vanish silently because a tick took the spell's
-// one report a while ago.
+// automatic sends (ticks, triggers, the automation rows and chips through
+// Char.Action.Try) stay at that one, but a line the player typed, or a touch
+// button press (CmdTyped too, #781 D52), must not vanish silently because a
+// tick took the spell's one report a while ago.
 const typedRefusalEvery = time.Second
 
 // refusalClock is time.Now, swapped by tests.

@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
@@ -29,6 +30,22 @@ func IsCompassDirection(name string) bool {
 // matching exit exists.
 func FindExit(room *rooms.Room, exitName string) FindExitResult {
 	name, roomId := room.FindExitByName(exitName)
+	if name == `` {
+		return FindExitResult{Found: false}
+	}
+	return FindExitResult{
+		ExitName: name,
+		RoomId:   roomId,
+		Found:    true,
+	}
+}
+
+// FindKnownExit is FindExit for a mover who may use only the exits they know
+// (Room.FindKnownExitByName): a secret exit they have not found is not found
+// (#781, owner ruling 1). Every player path that names an exit uses it; mob
+// moves keep FindExit, since a scripted route takes its secret exits.
+func FindKnownExit(room *rooms.Room, char *characters.Character, exitName string) FindExitResult {
+	name, roomId := room.FindKnownExitByName(char, exitName)
 	if name == `` {
 		return FindExitResult{Found: false}
 	}

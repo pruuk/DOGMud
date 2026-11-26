@@ -35,20 +35,26 @@ func SendHeard(actor Actor, cat messaging.Category, text string) {
 // A hidden actor's emote reaches no one (#274, owner R3, 2026-10-08): an
 // emote would give its hider away, so it is silence rather than an anonymous
 // line. The player emote command tells its own hider why.
-func SendSeen(actor Actor, cat messaging.Category, text string, chatter bool) {
+//
+// It reports whether the line went out to the room (judged per reader by the
+// room as it is now), for a caller that acts on what onlookers saw
+// (LearnSecretExitWatchingNow, #781 ruling 15): false for no room or a hidden
+// actor.
+func SendSeen(actor Actor, cat messaging.Category, text string, chatter bool) bool {
 	room := actor.GetRoom()
 	if room == nil {
-		return
+		return false
 	}
 	if c := actor.GetCharacter(); c != nil && c.IsHidden() {
-		return
+		return false
 	}
 	names := []string{actor.GetName()}
 	if chatter && actor.IsPlayer() {
 		room.SendVisualCommunicationHidingNames(cat, text, names, actor.GetUserId())
-		return
+		return true
 	}
 	room.SendTextVisualHidingNames(cat, text, names, roomLineExcludes(actor)...)
+	return true
 }
 
 // sendSpoken sends a speech line (say, shout) the actor spoke to everyone else

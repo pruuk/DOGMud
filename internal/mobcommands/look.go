@@ -58,6 +58,8 @@ func Look(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		if !isSneaking {
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> peers %s.`, name, exit.TowardPhrase(res.ExitName)), []string{name})
+			// #781 ruling 15: whoever saw the peer learns a secret exit.
+			actions.LearnSecretExitWatchingNow(room, res.ExitName, &mob.Character)
 		}
 		lookRoom(mob, res.ExitRoomId, secretLook || isSneaking)
 		return true, nil
@@ -139,6 +141,9 @@ func lookRoom(mob *mobs.Mob, roomId int, secretLook bool) {
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is looking into the room %s.`, mob.Character.Name, exit.FromPhrase(lookFromName)),
 				[]string{mob.Character.Name},
 			)
+			// #781 ruling 15, the far side of a peer: whoever saw it learns
+			// the secret exit here the line names; the peering mob does not.
+			actions.LearnSecretExitWatchingNow(room, lookFromName, &mob.Character)
 		}
 	}
 

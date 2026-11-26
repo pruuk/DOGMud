@@ -251,8 +251,9 @@ fails if anything else queues at or above it. `modules/gmcp` pushes it as
 
 A command a player's client sent is an `Input` carrying `CmdFromClient`: a
 typed line (telnet or web client, `world.inputEventFor`), a GMCP
-`Char.Action.Try` (`modules/gmcp`, through `UserRecord.CommandFlagged`), or a
-piece of a macro one of those named (`world.processInput`). Each player may
+`Char.Action.Try` or `Char.Button.Press` (`modules/gmcp`, through
+`UserRecord.CommandFlagged`), or a piece of a macro one of those named
+(`world.processInput`). Each player may
 have at most `Network.MaxPendingInputs` (ships 10) waiting; engine-queued
 Inputs never count and are never refused.
 
@@ -275,7 +276,8 @@ Inputs never count and are never refused.
   spell a refused `CmdTyped` line is reported again at most once a second
   (`typedRefusalEvery`), so a typed line never vanishes because an earlier
   automatic send took the report. Web client tick and trigger lines are text
-  frames, so they count as typed here; only `Char.Action.Try` is not.
+  frames, so they count as typed here; a touch button press carries
+  `CmdTyped` too; only `Char.Action.Try` is not.
   `modules/gmcp` turns it into `Char.Input.Queue` and, on `Refused`, one plain
   line to every client (`refusal.InputQueueFull`).
 - `PendingInputs(userId)` reads the count. `QueuedEngineInputs(userId,
@@ -344,6 +346,21 @@ Test helper (same file): `DrainQueuedNpcMarkersChangedForTest(userId)` removes
 and returns the queued events for one user (0 for all) and frees their unique
 slots, as `ProcessEvents` does, so a later refresh queues again.
 
+### Movement Buttons Event (#781)
+
+`roomexits.go` holds `RoomExitsChanged{UserId, SecretExitFound}`: what a
+player's movement buttons show may have changed outside the once-a-round
+`Room.Info` check (a dark mark was recorded, `internal/buttons`; a button
+press was stale, `modules/gmcp` `pressButton`; or, with
+`SecretExitFound`, the player newly found a secret exit,
+`characters.Character.LearnSecretExit`). `modules/gmcp` re-sends `Room.Info`,
+and on a find `Zone.Map` too. It is a unique event (`UniqueID` is
+`RoomExitsChanged-<userId>` for a mark, `RoomExitsChanged-found-<userId>` for
+a find), so refreshes for one player merge, a find apart from a mark: the
+queue keeps the first of a merged pair, and a mark must not swallow a find.
+`DrainQueuedRoomExitsChangedForTest(userId)` (same file) is the test drain,
+shaped like `DrainQueuedNpcMarkersChangedForTest`.
+
 ### Talk Next-Offer Event (#375 phase 2)
 
 `TalkNextOffer{UserId, MobInstanceId, FinalToken}` (`eventtypes.go`) brings the
@@ -395,6 +412,11 @@ func (l RedrawPrompt) UniqueID() string {
 }
 ```
 
+`IsQueued(e)` (`events.go`) reports whether a unique event with `e`'s
+`UniqueID` is waiting, the same test `AddToQueue` merges on; a non-unique
+event is never reported. `modules/gmcp` `pressButton` reads it so a flood of
+stale presses sends one refusal line (#781).
+
 ## Event Flags
 
 ### Command Behavior Flags
@@ -411,8 +433,12 @@ const (
     CmdTyped                   EventFlag = 0b01000000  // A line the player typed; only a typed line may answer a menu or prompt (#375)
     CmdFromClient              EventFlag = 0b10000000  // A command the player's client sent: counts against MaxPendingInputs, one per tick (pending_inputs.go)
     CmdMacroPiece              EventFlag = 0b1_00000000 // A piece of a macro: never expands a macro itself, so no macro can call itself
+    CmdButton                  EventFlag = 0b10_00000000 // A touch button press (with CmdTyped and CmdFromClient); never answers a prompt (#781, D13)
 )
 ```
+
+`CmdButton` is set only by `modules/gmcp` `pressButton`; `world.processInput`
+drops a `CmdButton` line silently while a prompt is open.
 
 ### Flag Usage
 ```go
@@ -796,6 +822,17 @@ the one statement of the Deafened moderation rule: true when `m` is player
 chatter (`IsCommunication`) and the reader is deafened.
 `internal/hooks/Message_SendMessages.go` applies it on both of its delivery
 branches, and tests read it rather than copy the rule.
+
+`Message.OnlyUserIds []int` (#781 D43) is the allow-list of a `RoomId`
+message: when not empty, only those players may read it, and only while they
+are in the room at delivery, so a player who walks in between queueing and
+delivery reads nothing from it. `ExcludeUserIds` still applies; empty is the
+old message. `Message.AddressedTo(userId) bool` is the one statement of the
+addressing rule (exclude, then allow-list); the RoomId branch of
+`hooks.Message_SendMessage` applies it, keeping the in-room, `IsQuiet` and
+deafen checks. That hook is the only delivery reader of `events.Message`; the
+other readers are `AddToQueue`'s reply window (UserId messages only) and the
+`DrainQueued*ForTest` helpers.
 
 `Condition` also carries `Caster state.ActorRef`, `CasterCrit bool` and
 `CastStart bool` (messaging M6 slice 1): who cast it, which

@@ -1,9 +1,11 @@
 package mapper
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // markSecret marks the exits of loaded fixture rooms secret, before any map
@@ -134,5 +136,89 @@ func TestGuidanceSkipsAnUnknownSecretBorder(t *testing.T) {
 
 	if p, err := GetPath(48011, 48031); err != nil || len(p) != 2 {
 		t.Errorf("mob GetPath 48011 -> 48031: %v, %v; want 2 steps through the secret border", p, err)
+	}
+}
+
+// #781 ruling 13: an NPC's unscripted route takes a secret exit only once the
+// NPC found it; a scripted route (GetPath, AnySecretExit) takes it as before.
+func TestGetPathKnown_TakesOnlyAllowedSecretExits(t *testing.T) {
+	secretRingWorld(t)
+
+	p, err := GetPathKnown(48001, nil, 48002)
+	if err != nil || len(p) != 3 || p[0].exitName != "south" {
+		t.Fatalf("unknown secret exit: %v, %v; want the 3-step open way starting south", p, err)
+	}
+	p, err = GetPathKnown(48001, knowsOnly(secretExit{48001, "east"}), 48002)
+	if err != nil || len(p) != 1 || p[0].exitName != "east" {
+		t.Fatalf("known secret exit: %v, %v; want the one step east", p, err)
+	}
+	p, err = GetPathKnown(48001, AnySecretExit, 48002)
+	if err != nil || len(p) != 1 || p[0].exitName != "east" {
+		t.Fatalf("a scripted route: %v, %v; want the one secret step east", p, err)
+	}
+	// The cached every-exit route must not leak into a filtered search.
+	if p, err = GetPathKnown(48001, nil, 48002); err != nil || len(p) != 3 {
+		t.Fatalf("after a cached secret route: %v, %v; want 3 steps", p, err)
+	}
+	// Nor may a filtered route leak into the scripted route's cache.
+	if p, err = GetPath(48001, 48002); err != nil || len(p) != 1 || p[0].exitName != "east" {
+		t.Fatalf("GetPath after filtered searches: %v, %v; want the one secret step east", p, err)
+	}
+}
+
+// A cached step whose exit the map no longer holds is stale: it counts as
+// refused, so GetPathKnown searches again rather than trusting it.
+func TestTakesRefusedSecret_StaleStepIsRefused(t *testing.T) {
+	secretRingWorld(t)
+	if takesRefusedSecret(48001, []pathStep{{exitName: "south", roomId: 48003}}, nil) {
+		t.Fatal("an open step that exists must not count as refused")
+	}
+	if !takesRefusedSecret(48001, []pathStep{{exitName: "gone", roomId: 48002}}, AnySecretExit) {
+		t.Fatal("a step through an exit the map no longer holds must count as refused")
+	}
+}
+
+// Zone.Map draws a secret exit once the player found it (ruling 1), not once
+// they visited the room beyond.
+func TestSnapshot_SecretExitDrawnOnlyOnceFound(t *testing.T) {
+	secretRingWorld(t)
+	visited := map[int]struct{}{48001: {}, 48002: {}, 48003: {}, 48004: {}}
+	hasEdge := func(snap []SnapshotRoom, from, to int) bool {
+		for _, r := range snap {
+			if r.RoomId != from {
+				continue
+			}
+			for _, e := range r.Exits {
+				if e.ToRoomId == to {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	m := GetMapper(48001)
+	if hasEdge(m.Snapshot(visited, nil), 48001, 48002) {
+		t.Fatal("an unfound secret exit was drawn although the room beyond is visited")
+	}
+	if !hasEdge(m.Snapshot(visited, knowsOnly(secretExit{48001, "east"})), 48001, 48002) {
+		t.Fatal("a found secret exit must be drawn")
+	}
+}
+
+// The ASCII map draws the secret glyph only for a secret exit the player found.
+func TestGetLimitedMap_SecretExitDrawnOnlyOnceFound(t *testing.T) {
+	secretRingWorld(t)
+	u := users.NewTestUser(48090, "mapper", "Mapper", 948090)
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{48090: u}))
+	m := GetMapper(48001)
+	cfg := Config{ZoomLevel: 1, Width: 21, Height: 11, UserId: 48090}
+	glyphs := func() int { return strings.Count(renderText(m.GetLimitedMap(48001, cfg)), string(SecretSymbol)) }
+	before := glyphs()
+	if before != 0 {
+		t.Fatalf("secret glyphs %d before the find: an unfound secret exit must draw nothing", before)
+	}
+	u.Character.LearnSecretExit(48001, "east")
+	if after := glyphs(); after <= before {
+		t.Fatalf("secret glyphs %d before the find and %d after: a found secret exit must be drawn, an unfound one not", before, after)
 	}
 }

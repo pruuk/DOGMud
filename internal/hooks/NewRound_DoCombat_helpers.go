@@ -1020,6 +1020,9 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 	// Visual (owner ruling 2026-09-21): seeing someone break away and which
 	// way they went is sight, so a reader who cannot see learns nothing.
 	uRoom.SendTextVisualHidingNames(messaging.CategoryRoomExit, fmt.Sprintf(`<ansi fg="username">%s</ansi> flees to the <ansi fg="exit">%s</ansi> exit!`, user.Character.Name, out.ExitName), []string{user.Character.Name}, user.UserId)
+	// #781 ruling 14: whoever read that line learns the secret exit it
+	// names, judged as the line was (the room as it is now).
+	actions.LearnSecretExitWatchingNow(uRoom, out.ExitName, user.Character)
 
 	if err := rooms.MoveToRoom(user.UserId, out.ExitRoomId); err == nil {
 

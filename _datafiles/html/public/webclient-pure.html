@@ -821,6 +821,7 @@
         let allRooms = {
             currentZoneKey: "",
             roomZones: {},
+            lastRoomId: null,
         };
         let GMCPUpdateHandlers = {
             "Comm": function() {
@@ -899,6 +900,7 @@
 
                     if ( allRooms.currentZoneKey != zoneKey ) {
                         gr.reset();
+                        allRooms.lastRoomId = null;
                         allRooms.currentZoneKey = zoneKey;
                         if( !allRooms.roomZones[zoneKey] || !Array.isArray(allRooms.roomZones[zoneKey]) ) {
                             allRooms.roomZones[zoneKey] = [];
@@ -913,6 +915,17 @@
                         // stay wiped (#650, RoomGridSVG.RESYNC_GRACE_MS).
                         gr.requestResync(RoomGridSVG.RESYNC_GRACE_MS);
                     }
+
+                    // Room.Info comes again in the same room when its exits
+                    // change (#781). The room is still updated below, so an
+                    // exit it gained is drawn; only a new room moves the map,
+                    // so a map the player moved stays where it is (D48).
+                    // If mapwhere.js did not load, the same test inline, so
+                    // the room is still drawn.
+                    var newRoom = window.MapWhere
+                        ? window.MapWhere.recentre(allRooms.lastRoomId, obj.Info.num)
+                        : allRooms.lastRoomId !== obj.Info.num;
+                    allRooms.lastRoomId = obj.Info.num;
 
                     var r = {
                         RoomId: obj.Info.num,
@@ -956,12 +969,25 @@
                     for (var p in obj.Info.exitsv2 ) {
                         var exitInfo = obj.Info.exitsv2[p];
                         // Only add these rooms if there is no z delta, since it's a 2D rendering.
-                        if ( exitInfo.dz == 0 ) {
+                        // A temporary exit (a gangplank, a portal) is no map edge (#781).
+                        // An exit with no map direction (delta 0, 0, 0) is
+                        // none either; the server's mapper drops it too.
+                        if ( exitInfo.dz == 0 && exitInfo.kind !== "temporary"
+                                && !(exitInfo.dx == 0 && exitInfo.dy == 0) ) {
                             r.Exits.push( { RoomId: exitInfo.num, x: exitInfo.dx+parseInt(coords[1]), y: exitInfo.dy+parseInt(coords[2]), Text: "" } );
                         }
                     }
 
-                    allRooms.roomZones[zoneKey].push(r);
+                    // One entry per room: Room.Info comes again in the same
+                    // room (its exits, its Contents pushes), and the list is
+                    // replayed on every return to the zone.
+                    var zoneRooms = allRooms.roomZones[zoneKey];
+                    var at = zoneRooms.findIndex(function (z) { return z.RoomId === r.RoomId; });
+                    if ( at >= 0 ) {
+                        zoneRooms[at] = r;
+                    } else {
+                        zoneRooms.push(r);
+                    }
                     // A room a Zone.Map already drew keeps that version: this
                     // Room.Info shape has no name, tags or exit metadata, and
                     // since #650 no Zone.Map follows a step into a known room
@@ -970,7 +996,9 @@
                     if ( !(known && known.room.fromSnapshot) ) {
                         gr.addRoom(r);
                     }
-                    gr.centerOnRoom(r.RoomId);
+                    if ( newRoom ) {
+                        gr.centerOnRoom(r.RoomId);
+                    }
                     updateMapWhere();
                 }
 
@@ -3205,6 +3233,8 @@
             socket.onopen = function() {
                 linesSent = 0;
                 if (sendWait) sendWait.reset();
+                // A new connection centres on its first room (#781).
+                allRooms.lastRoomId = null;
                 term.writeln("Connected to the server!");
                 term.clear();
 

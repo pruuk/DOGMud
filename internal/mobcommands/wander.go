@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/ambient"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -32,14 +33,53 @@ func hasLootItems(floor []items.Item) bool {
 // Filtered candidates win when present. An empty list means no adjacent room
 // qualified, which is the normal case, so fall back to an ordinary random
 // exit rather than standing still.
-func pickWanderExit(exitOptions []string, room *rooms.Room) (string, int) {
+//
+// The fallback takes a secret exit only once the mover found it (#781, owner
+// ruling 13: wandering is the NPC's own choice).
+func pickWanderExit(exitOptions []string, room *rooms.Room, mover *characters.Character) (string, int) {
 	if len(exitOptions) > 0 {
 		picked := exitOptions[util.Rand(len(exitOptions))]
-		if ex, ok := room.Exits[picked]; ok {
+		// GetExitInfo, so a candidate means the exit wanderCandidates judged
+		// (an active mutator's takes the place of the room's).
+		if ex, ok := room.GetExitInfo(picked); ok {
 			return picked, ex.RoomId
 		}
 	}
-	return room.GetRandomExit()
+	return room.GetRandomKnownExit(mover)
+}
+
+// wanderCandidates is the exits of room whose far room wants accepts, among
+// the exits mover knows: a secret exit only once found (#781, ruling 13,
+// Room.PermanentExitsKnownTo, which resolves the room's mutators once).
+func wanderCandidates(room *rooms.Room, mover *characters.Character, wants func(dest *rooms.Room) bool) []string {
+	out := []string{}
+	for exitName, ex := range room.PermanentExitsKnownTo(mover) {
+		dest := rooms.LoadRoom(ex.RoomId)
+		if dest == nil || !wants(dest) {
+			continue
+		}
+		out = append(out, exitName)
+	}
+	return out
+}
+
+// packFollowerStep is MovePackFollowers' canStep for packmates following their
+// alpha through exitName of room: each pays its own step (movement parity 4b),
+// and one that goes learns a secret exit the alpha took (#781, ruling 2's NPC
+// analogue, D17). Whether the exit is secret is asked once per alpha step, so
+// an open exit costs the followers nothing more.
+func packFollowerStep(room *rooms.Room, exitName string) func(f *mobs.Mob) bool {
+	secretExit := room.IsSecretExit(exitName)
+	return func(f *mobs.Mob) bool {
+		if !actions.QuoteMobStep(f, exitName).OK() {
+			return false
+		}
+		if secretExit {
+			actions.LearnSecretExitFollowing(&f.Character, room, exitName)
+		}
+		ambient.CountMove(room.RoomId, ambient.MoveIdle)
+		return true
+	}
 }
 
 func Wander(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
@@ -77,33 +117,18 @@ func Wander(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	exitOptions := make([]string, 0)
 	restrictZone := true
 
-	// First only consider adjacent rooms with loot in them
-	if rest == `loot` {
-		for exitName, exit := range room.Exits {
-			exitRoom := rooms.LoadRoom(exit.RoomId)
-			if exitRoom == nil {
-				continue
-			}
-			if hasLootItems(exitRoom.Items) || exitRoom.Gold > 0 {
-				exitOptions = append(exitOptions, exitName)
-			}
-		}
+	switch rest {
+	case `loot`: // first only consider adjacent rooms with loot in them
+		exitOptions = wanderCandidates(room, &mob.Character, func(dest *rooms.Room) bool {
+			return hasLootItems(dest.Items) || dest.Gold > 0
+		})
+	case `players`: // first only consider adjacent rooms with players in them
+		exitOptions = wanderCandidates(room, &mob.Character, func(dest *rooms.Room) bool {
+			return dest.PlayerCt() > 0
+		})
 	}
 
-	// First only consider adjacent rooms with players in them
-	if rest == `players` {
-		for exitName, exit := range room.Exits {
-			exitRoom := rooms.LoadRoom(exit.RoomId)
-			if exitRoom == nil {
-				continue
-			}
-			if exitRoom.PlayerCt() > 0 {
-				exitOptions = append(exitOptions, exitName)
-			}
-		}
-	}
-
-	if exitName, roomId := pickWanderExit(exitOptions, room); exitName != `` {
+	if exitName, roomId := pickWanderExit(exitOptions, room, &mob.Character); exitName != `` {
 		if r := rooms.LoadRoom(roomId); r != nil {
 			if !restrictZone || r.Zone == mob.Character.Zone {
 
@@ -128,13 +153,7 @@ func Wander(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				// before it moves a follower, so a true here is a follower
 				// that goes, and telemetry counts it.
 				if mob.IsPackAlpha && len(preMoveRoomMobs) > 0 {
-					mobs.MovePackFollowers(mob, exitName, preMoveRoomMobs, func(f *mobs.Mob) bool {
-						if !actions.QuoteMobStep(f, exitName).OK() {
-							return false
-						}
-						ambient.CountMove(room.RoomId, ambient.MoveIdle)
-						return true
-					})
+					mobs.MovePackFollowers(mob, exitName, preMoveRoomMobs, packFollowerStep(room, exitName))
 				}
 
 			}

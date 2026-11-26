@@ -212,6 +212,20 @@ func TryAddToQueue(e Event, priority ...int) bool {
 	return true
 }
 
+// IsQueued reports whether a unique event with e's UniqueID is waiting in the
+// queue, the same test AddToQueue uses to merge it. An event that is not
+// unique is never reported as queued.
+func IsQueued(e Event) bool {
+	ue, ok := e.(uniqueEvent)
+	if !ok {
+		return false
+	}
+	qLock.Lock()
+	defer qLock.Unlock()
+	_, exists := uniqueMap[ue.UniqueID()]
+	return exists
+}
+
 // OpenReply starts marking every Message queued for userId as the reply to
 // the typed line being handled (#842). world.processInput calls it for a
 // line the pager did not take; ProcessEvents closes it when it pops that

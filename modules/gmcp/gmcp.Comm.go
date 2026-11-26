@@ -237,7 +237,8 @@ func commSpeakerRoom(evt events.Communication) *rooms.Room {
 // shoutDeliveries is who receives a shout over GMCP (spec 2026-11-07): the
 // speaker's room as for say (by sight), and every adjacent room as
 // "Someone (<exit>)", the words the game text uses for a shout heard next
-// door. A player's shout skips deafened listeners next door, as the text
+// door ("Someone (nearby)" through a secret exit the listener has not found,
+// #781 ruling 16). A player's shout skips deafened listeners next door, as the text
 // lane does; an NPC's reaches them.
 func shoutDeliveries(evt events.Communication, base GMCPCommModule_Payload) []commDelivery {
 	room := commSpeakerRoom(evt)
@@ -245,14 +246,22 @@ func shoutDeliveries(evt events.Communication, base GMCPCommModule_Payload) []co
 		return nil
 	}
 	deliveries := sayDeliveries(evt, base)
-	room.ForEachAdjacentRoom(func(other *rooms.Room, sourceExit string) {
+	room.ForEachAdjacentRoom(func(other *rooms.Room, back rooms.ExitTo) {
+		// #781 ruling 16: through a secret exit a listener who has not
+		// found it reads "nearby", as the game text does. Split once per
+		// room; an ordinary exit does no per-listener work.
+		knowers, _, secret := other.HeardThroughExit(back)
 		for _, uid := range other.GetPlayers() {
 			u := users.GetByUserId(uid)
 			if u == nil || (evt.SourceUserId > 0 && u.Deafened) {
 				continue
 			}
 			p := base
-			p.Sender = `Someone (` + sourceExit + `)`
+			heard := back.Name
+			if secret && !slices.Contains(knowers, uid) {
+				heard = rooms.HeardFromNearby
+			}
+			p.Sender = `Someone (` + heard + `)`
 			deliveries = append(deliveries, commDelivery{UserId: uid, Payload: p})
 		}
 	})

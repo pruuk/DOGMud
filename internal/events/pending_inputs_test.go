@@ -308,6 +308,41 @@ func TestPendingInputs_TypedRefusalReportedAgainEachSecond(t *testing.T) {
 	require.Equal(t, 1, refused(), "again a second later")
 }
 
+// A touch button press carries CmdTyped, so a refused press is reported as a
+// refused typed line is (#781, D52): again after the spell's first report,
+// at most once a second.
+func TestPendingInputs_ButtonPressRefusalReportedAgainEachSecond(t *testing.T) {
+	pendingFixture(t, 1)
+	clock := time.Unix(3000, 0)
+	refusalClock = func() time.Time { return clock }
+	t.Cleanup(func() { refusalClock = time.Now })
+	refused := func() int {
+		n := 0
+		for _, c := range noticesFor(t, 7) {
+			if c.Refused {
+				n++
+			}
+		}
+		return n
+	}
+	auto := Input{UserId: 7, InputText: "tick", Flags: CmdFromClient}
+	press := Input{UserId: 7, InputText: "north", Flags: CmdTyped | CmdFromClient | CmdButton}
+
+	TryAddToQueue(auto) // fills
+	noticesFor(t, 7)
+	require.False(t, TryAddToQueue(auto))
+	require.Equal(t, 1, refused(), "the spell's first refusal, automatic")
+
+	require.False(t, TryAddToQueue(press))
+	require.Equal(t, 1, refused(), "a press is reported though the spell's report went")
+	require.False(t, TryAddToQueue(press))
+	require.Equal(t, 0, refused(), "not twice in a second")
+
+	clock = clock.Add(time.Second)
+	require.False(t, TryAddToQueue(press))
+	require.Equal(t, 1, refused(), "again a second later")
+}
+
 // The once-a-second rule for typed lines is per full spell: a typed line
 // refused in the spell before does not silence one in the next, even inside
 // the same second. Here the new spell's first refusal is automatic, so a

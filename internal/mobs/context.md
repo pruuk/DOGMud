@@ -355,7 +355,19 @@ gates each follower's own step, the same quote-before-issue rule every other
 mob walker now follows (`mobcommands.wander.go` passes a closure that calls
 `actions.QuoteMobStep`). A follower `canStep` refuses is left behind for that
 tick rather than dragged into a step it cannot pay for; it is not counted a
-wander failure.
+wander failure. The same closure teaches a follower a secret exit the alpha
+took (`actions.LearnSecretExitFollowing`, #781).
+
+### `PathtoFoundOnly` (`pathto.go`, #781)
+
+`PathtoFoundOnly` (`found`) is the word `mobcommands.Pathto` reads as "take
+only the secret exits this mob has found". `behaviortree.RunGoalPlanner` adds
+it to a planner's `pathto`; every other `pathto` (schedules, patrols, trees,
+idle commands, home returns, admin) is a scripted route and takes every
+secret exit (owner ruling 13). `PathtoCommand(foundOnly bool, targets
+...string) string` builds the line (the one builder beside the one reader,
+`mobcommands.pathtoTargets`); `RunGoalPlanner` and the path walker's re-path
+use it.
 
 ## Conversation System Integration
 
@@ -380,12 +392,16 @@ as `rooms.NpcMarker`).
 type PathQueue struct {
     roomQueue   []PathRoom
     currentRoom PathRoom
+    foundOnly   bool // set by `pathto found` (#781)
 }
 
-// Path management
-func (p *PathQueue) SetPath(path []PathRoom) {
+// Path management. foundOnly marks a planner's errand route (`pathto found`,
+// PathtoFoundOnly): FoundOnly() reports it, Clear() resets it, and the path
+// walker's re-path (hooks.advanceMobPath) asks for `pathto found` again.
+func (p *PathQueue) SetPath(path []PathRoom, foundOnly bool) {
     p.roomQueue = path
     p.currentRoom = nil
+    p.foundOnly = foundOnly
 }
 
 func (p *PathQueue) Next() PathRoom {
@@ -1168,6 +1184,7 @@ Mobs with `patrol_id:` set follow waypoint patrols authored in
 | `save.go` / `instance_save.go` | Template and instance persistence |
 | `memory.go` | Memory reporting |
 | `mobs_path.go` | Pathing state (`pathto`) |
+| `pathto.go` | `PathtoFoundOnly`, the `pathto found` word for a planner's errand, and `PathtoCommand`, the line builder (#781) |
 | `schedule.go` / `schedule_loader.go` | Daily NPC schedules |
 | `patrol.go` / `patrol_loader.go` | Patrol routes |
 | `sleeper.go` | Sleep state for scheduled NPCs |
@@ -1191,6 +1208,11 @@ per-instance write allocates on the instance, which is safe. Before adding a
 new per-instance write to a template-sourced field, check which of those two
 categories it is in. `internal/mobs/spawn_template_isolation_test.go` guards
 the copies.
+
+- `Character.Discoveries` is deep-copied at spawn (#781), so a mob's search
+  find or a secret exit learned behind its leader stays with that instance.
+  Discoveries are not saved in `MobInstanceData`; a fresh spawn has found
+  nothing.
 
 ## WalkItems (walk_items.go)
 

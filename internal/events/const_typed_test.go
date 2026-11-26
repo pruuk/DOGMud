@@ -17,3 +17,14 @@ func TestCmdTyped_IsADistinctBit(t *testing.T) {
 		t.Fatal("CmdTyped not detected")
 	}
 }
+
+func TestCmdButton_IsADistinctBit(t *testing.T) {
+	for _, f := range []EventFlag{CmdSkipScripts, CmdSecretly, CmdIsRequeue, CmdBlockInput, CmdUnBlockInput, CmdFollowStep, CmdTyped} {
+		if f&CmdButton != 0 {
+			t.Fatalf("CmdButton overlaps flag %b", f)
+		}
+	}
+	if CmdTyped.Has(CmdButton) {
+		t.Fatal("a typed line must not read as a button press")
+	}
+}

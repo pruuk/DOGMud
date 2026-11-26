@@ -22,7 +22,7 @@ func TestSnapshotSkipsEphemeralRooms(t *testing.T) {
 		ephID: node(ephID, 0, -1, 0, map[string]nodeExit{}),
 	}
 	m := mkMapper(nodes)
-	snap := m.Snapshot(map[int]struct{}{5: {}, ephID: {}}) // both "visited"
+	snap := m.Snapshot(map[int]struct{}{5: {}, ephID: {}}, nil) // both "visited"
 
 	var r5 *SnapshotRoom
 	for i := range snap {
@@ -49,7 +49,7 @@ func TestSnapshotSymbolDefaultsWhenUnset(t *testing.T) {
 	}
 	// Symbol deliberately left at zero value
 	m := mkMapper(nodes)
-	snap := m.Snapshot(map[int]struct{}{1: {}})
+	snap := m.Snapshot(map[int]struct{}{1: {}}, nil)
 	if len(snap) != 1 {
 		t.Fatalf("expected 1 room in snapshot, got %d", len(snap))
 	}
@@ -67,7 +67,7 @@ func TestSnapshotClassifiesLongExit(t *testing.T) {
 		4: node(4, 3, 0, 0, map[string]nodeExit{}),
 	}
 	m := mkMapper(nodes)
-	snap := m.Snapshot(map[int]struct{}{1: {}, 4: {}})
+	snap := m.Snapshot(map[int]struct{}{1: {}, 4: {}}, nil)
 	var r1 *SnapshotRoom
 	for i := range snap {
 		if snap[i].RoomId == 1 {
@@ -96,7 +96,7 @@ func TestSnapshotFiltersVisitedAndClassifies(t *testing.T) {
 
 	visited := map[int]struct{}{1: {}, 2: {}} // room 3 not visited
 
-	snap := m.Snapshot(visited)
+	snap := m.Snapshot(visited, nil)
 	if len(snap) != 2 {
 		t.Fatalf("expected 2 visited rooms in snapshot, got %d", len(snap))
 	}
@@ -148,7 +148,9 @@ func TestSnapshotExitFlagsAndStubs(t *testing.T) {
 	m := mkMapper(nodes)
 	visited := map[int]struct{}{1: {}, 2: {}, 3: {}, 4: {}}
 
-	snap := m.Snapshot(visited)
+	// Every secret exit let through: this test is about the flags, not the
+	// secret-exit gate (TestSnapshotHidesUndiscoveredSecretExits).
+	snap := m.Snapshot(visited, AnySecretExit)
 	var r1 *SnapshotRoom
 	for i := range snap {
 		if snap[i].RoomId == 1 {
@@ -181,14 +183,13 @@ func TestSnapshotExitFlagsAndStubs(t *testing.T) {
 
 // TestSnapshotHidesUndiscoveredSecretExits guards fog parity with the ASCII map.
 //
-// GetLimitedMap skips a secret exit entirely unless the room behind it has been
-// visited. The web snapshot originally copied Secret through unconditionally,
-// so the browser map disclosed secret exits the ASCII map hides. That is a
-// gameplay advantage, not a cosmetic difference, and it was found only by an
-// adversarial review of the diagrams describing this code.
+// Both maps draw a secret exit only once the player found it (#781, owner
+// ruling 1: SecretExitsKnownTo). The web snapshot originally copied Secret
+// through unconditionally, so the browser map disclosed secret exits the
+// ASCII map hides. That is a gameplay advantage, not a cosmetic difference.
 //
-// Room 1 has two secret exits: north to a visited room, east to an unvisited
-// one. Only the north one may appear.
+// Room 1 has two secret exits into visited rooms: north, which the player
+// found, and east, which they did not. Only the north one may appear.
 func TestSnapshotHidesUndiscoveredSecretExits(t *testing.T) {
 	nodes := map[int]*mapNode{
 		1: node(1, 0, 0, 0, map[string]nodeExit{
@@ -199,8 +200,8 @@ func TestSnapshotHidesUndiscoveredSecretExits(t *testing.T) {
 		3: node(3, 1, 0, 0, map[string]nodeExit{}),
 	}
 	m := mkMapper(nodes)
-	// Room 3 is deliberately absent from the visited set.
-	snap := m.Snapshot(map[int]struct{}{1: {}, 2: {}})
+	// Room 3 is visited: a visit no longer discloses the exit into it.
+	snap := m.Snapshot(map[int]struct{}{1: {}, 2: {}, 3: {}}, knowsOnly(secretExit{1, "north"}))
 
 	var r1 *SnapshotRoom
 	for i := range snap {
@@ -214,7 +215,7 @@ func TestSnapshotHidesUndiscoveredSecretExits(t *testing.T) {
 
 	for _, e := range r1.Exits {
 		if e.ToRoomId == 3 {
-			t.Errorf("secret exit to unvisited room 3 was disclosed (secret=%v, stub=%v): "+
+			t.Errorf("unfound secret exit to room 3 was disclosed (secret=%v, stub=%v): "+
 				"the ASCII map hides these, so the web map must too", e.Secret, e.Stub)
 		}
 	}
@@ -224,14 +225,14 @@ func TestSnapshotHidesUndiscoveredSecretExits(t *testing.T) {
 		if e.ToRoomId == 2 {
 			foundDiscovered = true
 			if !e.Secret {
-				t.Errorf("secret exit to VISITED room 2 lost its Secret flag; "+
-					"the gate should hide undiscovered ones only, got %+v", e)
+				t.Errorf("found secret exit to room 2 lost its Secret flag; "+
+					"the gate should hide unfound ones only, got %+v", e)
 			}
 		}
 	}
 	if !foundDiscovered {
-		t.Error("secret exit to visited room 2 was hidden; once you have been " +
-			"through it, it must still render")
+		t.Error("found secret exit to room 2 was hidden; once the player " +
+			"found it, it must render")
 	}
 }
 
@@ -245,7 +246,7 @@ func TestSnapshotKeepsNonSecretStubs(t *testing.T) {
 		2: node(2, 0, -1, 0, map[string]nodeExit{}),
 	}
 	m := mkMapper(nodes)
-	snap := m.Snapshot(map[int]struct{}{1: {}})
+	snap := m.Snapshot(map[int]struct{}{1: {}}, nil)
 
 	if len(snap) != 1 {
 		t.Fatalf("expected 1 room, got %d", len(snap))

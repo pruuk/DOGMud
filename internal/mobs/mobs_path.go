@@ -9,6 +9,15 @@ type PathRoom interface {
 type PathQueue struct {
 	roomQueue   []PathRoom
 	currentRoom PathRoom
+	// foundOnly marks a route that takes only the secret exits the mob found
+	// (`pathto found`, PathtoFoundOnly, #781), so a re-path keeps the rule.
+	foundOnly bool
+}
+
+// FoundOnly reports whether the path was set by `pathto found` (a planner's
+// errand, #781): a re-path after the mob is displaced must ask for the same.
+func (p PathQueue) FoundOnly() bool {
+	return p.foundOnly
 }
 
 func (p PathQueue) Len() int {
@@ -18,6 +27,7 @@ func (p PathQueue) Len() int {
 func (p *PathQueue) Clear() {
 	p.roomQueue = []PathRoom{}
 	p.currentRoom = nil
+	p.foundOnly = false
 }
 
 func (p PathQueue) Current() PathRoom {
@@ -59,7 +69,10 @@ func (p *PathQueue) Waypoints() []int {
 	return wpList
 }
 
-func (p *PathQueue) SetPath(path []PathRoom) {
+// SetPath replaces the path. foundOnly is true for a route `pathto found` built
+// (only the secret exits the mob found, #781), false for a scripted route.
+func (p *PathQueue) SetPath(path []PathRoom, foundOnly bool) {
 	p.roomQueue = path
 	p.currentRoom = nil
+	p.foundOnly = foundOnly
 }

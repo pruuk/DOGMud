@@ -873,6 +873,16 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender {
 
 	out := newMapRender(c.Width, c.Height)
 
+	// The secret exits this map may draw: the player's found ones (#781), all
+	// of them for a debug render (UserId below zero), none when there is no
+	// such player.
+	var secretKnown SecretExitKnown
+	if c.UserId < 0 {
+		secretKnown = AnySecretExit
+	} else if u := users.GetByUserId(c.UserId); u != nil {
+		secretKnown = SecretExitsKnownTo(u.Character)
+	}
+
 	centerX, centerY := c.Width>>1, c.Height>>1
 
 	// Start drawing from the center of the output canvas
@@ -948,7 +958,7 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender {
 
 		// Now process it
 		skip := false
-		for _, exitInfo := range node.Exits {
+		for exitName, exitInfo := range node.Exits {
 			if _, ok := tmpCrawledTracker[exitInfo.RoomId]; ok {
 				continue
 			}
@@ -966,25 +976,15 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender {
 
 					user := users.GetByUserId(c.UserId)
 					if user != nil {
-						hasKey, hasSequence := user.Character.HasKey(exitInfo.LockId, exitInfo.LockDifficulty)
-						showLocked = hasKey || hasSequence
+						showLocked = knowsExitLock(user, node.RoomId, exitName, exitInfo)
 					}
 				} else if c.UserId < 0 { // Debug
 					showLocked = true
 				}
 			}
 
-			if exitInfo.Secret {
-				targetRoom := rooms.LoadRoom(exitInfo.RoomId)
-				if targetRoom == nil {
-					continue
-				}
-
-				if c.UserId >= 0 {
-					if !targetRoom.HasVisited(c.UserId, rooms.VisitorUser) {
-						continue
-					}
-				}
+			if exitInfo.Secret && !secretKnown.allows(node.RoomId, exitName, exitInfo.RoomId) {
+				continue
 			}
 
 			// Dont' draw if z-plane has moved
@@ -1234,6 +1234,17 @@ func (r *mapper) drawNode(roomId int) *mapNode {
 		}
 	}
 	return r.getMapNode(roomId)
+}
+
+// knowsExitLock reports whether the user may see past a locked exit on the
+// map: they hold its key, or they know its combination as the lock stands
+// now. The lock's state changes at every relock, so only its difficulty is
+// taken from the crawl-time nodeExit: rooms.ExitLockAt reads the live room,
+// or for a room idle unloading has dropped the state remembered at the
+// unload, or else that difficulty at rotation 0, and never touches disk.
+func knowsExitLock(user *users.UserRecord, roomId int, exitName string, e nodeExit) bool {
+	hasKey, hasSequence := user.Character.HasKey(e.LockId, rooms.ExitLockAt(roomId, exitName, uint8(e.LockDifficulty)))
+	return hasKey || hasSequence
 }
 
 func (r *mapper) getMapNode(roomId int) *mapNode {

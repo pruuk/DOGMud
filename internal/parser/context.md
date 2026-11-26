@@ -24,7 +24,9 @@ when a command must **split** input into multiple slots.
 
 - **parser.go** — `Kind`, `Scope`, `Match`, tokenisation, and `Resolve`.
 - **adapters.go** — one adapter per `Kind`; each tries to match a candidate
-  string in the given scope.
+  string in the given scope. The exit adapter matches only an exit the
+  scope's user knows (`Room.ExitKnownTo`): an unfound secret exit matches
+  nothing, and with no user no secret exit does (#781, owner ruling 1).
 - **helpers.go** — the split helpers and the typed convenience wrappers.
 
 ## Core types

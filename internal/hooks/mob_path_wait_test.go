@@ -13,13 +13,14 @@ import (
 )
 
 type walkerTestStep struct {
-	exit string
-	room int
+	exit     string
+	room     int
+	waypoint bool
 }
 
 func (s walkerTestStep) ExitName() string { return s.exit }
 func (s walkerTestStep) RoomId() int      { return s.room }
-func (s walkerTestStep) Waypoint() bool   { return false }
+func (s walkerTestStep) Waypoint() bool   { return s.waypoint }
 
 const walkerCliff = "walkertestcliff"
 
@@ -41,7 +42,7 @@ func walkerWorld(t *testing.T, stamina, staminaMax int) *mobs.Mob {
 	m.Character.RoomId = 7101
 	m.Character.StaminaMax.Value = staminaMax
 	m.Character.Stamina = stamina
-	m.Path.SetPath([]mobs.PathRoom{walkerTestStep{"north", 7102}})
+	m.Path.SetPath([]mobs.PathRoom{walkerTestStep{exit: "north", room: 7102}}, false)
 	events.DrainQueuedInputsForTest(7150)
 	t.Cleanup(func() { events.DrainQueuedInputsForTest(7150) })
 	return m

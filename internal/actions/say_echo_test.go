@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/ambient"
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
@@ -13,6 +15,22 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+// giveKeenEars gives c the superhearing flag, so c hears quiet lines
+// (Character.HearsQuiet). A quiet line next door is not queued at all for a
+// room where nobody hears quiet lines, so a test that reads the queued echo
+// needs such a listener there.
+func giveKeenEars(t *testing.T, c *characters.Character) {
+	t.Helper()
+	const keenEars = 99790
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		keenEars: {ConditionId: keenEars, Name: "Test Keen Ears", TriggerCount: 1000000,
+			Flags: []conditions.Flag{conditions.SuperHearing}},
+	}))
+	if err := c.AddCondition(keenEars, true); err != nil || !c.HearsQuiet() {
+		t.Fatalf("fixture: keen ears (%v)", err)
+	}
+}
 
 // A player's say still echoes next door unbudgeted (#317): even with the
 // neighbour over budget, nobody is left out of the echo.
@@ -34,6 +52,7 @@ func TestPlayerSayEcho_IsNeverBudgeted(t *testing.T) {
 	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{31951: speaker, 31961: neighbour}))
 	here.AddPlayer(31951)
 	next.AddPlayer(31961)
+	giveKeenEars(t, neighbour.Character) // the echo is quiet
 	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
 	ambient.ChargeForTest(31961, 6005)
 

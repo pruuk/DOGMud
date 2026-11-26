@@ -545,6 +545,17 @@ class RoomGridSVG {
       // the centre) for the whole of that room's visit.
       const priorCenterId = this.currentCenterId;
 
+      // A full map while the player is still in the room the last map was
+      // drawn for (a secret exit found after a resync, #781) keeps the view
+      // the player chose (Fit, zoom): reset() would put the zoom back to 1.
+      // A step since the last map, or a zone or floor change, resets and
+      // centres as before.
+      const keepView = isFull && priorCenterId != null
+          && priorCenterId === this._lastSnapshotCenterId
+          && this._zone === zone && this._z === currentZ;
+      const priorZoom = this.zoomLevel;
+      const priorCenter = this.center ? { x: this.center.x, y: this.center.y } : null;
+
       // Build party lookup, keeping the old one: a partial map re-sends only
       // changed rooms, so rooms a party member left or entered are rebuilt
       // below even when the server did not re-send them.
@@ -631,6 +642,11 @@ class RoomGridSVG {
       if (wantCenterId != null && this.currentCenterId !== wantCenterId && this.rooms.get(wantCenterId)) {
           this.centerOnRoom(wantCenterId);
       }
+      if (keepView && this.currentCenterId === priorCenterId) {
+          this.zoomLevel = priorZoom;
+          if (priorCenter) this.center = priorCenter;
+      }
+      this._lastSnapshotCenterId = this.currentCenterId;
 
       this._drawQuestArrow();
       this._drawQuestWash();

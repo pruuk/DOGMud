@@ -18,7 +18,7 @@ func TestPathQueuePeekDoesNotAdvance(t *testing.T) {
 	if p.Peek() != nil {
 		t.Fatal("an empty queue peeks nil")
 	}
-	p.SetPath([]PathRoom{peekStep{"north", 2}, peekStep{"east", 3}})
+	p.SetPath([]PathRoom{peekStep{"north", 2}, peekStep{"east", 3}}, false)
 	if got := p.Peek(); got == nil || got.RoomId() != 2 {
 		t.Fatalf("Peek = %v, want the north step", got)
 	}

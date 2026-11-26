@@ -20,7 +20,14 @@ func exitAdapter(s Scope, candidate string) (Match, bool) {
 	if s.Room == nil {
 		return Match{}, false
 	}
-	if _, ok := s.Room.Exits[candidate]; ok {
+	// Only an exit the user knows (#781, owner ruling 1): a secret one not
+	// yet found matches nothing, and with no user in scope no secret one
+	// does.
+	var viewer *characters.Character
+	if s.User != nil {
+		viewer = s.User.Character
+	}
+	if s.Room.ExitKnownTo(viewer, candidate) {
 		return Match{Kind: KindExit, Name: candidate}, true
 	}
 	return Match{}, false

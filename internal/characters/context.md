@@ -545,7 +545,11 @@ seed made at every boot (`util.LockSequence`), `SetKey` stamps a solution with
 `KeyRingBoot = util.BootID()`, and `DropStaleLockSolutions` removes every
 solution from an older boot. `GetKey`, `SetKey` and `KeyCount` call it, as
 do `users.LoadUser` and the `keyring` command, so a stale solution is never
-read or shown. `HasKey` compares a solution to the current sequence.
+read or shown. `HasKey(lockId, gamelock.Lock)` compares a solution to the
+lock's current sequence, `gamelock.Lock.Sequence`, the one `picklock` asks
+for: every relock gets a new combination, by `SetLocked` or on the timer, so
+a solution learned before the last relock stops counting (#781). Callers pass the live
+lock (the exit's or the container's), never a difficulty alone.
 
 ### The let-go lookups (`inventory_let_go.go`, #940)
 
@@ -1424,6 +1428,15 @@ One consequence worth knowing: `assess` does not filter player corpses (`raise`
 does, on `UserId != 0`), and a player's `Base` is a gaussian roll rather than a
 species baseline, so a player corpse now reports the whole character rather than
 only its trained points. Deliberate.
+
+## Hearing quiet lines
+
+`HearsQuiet()` reports whether the character takes in a quiet line
+(`events.Message.IsQuiet`, a say's echo next door): only with the
+`superhearing` condition flag. It is the one statement of that rule: the
+delivery hook (`hooks.Message_SendMessage`), the ambient budget
+(`ambient.HearsQuiet`) and `rooms.Room.SendTextToExitsExcluding` (which
+skips a neighbour where no player hears quiet lines) all ask it.
 
 ## Mitigation System (Three Channels)
 
@@ -2526,3 +2539,15 @@ The ward effects `mitigation_magical` and `mitigation_conviction` are read by
 `GetMagicalMitigation` and `GetConvictionMitigation` through
 `Conditions.Effect`, beside the statmods they sum with, as `mitigation_flat`
 is by `GetPhysicalMitigation`.
+
+## Secret exits (#781)
+
+`KnowsSecretExit(roomId, exitName)` is the one secret-exit rule (#781,
+owner rulings 1, 2 and 13): true once the character holds the discovery
+`SecretExitDiscoveryKey(exitName)` for that room. `LearnSecretExit` is the
+one recorder: `search`, a follower moving behind its leader and an onlooker
+watching the exit used all write through it. A player's new find (the
+character has a user id, and the record was not there) queues
+`events.RoomExitsChanged{UserId, SecretExitFound: true}`, so `modules/gmcp`
+re-sends `Room.Info` and `Zone.Map` at once (#781 Task 11b); a re-find and an
+NPC's find queue nothing. A nil character knows none. `rooms.KnownExits` and every exit filter call it.

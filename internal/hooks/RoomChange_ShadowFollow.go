@@ -21,9 +21,11 @@ const shadowSpottedLine = "You've been spotted. Your shadow ends."
 
 // RoomChangeShadowFollow runs two passes on every RoomChange.
 //
-// Follow: when the mover left through a named exit (shadowExitTo), every
-// player and mob still in the old room whose shadow names the mover queues
-// the same exit, if it is still hidden. A shadower whose target is set but
+// Follow: when the mover left through a named exit (actions.FollowExitTo,
+// the exit key the mover could have used), every player and mob still in the
+// old room whose shadow names the mover queues the same exit, if it is still
+// hidden. At a secret exit a player shadower learns it, and a mob shadower
+// follows actions.NPCMayFollowThrough or drops the shadow quietly (#781). A shadower whose target is set but
 // whose Shadowing condition is gone is stale: its state is cleared
 // (actions.ClearShadow) and it stays put. A teleport has no named exit and
 // moves no one.
@@ -59,6 +61,21 @@ func RoomChangeShadowFollow(e events.Event) events.ListenerReturn {
 type shadowFollower struct {
 	char *characters.Character
 	cmd  interface{ Command(string, ...float64) }
+	mob  bool
+}
+
+// shadowMover is the character that moved in evt, or nil.
+func shadowMover(evt events.RoomChange) *characters.Character {
+	if evt.UserId > 0 {
+		if u := users.GetByUserId(evt.UserId); u != nil {
+			return u.Character
+		}
+		return nil
+	}
+	if m := mobs.GetInstance(evt.MobInstanceId); m != nil {
+		return &m.Character
+	}
+	return nil
 }
 
 func shadowFollowPass(evt events.RoomChange) {
@@ -66,7 +83,7 @@ func shadowFollowPass(evt events.RoomChange) {
 	if fromRoom == nil {
 		return
 	}
-	exitName := shadowExitTo(fromRoom, evt.ToRoomId)
+	exitName := actions.FollowExitTo(fromRoom, shadowMover(evt), evt.ToRoomId)
 	if exitName == "" {
 		return
 	}
@@ -85,7 +102,7 @@ func shadowFollowPass(evt events.RoomChange) {
 			continue
 		}
 		if m := mobs.GetInstance(instId); m != nil {
-			followers = append(followers, shadowFollower{char: &m.Character, cmd: m})
+			followers = append(followers, shadowFollower{char: &m.Character, cmd: m, mob: true})
 		}
 	}
 
@@ -100,6 +117,19 @@ func shadowFollowPass(evt events.RoomChange) {
 		}
 		if !f.char.IsHidden() {
 			continue
+		}
+		// #781, owner rulings 2 and 13 (shadowing is following): a player
+		// shadower learns a secret exit its quarry takes. A mob shadower
+		// follows the follow module's NPC rule; one that may not take the
+		// exit drops the shadow quietly, with no line, so nothing hints at
+		// the exit.
+		if f.mob {
+			if !actions.NPCMayFollowThrough(f.char, fromRoom, exitName, evt.UserId) {
+				actions.DropShadow(f.char)
+				continue
+			}
+		} else {
+			actions.LearnSecretExitFollowing(f.char, fromRoom, exitName)
 		}
 		f.cmd.Command(exitName)
 	}
@@ -169,30 +199,4 @@ func shadowNamesMover(evt events.RoomChange, userId, mobInstanceId int) bool {
 		return userId == evt.UserId
 	}
 	return mobInstanceId > 0 && mobInstanceId == evt.MobInstanceId
-}
-
-// shadowExitTo is the command word that leads from room to toRoomId, or ""
-// when no exit does (a teleport). It returns the exit's map KEY, which is what
-// `go` matches, looking in the permanent exits, then the temporary exits,
-// then the active mutators' exits. Room.FindExitTo is not used: for a
-// temporary exit it returns the Title, which need not be the key.
-func shadowExitTo(room *rooms.Room, toRoomId int) string {
-	for exitName, exitInfo := range room.Exits {
-		if exitInfo.RoomId == toRoomId {
-			return exitName
-		}
-	}
-	for exitName, exitInfo := range room.ExitsTemp {
-		if exitInfo.RoomId == toRoomId {
-			return exitName
-		}
-	}
-	for mut := range room.ActiveMutators {
-		for exitName, exitInfo := range mut.GetSpec().Exits {
-			if exitInfo.RoomId == toRoomId {
-				return exitName
-			}
-		}
-	}
-	return ""
 }

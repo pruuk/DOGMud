@@ -4,6 +4,21 @@
 
 - Once you choose a side in The Windwarden's Dilemma, the map and quest log now point you to what you were asked to find: Sylara's carved wolf totem in the Kill Ground, or Rhett's windstone samples on the Rocky Shelf. Once it is in your pack, they point you back to whoever asked for it. If you were already partway through, you pick up right where you were.
 
+## 2026-11-25: Secret exits stay secret until you find them
+
+- A secret exit now joins a room's exits, your map and quest directions once you find it with `search`, and it stays there. Walking through it no longer shows it for a few minutes; finding it does. On the web client your map shows it at once.
+- Until you find it, a secret exit answers like a wall: going, looking, unlocking, picking or shooting that way tells you nothing.
+- Following someone through a secret exit, in a party or with `follow`, teaches it to you. Companions learn it too.
+- Seeing someone use a secret exit teaches it to you: walking through it, working its lock or trap, looking or shooting through it. You learn the exit, not the combination of its lock.
+- A sound that reaches you through a secret exit you have not found comes "from nearby". Once you find the exit, you see which way the sound came from.
+- `track` follows a trail through a secret exit only if you have found that exit.
+- `scan` looks through a secret exit once you have found it. In total darkness, or while blinded, `scan` tells you it is too dark to see, as `look` does, and names no exits. Creatures scanning in the dark see nothing either.
+- Creatures wander, chase, shoot and run errands only through secret exits they have found. Patrols and daily routes keep their usual ways.
+- A door or chest gets a new combination each time it locks again, also when it locks again by itself. A combination you learned before then stops working.
+- A door you unlock stays unlocked after everyone leaves the area, until it locks again by itself.
+- `go w` and the other short directions now answer just as `w` does.
+- On the web client the map no longer jumps back to you while you stay in one room, and it keeps your zoom.
+
 ## 2026-11-25: Small fixes
 
 - You can start one flee each round. A second `flee` started in the same round is refused and costs nothing. Monsters follow the same rule.

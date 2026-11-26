@@ -47,7 +47,8 @@ An ambient say's echo next door ("You hear someone talking.", owner
 `rooms.Room.SendTextToExitsExcluding`, with source `say_echo` and
 `Perceives: ambient.HearsQuiet`. The echo is a quiet message, which the
 delivery hook gives only to a player with the `superhearing` condition
-flag, so only such a player is charged; no shipped condition grants it
+flag (`characters.Character.HearsQuiet`, the one rule, which `HearsQuiet`
+here asks), so only such a player is charged; no shipped condition grants it
 today. Every other say's echo never comes here.
 
 `AllHaveBudget` reports, without charging, whether every player present

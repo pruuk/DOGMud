@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -81,8 +81,9 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 		row = append(row, keyType)
 
-		roomIdStr, _, _ := strings.Cut(lockId, `-`)
-		lockId = lockId[len(roomIdStr)+1:]
+		// lockId stays the whole "<roomId>-<name>" id, the one picklock
+		// learns the sequence under; name is the exit or container part.
+		roomIdStr, name, _ := strings.Cut(lockId, `-`)
 
 		roomId, _ := strconv.Atoi(roomIdStr)
 		room := rooms.LoadRoom(roomId)
@@ -92,10 +93,15 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 		if keyType != `Key` {
 
-			exitName, _ := room.FindExitByName(lockId)
-			exitInfo := room.Exits[exitName]
+			var lock gamelock.Lock
+			if containerName := room.FindContainerByName(name); containerName != `` {
+				lock = room.Containers[containerName].Lock
+			} else {
+				exitName, _ := room.FindExitByName(name)
+				lock = room.Exits[exitName].Lock
+			}
 
-			actualSequence := util.LockSequence(lockId, int(exitInfo.Lock.Difficulty), exitInfo.Lock.RotationSeed)
+			actualSequence := lock.Sequence(lockId)
 			diff := len(actualSequence) - len(sequence)/2
 			if diff > 0 {
 				complete = false
@@ -110,7 +116,7 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 		var formatting []string
 
-		if containerName := room.FindContainerByName(lockId); containerName != `` {
+		if containerName := room.FindContainerByName(name); containerName != `` {
 			row = append(row, containerName)
 
 			if keyType == `Key` {
@@ -127,7 +133,7 @@ func KeyRing(rest string, user *users.UserRecord, room *rooms.Room, flags events
 				formatting = exitPickFormatting
 			}
 
-			exitName, _ := room.FindExitByName(lockId)
+			exitName, _ := room.FindExitByName(name)
 			row = append(row, exitName)
 		}
 

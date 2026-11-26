@@ -151,7 +151,7 @@ The adapter is the single blast-radius point when a subsystem API changes.
 | `findCraftingStationInZone(mob, stationName)` | First room in zone, not behind a `room_gate`, whose `Station` field matches |
 | `zoneAdjacentTo(zone)` | Zones sharing a room-exit border; lazy-computed + cached at first call |
 | `pickGiftItemFromInventory(mob)` | Highest-value non-quest item from backpack for gifting |
-| `pickRandomExit(mob)` | Random exit direction name from mob's current room |
+| `pickRandomExit(mob)` | Random exit direction name from mob's current room, among exits the mob knows: a secret exit only once found (#781 ruling 13; `survival` names it to `flee`, which honours a named secret exit) |
 | `pickSocialEmote()` | Random social emote command string (nod/bow/smile/wave/grin) |
 | `pickKnownRecipeForSkill(mob, skillName)` | Lowest-SkillMinimum known recipe that trains the given skill |
 | `mobMiscIntOr(mob, key, def)` | Read int from MiscData with default |

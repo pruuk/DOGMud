@@ -768,7 +768,8 @@ one check: it counts the command against the round (the count resets when
 connection type returns false and spends nothing. Every path that queues a
 command for a connection calls it: both typed-line loops in `main.go`
 (`handleTelnetConnection` and `resumeRestoredConnection`) and GMCP
-`Char.Action.Try` (`modules/gmcp`, `gmcp.CharOp.go`), and macro expansion in
+`Char.Action.Try` and `Char.Button.Press` (`modules/gmcp`, `gmcp.CharOp.go`),
+and macro expansion in
 `world.go` `processInput`, where the line naming the macro pays for its first
 command and every later command spends one more (expansion stops at the first
 refusal). Those run on different goroutines (connection reader and

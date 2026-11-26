@@ -44,7 +44,8 @@ type ScanResult struct {
 	Sightings []ScanSighting
 }
 
-// Scan walks each visible (non-secret) exit from the actor's room, loads
+// Scan walks each exit of the actor's room the actor knows (a secret one only
+// once found), loads
 // the adjacent room, and lists the mobs and players the actor makes out in
 // each (scanReach, then listedOccupants: nobody through darkness, never a
 // hidden creature the actor does not perceive).
@@ -59,8 +60,20 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 		return result
 	}
 
+	// A scanner who sees nothing in its own room scans nothing and names no
+	// exit, as look names none (owner ruling 2026-11-26, #781): a player reads
+	// look's own line, too dark or blinded, and a mob gets no sightings.
+	if line, dark := NoSightLine(ResolveLook(actor, ``).Kind); dark {
+		if actor.IsPlayer() {
+			actor.SendText(messaging.CategoryRefusal, line)
+		}
+		return result
+	}
+
 	for exitName, exitInfo := range room.Exits {
-		if exitInfo.Secret {
+		// A secret exit is scanned once the scanner has found it, by the one
+		// known-exit rule (#781, owner ruling 1).
+		if !room.ExitKnownTo(actor.GetCharacter(), exitName) {
 			continue
 		}
 

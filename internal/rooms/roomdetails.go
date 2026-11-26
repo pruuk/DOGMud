@@ -2,7 +2,6 @@ package rooms
 
 import (
 	"fmt"
-	"maps"
 	"sort"
 	"strings"
 
@@ -26,6 +25,10 @@ type RoomTemplateDetails struct {
 	VisibleCorpses []string
 	VisibleExits   map[string]exit.RoomExit
 	TemporaryExits map[string]exit.TemporaryRoomExit
+	// ExitsDark is true when the viewer sees nothing in the room
+	// (KnownExitList.Dark): both exit maps are empty because nothing is seen,
+	// not because there is no way out, so no exits line may say "None" (#781).
+	ExitsDark      bool
 	UserId         int
 	Character      *characters.Character
 	RoomSymbol     string
@@ -360,22 +363,18 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		details.VisibleMobs = []string{}
 	}
 
-	maps.Copy(details.TemporaryExits, r.ExitsTemp)
-
-	// Do this twice to ensure secrets are last
-
-	for exitStr, exitInfo := range r.Exits {
-
-		// If it's a secret room we need to make sure the player has recently been there before including it in the exits
-		if exitInfo.Secret {
-			if targetRm := LoadRoom(exitInfo.RoomId); targetRm != nil {
-				if targetRm.HasVisited(user.UserId, VisitorUser) {
-					details.VisibleExits[exitStr] = exitInfo
-				}
-			}
-		} else {
-			details.VisibleExits[exitStr] = exitInfo
+	// The exits line lists what the viewer knows of this room's exits, the
+	// one rule Room.Info, the maps and the touch buttons read too (KnownExits,
+	// #781): a secret exit once found, mutator and temporary exits, and
+	// nothing at all in the dark, which ExitsDark tells apart from no exits.
+	known := KnownExitsAt(r, user.Character, sight)
+	details.ExitsDark = known.Dark
+	for _, ke := range known.Exits {
+		if ke.Kind == ExitTemporary {
+			details.TemporaryExits[ke.Name] = ke.Temp
+			continue
 		}
+		details.VisibleExits[ke.Name] = ke.Exit
 	}
 
 	// add any corpses present
@@ -431,12 +430,6 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		}
 	}
 
-	// assign mutator exits last so that they can overwrite normal exits
-	for mut := range r.ActiveMutators {
-		spec := mut.GetSpec()
-		maps.Copy(details.VisibleExits, spec.Exits)
-	}
-
 	if searchMobName := user.Character.GetMiscData(`tracking-mob`); searchMobName != nil {
 
 		// Condition-absent cleanup: if tracking misc data was set but the
@@ -479,7 +472,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 				} else {
 
-					exitName := r.findMobExit(0, searchMobNameStr)
+					exitName := r.findMobExit(user.Character, 0, searchMobNameStr)
 					if exitName == `` {
 
 						// Always show when trail is lost
@@ -553,7 +546,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 				} else {
 
-					exitName := r.findUserExit(0, searchUserNameStr)
+					exitName := r.findUserExit(user.Character, 0, searchUserNameStr)
 					if exitName == `` {
 
 						// Always show when trail is lost

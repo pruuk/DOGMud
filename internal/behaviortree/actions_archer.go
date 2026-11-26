@@ -234,9 +234,13 @@ func actTryFire(params map[string]any, ctx *EvalContext) Result {
 	if room == nil {
 		return Failure
 	}
-	dir := room.FindExitTo(targetRoomId)
+	// #781 ruling 13 (plan D35): the archer chooses this shot on its own, so
+	// it shoots only through an exit it knows, a secret one once found.
+	// FindKnownExitTo answers a temporary exit by its key, the word shoot
+	// matches.
+	dir := room.FindKnownExitTo(&mob.Character, targetRoomId)
 	if dir == "" {
-		return Failure // not adjacent — can't line up a shot this tick
+		return Failure // not adjacent, or only through a secret exit it has not found
 	}
 	mob.Command(fmt.Sprintf("shoot %s %s", name, dir))
 	return Success
@@ -315,7 +319,9 @@ func actKeepDistance(params map[string]any, ctx *EvalContext) Result {
 func pickRetreatExit(mob *mobs.Mob, room *rooms.Room) string {
 	homeId := mob.HomeRoomId
 	fallback := ""
-	for dir, info := range room.Exits {
+	// A walk-away is the mob's own choice: a secret exit only once found
+	// (#781, owner ruling 13).
+	for dir, info := range room.PermanentExitsKnownTo(&mob.Character) {
 		if info.Lock.IsLocked() {
 			continue
 		}

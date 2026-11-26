@@ -1,0 +1,126 @@
+package actions
+
+import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+)
+
+// LearnSecretExitFollowing records that c, moving through exitName of room
+// behind the one it follows, now knows that exit when it is secret (#781,
+// owner ruling 2: a player who moves through a secret exit with the leader
+// they follow learns it; ruling 13 applies it to a companion or charmed NPC
+// moving with its leader, and to a packmate behind its alpha). It is called
+// when the follow step is issued, before the step runs, because the step
+// answers to the follower's own known-exit rule. Where the path has a sight
+// check (a party member, a player follower) it comes first; a companion, an
+// NPC follower and a shadower step without one. An exit that is not secret,
+// or no such exit: nothing.
+func LearnSecretExitFollowing(c *characters.Character, room *rooms.Room, exitName string) {
+	if c == nil || room == nil {
+		return
+	}
+	if ex, ok := room.GetExitInfo(exitName); ok && ex.Secret {
+		c.LearnSecretExit(room.RoomId, exitName)
+	}
+}
+
+// LearnSecretExitWatching records that every onlooker in room who saw a
+// movement line naming exitName of room now knows that exit when it is
+// secret (#781, owner ruling 14: an onlooker who sees the mover learns the
+// exit). Call it beside the line: "X leaves towards the <exit> exit" in the
+// room left, "X enters from the <exit>" in the room entered (exitName is
+// then the exit there leading back, "" when the line just says "arrives",
+// which names nothing and teaches nothing), "X flees to the <exit> exit!".
+//
+// Who saw it is the decision the line itself was delivered at, never a
+// second sight rule: players is the VisualSnapshot the line was sent
+// against, npcs the MobVisualSnapshot taken at the same moment. An onlooker
+// learns at SightFull and at SightShapes (a shapes-only reader's line still
+// names the exit: only names become "a figure"); one at SightNone read the
+// sound line, or nothing, and learns nothing. Like the line, it reaches only
+// those in room now AND in the snapshot (Room.SnapshotReaders and its mob
+// twin). mover is skipped: this rule changes nothing about what the mover
+// knows. An NPC onlooker records on its own instance, as search does.
+//
+// Ruling 15 (2026-11-25) widens it from movement to any line that shows
+// someone using the exit: picking, unlocking or locking its lock, disarming
+// its trap, peering or shooting through it, a mob finding it locked. mover is
+// then the one using it, or, on the far side of a peer or a shot, the party
+// that line leaves out (a shot's target). It records the exit only
+// (Character.LearnSecretExit, the Discoveries record): a lock's sequence lives
+// on the picker's keyring (Character.SetKey) and no onlooker gets it.
+//
+// The snapshots cost light composition per occupant, so a caller on a
+// movement path takes the NPC one only when Room.IsSecretExit says it will
+// be read. A line sent live (judged by the room as it is now) uses
+// LearnSecretExitWatchingNow instead.
+func LearnSecretExitWatching(room *rooms.Room, exitName string, mover *characters.Character, players rooms.VisualSnapshot, npcs rooms.MobVisualSnapshot) {
+	if room == nil || !room.IsSecretExit(exitName) {
+		return
+	}
+	for u, d := range room.SnapshotReaders(players) {
+		if d != messaging.SightNone && u.Character != mover {
+			u.Character.LearnSecretExit(room.RoomId, exitName)
+		}
+	}
+	for m, d := range room.MobSnapshotReaders(npcs) {
+		if d != messaging.SightNone && &m.Character != mover {
+			m.Character.LearnSecretExit(room.RoomId, exitName)
+		}
+	}
+}
+
+// LearnSecretExitWatchingNow is LearnSecretExitWatching for a line sent live,
+// judged by the room as it is now (SendTextVisualWithAudio,
+// SendTextVisualHidingNames): call it right after the send. It asks whether
+// the exit is secret first and only then takes both snapshots, so an
+// ordinary step pays nothing for ruling 14.
+func LearnSecretExitWatchingNow(room *rooms.Room, exitName string, mover *characters.Character) {
+	if room == nil || !room.IsSecretExit(exitName) {
+		return
+	}
+	LearnSecretExitWatching(room, exitName, mover, room.VisualSnapshot(), room.MobVisualSnapshot())
+}
+
+// NPCMayFollowThrough reports whether the NPC c, stepping behind its leader
+// through exitName of room, takes that exit (#781, owner ruling 13). An exit
+// c knows (Room.ExitKnownTo): yes. A secret one c has not found: yes, and c
+// learns it, when the leader is a mob (leaderUserId 0: a packmate behind its
+// alpha, plan D17) or the player who charmed c; any other NPC following a
+// player stops there. modules/follow and the shadow hook both ask it.
+func NPCMayFollowThrough(c *characters.Character, room *rooms.Room, exitName string, leaderUserId int) bool {
+	if room.ExitKnownTo(c, exitName) {
+		return true
+	}
+	if leaderUserId > 0 && !c.IsCharmed(leaderUserId) {
+		return false
+	}
+	LearnSecretExitFollowing(c, room, exitName)
+	return true
+}
+
+// FollowExitTo is the exit key of room a follower steps through behind leader,
+// who went from room to toRoomId, or "" when no exit leads there (a
+// teleport). The move does not name its exit, so among the exits that lead
+// there the one leader could have used wins, by Room.ExitsTo's one ranking: a
+// plain room or mutator exit first (it teaches nothing), then a temporary
+// one, then a secret one leader knows, and a secret one leader does not know
+// only when nothing else leads there (a scripted mob route takes it); A to Z
+// within each. It answers the exit's key, which is what `go` matches, never a
+// temporary exit's title. A nil leader knows no secret exit.
+func FollowExitTo(room *rooms.Room, leader *characters.Character, toRoomId int) string {
+	if room == nil {
+		return ""
+	}
+	ways := room.ExitsTo(toRoomId)
+	for _, way := range ways {
+		if !way.Secret || room.ExitKnownTo(leader, way.Key) {
+			return way.Key
+		}
+	}
+	if len(ways) > 0 {
+		return ways[0].Key
+	}
+	return ""
+}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/buttons"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -40,6 +41,10 @@ func init() {
 	events.RegisterListener(GMCPRoomUpdate{}, g.buildAndSendGMCPPayload)
 	events.RegisterListener(events.SightBandChanged{}, g.sightBandChangedHandler)
 	events.RegisterListener(events.NpcMarkersChanged{}, g.npcMarkersChangedHandler)
+	// Room.Info kept current for the touch buttons (#781): see
+	// gmcp.RoomExitsWatch.go.
+	events.RegisterListener(events.NewRound{}, g.roomExitsWatchHandler)
+	events.RegisterListener(events.RoomExitsChanged{}, g.roomExitsChangedHandler)
 
 }
 
@@ -127,6 +132,11 @@ func (g *GMCPRoomModule) despawnHandler(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
+	// The player left the game: their button ids, dark marks and the record
+	// of the last Room.Info sent go with them (#781).
+	buttons.Forget(evt.UserId)
+	forgetSentRoomExits(evt.UserId)
+
 	room := rooms.LoadRoom(evt.RoomId)
 	if room == nil {
 		return events.Continue
@@ -204,6 +214,9 @@ func (g *GMCPRoomModule) roomChangeHandler(e events.Event) events.ListenerReturn
 		return events.Continue
 	}
 
+	// Leaving a room clears its dark marks (#781, owner ruling 4).
+	buttons.ClearDarkMarks(evt.UserId)
+
 	// Send update to the moved player about their new room.
 	events.AddToQueue(GMCPRoomUpdate{
 		UserId:     evt.UserId,
@@ -249,6 +262,11 @@ func (g *GMCPRoomModule) buildAndSendGMCPPayload(e events.Event) events.Listener
 			requestedId := strings.Join(identifierParts, `.`)
 
 			payload, moduleName := g.GetRoomNode(user, requestedId)
+			// What the touch buttons were just sent, for the round watcher
+			// (gmcp.RoomExitsWatch.go).
+			if p, ok := payload.(GMCPRoomModule_Payload); ok && moduleName == `Room.Info` {
+				recordSentRoomExits(evt.UserId, roomExitsSignature(p.Id, p.Dark, p.ExitsV2, p.DarkMarks))
+			}
 
 			events.AddToQueue(GMCPOut{
 				UserId:  evt.UserId,
@@ -261,6 +279,76 @@ func (g *GMCPRoomModule) buildAndSendGMCPPayload(e events.Event) events.Listener
 	}
 
 	return events.Continue
+}
+
+// roomExitsInfo is Room.Info's exit half for one viewer (#781): the exits
+// they know here (rooms.KnownExits, the one rule the exits line and the maps
+// read too), each with its kind, whether it is locked now and its button id;
+// the dark flag; the T directions' fixed ids; and the dark marks. GetRoomNode
+// sends it and the round watcher compares it, so the two cannot disagree
+// about what "changed" means.
+type roomExitsInfo struct {
+	Exits     map[string]int
+	ExitsV2   map[string]GMCPRoomModule_Payload_Contents_ExitInfo
+	Dark      bool
+	Moves     map[string]string
+	DarkMarks map[string]string
+}
+
+// sight is messaging.ParticipantSight(user.Character, room), which the
+// caller has already read, so one Room.Info asks it once.
+func buildRoomExitsInfo(user *users.UserRecord, room *rooms.Room, sight messaging.SightDecision) roomExitsInfo {
+	known := rooms.KnownExitsAt(room, user.Character, sight)
+	info := roomExitsInfo{
+		Exits:     map[string]int{},
+		ExitsV2:   map[string]GMCPRoomModule_Payload_Contents_ExitInfo{},
+		Dark:      known.Dark,
+		Moves:     buttons.FixedIds(),
+		DarkMarks: buttons.DarkMarks(user.UserId, room.RoomId, known.Dark),
+	}
+	ids := buttons.MovementIds(user.UserId, room, known)
+	for _, ke := range known.Exits {
+		// A temporary exit named like a permanent one is reached by the
+		// permanent one's name (Room.FindExitByName), so it is listed once.
+		if _, dup := info.ExitsV2[ke.Name]; dup {
+			continue
+		}
+		info.Exits[ke.Name] = ke.RoomId
+
+		direction := ke.Name
+		if ke.Exit.MapDirection != `` {
+			direction = ke.Exit.MapDirection
+		}
+		deltaX, deltaY, deltaZ := mapper.GetDelta(direction)
+		v2 := GMCPRoomModule_Payload_Contents_ExitInfo{
+			RoomId:  ke.RoomId,
+			DeltaX:  deltaX,
+			DeltaY:  deltaY,
+			DeltaZ:  deltaZ,
+			Details: []string{},
+			Kind:    string(ke.Kind),
+			Id:      ids[ke.Name],
+		}
+		if ke.Exit.Secret {
+			v2.Details = append(v2.Details, `secret`)
+		}
+		// Locked now, not "has a lock" (owner ruling 3).
+		if ke.LockedNow {
+			v2.Details = append(v2.Details, `locked`)
+		}
+		if ke.Exit.HasLock() {
+			lockId := fmt.Sprintf(`%d-%s`, room.RoomId, ke.Name)
+			haskey, hascombo := user.Character.HasKey(lockId, ke.Exit.Lock)
+			if haskey {
+				v2.Details = append(v2.Details, `player_has_key`)
+			}
+			if hascombo {
+				v2.Details = append(v2.Details, `player_has_pick_combo`)
+			}
+		}
+		info.ExitsV2[ke.Name] = v2
+	}
+	return info
 }
 
 func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) (data any, moduleName string) {
@@ -313,7 +401,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 			if container.HasLock() {
 				c.Locked = true
 				lockId := fmt.Sprintf(`%d-%s`, room.RoomId, name)
-				c.HasKey, c.HasPickCombo = user.Character.HasKey(lockId, int(container.Lock.Difficulty))
+				c.HasKey, c.HasPickCombo = user.Character.HasKey(lockId, container.Lock)
 			}
 
 			payload.Contents.Containers = append(payload.Contents.Containers, c)
@@ -475,71 +563,16 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 			payload.Coordinates += `, ` + strconv.Itoa(x) + `, ` + strconv.Itoa(y) + `, ` + strconv.Itoa(z)
 		}
 
-		// set exits
-		payload.Exits = map[string]int{}
-		payload.ExitsV2 = map[string]GMCPRoomModule_Payload_Contents_ExitInfo{}
-
-		for exitName, exitInfo := range room.Exits {
-			// Empty maps, not omitted, in the dark, so a client merging
-			// payloads drops the last sighted exits (the Char.Enemies rule).
-			if seesNothing {
-				break
-			}
-
-			if exitInfo.Secret {
-				if exitRoom := rooms.LoadRoom(exitInfo.RoomId); exitRoom != nil {
-					if !exitRoom.HasVisited(user.UserId, rooms.VisitorUser) {
-						continue
-					}
-				}
-			}
-
-			// Skip non compass directions?
-			if !mapper.IsCompassDirection(exitName) {
-				//continue
-			}
-
-			payload.Exits[exitName] = exitInfo.RoomId
-
-			// Form the "exitV2"
-			deltaX, deltaY, deltaZ := 0, 0, 0
-			if len(exitInfo.MapDirection) > 0 {
-				deltaX, deltaY, deltaZ = mapper.GetDelta(exitInfo.MapDirection)
-			} else {
-				deltaX, deltaY, deltaZ = mapper.GetDelta(exitName)
-			}
-
-			exitV2 := GMCPRoomModule_Payload_Contents_ExitInfo{
-				RoomId:  exitInfo.RoomId,
-				DeltaX:  deltaX,
-				DeltaY:  deltaY,
-				DeltaZ:  deltaZ,
-				Details: []string{},
-			}
-
-			if exitInfo.Secret {
-				exitV2.Details = append(exitV2.Details, `secret`)
-			}
-
-			if exitInfo.HasLock() {
-
-				exitV2.Details = append(exitV2.Details, `locked`)
-
-				lockId := fmt.Sprintf(`%d-%s`, room.RoomId, exitName)
-				haskey, hascombo := user.Character.HasKey(lockId, int(exitInfo.Lock.Difficulty))
-
-				if haskey {
-					exitV2.Details = append(exitV2.Details, `player_has_key`)
-				}
-
-				if hascombo {
-					exitV2.Details = append(exitV2.Details, `player_has_pick_combo`)
-				}
-			}
-
-			payload.ExitsV2[exitName] = exitV2
-		}
-		// end exits
+		// Exits: what the viewer knows here and the touch buttons' ids
+		// (#781). In the dark both maps are present and empty, so a client
+		// merging payloads drops the last sighted exits (the Char.Enemies
+		// rule).
+		exitsInfo := buildRoomExitsInfo(user, room, sight)
+		payload.Exits = exitsInfo.Exits
+		payload.ExitsV2 = exitsInfo.ExitsV2
+		payload.Dark = exitsInfo.Dark
+		payload.Moves = exitsInfo.Moves
+		payload.DarkMarks = exitsInfo.DarkMarks
 
 		// Set room details
 		if room.IsBank {
@@ -609,6 +642,9 @@ type GMCPRoomModule_Payload struct {
 	Exits       map[string]int                                      `json:"exits"`
 	ExitsV2     map[string]GMCPRoomModule_Payload_Contents_ExitInfo `json:"exitsv2"`
 	Details     []string                                            `json:"details"`
+	Dark        bool                                                `json:"dark"`      // the viewer sees nothing here (#781); exits and exitsv2 are then empty
+	Moves       map[string]string                                   `json:"moves"`     // the six T directions to their fixed button ids, in every room (#781)
+	DarkMarks   map[string]string                                   `json:"darkmarks"` // T direction to "wall" or "locked", tried in the dark (#781, ruling 4)
 	Contents    GMCPRoomModule_Payload_Contents                     `json:"Contents"`
 }
 
@@ -618,6 +654,8 @@ type GMCPRoomModule_Payload_Contents_ExitInfo struct {
 	DeltaY  int      `json:"dy"`
 	DeltaZ  int      `json:"dz"`
 	Details []string `json:"details"`
+	Kind    string   `json:"kind"` // compass, vertical, diagonal, named or temporary (rooms.ExitKind)
+	Id      string   `json:"id"`   // the movement button's id (internal/buttons)
 }
 
 // /////////////////

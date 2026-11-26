@@ -413,7 +413,7 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 	rest = strings.TrimSpace(rest)
 
 	// Figure out whether it was an exit entered
-	exitName, _ := room.FindExitByName(cmd)
+	exitName, _ := room.FindKnownExitByName(user.Character, cmd)
 	if exitName != `` {
 		rest = cmd
 		cmd = "go"
@@ -653,7 +653,7 @@ func fallbackRoute(user *users.UserRecord, room *rooms.Room, cmd string) command
 	if spellId := spells.ResolveSpellId(cmd); spellId != "" && user.Character.HasSpell(spellId) {
 		return routeSpell
 	}
-	if (room != nil && actions.FindExit(room, cmd).Found) || actions.IsCompassDirection(cmd) {
+	if (room != nil && actions.FindKnownExit(room, user.Character, cmd).Found) || actions.IsCompassDirection(cmd) {
 		return routeGo
 	}
 	return routeUnknown

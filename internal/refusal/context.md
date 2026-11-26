@@ -99,6 +99,7 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `RemainsHoldLootLine` (no send) | Those remains still hold spoils. Clear the loot from them first, then raise what's left. |
 | `RemainsTooFaintLine` (no send) | Those remains are too faint to hold a bound spirit. |
 | `RemainsAlreadyRaisedLine` (no send) | Those remains were already animated once; there is nothing left to raise. |
+| `StaleButton(u)` / `StaleButtonLine` (`button.go`, #781) | That button was out of date. Try again. (a touch button id not issued to this player for this room; `modules/gmcp` re-sends `Room.Info` with it) |
 | `InputQueueFull` / `InputQueueFullLine` (`input.go`; the first command refused in a full spell, to every client, sent by `modules/gmcp`) | You're already doing as much as you can. Wait a moment. |
 | `StillGearingUp` / `StillGearingUpLine` (`busy.go`; gearup while the last gearup's wears still wait) | You're still putting your gear on. |
 | `AutomationLimit(u, "triggers", 100)` / `AutomationLimitText` (`input.go`; `Char.Automation.Set` past the count cap) | You can keep at most 100 triggers. Remove one first. |

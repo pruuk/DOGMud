@@ -31,7 +31,7 @@ func TestPickWanderExit_UsesFilteredCandidates(t *testing.T) {
 	// Run repeatedly: pre-fix this picked uniformly from all four exits, so
 	// a single lucky iteration would not prove anything.
 	for i := range 200 {
-		name, roomId := pickWanderExit(options, room)
+		name, roomId := pickWanderExit(options, room, nil)
 		if name != "north" {
 			t.Fatalf("iteration %d: picked %q, want the only filtered candidate %q", i, name, "north")
 		}
@@ -47,7 +47,7 @@ func TestPickWanderExit_StaysWithinCandidateSet(t *testing.T) {
 	allowed := map[string]int{"north": 100, "south": 200}
 
 	for i := range 200 {
-		name, roomId := pickWanderExit(options, room)
+		name, roomId := pickWanderExit(options, room, nil)
 		wantRoom, ok := allowed[name]
 		if !ok {
 			t.Fatalf("iteration %d: picked %q, which is outside the candidate set", i, name)
@@ -63,7 +63,7 @@ func TestPickWanderExit_StaysWithinCandidateSet(t *testing.T) {
 func TestPickWanderExit_EmptyCandidatesFallsBackToRandomExit(t *testing.T) {
 	room := wanderTestRoom()
 
-	name, roomId := pickWanderExit(nil, room)
+	name, roomId := pickWanderExit(nil, room, nil)
 	if name == "" {
 		t.Fatal("empty candidates returned no exit; mob would stand still instead of wandering")
 	}
@@ -79,7 +79,7 @@ func TestPickWanderExit_EmptyCandidatesFallsBackToRandomExit(t *testing.T) {
 func TestPickWanderExit_StaleCandidateFallsBack(t *testing.T) {
 	room := wanderTestRoom()
 
-	name, roomId := pickWanderExit([]string{"up"}, room)
+	name, roomId := pickWanderExit([]string{"up"}, room, nil)
 	if name == "up" {
 		t.Fatal("picked a candidate that is not an exit of the room")
 	}
@@ -95,7 +95,7 @@ func TestPickWanderExit_StaleCandidateFallsBack(t *testing.T) {
 func TestPickWanderExit_NoExitsIsSafe(t *testing.T) {
 	room := &rooms.Room{RoomId: 1, Exits: map[string]exit.RoomExit{}}
 
-	if name, _ := pickWanderExit(nil, room); name != "" {
+	if name, _ := pickWanderExit(nil, room, nil); name != "" {
 		t.Errorf("expected no exit from an exitless room, got %q", name)
 	}
 }

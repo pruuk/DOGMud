@@ -21,6 +21,15 @@ func (c *Character) HasConditionFlag(conditionFlag conditions.Flag) bool {
 	return c.Conditions.HasFlag(conditionFlag)
 }
 
+// HearsQuiet reports whether c takes in a quiet line (events.Message.IsQuiet,
+// a say's echo next door): only with the superhearing flag. The one statement
+// of the rule: the delivery hook (hooks.Message_SendMessage), the ambient
+// budget (ambient.HearsQuiet) and Room.SendTextToExitsExcluding, which skips
+// a room where nobody would hear it, all ask it.
+func (c *Character) HearsQuiet() bool {
+	return c.HasConditionFlag(conditions.SuperHearing)
+}
+
 // HasFlagFromAnySource returns true if the character has the given flag from
 // either active conditions OR permanent mutation effects. Use this instead of
 // HasConditionFlag when the check should also honor mutation-granted flags.

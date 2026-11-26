@@ -755,6 +755,13 @@ slice a mob's step was free and unconditional; now `quoteMobPathStep(mob)
   hands the mob back to the idle command, schedule and patrol fallbacks
   instead of parking it on an impossible step forever.
 
+A mob standing off its path (moved by something else) re-paths through its
+remaining waypoints. A path set by `pathto found` (a planner's errand,
+`mob.Path.FoundOnly()`) re-paths as `pathto found <waypoints>`
+(`mobs.PathtoCommand`), so it still
+takes only the secret exits the mob found (#781, owner ruling 13); a
+scripted path re-paths as plain `pathto`.
+
 `mobPathStepWaiting(mob) bool` re-runs `quoteMobPathStep` and reports the
 middle case above (a step the walker would take that is affordable-later,
 not-affordable-now). The patrol executor's `applyPatrolPlan` (`WantsPath`
@@ -1000,7 +1007,15 @@ The round driver reads Combat Phase state instead of legacy `Aggro`:
   fires the `mob_flee` behaviour event. Before this slice a mob's `Flee`
   resolved instantly in `mobcommands.Flee` with no round-later step at all.
   A mob still casting never reaches it, but `mobcommands.Flee` drops the
-  cast when it begins the flee, as the player's command does.
+  cast when it begins the flee, as the player's command does. The player's
+  "X flees to the <exit> exit!" line is followed by
+  `actions.LearnSecretExitWatchingNow` (#781 ruling 14), so an onlooker who read
+  it learns a secret exit it names; the mob's lines are `RelocateMob`'s.
+- **A mob attacked from the next room** (`NewRound_DoCombat_unified.go`,
+  not yet in combat) walks to its attacker through
+  `Room.FindKnownExitTo(defChar, atkChar.RoomId)`: a secret exit only once the
+  mob found it (#781, owner ruling 13). With no known exit it does not walk
+  and only queues its `attack`.
 - **`PackFlee`** (`MobDeath_PackFlee.go`) queues `flee` only on packmates for
   which `actions.FleeGate` returns `FleeOK`, and counts only those toward the
   scatter line. That covers the owner ruling that idle packmates stay put
@@ -2225,13 +2240,20 @@ Registered as a `RoomChange` event listener (player/mob parity slice 6); it
 replaced a loop in `usercommands/go.go` and `MobRoomChange_ShadowFollow.go`,
 which moved only player shadowers. `RoomChangeShadowFollow` runs two passes:
 
-- **Follow.** `shadowExitTo` resolves the exit's map key from `Exits`, then
-  `ExitsTemp`, then the active mutators' exits (not `Room.FindExitTo`, which
-  returns a temporary exit's title). No exit (a teleport): nothing. Otherwise
-  every player and mob in the old room whose `actions.ShadowTargetOf` names
-  the mover is checked: no condition 87 means stale, `actions.ClearShadow`;
-  not hidden, it stays; else it queues the exit through one `Command` call
-  (users and mobs share the signature).
+- **Follow.** `actions.FollowExitTo` resolves the exit's map key (room,
+  mutator and temporary exits; never a temporary exit's title), preferring
+  the exit the mover could have used, so a shadower never learns a secret
+  exit the mover did not take (#781). No exit (a teleport): nothing.
+  Otherwise every player and mob in the old room whose
+  `actions.ShadowTargetOf` names the mover is checked: no condition 87 means
+  stale, `actions.ClearShadow`; not hidden, it stays; else it queues the exit
+  through one `Command` call (users and mobs share the signature). At a
+  secret exit (#781, rulings 2 and 13, shadowing is following) a player
+  shadower learns it first (`actions.LearnSecretExitFollowing`); a mob
+  shadower answers to `actions.NPCMayFollowThrough`, and one that may not
+  take it drops the shadow quietly (`actions.DropShadow`: no cooldown, no
+  line), so nothing hints at the exit. Tests:
+  `RoomChange_ShadowFollow_secret_test.go`.
 - **Arrival.** When the mover has a live shadow whose quarry is in the room
   it entered: not hidden, `actions.EndShadow` with "You've been spotted --
   your shadow ends."; still hidden, `actions.ShadowSenseRoll` in that room.
@@ -2630,7 +2652,11 @@ room targeting the shooter", a wider question than "who has engaged me".
 delivered text. Player chatter on its `RoomId` branch arrives unrendered, so
 `roomMessageTextFor` wraps it there for each reader. Both of its branches gate on
 `message.HiddenFromDeafened(user.Deafened)` (`internal/events`'s one
-statement of the rule) before sending, rather than re-deriving it. Every
+statement of the rule) before sending, rather than re-deriving it. The
+`RoomId` branch reads the players in the room at delivery and keeps those
+`message.AddressedTo(userId)` allows (`ExcludeUserIds`, and the
+`OnlyUserIds` allow-list of #781 D43, so a walk-in never reads a line
+addressed to others). Every
 speech and emote room line now reaches this package through
 `internal/actions`'s shared bodies (`Say`, `Shout`, `SendHeard`, `SendSeen`),
 so nothing in `hooks` hides a speaker's name itself.

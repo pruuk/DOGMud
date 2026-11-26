@@ -1,9 +1,6 @@
 package hooks
 
 import (
-	"slices"
-
-	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -71,21 +68,15 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 			return events.Continue
 		}
 
+		// The players in the room now: one who left since queueing reads
+		// nothing, and OnlyUserIds (#781 D43) keeps a walk-in out of a line
+		// addressed to others (events.Message.AddressedTo).
 		for _, userId := range room.GetPlayers() {
-			skip := false
-
 			if message.UserId == userId {
 				continue
 			}
 
-			exLen := len(message.ExcludeUserIds)
-			if exLen > 0 {
-				if slices.Contains(message.ExcludeUserIds, userId) {
-					skip = true
-				}
-			}
-
-			if skip {
+			if !message.AddressedTo(userId) {
 				continue
 			}
 
@@ -97,10 +88,8 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 				}
 
 				// If this is a quiet message, make sure the player can hear it
-				if message.IsQuiet {
-					if !user.Character.HasConditionFlag(conditions.SuperHearing) {
-						continue
-					}
+				if message.IsQuiet && !user.Character.HearsQuiet() {
+					continue
 				}
 
 				textOut := templates.AnsiParse(roomMessageTextFor(message, user))

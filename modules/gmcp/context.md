@@ -487,6 +487,49 @@ call, for every lane including the sub-module requests:
 - **Map (owner ruling R5):** `go.go` maps a room only through `actions.MarkRoomMappedIfSeen`, so
   a room walked in the dark stays off `Zone.Map` until seen; rooms already mapped stay.
 
+`Room.Info` exits come from `rooms.KnownExits` through `buildRoomExitsInfo`
+(#781): only exits the viewer knows (a secret exit once found), room,
+mutator and temporary exits. Each `exitsv2` entry has `kind` (`compass`,
+`vertical`, `diagonal`, `named`, `temporary`), `id` (the movement button id,
+`internal/buttons`) and `details` (`secret`; `locked` means locked now;
+`player_has_key`, `player_has_pick_combo` on any lock; the combination counts
+only at the lock's current rotation, `characters.HasKey`). Top level: `dark`
+(the viewer sees nothing; the exit maps are then empty), `moves` (the six T
+directions to their fixed ids, always sent) and `darkmarks` (T direction to
+`wall` or `locked`). The builder reads `rooms.KnownExitsAt` with the sight
+`GetRoomNode` already holds, so one `Room.Info` asks `ParticipantSight` once.
+Building `Room.Info` issues the player's per-room ids and replaces the set
+they held (`buttons.MovementIds`); the same exits in the same room keep the
+held set. Building it also clears the player's dark marks once the room is
+not dark to them (`buttons.DarkMarks`). A temporary exit that shares a
+permanent exit's name is listed once, as the permanent exit, since that name
+reaches the permanent one (`Room.FindExitByName`).
+
+`Room.Info` is kept current by `gmcp.RoomExitsWatch.go` (#781, spec "Kept
+current"), the `Char.Vitals` watcher's pattern: once a round
+(`roomExitsWatchHandler` on `events.NewRound`) each GMCP user's exit half
+(`buildRoomExitsInfo`, with one `ParticipantSight` read) is turned into a
+string by `roomExitsSignature` (room, dark flag, each `exitsv2` entry's name,
+kind, id, destination and details, the dark marks) and compared with the last
+one sent (`lastSentRoomExits`, recorded in `buildAndSendGMCPPayload` for every
+full `Room.Info`). `Room.Info` is re-sent only on a change: a door unlocked or
+relocking on its timer, a temporary exit coming or going, a secret exit found,
+the light changing, a key or combination gained. A round with no change sends
+nothing. `events.RoomExitsChanged` (a dark mark, a stale button press, or a
+secret exit newly found) sends `Room.Info` at once (`roomExitsChangedHandler`). On a find
+(`SecretExitFound`) it also queues `GMCPZoneUpdate`, so `Zone.Map` goes out
+through its one sender (`GMCPZoneModule.buildAndSend`): the web client gets a
+partial map (the #650 diff), normally the changed room alone, or the full map
+when it is the first map or follows a resync; a telnet GMCP client gets the
+whole map as on every update. A dark mark sends no `Zone.Map`. Tests in
+`gmcp.SecretExitFound_test.go`, which also checks that the exits line,
+`Room.Info` and `Zone.Map` agree on one find. `roomChangeHandler` clears the mover's dark marks
+(`buttons.ClearDarkMarks`, ruling 4); `despawnHandler` forgets the player's
+ids and marks (`buttons.Forget`) and the record (`forgetSentRoomExits`).
+Measured 2026-11-25 (scratch benchmark, 100 GMCP players in lit rooms of seven
+exits, Ryzen desktop): about 0.75 to 0.95 ms for the whole pass, 47
+allocations per player, once every 4-second round.
+
 `Comm.Channel` say goes through `sayDeliveries` (`gmcp.Comm.go`), one payload per listener,
 matching the text lane (`actions.sendSpoken`): `sender` is the name at clear sight, `A figure`
 at shapes, `Someone` at none or when `events.Communication.SpeakerHidden`; a player speaker's
@@ -498,7 +541,8 @@ speaker's room through `commSpeakerRoom`.
 `Comm.Channel` shout goes through `shoutDeliveries` (owner 2026-11-07): the speaker's room
 exactly as say, then every room from `Room.ForEachAdjacentRoom` with `sender`
 `Someone (<exit>)`, the listener's exit back toward the shouter, as the game text's "from the
-<exit> direction". A player's shout skips deafened listeners next door; an NPC's reaches them.
+<exit> direction"; through a secret exit that listener has not found it is `Someone (nearby)`
+(`Room.HeardThroughExit` on the `ExitTo` `ForEachAdjacentRoom` passes, asked once per room, #781 owner ruling 16). A player's shout skips deafened listeners next door; an NPC's reaches them.
 The web client files `shout` into the Chat window as "<sender> shouts: <words>". Other
 channels are unchanged.
 
@@ -525,6 +569,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Zone.go` | `Zone` | The `Zone.Map` snapshot the web mapper draws, plus `party` and `full`; sent as a diff (see "Zone.Map is sent as a diff") |
 | `gmcp.ZoneDiff.go` | (none) | `zoneDiff`, the pure decision of what `Zone.Map` to send, and `roomFingerprint` |
 | `gmcp.CharVitalsWatch.go` | `Char.Vitals` | The once-a-round on-change check that keeps `Char.Vitals` current (see "When Char.Vitals is sent") |
+| `gmcp.RoomExitsWatch.go` | `Room.Info` | The once-a-round on-change check that keeps `Room.Info`'s exits, locks, dark flag and dark marks current for the touch buttons (#781) |
 | `gmcp.Party.go` | `Party` | Party roster and member vitals. The full `Party` package goes out on `PartyUpdated` and also to a member on `PlayerSpawn` (and once more the next round): a reconnect inside the zombie window keeps the party, and without the push the fresh client had `Party.Vitals` but no `Members`, so the web client's Vitals window showed the viewer twice (playtest 2026-10-17) |
 | `gmcp.Comm.go` | `Comm` | Channel messages |
 | `gmcp.Item.go` / `gmcp.Item_refs.go` | `Char.Items` | Inventory and equipment, plus item reference data |
@@ -540,6 +585,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Build.go` | `Build` | The admin web building tools' data feed. The whole builder is off (owner 2026-10-28, #375 phase 6 postponed until more big arcs land): `refuseWebBuilder` refuses every `Build.*` message in `handleBuildOp` before dispatch. The handlers stay for its return; the two doors in `buildQuestUpdate` are dormant until then: the loop door (`questDeps.loopWorld`, `loopVerdict`) and the destination check boot runs (`questDeps.destinations`, `destinationVerdict`; each refuses only the findings the save adds and warns about the quest's own standing ones) |
 | `gmcp.Delete_refs.go` | `Build` | The boot doors' checks for `Build.Room.Delete`, `Build.Item.Delete` and `Build.Mob.Delete`: `questRefsWithoutRoom` / `questRefsWithoutItem` / `questRefsWithoutMob` run the quest loop with the id gone and `dialogueRefsWithoutItem` the dialogue door, each returning only what the delete adds. `roomQuestRefs` backs `buildDeps.questRefs` (the room delete refuses, naming each quest and where); `itemQuestRefs` backs `refIterators.questRefs` in the item reference scan, which no longer walks quest rewards itself; `mobQuestRefs` backs `mobRefIterators.questRefs` in the mob scan, which no longer walks quest triggers itself (and covers a step `destination:` block's `mob`) |
 | `gmcp.CharOp.go` | — | `GMCPCharOp` + `handleCharOp`: inbound state-touching `Char.*` ops, deferred to MainWorker |
+| `gmcp.ButtonPress.go` | `Char.Button.Press` (inbound) | `pressButton`: a touch button id run as typed input; see "Char.Button.Press" above |
 | `gmcp.Relay.go` | `Companion.Relay.*` | The companion key relay: installs `companionai.SetRelaySender`, forwards inbound relay messages to `companionai.RelayInbound` |
 | `gmcp.Game.go` | `Game` | Game-level metadata |
 | `gmcp.World.go` | `World` | World-level state (weather, time) |
@@ -602,6 +648,42 @@ player's client may have `Network.MaxPendingInputs` (10) commands waiting
   list's click handler sends nothing from a row or chip (the on/off switches
   still work). A closed socket clears it. Held by
   `tools/jstest/webclient-input-queue.test.js`.
+
+## Char.Button.Press: a touch button (`gmcp.ButtonPress.go`, #781)
+
+Inbound `Char.Button.Press {"id": "..."}` is deferred to MainWorker through
+`GMCPCharOp` like the other `Char.*` ops; a payload that is not a string `id`
+does nothing. `pressButton` resolves the id with `buttons.Resolve` (a fixed id
+`m1`..`m6` is its bare direction in any room; a per-room id is `go <exit>`
+only in the room it was issued for, to the player it was issued to) and queues
+the line as typed input
+(`CommandFlagged(line, events.CmdTyped|events.CmdFromClient|events.CmdButton)`,
+the current turn) through the same per-user input queue as typing, so it obeys
+everything typing does: combat, conditions, quest gates, dark marks, and a
+menu or page stop treats it as typing. It is a command from the client, as a
+Try is: it counts against the player's pending inputs and runs at the client
+pace. Refused at the cap, nothing is queued and the player gets
+`refusal.InputQueueFull` through `Char.Input.Queue`'s `Refused` path (the
+press carries `CmdTyped`, so it is reported as a refused typed line is); a
+press has no result frame and is never retried, since the player may have
+moved by then. On an AI-port connection a press spends one command from the
+same per-round budget as typed lines and Try (`AIRateLimited`, checked in
+`handleCharOp` before `pressButton`, so a stale or prompt-time press spends
+too); over the budget it is dropped with the typed path's line. Tests in
+`gmcp.ButtonPress_queue_test.go`. A stale id (never issued, another
+player's, another room's, empty or overlong) answers `refusal.StaleButton`,
+one line that never repeats the id, and queues `events.RoomExitsChanged`,
+which re-sends `Room.Info`. That event merges per player while queued, and a
+stale press that finds one waiting (`events.IsQueued`) adds no second line, so
+a run of stale presses reads one line and builds `Room.Info` once. A press
+never answers a prompt (D13): `pressButton` does nothing while one is open,
+and `world.processInput` drops a `CmdButton` line silently if a prompt opened
+after the press was queued (its `InputDone` still fires, and its pending
+input slot was already freed as the queue popped it; tests in
+`world_button_press_test.go`). A game menu needs no such drop: `RouteMenuInput`
+has no free-text case, so an `AcceptText` menu takes free text only as a
+prompt question. Guard 1 (round trip) for movement ids, destination included,
+is `internal/usercommands/button_roundtrip_test.go`.
 
 ## Char.Input.Done: a typed line is finished (`gmcp.InputDone.go`, web client plan 6)
 
@@ -753,6 +835,17 @@ Completed tabs; `done` rows are the Completed tab and carry a name only.
   connection, and `zoneResyncHandler` answers a player at most once per tick
   (`resyncTurn`, cleared on despawn); a request in a tick already answered
   waits for the next (`CancelAndRequeue`) rather than being dropped.
+- **`GMCPZoneUpdate` is unique per user** (`UniqueID` is
+  `GMCPZoneUpdate-<userId>`), so requests queued for one player in one tick
+  merge into one snapshot build and one send (a secret exit found while
+  following, plus the move). Keeping only the first loses nothing: every
+  producer (`roomChangeHandler`, `sightBandChangedHandler`,
+  `zoneResyncHandler`, `roomExitsChangedHandler`) carries only the user id,
+  and `buildAndSend` reads the player's room, visited rooms, found exits and
+  party when it runs. A resync that merges into a request already queued
+  still gets a full map, because that request runs after the resync deleted
+  `zoneSent`. The builder's `sendZoneMapFull` sends its own `GMCPOut` and
+  never goes through `GMCPZoneUpdate`.
 - **Emit only on change where you can.** These push on room change and round
   boundaries; adding an unconditional per-round emit to a large payload is a
   bandwidth regression that will not show up in a local test.
