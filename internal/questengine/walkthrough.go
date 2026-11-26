@@ -108,7 +108,7 @@ func (wp walkPath) msg(s string) string {
 	if wp.key == "" {
 		return s
 	}
-	return s + " (on the " + wp.side + " path)"
+	return onPaths(s, []string{wp.side})
 }
 
 // ways is the Ways into the path's step at position n that lie on the path
@@ -408,6 +408,14 @@ func (env *walkEnv) walkOnePath(wp walkPath, offer questloop.Way, byId map[int]*
 		into := wp.ways(ways, i)
 
 		for _, p := range states {
+			// A step of this side opens once the branch flag names it. A
+			// player may set it apart from the grant (a "choose" topic), so
+			// the walk takes it from a setter that grants nothing of this
+			// quest (meetFlag); a setter that also grants a step is a Way,
+			// and a flag it sets after its grant still fails the walk.
+			if wp.steps[i].Branch != "" {
+				env.meetFlag(p, wp.key, wp.side, q.QuestId)
+			}
 			env.hear(p)
 			// Skip probe: a Way into a later step must not fire from here,
 			// or a player can jump over step i. A Way that also grants step
@@ -983,16 +991,69 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 	return env.eng.Notify(t.Event, d, p, &trailCtx{walkCtx{p: p}, trail}).Handled
 }
 
+// dedupeFindings keeps the first finding of each key. When the same key was
+// found on more than one path of a branched quest, the kept message names
+// every such path (onPaths); the key never does.
 func dedupeFindings(fs []questloop.Finding) []questloop.Finding {
-	seen := map[string]bool{}
+	at := map[string]int{}
+	paths := map[string][]string{}
 	var out []questloop.Finding
 	for _, f := range fs {
-		if !seen[f.Key()] {
-			seen[f.Key()] = true
+		k := f.Key()
+		_, ps := splitPaths(f.Msg)
+		n, seen := at[k]
+		if !seen {
+			at[k] = len(out)
+			paths[k] = ps
 			out = append(out, f)
+			continue
 		}
+		if len(ps) == 0 || len(paths[k]) == 0 {
+			continue
+		}
+		for _, p := range ps {
+			if !slices.Contains(paths[k], p) {
+				paths[k] = append(paths[k], p)
+			}
+		}
+		text, _ := splitPaths(out[n].Msg)
+		out[n].Msg = onPaths(text, paths[k])
 	}
 	return out
+}
+
+// onPaths names the paths a branched walk finding was found on, after its
+// text: " (on the sylara path)", " (on the sylara and rhett paths)".
+func onPaths(text string, paths []string) string {
+	switch len(paths) {
+	case 0:
+		return text
+	case 1:
+		return text + " (on the " + paths[0] + " path)"
+	}
+	return text + " (on the " + strings.Join(paths[:len(paths)-1], ", ") + " and " + paths[len(paths)-1] + " paths)"
+}
+
+// splitPaths undoes onPaths: the text and the paths it names, or the whole
+// message and none for a finding that names no path.
+func splitPaths(msg string) (string, []string) {
+	const open = " (on the "
+	i := strings.LastIndex(msg, open)
+	if i < 0 {
+		return msg, nil
+	}
+	inner, ok := strings.CutSuffix(msg[i+len(open):], " paths)")
+	if !ok {
+		if inner, ok = strings.CutSuffix(msg[i+len(open):], " path)"); !ok {
+			return msg, nil
+		}
+		return msg[:i], []string{inner}
+	}
+	head, last, ok := strings.Cut(inner, " and ")
+	if !ok {
+		return msg, nil
+	}
+	return msg[:i], append(strings.Split(head, ", "), last)
 }
 
 // checkWay reports a Way's needs the world cannot meet (spec 7.2): an item

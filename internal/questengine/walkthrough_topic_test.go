@@ -241,9 +241,13 @@ func TestWalk_DeadBranchIsReportedOnItsPath(t *testing.T) {
 	require.Contains(t, fs[0].Msg, "rhett path", "the path is named in the message")
 }
 
-// The walk player keeps the game's step rule: a side's step is granted only
-// once the flag names that side, so a flag set after the grant fails the walk
-// as it fails in play.
+// A side whose flag is set only after its grant, or set to the other side,
+// is reported dead on its path, as it is dead in play. The trigger engine's
+// off-path gate (triggerOpen) is what refuses these grants first; this test
+// proves the walk surfaces that refusal as a finding on the right path, and
+// that the walk's search for a flag setter (meetFlag) does not rescue it,
+// since the only setter is the Way that grants the step. The walk player's
+// own path rule is TestWalkPlayer_FollowsThePath's.
 func TestWalk_FlagSetAfterTheGrantIsReported(t *testing.T) {
 	// The trigger grants, then sets the flag.
 	w := forkedWalkWorld()
@@ -258,6 +262,32 @@ func TestWalk_FlagSetAfterTheGrantIsReported(t *testing.T) {
 	w = forkedWalkWorld()
 	w.Dialogue[2].Topics[0].SetsQuestFlag.Value = "sylara"
 	require.Contains(t, keys(Walk(w, questloop.Sources{})), "walk-dead-end 54 step rhett")
+}
+
+// A side whose flag a separate topic sets (Rhett's "choose") is playable: the
+// player chooses, then hears the stand topic whose trigger grants the side's
+// step. The walk takes the flag from that setter, as it does for any flag a
+// gate needs (meetFlag).
+func TestWalk_SideFlagFromASeparateSetter(t *testing.T) {
+	w := forkedWalkWorld()
+	rhett := w.Dialogue[2]
+	rhett.Topics[0].SetsQuestFlag = nil
+	rhett.Topics = append(rhett.Topics, dialogue.Topic{Key: "choose", Kind: dialogue.KindInfo, Label: "Choose", Text: "t",
+		Gates:   dialogue.Gates{QuestRequired: []string{"54-start"}, QuestExcluded: []string{"54-end"}},
+		Effects: dialogue.Effects{SetsQuestFlag: &dialogue.QuestFlagSet{Key: "54-branch", Value: "rhett"}}})
+	require.Empty(t, Walk(w, questloop.Sources{}))
+}
+
+// One defect found on both paths is one finding, under its one key, whose
+// message names both paths.
+func TestWalk_SameFindingOnTwoPathsNamesBoth(t *testing.T) {
+	w := forkedWalkWorld()
+	for _, df := range w.Dialogue[1:] {
+		df.Topics[1].QuestExcluded = append(df.Topics[1].QuestExcluded, df.Topics[1].QuestRequired...)
+	}
+	fs := Walk(w, questloop.Sources{})
+	f := findingOf(fs, "walk-dead-end 54 step end")
+	require.Equal(t, "no way in reaches 54-end (on the sylara and rhett paths)", f.Msg)
 }
 
 // A path's walk ends with the branch flag on its own side.
