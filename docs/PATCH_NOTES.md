@@ -15,7 +15,6 @@
 - Creatures wander, chase, shoot and run errands only through secret exits they have found. Patrols and daily routes keep their usual ways.
 - A door or chest gets a new combination each time it locks again, also when it locks again by itself. A combination you learned before then stops working.
 - A door you unlock stays unlocked after everyone leaves the area, until it locks again by itself.
-- `exits` in the dark now says it is too dark to see, as `look` does.
 - `go w` and the other short directions now answer just as `w` does.
 - On the web client the map no longer jumps back to you while you stay in one room, and it keeps your zoom.
 

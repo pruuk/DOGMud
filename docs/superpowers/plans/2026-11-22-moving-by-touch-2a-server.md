@@ -4977,6 +4977,8 @@ Each defect: check on the branch, search open issues, then `gh issue create --re
 
 ---
 
+**Result (2026-11-26, run `6f5dbbe6ee224aa3`, built `9536f39e7`):** every goal passed and all five Step 4 GMCP checks passed; nothing told the unfound north door from the south wall, dark or lit, and no finding lets a player pass or confirm an unfound secret exit. Fixed on the branch: `scan` skipped every secret exit, found or not (now `Room.ExitKnownTo`, test `TestScan_ASecretExitIsScannedOnceFound`); the patch notes claimed an `exits` command, which no player can type (upstream removed it from the command map in #291; `usercommands.Exits` is dead code), so that line is gone and the goals read the Exits line of `look`; the goals walk west to 6420, since 6417 east holds a Pale Creeper that killed the `early` seat. Owner questions raised: a pitch-dark `search` found the door on the third try (search scales by sight rather than refusing), and `scan` from a pitch-dark room names the exits it cannot see through.
+
 ### Task 18: PR
 
 - [ ] **Step 1: Re-run the gate if anything changed since task 15** (steps 1 to 5 of task 15).
