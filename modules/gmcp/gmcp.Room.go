@@ -337,8 +337,9 @@ func buildRoomExitsInfo(user *users.UserRecord, room *rooms.Room, sight messagin
 			v2.Label = label
 		}
 		// The viewer's own instance portal: the deck lists it first among
-		// portals to one zone (plan 2b D3; the client has no user id).
-		if rooms.IsOwnPortal(ke, user.UserId) {
+		// portals to one zone (plan 2b D3; the client has no user id). Only
+		// when it has a button: a revoked portal is not offered.
+		if v2.Id != `` && rooms.IsOwnPortal(ke, user.UserId) {
 			v2.Details = append(v2.Details, `own_portal`)
 		}
 		if ke.Exit.Secret {

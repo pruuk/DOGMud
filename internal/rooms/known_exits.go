@@ -363,37 +363,45 @@ func (r *Room) HeardLines(way ExitTo, named, nearby string, exclude []int) []Hea
 // (#781, owner ruling 18 and the plan review's R2: every exit the player may
 // legally enter gets a button). An exit is offered under its own name,
 // except a player's instance portal (exit.InstancePortalZone): it is
-// labelled with its zone, without the number, and offered only to a player
-// MayEnterInstance lets through, so a party member's portal is offered
-// beside the player's own. known is not changed: the exits line and
-// Room.Info's exit maps still list every exit. A room with no portal (nearly
-// every room) returns known itself and nil labels, since Room.Info's round
-// watcher calls this for every GMCP player every round.
+// labelled with its zone, without the number. Any temporary exit into an
+// instance (a keyed portal, or an add_temp_exit rift under its own name) is
+// offered only to a player MayEnterInstance lets through, so a party
+// member's portal is offered beside the player's own. known is not changed:
+// the exits line and Room.Info's exit maps still list every exit. A room
+// with no portal and no temporary exit into an ephemeral room (nearly every
+// room) returns
+// known itself and nil labels, since Room.Info's round watcher calls this
+// for every GMCP player every round. Labels stay nil when no portal is
+// offered.
 func ForDeck(known KnownExitList, userId int) (KnownExitList, map[string]string) {
-	var labels map[string]string
-	for _, ke := range known.Exits {
-		if _, portal := deckPortalZone(ke); portal {
-			labels = map[string]string{}
-			break
-		}
-	}
-	if labels == nil {
+	if !slices.ContainsFunc(known.Exits, func(ke KnownExit) bool {
+		_, portal := deckPortalZone(ke)
+		return portal || deckChecksEntry(ke)
+	}) {
 		return known, nil
 	}
+	var labels map[string]string
 	deck := KnownExitList{Dark: known.Dark, Exits: make([]KnownExit, 0, len(known.Exits))}
 	for _, ke := range known.Exits {
-		zone, portal := deckPortalZone(ke)
-		if !portal {
-			deck.Exits = append(deck.Exits, ke)
-			continue
-		}
-		if !MayEnterInstance(userId, ke.RoomId) {
+		if deckChecksEntry(ke) && !MayEnterInstance(userId, ke.RoomId) {
 			continue
 		}
 		deck.Exits = append(deck.Exits, ke)
-		labels[ke.Name] = zone
+		if zone, portal := deckPortalZone(ke); portal {
+			if labels == nil {
+				labels = map[string]string{}
+			}
+			labels[ke.Name] = zone
+		}
 	}
 	return deck, labels
+}
+
+// deckChecksEntry reports whether ForDeck must ask MayEnterInstance before
+// offering ke: a temporary exit into an ephemeral room. A keyed instance
+// portal always leads into one.
+func deckChecksEntry(ke KnownExit) bool {
+	return ke.Kind == ExitTemporary && IsEphemeralRoomId(ke.RoomId)
 }
 
 // IsOwnPortal reports whether ke is userId's own instance portal, the one

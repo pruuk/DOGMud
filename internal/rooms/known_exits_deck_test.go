@@ -86,6 +86,24 @@ func TestForDeck_EveryPortalAPlayerMayEnterGetsAButton(t *testing.T) {
 	require.False(t, IsOwnPortal(KnownExit{Name: "north", Kind: ExitCompass}, 42), "a room exit is nobody's portal")
 }
 
+// A temporary exit into an instance under any other name (add_temp_exit
+// after create_instance) is offered only to a player the instance lets in,
+// and keeps its own name: the zone label is for keyed portals only.
+func TestForDeck_AnyTemporaryExitIntoAnInstanceIsOfferedOnlyToWhoMayEnter(t *testing.T) {
+	entry := ephemeralRoomIdMinimum + 4545
+	freshInstance(t, entry, 42)
+	known := KnownExitList{Exits: []KnownExit{
+		{Name: "north", Kind: ExitCompass, RoomId: 1},
+		{Name: "rift", Kind: ExitTemporary, RoomId: entry, Temp: exit.TemporaryRoomExit{RoomId: entry}},
+	}}
+	deck, labels := ForDeck(known, 99)
+	require.Equal(t, []string{"north"}, deckNames(deck), "a stranger: MoveToRoom would refuse the rift")
+	require.Nil(t, labels)
+	deck, labels = ForDeck(known, 42)
+	require.Equal(t, []string{"north", "rift"}, deckNames(deck), "a player the instance authorized")
+	require.NotContains(t, labels, "rift", "a rift is shown by its own name")
+}
+
 func TestForDeck_ARoomWithNoPortalIsReturnedAsItIs(t *testing.T) {
 	known := KnownExitList{Exits: []KnownExit{
 		{Name: "north", Kind: ExitCompass, RoomId: 1},
