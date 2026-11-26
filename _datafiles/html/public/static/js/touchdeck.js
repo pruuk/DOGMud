@@ -16,6 +16,7 @@
 //   fieldOf               where the player is typing (plan 1b)
 //   rowFade / scrollLeftToShow  a phone's sideways-scrolling sub-tab row (plan 1c)
 //   moves / cells / levelAfter / tap / render  moving by touch (plan 2b)
+//   lineIcon              a stroke-path icon (the deck and dashboard.js's tab bar)
 // Tested by tools/jstest/touchdeck.test.js, touchdeck-moves.test.js and touch-targets.test.js.
 
 (function (root, factory) {
@@ -335,18 +336,27 @@
         eye: { box: 26, paths: ['M3 12c3 4 7 6 10 6s7-2 10-6', 'M6 16l-2 3M10 18l-1 3.5M16 18l1 3.5M20 16l2 3'] }
     };
 
-    function svgIcon(doc, name, cls) {
-        var d = ICONS[name], svg = doc.createElementNS(SVG_NS, 'svg');
-        svg.setAttribute('viewBox', '0 0 ' + d.box + ' ' + d.box);
-        svg.setAttribute('class', cls);
+    // One line icon: stroke paths in a box-wide square, hidden from screen
+    // readers (its button carries the words). The client's one builder for
+    // them: the deck's icons and the tab bar's round tabs (dashboard.js
+    // makeTabBar) both draw through it. cls is optional.
+    function lineIcon(doc, box, paths, cls) {
+        var svg = doc.createElementNS(SVG_NS, 'svg');
+        svg.setAttribute('viewBox', '0 0 ' + box + ' ' + box);
+        if (cls) svg.setAttribute('class', cls);
         svg.setAttribute('aria-hidden', 'true');
         svg.setAttribute('focusable', 'false');
-        d.paths.forEach(function (p) {
+        paths.forEach(function (p) {
             var path = doc.createElementNS(SVG_NS, 'path');
             path.setAttribute('d', p);
             svg.appendChild(path);
         });
         return svg;
+    }
+
+    function svgIcon(doc, name, cls) {
+        var d = ICONS[name];
+        return lineIcon(doc, d.box, d.paths, cls);
     }
 
     function textEl(doc, cls, text) {
@@ -455,7 +465,7 @@
         rowFade: rowFade, scrollLeftToShow: scrollLeftToShow,
         moves: moves, T_DIRS: T_DIRS, DIAGONALS: DIAGONALS, NAME_LETTERS: NAME_LETTERS,
         cells: cells, levelAfter: levelAfter, tap: tap, DOUBLE_TAP_MS: DOUBLE_TAP_MS, DARK_LINE: DARK_LINE,
-        render: render,
+        render: render, lineIcon: lineIcon,
         BTN: BTN, GAP: GAP, SMALL_BTN: SMALL_BTN, SMALL_GAP: SMALL_GAP, PAD: PAD
     };
 }));
