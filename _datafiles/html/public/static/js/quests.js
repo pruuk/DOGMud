@@ -331,7 +331,7 @@
     function row(l) {
       l = l || {};
       var delay = numInput(l.delay);
-      var text = textInput(l.text);
+      var text = textArea(l.text);
       text.style.minWidth = "260px";
       var speaker = numInput(l.speaker, "q-mob-dl");
       var emote = boolInput(l.emote);
@@ -393,14 +393,14 @@
       body.appendChild(field("Delay between lines (seconds)", delayB));
       var sqLines = sayLines(sq.lines);
       body.appendChild(field("Lines", sqLines.el));
-      var lockMsg = textInput(sq.lock_message);
+      var lockMsg = textArea(sq.lock_message);
       body.appendChild(field("Lock message (blocks movement while running; empty = no lock)", lockMsg));
       body.appendChild(ce("div", { style: "font-size:10px;color:var(--gold-dim);margin-top:6px;", text: "On complete, actions run after the last line (a sequence cannot nest another sequence):" }));
       var onC = actionList(sq.on_complete, body, false);
       return function () {
         var oc = onC.get();
         return { sequence: QM.merge(sq, { delay_between: toInt(delayB.value), lines: sqLines.get(),
-          on_complete: oc.length ? oc : undefined, lock_message: orUndef(lockMsg.value.trim()) }) };
+          on_complete: oc.length ? oc : undefined, lock_message: orUndef(lockMsg.value) }) };
       };
     }
     if (type === "declare_bounty") {
@@ -494,8 +494,9 @@
       var spec = ACTION_FORMS[type];
       if (spec === "custom" || (spec.length && spec[0].nest)) stub[type] = {};
       else if (spec.length && spec[0].kind === "bool") stub[spec[0].k] = true;
-      else stub[spec[0].k] = spec[0].kind === "num" || NUMERIC_KINDS[spec[0].kind] ? 0 : " ";
-      // Render with the explicit type (stub values may be zero/empty).
+      else stub[spec[0].k] = spec[0].kind === "num" || NUMERIC_KINDS[spec[0].kind] ? 0 : "";
+      // Render with the explicit type: the stub's values are empty, and a
+      // text kind is read untrimmed, so a seed other than "" would be saved.
       collapsible(box, function () { return "action: " + type; }, function (body) {
         var gather = buildActionBody(type, stub, body, allowSequence);
         return { gather: function () { return QM.merge({}, gather()); } };
@@ -543,7 +544,7 @@
     command: "text", quest_token: "token", noun: "text",
     effect: "text", topic: "text", target: "target", reason: "reason",
     area: "text", zone: "text", count: "num", label: "text",
-    distinct: "text", explored_line: "text", held_line: "text" };
+    distinct: "text", explored_line: "longtext", held_line: "longtext" };
   // Fields that shape the trigger rather than filter its event get their own
   // label in the form.
   var FIELD_LABELS = {
@@ -639,10 +640,12 @@
         for (var fk in filterReaders) {
           filters[fk] = readKind(filterReaders[fk].kind, filterReaders[fk].input);
         }
-        // Filters another event offers go with that event.
+        // Filters another event offers go with the old event, but only when
+        // the event was changed: a loaded trigger keeps a filter the editor
+        // has no control for on its event (quest 28's command_issued noun).
         var offered = EVENT_FILTERS[evSel.value] || [];
         var dropped = [];
-        for (var ev in EVENT_FILTERS) {
+        for (var ev in evSel.value === t.event ? {} : EVENT_FILTERS) {
           EVENT_FILTERS[ev].forEach(function (f) {
             if (offered.indexOf(f) < 0 && dropped.indexOf(f) < 0) dropped.push(f);
           });

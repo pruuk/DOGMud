@@ -34,7 +34,7 @@ func loadShippedQuest(t *testing.T, prefix string) quests.Quest {
 }
 
 func TestBuilderSave_ShippedQuestsRoundTripUnchanged(t *testing.T) {
-	for _, prefix := range []string{"11", "76"} {
+	for _, prefix := range []string{"11", "76", "28", "69"} {
 		t.Run(prefix, func(t *testing.T) {
 			loaded := loadShippedQuest(t, prefix)
 			want, err := yaml.Marshal(loaded)
@@ -69,7 +69,9 @@ func TestBuilderSave_ShippedQuestsRoundTripUnchanged(t *testing.T) {
 // and this test fails when a shipped quest changes and its fixture was not
 // regenerated.
 func TestBuilderFixtures_MatchTheShippedQuests(t *testing.T) {
-	for _, prefix := range []string{"11", "76"} {
+	// 11 (branches, destinations), 76 (missing_items), 28 (npc_say, whisper,
+	// anywhere), 69 (sequence).
+	for _, prefix := range []string{"11", "76", "28", "69"} {
 		q := loadShippedQuest(t, prefix)
 		wire, err := json.MarshalIndent(q, "", "  ")
 		require.NoError(t, err)

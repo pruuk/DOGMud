@@ -224,10 +224,69 @@ check('fixture 76 has a trigger with missing_items',
 
 // --- an unedited save -----------------------------------------------------------
 
-[['11', q11], ['76', q76]].forEach(function (p) {
+var q28 = load('28'), q69 = load('69');
+check('fixture 28 has an npc_say line with whisper', JSON.stringify(q28).indexOf('"whisper"') > 0, true);
+check('fixture 28 has a destination anywhere', JSON.stringify(q28).indexOf('"anywhere"') > 0, true);
+// No shipped quest uses a sequence action, a declare_bounty, repeat_limit,
+// rewards.summary or rewards.surprise, so the synthetic quest below sets them.
+
+[['11', q11], ['76', q76], ['28', q28], ['69', q69]].forEach(function (p) {
     var got = loadPage(p[1], ENUMS).save();
     check('quest ' + p[0] + ': an unedited save sends the quest it loaded', prune(got), prune(p[1]));
 });
+
+// A synthetic quest: quest 11 with every field the shipped quests leave out.
+function synthetic() {
+    var q = clone(q11);
+    q.repeat_limit = 2;
+    q.rewards.summary = 'You settled the matter.\nIt held.\n';
+    q.rewards.surprise = true;
+    q.steps[0].destination = { anywhere: true };
+    q.triggers[0].actions = q.triggers[0].actions.concat([
+        { npc_say: { mob: 241, lines: [
+            { text: 'First line.\nSecond line.\n', whisper: true, delay: 2, speaker: 5, emote: true },
+            { text: 'Plain.' }] } },
+        { sequence: { delay_between: 3, lines: [{ text: 'Hold on.\nAlmost.', delay: 1 }],
+            on_complete: [{ grant: '11-start' }, { actor: 'Done.\n' }], lock_message: 'You cannot move.\nNot yet.' } },
+        { declare_bounty: { issuer: { type: 'quest', id: '<self>' }, target: { type: 'mob', id: 241 },
+            target_player: true, condition: 'kill', expiry_rounds: 10, gold_override: 5, rep_override: 2,
+            reason: 'for the cause' } }
+    ]);
+    q.triggers[1].held_line = 'You already hold it.\nGood.\n';
+    q.triggers.push({ event: 'room_enter', area: 'the-steppe', distinct: 'all', label: 'Explored',
+        explored_line: 'Mapped.\nAll of it.\n', actions: [{ actor: 'Done.' }] });
+    return q;
+}
+check('synthetic quest: an unedited save sends everything it loaded',
+    prune(loadPage(synthetic(), ENUMS).save()), prune(synthetic()));
+check('synthetic quest: the fields are present in the input',
+    [synthetic().repeat_limit, synthetic().rewards.surprise, synthetic().steps[0].destination.anywhere],
+    [2, true, true]);
+
+// Adding an action and typing into it saves exactly the typed text: the new
+// row is seeded empty, not with a space.
+(function () {
+    function addActor(pg) {
+        var adds = [];
+        walk(pg.inspector, function (e) {
+            if (e.tagName === 'SELECT' && e.options.length && e.options[0].textContent === '+ add action…') adds.push(e);
+        });
+        adds[0].value = 'actor';
+        fire(adds[0], 'change');
+        var texts = pg.controls('Text (player only)', true);
+        return texts[texts.length - 1];
+    }
+    var pg = loadPage(q11, ENUMS);
+    var box = addActor(pg);
+    box.value = box.value + 'Hello';    // typing appends to what the box holds
+    fire(box, 'input');
+    var got = pg.save().triggers[0].actions;
+    check('a new actor action saves exactly the typed text', got[got.length - 1], { actor: 'Hello' });
+    var pg2 = loadPage(q11, ENUMS);
+    addActor(pg2);
+    var got2 = pg2.save().triggers[0].actions;
+    check('a new actor action left empty saves an empty text', got2[got2.length - 1], { actor: '' });
+})();
 
 // --- one edit each --------------------------------------------------------------
 

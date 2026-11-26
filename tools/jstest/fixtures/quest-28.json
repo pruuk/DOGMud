@@ -1,0 +1,1035 @@
+{
+  "questid": 28,
+  "name": "Waking to Gaius",
+  "description": "You wake in the grey between-place with a guide named Dewey beside you. Learn the first handful of things every soul needs before it steps into the world, one at a time, at your own pace.",
+  "steps": [
+    {
+      "id": "start",
+      "description": "You have woken, and Dewey has marked your path.",
+      "hint": "Hint names your next step whenever you are not sure. Next, look shows you the room you are in. Type look. For more, type help look.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "hinted",
+      "description": "You read your first hint. That command is your compass now.",
+      "hint": "Look shows you the room you are in. Type look. For more, type help look.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "looked",
+      "description": "You took in the room around you.",
+      "hint": "Words shown in a different color in a room are things you can look at. Type look guide.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "examined",
+      "description": "You looked closely at your guide. Reading is the first survival skill.",
+      "hint": "A close look often shows more. Type look stone to look closer, or type north to walk on.",
+      "destination": {}
+    },
+    {
+      "id": "status_prompt",
+      "description": "You stepped into the place where you meet yourself.",
+      "hint": "Status shows a page about you: what you are good at, and how much you have left to spend. Type status. For more, type help status.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "statused",
+      "description": "You read your six attributes and three pools.",
+      "hint": "Skills are the things you get better at by doing them. Type skills. For more, type help skills.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "skilled",
+      "description": "You read your skills. Each one grows when you use it.",
+      "hint": "Spells are the magic you know. Type spells to list yours. For more, type help spells.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "spelled",
+      "description": "You read the list of spells you know.",
+      "hint": "Chrysalis Glow is a spell that makes a soft light around you. Type cast glow. For more, type help chrysalis-glow.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "glowed",
+      "description": "You cast your first spell: a light of your own for dark places.",
+      "hint": "To walk to the next room, type its direction. Type north.",
+      "destination": {}
+    },
+    {
+      "id": "carry_prompt",
+      "description": "Small things matter out there.",
+      "hint": "Get picks a thing up and puts it in your pack. Type get token. For more, type help get.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "got",
+      "description": "The token is yours now.",
+      "hint": "Inventory lists what you carry and what you wear. Type inventory.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "invd",
+      "description": "You checked what you are carrying.",
+      "hint": "Help lists every topic the game can explain. Type help.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "helped",
+      "description": "You opened the help index, your patient, permanent reference.",
+      "hint": "To walk to the next room, type its direction. Type north.",
+      "destination": {}
+    },
+    {
+      "id": "speaks_prompt",
+      "description": "Out in the world, people answer when you speak.",
+      "hint": "Say speaks out loud to everyone in the room. Type say hello. For more, type help say.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "said",
+      "description": "You spoke, and the world can hear you.",
+      "hint": "Talk starts a conversation with one person, and you choose what to ask about. Type talk dewey, then choose the question about the world. For more, type help talk.",
+      "destination": {}
+    },
+    {
+      "id": "asked",
+      "description": "You learned to talk with someone and ask a question. Half of what matters is learned that way.",
+      "hint": "To walk to the next room, type its direction. Type north.",
+      "destination": {}
+    },
+    {
+      "id": "proving_prompt",
+      "description": "The practice ring, where you make your mistakes safely.",
+      "hint": "A war cry is a shout that steadies you for a fight. Type warcry. For more, type help warcry.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "warcried",
+      "description": "Your war cry steadied your nerve. It is a condition, an effect on you.",
+      "hint": "Conditions are effects on you, good or bad. Type conditions to see yours. For more, type help conditions.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "saw_conditions",
+      "description": "You read your conditions. They can be good or bad.",
+      "hint": "Big moves need time to rest after you use them. Type cooldowns to see which ones are resting. An empty list means they have all rested. For more, type help cooldowns.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "checked_cooldowns",
+      "description": "You checked your cooldowns. Your big moves share one well.",
+      "hint": "Consider tells you how hard a foe is before you fight it. Type consider effigy. For more, type help consider.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "considered",
+      "description": "You read the effigy true. Some fights cannot be won.",
+      "hint": "The ring is safe, so fight anyway. Attack starts a fight. Type attack effigy.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "attacked",
+      "description": "You closed with the effigy. Your swings keep going on their own.",
+      "hint": "Conviction Spike is a spell that strikes your foe with the force of belief. Once your shout has rested, type cast spike. For more, type help conviction-spike.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "cast_spike",
+      "description": "You loosed a spike of conviction. Belief is a weapon here.",
+      "hint": "A trip knocks your foe to the ground. Once your spike has rested, type trip, even if the effigy is down already. For more, type help trip.",
+      "destination": {
+        "anywhere": true
+      }
+    },
+    {
+      "id": "tripped",
+      "description": "You put the effigy down: voice, belief, and body, all yours.",
+      "hint": "This fight cannot be won. Flee breaks you out of a fight and runs you to safety. Type flee. The effigy may block you. If it does, type flee again. For more, type help flee.",
+      "destination": {}
+    },
+    {
+      "id": "fled",
+      "description": "You broke away. Running is how you live to win the next one.",
+      "hint": "Dewey is waiting at the Landing to send you on. Type talk dewey, then choose Waking to Gaius.",
+      "destination": {
+        "mob": [
+          9491
+        ]
+      }
+    },
+    {
+      "id": "end",
+      "description": "Dewey sent you through to the world. Gaius is waiting.",
+      "destination": {}
+    }
+  ],
+  "rewards": {
+    "actor": "Dewey's hand is steady on your shoulder, and his voice is warm, already a little proud. You are awake now, and the world is real."
+  },
+  "triggers": [
+    {
+      "event": "room_enter",
+      "room": 6258,
+      "conditions": {
+        "missing": [
+          "28-start",
+          "28-end"
+        ]
+      },
+      "actions": [
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "There you are, waking up at last. Easy, now. Nothing here can harm you. I am Dewey, your guide.",
+                "delay": 1
+              },
+              {
+                "text": "You act here by typing. The first word you type is the command. Type it, press Enter, and the world answers.",
+                "delay": 2
+              },
+              {
+                "text": "See the [!] in front of my name? It means I have a quest for you. A quest is a task, done one step at a time.",
+                "delay": 2
+              },
+              {
+                "text": "Talk starts a conversation with someone, and you choose what to say from a list. Type talk dewey.",
+                "delay": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "quest_granted",
+      "quest_token": "28-start",
+      "conditions": {
+        "missing": [
+          "28-hinted"
+        ]
+      },
+      "actions": [
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Good. Your quest has begun. Your first command is hint. It names your next step, any time you are not sure. Type hint.",
+                "delay": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "hint",
+      "conditions": {
+        "has": [
+          "28-start"
+        ],
+        "missing": [
+          "28-hinted"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-hinted"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Good. Now take stock of where you stand. Look shows you the room around you. Type look."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "look",
+      "noun": "guide",
+      "conditions": {
+        "has": [
+          "28-looked"
+        ],
+        "missing": [
+          "28-examined"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-examined"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "That's the whole trick of this world. The ones who read what is in front of them live longest. Any word shown in a different color is worth a look, and a close look often shows you more than the room did. Try the stone under your feet. Type look stone."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "look",
+      "conditions": {
+        "has": [
+          "28-hinted"
+        ],
+        "missing": [
+          "28-looked"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-looked"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Good. See the words shown in a different color? Those are things you can look at more closely. Try one. Type look guide."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "look_at",
+      "room": 6258,
+      "noun": "stone",
+      "conditions": {
+        "has": [
+          "28-examined"
+        ],
+        "missing": [
+          "28-status_prompt"
+        ],
+        "has_flag": {
+          "28-stone": "read"
+        }
+      },
+      "actions": [
+        {
+          "actor": "You crouch for a closer look at the threshold-stone. Its surface is polished to a shine, hollowed at the center by every soul who ever woke here and stepped through. The fine lines around its edge are names, hundreds of them, small and neat, no two written alike. Toward the hollowed center the oldest have worn almost smooth, and one of them still reads Dewey."
+        }
+      ]
+    },
+    {
+      "event": "look_at",
+      "room": 6258,
+      "noun": "stone",
+      "conditions": {
+        "has": [
+          "28-examined"
+        ],
+        "missing": [
+          "28-status_prompt"
+        ],
+        "missing_flag": {
+          "28-stone": "read"
+        }
+      },
+      "actions": [
+        {
+          "set_flag": {
+            "key": "28-stone",
+            "value": "read"
+          }
+        },
+        {
+          "actor": "You crouch for a closer look at the threshold-stone. Its surface is polished to a shine, hollowed at the center by every soul who ever woke here and stepped through. The fine lines around its edge are names, hundreds of them, small and neat, no two written alike. Toward the hollowed center the oldest have worn almost smooth, and one of them still reads Dewey."
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "You found the names. I stood where you stand, a long time ago. Look closely like that out in the world, and you will find things other people walk past. The exits line shows the ways out. To walk north, type north.",
+                "delay": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "room_enter",
+      "room": 6259,
+      "conditions": {
+        "has": [
+          "28-examined"
+        ],
+        "missing": [
+          "28-status_prompt"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-status_prompt"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "This is where you meet yourself. Status shows a page about you: what you are good at, and how much you have left to spend. Type status.",
+                "delay": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "status",
+      "conditions": {
+        "has": [
+          "28-status_prompt"
+        ],
+        "missing": [
+          "28-statused"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-statused"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "There you are, all of you on one page. The six attributes at the top are how strong, quick and sharp you are. They grow when you use them."
+              },
+              {
+                "text": "Your three pools matter most. Health keeps you alive. Stamina pays for swings and other moves of the body. Conviction pays for spells and shouts. All three refill with time and rest.",
+                "delay": 2
+              },
+              {
+                "text": "The line at the bottom of your screen shows the same three pools as bars: HP is health, SP is stamina, CP is conviction. That line is your prompt.",
+                "delay": 2
+              },
+              {
+                "text": "Some things you keep, like a companion or a piece of enchanted gear, hold part of a pool back for as long as you keep them. That is called reservation. Rest does not bring it back, and status shows how much is held.",
+                "delay": 2
+              },
+              {
+                "text": "Next, your skills. Skills are the things you get better at by doing them. Type skills.",
+                "delay": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "skills",
+      "conditions": {
+        "has": [
+          "28-statused"
+        ],
+        "missing": [
+          "28-skilled"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-skilled"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Every skill starts small and grows each time you use it. Now your spells. Spells are the magic you know. Type spells."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "spells",
+      "conditions": {
+        "has": [
+          "28-skilled"
+        ],
+        "missing": [
+          "28-spelled"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-spelled"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "You woke knowing a few already. Chrysalis Glow makes a soft light around you. Out in the world, nights and caves are dark, and a light lets you see your way. Type cast glow."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command",
+      "command": "cast",
+      "noun": "chrysalis-glow",
+      "conditions": {
+        "has": [
+          "28-spelled"
+        ],
+        "missing": [
+          "28-glowed"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-glowed"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Good. Hold still while it gathers. Spells take a moment. The light lasts a while, then fades. When it fades, cast it again. Once it is up, type north."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "room_enter",
+      "room": 6260,
+      "conditions": {
+        "has": [
+          "28-glowed"
+        ],
+        "missing": [
+          "28-carry_prompt"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-carry_prompt"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Small things matter out there. Get picks a thing up and puts it in your pack. Type get token.",
+                "delay": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "get",
+      "noun": "token",
+      "conditions": {
+        "has": [
+          "28-carry_prompt"
+        ],
+        "missing": [
+          "28-got"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-got"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Yours now. Inventory lists everything you carry and wear. Type inventory."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "inventory",
+      "conditions": {
+        "has": [
+          "28-got"
+        ],
+        "missing": [
+          "28-invd"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-invd"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "When you forget a command, the game remembers for you. Help lists every topic it can explain. Type help."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "help",
+      "conditions": {
+        "has": [
+          "28-invd"
+        ],
+        "missing": [
+          "28-helped"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-helped"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "That list is always there. Help and a topic, like help look, explains one thing. When you are ready, type north."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "room_enter",
+      "room": 6261,
+      "conditions": {
+        "has": [
+          "28-helped"
+        ],
+        "missing": [
+          "28-speaks_prompt"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-speaks_prompt"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "People answer when you speak to them out there. Say speaks out loud to everyone in the room. Type say hello.",
+                "delay": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command",
+      "command": "say",
+      "conditions": {
+        "has": [
+          "28-speaks_prompt"
+        ],
+        "missing": [
+          "28-said"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-said"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Ha, and the world will answer, out there. You know talk already. This time, ask me a question. A numbered list comes up, and you type a number to ask one. Type talk dewey."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "topic_heard",
+      "mob": 9491,
+      "topic": "asked_28",
+      "conditions": {
+        "has": [
+          "28-said"
+        ],
+        "missing": [
+          "28-asked"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-asked"
+        }
+      ]
+    },
+    {
+      "event": "room_enter",
+      "room": 6262,
+      "conditions": {
+        "has": [
+          "28-asked"
+        ],
+        "missing": [
+          "28-proving_prompt"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-proving_prompt"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "When you see [*] beside my name, I still have something worth hearing. If you want it, type talk dewey.",
+                "delay": 1
+              },
+              {
+                "text": "The practice ring, where you make your mistakes safely. A war cry is a shout that steadies you before a fight. Type warcry.",
+                "delay": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command",
+      "command": "warcry",
+      "conditions": {
+        "has": [
+          "28-proving_prompt"
+        ],
+        "missing": [
+          "28-warcried"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-warcried"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Feel that lift? That is a condition, an effect on you. Conditions can be good or bad. Type conditions to see yours."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "conditions",
+      "conditions": {
+        "has": [
+          "28-warcried"
+        ],
+        "missing": [
+          "28-saw_conditions"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-saw_conditions"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Shouting used one of your big moves. Big moves need time to rest after you use them. Type cooldowns to see what is resting. If the list is empty, your shout has rested already."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "cooldowns",
+      "conditions": {
+        "has": [
+          "28-saw_conditions"
+        ],
+        "missing": [
+          "28-checked_cooldowns"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-checked_cooldowns"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Before you fight, size up your foe. Consider tells you how hard a fight will be. Type consider effigy."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "consider",
+      "noun": "effigy",
+      "conditions": {
+        "has": [
+          "28-checked_cooldowns"
+        ],
+        "missing": [
+          "28-considered"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-considered"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Your instincts speak true. That thing is woven too tight for anyone to break. Remember the feeling of a fight you cannot win. It will matter in a moment."
+              },
+              {
+                "text": "But this ring is safe. Its blows are too soft to matter. So fight anyway. Type attack effigy.",
+                "delay": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command_issued",
+      "command": "attack",
+      "noun": "effigy",
+      "conditions": {
+        "has": [
+          "28-considered"
+        ],
+        "missing": [
+          "28-attacked"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-attacked"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "You keep swinging on your own while the fight goes on. Your shout is still resting, so watch a few blows land first.",
+                "whisper": true
+              },
+              {
+                "text": "Rested. Now strike with belief too. Conviction Spike is a spell that hits with force. Type cast spike.",
+                "delay": 17,
+                "whisper": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command",
+      "command": "cast",
+      "noun": "conviction-spike",
+      "conditions": {
+        "has": [
+          "28-attacked"
+        ],
+        "missing": [
+          "28-cast_spike"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-cast_spike"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Spells take a moment to gather. Watch it build.",
+                "whisper": true
+              },
+              {
+                "text": "There. A spell is a big move too, so it rests the way your shout did. Wait for it.",
+                "delay": 8,
+                "whisper": true
+              },
+              {
+                "text": "Rested. Now your body. A trip sweeps a foe off its feet. If the effigy is down already, trip it anyway, and it counts. Type trip.",
+                "delay": 9,
+                "whisper": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command",
+      "command": "trip",
+      "conditions": {
+        "has": [
+          "28-cast_spike"
+        ],
+        "missing": [
+          "28-tripped"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-tripped"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "That is the body's way. A foe on the ground wears a condition of its own until it stands. Voice, belief, and body: all yours.",
+                "delay": 1,
+                "whisper": true
+              },
+              {
+                "text": "Out here you grow by doing. Belief deepens your Willpower, and blades sharpen your Dexterity. You earn it. You never pick it.",
+                "delay": 2,
+                "whisper": true
+              },
+              {
+                "text": "Now the last lesson, the one your instincts already gave you. This fight cannot be won. Flee breaks you out of a fight. Type flee to break away and live. The effigy may block you. If it does, type flee again.",
+                "delay": 2,
+                "whisper": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "event": "command",
+      "room": 6467,
+      "command": "flee",
+      "conditions": {
+        "has": [
+          "28-tripped"
+        ],
+        "missing": [
+          "28-fled"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "28-fled"
+        },
+        {
+          "npc_say": {
+            "mob": 9491,
+            "lines": [
+              {
+                "text": "Running isn't losing. It's how you live to win the next one."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "flags": [
+    {
+      "key": "stone",
+      "values": [
+        "read"
+      ],
+      "description": "Dewey has spoken about the names on the threshold stone"
+    }
+  ]
+}
