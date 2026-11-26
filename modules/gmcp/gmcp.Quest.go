@@ -41,6 +41,10 @@ type questDeps struct {
 	// the given reference checks (buildQuestUpdate passes validators, so they
 	// are built once per save) (#375 phase 2 editor door). Nil skips the loop rules.
 	loopWorld func(v quests.QuestValidators) questloop.World
+
+	// destinations is the destination rule boot runs (main_quests.go
+	// destinationDoor): its findings over the given quests. Nil skips it.
+	destinations func(qs []*quests.Quest) ([]questloop.Finding, []string)
 }
 
 func realQuestDeps() questDeps {
@@ -56,7 +60,37 @@ func realQuestDeps() questDeps {
 		reindex:    questengine.LoadDataFiles,
 		validators: questworld.Validators(),
 		loopWorld:  questworld.RegistryWith,
+
+		destinations: questengine.Destinations,
 	}
+}
+
+// destinationVerdict runs the destination rule over the loaded quests before
+// and after the edit and refuses only the findings the edit adds, as
+// loopVerdict does. Boot refuses every destination finding (destinationDoor),
+// so a save that adds one would stop the next restart.
+func destinationVerdict(all []quests.Quest, check func([]*quests.Quest) ([]questloop.Finding, []string), q quests.Quest) (refuse []string) {
+	before := make([]*quests.Quest, 0, len(all)+1)
+	after := make([]*quests.Quest, 0, len(all)+1)
+	for i := range all {
+		before = append(before, &all[i])
+		if all[i].QuestId != q.QuestId {
+			after = append(after, &all[i])
+		}
+	}
+	after = append(after, &q)
+	had := map[string]bool{}
+	bf, _ := check(before)
+	for _, f := range bf {
+		had[f.Key()] = true
+	}
+	af, _ := check(after)
+	for _, f := range af {
+		if !had[f.Key()] {
+			refuse = append(refuse, f.String())
+		}
+	}
+	return refuse
 }
 
 // loopVerdict runs the loop rules over the world before and after the edit.
@@ -248,6 +282,11 @@ func buildQuestUpdate(d questDeps, q quests.Quest) BuildResult {
 			return buildErr("quest %d refused:\n%s", q.QuestId, strings.Join(refuse, "\n"))
 		}
 		warns = append(warns, known...)
+	}
+	if d.destinations != nil {
+		if refuse := destinationVerdict(d.all(), d.destinations, q); len(refuse) > 0 {
+			return buildErr("quest %d refused:\n%s", q.QuestId, strings.Join(refuse, "\n"))
+		}
 	}
 	if err := d.save(q); err != nil {
 		return buildErr("could not save quest %d: %s", q.QuestId, err.Error())
