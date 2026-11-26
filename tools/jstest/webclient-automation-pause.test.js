@@ -192,6 +192,9 @@ global.term = { write: function (s) { termLines.push(s); }, writeln: function (s
 // screen reader log (static/js/screenreader.js); a stand-in records that.
 var srWrites = [];
 global.screenReader = { write: function (t) { srWrites.push(t); } };
+// gameLine wraps with the real termfit.js (this term has no column count,
+// so the text goes through as it is).
+global.window = { TermFit: require(path.join(__dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'js', 'termfit.js')) };
 (0, eval)(extract('function gameLine(text) {', '// Called by the Char GMCP handler'));
 // Ends at the next comment, not at a newline marker: a Windows checkout has
 // \r\n line endings, which a '\n        }\n' marker never matches.

@@ -531,8 +531,23 @@ function listenerChecks() {
     check('a throwing font lookup does not escape the fit', !threw, 'threw');
 }
 
+// The page's own lines (gameLine) wrap at word boundaries to the column
+// count, as the server wraps its text (plan 2b Task 11: the Dark tile's line
+// split "the" across the edge at 320px).
+function wrapChecks() {
+    var DARK = 'It is too dark to see the way. Light a torch or cast glow.';
+    var w = TermFit.wrapText(DARK, 24).split('\r\n');
+    check('a page line wraps between words', JSON.stringify(w) === JSON.stringify(['It is too dark to see', 'the way. Light a torch', 'or cast glow.']), JSON.stringify(w));
+    check('no wrapped row is wider than the columns', w.every(function (l) { return l.length <= 24; }), JSON.stringify(w));
+    check('a line that fits is left alone', TermFit.wrapText(DARK, 80) === DARK, TermFit.wrapText(DARK, 80));
+    check('its line breaks stay, a leading one too', TermFit.wrapText('\r\nab cd', 3) === '\r\nab\r\ncd', JSON.stringify(TermFit.wrapText('\r\nab cd', 3)));
+    check('a word longer than a row is cut', TermFit.wrapText('abcdefg', 3) === 'abc\r\ndef\r\ng', JSON.stringify(TermFit.wrapText('abcdefg', 3)));
+    check('no column count: the text as it is', TermFit.wrapText(DARK, 0) === DARK && TermFit.wrapText(DARK, undefined) === DARK, 'changed');
+}
+
 function run() {
     syncChecks();
+    wrapChecks();
 
     // A phone panel full of scrollback: the case that lost lines.
     var phone = makePage(360, 500, { text: 14, minFont: 1 });

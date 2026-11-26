@@ -4,6 +4,7 @@
 // it never starts one. Plain Node 24 (built-in WebSocket and fetch).
 //
 //   node tools/webshot/live-shot.js <shots.json>
+//   node tools/webshot/live-shot.js --self-test   (checks its pure helpers)
 //
 // shots.json:
 //   { "url": "http://127.0.0.1:18090/webclient-pure.html",
@@ -29,6 +30,17 @@
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
+
+// node tools/webshot/live-shot.js --self-test checks the pure helpers below
+// without a browser or a server.
+if (process.argv[2] === '--self-test') {
+  let failed = 0;
+  const check = (name, ok) => { console.log((ok ? 'ok   ' : 'FAIL ') + name); if (!ok) failed++; };
+  check('the kick prompt on one line', asksToKick('Someone is linked to that character. Kick them? [y/n]'));
+  check('the kick prompt wrapped at a narrow width (320px)', asksToKick('...linked to that character. Kick\nthem? [y/n]'));
+  check('no kick prompt', !asksToKick('Welcome back.\n[HP 100]:'));
+  process.exit(failed ? 1 : 0);
+}
 
 const cfg = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const CALL_TIMEOUT_MS = 30000;
@@ -126,6 +138,13 @@ function screenTail(dt, n) {
   })()`);
 }
 
+// asksToKick: the screen tail holds the "Kick them?" prompt. A narrow
+// terminal wraps it ("Kick" at the end of one row, "them?" on the next), so
+// the rows are joined and whitespace runs read as one space.
+function asksToKick(tail) {
+  return String(tail).replace(/\s+/g, ' ').includes('Kick them?');
+}
+
 // connect clicks Connect and waits for the page's game socket (the top-level
 // `socket`) to open, so the login lines are never typed into a closed client.
 async function connect(dt) {
@@ -180,7 +199,7 @@ async function main() {
       await typeLine(dt, s.password);
       await sleep(3000);
       // A character still linked from an earlier session is offered a kick.
-      if ((await screenTail(dt, 3)).includes('Kick them?')) {
+      if (asksToKick(await screenTail(dt, 3))) {
         await typeLine(dt, 'y');
         await sleep(3000);
       }

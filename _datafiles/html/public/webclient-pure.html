@@ -3006,10 +3006,19 @@
         // gameLine writes one of the page's own lines into the game window
         // and, while screen reader mode is on, into the screen reader log,
         // so a blind player hears it (a dropped connection above all).
+        // The game window gets it wrapped between words to its columns, as
+        // the server wraps its own text (termfit.js wrapText); the screen
+        // reader log gets it whole.
         function gameLine(text) {
-            term.writeln(text);
+            term.writeln(window.TermFit.wrapText(text, term.cols));
             screenReader.write(text + '\r\n');
             localLineSincePrompt = true;
+        }
+
+        // A page line on a line of its own: a prompt (the login prompt, the
+        // game prompt) leaves the cursor at the end of its text.
+        function gameLineAfterPrompt(text) {
+            gameLine('\r\n' + text);
         }
 
         // #922: the server clears a prompt that wrapped by moving up over its
@@ -3060,7 +3069,7 @@
             if (note) { note.textContent = AUTOMATION_LOGIN_MESSAGE; note.hidden = false; }
             // And in the game text, on a line of its own: the login prompt
             // leaves the cursor at the end of "username (or new):".
-            gameLine('\r\n' + AUTOMATION_LOGIN_MESSAGE);
+            gameLineAfterPrompt(AUTOMATION_LOGIN_MESSAGE);
             return true;
         }
 
@@ -4042,9 +4051,9 @@
 
             // 5b) A touch deck button sends only its id (sendButtonPress,
             // plan 2b), and the Dark tile's line goes into the game window
-            // like the page's own lines.
+            // on a line of its own, after the prompt.
             if (window.Dashboard && Dashboard.setDeckSender) {
-                Dashboard.setDeckSender(sendButtonPress, gameLine);
+                Dashboard.setDeckSender(sendButtonPress, gameLineAfterPrompt);
             }
 
             // 6) Play in Browser already said yes, so join straight away. Join
