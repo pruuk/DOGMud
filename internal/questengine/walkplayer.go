@@ -33,6 +33,8 @@ type walkPlayer struct {
 	masterwork bool
 }
 
+// newWalkPlayer is a player holding no quest, items, flags or gold, whose
+// step order reads qs (every quest the walk registered).
 func newWalkPlayer(qs map[int]*quests.Quest) *walkPlayer {
 	return &walkPlayer{quests: qs, progress: map[int]string{}, items: map[int]bool{},
 		flags: map[string]string{}, heard: map[string]bool{}, spells: map[string]bool{}}

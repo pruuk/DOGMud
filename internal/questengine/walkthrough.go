@@ -75,6 +75,7 @@ type walkPath struct {
 	key string
 }
 
+// newWalkPath is the walk of steps, one of q.Paths(), on side.
 func newWalkPath(q *quests.Quest, steps []quests.QuestStep, side string) walkPath {
 	wp := walkPath{q: q, steps: steps, side: side, key: q.BranchFlagKey()}
 	for _, s := range steps {
