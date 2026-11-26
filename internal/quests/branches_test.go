@@ -312,6 +312,9 @@ func TestQuest_ValidateBranches(t *testing.T) {
 		{"branched first step", func(q *Quest) { q.Steps[0].Branch = "sylara" }, `first step "start" cannot be branched`},
 		{"branched last step", func(q *Quest) { q.Steps[5].Branch = "rhett" }, `last step "end" cannot be branched`},
 		{"repeatable", func(q *Quest) { q.Repeatable = true }, `a repeatable quest cannot branch`},
+		{"flag value no step uses", func(q *Quest) {
+			q.Flags[0].Values = append(q.Flags[0].Values, "kael")
+		}, `value "kael" of branch flag "branch" is the branch of no step`},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

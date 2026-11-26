@@ -27,8 +27,9 @@ import (
 // ("<questId>-<key>", see flagKey); nil reads every flag as unset.
 
 // validateBranches refuses a branch that is not a value of exactly one
-// declared flag, branched steps on more than one flag, a branched first or
-// last step, and branches on a repeatable quest (a repeat clears tokens, not
+// declared flag, branched steps on more than one flag, a value of that flag
+// no step branches on, a branched first or last step, and branches on a
+// repeatable quest (a repeat clears tokens, not
 // flags, so a second run would be locked to the first run's side).
 func (r *Quest) validateBranches() error {
 	flagIdx := -1
@@ -63,13 +64,28 @@ func (r *Quest) validateBranches() error {
 		}
 		flagIdx = owner
 	}
+	// Every value of the branch flag is a side with its own steps: a value no
+	// step uses would be a path of the unbranched steps alone, on which a
+	// player stands at the first step with no way on.
+	if flagIdx >= 0 {
+		f := r.Flags[flagIdx]
+		for _, v := range f.Values {
+			if !slices.ContainsFunc(r.Steps, func(s QuestStep) bool { return s.Branch == v }) {
+				return fmt.Errorf("value %q of branch flag %q is the branch of no step: every value of the flag the steps branch on must be a side with its own steps; record any other choice in a separate flag", v, f.Key)
+			}
+		}
+	}
 	return nil
 }
 
 // branchCache is what Validate works out once about a quest's fork, so the
 // hot readers (HasQuest on every trigger check) build no string. A quest that
 // never went through Validate (a test literal) works it out on each call, and
-// so does one whose id or step count changed since (cached).
+// so does one whose id or step count changed since (cached). An in-place edit
+// that keeps both (a step id renamed, a step's Branch changed, Flags edited)
+// is not seen: whoever edits Steps or Flags of a validated quest calls
+// Validate again, which refills the cache. Checking more on every read would
+// cost the hot readers.
 type branchCache struct {
 	ready   bool
 	questId int      // QuestId when filled

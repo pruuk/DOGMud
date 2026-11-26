@@ -76,7 +76,9 @@ type Quest struct {
 	CooldownRounds int            `yaml:"cooldown_rounds,omitempty" json:"cooldown_rounds,omitempty"` // rounds after completion before a repeatable quest can be re-taken
 	RepeatLimit    int            `yaml:"repeat_limit,omitempty" json:"repeat_limit,omitempty"`       // lifetime completions of a repeatable; 0 = no cap (#375 P3)
 
-	// branch is worked out by Validate (branches.go), never saved.
+	// branch is worked out by Validate (branches.go), never saved. Any edit
+	// to Steps or Flags after Validate must be followed by Validate again,
+	// or the path readers may use the old fork (see branchCache).
 	branch branchCache
 }
 
