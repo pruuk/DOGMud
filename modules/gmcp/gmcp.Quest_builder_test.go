@@ -13,9 +13,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// The builder's save path (#958): a quest loaded from its file, sent to the
-// editor as JSON, posted back unedited (what the page's gather now does) and
-// saved by Build.Quest.Update must be the same quest. Compared as YAML: a
+// The builder's server side (#958): a quest loaded from its file, sent to the
+// editor as JSON, posted back unedited and saved by Build.Quest.Update must be
+// the same quest. This covers the Go half only (JSON tags and the door); the
+// page's own gather is run by tools/jstest/questbuilder.test.js. Compared as YAML: a
 // quest carries an unexported cache Validate fills, so raw struct equality
 // would depend on which side was validated.
 
@@ -59,6 +60,32 @@ func TestBuilderSave_ShippedQuestsRoundTripUnchanged(t *testing.T) {
 	}
 }
 
+// tools/jstest/fixtures/quest-11.json and quest-76.json are the quests as the
+// page receives them (Build.Quest's quest, the JSON of the shipped YAML), for
+// tools/jstest/questbuilder.test.js. They are generated, not hand-written:
+//
+//	UPDATE_QUEST_FIXTURES=1 go test ./modules/gmcp/ -run TestBuilderFixtures
+//
+// and this test fails when a shipped quest changes and its fixture was not
+// regenerated.
+func TestBuilderFixtures_MatchTheShippedQuests(t *testing.T) {
+	for _, prefix := range []string{"11", "76"} {
+		q := loadShippedQuest(t, prefix)
+		wire, err := json.MarshalIndent(q, "", "  ")
+		require.NoError(t, err)
+		wire = append(wire, '\n')
+		path := "../../tools/jstest/fixtures/quest-" + prefix + ".json"
+		if os.Getenv("UPDATE_QUEST_FIXTURES") == "1" {
+			require.NoError(t, os.WriteFile(path, wire, 0o644))
+			continue
+		}
+		have, err := os.ReadFile(path)
+		require.NoError(t, err, "run with UPDATE_QUEST_FIXTURES=1 to generate %s", path)
+		require.Equal(t, string(wire), strings.ReplaceAll(string(have), "\r\n", "\n"),
+			"%s is out of date; regenerate with UPDATE_QUEST_FIXTURES=1", path)
+	}
+}
+
 // Quest 11 carries a branch on its steps and quest 76 a trigger's
 // missing_items: the round trip above must be holding them, not an empty
 // field on both sides.
@@ -96,6 +123,7 @@ func TestQuestBuilderPageGathersThroughTheMerge(t *testing.T) {
 		require.Contains(t, js, want)
 	}
 	require.NotContains(t, js, "map_target")
+	require.NotContains(t, js, "map-target")
 
 	html, err := os.ReadFile("../../_datafiles/html/public/build.html")
 	require.NoError(t, err)
@@ -140,4 +168,12 @@ func TestBuildQuestUpdate_RefusesAddedDestinationFinding(t *testing.T) {
 	ok := buildQuestUpdate(d, validUpdateReq(90020))
 	require.True(t, ok.Ok, ok.Error)
 	require.Len(t, w.saved, 1)
+
+	// A quest's own standing finding is let through with a warning, as the
+	// loop door does.
+	own := validUpdateReq(90021)
+	own.Steps = append([]quests.QuestStep{{Id: "old"}}, own.Steps...)
+	res = buildQuestUpdate(d, own)
+	require.True(t, res.Ok, res.Error)
+	require.Contains(t, strings.Join(res.Warnings, "\n"), "known (already in the world): walk-destination 90021 step old")
 }

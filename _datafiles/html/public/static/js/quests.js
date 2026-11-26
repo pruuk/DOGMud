@@ -44,7 +44,7 @@
     dirty: false,
     saving: false,
     deleting: false,
-    zoneRows: [],       // Build.Zones rows (map-target assist)
+    zoneRows: [],       // Build.Zones rows (room picker assist)
     mobRows: [],        // Build.Mobs rows (mob pickers)
     roomsByZone: {},    // zone -> Build.Rooms rows
     _pendingRoomZone: "",
@@ -183,7 +183,7 @@
     return wrap;
   }
 
-  // map-target assist: the numeric input is authoritative; the zone+room
+  // room picker assist: the numeric input is authoritative; the zone+room
   // dropdowns just fill it (no client-side room→zone reverse lookup exists).
   function roomAssist(numEl) {
     var zoneSel = ce("select", {});
@@ -272,8 +272,8 @@
     give_item:     [{ k: "give_item", kind: "item", label: "Item" }],
     give_gold:     [{ k: "give_gold", kind: "num", label: "Gold" }],
     charge_gold:   [{ k: "charge_gold", kind: "num", label: "Gold" }],
-    actor:         [{ k: "actor", kind: "text", label: "Text (player only)" }],
-    observer:      [{ k: "observer", kind: "text", label: "Text (whole room)" }],
+    actor:         [{ k: "actor", kind: "longtext", label: "Text (player only)" }],
+    observer:      [{ k: "observer", kind: "longtext", label: "Text (whole room)" }],
     teach_spell:   [{ k: "teach_spell", kind: "spell", label: "Spell" }],
     teleport:      [{ k: "teleport", kind: "room", label: "Room" }],
     give_mutation: [{ k: "give_mutation", kind: "bool", label: "Roll a random mutation" }],
@@ -299,6 +299,9 @@
   function kindInput(kind, val) {
     if (kind === "bool") return boolInput(val);
     if (kind === "text") return textInput(val);
+    // longtext: player-facing prose that runs over lines. A text input drops
+    // line breaks and readKind trims, so a one-line control would flatten it.
+    if (kind === "longtext") return textArea(val);
     if (kind === "target" || kind === "reason") {
       var sel = ce("select", {});
       [""].concat(kind === "target" ? TARGET_KINDS : GAIN_REASONS).forEach(function (k) {
@@ -318,6 +321,7 @@
     if (input && input.read) return input.read();
     if (kind === "bool") return !!input.checked;
     if (NUMERIC_KINDS[kind]) return toInt(input.value);
+    if (kind === "longtext") return input.value;
     return input.value.trim();
   }
 
@@ -780,7 +784,9 @@
         // value no flag offers stays selectable, so a save does not lose it.
         var branch = ce("select", {});
         function fillBranch() {
-          var keep = branch.value || s.branch || "";
+          // The loaded branch only seeds the first fill; after that the
+          // picker's own value stands, so choosing "(none)" sticks.
+          var keep = branch.options.length ? branch.value : (s.branch || "");
           var vals = QM.branchValues(gatherFlags());
           if (keep && vals.indexOf(keep) < 0) vals.push(keep);
           branch.innerHTML = "";

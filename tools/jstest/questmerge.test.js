@@ -14,17 +14,18 @@ function check(name, got, want) {
     failures++; console.log('FAIL ' + name + '\n  got  ' + g + '\n  want ' + w);
 }
 
-// A step as the editor loads it: a destination, a branch, and a repeat-style
-// field the editor has no control for.
+// A step as the editor loads it: a destination, a branch, and a stand-in
+// (future_field) for a field added to steps later. repeat_limit is a quest
+// field, tested below.
 var step = { id: 'fetch', description: 'd', hint: 'h', branch: 'windward',
-    destination: { room: 3082, mob: [241, 242], area: 'x', zone: 'y' }, repeat_limit: 3 };
+    destination: { room: 3082, mob: [241, 242], area: 'x', zone: 'y' }, future_field: 3 };
 var noEditStep = { id: 'fetch', description: 'd', hint: 'h', branch: 'windward' };
-check('step: nothing edited keeps destination, branch, repeat_limit',
+check('step: nothing edited keeps destination, branch and a field added later',
     QM.step(step, noEditStep), step);
 check('step: an edited hint lands and the rest survives',
     QM.step(step, { id: 'fetch', description: 'd', hint: 'new hint', branch: 'windward' }),
     { id: 'fetch', description: 'd', hint: 'new hint', branch: 'windward',
-        destination: step.destination, repeat_limit: 3 });
+        destination: step.destination, future_field: 3 });
 check('step: a blank branch is omitted',
     QM.step(step, { id: 'fetch', description: 'd', hint: 'h', branch: '' }).branch, undefined);
 check('step: a new step starts from {} and has no branch key',

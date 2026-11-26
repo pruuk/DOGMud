@@ -69,7 +69,8 @@ func realQuestDeps() questDeps {
 // and after the edit and refuses only the findings the edit adds, as
 // loopVerdict does. Boot refuses every destination finding (destinationDoor),
 // so a save that adds one would stop the next restart.
-func destinationVerdict(all []quests.Quest, check func([]*quests.Quest) ([]questloop.Finding, []string), q quests.Quest) (refuse []string) {
+// It warns about this quest's findings that were already there.
+func destinationVerdict(all []quests.Quest, check func([]*quests.Quest) ([]questloop.Finding, []string), q quests.Quest) (refuse, warn []string) {
 	before := make([]*quests.Quest, 0, len(all)+1)
 	after := make([]*quests.Quest, 0, len(all)+1)
 	for i := range all {
@@ -86,11 +87,14 @@ func destinationVerdict(all []quests.Quest, check func([]*quests.Quest) ([]quest
 	}
 	af, _ := check(after)
 	for _, f := range af {
-		if !had[f.Key()] {
+		switch {
+		case had[f.Key()] && f.QuestId == q.QuestId:
+			warn = append(warn, "known (already in the world): "+f.String())
+		case !had[f.Key()]:
 			refuse = append(refuse, f.String())
 		}
 	}
-	return refuse
+	return refuse, warn
 }
 
 // loopVerdict runs the loop rules over the world before and after the edit.
@@ -284,9 +288,11 @@ func buildQuestUpdate(d questDeps, q quests.Quest) BuildResult {
 		warns = append(warns, known...)
 	}
 	if d.destinations != nil {
-		if refuse := destinationVerdict(d.all(), d.destinations, q); len(refuse) > 0 {
+		refuse, known := destinationVerdict(d.all(), d.destinations, q)
+		if len(refuse) > 0 {
 			return buildErr("quest %d refused:\n%s", q.QuestId, strings.Join(refuse, "\n"))
 		}
+		warns = append(warns, known...)
 	}
 	if err := d.save(q); err != nil {
 		return buildErr("could not save quest %d: %s", q.QuestId, err.Error())
