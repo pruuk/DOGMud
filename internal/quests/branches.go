@@ -66,9 +66,56 @@ func (r *Quest) validateBranches() error {
 	return nil
 }
 
+// branchCache is what Validate works out once about a quest's fork, so the
+// hot readers (HasQuest on every trigger check) build no string. A quest that
+// never went through Validate (a test literal) works it out on each call.
+type branchCache struct {
+	ready  bool
+	flag   int      // index in Flags of the branch flag, -1 when unbranched
+	key    string   // that flag's registered key, "<questId>-<key>"
+	tokens []string // each step's token, "<questId>-<stepId>", by step index
+}
+
+// prepareBranches fills the branch cache. Validate calls it.
+func (r *Quest) prepareBranches() {
+	c := branchCache{ready: true, flag: r.findBranchFlag()}
+	if c.flag >= 0 {
+		c.key = flagKey(r.QuestId, r.Flags[c.flag].Key)
+	}
+	c.tokens = make([]string, len(r.Steps))
+	for i, s := range r.Steps {
+		c.tokens[i] = PartsToToken(r.QuestId, s.Id)
+	}
+	r.branch = c
+}
+
 // branchFlag is the index in Flags of the flag the branched steps use, or -1
 // for a quest with no branched steps.
 func (r *Quest) branchFlag() int {
+	if r.branch.ready {
+		return r.branch.flag
+	}
+	return r.findBranchFlag()
+}
+
+// branchKey is the branch flag's registered key; fi is branchFlag().
+func (r *Quest) branchKey(fi int) string {
+	if r.branch.ready {
+		return r.branch.key
+	}
+	return flagKey(r.QuestId, r.Flags[fi].Key)
+}
+
+// stepToken is step i's token.
+func (r *Quest) stepToken(i int) string {
+	if r.branch.ready && i < len(r.branch.tokens) {
+		return r.branch.tokens[i]
+	}
+	return PartsToToken(r.QuestId, r.Steps[i].Id)
+}
+
+// findBranchFlag works out branchFlag from the steps and flags.
+func (r *Quest) findBranchFlag() int {
 	for _, s := range r.Steps {
 		if s.Branch == `` {
 			continue
@@ -87,7 +134,7 @@ func (r *Quest) branchFlag() int {
 // quest's branched steps use, or blank for a quest with no branched steps.
 func (r *Quest) BranchFlagKey() string {
 	if fi := r.branchFlag(); fi >= 0 {
-		return flagKey(r.QuestId, r.Flags[fi].Key)
+		return r.branchKey(fi)
 	}
 	return ``
 }
@@ -124,30 +171,42 @@ func (r *Quest) Side(stepId string, flag func(string) string) string {
 	if flag == nil {
 		return ``
 	}
-	return flag(flagKey(r.QuestId, r.Flags[fi].Key))
+	return flag(r.branchKey(fi))
 }
 
 // GrantOnPath reports whether granting stepId keeps a player on their own
 // path: true for an unbranched step (or one the quest lacks), and for a
 // branched step of the player's side. It sees the player only through has
-// (HasQuest on this quest's tokens) and flag, as the trigger engine does, and
-// reads the same side as Side: a held branched step is held only on its own
-// side's path, so its branch is the side; holding none, the flag decides.
+// (HasQuest on this quest's tokens) and flag, as the trigger engine does.
+// Holding any branched step of the grant's side opens it; holding only the
+// other side's shuts it; holding none, the flag decides. For a holder on the
+// path helper (Character.HasQuest) this is Side; a holder that reads steps
+// as one straight line, and so "holds" both sides' earlier steps, still gets
+// its own side's next step.
 func (r *Quest) GrantOnPath(stepId string, has func(string) bool, flag func(string) string) bool {
 	i := r.stepIndex(stepId)
 	if i < 0 || r.Steps[i].Branch == `` {
 		return true
 	}
-	for _, s := range r.Steps {
-		if s.Branch != `` && has(PartsToToken(r.QuestId, s.Id)) {
-			return s.Branch == r.Steps[i].Branch
+	want := r.Steps[i].Branch
+	heldOther := false
+	for j, s := range r.Steps {
+		if s.Branch == `` || !has(r.stepToken(j)) {
+			continue
 		}
+		if s.Branch == want {
+			return true
+		}
+		heldOther = true
+	}
+	if heldOther {
+		return false
 	}
 	fi := r.branchFlag()
 	if fi < 0 || flag == nil {
 		return false
 	}
-	return flag(flagKey(r.QuestId, r.Flags[fi].Key)) == r.Steps[i].Branch
+	return flag(r.branchKey(fi)) == want
 }
 
 // onSide reports whether step i lies on side's path.

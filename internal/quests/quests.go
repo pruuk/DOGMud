@@ -75,6 +75,9 @@ type Quest struct {
 	Repeatable     bool           `yaml:"repeatable,omitempty" json:"repeatable,omitempty"`           // completing clears progress so it can be re-taken (after CooldownRounds)
 	CooldownRounds int            `yaml:"cooldown_rounds,omitempty" json:"cooldown_rounds,omitempty"` // rounds after completion before a repeatable quest can be re-taken
 	RepeatLimit    int            `yaml:"repeat_limit,omitempty" json:"repeat_limit,omitempty"`       // lifetime completions of a repeatable; 0 = no cap (#375 P3)
+
+	// branch is worked out by Validate (branches.go), never saved.
+	branch branchCache
 }
 
 type QuestStep struct {
@@ -326,6 +329,7 @@ func (r *Quest) Validate() error {
 	if err := r.validateBranches(); err != nil {
 		return fmt.Errorf("quest %d (%s): %w", r.QuestId, r.Name, err)
 	}
+	r.prepareBranches()
 
 	// Validate grant tokens reference valid steps (only for this quest's own tokens)
 	for i, t := range r.Triggers {

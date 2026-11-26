@@ -184,14 +184,24 @@ func TestIsTokenPassedOnPath(t *testing.T) {
 	}
 }
 
-// HasQuest runs on every trigger check: the on-path order must not allocate.
+// HasQuest runs on every trigger check: the on-path order must not allocate,
+// on a branched step or an unbranched one (where the flag is read), for a
+// quest that went through Validate as every loaded quest does.
 func TestOnPath_NoAllocation(t *testing.T) {
 	b, p := branchedQuest(), plainQuest()
+	require.NoError(t, b.Validate())
+	require.NoError(t, p.Validate())
 	rhett := func(string) string { return "rhett" }
+	none := func(string) bool { return false }
 	allocs := testing.AllocsPerRun(100, func() {
 		_ = p.stepBefore("middle", "start", "middle", nil)
 		_ = b.stepBefore("samples", "rhett", "samples", rhett)
+		_ = b.stepBefore("start", "start", "rhett", rhett)
+		_ = b.stepBefore("end", "samples", "end", rhett)
 		_, _ = b.StepProgress("totem", rhett)
+		_, _ = b.StepProgress("start", rhett)
+		_ = b.Side("end", rhett)
+		_ = b.GrantOnPath("rhett", none, rhett)
 	})
 	require.Zero(t, allocs)
 }
@@ -218,6 +228,32 @@ func TestQuest_GrantOnPathAgreesWithSide(t *testing.T) {
 		}
 	}
 	require.True(t, b.GrantOnPath("gone", func(string) bool { return false }, nil), "an unknown step is not this gate's to refuse")
+}
+
+// A holder that reads steps as one straight line (the walk player, a test
+// mock) "holds" every earlier step, Sylara's included, when it stands at
+// rhett. The gate must still open Rhett's next step to it: holding a step of
+// the grant's own side is enough.
+func TestQuest_GrantOnPathNaiveHolder(t *testing.T) {
+	b := branchedQuest()
+	naive := func(held ...string) func(string) bool {
+		return func(tok string) bool {
+			for _, h := range held {
+				if PartsToToken(b.QuestId, h) == tok {
+					return true
+				}
+			}
+			return false
+		}
+	}
+	atRhett := naive("start", "sylara", "totem", "rhett")
+	require.True(t, b.GrantOnPath("samples", atRhett, nil), "Rhett's return step stays open")
+
+	atSylara := naive("start", "sylara")
+	require.False(t, b.GrantOnPath("rhett", atSylara, flags("97311-branch", "rhett")),
+		"holding only the other side's steps shuts this side, whatever the flag says")
+	require.True(t, b.GrantOnPath("rhett", naive("start"), flags("97311-branch", "rhett")),
+		"holding no branched step, the flag decides")
 }
 
 func TestQuest_ValidateBranches(t *testing.T) {
