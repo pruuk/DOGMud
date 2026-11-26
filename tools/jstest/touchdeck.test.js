@@ -42,9 +42,9 @@ check('junk is saved as Automatic', TD.writePref(store(), 'x'), 'auto');
 check('blocked storage does not throw on save', TD.writePref(blocked, 'always'), 'always');
 
 // Whether the deck shows. Owner 2026-11-21: Automatic is off until plan 2b
-// puts movement in the deck.
-check('the switch plan 2b turns on is still off', TD.AUTOMATIC_SHOWS, false);
-check('Automatic on a touch screen: off until plan 2b', TD.deckOn('auto', true), false);
+// puts movement in the deck, which it now does.
+check('plan 2b turns Automatic on', TD.AUTOMATIC_SHOWS, true);
+check('Automatic on a touch screen: on', TD.deckOn('auto', true), true);
 check('Automatic with a mouse: off', TD.deckOn('auto', false), false);
 check('Always with a mouse: on', TD.deckOn('always', false), true);
 check('Always on touch: on', TD.deckOn('always', true), true);

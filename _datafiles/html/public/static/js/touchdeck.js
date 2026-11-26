@@ -34,9 +34,10 @@
     var KEY = 'dogmud.touchControls';
     var PREFS = { auto: true, always: true, never: true };
 
-    // Automatic shows the deck on a touch screen only once the deck has
-    // buttons (owner ruling 2026-11-21). Plan 2b sets this to true.
-    var AUTOMATIC_SHOWS = false;
+    // Automatic shows the deck on a touch screen once the deck has buttons
+    // (owner ruling 2026-11-21): plan 2b's movement buttons (spec 2,
+    // "Turning it on").
+    var AUTOMATIC_SHOWS = true;
 
     function readPref(storage) {
         try {

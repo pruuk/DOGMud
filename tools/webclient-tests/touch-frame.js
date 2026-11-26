@@ -106,5 +106,7 @@ const tdScriptAt = html.indexOf('/static/js/touchdeck.js');
 const dashScriptAt = html.indexOf('/static/js/dashboard.js');
 check(tdScriptAt > 0 && dashScriptAt > tdScriptAt, 'touchdeck.js loads before dashboard.js (the tab bar draws its icons with TouchDeck.lineIcon)');
 
+check(html.indexOf('<p class="settings-note" id="touch-note">Buttons above the command box for walking. Automatic shows them on phones and tablets. Always shows them on every screen. Never hides them.</p>') > 0, 'the Touch controls note says what each choice does now (plan 2b)');
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails === 0 ? 0 : 1);
