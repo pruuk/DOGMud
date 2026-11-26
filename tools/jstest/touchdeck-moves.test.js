@@ -136,7 +136,7 @@ check('frame 2: labels in order', [list[1].label, list[2].label], ['ledge', 'shr
 check('frame 2: no More when they fit', list.some(function (c) { return c.kind === 'more'; }), false);
 check('frame 3: diagonals in the list keep arrow and letters',
     TD.cells(TD.moves(junction, ''), PHONE, 'exits', 0).slice(1, 3).map(function (c) { return c.arrow + c.label; }), ['↗NE', '↙SW']);
-check('no room has more than two today, so an empty list falls back to the T',
+check('a room with no other exits: the list falls back to the T',
     TD.cells(TD.moves(barracks, ''), PHONE, 'exits', 0)[0].kind, 'move');
 
 var many = {};
@@ -161,7 +161,7 @@ check('the T stays the T', TD.levelAfter('top', 5243, 5243, mt), 'top');
 
 // --- tap ------------------------------------------------------------------
 
-var st = { level: 'top', page: 0, lastId: '', lastAt: 0 };
+var st = { level: 'top', page: 0, guardUntil: 0 };
 check('a lit arrow sends its fixed id', TD.tap(st, top[6], 1000).send, 'm4');
 check('a dim arrow sends nothing', TD.tap(st, top[1], 1000).send, '');
 check('a dark arrow sends its fixed id (all six tappable)', TD.tap(st, dk[1], 1000).send, 'm1');
@@ -170,16 +170,51 @@ check('a combat-dimmed arrow still sends (the server says why)',
 var r1 = TD.tap(st, top[6], 1000), r2 = TD.tap(r1, top[6], 1100);
 check('ruling 8: a fast double tap on the T sends twice', [r1.send, r2.send], ['m4', 'm4']);
 var opened = TD.tap(st, top[3], 1000);
-check('the exits button opens the list at its first page', [opened.level, opened.page], ['exits', 0]);
+check('the exits button opens the list', opened.level, 'exits');
+check('the exits button opens the list at its first page',
+    [TD.tap({ level: 'top', page: 2, guardUntil: 0 }, top[3], 1000).level, TD.tap({ level: 'top', page: 2, guardUntil: 0 }, top[3], 1000).page], ['exits', 0]);
 check('a dim exits button does nothing', TD.tap(st, TD.cells(TD.moves(barracks, ''), PHONE, 'top', 0)[3], 1000).level, 'top');
-var e1 = TD.tap(opened, list[2], 2000);
+var e1 = TD.tap({ level: 'exits', page: 0, guardUntil: 0 }, list[2], 2000);
 check('an exit sends its per-room id', e1.send, 'xa1b2c3d4');
 check('a second tap on it within half a second is ignored', TD.tap(e1, list[2], 2000 + TD.DOUBLE_TAP_MS - 1).send, '');
 check('after half a second it counts again', TD.tap(e1, list[2], 2000 + TD.DOUBLE_TAP_MS).send, 'xa1b2c3d4');
-check('Back returns to the T', TD.tap(opened, list[0], 3000).level, 'top');
-check('More turns the page', TD.tap({ level: 'exits', page: 0, lastId: '', lastAt: 0 }, page0[11], 1000).page, 1);
+var backed = TD.tap({ level: 'exits', page: 2, guardUntil: 0 }, list[0], 3000);
+check('Back returns to the T at the first page', [backed.level, backed.page], ['top', 0]);
+check('More turns the page', TD.tap({ level: 'exits', page: 0, guardUntil: 0 }, page0[11], 1000).page, 1);
 check('the Dark tile says what to do', TD.tap(st, dk[3], 1000).say, 'It is too dark to see the way. Light a torch or cast glow.');
-check('an empty slot does nothing', TD.tap(st, top[4], 1000), { level: 'top', page: 0, lastId: '', lastAt: 0, send: '', say: '' });
+check('an empty slot does nothing', TD.tap(st, top[4], 1000), { level: 'top', page: 0, guardUntil: 0, send: '', say: '' });
+
+// Plan 2b D11: a tap that changes the level, the page or the room puts a
+// different button under the finger, so the second tap of a double tap
+// must not act on it. Other, Back, More and an exit that sends hold every
+// tap off for DOUBLE_TAP_MS; the T never does (ruling 8).
+var four = info(7, {
+    up: ex('vertical', 'm5'), north: ex('compass', 'm1'),
+    aa: ex('named', 'xaaaaaaaa'), bb: ex('named', 'xbbbbbbbb'), cc: ex('named', 'xcccccccc'), dd: ex('named', 'xdddddddd')
+});
+var fourTop = TD.cells(TD.moves(four, ''), PHONE, 'top', 0);
+var fourList = TD.cells(TD.moves(four, ''), PHONE, 'exits', 0);
+var g1 = TD.tap(st, fourTop[3], 1000);
+var g2 = TD.tap(g1, fourList[3], 1000 + 100);
+check('double tap on exits: the second tap does not send the exit now under the finger',
+    [g1.level, fourList[3].label, g2.send, g2.level], ['exits', 'cc', '', 'exits']);
+var b1 = TD.tap({ level: 'exits', page: 0, guardUntil: 0 }, fourList[0], 1000);
+var b2 = TD.tap(b1, fourTop[0], 1000 + 100);
+check('double tap on Back: the second tap does not walk up',
+    [b1.level, fourTop[0].id, b2.send], ['top', 'm5', '']);
+var x1 = TD.tap({ level: 'exits', page: 0, guardUntil: 0 }, fourList[1], 1000);
+// Room.Info for the new room arrives about 300 ms later; the deck redraws
+// at the T and north is now under the finger.
+var arrived = TD.cells(TD.moves(four, ''), PHONE, 'top', 0);
+var x2 = TD.tap({ level: 'top', page: 0, guardUntil: x1.guardUntil }, arrived[1], 1000 + 300);
+check('an exit, then Room.Info, then the second tap: no second walk',
+    [x1.send, arrived[1].id, x2.send], ['xaaaaaaaa', 'm1', '']);
+check('once the hold ends the T works again',
+    TD.tap({ level: 'top', page: 0, guardUntil: x1.guardUntil }, arrived[1], 1000 + TD.DOUBLE_TAP_MS).send, 'm1');
+var mo1 = TD.tap({ level: 'exits', page: 0, guardUntil: 0 }, page0[11], 1000);
+check('double tap on More turns one page', TD.tap(mo1, page0[11], 1000 + 100).page, 1);
+var t1 = TD.tap(st, fourTop[1], 1000), t2 = TD.tap(t1, fourTop[1], 1000 + 50);
+check('ruling 8: the T sets no hold, so T after T sends twice', [t1.send, t2.send, t1.guardUntil], ['m1', 'm1', 0]);
 
 // --- render: the buttons drawn --------------------------------------------
 
@@ -227,6 +262,9 @@ check('frame 5: the wall mark is a class (drawn by CSS)', has(deck.children[1], 
 check('frame 5: a locked door felt in the dark carries the padlock', svgs(deck.children[6]), ['deck-lock']);
 check('frame 5: the Dark tile: closed eye and its word', [svgs(deck.children[3]), words(deck.children[3])], [['deck-icon'], 'Dark']);
 check('R1: the pitch-dark buttons are olive grey, not brass', [has(deck.children[7], 'brass'), has(deck.children[3], 'brass')], [false, false]);
+
+TD.render(deck, TD.cells(TD.moves(info(8, { west: ex('compass', 'm4') }, { moves: {} }), ''), PHONE, 'top', 0), doc);
+check('a lit arrow with no id is disabled (a tap would send nothing)', deck.children[6].disabled, true);
 
 TD.render(deck, TD.cells(TD.moves(tower, 'combat'), PHONE, 'top', 0), doc);
 check('frame 6: combat dims by class and keeps the button live',

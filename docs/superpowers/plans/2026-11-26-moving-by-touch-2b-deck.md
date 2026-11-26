@@ -114,7 +114,7 @@ Read on 2026-11-26 with grep and Read at `ebbba8037`. Line numbers move; re-grep
 | D8 | A third type token `--deck-label: 12px` in `gomud.css`, admitted by the type guard and pinned there, recorded in the brand doc | Ruling 18 sets named-button text at 12px; the guard's rule is "sizes come from tokens" | Per-line exemptions in `typeExemptLines` |
 | D9 | At 44px buttons a name gets `letter-spacing: -0.5px` | Six letters at 12px are 43.2px, the inside of a 44px button with 1px edges is 42px; with the spacing 40.2px | Let the name touch the edge |
 | D10 | A lit room's "no exit" arrow is disabled; in the dark all six stay tappable; in combat the dimmed buttons stay tappable | Ruling 4 for the dark; the mode comes once a round (F20), so a disabled deck would stay dead up to a round after a fight, and the server's refusal says why | Disable movement in combat |
-| D11 | A second tap on the same other-exit button within 0.5 s is ignored; the six T buttons never ignore a tap | Roadmap fat-finger rule; ruling 8 for the T | Ignore quick repeats on the T too |
+| D11 | A tap on the exits button, Back or More, or on an exit that sends, holds every tap off for 0.5 s (`guardUntil` in the tap state): each of them redraws the deck or moves the player, so a different button lands under the finger and the second tap of a double tap must not act on it (double tap on exits sending the third exit, double tap on Back walking up, an exit then its `Room.Info` then a second walk north). A T tap sets no hold, so T after T sends twice | Roadmap fat-finger rule; ruling 8 for the T; review of Tasks 2 to 4 found the per-button guard let those three sequences act | Ignore quick repeats on the T too |
 | D12 | The client sorts other exits again (diagonals clockwise from northeast, then A to Z by label), with a jstest that reads the server's `exitOrder` and fails if they part | `exitsv2` is a JSON object (Go marshals maps by key), so the server's order does not survive; a sort is cheaper than a new wire field | Add an order field to `exitsv2` |
 | D13 | Back reads "‹ Back" and More "More ›"; More turns to the next page and wraps to the first | The mockup's Back; no room needs More today | Back names its target in words |
 | D14 | Back and More get a 2px solid `--brass-border` edge with 2px corners, the exits button a 2px dashed one; movement keeps `.brass`'s 1px edge and 6px corners. The brass fill, not the edge, outlines a button on the deck (6.82 to 10.57 against `--ink-deep`; the edge alone is 1.40), and the edge reads on the brass (4.87 to 7.55) | Brand: kinds by shape and edge; under R1 the edge must read against brass, not against the deck | 1px as drawn |
@@ -821,7 +821,7 @@ Expected: every line `ok`, exit 0; Go `ok`.
 
 - [ ] **Step 5: Prove the tests can fail**
 
-Swap `'southwest', 'northwest'` in `DIAGONALS`: the order guard and the junction check fail. Restore. Change `var NAME_LETTERS = 6;` to `= 7;`: the Go guard fails. Restore.
+Swap `'southwest', 'northwest'` in `DIAGONALS`: the order guard fails (the junction check does not: its fixture has only northeast and southwest). Restore. Change `var NAME_LETTERS = 6;` to `= 7;`: the Go guard fails. Restore.
 
 - [ ] **Step 6: Commit**
 
@@ -1052,7 +1052,7 @@ Expected: every line `ok`, exit 0.
 
 - [ ] **Step 5: Prove the tests can fail**
 
-In `tap`, change `if (!c.id || (c.id === st.lastId && now - st.lastAt < DOUBLE_TAP_MS)) break;` to `if (!c.id) break;`: "a second tap on it within half a second is ignored" fails. Restore. In `cells` change `var slot = s.cols >= 4 ? 3 : 2 * s.cols;` to `var slot = 3;`: the sideways check fails. Restore.
+In `tap`, change `if (!c.id || (c.id === st.lastId && now - st.lastAt < DOUBLE_TAP_MS)) break;` to `if (!c.id) break;`: "a second tap on it within half a second is ignored" fails. Restore. (The review fix after Task 4 replaced `lastId`/`lastAt` with the `guardUntil` hold of D11; `touchdeck.js` `tap` and its tests in `touchdeck-moves.test.js` are the current text.) In `cells` change `var slot = s.cols >= 4 ? 3 : 2 * s.cols;` to `var slot = 3;`: the sideways check fails. Restore.
 
 - [ ] **Step 6: Commit**
 
@@ -1809,7 +1809,7 @@ After `    _deck: null,        // #touch-deck, inside the slot` add:
     _moves: null,
     _movesNum: null,
     _deckMode: "",
-    _deckState: { level: "top", page: 0, lastId: "", lastAt: 0 },
+    _deckState: { level: "top", page: 0, guardUntil: 0 },
     _deckCells: [],
     _deckSig: "",
     _deckPress: null,
@@ -1879,7 +1879,7 @@ After the closing `},` of `applyDeck` add:
       var num = info ? info.num : null;
       var level = TD.levelAfter(this._deckState.level, this._movesNum, num, TD.moves(info, this._deckMode));
       if (level !== this._deckState.level) {
-        this._deckState = { level: level, page: 0, lastId: this._deckState.lastId, lastAt: this._deckState.lastAt };
+        this._deckState = { level: level, page: 0, guardUntil: this._deckState.guardUntil };
       }
       this._moves = info;
       this._movesNum = num;
@@ -1899,7 +1899,7 @@ After the closing `},` of `applyDeck` add:
       var TD = window.TouchDeck, c = this._deckCells[i];
       if (!TD || !c) return;
       var r = TD.tap(this._deckState, c, Date.now());
-      this._deckState = { level: r.level, page: r.page, lastId: r.lastId, lastAt: r.lastAt };
+      this._deckState = { level: r.level, page: r.page, guardUntil: r.guardUntil };
       if (r.send && this._deckPress) this._deckPress(r.send);
       if (r.say && this._deckSay) this._deckSay(r.say);
       this.applyDeck();
@@ -2384,7 +2384,7 @@ Comment on #781 with what landed and what is left (2c: the Map tab's T and the s
 
 **Placeholder scan:** none. Every code step shows the code; every command shows its expected result.
 
-**Type consistency:** `TouchDeck.moves(info, mode)` returns `{ready, dark, combat, t: {dir: {id, lit, locked, mark}}, others: [{name, id, label, arrow, locked, own}]}`; `cells(model, shape, level, page)` returns cells `{kind, ...}` with kinds `empty move other dark back exit more`; `levelAfter(level, lastNum, num, model)`; `tap(state, cell, now)` returns `{level, page, lastId, lastAt, send, say}`; `render(deck, cells, doc)`; exports `T_DIRS`, `DIAGONALS`, `NAME_LETTERS`, `DOUBLE_TAP_MS`, `DARK_LINE`. `Dashboard.setDeckSender(press, say)`, `setMoves(info)`, `setDeckMode(mode)`, `_deckTap(i)`, state `_moves`, `_movesNum`, `_deckMode`, `_deckState`, `_deckCells`, `_deckSig`. Server: `exit.InstancePortalKey(zone, userId) string`, `exit.InstancePortalZone(key, TemporaryRoomExit) (string, bool)`, `rooms.MayEnterInstance(userId, roomId) bool`, `rooms.ForDeck(KnownExitList, userId) (KnownExitList, map[string]string)`, `rooms.IsOwnPortal(KnownExit, userId) bool`, the `exitsv2` detail `own_portal`, `GMCPRoomModule_Payload_Contents_ExitInfo.Label` (`json:"label,omitempty"`). Used with these signatures in every task.
+**Type consistency:** `TouchDeck.moves(info, mode)` returns `{ready, dark, combat, t: {dir: {id, lit, locked, mark}}, others: [{name, id, label, arrow, locked, own}]}`; `cells(model, shape, level, page)` returns cells `{kind, ...}` with kinds `empty move other dark back exit more`; `levelAfter(level, lastNum, num, model)`; `tap(state, cell, now)` returns `{level, page, guardUntil, send, say}`; `render(deck, cells, doc)`; exports `T_DIRS`, `DIAGONALS`, `NAME_LETTERS`, `DOUBLE_TAP_MS`, `DARK_LINE`. `Dashboard.setDeckSender(press, say)`, `setMoves(info)`, `setDeckMode(mode)`, `_deckTap(i)`, state `_moves`, `_movesNum`, `_deckMode`, `_deckState`, `_deckCells`, `_deckSig`. Server: `exit.InstancePortalKey(zone, userId) string`, `exit.InstancePortalZone(key, TemporaryRoomExit) (string, bool)`, `rooms.MayEnterInstance(userId, roomId) bool`, `rooms.ForDeck(KnownExitList, userId) (KnownExitList, map[string]string)`, `rooms.IsOwnPortal(KnownExit, userId) bool`, the `exitsv2` detail `own_portal`, `GMCPRoomModule_Payload_Contents_ExitInfo.Label` (`json:"label,omitempty"`). Used with these signatures in every task.
 
 ## Open questions for the owner
 

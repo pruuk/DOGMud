@@ -226,9 +226,12 @@
         return m;
     }
 
-    // A second tap on the same other-exit button within this long is
-    // ignored (roadmap fat-finger rules). The six T buttons never ignore a
-    // tap: a fast double tap walks twice, like typing (owner ruling 8).
+    // The hold after a tap that changes what is under the finger (roadmap
+    // fat-finger rules, plan 2b D11). A tap on the exits button, Back or
+    // More, or on an exit that sends, redraws the deck or moves the player,
+    // so a different button lands under the finger: every tap in the next
+    // DOUBLE_TAP_MS is ignored. A T tap sets no hold, so a fast double tap
+    // on the T walks twice, like typing (owner ruling 8).
     var DOUBLE_TAP_MS = 500;
 
     // The Dark tile's line (spec 2b, States).
@@ -283,31 +286,33 @@
         return 'exits';
     }
 
-    // What a tap on cell c does. st: { level, page, lastId, lastAt }; now in
-    // ms. Returns the next state with send (an id for Char.Button.Press, or
-    // '') and say (a line for the game window, or '').
+    // What a tap on cell c does. st: { level, page, guardUntil }; now in ms.
+    // Returns the next state with send (an id for Char.Button.Press, or '')
+    // and say (a line for the game window, or ''). A tap before guardUntil
+    // is ignored (DOUBLE_TAP_MS).
     function tap(st, c, now) {
-        var r = { level: st.level, page: st.page, lastId: st.lastId, lastAt: st.lastAt, send: '', say: '' };
-        if (!c) return r;
+        var r = { level: st.level, page: st.page, guardUntil: st.guardUntil || 0, send: '', say: '' };
+        if (!c || now < r.guardUntil) return r;
         switch (c.kind) {
         case 'move':
             if ((c.lit || c.dark) && c.id) r.send = c.id;
             break;
         case 'exit':
-            if (!c.id || (c.id === st.lastId && now - st.lastAt < DOUBLE_TAP_MS)) break;
+            if (!c.id) break;
             r.send = c.id;
-            r.lastId = c.id;
-            r.lastAt = now;
+            r.guardUntil = now + DOUBLE_TAP_MS;
             break;
         case 'other':
-            if (c.lit) { r.level = 'exits'; r.page = 0; }
+            if (c.lit) { r.level = 'exits'; r.page = 0; r.guardUntil = now + DOUBLE_TAP_MS; }
             break;
         case 'back':
             r.level = 'top';
             r.page = 0;
+            r.guardUntil = now + DOUBLE_TAP_MS;
             break;
         case 'more':
             r.page = (st.page || 0) + 1;
+            r.guardUntil = now + DOUBLE_TAP_MS;
             break;
         case 'dark':
             r.say = DARK_LINE;
@@ -396,10 +401,11 @@
         return '';
     }
 
-    // A lit room's arrow with no exit that way, and the exits button with
-    // no other exits, take no tap. In the dark all six arrows do (ruling 4).
+    // A lit room's arrow with no exit that way, an arrow with no id (a tap
+    // would send nothing), and the exits button with no other exits take no
+    // tap. In the dark all six arrows do (ruling 4).
     function disabledOf(c) {
-        return (c.kind === 'move' && !c.lit && !c.dark) || (c.kind === 'other' && !c.lit);
+        return (c.kind === 'move' && ((!c.lit && !c.dark) || !c.id)) || (c.kind === 'other' && !c.lit);
     }
 
     // Draws cells into the deck element, replacing what it held. Text goes
