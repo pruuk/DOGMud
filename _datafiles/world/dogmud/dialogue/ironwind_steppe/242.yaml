@@ -19,6 +19,9 @@ opener:
     - 11-end
     questFlagRequired:
       11-branch: rhett
+    # Only while the samples are carried: a player who dropped them gets the
+    # fetch variant below and is sent back to the veins.
+    carriesItem: 40032
     text: "Are those my samples? Let me see, let me see!"
     hints: "Rhett is already reaching for your pack. Choose a line below to give
       him the samples."
@@ -137,6 +140,10 @@ topics:
   questExcluded:
   - 11-start
   - 11-end
+  # A player who chose Sylara and set the quest aside takes it back from
+  # Sylara or Kael; Rhett does not pitch his side to them again.
+  questFlagExcluded:
+    11-branch: sylara
   grantsQuest: 11-start
   moodChange: friendly
 # R28: the side is chosen here, after the must-hear warning.

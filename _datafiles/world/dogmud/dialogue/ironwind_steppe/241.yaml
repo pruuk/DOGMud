@@ -18,6 +18,9 @@ opener:
     - 11-end
     questFlagRequired:
       11-branch: sylara
+    # Only while the totem is carried: a player who dropped it gets the
+    # fetch variant below and is sent back to the bones.
+    carriesItem: 40033
     text: "You have it. I can feel the wolf spirit stirring in your pack. Give it
       to me."
     hints: "Choose a line below to give Sylara her totem."
@@ -135,6 +138,10 @@ topics:
   questExcluded:
   - 11-start
   - 11-end
+  # A player who chose Rhett and set the quest aside takes it back from Rhett
+  # or Kael; Sylara does not pitch her side to them again.
+  questFlagExcluded:
+    11-branch: rhett
   grantsQuest: 11-start
   moodChange: neutral
 # R28: the side is chosen here, after the must-hear warning.
