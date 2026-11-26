@@ -81,7 +81,7 @@ Server:
   - checkclient
   # - Motd -
   #   Message of the day. This is displayed when the motd command is run.
-  Motd: '{{ t "MORE ROOM ON A PHONE. No title bar over the game, Comms channels in one row you swipe, and an open tab steps aside while you type.\nLONG ANSWERS COME A PAGE AT A TIME. Press Enter for the next page, or type q to stop.\nPROMPTS FIT NARROW SCREENS. Your prompt and questions now break between words.\nNOTHING YOU MAKE VANISHES. If you cannot carry what you craft, buy or earn, it falls at your feet.\nThe novel: https://dogmud.org/novel\nFull patch notes: https://dogmud.org/patch-notes" }}'
+  Motd: '{{ t "COULEE TEACHERS OFFER THEIR TRADES. After your walk with Crier Toke, each trade''s teacher offers you its first quest.\nQUEST GEAR. What a quest hands you fades if it leaves your hands. Lose it and the giver hands you another.\nCOMMANDS WAIT THEIR TURN. Commands sent quickly wait in line, up to ten at a time.\nONE FLEE A ROUND. A second try in the same round waits for the next.\nThe novel: https://dogmud.org/novel\nFull patch notes: https://dogmud.org/patch-notes" }}'
   # - NextRoomID -
   # This number is auto-updated to the highest number of rooms in the game.
   #   If creating your own rooms but don't want to risk an update conflicting,
