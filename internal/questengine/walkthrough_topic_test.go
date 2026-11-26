@@ -1,6 +1,7 @@
 package questengine
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
@@ -51,7 +52,7 @@ func TestWalk_TopicHeardTriggerHearsItsTopic(t *testing.T) {
 	// set by hearing rumours, not by the flag search.
 	env := newWalkEnv(NewEngine(), questloop.Sources{}, w.Quests, w.Dialogue)
 	env.eng.RegisterQuest(w.Quests[0])
-	p := newWalkPlayer(map[int][]string{53: {"start", "asked", "went", "end"}})
+	p := newWalkPlayer(stepQuests(map[int][]string{53: {"start", "asked", "went", "end"}}))
 	p.grant("53-start")
 	var asked questloop.Way
 	for _, wy := range questloop.WaysInto(w)["53-asked"] {
@@ -101,7 +102,7 @@ func TestWalk_PlayedTopicRaisesTopicHeard(t *testing.T) {
 	// queued grant landed after it.
 	eng := NewEngine()
 	eng.RegisterQuest(w.Quests[0])
-	p := newWalkPlayer(map[int][]string{53: {"start", "firstkill", "end"}})
+	p := newWalkPlayer(stepQuests(map[int][]string{53: {"start", "firstkill", "end"}}))
 	p.grant("53-start")
 	boast := questloop.WaysInto(w)["53-firstkill"][0]
 	require.NotNil(t, boast.Topic)
@@ -167,6 +168,106 @@ func TestWalk_TopicHeardTopicItemGatesTheSkipProbe(t *testing.T) {
 
 	got := Walk(handoffWorld(), outside(900))
 	require.Contains(t, keys(got), "walk-dead-end 53 quest 53 trigger topic_heard mob=9200 topic=handoff grants=53-went")
+}
+
+// forkedWalkWorld is quest 11's shape (#958) with branch: on its four middle
+// steps. Kael (9300) offers quest 54; hearing Sylara's (9301) or Rhett's
+// (9302) stand topic sets the branch flag and, through a topic_heard trigger,
+// grants that side's fetch step; picking up the side's item grants its return
+// step; each NPC takes the hand-in of their own side's return step.
+func forkedWalkWorld() questloop.World {
+	q := &quests.Quest{
+		QuestId: 54, Name: "Forked",
+		Flags: []quests.QuestFlagDef{{Key: "branch", Values: []string{"sylara", "rhett"}}},
+		Steps: []quests.QuestStep{
+			{Id: "start", Hint: "h"},
+			{Id: "sylara", Branch: "sylara", Hint: "h"}, {Id: "totem", Branch: "sylara", Hint: "h"},
+			{Id: "rhett", Branch: "rhett", Hint: "h"}, {Id: "samples", Branch: "rhett", Hint: "h"},
+			{Id: "end"},
+		},
+		Triggers: []quests.TriggerDef{
+			{Event: "topic_heard", Mob: 9301, Topic: "stand",
+				Conditions: quests.Conditions{Has: []string{"54-start"}, Missing: []string{"54-sylara"}},
+				Actions:    []quests.ActionDef{{Grant: "54-sylara"}}},
+			{Event: "item_gain", Item: 901,
+				Conditions: quests.Conditions{Has: []string{"54-sylara"}, Missing: []string{"54-totem"}},
+				Actions:    []quests.ActionDef{{Grant: "54-totem"}}},
+			{Event: "topic_heard", Mob: 9302, Topic: "stand",
+				Conditions: quests.Conditions{Has: []string{"54-start"}, Missing: []string{"54-rhett"}},
+				Actions:    []quests.ActionDef{{Grant: "54-rhett"}}},
+			{Event: "item_gain", Item: 902,
+				Conditions: quests.Conditions{Has: []string{"54-rhett"}, Missing: []string{"54-samples"}},
+				Actions:    []quests.ActionDef{{Grant: "54-samples"}}},
+		},
+	}
+	kael := &dialogue.DialogueFile{MobId: 9300, Topics: []dialogue.Topic{
+		{Key: "offer", Kind: dialogue.KindOffer, Quest: 54, Label: "Forked", Text: "t",
+			Effects: dialogue.Effects{GrantsQuest: "54-start"}},
+	}}
+	side := func(mob int, value, need string) *dialogue.DialogueFile {
+		return &dialogue.DialogueFile{MobId: mob, Topics: []dialogue.Topic{
+			{Key: "stand", Kind: dialogue.KindInfo, Label: "Stand", Text: "t",
+				Gates:   dialogue.Gates{QuestRequired: []string{"54-start"}, QuestExcluded: []string{"54-end"}},
+				Effects: dialogue.Effects{SetsQuestFlag: &dialogue.QuestFlagSet{Key: "54-branch", Value: value}}},
+			{Key: "hand_in", Kind: dialogue.KindHandIn, Quest: 54, Label: "Forked", Text: "t",
+				Gates: dialogue.Gates{QuestRequired: []string{need}}, Effects: dialogue.Effects{GrantsQuest: "54-end"}},
+		}}
+	}
+	return questloop.World{Quests: []*quests.Quest{q}, Dialogue: []*dialogue.DialogueFile{
+		kael, side(9301, "sylara", "54-totem"), side(9302, "rhett", "54-samples")}}
+}
+
+// findingOf is the finding with key, or a zero Finding.
+func findingOf(fs []questloop.Finding, key string) questloop.Finding {
+	for _, f := range fs {
+		if f.Key() == key {
+			return f
+		}
+	}
+	return questloop.Finding{}
+}
+
+// Each path is walked on its own: Rhett's hand-in is not a dead end on
+// Sylara's path, nor Sylara's steps on Rhett's.
+func TestWalk_ForkedQuestFinishesOnEachPath(t *testing.T) {
+	require.Empty(t, Walk(forkedWalkWorld(), questloop.Sources{}))
+}
+
+func TestWalk_DeadBranchIsReportedOnItsPath(t *testing.T) {
+	w := forkedWalkWorld()
+	w.Quests[0].Triggers = slices.Delete(w.Quests[0].Triggers, 3, 4) // no samples pickup
+	fs := Walk(w, questloop.Sources{})
+	require.Equal(t, []string{"walk-dead-end 54 step samples"}, keys(fs))
+	require.Contains(t, fs[0].Msg, "rhett path", "the path is named in the message")
+}
+
+// The walk player keeps the game's step rule: a side's step is granted only
+// once the flag names that side, so a flag set after the grant fails the walk
+// as it fails in play.
+func TestWalk_FlagSetAfterTheGrantIsReported(t *testing.T) {
+	// The trigger grants, then sets the flag.
+	w := forkedWalkWorld()
+	w.Dialogue[1].Topics[0].SetsQuestFlag = nil
+	w.Quests[0].Triggers[0].Actions = []quests.ActionDef{{Grant: "54-sylara"},
+		{SetFlag: &quests.QuestFlagAction{Key: "54-branch", Value: "sylara"}}}
+	fs := Walk(w, questloop.Sources{})
+	require.Contains(t, keys(fs), "walk-dead-end 54 step sylara")
+	require.Contains(t, findingOf(fs, "walk-dead-end 54 step sylara").Msg, "sylara path")
+
+	// The topic sets the wrong side.
+	w = forkedWalkWorld()
+	w.Dialogue[2].Topics[0].SetsQuestFlag.Value = "sylara"
+	require.Contains(t, keys(Walk(w, questloop.Sources{})), "walk-dead-end 54 step rhett")
+}
+
+// A path's walk ends with the branch flag on its own side.
+func TestWalk_PathMustEndOnItsSide(t *testing.T) {
+	w := forkedWalkWorld()
+	w.Quests[0].Triggers[1].Actions = append(w.Quests[0].Triggers[1].Actions,
+		quests.ActionDef{SetFlag: &quests.QuestFlagAction{Key: "54-branch", Value: "rhett"}})
+	fs := Walk(w, questloop.Sources{})
+	require.Equal(t, []string{"walk-branch-flag 54 step end"}, keys(fs))
+	require.Contains(t, fs[0].Msg, "sylara path")
 }
 
 // A topic_heard trigger is source-checked for its topic's NPC and items.

@@ -9,17 +9,21 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/narration"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 )
 
 // walkPlayer is the walkthrough's player: quest progress with the game's real
-// step order (HasQuest holds for the current step and every earlier one; a
-// grant only moves forward; a quest is entered only at its first step, as
-// characters.GiveQuestToken does), plus items, flags, gold and room. It
-// satisfies PlayerState for the trigger engine and backs a dialogue
-// PlayerState for topics.
+// step order, read from the same path helpers Character uses
+// (quests.Quest.IsStepPassedOnPath and IsStepAfterOnPath) with the walk
+// player's own flags: HasQuest holds for the current step and every earlier
+// one on the player's path, never another side's; a grant only moves forward
+// on that path; a quest is entered only at "start" or the only step of a
+// one-step quest, as characters.GiveQuestToken does. Plus items, flags, gold
+// and room. It satisfies PlayerState for the trigger engine and backs a
+// dialogue PlayerState for topics.
 type walkPlayer struct {
-	steps      map[int][]string // quest id -> step ids in order
-	progress   map[int]string   // quest id -> current step id
+	quests     map[int]*quests.Quest // quest id -> quest, shared by every walk
+	progress   map[int]string        // quest id -> current step id
 	items      map[int]bool
 	flags      map[string]string
 	heard      map[string]bool // dialogue.HeardKey -> heard
@@ -29,8 +33,8 @@ type walkPlayer struct {
 	masterwork bool
 }
 
-func newWalkPlayer(steps map[int][]string) *walkPlayer {
-	return &walkPlayer{steps: steps, progress: map[int]string{}, items: map[int]bool{},
+func newWalkPlayer(qs map[int]*quests.Quest) *walkPlayer {
+	return &walkPlayer{quests: qs, progress: map[int]string{}, items: map[int]bool{},
 		flags: map[string]string{}, heard: map[string]bool{}, spells: map[string]bool{}}
 }
 
@@ -46,45 +50,46 @@ func splitToken(token string) (int, string) {
 	return n, step
 }
 
-func (p *walkPlayer) index(questId int, step string) int {
-	return slices.Index(p.steps[questId], step)
+// quest is the walk's quest for token, and its step id, when the quest has
+// that step.
+func (p *walkPlayer) quest(token string) (*quests.Quest, int, string) {
+	id, step := splitToken(token)
+	q := p.quests[id]
+	if q == nil {
+		return nil, id, step
+	}
+	if _, ok := q.Step(step); !ok {
+		return nil, id, step
+	}
+	return q, id, step
 }
 
 func (p *walkPlayer) HasQuest(token string) bool {
-	id, step := splitToken(token)
+	q, id, step := p.quest(token)
 	cur, ok := p.progress[id]
-	if !ok {
+	if q == nil || !ok {
 		return false
 	}
-	want := p.index(id, step)
-	return want >= 0 && want <= p.index(id, cur)
+	return step == cur || q.IsStepPassedOnPath(step, cur, p.GetQuestFlag)
 }
 
-// grant moves a quest forward the way GiveQuestToken does. A quest not yet
-// begun is entered only at "start", or at the only step of a one-step quest
-// (quests.IsTokenAfter).
+// grant moves a quest forward the way GiveQuestToken does
+// (quests.IsTokenAfterOnPath): a quest not yet begun is entered only at
+// "start", or at the only step of a one-step quest, and a begun one moves
+// only forward on the player's path.
 func (p *walkPlayer) grant(token string) {
-	id, step := splitToken(token)
-	next := p.index(id, step)
-	if next < 0 {
+	q, id, step := p.quest(token)
+	if q == nil {
 		return
 	}
-	cur, ok := p.progress[id]
-	if !ok {
-		if step == "start" || (step == "end" && len(p.steps[id]) == 1) {
-			p.progress[id] = step
-		}
-		return
-	}
-	if next > p.index(id, cur) {
+	if q.IsStepAfterOnPath(p.progress[id], step, p.GetQuestFlag) {
 		p.progress[id] = step
 	}
 }
 
 // hold puts the player on a token's step directly, for prerequisites.
 func (p *walkPlayer) hold(token string) {
-	id, step := splitToken(token)
-	if p.index(id, step) >= 0 {
+	if q, id, step := p.quest(token); q != nil {
 		p.progress[id] = step
 	}
 }

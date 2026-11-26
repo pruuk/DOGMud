@@ -111,7 +111,7 @@ func TestWalk_QuestGrantedChainOffTheOfferFinishes(t *testing.T) {
 	// (the walk never fires the quest_granted Way directly).
 	eng := NewEngine()
 	eng.RegisterQuest(w.Quests[0])
-	p := newWalkPlayer(map[int][]string{53: {"start", "firstkill", "end"}})
+	p := newWalkPlayer(stepQuests(map[int][]string{53: {"start", "firstkill", "end"}}))
 	offer := questloop.WaysInto(w)["53-start"][0]
 	trail := fireWay(&walkEnv{eng: eng}, p, offer, 53)
 	require.Equal(t, "firstkill", p.progress[53])
