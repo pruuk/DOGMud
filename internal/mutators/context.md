@@ -138,6 +138,10 @@ func (m *MutatorSpec) Save() error
   every active mutator's `SkyLight` and takes the product); nil leaves the
   sky untouched rather than contributing a no-op 1. It replaced the old
   `-2..2` `LightMod` field, which is gone.
+- **A mutator exit is a named exit like a room's.** `Validate` refuses one
+  longer than `exit.MaxNameLetters` (6 letters, compass words exempt; owner
+  ruling 18, 2026-11-26), naming the mutator and the exit, so it fails the
+  boot (`exit_name_length_test.go`).
 
 ## Dependencies
 

@@ -224,17 +224,33 @@ func TestBuildExitAdd_PortalAllowsCrossPlane(t *testing.T) {
 	w.put(&rooms.Room{RoomId: 1, Zone: "Over", Plane: 0, X: 0, Y: 0, Z: 0})
 	w.put(&rooms.Room{RoomId: 2, Zone: "Inn", Plane: 1, X: 9, Y: 9, Z: 0})
 
-	res := buildExitAdd(w.deps(), exitAddReq{RoomId: 1, PortalName: "enter inn", ToRoomId: 2, Message: "You step inside."})
+	res := buildExitAdd(w.deps(), exitAddReq{RoomId: 1, PortalName: "inn", ToRoomId: 2, Message: "You step inside."})
 	if !res.Ok {
 		t.Fatalf("a portal to another plane must be allowed, got %+v", res)
 	}
-	e, ok := w.rooms[1].Exits["enter inn"]
+	e, ok := w.rooms[1].Exits["inn"]
 	if !ok || e.RoomId != 2 || e.ExitMessage != "You step inside." {
 		t.Errorf("portal exit not written correctly: %+v", w.rooms[1].Exits)
 	}
 	// Portals are non-spatial: no auto reciprocal on the target.
 	if len(w.rooms[2].Exits) != 0 {
 		t.Errorf("portal must not auto-wire a reciprocal, got %+v", w.rooms[2].Exits)
+	}
+}
+
+// Owner ruling 18 (2026-11-26): a named exit fits a deck button, so the
+// builder refuses a name longer than exit.MaxNameLetters and writes nothing.
+func TestBuildExitAdd_RefusesANameLongerThanAButton(t *testing.T) {
+	w := newFakeWorld()
+	w.put(&rooms.Room{RoomId: 1, Zone: "Over", Plane: 0, X: 0, Y: 0, Z: 0})
+	w.put(&rooms.Room{RoomId: 2, Zone: "Inn", Plane: 1, X: 9, Y: 9, Z: 0})
+
+	res := buildExitAdd(w.deps(), exitAddReq{RoomId: 1, PortalName: "outlook", ToRoomId: 2})
+	if res.Ok {
+		t.Fatalf("a seven-letter exit name must be refused, got %+v", res)
+	}
+	if _, ok := w.rooms[1].Exits["outlook"]; ok {
+		t.Errorf("the refused exit was written: %+v", w.rooms[1].Exits)
 	}
 }
 

@@ -168,6 +168,17 @@ share the exterior's x/y coordinate, and down into a negative z for
 basements and cellars. Reserve enter/leave for cases with no sensible
 cardinal direction, such as a portal or a fall.
 
+**A named exit is at most 6 letters** (owner ruling 18, 2026-11-26), so it
+fits a 48px touch deck button: `tower`, `ledge`, `shrine`, `portal`, not
+`watchtower` or `overlook`. Spaces and hyphens count. The ten compass words
+(north to southwest, up, down) are exempt. The limit is one constant,
+`exit.MaxNameLetters` (`internal/exit/name.go`). The boot refuses a longer
+room or mutator exit and names the room and the exit; so do the builders and
+a behaviour tree's `add_temp_exit`. The guard is
+`internal/guards/exit_name_length_guard_test.go`. Renaming a shipped exit
+means updating any text that tells a player to type it (dialogue hints,
+quest steps, help) and any mob script that walks it.
+
 [[feedback_noun_keys_space_separated]]: multi-word noun keys must be
 space-separated (`notice board`), not hyphenated (`notice-board`). The
 engine auto-aliases each word in a space-separated key so `look notice`,

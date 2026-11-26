@@ -10,7 +10,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-const gangplankExitName = `gangplank`
+// gangplankExitName is the deck's temporary exit to the pier while she is
+// tied up. Players type it, and the touch deck shows it on a button, so it
+// fits exit.MaxNameLetters (owner ruling 18, 2026-11-26: was "gangplank").
+const gangplankExitName = `plank`
 
 // ambiance lines shown on deck while at sea, rotated deterministically.
 var atSeaAmbiance = []string{
@@ -101,7 +104,7 @@ func emitArrival(r Route, atPortIdx int) {
 	}
 	if deck := rooms.LoadRoom(r.DeckRoom); deck != nil {
 		deck.SendText(messaging.CategoryRoomDescription,
-			`Fenders squeal against timber as she comes alongside. The gangplank goes down, and you can walk ashore.`)
+			`Fenders squeal against timber as she comes alongside. The gangplank goes down. Type <ansi fg="command">`+gangplankExitName+`</ansi> to walk ashore.`)
 	}
 }
 

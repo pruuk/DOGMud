@@ -4,6 +4,8 @@ package behaviortree
 // actSetRoomLocked, actSpawnItemInRoom, actAddTempExit, actMovePlayer, actIntercept
 
 import (
+	"fmt"
+
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -53,6 +55,17 @@ func actSpawnItemInRoom(params map[string]any, ctx *EvalContext) Result {
 	item := items.New(itemId)
 	room.AddItem(item, false)
 	return Success
+}
+
+// checkAddTempExitParams refuses, at load, an add_temp_exit node with no
+// exit_name, which could never open anything, or with one longer than a deck
+// button holds (owner ruling 18, exit.MaxNameLetters).
+func checkAddTempExitParams(params map[string]any) error {
+	name := getStringParam(params, "exit_name")
+	if name == "" {
+		return fmt.Errorf("add_temp_exit needs an exit_name param")
+	}
+	return exit.CheckName(name)
 }
 
 func actAddTempExit(params map[string]any, ctx *EvalContext) Result {

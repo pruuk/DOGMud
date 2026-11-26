@@ -152,6 +152,24 @@ func TestBuilderMenu_ExitByNumber(t *testing.T) {
 	assert.Equal(t, `Delete this exit?`, lastQuestion(t, admin), "2 picked north")
 }
 
+// Owner ruling 18 (2026-11-26): the `room exits` editor asks again when the
+// new exit's name is longer than a deck button holds (exit.MaxNameLetters).
+func TestBuilderMenu_ExitNameLongerThanAButtonIsAskedAgain(t *testing.T) {
+	admin, room := builderAdmin(t)
+	run := func() { _, _ = room_Edit_Exits("", admin, room, 0) }
+	const nameQ = `Choose a name for this exit:`
+
+	drive(t, admin, run, "1")
+	require.Equal(t, nameQ, lastQuestion(t, admin), "1 picked new")
+
+	out := drive(t, admin, run, "outlook")
+	assert.Contains(t, out, `"outlook" is 7 letters`)
+	assert.Equal(t, nameQ, lastQuestion(t, admin), "a seven-letter name is asked again")
+
+	drive(t, admin, run, "ledge")
+	assert.Equal(t, `What RoomId will this exit lead to?`, lastQuestion(t, admin), "a six-letter or shorter name goes on")
+}
+
 func TestBuilderMenu_TrapConditionsToggleByNumber(t *testing.T) {
 	admin, _ := builderAdmin(t)
 	// Two specs share a name, as two shipped "Stunned" specs do: picking

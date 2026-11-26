@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -24,19 +25,6 @@ const (
 var (
 	ErrOutOfBounds  = errors.New(`out of bounds`)
 	ErrRoomNotFound = errors.New(`room not found`)
-
-	compassDirections = map[string]struct{}{
-		"north":     {},
-		"south":     {},
-		"west":      {},
-		"east":      {},
-		"northwest": {},
-		"northeast": {},
-		"southwest": {},
-		"southeast": {},
-		"down":      {},
-		"up":        {},
-	}
 
 	// TODO: Refactor this and remove string identifier from room data.
 	posDeltas = map[string]positionDelta{
@@ -186,10 +174,11 @@ func IsValidExitDirection(exitName string) bool {
 	return ok
 }
 
-// Returns true if exitName is a compass direction (north, south, east, west, northwest)
+// IsCompassDirection reports whether exitName is one of the ten compass words
+// (exit.IsCompassWord, the one list). A distance name such as "north-x2" is
+// not: IsValidExitDirection answers for those.
 func IsCompassDirection(exitName string) bool {
-	_, ok := compassDirections[exitName]
-	return ok
+	return exit.IsCompassWord(exitName)
 }
 
 func GetDirectionDeltaNames() []string {

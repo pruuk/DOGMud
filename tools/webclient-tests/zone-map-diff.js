@@ -402,7 +402,7 @@ check('9a: the same room again leaves the map where the player put it',
   g.center.x === 777 && g.center.y === 555, 'center=' + JSON.stringify(g.center));
 check('9a: the same room again still draws its new exit', exitIds(g, 1) === '2', 'exits=' + exitIds(g, 1));
 roomInfoExits(1, 0, { east: { num: 2, dx: 1, dy: 0, dz: 0, kind: 'compass' },
-  gangplank: { num: 3, dx: 0, dy: 1, dz: 0, kind: 'temporary' } });
+  plank: { num: 3, dx: 0, dy: 1, dz: 0, kind: 'temporary' } });
 check('9a: a temporary exit is no map edge', exitIds(g, 1) === '2', 'exits=' + exitIds(g, 1));
 check('9a: a temporary exit adds no room', !g.rooms.get(3), 'rooms=' + ids(g));
 roomInfoExits(2, 1, {});

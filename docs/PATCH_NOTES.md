@@ -1,5 +1,13 @@
 # DOGMud Patch Notes
 
+## 2026-11-26: Shorter names for a few ways out
+
+- Named ways out of a room now have short names, so they fit on a button when you play by touch.
+- At the old tower above Pothole Coulee, the rim trails are now `tower` and `ledge`. From Clearstone Rise or Eagle's Reach, type `tower` to walk to the Tower Top; from the Tower Top, type `ledge` to walk to Eagle's Reach. `shrine` is unchanged.
+- To walk ashore from a ferry once she ties up, type `plank`.
+- When a creature tears open a way through to somewhere else, it is now a `rift`.
+- To leave the arena or another instance, type `return` at its entrance.
+
 ## 2026-11-26: The Windwarden's Dilemma points the way
 
 - Once you choose a side in The Windwarden's Dilemma, the map and quest log now point you to what you were asked to find: Sylara's carved wolf totem in the Kill Ground, or Rhett's windstone samples on the Rocky Shelf. Once it is in your pack, they point you back to whoever asked for it. If you were already partway through, you pick up right where you were.

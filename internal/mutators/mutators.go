@@ -332,6 +332,19 @@ func (m *MutatorSpec) Validate() error {
 		}
 	}
 
+	// A mutator exit is a named exit like a room's: it fits a deck button
+	// (owner ruling 18, exit.MaxNameLetters). Checked A to Z for a stable error.
+	exitNames := make([]string, 0, len(m.Exits))
+	for name := range m.Exits {
+		exitNames = append(exitNames, name)
+	}
+	slices.Sort(exitNames)
+	for _, name := range exitNames {
+		if err := exit.CheckName(name); err != nil {
+			return fmt.Errorf("mutator %q: %w", m.MutatorId, err)
+		}
+	}
+
 	if m.NameModifier != nil && !m.NameModifier.Behavior.IsValid() {
 		m.NameModifier.Behavior = TextDefault
 	}

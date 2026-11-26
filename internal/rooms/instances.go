@@ -317,11 +317,17 @@ func InstanceMobGold(goldPaid int, tier int) int {
 	return gold
 }
 
+// instanceReturnExitName is the temporary exit an instance's entry room gets
+// back to the overworld. Players type it and the touch deck shows it on a
+// button, so it fits exit.MaxNameLetters (owner ruling 18, 2026-11-26: was
+// "return portal").
+const instanceReturnExitName = `return`
+
 // ZoneInstanceOpts holds optional behavioral overrides for CreateZoneInstanceWithOpts.
 // The zero value reproduces the behavior of the plain CreateZoneInstance call.
 type ZoneInstanceOpts struct {
-	// SuppressReturnPortal, when true, skips adding the "return portal"
-	// temporary exit to the entry room. Use this for jail cells or any
+	// SuppressReturnPortal, when true, skips adding the return exit
+	// (instanceReturnExitName) to the entry room. Use this for jail cells or any
 	// instanced room that must have no escape exit.
 	SuppressReturnPortal bool
 }
@@ -440,12 +446,12 @@ func CreateZoneInstanceWithOpts(
 
 		returnExit := exit.TemporaryRoomExit{
 			RoomId:       overworldRoomId,
-			Title:        "Return Portal",
+			Title:        instanceReturnExitName,
 			UserId:       0, // system-created
 			SpawnedRound: inst.CreatedRound,
 			Expires:      "999 real hours",
 		}
-		entryRoom.AddTemporaryExit("return portal", returnExit)
+		entryRoom.AddTemporaryExit(instanceReturnExitName, returnExit)
 	}
 
 	// 5. Scale mob stat pools based on gold paid.

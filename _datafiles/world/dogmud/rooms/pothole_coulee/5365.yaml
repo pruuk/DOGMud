@@ -20,7 +20,7 @@ exits:
   south:
     roomid: 5364
   # Lateral connector (chunk 8): non-spatial rim-walk to Spoke A's Tower Top.
-  watchtower:
+  tower:
     roomid: 5243
 nouns:
   lip: The lip is the bluff's terminus, the clean edge where stone

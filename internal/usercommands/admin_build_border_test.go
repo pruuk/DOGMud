@@ -61,6 +61,31 @@ func TestBuildRoom_ConnectsToANeighbouringZonesRoomInThatCell(t *testing.T) {
 	require.Equal(t, 9963, admin.Character.RoomId, "the admin is moved to the room already there")
 }
 
+// Owner ruling 18 (2026-11-26): every exit name fits a deck button, and the
+// boot refuses a longer one, so `build room <name>` and `room exit` refuse a
+// name longer than exit.MaxNameLetters before anything is built or renamed.
+func TestBuilders_RefuseAnExitNameLongerThanAButton(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	useDogmudTemplates(t)
+	admin := borderBuildScene(t)
+	room := rooms.LoadRoom(9960)
+
+	_, err := Build(`room outlook`, admin, room, 0)
+	require.NoError(t, err)
+	require.Equal(t, 9960, admin.Character.RoomId, "nothing was built, so the admin did not move")
+	require.NotContains(t, room.Exits, "outlook")
+
+	_, err = adminRoom_Exit([]string{"exit", "east", "outlook"}, admin, room)
+	require.NoError(t, err)
+	require.Contains(t, room.Exits, "east", "the rename was refused")
+	require.NotContains(t, room.Exits, "outlook")
+
+	_, err = adminRoom_Exit([]string{"exit", "east", "ledge"}, admin, room)
+	require.NoError(t, err)
+	require.Contains(t, room.Exits, "ledge", "fixture check: a six-letter rename goes through")
+}
+
 func TestTeleportDirection_FindsANeighbouringZonesRoom(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()

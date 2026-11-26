@@ -3226,6 +3226,25 @@ func (r *Room) Id() int {
 	return r.RoomId
 }
 
+// checkExitNames refuses a named exit longer than exit.MaxNameLetters (owner
+// ruling 18, 2026-11-26: every exit name fits a deck button). The room
+// loader reads it through Validate, so a long name fails the boot, and
+// SaveRoomTemplate reads it so no builder save writes one. Names are checked
+// A to Z so the error is the same every run.
+func checkExitNames(roomId int, exits map[string]exit.RoomExit) error {
+	names := make([]string, 0, len(exits))
+	for name := range exits {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	for _, name := range names {
+		if err := exit.CheckName(name); err != nil {
+			return fmt.Errorf("room %d: %w", roomId, err)
+		}
+	}
+	return nil
+}
+
 func (r *Room) Validate() error {
 	if r.Title == "" {
 		return errors.New("title cannot be empty")
@@ -3242,6 +3261,9 @@ func (r *Room) Validate() error {
 	}
 	if r.Lamp != nil && (*r.Lamp < 0 || *r.Lamp > 100) {
 		return fmt.Errorf("room %d lamp %d is outside 0 to 100 (a lamp is light; negative is magical darkness only)", r.RoomId, *r.Lamp)
+	}
+	if err := checkExitNames(r.RoomId, r.Exits); err != nil {
+		return err
 	}
 
 	if len(r.SpawnInfo) > 0 {

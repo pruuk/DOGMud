@@ -199,6 +199,11 @@ The `internal/mobcommands` package implements the AI command system for non-play
   fizzles one held out of combat, so without the commit a mob-target harm
   cast never resolved (#242). A non-combatant caster is refused by the
   combat-phase veto (`hooks/CombatPhase_Vetoes.go`) and fights nobody.
+  `Portal` (`portal.go`) opens a two-round temporary exit named `rift`
+  (`mobPortalExitName`) both ways; a bare `portal` walks an open one, and mob
+  scripts follow with `go rift`. Every exit name fits a deck button, at most
+  `exit.MaxNameLetters` letters (owner ruling 18, 2026-11-26; it was `dark
+  portal`); `portal_exit_name_test.go` pins it.
 - **Stealth operations**: `sneak` - Covert movement capabilities
 
 ### Advanced AI Features

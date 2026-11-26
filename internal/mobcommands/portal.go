@@ -15,8 +15,10 @@ import (
 
 // mobPortalExitName is the temporary exit Portal opens. Go counts a step
 // through it as a mob move for ambient telemetry: Portal only opens the
-// way, and the room change is the `go portal` that follows.
-const mobPortalExitName = `dark portal`
+// way, and the room change is the `go rift` that follows. Players type it
+// and the touch deck shows it on a button, so it fits exit.MaxNameLetters
+// (owner ruling 18, 2026-11-26: was "dark portal").
+const mobPortalExitName = `rift`
 
 // Mob portaling is different than player portaling.
 // Mob portals are open for shorter periods, and go to specific locations.
@@ -24,7 +26,7 @@ func Portal(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	// This is a hack because using "portal" to enter an existing portal is very common
 	if rest == `` {
-		if handled, err := Go(`portal`, mob, room); handled {
+		if handled, err := Go(mobPortalExitName, mob, room); handled {
 			return handled, err
 		}
 	}

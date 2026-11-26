@@ -510,7 +510,7 @@ func ChargeMove(actor Actor, dest *rooms.Room) MoveCharge // pays the stamina, o
 func QuoteMobStep(mob *mobs.Mob, exitName string) MoveCharge // quotes a mob's next step by exit name; a step that does not resolve quotes as affordable
 func TrainSearchOnMove(actor Actor) // the rare Search training a completed step earns
 func InterruptWorkOnMove(c *characters.Character) activity.State // stops Crafting/Salvaging; returns the work interrupted, or Free
-func IsCompassDirection(name string) bool // go.go: the ten compass words; a player's and a mob's go both read it to spot a move attempt
+func IsCompassDirection(name string) bool // go.go: the ten compass words (exit.IsCompassWord); a player's and a mob's go both read it to spot a move attempt
 ```
 
 **`InterruptWorkOnMove` is movement's one interrupt** (#512, owner ruling

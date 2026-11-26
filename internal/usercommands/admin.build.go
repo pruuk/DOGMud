@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -88,6 +89,15 @@ func Build(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				if returnExitName, returnExitDirection, err = mapper.AdjustExitName(returnExitName); err != nil {
 					user.SendText(messaging.CategoryAdmin, err.Error())
 					return true, err
+				}
+			}
+
+			// Every exit name fits a deck button (owner ruling 18); the boot
+			// refuses a longer one, so the builder refuses it first.
+			for _, name := range []string{exitName, returnExitName} {
+				if nameErr := exit.CheckName(name); nameErr != nil {
+					user.SendText(messaging.CategoryAdmin, nameErr.Error())
+					return true, nil
 				}
 			}
 

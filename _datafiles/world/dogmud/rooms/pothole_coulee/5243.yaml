@@ -30,7 +30,7 @@ exits:
   # exempt from the cartesian consistency check.
   shrine:
     roomid: 5346
-  overlook:
+  ledge:
     roomid: 5365
 nouns:
   crown: The shattered top of the tower, courses fallen to a low broken rim,

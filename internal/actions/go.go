@@ -2,6 +2,7 @@ package actions
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
@@ -15,14 +16,10 @@ type FindExitResult struct {
 // IsCompassDirection reports whether name is one of the ten compass words a
 // mover can try even where the room has no such exit ("bumping into walls").
 // A player's go and a mob's go both read it to tell a movement attempt from
-// any other word (#512).
+// any other word (#512). The list lives in exit.IsCompassWord, which the
+// exit-name length rule reads too.
 func IsCompassDirection(name string) bool {
-	switch name {
-	case "north", "south", "east", "west", "up", "down",
-		"northwest", "northeast", "southwest", "southeast":
-		return true
-	}
-	return false
+	return exit.IsCompassWord(name)
 }
 
 // FindExit looks up an exit on the given room by name (supports aliases and
