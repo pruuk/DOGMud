@@ -30,7 +30,7 @@ func TestWalkPlayer_StepOrderSemantics(t *testing.T) {
 }
 
 // A quest is entered only at "start", or at the only step of a one-step
-// quest, as quests.IsTokenAfter allows: not at whatever step comes first.
+// quest, as quests.IsTokenAfterOnPath allows: not at whatever step comes first.
 func TestWalkPlayer_EntersOnlyAtStart(t *testing.T) {
 	p := newWalkPlayer(map[int][]string{60: {"begin", "end"}, 61: {"end"}})
 	p.grant("60-begin")

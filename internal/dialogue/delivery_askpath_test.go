@@ -48,7 +48,7 @@ type deliveryCase struct {
 // mid-quest step the quest's topic_heard trigger on that topic), and any
 // flag/gold/rep/item rewards land.
 //
-// Chain quests grant the END token directly; IsTokenAfter permits skipping
+// Chain quests grant the END token directly; IsTokenAfterOnPath permits skipping
 // intermediate steps.
 //
 // Data-driven over the REAL dialogue files so it catches authoring mistakes.
@@ -186,7 +186,7 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 			heard := map[string]bool{}
 			// A real character holds one current step per quest, and HasQuest
 			// is true for that step and every step before it
-			// (characters.HasQuest via quests.IsTokenAfter).
+			// (characters.HasQuest via quests.IsTokenPassedOnPath).
 			questId, _ := splitToken(tc.heldToken)
 			steps := questStepsForTest(t, questId)
 			current := stepIndex(steps, tc.heldToken)

@@ -79,8 +79,34 @@ func (c *Character) HasQuest(questToken string) bool {
 
 	currentToken := quests.PartsToToken(testQuestId, currentStep)
 
-	// If the current token comes after the test token then they've already done that quest
-	return quests.IsTokenAfter(questToken, currentToken)
+	// A step the player has passed on their own path is held; a step of
+	// another side never is (#958).
+	return quests.IsTokenPassedOnPath(questToken, currentToken, c.GetQuestFlag)
+}
+
+// QuestBranchMismatches lists, sorted, the held quests whose current step is
+// branched while the quest's branch flag names another side, as
+// "<qid>-<step> (flag <key>=<value>)". Such a save keeps moving on its step's
+// side (quests.Quest.Side); LoadUser logs the list once per load.
+func (c *Character) QuestBranchMismatches() []string {
+	var out []string
+	for qid, step := range c.QuestProgress {
+		q := quests.GetQuestById(qid)
+		if q == nil {
+			continue
+		}
+		key := q.BranchFlagKey()
+		if key == `` {
+			continue
+		}
+		stepSide := q.Side(step, nil)
+		flagSide := c.GetQuestFlag(key)
+		if stepSide != `` && flagSide != `` && stepSide != flagSide {
+			out = append(out, fmt.Sprintf("%s (flag %s=%s)", quests.PartsToToken(qid, step), key, flagSide))
+		}
+	}
+	sort.Strings(out)
+	return out
 }
 
 func (c *Character) GetQuestProgress() map[int]string {
@@ -113,7 +139,7 @@ func (c *Character) GiveQuestToken(questToken string) bool {
 
 	currentToken := quests.PartsToToken(questId, currentProgress)
 
-	if quests.IsTokenAfter(currentToken, questToken) {
+	if quests.IsTokenAfterOnPath(currentToken, questToken, c.GetQuestFlag) {
 		c.QuestProgress[questId] = newStep
 		c.clearQuestStepCounts(questId)
 		// A secret quest is a hidden marker the player never sees, so it must
