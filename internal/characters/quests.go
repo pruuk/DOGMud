@@ -84,13 +84,20 @@ func (c *Character) HasQuest(questToken string) bool {
 	return quests.IsTokenPassedOnPath(questToken, currentToken, c.GetQuestFlag)
 }
 
-// QuestBranchMismatches lists, sorted, the held quests whose current step is
-// branched while the quest's branch flag names another side, as
-// "<qid>-<step> (flag <key>=<value>)". Such a save keeps moving on its step's
-// side (quests.Quest.Side); LoadUser logs the list once per load.
+// QuestBranchMismatches lists, sorted, the held and shelved quests whose step
+// is branched while the quest's branch flag names another side, as
+// "<progress|shelf> <qid>-<step> (flag <key>=<value>)". Such a save keeps
+// moving on its step's side (quests.Quest.Side); MigrateQuestProgress
+// returns the list for its caller to log once.
 func (c *Character) QuestBranchMismatches() []string {
-	var out []string
-	for qid, step := range c.QuestProgress {
+	out := c.questBranchMismatches(`progress`, c.QuestProgress, nil)
+	out = c.questBranchMismatches(`shelf`, c.ShelvedQuests, out)
+	sort.Strings(out)
+	return out
+}
+
+func (c *Character) questBranchMismatches(where string, progress map[int]string, out []string) []string {
+	for qid, step := range progress {
 		q := quests.GetQuestById(qid)
 		if q == nil {
 			continue
@@ -102,11 +109,29 @@ func (c *Character) QuestBranchMismatches() []string {
 		stepSide := q.Side(step, nil)
 		flagSide := c.GetQuestFlag(key)
 		if stepSide != `` && flagSide != `` && stepSide != flagSide {
-			out = append(out, fmt.Sprintf("%s (flag %s=%s)", quests.PartsToToken(qid, step), key, flagSide))
+			out = append(out, fmt.Sprintf("%s %s (flag %s=%s)", where, quests.PartsToToken(qid, step), key, flagSide))
 		}
 	}
-	sort.Strings(out)
 	return out
+}
+
+// MigrateQuestProgress brings saved quest progress up to the shipped quests
+// as a character comes into play, by LoadUser or by SwapToAlt: it drops
+// quests retired whole, applies the step-id manifest's renames, and moves
+// quest 11's retired `sided` step to its side (#958), in that order. It
+// returns the quests it dropped and any branch mismatches left
+// (QuestBranchMismatches), for the caller to log with the username. Each
+// part is idempotent, so it runs on every load with no marker.
+func (c *Character) MigrateQuestProgress() (dropped []int, mismatches []string) {
+	// A quest retired whole has nothing left to resume, so it goes before
+	// the step checks (#375 phase 7: quest 29 Two Roads).
+	dropped = c.DropRetiredQuests(quests.RetiredQuests())
+	// A renamed quest step keeps the player on it (#375 phase 2).
+	c.RenameQuestSteps(quests.StepRenames())
+	// Which step a `sided` save moves to depends on its flag and pack, so
+	// it is not a manifest rename.
+	c.MigrateQuest11SidedStep()
+	return dropped, c.QuestBranchMismatches()
 }
 
 func (c *Character) GetQuestProgress() map[int]string {

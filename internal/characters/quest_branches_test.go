@@ -75,7 +75,7 @@ func TestBranchedPath_FlagDisagreesWithStep(t *testing.T) {
 		QuestProgress: map[int]string{11: "rhett"},
 		QuestFlags:    map[string]string{"11-branch": "sylara"},
 	}
-	require.Equal(t, []string{"11-rhett (flag 11-branch=sylara)"}, c.QuestBranchMismatches())
+	require.Equal(t, []string{"progress 11-rhett (flag 11-branch=sylara)"}, c.QuestBranchMismatches())
 	require.True(t, c.HasQuest("11-rhett"))
 	require.False(t, c.HasQuest("11-sylara"))
 	require.False(t, c.GiveQuestToken("11-totem"), "the flag does not move it across")
@@ -84,4 +84,11 @@ func TestBranchedPath_FlagDisagreesWithStep(t *testing.T) {
 	require.Empty(t, rhettSider("rhett").QuestBranchMismatches(), "an agreeing flag is no mismatch")
 	require.Empty(t, rhettSider("start").QuestBranchMismatches(), "an unbranched step has no side to disagree with")
 	require.Empty(t, (&Character{QuestProgress: map[int]string{11: "rhett"}}).QuestBranchMismatches(), "an unset flag is no mismatch")
+
+	shelved := &Character{
+		ShelvedQuests: map[int]string{11: "totem"},
+		QuestFlags:    map[string]string{"11-branch": "rhett"},
+	}
+	require.Equal(t, []string{"shelf 11-totem (flag 11-branch=rhett)"}, shelved.QuestBranchMismatches(),
+		"a shelved step resumes as is, so its mismatch is named too")
 }

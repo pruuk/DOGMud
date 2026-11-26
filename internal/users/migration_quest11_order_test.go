@@ -3,6 +3,7 @@ package users
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/stretchr/testify/require"
 )
@@ -44,6 +45,25 @@ func TestQuest11SidedSave_StepMigrationFirst(t *testing.T) {
 
 	require.False(t, u.Character.GiveQuestToken("11-sylara"), "the other side stays shut")
 	require.True(t, u.Character.GiveQuestToken("11-rhett"), "its own side reopens")
+}
+
+// An alt comes into play through SwapToAlt as well as LoadUser, and gets the
+// same quest progress migration: an alt saved on `11-sided` lands on its
+// side's step.
+func TestSwapToAlt_MigratesQuest11SidedStep(t *testing.T) {
+	withUserDataDir(t)
+	seedBranchedQuest11(t)
+	u := NewTestUser(97413, "q11alt", "Mainchar", 97413)
+	alt := characters.Character{
+		Name:          "Sidedalt",
+		QuestProgress: map[int]string{11: "sided"},
+		QuestFlags:    map[string]string{"11-branch": "rhett"},
+	}
+	require.True(t, characters.SaveAlts(u.UserId, []characters.Character{alt}))
+
+	require.True(t, u.SwapToAlt("Sidedalt"))
+	require.Equal(t, "Sidedalt", u.Character.Name)
+	require.Equal(t, "rhett", u.Character.QuestProgress[11], "the swapped-in alt lands on its side's step")
 }
 
 // With a user index on disk (every normal boot) only LoadUser meets the save:
