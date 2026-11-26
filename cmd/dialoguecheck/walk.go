@@ -1132,21 +1132,37 @@ func (w *walker) checkQuest(m *qmodel) {
 	for _, e := range w.edges[id] {
 		out[e.from] = true
 	}
-	stuck := map[int][]node{}
+	// Stuck nodes by step and side: each stuck side of a branched quest is
+	// explained from its own node (#958).
+	type at struct {
+		idx  int
+		side string
+	}
+	stuck := map[at][]node{}
 	for n := range w.reach[id] {
 		if n.idx >= 0 && n.idx != m.end && !canEnd[n] && !out[n] {
-			stuck[n.idx] = append(stuck[n.idx], n)
+			k := at{n.idx, n.side}
+			stuck[k] = append(stuck[k], n)
 		}
 	}
-	idxs := make([]int, 0, len(stuck))
-	for i := range stuck {
-		idxs = append(idxs, i)
+	ats := make([]at, 0, len(stuck))
+	for k := range stuck {
+		ats = append(ats, k)
 	}
-	sort.Ints(idxs)
-	for _, i := range idxs {
-		ns := stuck[i]
+	sort.Slice(ats, func(a, b int) bool {
+		if ats[a].idx != ats[b].idx {
+			return ats[a].idx < ats[b].idx
+		}
+		return ats[a].side < ats[b].side
+	})
+	for _, k := range ats {
+		i, ns := k.idx, stuck[k]
+		where := m.token(i)
+		if k.side != "" {
+			where += " on the " + k.side + " side"
+		}
 		how := ""
-		if len(ns) == 1 && !ns[0].chain && w.reach[id][node{idx: i, chain: true, side: ns[0].side}] {
+		if len(ns) == 1 && !ns[0].chain && w.reach[id][node{idx: i, chain: true, side: k.side}] {
 			how = " when it is granted by a behavior tree (no quest_granted chain fires)"
 		}
 		var next []string
@@ -1174,7 +1190,7 @@ func (w *walker) checkQuest(m *qmodel) {
 		if len(next) > 0 {
 			need = "blocked: " + strings.Join(next, "; ")
 		}
-		w.emit(ClassDeadEnd, zones, "quest %d %q: a player can reach %s%s and never %d-end; %s", id, m.q.Name, m.token(i), how, id, need)
+		w.emit(ClassDeadEnd, zones, "quest %d %q: a player can reach %s%s and never %d-end; %s", id, m.q.Name, where, how, id, need)
 	}
 }
 

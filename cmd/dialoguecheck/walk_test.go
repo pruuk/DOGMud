@@ -310,6 +310,15 @@ func TestWalk_BranchedQuestFollowsEachPath(t *testing.T) {
 	require.Contains(t, strings.Join(ofClass(Walk(in), ClassUnreachable), "\n"), `topic "camp"`)
 }
 
+// A stuck step of a branched quest is explained from the side that is stuck.
+func TestWalk_BranchedDeadEndNamesItsSide(t *testing.T) {
+	in := forkedInput()
+	in.Quests[0].Triggers = in.Quests[0].Triggers[:3] // no samples pickup
+	dead := ofClass(Walk(in), ClassDeadEnd)
+	require.Len(t, dead, 1, "%v", dead)
+	require.Contains(t, dead[0], "can reach 54-rhett on the rhett side and never 54-end")
+}
+
 func TestReport_ZoneFilterHidesOtherZonesAndSetsTheExitStatus(t *testing.T) {
 	fs := []Finding{
 		{Class: ClassDeadEnd, Zones: []string{"zone_b"}, Text: "elsewhere"},
