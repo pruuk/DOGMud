@@ -411,23 +411,17 @@ func tokenAfter(currentToken string, nextToken string, atNext bool, flag func(st
 	currentId, currentStep := TokenToParts(currentToken)
 	nextId, nextStep := TokenToParts(nextToken)
 
-	// If they don't have any progress yet, then they can only "start" a quest.
+	// If they don't have any progress yet, then they can only "start" a quest
+	// (even one not loaded), or end a one-step quest (IsStepAfterOnPath).
 	if currentStep == `` {
 		if nextStep == `start` {
 			return true
-		} else if nextStep == `end` {
-			// If it's a single step quest, then they can end it.
-			if questInfo := GetQuest(nextToken); questInfo != nil {
-				if len(questInfo.Steps) == 1 {
-					return true
-				}
-			}
 		}
-		return false
+		questInfo := GetQuest(nextToken)
+		return questInfo != nil && questInfo.IsStepAfterOnPath(``, nextStep, flag)
 	}
 
-	// If same, false
-	if currentId != nextId || currentStep == nextStep {
+	if currentId != nextId {
 		return false
 	}
 
@@ -437,11 +431,10 @@ func tokenAfter(currentToken string, nextToken string, atNext bool, flag func(st
 		return false
 	}
 
-	at := currentStep
 	if atNext {
-		at = nextStep
+		return questInfo.IsStepPassedOnPath(currentStep, nextStep, flag)
 	}
-	return questInfo.stepBefore(at, currentStep, nextStep, flag)
+	return questInfo.IsStepAfterOnPath(currentStep, nextStep, flag)
 }
 
 func PartsToToken(questId int, questStep string) string {

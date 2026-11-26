@@ -68,17 +68,25 @@ func (r *Quest) validateBranches() error {
 
 // branchCache is what Validate works out once about a quest's fork, so the
 // hot readers (HasQuest on every trigger check) build no string. A quest that
-// never went through Validate (a test literal) works it out on each call.
+// never went through Validate (a test literal) works it out on each call, and
+// so does one whose id or step count changed since (cached).
 type branchCache struct {
-	ready  bool
-	flag   int      // index in Flags of the branch flag, -1 when unbranched
-	key    string   // that flag's registered key, "<questId>-<key>"
-	tokens []string // each step's token, "<questId>-<stepId>", by step index
+	ready   bool
+	questId int      // QuestId when filled
+	steps   int      // len(Steps) when filled
+	flag    int      // index in Flags of the branch flag, -1 when unbranched
+	key     string   // that flag's registered key, "<questId>-<key>"
+	tokens  []string // each step's token, "<questId>-<stepId>", by step index
+}
+
+// cached reports whether the branch cache still describes the quest.
+func (r *Quest) cached() bool {
+	return r.branch.ready && r.branch.questId == r.QuestId && r.branch.steps == len(r.Steps)
 }
 
 // prepareBranches fills the branch cache. Validate calls it.
 func (r *Quest) prepareBranches() {
-	c := branchCache{ready: true, flag: r.findBranchFlag()}
+	c := branchCache{ready: true, questId: r.QuestId, steps: len(r.Steps), flag: r.findBranchFlag()}
 	if c.flag >= 0 {
 		c.key = flagKey(r.QuestId, r.Flags[c.flag].Key)
 	}
@@ -92,7 +100,7 @@ func (r *Quest) prepareBranches() {
 // branchFlag is the index in Flags of the flag the branched steps use, or -1
 // for a quest with no branched steps.
 func (r *Quest) branchFlag() int {
-	if r.branch.ready {
+	if r.cached() {
 		return r.branch.flag
 	}
 	return r.findBranchFlag()
@@ -100,7 +108,7 @@ func (r *Quest) branchFlag() int {
 
 // branchKey is the branch flag's registered key; fi is branchFlag().
 func (r *Quest) branchKey(fi int) string {
-	if r.branch.ready {
+	if r.cached() {
 		return r.branch.key
 	}
 	return flagKey(r.QuestId, r.Flags[fi].Key)
@@ -108,7 +116,7 @@ func (r *Quest) branchKey(fi int) string {
 
 // stepToken is step i's token.
 func (r *Quest) stepToken(i int) string {
-	if r.branch.ready && i < len(r.branch.tokens) {
+	if r.cached() {
 		return r.branch.tokens[i]
 	}
 	return PartsToToken(r.QuestId, r.Steps[i].Id)
@@ -226,6 +234,26 @@ func (r *Quest) stepBefore(at, a, b string, flag func(string) string) bool {
 	return r.onSide(ia, side) && r.onSide(ib, side)
 }
 
+// IsStepAfterOnPath reports whether granting step next to a player standing
+// at step cur moves them forward on their path, as GiveQuestToken asks. A
+// blank cur is a player who has not begun the quest: they enter only at
+// "start", or at the only step of a one-step quest. IsTokenAfterOnPath is the
+// token form; a reader that holds the quest itself (the walkthrough's player)
+// calls this one.
+func (r *Quest) IsStepAfterOnPath(cur, next string, flag func(string) string) bool {
+	if cur == `` {
+		return next == `start` || (next == `end` && len(r.Steps) == 1)
+	}
+	return cur != next && r.stepBefore(cur, cur, next, flag)
+}
+
+// IsStepPassedOnPath reports whether a player standing at step cur has passed
+// step on their path, as HasQuest asks of every step but the current one. The
+// token form is IsTokenPassedOnPath.
+func (r *Quest) IsStepPassedOnPath(step, cur string, flag func(string) string) bool {
+	return step != cur && r.stepBefore(cur, step, cur, flag)
+}
+
 // Path is the steps of a player standing at stepId, in order. It builds a
 // slice: hot paths use the order checks instead.
 func (r *Quest) Path(stepId string, flag func(string) string) []QuestStep {
@@ -247,15 +275,23 @@ func (r *Quest) pathFor(side string) []QuestStep {
 // flag, in the order the flag lists them, or the single path of all steps for
 // a quest with no branched steps.
 func (r *Quest) Paths() [][]QuestStep {
-	fi := r.branchFlag()
-	if fi < 0 {
-		return [][]QuestStep{slices.Clone(r.Steps)}
-	}
-	out := make([][]QuestStep, 0, len(r.Flags[fi].Values))
-	for _, v := range r.Flags[fi].Values {
+	sides := r.Sides()
+	out := make([][]QuestStep, 0, len(sides))
+	for _, v := range sides {
 		out = append(out, r.pathFor(v))
 	}
 	return out
+}
+
+// Sides is the side of each path Paths returns, in the same order: the branch
+// flag's declared values, or one blank side for a quest with no branched
+// steps. A walk of path k ends with the branch flag set to Sides()[k].
+func (r *Quest) Sides() []string {
+	fi := r.branchFlag()
+	if fi < 0 {
+		return []string{``}
+	}
+	return slices.Clone(r.Flags[fi].Values)
 }
 
 // StepProgress is how far a player standing at stepId is along their path:

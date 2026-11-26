@@ -256,6 +256,42 @@ func TestQuest_GrantOnPathNaiveHolder(t *testing.T) {
 		"holding no branched step, the flag decides")
 }
 
+// A quest edited after Validate (a builder save, a test that renumbers it)
+// must not read the fork Validate worked out for its old shape.
+func TestQuest_BranchCacheFollowsEdits(t *testing.T) {
+	b := branchedQuest()
+	require.NoError(t, b.Validate())
+	b.QuestId = 97399
+	require.Equal(t, "97399-branch", b.BranchFlagKey(), "a renumbered quest reads its new key")
+
+	p := plainQuest()
+	require.NoError(t, p.Validate())
+	p.Steps = append(p.Steps[:3], QuestStep{Id: "calm", Branch: "calm"}, p.Steps[3])
+	require.Equal(t, "97312-mood", p.BranchFlagKey(), "a step added after Validate is read")
+	require.Equal(t, "97312-calm", p.stepToken(3), "and so is its token")
+}
+
+// The step-id forms of the token helpers: a reader holding the quest (the
+// walkthrough's player) asks the same order as Character does.
+func TestQuest_StepOrderOnPath(t *testing.T) {
+	b := branchedQuest()
+	rhett := flags("97311-branch", "rhett")
+	require.True(t, b.IsStepAfterOnPath("", "start", nil), "a quest is entered at start")
+	require.False(t, b.IsStepAfterOnPath("", "sylara", nil), "and only at start")
+	require.True(t, b.IsStepAfterOnPath("start", "rhett", rhett))
+	require.False(t, b.IsStepAfterOnPath("start", "sylara", rhett), "never onto the other side")
+	require.False(t, b.IsStepAfterOnPath("start", "rhett", nil), "never onto a side before the flag names it")
+	require.False(t, b.IsStepAfterOnPath("rhett", "rhett", rhett))
+	require.True(t, b.IsStepPassedOnPath("start", "samples", nil))
+	require.False(t, b.IsStepPassedOnPath("totem", "samples", nil), "a Rhett player never holds Sylara's steps")
+	require.False(t, b.IsStepPassedOnPath("samples", "samples", nil), "the current step is not passed")
+
+	one := &Quest{QuestId: 97313, Steps: []QuestStep{{Id: "end"}}}
+	require.True(t, one.IsStepAfterOnPath("", "end", nil), "a one-step quest is entered at its only step")
+	require.Equal(t, []string{"sylara", "rhett"}, b.Sides())
+	require.Equal(t, []string{""}, plainQuest().Sides())
+}
+
 func TestQuest_ValidateBranches(t *testing.T) {
 	require.NoError(t, branchedQuest().Validate())
 	require.NoError(t, plainQuest().Validate())
