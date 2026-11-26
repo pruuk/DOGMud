@@ -101,5 +101,51 @@ var roominfo = read('world', 'dogmud', 'templates', 'admincommands', 'ingame', '
 check('the admin room info draws a marker on its block',
     /fg="map-[^"]*" bg="mapbg-/.test(roominfo) && !/fg="map-\{\{[^"]*"\s*>/.test(roominfo), 'roominfo.template');
 
+// Moving by touch (plan 2b). Lit deck buttons wear the site brass (owner
+// ruling R1): the client's even brass (--brass-grad's :root[data-client]
+// override in dashboard.css), --brass-text and --brass-border, measured on
+// both stops of the gradient (text and the padlock, drawn in currentColor,
+// 4.5:1; the dashed and heavy edges 3:1, brand section 2). The pitch-dark
+// colours are tokens on #touch-deck. Dimmed buttons are inactive controls,
+// which WCAG exempts; the dim state still has to stand 3:1 apart from a lit
+// button.
+var clientBrass = /:root\[data-client\] \{ --brass-grad: linear-gradient\((#[0-9a-fA-F]{6}), (#[0-9a-fA-F]{6})\); \}/.exec(dash);
+check('touch deck: the client brass override is read', !!clientBrass, 'no :root[data-client] --brass-grad override in dashboard.css');
+var stops = clientBrass ? [clientBrass[1], clientBrass[2]] : [];
+var deckBg = token(css, 'ink-deep');
+stops.forEach(function (stop) {
+    [['a label (and the padlock)', 'brass-text', 4.5], ['the dashed and heavy edges', 'brass-border', 3]].forEach(function (p) {
+        var r = contrast(token(css, p[1]), stop);
+        check('touch deck: ' + p[0] + ' on brass ' + stop + ' passes ' + p[2] + ':1', r >= p[2], token(css, p[1]) + ' = ' + r.toFixed(2));
+    });
+    check('touch deck: brass ' + stop + ' outlines a button on the deck', contrast(stop, deckBg) >= 3, contrast(stop, deckBg).toFixed(2));
+});
+// The dim state: opacity over the deck, read from the .deck-dim rule.
+function over(fgc, bgc, a) {
+    return '#' + [1, 3, 5].map(function (i) {
+        var f = parseInt(fgc.slice(i, i + 2), 16), b = parseInt(bgc.slice(i, i + 2), 16);
+        return ('0' + Math.round(f * a + b * (1 - a)).toString(16)).slice(-2);
+    }).join('');
+}
+var dimA = Number((/\.deck-dim,\s*\.deck-combat \{ opacity: ([0-9.]+); \}/.exec(dash) || [])[1]);
+check('touch deck: the dim opacity is read', dimA > 0 && dimA < 1, String(dimA));
+if (stops.length === 2 && dimA > 0) {
+    var litDark = stops[1], dimLight = over(stops[0], deckBg, dimA);
+    check('touch deck: a lit button stands 3:1 apart from a dim one', contrast(litDark, dimLight) >= 3,
+        litDark + ' against ' + dimLight + ' = ' + contrast(litDark, dimLight).toFixed(2));
+}
+[
+    ['a dark label on its tile', 'deck-blind-text', 'deck-blind-bg', 4.5],
+    ['a dark edge on its tile', 'deck-blind-edge', 'deck-blind-bg', 3],
+    ['the wall mark on a dark tile', 'deck-bump', 'deck-blind-bg', 3],
+    ['the Dark tile label', 'deck-darktile-text', 'deck-darktile-bg', 4.5],
+    ['the Dark tile edge on the dark deck', 'deck-darktile-edge', 'deck-blind-bg', 3]
+].forEach(function (p) {
+    var fgc = token(dash, p[1]), bgc = token(dash, p[2]);
+    var r = contrast(fgc, bgc);
+    check('touch deck: ' + p[0] + ' passes ' + p[3] + ':1', r >= p[3], fgc + ' on ' + bgc + ' = ' + r.toFixed(2));
+});
+check('touch deck: the wall mark is the warning red, the only red', token(dash, 'deck-bump') === token(css, 'hp-low'), token(dash, 'deck-bump'));
+
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

@@ -84,4 +84,22 @@ var slotRule = (/\.deck-slot \{[^}]*\}/.exec(css) || [''])[0];
 check('a deck slot is styled', slotRule !== '');
 check('a deck slot sets no size of its own', !/(^|[;{\s])(width|height|min-width|min-height)\s*:/.test(slotRule));
 
+// Plan 2b: a deck button fills its grid cell and sets no size of its own.
+var btnRule = (/\.deck-btn \{[^}]*\}/.exec(css) || [''])[0];
+check('a deck button is styled', btnRule !== '');
+check('a deck button sets no size of its own', btnRule !== '' && !/(^|[;{\s])(width|height|min-width|min-height)\s*:/.test(btnRule));
+
+// Owner ruling 18: the longest exit name fits its button at both sizes.
+// JetBrains Mono's letters are 0.6em wide; a named button has a 1px edge
+// each side. Task 11 of plan 2b measures it in the browser too.
+var gomud = fs.readFileSync(path.join(js, '..', 'css', 'gomud.css'), 'utf8');
+var labelPx = Number((/--deck-label:\s*(\d+)px;/.exec(gomud) || [])[1]);
+var tight = Number((/#touch-deck\.deck-small \.deck-name \{[^}]*letter-spacing:\s*(-?[\d.]+)px/.exec(css) || [])[1]);
+var LETTER = 0.6 * labelPx, EDGES = 2;
+check('the deck name size is read from --deck-label', labelPx > 0);
+check('a ' + TD.NAME_LETTERS + '-letter name fits a ' + TD.BTN + 'px button', TD.NAME_LETTERS * LETTER <= TD.BTN - EDGES);
+check('a ' + TD.NAME_LETTERS + '-letter name fits a ' + TD.SMALL_BTN + 'px button with the small spacing',
+    !isNaN(tight) && TD.NAME_LETTERS * (LETTER + tight) <= TD.SMALL_BTN - EDGES);
+check('the fit check can fail: seven letters do not fit at the small size', 7 * (LETTER + tight) > TD.SMALL_BTN - EDGES);
+
 process.exit(failures ? 1 : 0);

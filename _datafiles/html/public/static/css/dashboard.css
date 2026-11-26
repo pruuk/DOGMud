@@ -274,14 +274,98 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   justify-content: center;
   background: var(--ink-deep);
   border-top: 2px solid var(--gold-rule);
+  /* Moving by touch (plan 2b). Lit buttons are the site brass (.brass,
+     owner ruling R1): --brass-text #1a1206 is 12.69 and 8.19 on the
+     client's two brass stops, --brass-border 7.55 and 4.87, and the brass
+     outlines a button on this deck at 10.57 and 6.82. The pitch-dark state
+     keeps the ruled olive grey (spec ruling 11), its colours below, contrast
+     measured with WCAG's formula; tools/jstest/webclient-colours.test.js
+     checks every pair. */
+  --deck-blind-bg: #19140c;      /* dark room: umber, the darkest brand colour */
+  --deck-blind-edge: #7e8073;  /* olive grey: 4.55 on --deck-blind-bg (the mockup's #5d5c4e is 2.71) */
+  --deck-blind-text: #8b897a;    /* olive grey: 5.19 on --deck-blind-bg */
+  --deck-bump: #e35349;          /* the wall mark, warning red: 4.88 on --deck-blind-bg */
+  --deck-darktile-bg: #252015;   /* the Dark tile */
+  --deck-darktile-edge: #969889; /* 6.23 on --deck-blind-bg */
+  --deck-darktile-text: #cec6aa; /* 9.48 on --deck-darktile-bg */
 }
 #touch-slot[data-shows="tab"] #touch-deck { display: none; }
 #touch-slot[data-shows="empty"] #touch-deck { display: none; }
-/* An empty slot until the server sends buttons (spec 2 onward). */
+/* An empty slot: one the server sends no button for (the command slots until spec 3). */
 .deck-slot {
   border: 1px dashed var(--brass-border);
   border-radius: 6px;
 }
+/* Moving by touch (touch arc plan 2b; spec 2026-11-22; mockup
+   docs/roadmaps/touch-arc-mocks/s21-moving-by-touch.html). touchdeck.js
+   render() draws the buttons; every lit one also wears the site's .brass
+   (gomud.css: colour, brass, edge, pressed state; owner ruling R1). This
+   file loads after gomud.css, so .deck-btn's display and the edges below
+   win over .brass. A button fills its grid cell, so its size is the deck's
+   (--deck-btn from touchdeck.js shape), never its own. Kinds are told apart
+   by shape, edge and marks, never by colour alone: movement square with
+   .brass's 1px edge, other exits a dashed edge, Back and More a heavy
+   square edge. */
+.deck-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  line-height: 1.1;
+  cursor: pointer;
+  touch-action: manipulation;  /* no double-tap zoom: two quick taps walk twice (ruling 8) */
+}
+.deck-btn:disabled { cursor: default; }
+.deck-btn:focus-visible { outline: 2px solid var(--vellum); outline-offset: 1px; }  /* 9.70 on the deck */
+/* The edges read on the brass: --brass-border 7.55 and 4.87 on its stops. */
+.deck-other { border: 2px dashed var(--brass-border); }
+/* No exit that way, or in a fight (refused anyway; Flee comes with plan
+   3d). Inactive controls: WCAG asks no contrast of them; a lit button's
+   darker stop stands 3.83 apart from a dim button's lighter one. */
+.deck-dim,
+.deck-combat { opacity: 0.22; }
+.deck-blind {
+  background: var(--deck-blind-bg);
+  border: 1px dashed var(--deck-blind-edge);
+  color: var(--deck-blind-text);
+}
+.deck-mark-wall::after {
+  content: "\2715";
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-size: var(--deck-label);
+  line-height: 1;
+  color: var(--deck-bump);
+}
+.deck-darktile {
+  gap: 2px;
+  background: var(--deck-darktile-bg);
+  border: 1px solid var(--deck-darktile-edge);
+  color: var(--deck-darktile-text);
+}
+.deck-back,
+.deck-more {
+  border: 2px solid var(--brass-border);
+  border-radius: 2px;
+}
+.deck-arrow { font-size: var(--title); line-height: 1; }
+.deck-letter,
+.deck-name { font-size: var(--deck-label); line-height: 1.1; }
+.deck-name { white-space: nowrap; }
+/* At 44px six letters (43.2px at 12px) would touch the 1px edges. */
+#touch-deck.deck-small .deck-name { letter-spacing: -0.5px; }
+.deck-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+/* The padlock in the button's own text colour: 8.19 to 12.69 on brass,
+   5.19 on a pitch-dark tile. */
+.deck-lock { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.3; }
+#touch-deck.deck-dark { background: var(--deck-blind-bg); }
 /* The divider between the deck and the command box: a wider gap and a line
    (roadmap fat-finger rules), only while the deck is on. */
 #touch-slot.deck-on::after {
