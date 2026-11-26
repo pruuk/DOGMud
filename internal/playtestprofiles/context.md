@@ -47,6 +47,12 @@ type Overlays struct {
 }
 ```
 
+## Overlay order
+
+`ApplyOverlays` sets `SetQuestFlags` before `SetQuestTokens` (#958): a side step
+of a branched quest is granted only once the branch flag names that side, so
+a profile that sets both gets the step it asks for.
+
 ## Public API
 
 ```go

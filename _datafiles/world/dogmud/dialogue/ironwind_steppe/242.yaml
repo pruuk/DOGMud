@@ -9,8 +9,22 @@ opener:
     like to hear about the windstone, about Thornwall's failing wards, or about
     the Windwarden who guards the circle."
   # Quest 11: the sided variants come before the unsided one, because a
-  # flag map cannot say "no side yet" (#611).
+  # flag map cannot say "no side yet" (#611). The samples variant comes
+  # before the fetch one, because holding 11-samples counts as holding
+  # 11-rhett.
   variants:
+  - questRequired:
+    - 11-samples
+    questExcluded:
+    - 11-end
+    questFlagRequired:
+      11-branch: rhett
+    # Only while the samples are carried: a player who dropped them gets the
+    # fetch variant below and is sent back to the veins.
+    carriesItem: 40032
+    text: "Are those my samples? Let me see, let me see!"
+    hints: "Rhett is already reaching for your pack. Choose a line below to give
+      him the samples."
   - questRequired:
     - 11-start
     questExcluded:
@@ -34,7 +48,8 @@ opener:
   - questRequired:
     - 11-start
     questExcluded:
-    - 11-sided
+    - 11-sylara
+    - 11-rhett
     - 11-end
     text: "You have taken the question on? Good. Before you decide, let me tell you
       plainly what working with me would mean."
@@ -125,6 +140,10 @@ topics:
   questExcluded:
   - 11-start
   - 11-end
+  # A player who chose Sylara and set the quest aside takes it back from
+  # Sylara or Kael; Rhett does not pitch his side to them again.
+  questFlagExcluded:
+    11-branch: sylara
   grantsQuest: 11-start
   moodChange: friendly
 # R28: the side is chosen here, after the must-hear warning.
@@ -142,9 +161,11 @@ topics:
   # Open to anyone holding 11-start (11-end counts) who has not sided with
   # Sylara: no side yet, or Rhett's side. So the old saves that finished
   # unsided hear it before late_stand_with_rhett, and a save that chose his
-  # side before the sided step existed (flag set, no 11-sided, terms never
-  # heard) can hear it and then stand again. A save at 11-end holds 11-sided
-  # too (HasQuest counts later steps), so 11-sided cannot close this topic.
+  # side before the side steps existed (flag set, still on 11-start, terms
+  # never heard) can hear it and then stand again. Every save that holds
+  # 11-end also holds 11-start (HasQuest counts earlier steps), a player holds
+  # only the steps on their own side, and an unsided 11-end save holds only
+  # start, so no side step can close this topic.
   questRequired:
   - 11-start
   questExcluded:
@@ -167,7 +188,7 @@ topics:
   questRequired:
   - 11-start
   questExcluded:
-  - 11-sided
+  - 11-rhett
   - 11-end
   questFlagExcluded:
     11-branch: sylara
@@ -212,8 +233,12 @@ topics:
     ridge. Ask me about the work when you are ready."
   hints: "Rhett snatches the samples with eager hands, holds one up to the light,
     then tucks them carefully into his satchel."
+  # 11-samples, the return step: picking up the samples moves a carrying
+  # player there (the item_gain trigger of quest 11), including one who
+  # already held the samples when the fetch step began. The flag keeps the
+  # hand-in on Rhett's side; a Sylara player never holds 11-samples anyway.
   questRequired:
-  - 11-sided
+  - 11-samples
   questExcluded:
   - 11-end
   questFlagRequired:

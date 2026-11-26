@@ -10,6 +10,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -137,7 +138,7 @@ func TestWriter_CreateRefusesWhenFileExists(t *testing.T) {
 func TestWriter_RoundTripsEveryLiveFile(t *testing.T) {
 	root := filepath.Join("..", "..", "_datafiles", "world", "dogmud", "dialogue")
 	checked := 0
-	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	_ = util.WalkTolerant(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".yaml") {
 			return nil
 		}

@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // dataRoot returns the path to the dogmud data files relative to the repo root.
@@ -33,7 +35,7 @@ func dataRoot(t *testing.T) string {
 func listYAMLBasenames(t *testing.T, dir string) []string {
 	t.Helper()
 	var names []string
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // narrationRenderCallers is every production file allowed to call
@@ -61,14 +63,8 @@ var textutilFirstPickerRE = regexp.MustCompile(`(?s)narration\.Render\([^;]*?nar
 func TestNarrationRenderIsCalledOnlyByRegisteredStores(t *testing.T) {
 	found := map[string]bool{}
 	for _, root := range messagingSurfaceGoRoots {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					// A test elsewhere can create and remove a temp file under
-					// the tree while packages test in parallel; a vanished
-					// entry has nothing to scan.
-					return nil
-				}
 				return err
 			}
 			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {

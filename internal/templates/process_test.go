@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -383,7 +384,7 @@ func TestTier1_ParseAllTemplates(t *testing.T) {
 	var parsed int
 	var errors []string
 
-	err := filepath.Walk(templateRoot, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(templateRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

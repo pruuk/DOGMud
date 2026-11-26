@@ -38,10 +38,13 @@ nouns:
     to the touch, distinctly different from the surrounding
     stone. A geomancer would recognize this as windstone.
 containers:
-  veins:
-    items:
-      - itemid: 40032
+  veins: {}
 spawninfo:
+# Quest 11's samples refill, so every player who sides with Rhett can fetch them
+# (#958 playtest: a one-off container item stayed gone until the next wipe).
+- itemid: 40032
+  container: veins
+  respawnrate: 5 real minutes
 - mobid: 210
 - mobid: 210
 - mobid: 239

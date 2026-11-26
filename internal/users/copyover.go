@@ -154,6 +154,11 @@ func loadUserById(userId int) (*UserRecord, error) {
 		return nil, fmt.Errorf("user file %s parsed with no character data", userFilePath)
 	}
 
+	// The same quest progress migration LoadUser and SwapToAlt run: a player
+	// online across a copyover deploy may hold a renamed or split step
+	// (#958: quest 11's retired `sided` step).
+	logQuestMigration("CopyoverRestore", user.Username, user.Character)
+
 	// Same defect class as the old LoadUser: a discarded Validate() error
 	// let a nil/broken Character survive the copyover restore and get
 	// registered into userManager, panicking later on first use instead of

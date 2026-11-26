@@ -12,7 +12,7 @@ import (
 
 // The veteran route says the character is "already changed", so it must really
 // hold quest 30 at end when the command returns: every gate in the coulee reads
-// that token. A plain events.Quest cannot do it (IsTokenAfter refuses `end` on
+// that token. A plain events.Quest cannot do it (IsTokenAfterOnPath refuses `end` on
 // empty progress for a quest of several steps), and if it could, it would pay
 // the rite's reward lines to someone who skipped the rite. So anything queued
 // here must be MarkerOnly, which HandleQuestUpdate stops at before any banner
@@ -30,7 +30,7 @@ func TestAutoAwaken_OpensTheCharacterWithoutPayingTheRite(t *testing.T) {
 	u.Character.LastQuestId = 0
 
 	// Why the handler's token path is not the answer, pinned on a scratch
-	// character so a change to IsTokenAfter is seen here.
+	// character so a change to IsTokenAfterOnPath is seen here.
 	other := users.NewTestUser(9301, "scratch", "Scratch", 99301)
 	require.False(t, other.Character.GiveQuestToken("30-end"),
 		"a multi-step quest refuses end on empty progress")

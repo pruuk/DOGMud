@@ -55,7 +55,7 @@ func shippedGlyphs(t *testing.T) (map[rune]string, int) {
 
 	// Data: the live world (templates, YAML) and config.yaml.
 	world := filepath.Join(root, "_datafiles", "world", "dogmud")
-	err := filepath.WalkDir(world, func(p string, d fs.DirEntry, err error) error {
+	err := WalkDirTolerant(world, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -90,7 +90,7 @@ func shippedGlyphs(t *testing.T) (map[rune]string, int) {
 	// Go: string and rune literals only.
 	for _, dir := range []string{"internal", "modules", "."} {
 		base := filepath.Join(root, dir)
-		walkErr := filepath.WalkDir(base, func(p string, d fs.DirEntry, err error) error {
+		walkErr := WalkDirTolerant(base, func(p string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

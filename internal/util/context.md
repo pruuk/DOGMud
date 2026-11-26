@@ -7,9 +7,10 @@ counters and the MUD-wide lock, plus string, file, encoding, and memory
 helpers. Almost every other package imports it, so it imports almost nothing —
 keep it that way.
 
-Three files, despite the size of the surface: **util.go** (everything except
-the two below), **memory.go** (memory reporting), **copyover.go** (round-count
-survival across a hot restart).
+Most of the surface is in **util.go**. Smaller files hold one job each, among
+them **memory.go** (memory reporting), **copyover.go** (round-count survival
+across a hot restart), **lockseed.go** (lock sequences) and **walk.go** (tree
+walks that tolerate entries removed mid-walk).
 
 ## The global clock
 
@@ -245,6 +246,23 @@ system has no randomness. It makes the lock seed and boot id, the touch
 buttons' per-room ids (`internal/buttons`) and the playtest harness's
 usernames and passwords (`internal/playtestprofiles`); reach for it before
 writing another random-hex helper.
+
+### Walking a tree that may change underneath (walk.go)
+
+```go
+func WalkDirTolerant(root string, fn fs.WalkDirFunc) error
+func WalkTolerant(root string, fn filepath.WalkFunc) error
+```
+
+`filepath.WalkDir` and `filepath.Walk` with one extra rule: an entry other
+than root that is removed after its folder was listed is skipped. The walk's
+own error for it is dropped (fn never sees it), and so is an error fn returns
+for it once the path no longer exists (an `os.ReadFile` of a file removed
+mid-walk). Every other error reaches the caller, and a missing root is an
+error. Packages test in parallel and some tests create and remove temp
+folders under the repo, so every test that walks a tree uses these (#953);
+`internal/guards/tolerant_walk_guard_test.go` refuses a bare
+`filepath.Walk` or `filepath.WalkDir` in any `_test.go` file.
 
 ## Display helpers
 

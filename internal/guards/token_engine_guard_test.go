@@ -6,11 +6,12 @@ import (
 	"go/parser"
 	"go/token"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // tokenEngineAllowed lists the only production files outside
@@ -78,14 +79,8 @@ func TestNoSecondTokenEngine(t *testing.T) {
 	scanned := 0
 
 	for _, root := range messagingSurfaceGoRoots {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				if os.IsNotExist(err) {
-					// A test elsewhere can create and remove a temp file under
-					// the tree while packages test in parallel; a vanished
-					// entry has nothing to scan.
-					return nil
-				}
 				return err
 			}
 			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {

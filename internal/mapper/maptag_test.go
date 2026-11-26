@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // #455: "Deep Water" put a space inside fg="map-deep water", which matches
@@ -160,7 +162,7 @@ func TestMapTagTemplatesUseMapslug(t *testing.T) {
 	for _, world := range []string{"default", "dogmud"} {
 		root := filepath.Join("..", "..", "_datafiles", "world", world, "templates")
 		count := 0
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() || !strings.HasSuffix(path, ".template") {
 				return err
 			}

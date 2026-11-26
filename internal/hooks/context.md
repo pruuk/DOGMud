@@ -252,7 +252,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
     }
     
     // Validate quest progression
-    if !quests.IsTokenAfter(user.Character.GetCurrentQuestToken(), evt.QuestToken) {
+    if !quests.IsTokenAfterOnPath(user.Character.GetCurrentQuestToken(), evt.QuestToken, user.Character.GetQuestFlag) {
         return events.Cancel
     }
     

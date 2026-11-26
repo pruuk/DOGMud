@@ -839,19 +839,30 @@
       if (!out) return;
       var self = this;
       var atNewest = true;
+      // The active channel's scroll place at its last scroll event.
+      var lastTop = 0;
       // Runs after the page's own handler on the button, which has already
       // made the chosen channel active.
       out.addEventListener("click", function (e) {
         if (!e.target.closest || !e.target.closest(".subtab")) return;
         atNewest = true;
         self._scrollChatToNewest(out);
+        var shown = out.querySelector(".chat-window.active");
+        lastTop = shown ? shown.scrollTop : 0;
       });
       if (!window.ResizeObserver) return;
-      // Scroll does not bubble: listen in the capture phase.
+      // Scroll does not bubble: listen in the capture phase. Only a move up
+      // means the reader left the newest line. A scroll event arrives a
+      // frame late, so while the panel keeps shrinking (dragging a window's
+      // edge, or its own animation) our own jump to the newest line is
+      // measured against a box already smaller again and looks short of the
+      // bottom; it moved down, so the reader is still following (#942).
       out.addEventListener("scroll", function (e) {
         var w = e.target;
         if (!w.classList || !w.classList.contains("chat-window") || !w.classList.contains("active")) return;
-        atNewest = w.scrollHeight - w.scrollTop - w.clientHeight < 8;
+        if (w.scrollHeight - w.scrollTop - w.clientHeight < 8) atNewest = true;
+        else if (w.scrollTop < lastTop) atNewest = false;
+        lastTop = w.scrollTop;
       }, true);
       var resized = new ResizeObserver(function () {
         if (atNewest) self._scrollChatToNewest(out);

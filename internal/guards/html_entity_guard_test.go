@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Player text reaches telnet and the web client through ansitags, which
@@ -32,7 +34,7 @@ func TestPlayerTextHasNoHTMLEntities(t *testing.T) {
 	fset := token.NewFileSet()
 	scanned := 0
 	for _, dir := range []string{"internal", "modules"} {
-		err := filepath.WalkDir(filepath.Join(root, dir), func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(filepath.Join(root, dir), func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // What this guards, precisely (plan decision 13): every struct that names
@@ -99,7 +101,7 @@ type scanFile struct {
 // second copy of internal/ and must not be read as part of this repo.
 func scanItemHolders(root string) (itemScan, error) {
 	files := []scanFile{}
-	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+	err := util.WalkDirTolerant(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

@@ -11,6 +11,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // exitLookupEntry is how many unfiltered exit lookups one function makes and
@@ -158,7 +160,7 @@ func registryProblems(found map[string]int, registry map[string]exitLookupEntry,
 func walkGoSources(roots []string, visit func(rel string, file *ast.File), parseFailed func(path string, err error)) error {
 	for _, root := range roots {
 		fset := token.NewFileSet()
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				if os.IsNotExist(err) {
 					return nil

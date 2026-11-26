@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // U10b-1 Task 16: a FAILED craft awards ProgressionFailureFraction.
@@ -147,13 +148,7 @@ func TestFirstMobKillProgression_StaysDeleted(t *testing.T) {
 	internalDir := filepath.Dir(filepath.Dir(thisFile))
 
 	var offenders []string
-	err := filepath.WalkDir(internalDir, func(path string, d fs.DirEntry, err error) error {
-		if os.IsNotExist(err) {
-			// A test elsewhere can create and remove a temp file under
-			// the tree while packages test in parallel; a vanished
-			// entry has nothing to scan.
-			return nil
-		}
+	err := util.WalkDirTolerant(internalDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") {
 			return err
 		}

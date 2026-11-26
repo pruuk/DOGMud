@@ -236,6 +236,7 @@ func TestFleeCost_ZeroStaminaFractionalCarryBecomesShortOnlyWhenWholeDue(t *test
 	u.Character.CombatPhase.ResolveFlee(false)
 	events.DrainQueuedMessagesForTest(u.UserId)
 
+	nextFleeRound(t)
 	if _, err := Flee("", u, room, 0); err != nil {
 		t.Fatalf("second Flee returned %v", err)
 	}

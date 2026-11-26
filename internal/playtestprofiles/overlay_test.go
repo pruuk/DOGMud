@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -72,6 +73,27 @@ func TestApplyOverlaysSetsQuestFlag(t *testing.T) {
 	}, testWorld())
 	require.NoError(t, err)
 	require.Equal(t, "rhett", u.Character.GetQuestFlag("11-branch"))
+}
+
+// A side's step is granted only once the branch flag names that side (#958),
+// so the overlay sets quest flags before it grants quest tokens: a seat can
+// start on Sylara's step.
+func TestApplyOverlaysSetsFlagsBeforeTokens(t *testing.T) {
+	t.Cleanup(quests.SeedQuestsForTest(&quests.Quest{
+		QuestId: 11, Name: "Forked",
+		Flags: []quests.QuestFlagDef{{Key: "branch", Values: []string{"sylara", "rhett"}}},
+		Steps: []quests.QuestStep{{Id: "start"},
+			{Id: "sylara", Branch: "sylara"}, {Id: "totem", Branch: "sylara"},
+			{Id: "rhett", Branch: "rhett"}, {Id: "samples", Branch: "rhett"}, {Id: "end"}},
+	}))
+	u := baseUser()
+	err := ApplyOverlays(u, 100, Overlays{
+		SetQuestTokens: []string{"11-start", "11-sylara"},
+		SetQuestFlags:  map[string]string{"11-branch": "sylara"},
+	}, testWorld())
+	require.NoError(t, err)
+	require.True(t, u.Character.HasQuest("11-sylara"))
+	require.Equal(t, "sylara", u.Character.GetQuestFlag("11-branch"))
 }
 
 func TestApplyOverlaysSetsMutations(t *testing.T) {

@@ -27,6 +27,10 @@ const (
 	FleeRefuseGrappled
 	FleeRefuseProne
 	FleeRefuseNotReady
+	// FleeRefuseThisRound: this fleer already started a flee this round
+	// (#951). A flee may be started once every round; only the round it
+	// starts in counts, not the round it resolves in.
+	FleeRefuseThisRound
 )
 
 // FleeBegin reports one flee command. Accepted means the fleer is now
@@ -54,6 +58,10 @@ func FleeGate(c *characters.Character) FleeRefusal {
 		return FleeRefuseAlready
 	case !c.IsInCombat():
 		return FleeRefuseNotInCombat
+	case c.FleeTriedThisRound():
+		// Ahead of grapple and standing: standing up or breaking a hold will
+		// not buy a second attempt this round, so do not suggest it would.
+		return FleeRefuseThisRound
 	case c.IsStandingGrapple() || c.IsGroundGrapple():
 		return FleeRefuseGrappled
 	case !c.IsStanding():
@@ -94,6 +102,8 @@ func BeginFlee(actor Actor, preferredExit string) FleeBegin {
 		c.CancelFleeAdmission()
 		return FleeBegin{Refusal: fleeVetoReason(c)}
 	}
+	// The attempt has started: this round has had its flee (#951).
+	c.MarkFleeTriedThisRound()
 
 	bal := configs.GetBalanceConfig()
 	modifier := 1.0

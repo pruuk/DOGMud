@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/templates"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	textlang "golang.org/x/text/language"
 )
 
@@ -221,7 +222,7 @@ func templateBases(t *testing.T) (bases map[string]bool, forms map[string][]int)
 	t.Helper()
 	bases, forms = map[string]bool{}, map[string][]int{}
 	for _, root := range templateFolders(t) {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() {
 				return err
 			}
@@ -296,7 +297,7 @@ func TestTemplateFormsBalanceTheirColourTags(t *testing.T) {
 	opens, closes := regexp.MustCompile(`<ansi[\s>]`), regexp.MustCompile(`</ansi>`)
 	checked := 0
 	for _, root := range templateFolders(t) {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() || !templateFormFile.MatchString(filepath.ToSlash(path)) {
 				return err
 			}

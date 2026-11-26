@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
@@ -128,11 +129,8 @@ func TestShippedConditionKeysBind(t *testing.T) {
 			}
 			re := keyLine(b.key)
 			empty := emptyKeyLine(b.key)
-			require.NoError(t, filepath.WalkDir(root, func(p string, d os.DirEntry, err error) error {
+			require.NoError(t, util.WalkDirTolerant(root, func(p string, d os.DirEntry, err error) error {
 				if err != nil {
-					if os.IsNotExist(err) {
-						return nil
-					}
 					return err
 				}
 				if d.IsDir() || !strings.HasSuffix(p, ".yaml") {

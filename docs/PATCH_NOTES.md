@@ -1,5 +1,9 @@
 # DOGMud Patch Notes
 
+## 2026-11-26: The Windwarden's Dilemma points the way
+
+- Once you choose a side in The Windwarden's Dilemma, the map and quest log now point you to what you were asked to find: Sylara's carved wolf totem in the Kill Ground, or Rhett's windstone samples on the Rocky Shelf. Once it is in your pack, they point you back to whoever asked for it. If you were already partway through, you pick up right where you were.
+
 ## 2026-11-25: Secret exits stay secret until you find them
 
 - A secret exit now joins a room's exits, your map and quest directions once you find it with `search`, and it stays there. Walking through it no longer shows it for a few minutes; finding it does. On the web client your map shows it at once.
@@ -14,6 +18,11 @@
 - `exits` in the dark now says it is too dark to see, as `look` does.
 - `go w` and the other short directions now answer just as `w` does.
 - On the web client the map no longer jumps back to you while you stay in one room, and it keeps your zoom.
+
+## 2026-11-25: Small fixes
+
+- You can start one flee each round. A second `flee` started in the same round is refused and costs nothing. Monsters follow the same rule.
+- A panel you pop out into its own window now fits it: a small Comms window shows the newest message instead of the oldest, even while you resize it.
 
 ## 2026-11-25: Commands sent quickly wait their turn
 

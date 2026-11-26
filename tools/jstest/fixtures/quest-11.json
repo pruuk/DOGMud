@@ -1,0 +1,144 @@
+{
+  "questid": 11,
+  "name": "The Windwarden's Dilemma",
+  "description": "A conflict is brewing on the Ironwind Steppe between a druid who guards the ancient stone circle and a Thornwall scholar who wants to extract rare crystal from beneath it. You must choose a side.",
+  "steps": [
+    {
+      "id": "start",
+      "description": "A conflict is brewing on the Ironwind Steppe. Visit Windwarden Sylara at the stone circle or Geomancer Rhett at the ridge approach, hear what siding with each would mean, and choose a side.",
+      "hint": "Rhett camps at the Ridge Approach, seven rooms east of Thornwall's Old Citadel Plaza. Sylara keeps the Stone Circle, south twice from there, then east. Type talk rhett.",
+      "destination": {}
+    },
+    {
+      "id": "sylara",
+      "description": "You have sided with Windwarden Sylara. The wolves dragged her carved wolf totem into their kill ground. Search the bones there and bring it back to her.",
+      "hint": "From the Stone Circle: west three times, south twice, east, then south six times to the Kill Ground. Type get totem from bones.",
+      "destination": {
+        "room": 3082
+      },
+      "branch": "sylara"
+    },
+    {
+      "id": "totem",
+      "description": "You have Sylara's carved wolf totem. Take it back to her at the stone circle.",
+      "hint": "From the Kill Ground: north six times, west, north twice, then east three times to the Stone Circle. Type talk sylara.",
+      "destination": {
+        "mob": [
+          241
+        ]
+      },
+      "branch": "sylara"
+    },
+    {
+      "id": "rhett",
+      "description": "You have sided with Geomancer Rhett. He wants windstone samples chipped from the exposed veins on the Rocky Shelf, just south of his camp.",
+      "hint": "The Rocky Shelf is one room south of Rhett's camp at the Ridge Approach. Type get sample from veins.",
+      "destination": {
+        "room": 3032
+      },
+      "branch": "rhett"
+    },
+    {
+      "id": "samples",
+      "description": "You have the windstone samples. Take them back to Rhett at his camp.",
+      "hint": "Go north from the Rocky Shelf to Rhett's camp at the Ridge Approach. Type talk rhett.",
+      "destination": {
+        "mob": [
+          242
+        ]
+      },
+      "branch": "rhett"
+    },
+    {
+      "id": "end",
+      "description": "You have made your choice and completed the task. The consequences remain to be seen.",
+      "destination": {}
+    }
+  ],
+  "rewards": {
+    "gold": 10,
+    "actor": "You have chosen your path. The steppe will remember."
+  },
+  "triggers": [
+    {
+      "event": "topic_heard",
+      "mob": 241,
+      "topic": "stand_with_sylara",
+      "conditions": {
+        "has": [
+          "11-start"
+        ],
+        "missing": [
+          "11-sylara"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "11-sylara"
+        }
+      ]
+    },
+    {
+      "event": "item_gain",
+      "item": 40033,
+      "conditions": {
+        "has": [
+          "11-sylara"
+        ],
+        "missing": [
+          "11-totem"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "11-totem"
+        }
+      ]
+    },
+    {
+      "event": "topic_heard",
+      "mob": 242,
+      "topic": "stand_with_rhett",
+      "conditions": {
+        "has": [
+          "11-start"
+        ],
+        "missing": [
+          "11-rhett"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "11-rhett"
+        }
+      ]
+    },
+    {
+      "event": "item_gain",
+      "item": 40032,
+      "conditions": {
+        "has": [
+          "11-rhett"
+        ],
+        "missing": [
+          "11-samples"
+        ]
+      },
+      "actions": [
+        {
+          "grant": "11-samples"
+        }
+      ]
+    }
+  ],
+  "flags": [
+    {
+      "key": "branch",
+      "values": [
+        "sylara",
+        "rhett"
+      ],
+      "description": "Which NPC the player sided with"
+    }
+  ]
+}

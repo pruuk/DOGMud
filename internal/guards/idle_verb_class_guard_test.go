@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Every idle command in shipped content starts with a verb the idle roll's
@@ -50,7 +51,7 @@ func shippedIdlePools(t *testing.T) map[string][]string {
 	root := filepath.Join("_datafiles", "world", "dogmud")
 	for _, sub := range []string{"mobs", "schedules", "rooms"} {
 		dir := filepath.Join(root, sub)
-		err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(dir, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

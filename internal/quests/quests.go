@@ -75,6 +75,11 @@ type Quest struct {
 	Repeatable     bool           `yaml:"repeatable,omitempty" json:"repeatable,omitempty"`           // completing clears progress so it can be re-taken (after CooldownRounds)
 	CooldownRounds int            `yaml:"cooldown_rounds,omitempty" json:"cooldown_rounds,omitempty"` // rounds after completion before a repeatable quest can be re-taken
 	RepeatLimit    int            `yaml:"repeat_limit,omitempty" json:"repeat_limit,omitempty"`       // lifetime completions of a repeatable; 0 = no cap (#375 P3)
+
+	// branch is worked out by Validate (branches.go), never saved. Any edit
+	// to Steps or Flags after Validate must be followed by Validate again,
+	// or the path readers may use the old fork (see branchCache).
+	branch branchCache
 }
 
 type QuestStep struct {
@@ -84,6 +89,9 @@ type QuestStep struct {
 	// Destination is where the minimap and the quest log point during this
 	// step (#375 phase 4); see StepDestination.
 	Destination StepDestination `yaml:"destination,omitempty" json:"destination,omitempty"`
+	// Branch names the side this step belongs to (#958): a value of one of the
+	// quest's flags. Blank means every side takes the step. See branches.go.
+	Branch string `yaml:"branch,omitempty" json:"branch,omitempty"`
 }
 
 func (r *Quest) Id() int {
@@ -319,6 +327,12 @@ func (r *Quest) Validate() error {
 		flagKeys[fullKey] = true
 	}
 
+	// Branched steps; see branches.go.
+	if err := r.validateBranches(); err != nil {
+		return fmt.Errorf("quest %d (%s): %w", r.QuestId, r.Name, err)
+	}
+	r.prepareBranches()
+
 	// Validate grant tokens reference valid steps (only for this quest's own tokens)
 	for i, t := range r.Triggers {
 		for _, a := range t.Actions {
@@ -376,54 +390,53 @@ func GetQuestCt(includeSecret bool) int {
 	return ret
 }
 
-func IsTokenAfter(currentToken string, nextToken string) bool {
+// IsTokenAfterOnPath reports whether nextToken comes after currentToken on
+// the path of a player standing at currentToken (a grant must move forward).
+// flag reads the player's quest flags by registered key ("<questId>-<key>");
+// nil reads every flag as unset. See branches.go for the path.
+func IsTokenAfterOnPath(currentToken string, nextToken string, flag func(string) string) bool {
+	return tokenAfter(currentToken, nextToken, false, flag)
+}
+
+// IsTokenPassedOnPath reports whether a player standing at currentToken has
+// passed questToken on their path: a later step counts as holding the earlier
+// ones on the same path, and never a step of another side.
+func IsTokenPassedOnPath(questToken string, currentToken string, flag func(string) string) bool {
+	return tokenAfter(questToken, currentToken, true, flag)
+}
+
+// tokenAfter reports whether nextToken comes after currentToken on one
+// player's path. atNext says which of the two is the player's own position,
+// whose step decides the side.
+func tokenAfter(currentToken string, nextToken string, atNext bool, flag func(string) string) bool {
 
 	currentId, currentStep := TokenToParts(currentToken)
 	nextId, nextStep := TokenToParts(nextToken)
 
-	// If they don't have any progress yet, then they can only "start" a quest.
+	// If they don't have any progress yet, then they can only "start" a quest
+	// (even one not loaded), or end a one-step quest (IsStepAfterOnPath).
 	if currentStep == `` {
 		if nextStep == `start` {
 			return true
-		} else if nextStep == `end` {
-			// If it's a single step quest, then they can end it.
-			if questInfo := GetQuest(nextToken); questInfo != nil {
-				if len(questInfo.Steps) == 1 {
-					return true
-				}
-			}
 		}
+		questInfo := GetQuest(nextToken)
+		return questInfo != nil && questInfo.IsStepAfterOnPath(``, nextStep, flag)
+	}
+
+	if currentId != nextId {
 		return false
 	}
 
-	// If same, false
-	if currentId != nextId || currentStep == nextStep {
-		return false
-	}
-
-	// If currently at zero, whatever is offered must be next
-	questInfo := GetQuest(currentToken)
 	// If quest doesn't even exist, then no
+	questInfo := GetQuest(currentToken)
 	if questInfo == nil {
 		return false
 	}
 
-	result := false
-	startLooking := false
-
-	for _, step := range questInfo.Steps {
-		if step.Id == currentStep {
-			startLooking = true
-		}
-		if startLooking {
-			if step.Id == nextStep {
-				result = true
-				break
-			}
-		}
+	if atNext {
+		return questInfo.IsStepPassedOnPath(currentStep, nextStep, flag)
 	}
-
-	return result
+	return questInfo.IsStepAfterOnPath(currentStep, nextStep, flag)
 }
 
 func PartsToToken(questId int, questStep string) string {

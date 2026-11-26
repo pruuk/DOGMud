@@ -44,7 +44,8 @@ type World struct {
 //	quest <id> refs: <refusal text>            refs, one key per refusal
 //
 // one-action adds a reason to the way it names: :none, :reward, :prev,
-// :cond, :seq or :double.
+// :cond, :seq or :double. At the join of a branched quest's paths it also
+// names a side left with no way on, "step <id> from <prev id>:none".
 type Finding struct {
 	Rule    string
 	QuestId int

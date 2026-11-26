@@ -23,6 +23,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/tips"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	weathercontent "github.com/GoMudEngine/GoMud/modules/weather/content"
 	yamlv2 "gopkg.in/yaml.v2"
 	yamlv3 "gopkg.in/yaml.v3"
@@ -594,7 +595,7 @@ func yamlFilesUnder(t *testing.T, root string) []string {
 	}
 
 	var out []string
-	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err = util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

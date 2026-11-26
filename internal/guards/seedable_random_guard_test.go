@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // #594: every random draw in the game goes through the one seedable source
@@ -25,7 +27,7 @@ func TestOnlyTheDiceSourceImportsMathRand(t *testing.T) {
 	var offenders []string
 	scanned := 0
 	for _, root := range []string{"internal", "modules"} {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

@@ -20,7 +20,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
-	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state/presence"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -971,6 +970,12 @@ func (u *UserRecord) GetOnlineInfo() OnlineInfo {
 }
 
 func (u *UserRecord) WimpyCheck() {
+	// A flee may be started once every round (#951). In the round one was
+	// started, wimpy waits for the next hit in a later round rather than
+	// queueing a flee that is only refused, a line for every blow taken.
+	if u.Character.FleeTriedThisRound() {
+		return
+	}
 	if currentWimpy := u.GetConfigOption(`wimpy`); currentWimpy != nil {
 		healthPct := int(math.Floor(float64(u.Character.Health) / float64(u.Character.HealthMax.Value) * 100))
 		if healthPct < currentWimpy.(int) {
@@ -1017,12 +1022,11 @@ func (u *UserRecord) SwapToAlt(targetAltName string) bool {
 	// Write them to disc
 	characters.SaveAlts(u.UserId, newAlts)
 
-	// A quest retired whole is dropped here too, as LoadUser does: an alt that
-	// comes into play this way would otherwise keep it until the next login.
-	// No marker: the drop is idempotent, and each alt carries its own progress.
-	for _, qid := range selectedChar.DropRetiredQuests(quests.RetiredQuests()) {
-		mudlog.Info("SwapToAlt", "user", u.Username, "dropped retired quest", qid)
-	}
+	// Quest progress is migrated here too, as LoadUser does: an alt that
+	// comes into play this way would otherwise keep a retired quest, a
+	// renamed step or quest 11's split step until the next login. No marker:
+	// each part is idempotent, and each alt carries its own progress.
+	logQuestMigration("SwapToAlt", u.Username, &selectedChar)
 
 	// Run validation on the new character
 	selectedChar.Validate()

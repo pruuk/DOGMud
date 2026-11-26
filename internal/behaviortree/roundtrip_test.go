@@ -15,6 +15,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -80,7 +81,7 @@ func TestRoundTrip_MarshalFixedPointEveryLiveBehaviorFile(t *testing.T) {
 
 	root := configs.GetFilePathsConfig().DataFiles.String() + `/behaviors`
 	var files []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(root, func(path string, info os.FileInfo, err error) error {
 		if err == nil && !info.IsDir() && filepath.Ext(path) == ".yaml" {
 			files = append(files, path)
 		}
@@ -147,7 +148,7 @@ func TestShippedBehaviorTrees_AllCompile(t *testing.T) {
 
 	root := configs.GetFilePathsConfig().DataFiles.String() + `/behaviors`
 	var files []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(root, func(path string, info os.FileInfo, err error) error {
 		if err == nil && !info.IsDir() && filepath.Ext(path) == ".yaml" {
 			files = append(files, path)
 		}

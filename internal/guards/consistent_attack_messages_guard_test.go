@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // M3 item 8 deleted ConsistentAttackMessages and the seeded message pick it
@@ -123,7 +125,7 @@ func TestConsistentAttackMessagesStaysDeleted(t *testing.T) {
 	var hits []hit
 	scanned, selfSeen := 0, false
 
-	walkErr := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+	walkErr := util.WalkDirTolerant(".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

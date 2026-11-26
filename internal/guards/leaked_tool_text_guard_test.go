@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // An AI tool call's own markup once landed at the top of a help file
@@ -27,7 +29,7 @@ func TestGameDataHasNoLeakedToolMarkup(t *testing.T) {
 	root := repoRoot(t)
 	scanned := 0
 	for _, dir := range leakedToolTextDirs {
-		err := filepath.WalkDir(filepath.Join(root, dir), func(path string, d fs.DirEntry, err error) error {
+		err := util.WalkDirTolerant(filepath.Join(root, dir), func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}

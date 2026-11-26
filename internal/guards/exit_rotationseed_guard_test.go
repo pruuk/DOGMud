@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -50,7 +51,7 @@ func exitRotationSeedFindings(rel string, data []byte) ([]string, error) {
 func TestNoRoomTemplateSetsAnExitRotationSeed(t *testing.T) {
 	root := filepath.Join(repoRoot(t), filepath.FromSlash(exitRotationSeedRoomsDir))
 	files := 0
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err := util.WalkTolerant(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

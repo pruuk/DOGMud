@@ -14,6 +14,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // familyReads are the reads that decide a beast move by attack family
@@ -211,7 +213,7 @@ func TestScriptedBeastMovesAreInTheSpeciesList(t *testing.T) {
 	// cannot decode fails the test: its scripted moves would go unchecked.
 	cmds, species := map[string][]string{}, map[string]int{}
 	mobById, byArchetype := map[int]string{}, map[string][]string{}
-	require.NoError(t, filepath.WalkDir(filepath.Join("_datafiles", "world", "dogmud", "mobs"), func(p string, d os.DirEntry, err error) error {
+	require.NoError(t, util.WalkDirTolerant(filepath.Join("_datafiles", "world", "dogmud", "mobs"), func(p string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || filepath.Ext(p) != ".yaml" {
 			return err
 		}
@@ -240,7 +242,7 @@ func TestScriptedBeastMovesAreInTheSpeciesList(t *testing.T) {
 	// the mob named by its mob_id wherever it appears.
 	behaviors := filepath.Join("_datafiles", "world", "dogmud", "behaviors")
 	trees := 0
-	require.NoError(t, filepath.WalkDir(behaviors, func(p string, d os.DirEntry, err error) error {
+	require.NoError(t, util.WalkDirTolerant(behaviors, func(p string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || filepath.Ext(p) != ".yaml" {
 			return err
 		}

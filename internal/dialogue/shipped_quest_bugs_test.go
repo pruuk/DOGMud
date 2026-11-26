@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -18,25 +20,59 @@ func loadShippedDialogue(t *testing.T, path string) *DialogueFile {
 	return &df
 }
 
+// seedShippedQuest11 seeds the shipped quest 11 file, so a real character
+// resolves its branched path the way the game does.
+func seedShippedQuest11(t *testing.T) {
+	t.Helper()
+	data, err := os.ReadFile("../../_datafiles/world/dogmud/quests/11-the_windwardens_dilemma.yaml")
+	require.NoError(t, err)
+	var q quests.Quest
+	require.NoError(t, yaml.Unmarshal(data, &q))
+	t.Cleanup(quests.SeedQuestsForTest(&q))
+}
+
+// quest11State is a player on quest 11's step, built from a real character:
+// HasQuest and GetQuestFlag read the character, so what the player holds is
+// what the engine says they hold. side is the 11-branch flag ("" for none).
+func quest11State(step, side string, carrying bool) *PlayerState {
+	c := &characters.Character{
+		QuestProgress: map[int]string{11: step},
+		QuestFlags:    map[string]string{},
+	}
+	if side != "" {
+		c.QuestFlags["11-branch"] = side
+	}
+	ps := heldState()
+	ps.HasQuest = c.HasQuest
+	ps.GetQuestFlag = c.GetQuestFlag
+	ps.HasHeard = func(string) bool { return true }
+	ps.HasItem = func(int) bool { return carrying }
+	ps.CarriesItem = ps.HasItem
+	return ps
+}
+
 // #613: a player who takes quest 11 from Kael first holds 11-start with no
 // side. Each side's menu must still lead to the choice: the terms topic opens,
 // and hearing it opens the stand topic. Once the side is chosen, that side's
-// hand-in opens and the other side's stand closes.
+// hand-in opens at its return step and the other side's topics stay closed.
 func TestQuest11CanBeFinishedAfterTalkingToKaelFirst(t *testing.T) {
+	seedShippedQuest11(t)
 	kael := loadShippedDialogue(t, "ironwind_steppe/240.yaml")
 	require.Contains(t, menuKeys(kael, heldState()), "the_problem", "Kael offers the quest")
 
 	sides := []struct {
-		file, cause, terms, stand, handin, value, otherStand, otherFile string
+		file, cause, terms, stand, handin, value, fetch, ret       string
+		otherFile, otherCause, otherTerms, otherStand, otherHandin string
 	}{
-		{"ironwind_steppe/241.yaml", "her_cause", "sylara_terms", "stand_with_sylara", "totem_return", "sylara",
-			"stand_with_rhett", "ironwind_steppe/242.yaml"},
-		{"ironwind_steppe/242.yaml", "his_cause", "rhett_terms", "stand_with_rhett", "sample_return", "rhett",
-			"stand_with_sylara", "ironwind_steppe/241.yaml"},
+		{"ironwind_steppe/241.yaml", "her_cause", "sylara_terms", "stand_with_sylara", "totem_return", "sylara", "sylara", "totem",
+			"ironwind_steppe/242.yaml", "his_cause", "rhett_terms", "stand_with_rhett", "sample_return"},
+		{"ironwind_steppe/242.yaml", "his_cause", "rhett_terms", "stand_with_rhett", "sample_return", "rhett", "rhett", "samples",
+			"ironwind_steppe/241.yaml", "her_cause", "sylara_terms", "stand_with_sylara", "totem_return"},
 	}
 	for _, s := range sides {
 		t.Run(s.value, func(t *testing.T) {
 			df := loadShippedDialogue(t, s.file)
+			other := loadShippedDialogue(t, s.otherFile)
 
 			unsided := heldState("11-start")
 			keys := menuKeys(df, unsided)
@@ -48,45 +84,72 @@ func TestQuest11CanBeFinishedAfterTalkingToKaelFirst(t *testing.T) {
 			heard.HasHeard = func(string) bool { return true }
 			require.Contains(t, menuKeys(df, heard), s.stand, "hearing the terms opens the choice")
 
-			sided := heldState("11-start", "11-sided")
-			sided.HasHeard = func(string) bool { return true }
-			sided.HasItem = func(int) bool { return true }
-			sided.CarriesItem = func(int) bool { return true }
-			sided.GetQuestFlag = func(key string) string {
+			// On the fetch step the item is carried but the hand-in is not
+			// open yet; on the return step it is, and only there.
+			for _, step := range []struct {
+				id         string
+				handInOpen bool
+			}{{s.fetch, false}, {s.ret, true}} {
+				ps := quest11State(step.id, s.value, true)
+				keys := menuKeys(df, ps)
+				if step.handInOpen {
+					require.Contains(t, keys, s.handin, "the hand-in is open at the return step")
+				} else {
+					require.NotContains(t, keys, s.handin, "the hand-in waits for the return step")
+				}
+				require.NotContains(t, keys, s.stand, "the stand is not offered twice, at "+step.id)
+				otherKeys := menuKeys(other, ps)
+				require.NotContains(t, otherKeys, s.otherStand, "the other side's choice is closed at "+step.id)
+				require.NotContains(t, otherKeys, s.otherTerms, "the other side's terms are closed at "+step.id)
+				require.NotContains(t, otherKeys, s.otherHandin, "the other side's hand-in is closed at "+step.id)
+			}
+
+			// A finished side holds only its own steps, and no hand-in is left.
+			done := quest11State("end", s.value, true)
+			require.NotContains(t, menuKeys(df, done), s.handin, "the hand-in closes at the end")
+			require.NotContains(t, menuKeys(other, done), s.otherHandin)
+
+			// A save from before the side steps: the flag is set, the player is
+			// still on 11-start, and the terms may never have been heard.
+			flagged := quest11State("start", s.value, true)
+			flagged.HasHeard = func(string) bool { return false }
+			keys = menuKeys(df, flagged)
+			require.Contains(t, keys, s.terms, "the flagged save can hear its side's terms")
+			require.NotContains(t, keys, s.stand, "the stand waits for the terms")
+			require.NotContains(t, keys, s.handin, "the hand-in follows the side's return step")
+			require.NotContains(t, menuKeys(other, flagged), s.otherTerms, "the other side's terms stay hidden")
+			require.NotContains(t, menuKeys(other, flagged), s.otherStand)
+			flagged.HasHeard = func(string) bool { return true }
+			keys = menuKeys(df, flagged)
+			require.Contains(t, keys, s.stand, "with the terms heard the flagged save can stand again")
+			require.NotContains(t, keys, s.handin, "the hand-in follows the side's return step")
+
+			// An old save that finished with no side holds only 11-start (and
+			// 11-end), and the flag is empty, so the terms stay open.
+			finished := quest11State("end", "", false)
+			require.Contains(t, menuKeys(df, finished), s.terms, "the unsided finished save still hears the terms")
+			require.Contains(t, menuKeys(df, finished), "late_stand_with_"+s.value)
+
+			// #958 playtest: on the return step without the item, the NPC
+			// sends the player back to fetch it instead of asking for it.
+			carrying, _ := df.OpenerFor(quest11State(s.ret, s.value, true))
+			dropped, _ := df.OpenerFor(quest11State(s.ret, s.value, false))
+			fetching, _ := df.OpenerFor(quest11State(s.fetch, s.value, false))
+			require.NotEqual(t, carrying, dropped, "the 'you have it' opener needs the item carried")
+			require.Equal(t, fetching, dropped, "without the item the fetch opener plays")
+
+			// #958 playtest: a player who chose this side and set the quest
+			// aside is not pitched the other side's offer; their own still
+			// takes it back up.
+			shelved := heldState()
+			shelved.GetQuestFlag = func(key string) string {
 				if key == "11-branch" {
 					return s.value
 				}
 				return ""
 			}
-			require.Contains(t, menuKeys(df, sided), s.handin, "the chosen side takes the hand-in")
-			require.NotContains(t, menuKeys(loadShippedDialogue(t, s.otherFile), sided), s.otherStand,
-				"the other side's choice is closed")
-
-			// A save from before the sided step: the flag is set, 11-sided is not,
-			// and the terms may never have been heard.
-			other := loadShippedDialogue(t, s.otherFile)
-			otherTerms := map[string]string{"sylara": "rhett_terms", "rhett": "sylara_terms"}[s.value]
-			flagged := heldState("11-start")
-			flagged.GetQuestFlag = sided.GetQuestFlag
-			flagged.HasItem = sided.HasItem
-			flagged.CarriesItem = sided.CarriesItem
-			keys = menuKeys(df, flagged)
-			require.Contains(t, keys, s.terms, "the flagged save can hear its side's terms")
-			require.NotContains(t, keys, s.stand, "the stand waits for the terms")
-			require.NotContains(t, keys, s.handin, "the hand-in follows 11-sided")
-			require.NotContains(t, menuKeys(other, flagged), otherTerms, "the other side's terms stay hidden")
-			require.NotContains(t, menuKeys(other, flagged), s.otherStand)
-			flagged.HasHeard = func(string) bool { return true }
-			keys = menuKeys(df, flagged)
-			require.Contains(t, keys, s.stand, "with the terms heard the flagged save can stand again")
-			require.NotContains(t, keys, s.handin, "the hand-in follows 11-sided")
-
-			// An old save that finished with no side: 11-end counts as holding
-			// 11-sided, and the flag is empty, so the terms stay open for it.
-			finished := heldState("11-start", "11-sided", "11-end")
-			require.Contains(t, menuKeys(df, finished), s.terms, "the unsided finished save still hears the terms")
-			finished.HasHeard = func(string) bool { return true }
-			require.Contains(t, menuKeys(df, finished), "late_stand_with_"+s.value)
+			require.Contains(t, menuKeys(df, shelved), s.cause, "the chosen side's offer resumes the quest")
+			require.NotContains(t, menuKeys(other, shelved), s.otherCause, "the other side does not pitch again")
 		})
 	}
 }

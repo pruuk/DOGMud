@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -44,13 +45,19 @@ type Finding struct {
 
 func (f Finding) String() string { return f.Class + ": " + f.Text }
 
-// node is one quest's progress: the index of the current step (-1 for none)
-// and whether the grant that put it there fires quest_granted triggers.
-// Progress only moves forward (characters.GiveQuestToken) and HasQuest is
-// true for the current step and every earlier one (characters.HasQuest).
+// node is one quest's progress: the index of the current step (-1 for none),
+// whether the grant that put it there fires quest_granted triggers, and the
+// side of a branched quest the player is on. Progress only moves forward on
+// the player's path (characters.GiveQuestToken) and HasQuest is true for the
+// current step and every earlier one on that path (characters.HasQuest):
+// qmodel reads both from the quests path helpers.
 type node struct {
 	idx   int
 	chain bool
+	// side is the branch flag's value on the path that reached the node
+	// (#958), which the path helpers read as the player's flag: blank for a
+	// quest with no branched steps and before a side is taken.
+	side string
 }
 
 var none = node{idx: -1}
@@ -63,26 +70,70 @@ type qmodel struct {
 	zones map[string]bool
 }
 
-// grantTo is where granting step from cur lands, mirroring
-// quests.IsTokenAfter: from no progress only "start" (or the end of a
-// one-step quest) lands; otherwise only a later step does.
-func (m *qmodel) grantTo(cur int, step string) (int, bool) {
-	j, ok := m.idx[step]
-	if !ok {
-		return 0, false
-	}
-	if cur < 0 {
-		if step == "start" || (len(m.steps) == 1 && step == "end") {
-			return j, true
+// flagAt reads n's side as the player's branch flag; every other flag is
+// unset (the path helpers read only the branch flag).
+func (m *qmodel) flagAt(n node) func(string) string {
+	key := m.q.BranchFlagKey()
+	return func(k string) string {
+		if k != "" && k == key {
+			return n.side
 		}
-		return 0, false
+		return ""
 	}
-	return j, j > cur
 }
 
-func (m *qmodel) held(cur int, step string) bool {
+// stepAt is n's step id, blank before the quest begins.
+func (m *qmodel) stepAt(n node) string {
+	if n.idx < 0 {
+		return ""
+	}
+	return m.steps[n.idx]
+}
+
+// grantTo lists where granting step from cur lands, by the quests path order
+// (quests.Quest.IsStepAfterOnPath): from no progress only "start" (or the
+// end of a one-step quest), otherwise only a later step on the player's path.
+// A node with no side yet stands for a player whose branch flag may hold any
+// value some source sets (flagSet; the walk's flags are what is ever set, not
+// one player's) or none, so each is tried; the landing node keeps the side
+// the grant was taken on. A quest with no branched steps has one landing at
+// most, as before.
+func (m *qmodel) grantTo(cur node, step string, flagSet func(string) bool) []node {
 	j, ok := m.idx[step]
-	return ok && cur >= 0 && cur >= j
+	if !ok {
+		return nil
+	}
+	sides := []string{cur.side}
+	if key := m.q.BranchFlagKey(); cur.side == "" && key != "" {
+		for _, v := range m.q.Sides() {
+			if flagSet(key + "=" + v) {
+				sides = append(sides, v)
+			}
+		}
+	}
+	var out []node
+	for _, side := range sides {
+		at := node{idx: cur.idx, side: side}
+		flag := m.flagAt(at)
+		if !m.q.IsStepAfterOnPath(m.stepAt(cur), step, flag) {
+			continue
+		}
+		next := node{idx: j, side: m.q.Side(step, flag)}
+		if !slices.Contains(out, next) {
+			out = append(out, next)
+		}
+	}
+	return out
+}
+
+// held is HasQuest at n: the current step, or one passed on n's path
+// (quests.Quest.IsStepPassedOnPath), never another side's.
+func (m *qmodel) held(n node, step string) bool {
+	if _, ok := m.idx[step]; !ok || n.idx < 0 {
+		return false
+	}
+	cur := m.stepAt(n)
+	return step == cur || m.q.IsStepPassedOnPath(step, cur, m.flagAt(n))
 }
 
 func (m *qmodel) token(i int) string {
@@ -764,12 +815,12 @@ func (w *walker) eval(s *source, fixed map[int]node) (bool, string) {
 		m, g := w.qs[id], byQ[id]
 		passes := func(n node) bool {
 			for _, st := range g.req {
-				if !m.held(n.idx, st) {
+				if !m.held(n, st) {
 					return false
 				}
 			}
 			for _, st := range g.exc {
-				if m.held(n.idx, st) {
+				if m.held(n, st) {
 					return false
 				}
 			}
@@ -935,21 +986,28 @@ func (w *walker) fire(si int) bool {
 					continue
 				}
 				fired = true
-				cur := n
+				curs := []node{n}
 				for _, st := range byQ[id] {
-					j, ok := m.grantTo(cur.idx, st)
-					if !ok {
-						continue
+					var nexts []node
+					for _, cur := range curs {
+						lands := m.grantTo(cur, st, func(kv string) bool { return w.flags[kv] })
+						if len(lands) == 0 {
+							nexts = append(nexts, cur) // refused: the player stays
+							continue
+						}
+						for _, next := range lands {
+							next.chain = s.chains
+							if !w.hasEdge(id, cur, next, si) {
+								w.edges[id] = append(w.edges[id], edge{from: cur, to: next, src: si})
+							}
+							if !w.reach[id][next] {
+								w.reach[id][next] = true
+								changed = true
+							}
+							nexts = append(nexts, next)
+						}
 					}
-					next := node{idx: j, chain: s.chains}
-					if !w.hasEdge(id, cur, next, si) {
-						w.edges[id] = append(w.edges[id], edge{from: cur, to: next, src: si})
-					}
-					if !w.reach[id][next] {
-						w.reach[id][next] = true
-						changed = true
-					}
-					cur = next
+					curs = nexts
 				}
 			}
 		}
@@ -1074,21 +1132,37 @@ func (w *walker) checkQuest(m *qmodel) {
 	for _, e := range w.edges[id] {
 		out[e.from] = true
 	}
-	stuck := map[int][]node{}
+	// Stuck nodes by step and side: each stuck side of a branched quest is
+	// explained from its own node (#958).
+	type at struct {
+		idx  int
+		side string
+	}
+	stuck := map[at][]node{}
 	for n := range w.reach[id] {
 		if n.idx >= 0 && n.idx != m.end && !canEnd[n] && !out[n] {
-			stuck[n.idx] = append(stuck[n.idx], n)
+			k := at{n.idx, n.side}
+			stuck[k] = append(stuck[k], n)
 		}
 	}
-	idxs := make([]int, 0, len(stuck))
-	for i := range stuck {
-		idxs = append(idxs, i)
+	ats := make([]at, 0, len(stuck))
+	for k := range stuck {
+		ats = append(ats, k)
 	}
-	sort.Ints(idxs)
-	for _, i := range idxs {
-		ns := stuck[i]
+	sort.Slice(ats, func(a, b int) bool {
+		if ats[a].idx != ats[b].idx {
+			return ats[a].idx < ats[b].idx
+		}
+		return ats[a].side < ats[b].side
+	})
+	for _, k := range ats {
+		i, ns := k.idx, stuck[k]
+		where := m.token(i)
+		if k.side != "" {
+			where += " on the " + k.side + " side"
+		}
 		how := ""
-		if len(ns) == 1 && !ns[0].chain && w.reach[id][node{idx: i, chain: true}] {
+		if len(ns) == 1 && !ns[0].chain && w.reach[id][node{idx: i, chain: true, side: k.side}] {
 			how = " when it is granted by a behavior tree (no quest_granted chain fires)"
 		}
 		var next []string
@@ -1098,10 +1172,8 @@ func (w *walker) checkQuest(m *qmodel) {
 			}
 			later := false
 			for _, g := range s.grants {
-				if gid, st, ok := parseToken(g); ok && gid == id {
-					if j, ok := m.idx[st]; ok && j > i {
-						later = true
-					}
+				if gid, st, ok := parseToken(g); ok && gid == id && len(m.grantTo(ns[0], st, func(kv string) bool { return w.flags[kv] })) > 0 {
+					later = true
 				}
 			}
 			if !later {
@@ -1118,7 +1190,7 @@ func (w *walker) checkQuest(m *qmodel) {
 		if len(next) > 0 {
 			need = "blocked: " + strings.Join(next, "; ")
 		}
-		w.emit(ClassDeadEnd, zones, "quest %d %q: a player can reach %s%s and never %d-end; %s", id, m.q.Name, m.token(i), how, id, need)
+		w.emit(ClassDeadEnd, zones, "quest %d %q: a player can reach %s%s and never %d-end; %s", id, m.q.Name, where, how, id, need)
 	}
 }
 

@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // The #375 closing step's guards. The quest loop backlog is retired: every
@@ -39,7 +41,7 @@ func repoGoFiles(t *testing.T) []string {
 		t.Fatal(err)
 	}
 	for _, d := range []string{"internal", "modules", "cmd", "tools"} {
-		err := filepath.WalkDir(filepath.Join(root, d), func(path string, de os.DirEntry, err error) error {
+		err := util.WalkDirTolerant(filepath.Join(root, d), func(path string, de os.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
@@ -104,7 +106,7 @@ func TestRoomInteractStaysRetired(t *testing.T) {
 		filepath.Join(root, "_datafiles", "world"),
 		filepath.Join(root, "_datafiles", "html"),
 	} {
-		err := filepath.WalkDir(d, func(path string, de os.DirEntry, err error) error {
+		err := util.WalkDirTolerant(d, func(path string, de os.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
