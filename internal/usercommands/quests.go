@@ -128,12 +128,11 @@ func activeQuestRecord(user *users.UserRecord, questInfo *quests.Quest, questSte
 	guide := ``
 
 	if questStep != `all+` {
-		for _, step := range questInfo.Steps {
-			completedSteps++
-			if step.Id == questStep {
-				description = step.Description
-				break
-			}
+		// The player's own side only (#958): a branched quest counts the
+		// steps of the path the player is on.
+		completedSteps, totalSteps = questInfo.StepProgress(questStep, user.Character.GetQuestFlag)
+		if step, ok := questInfo.Step(questStep); ok {
+			description = step.Description
 		}
 		progress = questengine.GetEngine().UserStepProgress(user, questInfo.QuestId, questStep)
 		guide = questengine.GuideLine(questengine.GetEngine().ResolveDestination(user, questInfo.QuestId, questStep))

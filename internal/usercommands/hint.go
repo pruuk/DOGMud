@@ -103,13 +103,8 @@ func Hint(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if len(qDef.Steps) > 0 {
 			hintText = qDef.Steps[0].Hint
 		}
-	} else {
-		for _, step := range qDef.Steps {
-			if step.Id == currentStep {
-				hintText = step.Hint
-				break
-			}
-		}
+	} else if step, ok := qDef.Step(currentStep); ok {
+		hintText = step.Hint
 	}
 
 	if hintText == "" {

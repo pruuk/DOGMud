@@ -92,6 +92,14 @@ func (r *Quest) BranchFlagKey() string {
 	return ``
 }
 
+// Step is the quest's step with id, and whether it has one.
+func (r *Quest) Step(id string) (QuestStep, bool) {
+	if i := r.stepIndex(id); i >= 0 {
+		return r.Steps[i], true
+	}
+	return QuestStep{}, false
+}
+
 // stepIndex is the index of step id in Steps, or -1.
 func (r *Quest) stepIndex(id string) int {
 	for i, s := range r.Steps {
@@ -165,6 +173,7 @@ func (r *Quest) Path(stepId string, flag func(string) string) []QuestStep {
 	return r.pathFor(r.Side(stepId, flag))
 }
 
+// pathFor is the steps on side's path, in order.
 func (r *Quest) pathFor(side string) []QuestStep {
 	out := make([]QuestStep, 0, len(r.Steps))
 	for i, s := range r.Steps {

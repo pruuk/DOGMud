@@ -726,8 +726,8 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 				continue
 			}
 
-			completedSteps := 0
-			totalSteps := len(qDef.Steps)
+			// The player's own side only (#958), as the quest log counts.
+			completedSteps, totalSteps := qDef.StepProgress(questStep, user.Character.GetQuestFlag)
 
 			questPayload := GMCPCharModule_Payload_Quest{
 				Id:          questId,
@@ -739,13 +739,9 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 				Abandonable: usercommands.Abandonable(user.Character, questId),
 			}
 
-			for _, step := range qDef.Steps {
-				completedSteps++
-				if step.Id == questStep {
-					questPayload.Description = step.Description
-					questPayload.Hint = step.Hint
-					break
-				}
+			if step, ok := qDef.Step(questStep); ok {
+				questPayload.Description = step.Description
+				questPayload.Hint = step.Hint
 			}
 			questPayload.Progress = engine.UserStepProgress(user, questId, questStep)
 
