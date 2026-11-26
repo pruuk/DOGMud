@@ -119,6 +119,29 @@ func (r *Quest) Side(stepId string, flag func(string) string) string {
 	return flag(flagKey(r.QuestId, r.Flags[fi].Key))
 }
 
+// GrantOnPath reports whether granting stepId keeps a player on their own
+// path: true for an unbranched step (or one the quest lacks), and for a
+// branched step of the player's side. It sees the player only through has
+// (HasQuest on this quest's tokens) and flag, as the trigger engine does, and
+// reads the same side as Side: a held branched step is held only on its own
+// side's path, so its branch is the side; holding none, the flag decides.
+func (r *Quest) GrantOnPath(stepId string, has func(string) bool, flag func(string) string) bool {
+	i := r.stepIndex(stepId)
+	if i < 0 || r.Steps[i].Branch == `` {
+		return true
+	}
+	for _, s := range r.Steps {
+		if s.Branch != `` && has(PartsToToken(r.QuestId, s.Id)) {
+			return s.Branch == r.Steps[i].Branch
+		}
+	}
+	fi := r.branchFlag()
+	if fi < 0 || flag == nil {
+		return false
+	}
+	return flag(flagKey(r.QuestId, r.Flags[fi].Key)) == r.Steps[i].Branch
+}
+
 // onSide reports whether step i lies on side's path.
 func (r *Quest) onSide(i int, side string) bool {
 	b := r.Steps[i].Branch

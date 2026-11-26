@@ -36,7 +36,7 @@ func (e *Engine) heldAtStepStart(d EventDetails, player PlayerState, ctx ActionC
 	questId, _ := quests.TokenToParts(d.QuestToken)
 	result := NotifyResult{}
 	for _, t := range e.heldByQuest[questId] {
-		if !holdsItem(player, t.def.Item) || !EvalConditions(t.def.Conditions, player) {
+		if !holdsItem(player, t.def.Item) || !e.triggerOpen(t, player) {
 			continue
 		}
 		line := heldLine(t.def)

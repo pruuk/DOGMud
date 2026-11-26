@@ -44,9 +44,10 @@ func exploreMet(t *indexedTrigger, player PlayerState) bool {
 	return mr.MappedCount(rs) >= need
 }
 
-// exploreReady is the cheap test first (conditions), then the map read.
-func exploreReady(t *indexedTrigger, player PlayerState) bool {
-	return EvalConditions(t.def.Conditions, player) && exploreMet(t, player)
+// exploreReady is the cheap test first (conditions and side), then the map
+// read.
+func (e *Engine) exploreReady(t *indexedTrigger, player PlayerState) bool {
+	return e.triggerOpen(t, player) && exploreMet(t, player)
 }
 
 // CheckExplore is raised when roomId was newly mapped for the player
@@ -72,7 +73,7 @@ func (e *Engine) CheckExplore(roomId int, player PlayerState, ctx ActionContext)
 	pw, _ := ctx.(ProgressWatcher)
 	for _, key := range keys {
 		for _, t := range e.exploreByArea[key] {
-			if !EvalConditions(t.def.Conditions, player) {
+			if !e.triggerOpen(t, player) {
 				continue
 			}
 			// The step is live and one more of its area is mapped, so its
@@ -104,7 +105,7 @@ func (e *Engine) exploreAtStepStart(d EventDetails, player PlayerState, ctx Acti
 	questId, _ := quests.TokenToParts(d.QuestToken)
 	result := NotifyResult{}
 	for _, t := range e.exploreByQuest[questId] {
-		if !exploreReady(t, player) {
+		if !e.exploreReady(t, player) {
 			continue
 		}
 		line := exploredLine(t.def)

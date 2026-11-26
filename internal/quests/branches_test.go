@@ -196,6 +196,30 @@ func TestOnPath_NoAllocation(t *testing.T) {
 	require.Zero(t, allocs)
 }
 
+// GrantOnPath reads the side from what the player holds (the trigger engine
+// sees a player only through HasQuest and its flags). It must agree with Side
+// for every step and flag a player can stand on.
+func TestQuest_GrantOnPathAgreesWithSide(t *testing.T) {
+	b, p := branchedQuest(), plainQuest()
+	t.Cleanup(SeedQuestsForTest(b, p))
+	for _, q := range []*Quest{b, p} {
+		for _, at := range q.Steps {
+			for _, flagVal := range []string{"", "sylara", "rhett", "nobody"} {
+				flag := flags(flagKey(q.QuestId, "branch"), flagVal)
+				cur := PartsToToken(q.QuestId, at.Id)
+				has := func(tok string) bool { return tok == cur || IsTokenPassedOnPath(tok, cur, flag) }
+				side := q.Side(at.Id, flag)
+				for _, next := range q.Steps {
+					want := next.Branch == "" || next.Branch == side
+					require.Equal(t, want, q.GrantOnPath(next.Id, has, flag),
+						"quest %d at %s, flag %q, grant %s", q.QuestId, at.Id, flagVal, next.Id)
+				}
+			}
+		}
+	}
+	require.True(t, b.GrantOnPath("gone", func(string) bool { return false }, nil), "an unknown step is not this gate's to refuse")
+}
+
 func TestQuest_ValidateBranches(t *testing.T) {
 	require.NoError(t, branchedQuest().Validate())
 	require.NoError(t, plainQuest().Validate())

@@ -198,8 +198,8 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 func (e *Engine) fire(eventType string, t *indexedTrigger, details EventDetails, player PlayerState, ctx ActionContext, guard *EvalGuard, onFire func()) NotifyResult {
 	result := NotifyResult{}
 
-	// Condition evaluation
-	if !EvalConditions(t.def.Conditions, player) {
+	// Condition evaluation, and the side gate (#958)
+	if !e.triggerOpen(t, player) {
 		return result
 	}
 
@@ -397,6 +397,31 @@ func nounMatches(n string, d EventDetails, tier nounTier) bool {
 		return n == d.RoomNoun || slices.Contains(util.NounNumberVariants(d.RoomNoun), n)
 	}
 	return false
+}
+
+// triggerOpen reports whether t may fire for player: its conditions pass and
+// none of its actions grants a branched step of its own quest off the
+// player's side (#958). A trigger that would grant the other side's step is
+// skipped whole, before it speaks, pays or takes the command; refusing only
+// the grant would still run the rest. Every firing path (fire) and the talk
+// menu's dry run (WouldFire) read this one gate.
+func (e *Engine) triggerOpen(t *indexedTrigger, player PlayerState) bool {
+	if !EvalConditions(t.def.Conditions, player) {
+		return false
+	}
+	for _, a := range t.def.Actions {
+		if a.Grant == "" {
+			continue
+		}
+		questId, step := quests.TokenToParts(a.Grant)
+		if questId != t.questId {
+			continue
+		}
+		if q := e.quests[questId]; q != nil && !q.GrantOnPath(step, player.HasQuest, player.GetQuestFlag) {
+			return false
+		}
+	}
+	return true
 }
 
 // executeActions runs a trigger's actions in order, with panic recovery per
