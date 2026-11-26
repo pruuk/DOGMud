@@ -155,9 +155,10 @@ topics:
   # Sylara: no side yet, or Rhett's side. So the old saves that finished
   # unsided hear it before late_stand_with_rhett, and a save that chose his
   # side before the side steps existed (flag set, still on 11-start, terms
-  # never heard) can hear it and then stand again. A save at 11-end holds
-  # every side step too (HasQuest counts later steps), so no side step can
-  # close this topic.
+  # never heard) can hear it and then stand again. Every save that holds
+  # 11-end also holds 11-start (HasQuest counts earlier steps), a player holds
+  # only the steps on their own side, and an unsided 11-end save holds only
+  # start, so no side step can close this topic.
   questRequired:
   - 11-start
   questExcluded:
@@ -225,10 +226,12 @@ topics:
     ridge. Ask me about the work when you are ready."
   hints: "Rhett snatches the samples with eager hands, holds one up to the light,
     then tucks them carefully into his satchel."
-  # 11-rhett, not 11-samples: a Rhett player carrying the samples may hand
-  # them in from either of his steps.
+  # 11-samples, the return step: picking up the samples moves a carrying
+  # player there (the item_gain trigger of quest 11), including one who
+  # already held the samples when the fetch step began. The flag keeps the
+  # hand-in on Rhett's side; a Sylara player never holds 11-samples anyway.
   questRequired:
-  - 11-rhett
+  - 11-samples
   questExcluded:
   - 11-end
   questFlagRequired:

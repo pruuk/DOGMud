@@ -24,34 +24,39 @@ steps:
   # topic_heard triggers below; the topic sets the 11-branch flag), and
   # picking up the item grants its return step.
   #
-  # Steps are ordered, and holding a later step counts as holding every
-  # earlier one (Character.HasQuest). Sylara's steps come first, so a Rhett
-  # player skips past them and "holds" them, while a Sylara player never
-  # holds Rhett's. Every gate on these steps also checks the 11-branch flag,
-  # so neither side can reach the other's topics or triggers.
+  # Each side's steps carry `branch:`. A player's path is the unbranched steps
+  # (start, end) plus the steps of their own side, and holding a later step on
+  # the path counts as holding every earlier one (Character.HasQuest). A step
+  # on the other side is never held and never granted: the engine refuses
+  # that grant, so the triggers below need no flag condition.
   #
   # Old saves resting on the retired `sided` step are moved onto their side's
-  # steps at load (Character.MigrateQuest11SidedStep). Saves that chose a side
-  # before any sided step existed hold the flag on `start`; their side's terms
-  # topic stays open to them, so they hear it and stand again.
+  # steps at load (Character.MigrateQuestProgress, which calls
+  # MigrateQuest11SidedStep). Saves that chose a side before any sided step
+  # existed hold the flag on `start`; their side's terms topic stays open to
+  # them, so they hear it and stand again.
   - id: sylara
+    branch: sylara
     destination: {room: 3082}
     description: "You have sided with Windwarden Sylara. The wolves dragged
       her carved wolf totem into their kill ground. Search the bones there
       and bring it back to her."
-    hint: "From the Stone Circle, go west three times to the Southern Sagebrush Flats, south twice to the Sandy Creek Bend, east to the Creek Basin Crossing, then south six times to the Kill Ground. Type get totem from bones."
+    hint: "From the Stone Circle: west three times, south twice, east, then south six times to the Kill Ground. Type get totem from bones."
   - id: totem
+    branch: sylara
     destination: {mob: 241}
     description: "You have Sylara's carved wolf totem. Take it back to her at
       the stone circle."
-    hint: "From the Kill Ground, go north six times to the Creek Basin Crossing, west to the Sandy Creek Bend, north twice to the Southern Sagebrush Flats, then east three times to the Stone Circle. Type talk sylara."
+    hint: "From the Kill Ground: north six times, west, north twice, then east three times to the Stone Circle. Type talk sylara."
   - id: rhett
+    branch: rhett
     destination: {room: 3032}
     description: "You have sided with Geomancer Rhett. He wants windstone
       samples chipped from the exposed veins on the Rocky Shelf, just south
       of his camp."
     hint: "The Rocky Shelf is one room south of Rhett's camp at the Ridge Approach. Type get sample from veins."
   - id: samples
+    branch: rhett
     destination: {mob: 242}
     description: "You have the windstone samples. Take them back to Rhett at
       his camp."
@@ -65,14 +70,13 @@ rewards:
   gold: 10
 triggers:
   # sylara: hearing Windwarden Sylara's "stand_with_sylara" topic (the
-  # topic sets the flag first, so the flag check sees it).
+  # topic sets the flag first, so the engine sees the side).
   - event: topic_heard
     mob: 241
     topic: stand_with_sylara
     conditions:
       has: ["11-start"]
       missing: ["11-sylara"]
-      has_flag: {"11-branch": "sylara"}
     actions:
       - grant: "11-sylara"
 
@@ -83,7 +87,6 @@ triggers:
     conditions:
       has: ["11-sylara"]
       missing: ["11-totem"]
-      has_flag: {"11-branch": "sylara"}
     actions:
       - grant: "11-totem"
 
@@ -94,7 +97,6 @@ triggers:
     conditions:
       has: ["11-start"]
       missing: ["11-rhett"]
-      has_flag: {"11-branch": "rhett"}
     actions:
       - grant: "11-rhett"
 
@@ -104,6 +106,5 @@ triggers:
     conditions:
       has: ["11-rhett"]
       missing: ["11-samples"]
-      has_flag: {"11-branch": "rhett"}
     actions:
       - grant: "11-samples"
