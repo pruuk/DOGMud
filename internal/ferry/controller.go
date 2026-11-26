@@ -104,7 +104,7 @@ func emitArrival(r Route, atPortIdx int) {
 	}
 	if deck := rooms.LoadRoom(r.DeckRoom); deck != nil {
 		deck.SendText(messaging.CategoryRoomDescription,
-			`Fenders squeal against timber as she comes alongside. The gangplank goes down, and you can walk ashore.`)
+			`Fenders squeal against timber as she comes alongside. The gangplank goes down. Type <ansi fg="command">`+gangplankExitName+`</ansi> to walk ashore.`)
 	}
 }
 

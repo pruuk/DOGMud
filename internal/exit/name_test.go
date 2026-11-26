@@ -31,8 +31,8 @@ func TestCheckName(t *testing.T) {
 
 // Letters, not bytes: a six-letter name with a multibyte letter fits.
 func TestCheckName_CountsLettersNotBytes(t *testing.T) {
-	if err := CheckName("caféé"); err != nil {
-		t.Errorf("CheckName(caféé) = %v, want nil", err)
+	if err := CheckName("résumé"); err != nil { // 6 letters, 8 bytes
+		t.Errorf("CheckName(résumé) = %v, want nil", err)
 	}
 }
 

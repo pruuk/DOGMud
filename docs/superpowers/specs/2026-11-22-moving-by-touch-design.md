@@ -79,19 +79,21 @@ buttons.
     there as before. Same one rule: you use the exits you know.
 18. **Exit names fit a button** (2026-11-26, owner and Malia, mockup review):
     every exit name is at most 6 letters, so it fits a 48px deck button with
-    its text at 12px. Four were renamed: `watchtower` to `tower` (Clearstone
+    its text at 12px. Five were renamed: `watchtower` to `tower` (Clearstone
     Rise 5346 and Eagle's Reach 5365, both to Tower Top 5243), `overlook` to
     `ledge` (Tower Top 5243 to Eagle's Reach 5365), the ferry's `gangplank`
     to `plank`, a mob's `dark portal` to `rift`, and an instance's `return
-    portal` (its way back out) to `return`. `shrine` and `portal` stay. The ten compass words are exempt: they have fixed buttons. The 6
-    is one constant, `exit.MaxNameLetters` (`internal/exit/name.go`), and it
-    is enforced: the room loader (`Room.Validate`) and the mutator loader
+    portal` (its way back out) to `return`. `shrine` and `portal` stay. The
+    ten compass words are exempt: they have fixed buttons. The 6 is one
+    constant, `exit.MaxNameLetters` (`internal/exit/name.go`), and it is
+    enforced: the room loader (`Room.Validate`) and the mutator loader
     refuse a longer named exit at boot, naming the room or mutator and the
     exit; `SaveRoomTemplate`, `build room`, `room exit`, the `room exits`
     editor and the web builder refuse one before writing; a behaviour tree's
     `add_temp_exit` name is refused at tree load; tests pin the ferry, mob
-    portal and instance return constants; and `internal/guards/exit_name_length_guard_test.go`
-    walks the shipped rooms and mutators. **Instance portals** keyed
+    portal and instance return constants; and
+    `internal/guards/exit_name_length_guard_test.go` walks the shipped rooms
+    and mutators. **Instance portals** keyed
     `<zone>-<userId>` (`actOpenInstancePortal`) are exempt and keep their
     key. Requirement for plan 2b: that player's deck button is wired to
     their own instance exit, and its label leaves the number off (`arena`,

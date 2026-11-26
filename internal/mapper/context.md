@@ -72,7 +72,7 @@ silently loses one of them.
 func GetDelta(exitName string) (x, y, z int)
 func GetReciprocalExit(exitDirection string) string
 func IsValidExitDirection(exitName string) bool
-func IsCompassDirection(exitName string) bool
+func IsCompassDirection(exitName string) bool // the ten compass words, read from exit.IsCompassWord (the one list)
 func IsValidDirection(directionName string) bool
 func GetDirectionDeltaNames() []string
 func ExitArrow(directionName string) (rune, bool)

@@ -22,7 +22,7 @@ const MaxNameLetters = 6
 
 // IsCompassWord reports whether name is one of the ten compass words: the
 // four cardinals, the four diagonals, up and down. It is the one list;
-// actions.IsCompassDirection reads it.
+// actions.IsCompassDirection and mapper.IsCompassDirection read it.
 func IsCompassWord(name string) bool {
 	switch name {
 	case "north", "south", "east", "west", "up", "down",

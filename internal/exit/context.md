@@ -14,7 +14,7 @@ The `internal/exit` package provides data structures for managing room exits in 
   (runes, spaces and hyphens included), and accepts any compass word;
   `IsCompassWord(name)` is the one list of the ten compass words (four
   cardinals, four diagonals, up, down), which `actions.IsCompassDirection`
-  reads. Readers: `rooms.Room.Validate` and `rooms.SaveRoomTemplate`,
+  and `mapper.IsCompassDirection` (the web builder's spatial check) read. Readers: `rooms.Room.Validate` and `rooms.SaveRoomTemplate`,
   `mutators.MutatorSpec.Validate`, the builders (`build room`, `room exit`,
   the `room exits` editor, the web builder's `buildExitAdd`), the behaviour
   tree's `add_temp_exit` load check, the ferry, mob portal and instance
