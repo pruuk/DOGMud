@@ -15,8 +15,8 @@ you out, and you cannot go back in.
 
   <ansi fg="red">There is no second chance.</ansi> If you die, you are
   sent out and cannot go back in. Recall magic does not
-  work. The only way out is the return portal at the
-  entrance.
+  work. The only way out is at the entrance: type
+  <ansi fg="command">return</ansi> there.
 
   The fights come one after another. Every room past
   the entrance holds fighters who attack on sight, and

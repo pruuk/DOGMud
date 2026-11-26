@@ -11,7 +11,8 @@ import (
 // loader (rooms.Room.Validate), the mutator loader (mutators.MutatorSpec.
 // Validate), the builders, the behaviour-tree add_temp_exit check, the shipped
 // content guard (internal/guards/exit_name_length_guard_test.go) and the
-// constant temporary exits (ferry plank, mob rift) all read this one number.
+// constant temporary exits (ferry plank, mob rift, instance return) all read
+// this one number.
 //
 // Exempt: the ten compass words, which have fixed buttons, and the instance
 // portal exit keyed "<zone>-<userId>" (behaviortree actOpenInstancePortal),

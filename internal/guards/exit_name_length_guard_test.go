@@ -25,7 +25,8 @@ import (
 // sample world (_datafiles/world/default) does not boot here.
 //
 // Temporary exits are not in YAML. The constant ones are pinned by tests in
-// their packages (ferry gangplankExitName, mobcommands mobPortalExitName),
+// their packages (ferry gangplankExitName, mobcommands mobPortalExitName,
+// rooms instanceReturnExitName),
 // a behaviour tree's add_temp_exit name is refused at tree load, and the
 // instance portal key "<zone>-<userId>" is exempt by the same ruling.
 

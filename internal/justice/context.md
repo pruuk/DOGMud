@@ -314,7 +314,7 @@ Returns the ephemeral entry room ID and `true` on success. The zone
 template (`instance_jail_cell/5107.yaml`) is a plain stone cell; the
 description is patched at arrest time via `aSetCellDescFn` (see below).
 
-`SuppressReturnPortal: true` ensures no "return portal" exit is added to
+`SuppressReturnPortal: true` ensures no `return` exit is added to
 the ephemeral room — the prisoner cannot walk out; release is only via
 `ResolveDetention`.
 

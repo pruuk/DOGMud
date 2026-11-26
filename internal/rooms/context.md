@@ -625,7 +625,9 @@ func CreateZoneInstanceWithOpts(
 - Returns the registered `*ZoneInstance` (its `EntryRoomId` is the
   ephemeral entry room) or an error.
 - `ZoneInstanceOpts{SuppressReturnPortal bool}` — when `true`, the
-  auto-added "return portal" exit is **not** created. Use this for
+  auto-added `return` exit (`instanceReturnExitName`, at most
+  `exit.MaxNameLetters` letters by owner ruling 18, 2026-11-26; it was
+  "return portal") is **not** created. Use this for
   confinement instances (e.g. instanced jail cells) where the occupant
   must not be able to walk out; lifetime is controlled by explicit
   teardown rather than portal expiry.

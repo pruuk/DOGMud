@@ -34,6 +34,13 @@ func TestRoomValidate_RefusesAnExitNameLongerThanAButton(t *testing.T) {
 	require.NoError(t, r.Validate(), "six letters or fewer, and compass words, pass")
 }
 
+// The instance's way back out is the "return" exit (was "return portal"),
+// short enough for a deck button (owner ruling 18, 2026-11-26).
+func TestInstanceReturnExitName_FitsAButton(t *testing.T) {
+	require.Equal(t, "return", instanceReturnExitName, "the owner ruled return")
+	require.NoError(t, exit.CheckName(instanceReturnExitName))
+}
+
 // The builder's disk boundary refuses the same name, so no builder save
 // writes a room the next boot would refuse.
 func TestSaveRoomTemplate_RefusesAnExitNameLongerThanAButton(t *testing.T) {

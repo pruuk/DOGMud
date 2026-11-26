@@ -6,6 +6,7 @@
 - At the old tower above Pothole Coulee, the rim trails are now `tower` and `ledge`. From Clearstone Rise or Eagle's Reach, type `tower` to walk to the Tower Top; from the Tower Top, type `ledge` to walk to Eagle's Reach. `shrine` is unchanged.
 - To walk ashore from a ferry once she ties up, type `plank`.
 - When a creature tears open a way through to somewhere else, it is now a `rift`.
+- To leave the arena or another instance, type `return` at its entrance.
 
 ## 2026-11-26: The Windwarden's Dilemma points the way
 

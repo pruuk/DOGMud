@@ -42,7 +42,8 @@ tougher the enemies, and the better the potential loot.
   time of purchase can enter. Members added later cannot.
 
   Each rift stays open for 30 minutes. When it closes,
-  you can still leave through the return portal inside.
+  you can still leave: type <ansi fg="command">return</ansi> at the
+  entrance inside.
   The instance stays open as long as anyone is in it.
 
   Your companions follow you in automatically.

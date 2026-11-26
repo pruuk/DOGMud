@@ -17,7 +17,8 @@ The `internal/exit` package provides data structures for managing room exits in 
   reads. Readers: `rooms.Room.Validate` and `rooms.SaveRoomTemplate`,
   `mutators.MutatorSpec.Validate`, the builders (`build room`, `room exit`,
   the `room exits` editor, the web builder's `buildExitAdd`), the behaviour
-  tree's `add_temp_exit` load check, the ferry and mob portal constant tests,
+  tree's `add_temp_exit` load check, the ferry, mob portal and instance
+  return exit constant tests,
   and `internal/guards/exit_name_length_guard_test.go`. The instance portal
   exit keyed `<zone>-<userId>` is exempt by the same ruling.
 - **phrase.go**: Narration phrasing for an exit name, so up and down read as

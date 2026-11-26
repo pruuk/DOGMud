@@ -626,8 +626,8 @@ func TestCreateZoneInstanceWithOpts_SuppressReturnPortal(t *testing.T) {
 	if entryA == nil {
 		t.Fatalf("could not load ephemeral entry room %d", instA.EntryRoomId)
 	}
-	_, hasPortalA := entryA.ExitsTemp["return portal"]
-	assert.True(t, hasPortalA, "default instance: entry room should have 'return portal' exit")
+	_, hasPortalA := entryA.ExitsTemp[instanceReturnExitName]
+	assert.True(t, hasPortalA, "default instance: entry room should have the return exit")
 
 	// Tear down instance A so the ephemeral chunk is free for instance B.
 	GetInstanceRegistry().Remove(instA)
@@ -653,8 +653,8 @@ func TestCreateZoneInstanceWithOpts_SuppressReturnPortal(t *testing.T) {
 	if entryB == nil {
 		t.Fatalf("could not load ephemeral entry room %d (suppressed)", instB.EntryRoomId)
 	}
-	_, hasPortalB := entryB.ExitsTemp["return portal"]
-	assert.False(t, hasPortalB, "SuppressReturnPortal=true: entry room must NOT have a 'return portal' exit")
+	_, hasPortalB := entryB.ExitsTemp[instanceReturnExitName]
+	assert.False(t, hasPortalB, "SuppressReturnPortal=true: entry room must NOT have the return exit")
 
 	// Tear down instance B.
 	GetInstanceRegistry().Remove(instB)
