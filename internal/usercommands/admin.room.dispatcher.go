@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutators"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
@@ -214,6 +215,17 @@ func adminRoom_Exit(args []string, user *users.UserRecord, room *rooms.Room) (bo
 			return true, nil
 		}
 		delete(room.Exits, direction)
+		return true, nil
+	}
+
+	// Every exit name fits a deck button (owner ruling 18); the boot refuses
+	// a longer one, so the builder refuses it first.
+	newName := direction
+	if exitRename != `` {
+		newName = exitRename
+	}
+	if err := exit.CheckName(newName); err != nil {
+		user.SendText(messaging.CategoryAdmin, err.Error())
 		return true, nil
 	}
 

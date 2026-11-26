@@ -8,6 +8,18 @@ The `internal/exit` package provides data structures for managing room exits in 
 
 ### Core Files
 - **exit.go**: Exit data structures and functionality
+- **name.go**: the exit-name length rule (owner ruling 18, 2026-11-26: every
+  exit name fits a 48px touch deck button). `MaxNameLetters` (6) is the one
+  limit; `CheckName(name) error` refuses a longer name, counting letters
+  (runes, spaces and hyphens included), and accepts any compass word;
+  `IsCompassWord(name)` is the one list of the ten compass words (four
+  cardinals, four diagonals, up, down), which `actions.IsCompassDirection`
+  reads. Readers: `rooms.Room.Validate` and `rooms.SaveRoomTemplate`,
+  `mutators.MutatorSpec.Validate`, the builders (`build room`, `room exit`,
+  the `room exits` editor, the web builder's `buildExitAdd`), the behaviour
+  tree's `add_temp_exit` load check, the ferry and mob portal constant tests,
+  and `internal/guards/exit_name_length_guard_test.go`. The instance portal
+  exit keyed `<zone>-<userId>` is exempt by the same ruling.
 - **phrase.go**: Narration phrasing for an exit name, so up and down read as
   directions (#430). `FromPhrase(name)` gives "from above" / "from below" /
   `from the <exit>` (coloured); `TowardPhrase(name)` gives "up" / "down" /

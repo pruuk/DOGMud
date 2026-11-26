@@ -287,6 +287,7 @@ func compileAction(def NodeDef, path string) (Node, error) {
 // never let it act. Every tree loader compiles through compileAction, so a
 // refused node fails the whole tree's load (and the editor's save).
 var actionParamChecks = map[string]func(params map[string]any) error{
+	"add_temp_exit":        checkAddTempExitParams,
 	"board_ferry":          checkBoardFerryParams,
 	"open_instance_portal": checkOpenInstancePortalParams,
 }

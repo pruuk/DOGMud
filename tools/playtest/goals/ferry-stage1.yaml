@@ -48,10 +48,10 @@ goals:
   - id: arrive-and-disembark
     do: >-
       On the arrival emote at New Plymouth, look at the exits and walk
-      ashore via the gangplank exit. Confirm you're at The North Quay
+      ashore via the plank exit. Confirm you're at The North Quay
       (5502).
     verify: >-
-      The gangplank exit appears only after docking; walking it lands you at
+      The plank exit appears only after docking; walking it lands you at
       the North Quay; the berth prose there matches the vessel being in.
   - id: broke-refusal
     do: >-
@@ -81,7 +81,7 @@ notes:
     passage), that is a finding — record exactly what you typed and who
     answered.
 pass_criteria:
-  - Boarded, rode a full crossing, and disembarked via the gangplank with
+  - Boarded, rode a full crossing, and disembarked via the plank exit with
     correct fare charging.
   - Schedule quote received when the vessel was away, with no charge.
   - No crash, silent teleport, stuck state, or wrong-NPC ask resolution.

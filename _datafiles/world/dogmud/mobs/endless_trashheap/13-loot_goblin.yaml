@@ -4,12 +4,12 @@ itemdropchance: 100
 activitylevel: 90
 groups: []
 idlecommands:
-- portal home;go portal;wander;wander;wander;wander;wander;wander;wander;suicide
-- portal loot;go portal;get all
-- portal loot;go portal;get all
-- portal loot;go portal;get all
-- portal loot;go portal;get all
-- portal loot;go portal;get all
+- portal home;go rift;wander;wander;wander;wander;wander;wander;wander;suicide
+- portal loot;go rift;get all
+- portal loot;go rift;get all
+- portal loot;go rift;get all
+- portal loot;go rift;get all
+- portal loot;go rift;get all
 - wander loot;get all
 - wander loot;get all
 - wander loot;get all
@@ -27,7 +27,7 @@ idlecommands:
 - alchemy random
 angrycommands: []
 combatcommands:
-- portal home;go portal;drop all;wander
+- portal home;go rift;drop all;wander
 character:
   name: Loot Goblin
   description: The Loot Goblin is a creature of legend among treasure hunters and

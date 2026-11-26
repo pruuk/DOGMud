@@ -10,7 +10,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-const gangplankExitName = `gangplank`
+// gangplankExitName is the deck's temporary exit to the pier while she is
+// tied up. Players type it, and the touch deck shows it on a button, so it
+// fits exit.MaxNameLetters (owner ruling 18, 2026-11-26: was "gangplank").
+const gangplankExitName = `plank`
 
 // ambiance lines shown on deck while at sea, rotated deterministically.
 var atSeaAmbiance = []string{

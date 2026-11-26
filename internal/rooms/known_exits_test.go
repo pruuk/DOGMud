@@ -120,22 +120,22 @@ func TestKnownExits_TemporaryAndMutatorExitsAreListed(t *testing.T) {
 	if !GetZoneConfig("TestZone").Mutators.Add("test-known-bridge") {
 		t.Fatal("fixture premise: the mutator must attach")
 	}
-	if !r.AddTemporaryExit("gangplank", exit.TemporaryRoomExit{RoomId: 4}) {
+	if !r.AddTemporaryExit("plank", exit.TemporaryRoomExit{RoomId: 4}) {
 		t.Fatal("fixture premise: the temporary exit must attach")
 	}
 	got := KnownExits(r, c)
-	want := []string{"north", "east", "south", "northeast", "bridge", "gangplank"}
+	want := []string{"north", "east", "south", "northeast", "bridge", "plank"}
 	if !equalStrings(knownNames(got), want) {
 		t.Fatalf("known exits %v, want %v", knownNames(got), want)
 	}
 	for name, kind := range map[string]ExitKind{
-		"north": ExitCompass, "northeast": ExitDiagonal, "bridge": ExitNamed, "gangplank": ExitTemporary,
+		"north": ExitCompass, "northeast": ExitDiagonal, "bridge": ExitNamed, "plank": ExitTemporary,
 	} {
 		if got := knownExit(t, got, name).Kind; got != kind {
 			t.Errorf("%s kind %q, want %q", name, got, kind)
 		}
 	}
-	if gp := knownExit(t, got, "gangplank"); gp.RoomId != 4 || gp.Temp.Title != "gangplank" {
+	if gp := knownExit(t, got, "plank"); gp.RoomId != 4 || gp.Temp.Title != "plank" {
 		t.Errorf("gangplank: room %d title %q, want 4 and its title", gp.RoomId, gp.Temp.Title)
 	}
 }
@@ -350,7 +350,7 @@ func TestGetDetails_ExitsLineReadsKnownExits(t *testing.T) {
 	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{}))
 	viewer := users.NewTestUser(7802, "liner", "Liner", 97802)
 	viewer.Character = c
-	if !r.AddTemporaryExit("gangplank", exit.TemporaryRoomExit{RoomId: 4}) {
+	if !r.AddTemporaryExit("plank", exit.TemporaryRoomExit{RoomId: 4}) {
 		t.Fatal("fixture premise: the temporary exit must attach")
 	}
 	keys := func(d RoomTemplateDetails) map[string]bool {
@@ -364,7 +364,7 @@ func TestGetDetails_ExitsLineReadsKnownExits(t *testing.T) {
 	if got := keys(d); len(got) != 3 || got["west"] {
 		t.Fatalf("visible exits %v, want north, south, east (west unfound)", got)
 	}
-	if _, ok := d.TemporaryExits["gangplank"]; !ok {
+	if _, ok := d.TemporaryExits["plank"]; !ok {
 		t.Errorf("the gangplank must be in TemporaryExits, got %v", d.TemporaryExits)
 	}
 	c.LearnSecretExit(1, "west")

@@ -401,6 +401,12 @@ YAML keys are `skylight` and `lamp`:
   plan 6, owner ruling O1); a negative lamp would silently read as unlit, so
   it fails the load. `lighting_no_natural_negative_test.go` pins the shipped
   data too.
+- **Exit names fit a button** (owner ruling 18, 2026-11-26).
+  `Room.Validate` refuses a named exit longer than `exit.MaxNameLetters`
+  (6 letters; compass words exempt) through `checkExitNames`, so a long name
+  fails the boot with the room and exit named, and `SaveRoomTemplate` refuses
+  it before writing, so no builder save reaches disk with one
+  (`exit_name_length_test.go`).
 
   Plan 3b gave the world a wider biome vocabulary instead of reaching for
   this override in most of the cases that once seemed to need it: a brick

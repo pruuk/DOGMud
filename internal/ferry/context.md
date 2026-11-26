@@ -92,6 +92,12 @@ func Board(user *users.UserRecord, mob *mobs.Mob, roomId int, routeId string) Bo
 opening and closing the gangplank exit, emitting departures and arrivals, and
 stepping the factors.
 
+The gangplank exit's name, the word a player types to walk ashore, is
+`plank` (`gangplankExitName`, `controller.go`): every exit name fits a deck
+button, at most `exit.MaxNameLetters` letters (owner ruling 18, 2026-11-26;
+it was `gangplank`). `exit_name_test.go` pins it. The narration still says
+"gangplank" for the object.
+
 `Board()`'s "pays the fare and crosses the gangplank" line to the dock is a
 departure (#456, owner ruling 2026-10-09: a mover is seen by their own light
 on the way out): it takes `VisualSnapshot()` of the dock before

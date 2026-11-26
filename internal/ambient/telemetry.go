@@ -15,7 +15,7 @@ import (
 type MoveKind string
 
 const (
-	MoveIdle  MoveKind = "move_idle"  // a wander step (alpha or pack follower) or a trip through a mob's dark portal
+	MoveIdle  MoveKind = "move_idle"  // a wander step (alpha or pack follower) or a trip through a mob's rift
 	MoveTrack MoveKind = "move_track" // a step toward a tracked target (move_toward_tracked)
 	MovePath  MoveKind = "move_path"  // one step along a path: schedule, patrol, goal planner, home
 )

@@ -142,6 +142,14 @@ func room_Edit_Exits(rest string, user *users.UserRecord, room *rooms.Room, flag
 			return true, nil
 		}
 
+		// Every exit name fits a deck button (owner ruling 18); the boot
+		// refuses a longer one, so ask again.
+		if err := exit.CheckName(currentlyEditing.NameNew); err != nil {
+			user.SendText(messaging.CategoryAdmin, err.Error())
+			question.RejectResponse()
+			return true, nil
+		}
+
 		// Make sure the new name isn't a duplicate
 		if currentlyEditing.Name != currentlyEditing.NameNew {
 			if _, ok := room.Exits[currentlyEditing.NameNew]; ok {

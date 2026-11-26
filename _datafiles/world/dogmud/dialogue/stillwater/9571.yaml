@@ -8,7 +8,7 @@ opener:
     next.
   hints: Choose where you want to go below. If the boat is tied up here, the agent
     takes the fare as soon as you choose and you board at once. On board, wait until
-    she ties up at the far pier, then type gangplank to walk ashore.
+    she ties up at the far pier, then type plank to walk ashore.
 topics:
 - key: to_confluence
   kind: info

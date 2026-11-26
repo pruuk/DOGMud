@@ -108,14 +108,14 @@ func TestWanderTelemetry_SneakCountsNothing(t *testing.T) {
 	require.Empty(t, ambient.MovesForTest(1))
 }
 
-// A mob that steps through its own dark portal changes room: counted once.
+// A mob that steps through its own rift changes room: counted once.
 func TestPortalTelemetry_GoingThroughCountsOnce(t *testing.T) {
 	mob, room := wanderTelemetryFixture(t)
 	_, err := Portal("2", mob, room)
 	require.NoError(t, err)
 	require.Empty(t, ambient.MovesForTest(1), "opening a portal is not a move")
 
-	_, err = Go("portal", mob, room)
+	_, err = Go(mobPortalExitName, mob, room)
 	require.NoError(t, err)
 	require.Equal(t, 2, mob.Character.RoomId, "fixture premise: the mob went through")
 	require.Equal(t, 1, ambient.MovesForTest(1)[ambient.MoveIdle])

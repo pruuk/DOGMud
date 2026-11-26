@@ -28,7 +28,7 @@ exits:
   south:
     roomid: 5345
   # Lateral connector (chunk 8): non-spatial rim-walk to Spoke A's Tower Top.
-  watchtower:
+  tower:
     roomid: 5243
 nouns:
   rise: The crown of the rise is perhaps twenty paces across, its

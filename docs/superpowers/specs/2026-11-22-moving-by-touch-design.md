@@ -77,6 +77,25 @@ buttons.
     through a secret exit the tracker has found reads like any other ("They
     went north"); through one the tracker has not found, the trail is lost
     there as before. Same one rule: you use the exits you know.
+18. **Exit names fit a button** (2026-11-26, owner and Malia, mockup review):
+    every exit name is at most 6 letters, so it fits a 48px deck button with
+    its text at 12px. Four were renamed: `watchtower` to `tower` (Clearstone
+    Rise 5346 and Eagle's Reach 5365, both to Tower Top 5243), `overlook` to
+    `ledge` (Tower Top 5243 to Eagle's Reach 5365), the ferry's `gangplank`
+    to `plank`, and a mob's `dark portal` to `rift`. `shrine` and `portal`
+    stay. The ten compass words are exempt: they have fixed buttons. The 6
+    is one constant, `exit.MaxNameLetters` (`internal/exit/name.go`), and it
+    is enforced: the room loader (`Room.Validate`) and the mutator loader
+    refuse a longer named exit at boot, naming the room or mutator and the
+    exit; `SaveRoomTemplate`, `build room`, `room exit`, the `room exits`
+    editor and the web builder refuse one before writing; a behaviour tree's
+    `add_temp_exit` name is refused at tree load; tests pin the ferry and mob
+    portal constants; and `internal/guards/exit_name_length_guard_test.go`
+    walks the shipped rooms and mutators. **Instance portals** keyed
+    `<zone>-<userId>` (`actOpenInstancePortal`) are exempt and keep their
+    key. Requirement for plan 2b: that player's deck button is wired to
+    their own instance exit, and its label leaves the number off (`arena`,
+    not `arena-42`).
 
 ## Facts verified against source (2026-11-22)
 
@@ -280,3 +299,6 @@ anything from dark-room bumps.
 | The "Dark" tile's tap line: "It is too dark to see the way. Light a torch or cast glow." | Tells the player why and what to do | Reword |
 | Diagonals follow the compass symbol style (↗ NE) | The owner chose arrows with letters for "the directions" | Arrows only for diagonals |
 | `Zone.Map` moves to the discovery rule too. A character who walked through a secret exit before this change without ever searching it loses it from the map until they search it | Ruling 1 is one rule everywhere; the map was the only place using the visited set; there are no live players to migrate | Migrate: record a discovery for every secret exit a saved character has visited |
+| Ruling 18 counts letters as characters of the name (spaces and hyphens count), and refuses a mapper distance name such as `north-x2` like any other long name | One plain count; no shipped dogmud exit uses a distance name | Exempt distance names as compass words |
+| Ruling 18 is enforced in the builders too (`build room`, `room exit`, the `room exits` editor, the web builder, `SaveRoomTemplate`), not only at boot | A name the boot refuses would otherwise reach disk and stop the next boot | Enforce at boot and in the guard only |
+| The instance return portal (`return portal`, `rooms.CreateZoneInstance`) is not renamed; it is 13 letters and needs the owner's call | The ruling named four renames and exempted only the instance entrance key | Rename it (for example `return` or `back`) and pin it with a test |

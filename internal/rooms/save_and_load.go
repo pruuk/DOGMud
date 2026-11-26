@@ -298,6 +298,12 @@ func SaveRoomTemplate(roomTpl Room) error {
 		return errors.New(`ephemeral rooms are not saved`)
 	}
 
+	// The boot refuses a named exit longer than a deck button (owner ruling
+	// 18), so the builder's disk boundary refuses it too.
+	if err := checkExitNames(roomTpl.RoomId, roomTpl.Exits); err != nil {
+		return err
+	}
+
 	// Do not accept a RoomId of zero.
 	if roomTpl.RoomId == 0 {
 		roomTpl.RoomId = allocateRoomId()

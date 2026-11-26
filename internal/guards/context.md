@@ -46,6 +46,9 @@ package main.
   but misbehave. Examples: `condition_notice_guard_test.go`,
   `shipped_narration_data_guard_test.go`, `shop_night_trade_guard_test.go`,
   `coulee_npc_light_guard_test.go`, `topic_manifest_test.go`.
+  `exit_name_length_guard_test.go` walks the shipped rooms and mutators and
+  fails on a named exit longer than `exit.MaxNameLetters` (owner ruling 18,
+  2026-11-26: every exit name fits a deck button; compass words exempt).
 - **Goldens.** Record a rendered or computed output and compare it byte for
   byte: the lighting goldens (`lighting_*_golden_test.go`),
   `wrap_live_render_golden_test.go`, `m2_routing_guard_test.go`, and the

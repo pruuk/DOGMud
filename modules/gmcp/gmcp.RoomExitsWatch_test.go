@@ -72,8 +72,8 @@ func TestRoomExitsWatch_ResendsOnlyOnARealChange(t *testing.T) {
 		{"the door relocked on its timer", func() {
 			util.SetRoundCountForTest(gametime.GetDate(start).AddPeriod(gamelock.DefaultRelockTime))
 		}},
-		{"a gangplank came", func() { room.AddTemporaryExit("gangplank", exit.TemporaryRoomExit{RoomId: 9721}) }},
-		{"the gangplank went", func() { room.RemoveTemporaryExit(room.ExitsTemp["gangplank"]) }},
+		{"a gangplank came", func() { room.AddTemporaryExit("plank", exit.TemporaryRoomExit{RoomId: 9721}) }},
+		{"the gangplank went", func() { room.RemoveTemporaryExit(room.ExitsTemp["plank"]) }},
 		{"a secret exit found", func() { viewer.Character.LearnSecretExit(9720, "west") }},
 		{"the light went out", func() { room.Lamp = nil }},
 	}

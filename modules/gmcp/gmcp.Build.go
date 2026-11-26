@@ -1019,6 +1019,11 @@ func buildExitAdd(d buildDeps, req exitAddReq) BuildResult {
 	if d.isCompass(name) {
 		return buildErr("%q is a compass direction; add it as a spatial exit instead", name)
 	}
+	// Every exit name fits a deck button (owner ruling 18); the boot refuses
+	// a longer one, so the builder refuses it first.
+	if err := exit.CheckName(name); err != nil {
+		return buildErr("%s", err.Error())
+	}
 	if r := applyExit(d, req.RoomId, name, ex); !r.Ok {
 		return r
 	}

@@ -563,6 +563,9 @@ func openInstancePortal(user *users.UserRecord, mob *mobs.Mob, roomId int, req p
 		return
 	}
 
+	// The key is exempt from the exit-name length rule (exit.MaxNameLetters):
+	// owner ruling 18 (2026-11-26) wires this player's deck button to the
+	// exit and has its label leave the number off, so the key stays as it is.
 	exitKey := zoneName + "-" + fmt.Sprintf("%d", user.UserId)
 	room := rooms.LoadRoom(roomId)
 	if room == nil {

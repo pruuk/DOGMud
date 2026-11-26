@@ -500,7 +500,7 @@ without standing inert for a full round.
 | `spawn_mob` | `mob_id` (int), `room_id` (int, optional) | Spawns a mob. Defaults to current room. |
 | `summon_companion` | `mob_id` (int), `count` (int, default 1), `base_pool` (int, default 50) | Spawns mob(s) as charmed companions of the acting mob, scaled by charisma + manifestation skill. |
 | `spawn_item_in_room` | `item_id` (int), `room_id` (int, optional), `chance` (int 1-100, default 100) | Places an item on the floor of a room. |
-| `add_temp_exit` | `exit_name` (string), `room_id` (int), `title` (string), `expires` (string) | Adds a temporary exit to the current room. |
+| `add_temp_exit` | `exit_name` (string, required, at most `exit.MaxNameLetters` letters), `room_id` (int), `title` (string), `expires` (string) | Adds a temporary exit to the current room. A missing or too long `exit_name` fails the tree's load. |
 
 ### State Management — instant
 
@@ -1060,7 +1060,12 @@ could never act fails its whole tree's load, and the editor's save, with its
 path. Today it holds `board_ferry` (`destination` must be a key of `routes`)
 and `open_instance_portal` (`zone` must be a key of `zones`): since #375
 retired `player_ask`, no live event carries the player's own words, so these
-actions have no text to fall back on. Trees load lazily, so
+actions have no text to fall back on. It also holds `add_temp_exit`
+(`checkAddTempExitParams`): `exit_name` must be set and at most
+`exit.MaxNameLetters` letters, because a player taps it on a deck button
+(owner ruling 18, 2026-11-26). The instance portal key `<zone>-<userId>`
+that `open_instance_portal` opens is exempt by the same ruling: its button is
+wired to that player's exit and its label leaves the number off. Trees load lazily, so
 `TestShippedBehaviorTrees_AllCompile` (`roundtrip_test.go`) compiles every
 shipped behavior file through its subject's loader to turn a refused tree
 into a CI failure rather than a runtime log line.
