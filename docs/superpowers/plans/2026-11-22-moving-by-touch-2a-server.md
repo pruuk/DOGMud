@@ -4857,6 +4857,8 @@ Room.Info median and max within D24: record the numbers in the PR body. Over: se
 
 Stop the server by its recorded PID only (`Stop-Process -Id <pid>`); never by name or port. Leave the worktree for task 17 or remove it.
 
+**Result (2026-11-26, merged branch `1b8928ac7`):** `Room.Info` is within D24. Over 10 moves (west and east from 5227), each move's `Room.Info` arrived 0.0 to 0.5 ms before its "You head ..." line, so the "next `info` after `text`" rule in step 3 would have picked the following move's frame; the lag is nil. Conditions: the Rally shout to the first `Char.Conditions` carrying Rally took 2,281 ms (n=1; the profile's Rally from the first pass had to expire first). `Char.Conditions` goes out once a round (`conditionTriggeredHandler` on `ConditionsTriggered`, about 4.03 s apart), so the lag runs from 0 to one round. Filed as #961 (`bug`, `needs-design`; there is no `area:web-client` label).
+
 ---
 
 ### Task 17: ADVERSARIAL PLAYTEST: one seat against secret exits and dark bumps
