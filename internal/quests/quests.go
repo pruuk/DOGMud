@@ -84,6 +84,9 @@ type QuestStep struct {
 	// Destination is where the minimap and the quest log point during this
 	// step (#375 phase 4); see StepDestination.
 	Destination StepDestination `yaml:"destination,omitempty" json:"destination,omitempty"`
+	// Branch names the side this step belongs to (#958): a value of one of the
+	// quest's flags. Blank means every side takes the step. See branches.go.
+	Branch string `yaml:"branch,omitempty" json:"branch,omitempty"`
 }
 
 func (r *Quest) Id() int {
@@ -319,6 +322,11 @@ func (r *Quest) Validate() error {
 		flagKeys[fullKey] = true
 	}
 
+	// Branched steps; see branches.go.
+	if err := r.validateBranches(); err != nil {
+		return fmt.Errorf("quest %d (%s): %w", r.QuestId, r.Name, err)
+	}
+
 	// Validate grant tokens reference valid steps (only for this quest's own tokens)
 	for i, t := range r.Triggers {
 		for _, a := range t.Actions {
@@ -376,7 +384,25 @@ func GetQuestCt(includeSecret bool) int {
 	return ret
 }
 
-func IsTokenAfter(currentToken string, nextToken string) bool {
+// IsTokenAfterOnPath reports whether nextToken comes after currentToken on
+// the path of a player standing at currentToken (a grant must move forward).
+// flag reads the player's quest flags by registered key ("<questId>-<key>");
+// nil reads every flag as unset. See branches.go for the path.
+func IsTokenAfterOnPath(currentToken string, nextToken string, flag func(string) string) bool {
+	return tokenAfter(currentToken, nextToken, false, flag)
+}
+
+// IsTokenPassedOnPath reports whether a player standing at currentToken has
+// passed questToken on their path: a later step counts as holding the earlier
+// ones on the same path, and never a step of another side.
+func IsTokenPassedOnPath(questToken string, currentToken string, flag func(string) string) bool {
+	return tokenAfter(questToken, currentToken, true, flag)
+}
+
+// tokenAfter reports whether nextToken comes after currentToken on one
+// player's path. atNext says which of the two is the player's own position,
+// whose step decides the side.
+func tokenAfter(currentToken string, nextToken string, atNext bool, flag func(string) string) bool {
 
 	currentId, currentStep := TokenToParts(currentToken)
 	nextId, nextStep := TokenToParts(nextToken)
@@ -401,29 +427,17 @@ func IsTokenAfter(currentToken string, nextToken string) bool {
 		return false
 	}
 
-	// If currently at zero, whatever is offered must be next
-	questInfo := GetQuest(currentToken)
 	// If quest doesn't even exist, then no
+	questInfo := GetQuest(currentToken)
 	if questInfo == nil {
 		return false
 	}
 
-	result := false
-	startLooking := false
-
-	for _, step := range questInfo.Steps {
-		if step.Id == currentStep {
-			startLooking = true
-		}
-		if startLooking {
-			if step.Id == nextStep {
-				result = true
-				break
-			}
-		}
+	at := currentStep
+	if atNext {
+		at = nextStep
 	}
-
-	return result
+	return questInfo.stepBefore(at, currentStep, nextStep, flag)
 }
 
 func PartsToToken(questId int, questStep string) string {
