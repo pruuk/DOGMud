@@ -10,8 +10,9 @@ import (
 
 const fleeShortageText = "You break away on instinct rather than technique, too spent to use your training."
 
-// fleeRefusalText is what the player is told for each refusal. Every line is
-// unchanged from before slice 4a moved the rules into actions.BeginFlee.
+// fleeRefusalText is what the player is told for each refusal. Every line but
+// the once-a-round one (#951) is unchanged from before slice 4a moved the
+// rules into actions.BeginFlee.
 var fleeRefusalText = map[actions.FleeRefusal]string{
 	// A no-go root (a Jailed holding cell, 5.1c) pins the player; flee must
 	// honour it or it becomes a jail-escape hole (smoke BUG-02).
@@ -27,6 +28,8 @@ var fleeRefusalText = map[actions.FleeRefusal]string{
 	// that standing up is what unblocks it.
 	actions.FleeRefuseProne:    `<ansi fg="red">You can't flee from the ground. Stand up first!</ansi>`,
 	actions.FleeRefuseNotReady: `You can't break away just yet.`,
+	// #951: one flee attempt a round, whatever the first one's outcome.
+	actions.FleeRefuseThisRound: `You've already tried to break away this round. Wait for the next one.`,
 }
 
 func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {

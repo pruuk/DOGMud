@@ -25,6 +25,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/state/presence"
 	"github.com/GoMudEngine/GoMud/internal/stats"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 var (
@@ -870,6 +871,21 @@ func (c *Character) IsDisengaging() bool {
 		return false
 	}
 	return c.CombatPhase.State() == combatphase.Disengaging
+}
+
+// MarkFleeTriedThisRound records that this character started a flee in the
+// current round (#951), on the combat phase machine.
+func (c *Character) MarkFleeTriedThisRound() {
+	if c.CombatPhase != nil {
+		c.CombatPhase.MarkFleeRound(util.GetRoundCount())
+	}
+}
+
+// FleeTriedThisRound reports whether this character already started a flee
+// in the current round. A flee may be started once every round; the round
+// it resolves in does not count (#951).
+func (c *Character) FleeTriedThisRound() bool {
+	return c.CombatPhase != nil && c.CombatPhase.FleeTriedIn(util.GetRoundCount())
 }
 
 // EngagedTarget returns the current Engaged target as an ActorRef.
