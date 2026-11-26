@@ -86,7 +86,8 @@ func (e *Engine) GuardsRoom(roomId int) bool
 ```
 
 `WouldFire` runs the same match step as `Notify` (`fieldMatches`, then
-`EvalConditions` against the player's current state) and stops there: no
+`triggerOpen`: `EvalConditions` against the player's current state, and the
+off-path gate below) and stops there: no
 action runs, no token is granted, no text is sent, no `quest_granted` chain is
 followed, no `EvalGuard` is touched. It is for gates that must ask before the
 event happens (a quest gate on an exit). `SearchFeatures` returns the sorted,
@@ -497,9 +498,19 @@ own, unrelated action param.)
   framed in asterisks so it stands out from combat text; the room hears
   nothing, so the line prints once. Quest 28 whispers Dewey's lines during the
   effigy fight. A line with `emote: true` ignores `whisper`.
+- **A trigger that would grant the other side's step is skipped whole**
+  (#958, `Engine.triggerOpen`). It checks every `grant` action, of any quest,
+  with `Quest.GrantOnPath` against the player's quest tokens and flags, before
+  any action runs, so the other side's player gets none of its text, items or
+  gold and the command is not swallowed. A `set_flag` of the branch flag
+  earlier in the same action list stands in for the flag (`flagSetBefore`).
+  `fire`, `WouldFire`, the explore and held-item paths all read it, so a
+  branch-entry trigger needs no flag condition (the one-action rule still
+  refuses one).
 - **A quest holds ONE current step, so objectives cannot run in any order.**
   `characters.HasQuest(t)` is true for the current step and every step before
-  it, and a grant only moves forward. Two triggers that each gate only on
+  it on the player's own path (a step of another side of a branched quest is
+  never held), and a grant only moves forward. Two triggers that each gate only on
   `-start` let the later objective, done first, mark the earlier one done
   without doing it. Gate each trigger on the previous step's token. Newbie
   quests also ask for one command per step, each hint naming it plainly
@@ -557,12 +568,27 @@ on the caller's order. It reads the Ways into each step from
 `questloop.WaysInto`, which includes the world's external grants
 (`World.External`).
 
-- **`walkPlayer`** is the mock player. It has the game's real step order:
-  `HasQuest(t)` holds for the current step and every earlier one, a grant only
-  moves forward, and a quest is entered only at `start` (or the only step of a
-  one-step quest), as `quests.IsTokenAfter` allows. It also holds items,
-  flags, heard topics, gold and room, and `dialogueState()` wraps it as a
-  `dialogue.PlayerState`.
+- **`walkPlayer`** is the mock player. It has the game's real step order,
+  read from the same helpers `characters` uses (`Quest.IsStepPassedOnPath`
+  and `Quest.IsStepAfterOnPath`) with the walk player's own flags:
+  `HasQuest(t)` holds for the current step and every earlier one on the
+  player's path, never another side's; a grant only moves forward on that
+  path; and a quest is entered only at `start` (or the only step of a
+  one-step quest). So a side whose flag is set after its grant fails the walk
+  as it would fail in play. It also holds items, flags, heard topics, gold
+  and room, and `dialogueState()` wraps it as a `dialogue.PlayerState`.
+- **A branched quest is walked once per path** (#958, `walkPath`, built from
+  `quests.Paths` and `quests.Sides`). A path walk tries only the Ways that lie
+  on it (`walkPath.ways`, through `questloop.Way.OnPath`), so one side's
+  hand-in is not reported as a dead end on the other side's path. Before a
+  branched step the walk sets the branch flag from a setter that grants
+  nothing of the quest (`meetFlag`, a "choose" topic); a setter that also
+  grants the step is a Way, and a flag it sets after its grant fails the walk.
+  The quests are registered with the engine once and no path walk changes the
+  shared step map. A finding keeps the same key on every path; its message
+  names the paths it was found on (`onPaths`: "(on the sylara path)", "(on
+  the sylara and rhett paths)"), and `dedupeFindings` merges only findings
+  with the same text.
 - **`walkCtx`** is the `ActionContext`. Grants, items, gold and quest flags
   change the player; narration, spawns, teleports, `discover` and the rest
   are no-ops.
@@ -649,6 +675,7 @@ on the caller's order. It reads the Ways into each step from
 | `walk-no-source` | A Way needs an item (`has_item`, `item_give`, `item_gain`, `requiresItem`, `carriesItem`, an item `questtoken`) that `Sources.ItemSources` says nothing provides |
 | `walk-unspawned` | A Way needs a mob (`mob_death`, `item_give` target, the topic's NPC, a tree grant's NPC) that `Sources.MobSpawned` says nothing places |
 | `walk-no-spell` | A `spell_landed` Way that failed in every state for want of a held spell, and for no other reason (`walkEnv.spellRefused`, set only when the refused trigger itself would have fired) |
+| `walk-branch-flag` | A branched quest's path that finishes with the branch flag on another side (`walkPath.checkSide`); the message names the path and the value the walk must end with. Where is `step <last step of the path>` |
 
 `walk-no-spell` blames only the refused trigger: another `spell_landed`
 trigger the same event reaches is its own Way. A Way that fails for any other

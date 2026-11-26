@@ -105,6 +105,7 @@ type QuestStep struct {
     Description string          // Step description for players
     Hint        string          // Optional hint for completing step
     Destination StepDestination // Where the minimap and the quest log point (#375 phase 4)
+    Branch      string          // Side this step belongs to: a value of the quest's branch flag (see Quest Branches)
 }
 ```
 
@@ -235,55 +236,61 @@ func TokenToParts(questToken string) (questId int, questStep string) {
 ```
 
 ### Quest Progress Validation
+
+Step order is file order, read through the path helpers (`branches.go`, #958),
+never as a bare "later in the file" test. The token forms live in `quests.go`:
+
 ```go
-// Check if next token represents valid progression from current token
-func IsTokenAfter(currentToken string, nextToken string) bool {
-    currentId, currentStep := TokenToParts(currentToken)
-    nextId, nextStep := TokenToParts(nextToken)
-    
-    // No current progress - can only start quests
-    if currentStep == "" {
-        if nextStep == "start" {
-            return true
-        } else if nextStep == "end" {
-            // Single-step quest can be completed immediately
-            if questInfo := GetQuest(nextToken); questInfo != nil {
-                if len(questInfo.Steps) == 1 {
-                    return true
-                }
-            }
-        }
-        return false
-    }
-    
-    // Must be same quest and different step
-    if currentId != nextId || currentStep == nextStep {
-        return false
-    }
-    
-    // Validate step progression
-    questInfo := GetQuest(currentToken)
-    if questInfo == nil {
-        return false
-    }
-    
-    // Find current step and check if next step follows
-    result := false
-    startLooking := false
-    
-    for _, step := range questInfo.Steps {
-        if step.Id == currentStep {
-            startLooking = true
-        }
-        if startLooking && step.Id == nextStep {
-            result = true
-            break
-        }
-    }
-    
-    return result
-}
+// A grant must move forward on the path of a player standing at currentToken.
+func IsTokenAfterOnPath(currentToken string, nextToken string, flag func(string) string) bool
+
+// Has a player standing at currentToken passed questToken on their own path?
+// (Character.HasQuest asks this of every step but the current one.)
+func IsTokenPassedOnPath(questToken string, currentToken string, flag func(string) string) bool
 ```
+
+`flag` reads the player's quest flags by registered key (`"{questId}-{key}"`);
+nil reads every flag as unset. A player with no progress (a blank
+`currentToken`) enters a quest only at `start`, or at `end` of a one-step
+quest. A step on another side is neither after nor passed. A quest with no
+branched steps has one path of all its steps, so these answer as a straight
+line does.
+
+### Quest Branches (`branches.go`, #958)
+
+A step may carry `Branch` (`branch:` in YAML), a value of one of the quest's
+declared flags. `Quest.Validate` (via `validateBranches`) refuses: a branch
+that is not one word (letters, digits, `_`, `-`); a branch that is no
+declared flag's value, or the value of two flags; branched steps on more than
+one flag (one fork per quest); a value of the branch flag that no step
+branches on; a branched first or last step; and a `Repeatable` quest with a
+branched step.
+
+A player's path is the unbranched steps plus the steps whose branch is the
+player's side. The side is the branch of the player's current step when that
+step is branched, and otherwise the value of the branch flag.
+
+| Symbol | What it answers |
+|---|---|
+| `Quest.Side(stepId, flag)` | the side of a player at `stepId` (blank when unsided or unbranched) |
+| `Quest.Path(stepId, flag)` | that player's steps in order (builds a slice; hot paths do not use it) |
+| `Quest.Paths()` | one path per value of the branch flag, or the one path of all steps |
+| `Quest.Sides()` | the side of each path `Paths` returns, same order |
+| `Quest.StepProgress(stepId, flag)` | `done, total` along the player's path (quest log and GMCP) |
+| `Quest.IsStepAfterOnPath`, `Quest.IsStepPassedOnPath` | the step-id forms of the two token checks, for a reader that holds the quest (the walkthrough's player) |
+| `Quest.GrantOnPath(stepId, has, flag)` | would granting `stepId` keep the player on their path, seeing the player only through `has` and `flag` (the trigger engine's gate) |
+| `Quest.BranchFlagKey()` | registered key of the branch flag, blank for an unbranched quest |
+| `Quest.Step(id)` | the step with that id, and whether the quest has it |
+
+`Validate` fills a small cache (the branch flag, each step's token) so the hot
+readers (`HasQuest` runs on every trigger check) build no string. A quest that
+never went through `Validate` works it out per call. Whoever edits `Steps` or
+`Flags` of a validated quest in place calls `Validate` again to refill it.
+
+Users of the helpers: `Character.HasQuest` and `GiveQuestToken`
+(`internal/characters`), `Engine.triggerOpen` (`internal/questengine`),
+`questloop`'s one-action rule, the walkthrough's player, `cmd/dialoguecheck`,
+the `quests` command and the GMCP Char quest payload.
 
 ## Quest Discovery and Management
 
@@ -595,7 +602,7 @@ if reward.ConditionId > 0 {
 
 ### Quest Progress Tracking
 ```go
-// GiveQuestToken checks quests.IsTokenAfter internally, so callers don't
+// GiveQuestToken checks quests.IsTokenAfterOnPath internally, so callers don't
 // need to call it themselves before advancing.
 nextStep := "1001-middle"
 

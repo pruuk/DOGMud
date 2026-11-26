@@ -33,7 +33,7 @@ steps:
       is gone, someone beat you to him, and he will be back at his table."
   # loot and unlock split the old confront hint into one command each
   # (owner ruling: one command per hint). Inserted steps are save-safe:
-  # progress is one step id, read in this order (quests.IsTokenAfter).
+  # progress is one step id, read in this order (quests.IsTokenAfterOnPath).
   - id: loot
     destination:
       room: 498  # Operations Room, where Torvan falls
