@@ -992,15 +992,17 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 }
 
 // dedupeFindings keeps the first finding of each key. When the same key was
-// found on more than one path of a branched quest, the kept message names
-// every such path (onPaths); the key never does.
+// found with the same text on more than one path of a branched quest, the
+// kept message names every such path (onPaths); the key never does. A later
+// finding whose text differs is dropped and the first kept unchanged, so the
+// message never names a path its text is not true of.
 func dedupeFindings(fs []questloop.Finding) []questloop.Finding {
 	at := map[string]int{}
 	paths := map[string][]string{}
 	var out []questloop.Finding
 	for _, f := range fs {
 		k := f.Key()
-		_, ps := splitPaths(f.Msg)
+		fText, ps := splitPaths(f.Msg)
 		n, seen := at[k]
 		if !seen {
 			at[k] = len(out)
@@ -1008,15 +1010,15 @@ func dedupeFindings(fs []questloop.Finding) []questloop.Finding {
 			out = append(out, f)
 			continue
 		}
-		if len(ps) == 0 || len(paths[k]) == 0 {
-			continue
+		text, _ := splitPaths(out[n].Msg)
+		if len(ps) == 0 || len(paths[k]) == 0 || text != fText {
+			continue // a different defect text: the first stands as it is
 		}
 		for _, p := range ps {
 			if !slices.Contains(paths[k], p) {
 				paths[k] = append(paths[k], p)
 			}
 		}
-		text, _ := splitPaths(out[n].Msg)
 		out[n].Msg = onPaths(text, paths[k])
 	}
 	return out

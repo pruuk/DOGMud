@@ -290,6 +290,18 @@ func TestWalk_SameFindingOnTwoPathsNamesBoth(t *testing.T) {
 	require.Equal(t, "no way in reaches 54-end (on the sylara and rhett paths)", f.Msg)
 }
 
+// Two findings under one key whose texts differ are not merged: a skip from
+// start passes a different step on each path, and the kept message names
+// only the path its text is true of.
+func TestWalk_DifferentTextsOnTwoPathsAreNotMerged(t *testing.T) {
+	w := forkedWalkWorld()
+	w.Quests[0].Triggers = append(w.Quests[0].Triggers, quests.TriggerDef{Event: "item_gain", Item: 903,
+		Conditions: quests.Conditions{Has: []string{"54-start"}},
+		Actions:    []quests.ActionDef{{Grant: "54-end"}}})
+	f := findingOf(Walk(w, questloop.Sources{}), "walk-dead-end 54 quest 54 trigger item_gain item=903 grants=54-end")
+	require.Equal(t, "skips to 54-end from 54-start, passing 54-sylara (on the sylara path)", f.Msg)
+}
+
 // A path's walk ends with the branch flag on its own side.
 func TestWalk_PathMustEndOnItsSide(t *testing.T) {
 	w := forkedWalkWorld()
