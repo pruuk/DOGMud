@@ -25,7 +25,9 @@ function check(name, ok) {
 var PAD = LayoutPick.PAD;          // #dashboard padding (layoutpick.test.js ties it to the CSS)
 var BORDER = 2;                    // the slot's side borders (dashboard.css #touch-slot)
 var SESSION = 64, TABBAR = 64;     // the session bar with its gap; the tab bar's room on touch (--tabbar-h)
-var GAME_W = LayoutPick.GAME_W_DEFAULT;   // the game column outside phone mode
+var MAP_TITLE = 36;   // the Map card's title bar on a phone, the name strip's height (--tabname-h)
+var MAP_MIN = 120;    // the narrowest the map may get beside its buttons
+var GAME_W =LayoutPick.GAME_W_DEFAULT;   // the game column outside phone mode
 
 function span(n, b, g) { return n * b + (n - 1) * g + 2 * TD.PAD; }
 
@@ -60,11 +62,24 @@ MATRIX.forEach(function (m) {
     var mode = LayoutPick.pick(w, GAME_W, phone, h);
     var colW = mode === 'phone' ? w - 2 * PAD : GAME_W;
     var boxW = colW - BORDER;
-    var boxH = h - 2 * PAD - SESSION - TABBAR;
+    // A sideways phone with the deck on folds the session bar and tab bar
+    // away (#938, plan 2c), so its side column has their height too.
+    var boxH = h - 2 * PAD - (sideways ? 0 : SESSION + TABBAR);
     var s = TD.shape(boxW, boxH, phone && !sideways, sideways);
     var p = problems(s, boxW, boxH);
     check(m[0] + ' ' + w + 'x' + h + ': ' + s.rows + 'x' + s.cols + ' at ' + s.button + 'px' +
           (p.length ? ' (' + p.join('; ') + ')' : ''), p.length === 0);
+    // The Map tab's buttons (plan 2c): the deck's size (D11), inside the
+    // Map card (45% of the screen, F19) under its title bar. A shape's width
+    // includes its 8px padding each side, so the upright column is 176px.
+    if (phone) {
+        var ms = TD.mapShape(s, sideways);
+        var cardBody = Math.floor(0.45 * h) - MAP_TITLE;
+        var mp = problems(ms, ms.width, cardBody);
+        if (ms.height > cardBody) mp.push(ms.height + 'px tall in a ' + cardBody + 'px Map card');
+        if (ms.width > boxW - MAP_MIN) mp.push('leaves the map ' + (boxW - ms.width) + 'px');
+        check(m[0] + ' Map tab: ' + ms.rows + 'x' + ms.cols + ' at ' + ms.button + 'px' + (mp.length ? ' (' + mp.join('; ') + ')' : ''), mp.length === 0);
+    }
 });
 
 // The guard can fail.
@@ -74,6 +89,9 @@ check('the guard fails 44px where 48px fits',
     problems({ rows: 2, cols: 6, button: 44, gap: 5, side: false, width: 305, height: 109 }, 346, 600).length > 0);
 check('the guard fails a deck wider than its box',
     problems({ rows: 2, cols: 6, button: 48, gap: 8, side: false, width: 344, height: 120 }, 300, 600).length > 0);
+
+check('the Map guard fails three rows in a sideways card',
+    TD.mapShape(TD.shape(0, 300, true, true), false).height > Math.floor(0.45 * 360) - MAP_TITLE);
 
 // The stylesheet sizes the deck from touchdeck.js (dashboard.js sets the
 // variables), never with numbers of its own.
