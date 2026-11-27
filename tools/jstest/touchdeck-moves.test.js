@@ -181,8 +181,12 @@ check('after half a second it counts again', TD.tap(e1, list[2], 2000 + TD.DOUBL
 var backed = TD.tap({ level: 'exits', page: 2, guardUntil: 0 }, list[0], 3000);
 check('Back returns to the T at the first page', [backed.level, backed.page], ['top', 0]);
 check('More turns the page', TD.tap({ level: 'exits', page: 0, guardUntil: 0 }, page0[11], 1000).page, 1);
-check('the Dark tile says what to do', TD.tap(st, dk[3], 1000).say, 'It is too dark to see the way. Light a torch or cast glow.');
-check('an empty slot does nothing', TD.tap(st, top[4], 1000), { level: 'top', page: 0, guardUntil: 0, send: '', say: '' });
+// Owner ruling 2026-11-26: the client prints no text of its own for the
+// Dark tile; it types look, and the server answers (and wraps) its no-sight
+// line (actions.NoSightLine).
+check('the Dark tile types look', [TD.tap(st, dk[3], 1000).typed, TD.tap(st, dk[3], 1000).send], ['look', '']);
+check('the deck carries no line of its own', TD.DARK_LINE, undefined);
+check('an empty slot does nothing', TD.tap(st, top[4], 1000), { level: 'top', page: 0, guardUntil: 0, send: '', typed: '' });
 
 // Plan 2b D11: a tap that changes the level, the page or the room puts a
 // different button under the finger, so the second tap of a double tap

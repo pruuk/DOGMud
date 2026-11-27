@@ -169,7 +169,7 @@
     _deckSig: "",
     _deckDrawnLevel: "top",
     _deckPress: null,
-    _deckSay: null,
+    _deckType: null,
 
     // ---------------------------------------------------------------
     // Public entry point
@@ -705,10 +705,11 @@
     },
 
     // The page hands over how the deck sends (plan 2b): press(id) sends a
-    // Char.Button.Press, say(text) writes one of the page's own lines.
-    setDeckSender: function (press, say) {
+    // Char.Button.Press, type(line) sends a command as if typed (the Dark
+    // tile's look).
+    setDeckSender: function (press, type) {
       this._deckPress = press;
-      this._deckSay = say;
+      this._deckType = type;
     },
 
     // A Room.Info arrived, or null when the connection closed. After a move
@@ -741,7 +742,7 @@
       var r = TD.tap(this._deckState, c, Date.now());
       this._deckState = { level: r.level, page: r.page, guardUntil: r.guardUntil };
       if (r.send && this._deckPress) this._deckPress(r.send);
-      if (r.say && this._deckSay) this._deckSay(r.say);
+      if (r.typed && this._deckType) this._deckType(r.typed);
       this.applyDeck();
     },
 

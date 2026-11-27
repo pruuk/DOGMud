@@ -95,7 +95,7 @@ const roomAt = html.indexOf('"Room": function() {');
 const movesAt = html.indexOf('Dashboard.setMoves(obj.Info)');
 const coordsAt = html.indexOf('var coords = obj.Info.coords.split(",");');
 check(roomAt > 0 && movesAt > roomAt && movesAt < coordsAt, 'Room.Info reaches the deck before the map code runs');
-check(/Dashboard\.setDeckSender\(sendButtonPress, gameLineAfterPrompt\)/.test(html), 'a deck button sends through sendButtonPress (its id as Char.Button.Press; webclient-input-queue.test.js runs it), and the Dark tile\'s line starts on a line of its own (webclient-connect.test.js runs it)');
+check(/Dashboard\.setDeckSender\(sendButtonPress, playerSend\)/.test(html), 'a deck button sends through sendButtonPress (its id as Char.Button.Press; webclient-input-queue.test.js runs it), and the Dark tile types look through playerSend, the typed command path');
 check(/function sendButtonPress\(id\) \{[\s\S]{0,400}SendGMCP\("Char\.Button\.Press", \{ id: id \}\)/.test(html), 'sendButtonPress sends only the id');
 check(/"Commands": function\(\) \{[^}]*syncDeckMode\(\);/.test(html) && /"Commands\.State": function\(\) \{\s*checkDeathClearsQueue\(\);\s*syncDeckMode\(\);/.test(html), 'Commands.State\'s mode reaches the deck');
 check(/socket\.onclose = function\(event\) \{[\s\S]{0,300}if \(window\.Dashboard && Dashboard\.setMoves\) Dashboard\.setMoves\(null\);/.test(html), 'a closed connection clears the buttons');

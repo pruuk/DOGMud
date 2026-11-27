@@ -76,9 +76,8 @@ var musicStops = 0;
 global.MusicPlayer = { stopAll: function () { musicStops++; } };
 global.textInput = element();
 // The page's phone-keyboard wait (plan 6) sits just above the keydown marker
-// and reads window.HotInput; with none, the page makes no wait. gameLine
-// wraps with the real termfit.js.
-global.window = { TermFit: require(path.join(__dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'js', 'termfit.js')) };
+// and reads window.HotInput; with none, the page makes no wait.
+global.window = {};
 global.setTimeout = function () { return 0; };
 global.clearTimeout = function () {};
 global.__srWrites = [];
@@ -285,19 +284,14 @@ s.onmessage({ data: CLIMB + 'A cat arrives.\r\n' });
 check('the next clear climbs again', termWrites[3] === CLIMB + 'A cat arrives.\r\n', JSON.stringify(termWrites[3]));
 term.write = oldWrite;
 
-// A page line wraps at word boundaries to the game window's columns, and one
-// the player's tap prints (the touch deck's Dark tile, plan 2b) starts on a
-// line of its own, not glued to the prompt (Task 11, 360x800 and 320x640).
-var lines = [], oldWriteln = term.writeln, oldCols = term.cols;
+// Owner ruling 2026-11-26: no client-side text wrapper; the server wraps.
+// gameLine writes the page's line as it is.
+var lines = [], oldWriteln = term.writeln;
 term.writeln = function (t) { lines.push(t); };
-term.cols = 24;
-gameLineAfterPrompt('It is too dark to see the way. Light a torch or cast glow.');
-check('a page line after the prompt starts a new line and wraps between words',
-    JSON.stringify(lines) === JSON.stringify(['\r\nIt is too dark to see\r\nthe way. Light a torch\r\nor cast glow.']), JSON.stringify(lines));
-check('the screen reader hears it unwrapped',
-    __srWrites[__srWrites.length - 1] === '\r\nIt is too dark to see the way. Light a torch or cast glow.\r\n', JSON.stringify(__srWrites[__srWrites.length - 1]));
+gameLine('Your browser did not allow full screen, so the game stays in this window.');
+check('gameLine writes the page\'s line as it is (no client wrapper)',
+    JSON.stringify(lines) === JSON.stringify(['Your browser did not allow full screen, so the game stays in this window.']), JSON.stringify(lines));
 term.writeln = oldWriteln;
-term.cols = oldCols;
 
 // Every local write marks it, not only gameLine: the page wraps term.write and
 // term.writeln where term is made, server text bypasses the wrapper, and a

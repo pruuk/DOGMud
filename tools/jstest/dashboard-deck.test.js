@@ -100,8 +100,8 @@ slot.appendChild(deck);
 D._slot = slot;
 D._deck = deck;
 
-var pressed = [], said = [];
-D.setDeckSender(function (id) { pressed.push(id); }, function (t) { said.push(t); });
+var pressed = [], typed = [];
+D.setDeckSender(function (id) { pressed.push(id); }, function (line) { typed.push(line); });
 
 var MOVES = { north: 'm1', south: 'm2', east: 'm3', west: 'm4', up: 'm5', down: 'm6' };
 function room(num, v2, extra) {
@@ -175,7 +175,7 @@ check('combat reaches the cells', D._deckCells[1].combat, true);
 D.setMoves(room(6418, {}, { dark: true, darkmarks: { north: 'wall' } }));
 check('a pitch-dark room: the deck takes deck-dark', deck.classList.contains('deck-dark'), true);
 D._deckTap(at('dark'));
-check('the Dark tile writes its line through the page', said, [TD.DARK_LINE]);
+check('the Dark tile types look through the page, and presses nothing', [typed, pressed.length], [['look'], 4]);
 D.setMoves(null);
 check('a closed connection leaves only empty slots', D._deckCells.every(function (c) { return c.kind === 'empty'; }), true);
 check('and the deck is light again', deck.classList.contains('deck-dark'), false);

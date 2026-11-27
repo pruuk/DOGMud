@@ -236,8 +236,10 @@
     // on the T walks twice, like typing (owner ruling 8).
     var DOUBLE_TAP_MS = 500;
 
-    // The Dark tile's line (spec 2b, States).
-    var DARK_LINE = 'It is too dark to see the way. Light a torch or cast glow.';
+    // The Dark tile types this, and the server answers with its own
+    // no-sight line (actions.NoSightLine), worded and wrapped there (owner
+    // ruling 2026-11-26: the client writes no text of its own for the deck).
+    var DARK_COMMAND = 'look';
 
     // The deck's cells for one model, in slot order (row by row), for a
     // shape from shape(). level: 'top' (the T) or 'exits' (the other-exits
@@ -290,10 +292,10 @@
 
     // What a tap on cell c does. st: { level, page, guardUntil }; now in ms.
     // Returns the next state with send (an id for Char.Button.Press, or '')
-    // and say (a line for the game window, or ''). A tap before guardUntil
-    // is ignored (DOUBLE_TAP_MS).
+    // and typed (a command to send as if typed, or ''). A tap before
+    // guardUntil is ignored (DOUBLE_TAP_MS).
     function tap(st, c, now) {
-        var r = { level: st.level, page: st.page, guardUntil: st.guardUntil || 0, send: '', say: '' };
+        var r = { level: st.level, page: st.page, guardUntil: st.guardUntil || 0, send: '', typed: '' };
         if (!c || now < r.guardUntil) return r;
         switch (c.kind) {
         case 'move':
@@ -317,7 +319,7 @@
             r.guardUntil = now + DOUBLE_TAP_MS;
             break;
         case 'dark':
-            r.say = DARK_LINE;
+            r.typed = DARK_COMMAND;
             break;
         }
         return r;
@@ -489,7 +491,7 @@
         shape: shape, slotShows: slotShows, fieldOf: fieldOf,
         rowFade: rowFade, scrollLeftToShow: scrollLeftToShow,
         moves: moves, T_DIRS: T_DIRS, DIAGONALS: DIAGONALS, NAME_LETTERS: NAME_LETTERS,
-        cells: cells, levelAfter: levelAfter, tap: tap, DOUBLE_TAP_MS: DOUBLE_TAP_MS, DARK_LINE: DARK_LINE,
+        cells: cells, levelAfter: levelAfter, tap: tap, DOUBLE_TAP_MS: DOUBLE_TAP_MS,
         render: render, lineIcon: lineIcon, focusAfter: focusAfter, BACK_LABEL: BACK_LABEL, MORE_LABEL: MORE_LABEL,
         BTN: BTN, GAP: GAP, SMALL_BTN: SMALL_BTN, SMALL_GAP: SMALL_GAP, PAD: PAD
     };

@@ -194,29 +194,5 @@
         };
     }
 
-    // A line the page writes itself (webclient-pure.html gameLine), wrapped
-    // at word boundaries to the terminal's columns, as the server wraps its
-    // own text to them; xterm alone cuts a word in two at the edge. A word
-    // longer than a row is cut. Line breaks in text stay. With no column
-    // count the text comes back as it is.
-    function wrapText(text, cols) {
-        if (!(cols > 0)) return text;
-        return String(text).split(/\r?\n/).map(function (line) {
-            var rows = [], row = '';
-            line.split(' ').forEach(function (word) {
-                while (word.length > cols) {
-                    if (row) { rows.push(row); row = ''; }
-                    rows.push(word.slice(0, cols));
-                    word = word.slice(cols);
-                }
-                if (!row) row = word;
-                else if (row.length + 1 + word.length <= cols) row += ' ' + word;
-                else { rows.push(row); row = word; }
-            });
-            rows.push(row);
-            return rows.join('\r\n');
-        }).join('\r\n');
-    }
-
-    return { create: create, wrapText: wrapText };
+    return { create: create };
 }));
