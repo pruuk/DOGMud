@@ -1474,6 +1474,27 @@ html.layout-column.keyboard-open #dash-drawer {
   }
   #dashboard[data-mode="phone"] #touch-slot[data-shows="deck"]::after { display: none; }
 }
+/* The sideways bars (#938, owner ruling 2026-11-22 option A; plan 2c). A
+   sideways phone with the deck on folds the session bar and the tab bar
+   away (dashboard.js sets data-bars from touchdeck.js barsState), and the
+   game takes their rows. Menu, the side column's last button, brings both
+   back over the game (D6): the session bar across the top, the tab bar in
+   its usual place, until the player picks something or taps away. */
+#dashboard[data-bars] {
+  padding-bottom: 6px;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "center";
+}
+#dashboard[data-bars="folded"] #dash-session { display: none; }
+html:has(#dashboard[data-bars="folded"]) #dash-tabbar { display: none !important; }
+#dashboard[data-bars="shown"] #dash-session {
+  position: fixed;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  z-index: 51;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
 @media (display-mode: standalone) {
   html:not(.fullscreen-on) .chat-fs-hint { display: none; }
 }

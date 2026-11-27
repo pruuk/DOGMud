@@ -115,5 +115,9 @@ check(tdScriptAt > 0 && dashScriptAt > tdScriptAt, 'touchdeck.js loads before da
 
 check(html.indexOf('<p class="settings-note" id="touch-note">Buttons above the command box for walking. Automatic shows them on phones and tablets. Always shows them on every screen. Never hides them.</p>') > 0, 'the Touch controls note says what each choice does now (plan 2b)');
 
+check(/#dashboard\[data-bars="folded"\] #dash-session \{ display: none; \}/.test(css), 'folded: no session bar (#938)');
+check(/html:has\(#dashboard\[data-bars="folded"\]\) #dash-tabbar \{ display: none !important; \}/.test(css), 'folded: no tab bar (#938)');
+check(/#dashboard\[data-bars="shown"\] #dash-session \{[^}]*position: fixed;/.test(css), 'shown: the session bar over the game (#938, D6)');
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails === 0 ? 0 : 1);

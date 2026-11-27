@@ -248,6 +248,41 @@ D.applyDeck();
 check('Map tab closed again: hidden', mapDeck.hidden, true);
 D.setMoves(null);
 
+// --- the sideways bars (#938, plan 2c) -------------------------------------------
+
+// A phone on its side: viewportfit's isSidewaysPhone reads the screen.
+win.screen = { width: 800, height: 360 };
+win.ViewportFit = {
+    isPhone: function () { return true; },
+    isSidewaysPhone: function () { return true; },
+    orientationType: function () { return 'landscape-primary'; },
+    editableFocused: function () { return false; }
+};
+sandbox.screen = win.screen;
+D._drawerActive = null;
+D.setMoves(tower);
+check('sideways with the deck on: the bars fold', dash.dataset.bars, 'folded');
+var menuAt = D._deckMemo.cells.findIndex(function (c) { return c.kind === 'menu'; });
+check('Menu is the side column\'s last slot', menuAt, 11);
+D._deckState.guardUntil = 0;   // Back's hold from the Map section above
+D._deckTap(menuAt);
+check('Menu shows the bars', [dash.dataset.bars, D._deckMemo.cells[menuAt].open], ['shown', true]);
+D._deckTap(menuAt);
+check('Menu again folds them', [dash.dataset.bars, D._deckMemo.cells[menuAt].open], ['folded', false]);
+D._showBars(true);
+win.localStorage = { getItem: function () { return 'never'; }, setItem: function () {} };
+D.applyDeck();
+check('Touch controls on Never: no deck, no Menu, the bars as always (D4)', [dash.dataset.bars, D._barsShown], [undefined, false]);
+win.localStorage = { getItem: function () { return 'always'; }, setItem: function () {} };
+win.screen = { width: 360, height: 800 };
+sandbox.screen = win.screen;
+win.ViewportFit.isSidewaysPhone = function () { return false; };
+D.applyDeck();
+check('upright again: the bars as always', dash.dataset.bars, undefined);
+delete win.ViewportFit;
+win.screen = undefined;
+D.setMoves(null);
+
 // --- the tab bar draws its icons with touchdeck.js lineIcon -----------------
 // One stroke-path icon builder for the client (unify rule): the phone tab
 // bar's round tabs (makeTabBar) and the deck's icons share TouchDeck.lineIcon.

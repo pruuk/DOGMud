@@ -172,9 +172,26 @@
     _mapDeck: null,     // #map-deck, beside the map (plan 2c)
     _mapMemo: { sig: "", cells: [], level: "top" },
     _gridInView: "deck", // "map" while the Map tab's buttons show, else "deck"
-    _barsShown: false,  // Task 4 replaces these two stubs
-    _setBars: function () {},
-    _showBars: function () {},
+    // The sideways bars (#938, plan 2c): whether Menu brought them back.
+    _barsShown: false,
+
+    // folds: the deck shows Menu now (a sideways phone with the deck on).
+    // Sets data-bars on #dashboard (never on the root, which the keyboard
+    // watch observes), and forgets a shown state once nothing folds.
+    _setBars: function (folds) {
+      var TD = window.TouchDeck, dash = document.getElementById("dashboard");
+      if (!folds) this._barsShown = false;
+      if (!TD || !dash || !dash.dataset) return;
+      var state = TD.barsState(!!folds, this._barsShown);
+      if ((dash.dataset.bars || "") === state) return;
+      if (state) dash.dataset.bars = state; else delete dash.dataset.bars;
+    },
+
+    // Menu shows the bars, or folds them again.
+    _showBars: function (on) {
+      this._barsShown = !!on;
+      this.applyDeck();
+    },
     _deckPress: null,
     _deckType: null,
 
@@ -262,6 +279,37 @@
       };
       document.addEventListener("focusin", onFocusMove);
       document.addEventListener("focusout", onFocusMove);
+
+      // The bars Menu brought back (#938) fold again when the player picks
+      // something in them, unless the pick left one of their own dialogs
+      // open (Settings, Leave Game's question; plan 2c D5), or taps anywhere
+      // else. Escape folds them and hands the focus back to Menu (D7).
+      document.addEventListener("pointerdown", function (e) {
+        if (!self._barsShown) return;
+        var t = e.target;
+        if (t && t.closest && t.closest("#dash-session, #dash-tabbar, .deck-menu")) return;
+        self._showBars(false);
+      }, true);
+      document.addEventListener("click", function (e) {
+        if (!self._barsShown) return;
+        var t = e.target;
+        if (!(t && t.closest && t.closest("#dash-session button, #dash-tabbar button"))) return;
+        // After the page's own handler has opened or closed its dialog.
+        setTimeout(function () {
+          if (!self._barsShown) return;
+          var menu = document.getElementById("settings-menu");
+          var confirm = document.getElementById("sess-confirm");
+          if (window.TouchDeck.barsStayAfterPick(!!menu && !menu.hidden,
+              !!confirm && confirm.style.display !== "none")) return;
+          self._showBars(false);
+        }, 0);
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "Escape" || !self._barsShown) return;
+        self._showBars(false);
+        var menuBtn = document.querySelector(".deck-menu");
+        if (menuBtn) menuBtn.focus();
+      });
 
       // Folding, pop-out and the saved layout
       this.initCollapse   && this.initCollapse();
