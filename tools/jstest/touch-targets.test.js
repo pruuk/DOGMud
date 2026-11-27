@@ -32,6 +32,7 @@ var SESSION = 64, TABBAR = 64;     // the session bar with its gap; the tab bar'
 var MAP_TITLE = 42;
 var CARD_CUT = 2;
 var MAP_TOP = 8;      // the space above the Map tab's buttons (dashboard.css #map-deck padding-top)
+var MAP_RIGHT = 8;    // the space right of them, to the card's border (padding-right)
 var MAP_MIN = 120;    // the narrowest the map may get beside its buttons
 var GAME_W = LayoutPick.GAME_W_DEFAULT;   // the game column outside phone mode
 
@@ -83,7 +84,7 @@ MATRIX.forEach(function (m) {
         var cardBody = Math.floor(0.45 * h) - CARD_CUT - MAP_TITLE;
         var mp = problems(ms, ms.width, cardBody);
         if (ms.height + MAP_TOP > cardBody) mp.push((ms.height + MAP_TOP) + 'px tall in a ' + cardBody + 'px Map card');
-        if (ms.width > boxW - MAP_MIN) mp.push('leaves the map ' + (boxW - ms.width) + 'px');
+        if (ms.width + MAP_RIGHT > boxW - MAP_MIN) mp.push('leaves the map ' + (boxW - ms.width - MAP_RIGHT) + 'px');
         check(m[0] + ' Map tab: ' + ms.rows + 'x' + ms.cols + ' at ' + ms.button + 'px' + (mp.length ? ' (' + mp.join('; ') + ')' : ''), mp.length === 0);
     }
 });
@@ -98,6 +99,8 @@ check('the guard fails a deck wider than its box',
 
 check('MAP_TOP is the space dashboard.css puts above the Map tab buttons',
     new RegExp('> #map-deck \\{[^}]*padding-top: ' + MAP_TOP + 'px').test(css));
+check('MAP_RIGHT is the space dashboard.css puts right of the Map tab buttons',
+    new RegExp('> #map-deck \\{[^}]*padding-right: ' + MAP_RIGHT + 'px').test(css));
 check('the Map guard fails three rows in a sideways card',
     TD.mapShape(TD.shape(0, 300, true, true), false).height > Math.floor(0.45 * 360) - CARD_CUT - MAP_TITLE);
 
