@@ -3,7 +3,6 @@ package templates
 import (
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"text/template"
 
@@ -87,13 +86,10 @@ func widthFuncs(width int) template.FuncMap {
 }
 
 // WidestLine is the display width of the longest line in s, colour tags
-// not counted.
+// not counted: util.WidestLine, the one measure, which the command prompt
+// (internal/users, below this package) also reads.
 func WidestLine(s string) int {
-	widest := 0
-	for line := range strings.SplitSeq(strings.ReplaceAll(s, "\r\n", "\n"), "\n") {
-		widest = max(widest, util.VisibleWidth(line))
-	}
-	return widest
+	return util.WidestLine(s)
 }
 
 // ProcessForWidth renders fname for every reader whose screen is width

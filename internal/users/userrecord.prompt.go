@@ -416,6 +416,10 @@ func (u *UserRecord) CommandPromptBody() string {
 		goAhead = term.TelnetGoAhead.String()
 	}
 
+	// The prompt is wrapped below for every reader but two (see there).
+	wraps := !u.onAIPort() && goAhead == ``
+	width := u.WrapWidth()
+
 	if len(promptOut) == 0 {
 
 		if promptDefaultCompiled == `` {
@@ -460,15 +464,30 @@ func (u *UserRecord) CommandPromptBody() string {
 			customPrompt = u.GetConfigOption(`prompt-compiled`)
 		}
 
-		if customPrompt != nil {
+		render := func(words bool) string {
+			out := ``
 			if ansiPrompt, ok := customPrompt.(string); ok {
-				promptOut = u.ProcessPromptString(ansiPrompt)
+				out = u.processPromptString(ansiPrompt, words)
 			}
+			// Still nothing? Default to ... default
+			if len(out) == 0 {
+				out = u.processPromptString(promptDefaultCompiled, words)
+			}
+			return out
 		}
 
-		// Still nothing? Default to ... default
-		if len(promptOut) == 0 {
-			promptOut = u.ProcessPromptString(promptDefaultCompiled)
+		// A prompt whose health, stamina and conviction bars make a line of
+		// it wider than the screen is drawn with the words a screen reader
+		// account hears instead (vitalWord), so a phone shows the vitals on
+		// as few lines as it can (owner, 2026-11-26, from Malia's Galaxy S21
+		// check). Only where the prompt wraps: a go-ahead client and an AI
+		// port connection get it whole and unchanged, bars and all. A screen
+		// reader account has words already. Only below MaxAutoWrapWidth
+		// columns too: a desktop screen keeps the bars and lets a long line
+		// (the fight prompt with its tank block) wrap (owner, 2026-11-26).
+		promptOut = render(u.ScreenReader)
+		if wraps && !u.ScreenReader && width < MaxAutoWrapWidth && util.WidestLine(promptOut) > width {
+			promptOut = render(true)
 		}
 
 	}
@@ -482,8 +501,8 @@ func (u *UserRecord) CommandPromptBody() string {
 	// its replies whole), and a client that asked for the telnet go-ahead (a
 	// MUD client finds the prompt by that signal, wraps the line itself, and
 	// its triggers and gauges read it as one line; owner, 2026-11-21).
-	if !u.onAIPort() && goAhead == `` {
-		promptOut = messaging.WrapPrompt(promptOut, u.WrapWidth())
+	if wraps {
+		promptOut = messaging.WrapPrompt(promptOut, width)
 	}
 
 	unsent, suggested := u.GetUnsentText()
@@ -494,7 +513,17 @@ func (u *UserRecord) CommandPromptBody() string {
 
 }
 
+// ProcessPromptString renders promptStr for this player: the vitals as bars,
+// or as words for a screen reader account.
 func (u *UserRecord) ProcessPromptString(promptStr string) string {
+	return u.processPromptString(promptStr, u.ScreenReader)
+}
+
+// processPromptString renders promptStr, drawing {hpbar} {stbar} {cvbar} and
+// {tankbar} as words (vitalWord) when words is set, else as bars
+// (renderVitalBar). CommandPromptBody sets it for a screen reader account and
+// for a bar prompt too wide for the screen.
+func (u *UserRecord) processPromptString(promptStr string, words bool) string {
 
 	promptOut := strings.Builder{}
 
@@ -642,7 +671,7 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 
 			case `{hpbar}`:
 				reservedHP := u.Character.GetPoolReservation("health", u.Character.HealthMax.Value)
-				if u.ScreenReader {
+				if words {
 					promptOut.WriteString(vitalWord(`hp`, u.Character.Health, u.Character.HealthMax.Value, reservedHP))
 				} else {
 					promptOut.WriteString(renderVitalBar(u.Character.Health, u.Character.HealthMax.Value, reservedHP))
@@ -650,7 +679,7 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 
 			case `{stbar}`:
 				reservedSP := u.Character.GetPoolReservation("stamina", u.Character.StaminaMax.Value)
-				if u.ScreenReader {
+				if words {
 					promptOut.WriteString(vitalWord(`sp`, u.Character.Stamina, u.Character.StaminaMax.Value, reservedSP))
 				} else {
 					promptOut.WriteString(renderVitalBar(u.Character.Stamina, u.Character.StaminaMax.Value, reservedSP))
@@ -658,7 +687,7 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 
 			case `{cvbar}`:
 				reservedCP := u.Character.GetPoolReservation("conviction", u.Character.ConvictionMax.Value)
-				if u.ScreenReader {
+				if words {
 					promptOut.WriteString(vitalWord(`cp`, u.Character.Conviction, u.Character.ConvictionMax.Value, reservedCP))
 				} else {
 					promptOut.WriteString(renderVitalBar(u.Character.Conviction, u.Character.ConvictionMax.Value, reservedCP))
@@ -785,7 +814,7 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 				if tank, _ := tankOf(); tank != nil {
 					promptOut.WriteString(` <ansi fg="255">Thp:</ansi>`)
 					reservedTank := tank.GetPoolReservation("health", tank.HealthMax.Value)
-					if u.ScreenReader {
+					if words {
 						promptOut.WriteString(vitalWord(`hp`, tank.Health, tank.HealthMax.Value, reservedTank))
 					} else {
 						promptOut.WriteString(renderVitalBar(tank.Health, tank.HealthMax.Value, reservedTank))
