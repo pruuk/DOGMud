@@ -401,7 +401,10 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   max-width: 100%;
   justify-self: center;
 }
-#panel-map .map-body:has(> #map-deck:not([hidden])) > #map-deck { grid-column: 2; grid-row: 1; }
+/* 8px (the deck's gap) between the card's title line and the buttons, so
+   they do not touch it (owner, S21, 2026-11-27). The Map grid has no
+   padding of its own; touch-targets.test.js counts this as MAP_TOP. */
+#panel-map .map-body:has(> #map-deck:not([hidden])) > #map-deck { grid-column: 2; grid-row: 1; padding-top: 8px; }
 #map-deck { background: transparent; }
 /* The divider between the deck and the command box: a wider gap and a line
    (roadmap fat-finger rules), only while the deck is on. */
