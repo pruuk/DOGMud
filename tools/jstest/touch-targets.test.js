@@ -27,7 +27,7 @@ var BORDER = 2;                    // the slot's side borders (dashboard.css #to
 var SESSION = 64, TABBAR = 64;     // the session bar with its gap; the tab bar's room on touch (--tabbar-h)
 var MAP_TITLE = 36;   // the Map card's title bar on a phone, the name strip's height (--tabname-h)
 var MAP_MIN = 120;    // the narrowest the map may get beside its buttons
-var GAME_W =LayoutPick.GAME_W_DEFAULT;   // the game column outside phone mode
+var GAME_W = LayoutPick.GAME_W_DEFAULT;   // the game column outside phone mode
 
 function span(n, b, g) { return n * b + (n - 1) * g + 2 * TD.PAD; }
 
