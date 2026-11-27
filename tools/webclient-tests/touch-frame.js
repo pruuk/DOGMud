@@ -120,9 +120,13 @@ check(/html:has\(#dashboard\[data-bars="folded"\]\) #dash-tabbar \{ display: non
 // Review of 7deb3afa4: a tab open sets #dash-tabbar.named, whose rule
 // (html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"],
 // specificity 2,3,1) put the tab bar's padding back under a folded bar. The
-// data-bars rule repeats #dashboard three times (3,1,0) to win over every one.
-check(/#dashboard#dashboard#dashboard\[data-bars\] \{[^}]*padding-bottom: 6px;[^}]*grid-template-rows: minmax\(0, 1fr\);[^}]*grid-template-areas: "center";/.test(css), 'data-bars: no tab bar padding, one grid row, whatever else sets them (specificity 3,1,0 beats the .named rule)');
-check(!/^#dashboard\[data-bars\] \{/m.test(css), 'no weaker data-bars rule left beside it');
+// data-bars rule is a plain #dashboard[data-bars] that wins by source order,
+// and the two rules that outrank it by specificity step aside with :not([data-bars]).
+check(/\n#dashboard\[data-bars\] \{[^}]*padding-bottom: 6px;[^}]*grid-template-rows: minmax\(0, 1fr\);[^}]*grid-template-areas: "center";/.test(css), 'data-bars: no tab bar padding, one grid row, a plain rule');
+check(!/#dashboard#dashboard/.test(css), 'no repeated-id selector');
+check(css.indexOf('\n#dashboard[data-bars] {') > css.indexOf('\n#dashboard[data-mode="phone"] {'), 'the data-bars rule comes after the phone rule it overrides');
+check(/html:not\(\.keyboard-open\):has\(#dash-tabbar\.named\) #dashboard\[data-mode="phone"\]:not\(\[data-bars\]\) \{/.test(css), 'a tab open: its tab bar padding rule steps aside for data-bars');
+check(/html\.phone #dashboard:not\(\[data-mode\]\):not\(\[data-bars\]\) \{/.test(css), 'before a mode is set: the phone default steps aside for data-bars');
 check(/menu\.style\.top = \(\(getComputedStyle\(strip\)\.position === 'fixed' \? 0 : strip\.offsetTop\) \+ strip\.offsetHeight \+ 4\) \+ 'px';/.test(html), 'the Settings menu sits 4px under a fixed session bar, not 6px lower (offsetTop counted twice)');
 check(/#dashboard\[data-bars="shown"\] #dash-session \{[^}]*position: fixed;/.test(css), 'shown: the session bar over the game (#938, D6)');
 

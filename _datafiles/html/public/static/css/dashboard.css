@@ -981,7 +981,7 @@ html.layout-column #dash-drawer {
    page head (viewportfit.js isPhone), and a phone is a touch screen too
    (layoutpick decision 8), so a zoomed desktop keeps the wide default. */
 @media (pointer: coarse) {
-  html.phone #dashboard:not([data-mode]) {
+  html.phone #dashboard:not([data-mode]):not([data-bars]) {
     padding-bottom: calc(6px + 64px);   /* the phone tab bar's room (--tabbar-h on touch) */
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -1013,7 +1013,7 @@ html.layout-column #dash-drawer {
 /* That name strip makes the tab bar taller, so the game moves up by the
    same amount. Otherwise the strip would sit over the command box. (Not
    while the keyboard is up: the tab bar is hidden then.) */
-html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"] {
+html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"]:not([data-bars]) {
   padding-bottom: calc(6px + var(--tabbar-h) + var(--tabname-h));
 }
 /* The same in slim, where the bar is under the game column only... */
@@ -1480,11 +1480,11 @@ html.layout-column.keyboard-open #dash-drawer {
    game takes their rows. Menu, the side column's last button, brings both
    back over the game (D6): the session bar across the top, the tab bar in
    its usual place, until the player picks something or taps away. */
-/* #dashboard three times over: a tab open sets #dash-tabbar.named, whose
-   padding rule (html:not(.keyboard-open):has(#dash-tabbar.named)
-   #dashboard[data-mode="phone"], specificity 2,3,1) would otherwise put the
-   tab bar's room back under a folded bar and leave an empty strip. */
-#dashboard#dashboard#dashboard[data-bars] {
+/* Wins over #dashboard[data-mode="phone"] by source order. The two rules
+   that outrank it by specificity (the tab open one, whose padding would put
+   the tab bar's room back under a folded bar and leave an empty strip, and
+   the phone default before a mode is set) carry :not([data-bars]). */
+#dashboard[data-bars] {
   padding-bottom: 6px;
   grid-template-rows: minmax(0, 1fr);
   grid-template-areas: "center";

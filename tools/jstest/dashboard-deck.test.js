@@ -80,7 +80,7 @@ doc = {
     createElementNS: function (ns, t) { return new FakeEl(t, ns); },
     // Document listeners are recorded so a test can fire an event at them
     // (init's bars listeners: dispatch below); the real init is not run.
-    addEventListener: function (type, fn) { listeners.push({ type: type, fn: fn }); },
+    addEventListener: function (type, fn, capture) { listeners.push({ type: type, fn: fn, capture: capture === true }); },
     querySelector: function (sel) {
         if (sel !== '.deck-menu') return null;
         return D._deck.children.filter(function (b) { return /deck-menu/.test(b.className); })[0] || null;
@@ -100,7 +100,11 @@ function fire(type, needles, extra) {
             var self = this;
             return (needles || []).some(function (n) { return sel.indexOf(n) >= 0; }) ? self : null;
         } } };
-    listeners.forEach(function (l) { if (l.type === type) l.fn(ev); });
+    // The browser's order: capture listeners, then bubble ones, each in
+    // registration order.
+    [true, false].forEach(function (cap) {
+        listeners.forEach(function (l) { if (l.type === type && l.capture === cap) l.fn(ev); });
+    });
 }
 var timers = [];
 function flushTimers() { var t = timers; timers = []; t.forEach(function (f) { f(); }); }
@@ -291,6 +295,11 @@ check('sideways with the deck on: the bars fold', dash.dataset.bars, 'folded');
 var menuAt = D._deckMemo.cells.findIndex(function (c) { return c.kind === 'menu'; });
 check('Menu is the side column\'s last slot', menuAt, 11);
 D._deckState.guardUntil = 0;   // Back's hold from the Map section above
+// The page's own Settings Escape handler (webclient-pure.html), registered
+// BEFORE the bars' listeners, in the bubble phase, closing Settings.
+doc.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !settingsMenu.hidden) settingsMenu.hidden = true;
+});
 D._wireBars();
 var menuBtn = deck.children[menuAt];
 D._deckTap(menuAt);
@@ -352,8 +361,7 @@ doc.activeElement = doc.body;
 D._deckTap(menuAt);
 settingsMenu.hidden = false;
 fire('keydown', [], { key: 'Escape' });
-check('Escape with Settings open leaves the bars (Settings takes it)', dash.dataset.bars, 'shown');
-settingsMenu.hidden = true;
+check('Escape with Settings open closes Settings and leaves the bars (the capture listener sees it open)', [settingsMenu.hidden, dash.dataset.bars], [true, 'shown']);
 fire('keydown', [], { key: 'Escape' });
 check('the next Escape folds them and focuses Menu', [dash.dataset.bars, doc.activeElement === menuBtn], ['folded', true]);
 D._deckTap(menuAt);
