@@ -71,6 +71,29 @@ func TestCommandPromptBody_DefaultPromptWordsWhenTheBarsDoNotFit(t *testing.T) {
 	}
 }
 
+// Below 80 columns the bars stay while they fit: exactly as wide as the
+// screen keeps the bars byte for byte, one column narrower gets words.
+func TestCommandPromptBody_NarrowScreenKeepsBarsThatFit(t *testing.T) {
+	yamlPrompt, _ := shippedTextFormats(t)
+	tmpl := util.ConvertColorShortTags(yamlPrompt)
+	u := NewTestUser(7126, "fits", "Fitsa", 0)
+	u.SetConfigOption(`prompt-compiled`, tmpl)
+
+	bars := u.ProcessPromptString(tmpl)
+	exact := util.WidestLine(bars)
+	require.Less(t, exact, 80, "the shipped default prompt is narrower than 80")
+	require.GreaterOrEqual(t, exact, MinWrapWidth+1, "a narrower width must be reachable")
+
+	u.LineWidth = exact
+	require.Equal(t, exact, u.WrapWidth())
+	got := u.CommandPromptBody()
+	requireBars(t, got)
+	require.Equal(t, bars, got, "at %d columns the bars fit and are unchanged", exact)
+
+	u.LineWidth = exact - 1
+	requireWords(t, u.CommandPromptBody(), `unhurt`)
+}
+
 // The shipped fight prompt: bars at 80 when it fits, words at 38, the
 // tank's bar included. TestCommandPromptBody_WrapsTheFightPromptBetweenWords
 // checks the same prompt breaks between words.

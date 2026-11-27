@@ -3,7 +3,7 @@
 ## 2026-11-26: Your vitals as words on a narrow screen
 
 - On a narrow screen your health, stamina and conviction now show as words in your prompt, such as unhurt, tired or shaken, when the bars would not fit on one line. A wide screen keeps the bars. In a fight, the health of whoever is fighting your foe for you shows the same way.
-- A MUD client that reads your prompt for its own gauges still gets the bars.
+- A MUD client that reads your prompt for its own gauges, and asks the game to mark where each prompt ends, still gets the bars.
 
 ## 2026-11-26: Shorter names for a few ways out
 

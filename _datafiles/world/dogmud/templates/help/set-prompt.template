@@ -74,7 +74,8 @@ in-game prompt. The fight prompt (<ansi fg="command">fprompt</ansi>) appears dur
 ::
 
   On a narrow screen, when the bars would not fit on one line, they show
-  as words instead, such as unhurt or tired, as {tankbar} does too.
+  as words instead, such as unhurt or tired. The tank's bar in a fight
+  prompt does the same.
 
   <ansi fg="8">Combat Info (fight prompt):</ansi>
 ::rows
