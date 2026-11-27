@@ -61,9 +61,16 @@ check('a closed socket clears the full state', onclose.indexOf('setInputQueueFul
 
 // The grey-out covers the touch deck, the trigger and tick rows and the
 // macro and alias chips.
-['.auto-chip', '.auto-row', '#touch-deck'].forEach(function (sel) {
+['.auto-chip', '.auto-row', '.deck-grid'].forEach(function (sel) {
     check('dashboard.css greys ' + sel, css.indexOf('body.input-queue-full ' + sel) >= 0, sel);
 });
+
+// Menu keeps its slot in every state and sends nothing (D3), so the grey-out
+// and the click block apply to the other cells, never to the grid itself (a
+// child cannot undo its parent's opacity or filter).
+var gridRules = css.split('}').filter(function (r) { return /body\.input-queue-full \.deck-grid/.test(r); }).join('}');
+check('the deck grey-out skips Menu', /\.deck-grid\s*>\s*:not\(\.deck-menu\)/.test(gridRules), gridRules);
+check('no rule greys the whole grid', !/body\.input-queue-full \.deck-grid\s*[,{]/.test(gridRules), gridRules);
 
 // A touch deck press (plan 2b) is a player action like a typed command: it
 // sends nothing while the queue is full (the deck's grey-out is only CSS, so

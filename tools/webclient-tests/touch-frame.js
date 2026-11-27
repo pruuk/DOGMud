@@ -32,7 +32,10 @@ const cmdAt = html.indexOf('id="panel-cmd"');
 check(feedAt > 0 && slotAt > feedAt && cmdAt > slotAt, 'the slot sits between the game text and the command box');
 check(deckAt > slotAt && deckAt < cmdAt, 'the deck is inside the slot');
 check(/<div id="touch-slot" hidden>/.test(html), 'the slot starts hidden');
-check(/<div id="touch-deck" role="group" aria-label="Movement"><\/div>/.test(html), 'the deck starts empty and is one labelled group of buttons (plan 2b)');
+check(/<div id="touch-deck" class="deck-grid" role="group" aria-label="Movement"><\/div>/.test(html), 'the deck starts empty and is one labelled group of buttons (plan 2b), styled as a deck grid (plan 2c)');
+check(/<div id="map-deck" class="deck-grid" role="group" aria-label="Movement" hidden><\/div>/.test(html), 'the Map tab has its own movement buttons, hidden until the Map tab opens on a phone (plan 2c)');
+check(html.indexOf('id="map-render"') >= 0 && html.indexOf('id="map-deck"') > html.indexOf('id="map-render"') &&
+      html.indexOf('id="map-deck"') < html.indexOf('id="map-controls"'), 'the Map tab buttons sit right after the map');
 const scriptAt = html.indexOf('/static/js/touchdeck.js');
 const wiringAt = html.indexOf("querySelectorAll('input[name=\"touch-controls\"]')");
 check(scriptAt > 0 && wiringAt > scriptAt, 'touchdeck.js loads before the Settings code reads it');
@@ -49,10 +52,14 @@ check(!/#panel-feed(\.sight-\w+)?\s*\+\s*#panel-cmd/.test(css), 'no rule still n
     'the slot takes the ' + b + ' sight colour');
 });
 check(/#touch-slot\[hidden\] \{ display: none; \}/.test(css), 'an empty slot takes no room');
+check(/\.deck-grid\[hidden\] \{ display: none; \}/.test(css), 'a hidden deck grid stays hidden although .deck-grid sets display (plan 2c)');
+check(/#touch-deck \{ border-top: 2px solid var\(--gold-rule\); \}/.test(css), 'the deck in the slot keeps the rule above it, the Map tab buttons do not (plan 2c)');
+check(/#panel-map \.map-body:has\(> #map-deck:not\(\[hidden\]\)\) \{[^}]*display: grid;[^}]*grid-template-rows: minmax\(0, 1fr\);/.test(css), 'the Map body is a grid with the map in a row of the remaining height while the Map tab buttons show (plan 2c)');
 check(/#touch-slot #dash-drawer \{[^}]*position: static;/.test(css), 'an open tab in the slot is part of the stack, not floating');
 check(/#touch-slot #dash-drawer:not\(\.open\) \{ display: none; \}/.test(css), 'a closed tab takes no room in the slot');
 check(/#touch-slot\[data-shows="tab"\] #touch-deck \{ display: none; \}/.test(css), 'an open tab takes the deck\'s place');
-check(/#touch-slot\.deck-on #dash-drawer\.open \{ min-height: var\(--deck-h\); \}/.test(css), 'a short tab keeps the deck\'s height');
+check(/#dashboard:not\(\[data-bars\]\) #touch-slot\.deck-on #dash-drawer\.open \{ min-height: var\(--deck-h\); \}/.test(css), 'a short tab keeps the deck\'s height, except sideways where the deck is a side column and the height would be an empty band');
+check(!/(^|\n)#touch-slot\.deck-on #dash-drawer\.open \{ min-height/.test(css), 'no unscoped min-height rule for a tab over the deck remains');
 
 // dashboard.js.
 check(/_placeDrawer\(true\)/.test(dash) && /_placeDrawer\(false\)/.test(dash), 'a phone moves its tab card into the slot and back out');
@@ -99,7 +106,7 @@ check(/Dashboard\.setDeckSender\(sendButtonPress, playerSend\)/.test(html), 'a d
 check(/function sendButtonPress\(id\) \{[\s\S]{0,400}SendGMCP\("Char\.Button\.Press", \{ id: id \}\)/.test(html), 'sendButtonPress sends only the id');
 check(/"Commands": function\(\) \{[^}]*syncDeckMode\(\);/.test(html) && /"Commands\.State": function\(\) \{\s*checkDeathClearsQueue\(\);\s*syncDeckMode\(\);/.test(html), 'Commands.State\'s mode reaches the deck');
 check(/socket\.onclose = function\(event\) \{[\s\S]{0,300}if \(window\.Dashboard && Dashboard\.setMoves\) Dashboard\.setMoves\(null\);/.test(html), 'a closed connection clears the buttons');
-check(/TD\.cells\(model, s, this\._deckState\.level, this\._deckState\.page\)/.test(dash) && /TD\.render\(deck, cells, document\)/.test(dash), 'applyDeck draws the cells touchdeck.js lays out');
+check(/TD\.cells\(model, s, st\.level, st\.page\)/.test(dash) && /TD\.cells\(model, ms, st\.level, st\.page\)/.test(dash) && /TD\.render\(el, cells, document\)/.test(dash), 'applyDeck draws the cells touchdeck.js lays out, in both grids');
 check(/closest\("button\[data-cell\]"\)/.test(dash), 'one click handler serves every deck button');
 check(dash.indexOf('deck-slot') === -1, 'dashboard.js draws no empty slots of its own (touchdeck.js render draws every cell)');
 check(/\.deck-btn \{[^}]*touch-action: manipulation;/.test(css), 'a quick second tap is a tap, not a zoom');
@@ -108,6 +115,21 @@ const dashScriptAt = html.indexOf('/static/js/dashboard.js');
 check(tdScriptAt > 0 && dashScriptAt > tdScriptAt, 'touchdeck.js loads before dashboard.js (the tab bar draws its icons with TouchDeck.lineIcon)');
 
 check(html.indexOf('<p class="settings-note" id="touch-note">Buttons above the command box for walking. Automatic shows them on phones and tablets. Always shows them on every screen. Never hides them.</p>') > 0, 'the Touch controls note says what each choice does now (plan 2b)');
+
+check(/#dashboard\[data-bars="folded"\] #dash-session \{ display: none; \}/.test(css), 'folded: no session bar (#938)');
+check(/html:has\(#dashboard\[data-bars="folded"\]\) #dash-tabbar \{ display: none !important; \}/.test(css), 'folded: no tab bar (#938)');
+// Review of 7deb3afa4: a tab open sets #dash-tabbar.named, whose rule
+// (html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"],
+// specificity 2,3,1) put the tab bar's padding back under a folded bar. The
+// data-bars rule is a plain #dashboard[data-bars] that wins by source order,
+// and the two rules that outrank it by specificity step aside with :not([data-bars]).
+check(/\n#dashboard\[data-bars\] \{[^}]*padding-bottom: 6px;[^}]*grid-template-rows: minmax\(0, 1fr\);[^}]*grid-template-areas: "center";/.test(css), 'data-bars: no tab bar padding, one grid row, a plain rule');
+check(!/#dashboard#dashboard/.test(css), 'no repeated-id selector');
+check(css.indexOf('\n#dashboard[data-bars] {') > css.indexOf('\n#dashboard[data-mode="phone"] {'), 'the data-bars rule comes after the phone rule it overrides');
+check(/html:not\(\.keyboard-open\):has\(#dash-tabbar\.named\) #dashboard\[data-mode="phone"\]:not\(\[data-bars\]\) \{/.test(css), 'a tab open: its tab bar padding rule steps aside for data-bars');
+check(/html\.phone #dashboard:not\(\[data-mode\]\):not\(\[data-bars\]\) \{/.test(css), 'before a mode is set: the phone default steps aside for data-bars');
+check(/menu\.style\.top = \(\(getComputedStyle\(strip\)\.position === 'fixed' \? 0 : strip\.offsetTop\) \+ strip\.offsetHeight \+ 4\) \+ 'px';/.test(html), 'the Settings menu sits 4px under a fixed session bar, not 6px lower (offsetTop counted twice)');
+check(/#dashboard\[data-bars="shown"\] #dash-session \{[^}]*position: fixed;/.test(css), 'shown: the session bar over the game (#938, D6)');
 
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails === 0 ? 0 : 1);

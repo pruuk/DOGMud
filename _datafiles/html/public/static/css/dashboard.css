@@ -265,7 +265,7 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   transition: border-color 0.4s ease;
 }
 #touch-slot[hidden] { display: none; }
-#touch-deck {
+.deck-grid {
   display: grid;
   grid-template-columns: repeat(var(--deck-cols, 6), var(--deck-btn, 48px));
   grid-auto-rows: var(--deck-btn, 48px);
@@ -273,7 +273,6 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   padding: var(--deck-pad, 8px);
   justify-content: center;
   background: var(--ink-deep);
-  border-top: 2px solid var(--gold-rule);
   /* Moving by touch (plan 2b). Lit buttons are the site brass (.brass,
      owner ruling R1): --brass-text #1a1206 is 12.69 and 8.19 on the
      client's two brass stops, --brass-border 7.55 and 4.87, and the brass
@@ -289,6 +288,10 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   --deck-darktile-edge: #969889; /* 6.23 on --deck-blind-bg */
   --deck-darktile-text: #cec6aa; /* 9.48 on --deck-darktile-bg */
 }
+/* An element that sets display wins over [hidden]; a hidden grid stays hidden. */
+.deck-grid[hidden] { display: none; }
+/* The deck in the slot has the rule above it; the Map tab's buttons do not. */
+#touch-deck { border-top: 2px solid var(--gold-rule); }
 #touch-slot[data-shows="tab"] #touch-deck { display: none; }
 #touch-slot[data-shows="empty"] #touch-deck { display: none; }
 /* An empty slot: one the server sends no button for (the command slots until spec 3). */
@@ -360,12 +363,50 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 .deck-name { font-size: var(--deck-label); line-height: 1.1; }
 .deck-name { white-space: nowrap; }
 /* At 44px six letters (43.2px at 12px) would touch the 1px edges. */
-#touch-deck.deck-small .deck-name { letter-spacing: -0.5px; }
+.deck-grid.deck-small .deck-name { letter-spacing: -0.5px; }
 .deck-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 /* The padlock in the button's own text colour: 8.19 to 12.69 on brass,
    5.19 on a pitch-dark tile. */
 .deck-lock { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.3; }
-#touch-deck.deck-dark { background: var(--deck-blind-bg); }
+.deck-grid.deck-dark { background: var(--deck-blind-bg); }
+/* Menu, the side column's last button on a sideways phone (#938): three
+   lines over its word, the site brass like every lit deck button. */
+.deck-menu { gap: 2px; }
+/* The Map tab's buttons (plan 2c, mockup frame 7): a column beside the
+   map, which keeps the rest of the card's width (and its 320 by 300 shape,
+   so a narrower map is also shorter). Only while they show. The other
+   parts of the map body (the legend, where you are) span both columns. */
+#panel-map .map-body:has(> #map-deck:not([hidden])) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  /* Row 1 takes the card's remaining height (.map-body is a flex item of
+     #panel-map, whose height is set, so it is definite) and the legend and
+     where-you-are rows take what they need, as the flex column did. */
+  grid-template-rows: minmax(0, 1fr);
+  grid-auto-rows: auto;
+  column-gap: 8px;
+  align-items: start;
+}
+#panel-map .map-body:has(> #map-deck:not([hidden])) > * { grid-column: 1 / -1; }
+/* The map is sized by the height it has, as in the flex column (it gave up
+   height first), and takes its width from its 320 by 300 shape, capped at
+   its column. border-box so height: 100% includes the padding; the
+   aspect-ratio then shapes the border box (the leather letterboxes by the
+   padding, 4px on touch). */
+#panel-map .map-body:has(> #map-deck:not([hidden])) > #map-render {
+  grid-column: 1; grid-row: 1;
+  box-sizing: border-box;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  justify-self: center;
+}
+/* 8px (the deck's gap) between the buttons and the card's title line
+   above them and its border to their right, so they touch neither (owner,
+   S21, 2026-11-27). The Map grid has no padding of its own;
+   touch-targets.test.js counts these as MAP_TOP and MAP_RIGHT. */
+#panel-map .map-body:has(> #map-deck:not([hidden])) > #map-deck { grid-column: 2; grid-row: 1; padding-top: 8px; padding-right: 8px; }
+#map-deck { background: transparent; }
 /* The divider between the deck and the command box: a wider gap and a line
    (roadmap fat-finger rules), only while the deck is on. */
 #touch-slot.deck-on::after {
@@ -409,6 +450,10 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   min-height: 0;
   width: 100%;
 }
+/* The map's svg as a block: inline, its line box added a few pixels under
+   it, so a card body sized to the map scrolled by 3px (plan 2c headless,
+   800x360). */
+#panel-map #map-render > svg { display: block; }
 /* Map buttons (Fit, Center, −, +): a row under the map, not over its rooms
    (Malia 2026-11-02). Label #1a1206 (master's darker brass text, #774) on the
    brass: 5.45 at the middle stop, 13.77 on the highlight. The ID beats the
@@ -944,7 +989,7 @@ html.layout-column #dash-drawer {
    page head (viewportfit.js isPhone), and a phone is a touch screen too
    (layoutpick decision 8), so a zoomed desktop keeps the wide default. */
 @media (pointer: coarse) {
-  html.phone #dashboard:not([data-mode]) {
+  html.phone #dashboard:not([data-mode]):not([data-bars]) {
     padding-bottom: calc(6px + 64px);   /* the phone tab bar's room (--tabbar-h on touch) */
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -976,7 +1021,7 @@ html.layout-column #dash-drawer {
 /* That name strip makes the tab bar taller, so the game moves up by the
    same amount. Otherwise the strip would sit over the command box. (Not
    while the keyboard is up: the tab bar is hidden then.) */
-html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"] {
+html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"]:not([data-bars]) {
   padding-bottom: calc(6px + var(--tabbar-h) + var(--tabname-h));
 }
 /* The same in slim, where the bar is under the game column only... */
@@ -1267,7 +1312,9 @@ html.layout-column.keyboard-open #dash-drawer {
 #touch-slot #dash-drawer:not(.open) { display: none; }
 /* A tab shorter than the deck keeps the deck's height, so opening Health or
    Quests does not make the game text jump. */
-#touch-slot.deck-on #dash-drawer.open { min-height: var(--deck-h); }
+/* Not sideways (data-bars): there the deck is a side column beside the game,
+   so its height keeps nothing from jumping and only leaves an empty band. */
+#dashboard:not([data-bars]) #touch-slot.deck-on #dash-drawer.open { min-height: var(--deck-h); }
 
 /* ------------------------------------------------------------------ */
 /* Sub-tabs: Chat channels, Inventory, Automation (Malia 2026-11-01)   */
@@ -1436,6 +1483,31 @@ html.layout-column.keyboard-open #dash-drawer {
     border-radius: 6px;
   }
   #dashboard[data-mode="phone"] #touch-slot[data-shows="deck"]::after { display: none; }
+}
+/* The sideways bars (#938, owner ruling 2026-11-22 option A; plan 2c). A
+   sideways phone with the deck on folds the session bar and the tab bar
+   away (dashboard.js sets data-bars from touchdeck.js barsState), and the
+   game takes their rows. Menu, the side column's last button, brings both
+   back over the game (D6): the session bar across the top, the tab bar in
+   its usual place, until the player picks something or taps away. */
+/* Wins over #dashboard[data-mode="phone"] by source order. The two rules
+   that outrank it by specificity (the tab open one, whose padding would put
+   the tab bar's room back under a folded bar and leave an empty strip, and
+   the phone default before a mode is set) carry :not([data-bars]). */
+#dashboard[data-bars] {
+  padding-bottom: 6px;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "center";
+}
+#dashboard[data-bars="folded"] #dash-session { display: none; }
+html:has(#dashboard[data-bars="folded"]) #dash-tabbar { display: none !important; }
+#dashboard[data-bars="shown"] #dash-session {
+  position: fixed;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  z-index: 51;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 @media (display-mode: standalone) {
   html:not(.fullscreen-on) .chat-fs-hint { display: none; }
@@ -2018,12 +2090,14 @@ html.layout-column.keyboard-open #dash-drawer {
    frees. The page also ignores their clicks (setInputQueueFull). */
 body.input-queue-full .auto-chip,
 body.input-queue-full .auto-row,
-body.input-queue-full #touch-deck {
+body.input-queue-full .deck-grid > :not(.deck-menu) {
   opacity: 0.45;
   filter: grayscale(1);
   cursor: not-allowed;
 }
-body.input-queue-full #touch-deck { pointer-events: none; }
+/* Menu keeps its slot in every state and sends nothing (D3), so the grey-out
+   is per cell, never on the grid (a child cannot undo its parent's opacity). */
+body.input-queue-full .deck-grid > :not(.deck-menu) { pointer-events: none; }
 
 /* ── Action queue UI — queued/pending trigger rows, badges, status bar ──── */
 

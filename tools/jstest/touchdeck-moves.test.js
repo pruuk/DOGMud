@@ -186,7 +186,7 @@ check('More turns the page', TD.tap({ level: 'exits', page: 0, guardUntil: 0 }, 
 // line (actions.NoSightLine).
 check('the Dark tile types look', [TD.tap(st, dk[3], 1000).typed, TD.tap(st, dk[3], 1000).send], ['look', '']);
 check('the deck carries no line of its own', TD.DARK_LINE, undefined);
-check('an empty slot does nothing', TD.tap(st, top[4], 1000), { level: 'top', page: 0, guardUntil: 0, send: '', typed: '' });
+check('an empty slot does nothing', TD.tap(st, top[4], 1000), { level: 'top', page: 0, guardUntil: 0, send: '', typed: '', menu: false });
 
 // Plan 2b D11: a tap that changes the level, the page or the room puts a
 // different button under the finger, so the second tap of a double tap

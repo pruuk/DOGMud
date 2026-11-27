@@ -219,6 +219,10 @@ the deck returns to the T.
 
 ## 2c: the Map tab and the sideways phone
 
+*Built 2026-11-27 on `feature/moving-by-touch-2c`, plan
+`docs/superpowers/plans/2026-11-27-moving-by-touch-2c-map-and-menu.md` (PR
+pending).*
+
 **Map tab.** On a phone, an open tab covers the deck, so the Map tab carries
 the same T and other-exits button beside the map (about 160px; the map is
 pushed left and keeps its size as far as the buttons allow). Same ids, states

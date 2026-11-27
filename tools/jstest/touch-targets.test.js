@@ -25,6 +25,15 @@ function check(name, ok) {
 var PAD = LayoutPick.PAD;          // #dashboard padding (layoutpick.test.js ties it to the CSS)
 var BORDER = 2;                    // the slot's side borders (dashboard.css #touch-slot)
 var SESSION = 64, TABBAR = 64;     // the session bar with its gap; the tab bar's room on touch (--tabbar-h)
+// The Map card's chrome (title bar and borders) under its height. Measured:
+// the 160px card at 800x360 has a 118px body, so 42px. The card is the
+// drawer cap less 2px (dashboard.css #dash-drawer #panel-map), the cap being
+// 45% of the height for the Map (dashboard.css, :has(#panel-map)).
+var MAP_TITLE = 42;
+var CARD_CUT = 2;
+var MAP_TOP = 8;      // the space above the Map tab's buttons (dashboard.css #map-deck padding-top)
+var MAP_RIGHT = 8;    // the space right of them, to the card's border (padding-right)
+var MAP_MIN = 120;    // the narrowest the map may get beside its buttons
 var GAME_W = LayoutPick.GAME_W_DEFAULT;   // the game column outside phone mode
 
 function span(n, b, g) { return n * b + (n - 1) * g + 2 * TD.PAD; }
@@ -60,11 +69,24 @@ MATRIX.forEach(function (m) {
     var mode = LayoutPick.pick(w, GAME_W, phone, h);
     var colW = mode === 'phone' ? w - 2 * PAD : GAME_W;
     var boxW = colW - BORDER;
-    var boxH = h - 2 * PAD - SESSION - TABBAR;
+    // A sideways phone with the deck on folds the session bar and tab bar
+    // away (#938, plan 2c), so its side column has their height too.
+    var boxH = h - 2 * PAD - (sideways ? 0 : SESSION + TABBAR);
     var s = TD.shape(boxW, boxH, phone && !sideways, sideways);
     var p = problems(s, boxW, boxH);
     check(m[0] + ' ' + w + 'x' + h + ': ' + s.rows + 'x' + s.cols + ' at ' + s.button + 'px' +
           (p.length ? ' (' + p.join('; ') + ')' : ''), p.length === 0);
+    // The Map tab's buttons (plan 2c): the deck's size (D11), inside the
+    // Map card (45% of the screen, F19) under its title bar. The Map grid has
+    // no padding, so the upright column is 160px.
+    if (phone) {
+        var ms = TD.mapShape(s, sideways);
+        var cardBody = Math.floor(0.45 * h) - CARD_CUT - MAP_TITLE;
+        var mp = problems(ms, ms.width, cardBody);
+        if (ms.height + MAP_TOP > cardBody) mp.push((ms.height + MAP_TOP) + 'px tall in a ' + cardBody + 'px Map card');
+        if (ms.width + MAP_RIGHT > boxW - MAP_MIN) mp.push('leaves the map ' + (boxW - ms.width - MAP_RIGHT) + 'px');
+        check(m[0] + ' Map tab: ' + ms.rows + 'x' + ms.cols + ' at ' + ms.button + 'px' + (mp.length ? ' (' + mp.join('; ') + ')' : ''), mp.length === 0);
+    }
 });
 
 // The guard can fail.
@@ -75,9 +97,16 @@ check('the guard fails 44px where 48px fits',
 check('the guard fails a deck wider than its box',
     problems({ rows: 2, cols: 6, button: 48, gap: 8, side: false, width: 344, height: 120 }, 300, 600).length > 0);
 
+check('MAP_TOP is the space dashboard.css puts above the Map tab buttons',
+    new RegExp('> #map-deck \\{[^}]*padding-top: ' + MAP_TOP + 'px').test(css));
+check('MAP_RIGHT is the space dashboard.css puts right of the Map tab buttons',
+    new RegExp('> #map-deck \\{[^}]*padding-right: ' + MAP_RIGHT + 'px').test(css));
+check('the Map guard fails three rows in a sideways card',
+    TD.mapShape(TD.shape(0, 300, true, true), false).height > Math.floor(0.45 * 360) - CARD_CUT - MAP_TITLE);
+
 // The stylesheet sizes the deck from touchdeck.js (dashboard.js sets the
 // variables), never with numbers of its own.
-var deckRule = (/#touch-deck \{[^}]*\}/.exec(css) || [''])[0];
+var deckRule = (/\.deck-grid \{[^}]*\}/.exec(css) || [''])[0];
 check('the deck grid takes its button size from --deck-btn', /var\(--deck-btn/.test(deckRule));
 check('the deck grid takes its gap from --deck-gap', /var\(--deck-gap/.test(deckRule));
 var slotRule = (/\.deck-slot \{[^}]*\}/.exec(css) || [''])[0];
@@ -95,7 +124,7 @@ check('a deck button sets no size of its own', btnRule !== '' && !/(^|[;{\s])(wi
 // Task 11 of plan 2b measures it in the browser too.
 var gomud = fs.readFileSync(path.join(js, '..', 'css', 'gomud.css'), 'utf8');
 var labelPx = Number((/--deck-label:\s*(\d+)px;/.exec(gomud) || [])[1]);
-var tight = Number((/#touch-deck\.deck-small \.deck-name \{[^}]*letter-spacing:\s*(-?[\d.]+)px/.exec(css) || [])[1]);
+var tight = Number((/\.deck-grid\.deck-small \.deck-name \{[^}]*letter-spacing:\s*(-?[\d.]+)px/.exec(css) || [])[1]);
 var heavyEdge = Number((/\.deck-back,\s*\.deck-more \{[^}]*border:\s*(\d+)px solid/.exec(css) || [])[1]);
 var LETTER = 0.6 * labelPx, EDGES = 2, HEAVY_EDGES = 2 * heavyEdge;
 // Whether a label of n letters, with spacing px between letters, fits

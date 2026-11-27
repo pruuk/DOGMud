@@ -159,15 +159,95 @@
     _slot: null,        // #touch-slot, under the game text (touch frame plan 1a)
     _deck: null,        // #touch-deck, inside the slot
     // Moving by touch (plan 2b): the last Room.Info and Commands.State mode,
-    // the deck's level and tap memory (touchdeck.js tap), the cells drawn,
-    // and the page's senders (setDeckSender).
+    // the deck's level and tap memory (touchdeck.js tap), the cells each grid
+    // drew, and the page's senders (setDeckSender).
     _moves: null,
     _movesNum: null,
     _deckMode: "",
     _deckState: { level: "top", page: 0, guardUntil: 0 },
-    _deckCells: [],
-    _deckSig: "",
-    _deckDrawnLevel: "top",
+    // What each grid last drew (cells, their JSON, the level): the deck in
+    // the slot, and the Map tab's buttons (plan 2c), which share
+    // _deckState, the model and the senders (D2).
+    _deckMemo: { sig: "", cells: [], level: "top" },
+    _mapDeck: null,     // #map-deck, beside the map (plan 2c)
+    _mapMemo: { sig: "", cells: [], level: "top" },
+    _gridInView: "deck", // "map" while the Map tab's buttons show, else "deck"
+    // The sideways bars (#938, plan 2c): whether Menu brought them back.
+    _barsShown: false,
+
+    // folds: the deck shows Menu now (a sideways phone with the deck on).
+    // Sets data-bars on #dashboard (never on the root, which the keyboard
+    // watch observes), and forgets a shown state once nothing folds.
+    _setBars: function (folds) {
+      var TD = window.TouchDeck, dash = document.getElementById("dashboard");
+      if (!folds) this._barsShown = false;
+      if (!TD || !dash || !dash.dataset) return;
+      var state = TD.barsState(!!folds, this._barsShown);
+      if ((dash.dataset.bars || "") === state) return;
+      if (state) dash.dataset.bars = state; else delete dash.dataset.bars;
+    },
+
+    // The bars Menu brought back (#938) fold again when the player picks
+    // something in them, unless the pick left one of their own dialogs
+    // open (Settings, Leave Game's question; plan 2c D5), or taps anywhere
+    // else. Escape folds them and hands the focus back to Menu (D7).
+    _wireBars: function () {
+      var self = this;
+      // A live deck button is left to its own tap (_deckTap folds the bars);
+      // a gap in the deck, or a disabled slot, is a tap elsewhere.
+      document.addEventListener("pointerdown", function (e) {
+        if (!self._barsShown) return;
+        var t = e.target;
+        if (t && t.closest && t.closest("#dash-session, #dash-tabbar, .deck-menu, .deck-grid button[data-cell]:not(:disabled)")) return;
+        self._foldBars(false);
+      }, true);
+      document.addEventListener("click", function (e) {
+        if (!self._barsShown) return;
+        var t = e.target;
+        if (!(t && t.closest && t.closest("#dash-session button, #dash-tabbar button"))) return;
+        // After the page's own handler has opened or closed its dialog.
+        setTimeout(function () {
+          if (!self._barsShown) return;
+          var menu = document.getElementById("settings-menu");
+          var confirm = document.getElementById("sess-confirm");
+          if (window.TouchDeck.barsStayAfterPick(!!menu && !menu.hidden,
+              !!confirm && confirm.style.display !== "none")) return;
+          self._foldBars(false);
+        }, 0);
+      });
+      // Capture phase: the page's own Escape handlers (Settings) run after
+      // this, so a dialog still open here is the one this Escape belongs to.
+      // The bars stay for it; the next Escape folds them (D7).
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "Escape" || !self._barsShown) return;
+        var menu = document.getElementById("settings-menu");
+        var confirm = document.getElementById("sess-confirm");
+        if (window.TouchDeck.barsStayAfterPick(!!menu && !menu.hidden,
+            !!confirm && confirm.style.display !== "none")) return;
+        self._foldBars(true);
+      }, true);
+    },
+
+    // Folds the bars Menu brought back. The focus goes to Menu when it was
+    // inside the bars (they are display:none once folded) or when force says
+    // so (Escape), so a keyboard player is never left on nothing.
+    _foldBars: function (force) {
+      var a = document.activeElement;
+      var inBars = !!a && ["dash-session", "dash-tabbar"].some(function (id) {
+        var bar = document.getElementById(id);
+        return !!bar && !!bar.contains && bar.contains(a);
+      });
+      this._showBars(false);
+      if (!force && !inBars) return;
+      var menuBtn = document.querySelector(".deck-menu");
+      if (menuBtn) menuBtn.focus();
+    },
+
+    // Menu shows the bars, or folds them again.
+    _showBars: function (on) {
+      this._barsShown = !!on;
+      this.applyDeck();
+    },
     _deckPress: null,
     _deckType: null,
 
@@ -192,15 +272,17 @@
       // The touch slot and its deck (plan 1a). Absent in a page without them.
       this._slot = document.getElementById("touch-slot");
       this._deck = document.getElementById("touch-deck");
-      // One click handler for every deck button (plan 2b). A disabled
-      // button gets no click.
-      if (this._deck) {
-        var deckOwner = this;
-        this._deck.addEventListener("click", function (e) {
+      this._mapDeck = document.getElementById("map-deck");
+      // One click handler per button grid (plan 2b, 2c). A disabled button
+      // gets no click.
+      var deckOwner = this;
+      [[this._deck, "deck"], [this._mapDeck, "map"]].forEach(function (g) {
+        if (!g[0]) return;
+        g[0].addEventListener("click", function (e) {
           var b = e.target && e.target.closest ? e.target.closest("button[data-cell]") : null;
-          if (b && !b.disabled) deckOwner._deckTap(Number(b.getAttribute("data-cell")));
+          if (b && !b.disabled) deckOwner._deckTap(Number(b.getAttribute("data-cell")), g[1]);
         });
-      }
+      });
 
       // Apply the first mode, from the page's game width (pageGameWidth).
       this.setGameWidth(this.pageGameWidth());
@@ -253,6 +335,7 @@
       };
       document.addEventListener("focusin", onFocusMove);
       document.addEventListener("focusout", onFocusMove);
+      this._wireBars();
 
       // Folding, pop-out and the saved layout
       this.initCollapse   && this.initCollapse();
@@ -664,7 +747,26 @@
         this._scrollChatToNewest(document.getElementById("panel-" + this._drawerActive));
       }
       slot.classList.toggle("deck-on", on);
-      if (!on) return;
+      if (!on) {
+        if (this._mapDeck) this._mapDeck.hidden = true;
+        this._gridInView = "deck";
+        this._setBars(false);
+        return;
+      }
+
+      // The Map tab's buttons show where the deck would (no keyboard) and
+      // only on a phone with the Map tab open (spec 2c, D9).
+      var showMap = !!this._mapDeck && !keyboard && this.mode === "phone" && this._drawerActive === "map";
+      // The grids page differently (the Map's holds fewer exits), so a page
+      // number means nothing to the other grid: a change of grid starts at
+      // page 0. The level stays shared (D2).
+      var inView = showMap ? "map" : "deck";
+      if (inView !== this._gridInView) {
+        this._gridInView = inView;
+        if (this._deckState.page !== 0) {
+          this._deckState = { level: this._deckState.level, page: 0, guardUntil: this._deckState.guardUntil };
+        }
+      }
 
       var sw = window.screen ? screen.width : 0, sh = window.screen ? screen.height : 0;
       var phone = !!(VF && VF.isPhone(sw, sh)) && coarse;
@@ -673,34 +775,66 @@
       var boxW = (col ? col.clientWidth : window.innerWidth) - 2;   // the slot's side borders
       var boxH = col ? col.clientHeight : window.innerHeight;
       var s = TD.shape(boxW, boxH, phone && !sideways, sideways);
-      deck.style.setProperty("--deck-cols", String(s.cols));
-      deck.style.setProperty("--deck-btn", s.button + "px");
-      deck.style.setProperty("--deck-gap", s.gap + "px");
-      deck.style.setProperty("--deck-pad", s.pad + "px");
+      this._sizeDeck(deck, s);
       // The deck's height with its 2px top rule: a short tab keeps it.
       slot.style.setProperty("--deck-h", (s.height + 2) + "px");
+      // The bars fold while the side column carries Menu (#938, plan 2c).
+      this._setBars(s.menu);
       // The buttons (plan 2b): touchdeck.js lays the last Room.Info out in
       // this shape and draws it, again only when a cell changes.
       var model = TD.moves(this._moves, this._deckMode);
-      var cells = TD.cells(model, s, this._deckState.level, this._deckState.page);
-      deck.classList.toggle("deck-small", s.button < TD.BTN);
+      var st = this._deckState, bars = this._barsShown;
+      var cells = TD.cells(model, s, st.level, st.page);
       deck.classList.toggle("deck-dark", model.dark);
-      var sig = JSON.stringify(cells);
-      if (sig !== this._deckSig || deck.childElementCount !== cells.length) {
-        // render rebuilds every button, so a focused one would drop the
-        // keyboard and screen reader focus to the page: hand it on
-        // (touchdeck.js focusAfter).
-        var had = active && active !== deck && deck.contains(active) && active.getAttribute
-          ? active.getAttribute("data-cell") : null;
-        var levelWas = this._deckDrawnLevel;
-        this._deckSig = sig;
-        this._deckCells = cells;
-        this._deckDrawnLevel = this._deckState.level;
-        TD.render(deck, cells, document);
-        if (had !== null) {
-          var to = deck.children[TD.focusAfter(cells, Number(had), levelWas, this._deckState.level)];
-          if (to && to.focus) to.focus();
+      this._drawDeck(deck, this._deckMemo, cells, active);
+      // Whether Menu is open is set on its button in place, never through the
+      // cells: a change of cells rebuilds every button, and a rebuild while a
+      // finger is down on one loses that tap.
+      for (var mi = 0; mi < cells.length; mi++) {
+        if (cells[mi].kind === "menu" && deck.children[mi] && deck.children[mi].setAttribute) {
+          deck.children[mi].setAttribute("aria-expanded", bars ? "true" : "false");
         }
+      }
+
+      // The Map tab's buttons (plan 2c): on a phone an open tab takes the
+      // deck's place, so the Map tab carries the same T beside the map,
+      // from the same model and state (D2), in phone mode only (D9).
+      var mapDeck = this._mapDeck;
+      if (!mapDeck) return;
+      mapDeck.hidden = !showMap;
+      if (!showMap) return;
+      var ms = TD.mapShape(s, sideways);
+      this._sizeDeck(mapDeck, ms);
+      mapDeck.classList.toggle("deck-dark", model.dark);
+      this._drawDeck(mapDeck, this._mapMemo, TD.cells(model, ms, st.level, st.page), active);
+    },
+
+    // A grid's size from its shape (touchdeck.js shape or mapShape).
+    _sizeDeck: function (el, s) {
+      el.style.setProperty("--deck-cols", String(s.cols));
+      el.style.setProperty("--deck-btn", s.button + "px");
+      el.style.setProperty("--deck-gap", s.gap + "px");
+      el.style.setProperty("--deck-pad", s.pad + "px");
+      el.classList.toggle("deck-small", s.button < window.TouchDeck.BTN);
+    },
+
+    // Draws cells into a grid when they changed since memo. render rebuilds
+    // every button, so a focused one would drop the keyboard and screen
+    // reader focus to the page: hand it on (touchdeck.js focusAfter).
+    _drawDeck: function (el, memo, cells, active) {
+      var TD = window.TouchDeck;
+      var sig = JSON.stringify(cells);
+      if (sig === memo.sig && el.childElementCount === cells.length) return;
+      var had = active && active !== el && el.contains(active) && active.getAttribute
+        ? active.getAttribute("data-cell") : null;
+      var levelWas = memo.level;
+      memo.sig = sig;
+      memo.cells = cells;
+      memo.level = this._deckState.level;
+      TD.render(el, cells, document);
+      if (had !== null) {
+        var to = el.children[TD.focusAfter(cells, Number(had), levelWas, this._deckState.level)];
+        if (to && to.focus) to.focus();
       }
     },
 
@@ -735,14 +869,22 @@
       this.applyDeck();
     },
 
-    // A tap on the deck's cell i; touchdeck.js tap decides what it does.
-    _deckTap: function (i) {
-      var TD = window.TouchDeck, c = this._deckCells[i];
+    // A tap on cell i of a grid: "deck" (the slot) or "map" (the Map tab's
+    // buttons, plan 2c). touchdeck.js tap decides what it does.
+    _deckTap: function (i, which) {
+      var TD = window.TouchDeck;
+      var memo = which === "map" ? this._mapMemo : this._deckMemo;
+      var c = memo.cells[i];
       if (!TD || !c) return;
       var r = TD.tap(this._deckState, c, Date.now());
       this._deckState = { level: r.level, page: r.page, guardUntil: r.guardUntil };
       if (r.send && this._deckPress) this._deckPress(r.send);
       if (r.typed && this._deckType) this._deckType(r.typed);
+      if (r.menu) { this._showBars(!this._barsShown); return; }
+      // A tap on any other deck button is a pick: the bars Menu brought back
+      // fold (D5). Done here, after the tap, not on the finger going down,
+      // which would redraw under it.
+      this._barsShown = false;
       this.applyDeck();
     },
 

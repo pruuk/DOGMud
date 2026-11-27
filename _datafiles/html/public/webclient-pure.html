@@ -331,7 +331,7 @@
              the open tab (dashboard.js moves #dash-drawer in). Hidden while
              it holds neither. -->
         <div id="touch-slot" hidden>
-          <div id="touch-deck" role="group" aria-label="Movement"></div>
+          <div id="touch-deck" class="deck-grid" role="group" aria-label="Movement"></div>
         </div>
 
         <section class="dash-panel" id="panel-cmd" data-panel="cmd">
@@ -358,6 +358,11 @@
             <span class="ph-btns"><button type="button" class="brass map-legend-head" aria-controls="map-legend" aria-expanded="false" aria-label="Legend" title="Legend"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="2"/><path d="M11 6h8"/><circle cx="6" cy="12" r="2"/><path d="M11 12h8"/><circle cx="6" cy="18" r="2"/><path d="M11 18h8"/></svg></button><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body map-body">
             <div id="map-render"></div>
+            <!-- Moving by touch on the Map tab (touch arc plan 2c): the deck's
+                 T and exits button beside the map, while the Map is the open
+                 tab on a phone (an open tab takes the deck's place). Drawn by
+                 dashboard.js from the same Room.Info as the deck. -->
+            <div id="map-deck" class="deck-grid" role="group" aria-label="Movement" hidden></div>
             <!-- The map's Fit / Center / zoom buttons, under the map rather than over
                  its rooms (2026-11-02): RoomGridSVG puts them here (controlsHost). -->
             <!-- The "Legend ▾" button shares this row, at its right end
@@ -3860,7 +3865,9 @@
             // Just below the session strip, which is taller on phones (48px
             // buttons) than the 40px the stylesheet assumes.
             const strip = document.getElementById('dash-session');
-            menu.style.top = (strip.offsetTop + strip.offsetHeight + 4) + 'px';
+            // A fixed strip (the bars Menu brought back, #938) is the menu's
+            // own containing block, so its offsetTop must not be counted.
+            menu.style.top = ((getComputedStyle(strip).position === 'fixed' ? 0 : strip.offsetTop) + strip.offsetHeight + 4) + 'px';
             menu.hidden = false;
             document.getElementById('btn-settings').setAttribute('aria-expanded', 'true');
             document.getElementById('sound-on').focus();
