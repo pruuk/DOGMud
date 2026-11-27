@@ -49,3 +49,29 @@ func TestIsCompassWord(t *testing.T) {
 		}
 	}
 }
+
+// Owner ruling 18: a player's instance portal is keyed "<zone>-<userId>",
+// and its deck button reads the zone.
+func TestInstancePortalKeyAndZone(t *testing.T) {
+	key := InstancePortalKey("arena", 42)
+	if key != "arena-42" {
+		t.Fatalf("InstancePortalKey = %q, want arena-42", key)
+	}
+	if zone, ok := InstancePortalZone(key, TemporaryRoomExit{UserId: 42}); !ok || zone != "arena" {
+		t.Fatalf("InstancePortalZone(%q) = %q, %v; want arena, true", key, zone, ok)
+	}
+	for _, c := range []struct {
+		key string
+		uid int
+	}{
+		{"arena-42", 0}, // no opener: the ferry plank, a mob rift, the instance return
+		{"arena-42", 7}, // a number that is not the exit's opener
+		{"return", 0},
+		{"-42", 42}, // no zone
+		{"plank", 42},
+	} {
+		if zone, ok := InstancePortalZone(c.key, TemporaryRoomExit{UserId: c.uid}); ok {
+			t.Errorf("InstancePortalZone(%q, uid %d) = %q, true; want false", c.key, c.uid, zone)
+		}
+	}
+}

@@ -84,4 +84,37 @@ var slotRule = (/\.deck-slot \{[^}]*\}/.exec(css) || [''])[0];
 check('a deck slot is styled', slotRule !== '');
 check('a deck slot sets no size of its own', !/(^|[;{\s])(width|height|min-width|min-height)\s*:/.test(slotRule));
 
+// Plan 2b: a deck button fills its grid cell and sets no size of its own.
+var btnRule = (/\.deck-btn \{[^}]*\}/.exec(css) || [''])[0];
+check('a deck button is styled', btnRule !== '');
+check('a deck button sets no size of its own', btnRule !== '' && !/(^|[;{\s])(width|height|min-width|min-height)\s*:/.test(btnRule));
+
+// Owner ruling 18: the longest exit name fits its button at both sizes.
+// JetBrains Mono's letters are 0.6em wide; a named button has a 1px edge
+// each side, Back and More a 2px one (dashboard.css .deck-back, .deck-more).
+// Task 11 of plan 2b measures it in the browser too.
+var gomud = fs.readFileSync(path.join(js, '..', 'css', 'gomud.css'), 'utf8');
+var labelPx = Number((/--deck-label:\s*(\d+)px;/.exec(gomud) || [])[1]);
+var tight = Number((/#touch-deck\.deck-small \.deck-name \{[^}]*letter-spacing:\s*(-?[\d.]+)px/.exec(css) || [])[1]);
+var heavyEdge = Number((/\.deck-back,\s*\.deck-more \{[^}]*border:\s*(\d+)px solid/.exec(css) || [])[1]);
+var LETTER = 0.6 * labelPx, EDGES = 2, HEAVY_EDGES = 2 * heavyEdge;
+// Whether a label of n letters, with spacing px between letters, fits
+// inside a button btn px wide with edges px of border in all.
+function fits(n, spacing, btn, edges) { return !isNaN(spacing) && n * (LETTER + spacing) <= btn - edges; }
+check('the deck name size is read from --deck-label', labelPx > 0);
+check('the Back and More edge is read', heavyEdge > 0);
+check('a ' + TD.NAME_LETTERS + '-letter name fits a ' + TD.BTN + 'px button', fits(TD.NAME_LETTERS, 0, TD.BTN, EDGES));
+check('a ' + TD.NAME_LETTERS + '-letter name fits a ' + TD.SMALL_BTN + 'px button with the small spacing',
+    fits(TD.NAME_LETTERS, tight, TD.SMALL_BTN, EDGES));
+check('the fit check can fail: seven letters do not fit at the small size', !fits(7, tight, TD.SMALL_BTN, EDGES));
+[TD.BACK_LABEL, TD.MORE_LABEL].forEach(function (label) {
+    check('"' + label + '" fits its heavy-edged ' + TD.BTN + 'px button', fits(label.length, 0, TD.BTN, HEAVY_EDGES));
+    check('"' + label + '" fits its heavy-edged ' + TD.SMALL_BTN + 'px button with the small spacing',
+        fits(label.length, tight, TD.SMALL_BTN, HEAVY_EDGES));
+});
+check('Back and More have no space before or after the arrow (Malia, S21 check)',
+    [TD.BACK_LABEL, TD.MORE_LABEL].every(function (l) { return l.indexOf(' ') === -1; }));
+check('the heavy fit check can fail: six characters do not fit a heavy-edged small button',
+    !fits(6, tight, TD.SMALL_BTN, HEAVY_EDGES));
+
 process.exit(failures ? 1 : 0);

@@ -104,3 +104,13 @@ exits:
 	require.Contains(t, found[0], `"outlook"`)
 	require.Contains(t, found[0], "rooms/x/1.yaml")
 }
+
+// The web client's copy of the limit (touchdeck.js NAME_LETTERS, which
+// touch-targets.test.js uses to check a name this long fits a deck button)
+// is exit.MaxNameLetters.
+func TestTouchDeckNameLettersIsMaxNameLetters(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(repoRoot(t), "_datafiles", "html", "public", "static", "js", "touchdeck.js"))
+	require.NoError(t, err)
+	want := fmt.Sprintf("var NAME_LETTERS = %d;", exit.MaxNameLetters)
+	require.Contains(t, string(data), want, "touchdeck.js must hold %q", want)
+}

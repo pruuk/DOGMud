@@ -65,5 +65,44 @@ check('a closed socket clears the full state', onclose.indexOf('setInputQueueFul
     check('dashboard.css greys ' + sel, css.indexOf('body.input-queue-full ' + sel) >= 0, sel);
 });
 
+// A touch deck press (plan 2b) is a player action like a typed command: it
+// sends nothing while the queue is full (the deck's grey-out is only CSS, so
+// Enter, Space or a screen reader would still activate a button), and once
+// sent it leaves "Leaving..." and snaps the view to the newest output, the
+// same code SendData runs (playerActed).
+var ACTED_END = 'function SendData(';
+var acted = extract('function playerActed(', ACTED_END);
+var PRESS_END = 'playerActed(false);';
+var press = extract('function sendButtonPress(', PRESS_END) + PRESS_END + '\n    return true;\n}\n';
+var log = [];
+var probe = {
+    leavingGame: true,
+    setSessionState: function (s) { log.push('state ' + s); probe.leavingGame = false; },
+    term: { scrollToBottom: function () { log.push('scroll'); } },
+    SendGMCP: function (pkg, obj) { log.push('gmcp ' + pkg + ' ' + JSON.stringify(obj)); return probe.open; },
+    open: true
+};
+global.__probe = probe;
+(0, eval)('var __pressScope = (function () {\n' +
+    'var p = __probe;\n' +
+    'function setSessionState(s) { p.setSessionState(s); }\n' +
+    'function SendGMCP(a, b) { return p.SendGMCP(a, b); }\n' +
+    'var term = p.term;\n' +
+    acted.replace(/\bleavingGame\b/g, 'p.leavingGame') + press +
+    'return { press: sendButtonPress };\n}).call({});');
+var sendPress = (0, eval)('__pressScope.press');
+frame({ depth: 10, full: true });
+log = [];
+check('a deck press while the queue is full sends nothing', sendPress('m1') === false && log.length === 0, JSON.stringify(log));
+frame({ depth: 0, full: false });
+log = [];
+var sent = sendPress('m1');
+check('a deck press sends only its id as Char.Button.Press, then leaves "Leaving..." and scrolls to the newest output',
+    sent === true && JSON.stringify(log) === JSON.stringify(['gmcp Char.Button.Press {"id":"m1"}', 'state connected', 'scroll']), JSON.stringify(log));
+probe.open = false; probe.leavingGame = true; log = [];
+check('a press on a closed socket changes nothing on the page', sendPress('m1') === false && JSON.stringify(log) === JSON.stringify(['gmcp Char.Button.Press {"id":"m1"}']), JSON.stringify(log));
+var sendData = extract('function SendData(', 'function SendGMCP(');
+check('SendData runs the same after-send code', /playerActed\(dataToSend === 'quit'\);/.test(sendData) && !/scrollToBottom/.test(sendData) && !/setSessionState/.test(sendData), sendData);
+
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }
 console.log('all passed');

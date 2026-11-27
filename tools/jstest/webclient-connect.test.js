@@ -283,6 +283,16 @@ check('after a line the page wrote, the clear is one row', termWrites[2] === ONE
 s.onmessage({ data: CLIMB + 'A cat arrives.\r\n' });
 check('the next clear climbs again', termWrites[3] === CLIMB + 'A cat arrives.\r\n', JSON.stringify(termWrites[3]));
 term.write = oldWrite;
+
+// Owner ruling 2026-11-26: no client-side text wrapper; the server wraps.
+// gameLine writes the page's line as it is.
+var lines = [], oldWriteln = term.writeln;
+term.writeln = function (t) { lines.push(t); };
+gameLine('Your browser did not allow full screen, so the game stays in this window.');
+check('gameLine writes the page\'s line as it is (no client wrapper)',
+    JSON.stringify(lines) === JSON.stringify(['Your browser did not allow full screen, so the game stays in this window.']), JSON.stringify(lines));
+term.writeln = oldWriteln;
+
 // Every local write marks it, not only gameLine: the page wraps term.write and
 // term.writeln where term is made, server text bypasses the wrapper, and a
 // change of width marks it too (a reflowed prompt, second review of #924).

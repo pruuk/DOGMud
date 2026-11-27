@@ -32,7 +32,7 @@ const cmdAt = html.indexOf('id="panel-cmd"');
 check(feedAt > 0 && slotAt > feedAt && cmdAt > slotAt, 'the slot sits between the game text and the command box');
 check(deckAt > slotAt && deckAt < cmdAt, 'the deck is inside the slot');
 check(/<div id="touch-slot" hidden>/.test(html), 'the slot starts hidden');
-check(/<div id="touch-deck" aria-hidden="true"><\/div>/.test(html), 'the deck starts empty and hidden from screen readers');
+check(/<div id="touch-deck" role="group" aria-label="Movement"><\/div>/.test(html), 'the deck starts empty and is one labelled group of buttons (plan 2b)');
 const scriptAt = html.indexOf('/static/js/touchdeck.js');
 const wiringAt = html.indexOf("querySelectorAll('input[name=\"touch-controls\"]')");
 check(scriptAt > 0 && wiringAt > scriptAt, 'touchdeck.js loads before the Settings code reads it');
@@ -89,6 +89,25 @@ check(/ViewportFit\.isDesktopSite\(/.test(outer) && /setAttribute\('content', 'w
 check(/if \(!ViewportFit\.isPhone\(screen\.width, screen\.height\)\) return;\s*if \(!ViewportFit\.isDesktopSite\(/.test(outer), 'only a phone undoes Desktop site (tablets keep today\'s layout)');
 check(/desktopSite: function/.test(outer) && /turnedOff: function/.test(outer) && /canFullScreen: browserCan/.test(outer), 'the outer page tells the game what the tip needs');
 check(!/so every\s+Chat channel stays in sight on a phone/.test(css), 'the 2026-11-07 wrap comment is rewritten');
+
+// Plan 2b: moving by touch.
+const roomAt = html.indexOf('"Room": function() {');
+const movesAt = html.indexOf('Dashboard.setMoves(obj.Info)');
+const coordsAt = html.indexOf('var coords = obj.Info.coords.split(",");');
+check(roomAt > 0 && movesAt > roomAt && movesAt < coordsAt, 'Room.Info reaches the deck before the map code runs');
+check(/Dashboard\.setDeckSender\(sendButtonPress, playerSend\)/.test(html), 'a deck button sends through sendButtonPress (its id as Char.Button.Press; webclient-input-queue.test.js runs it), and the Dark tile types look through playerSend, the typed command path');
+check(/function sendButtonPress\(id\) \{[\s\S]{0,400}SendGMCP\("Char\.Button\.Press", \{ id: id \}\)/.test(html), 'sendButtonPress sends only the id');
+check(/"Commands": function\(\) \{[^}]*syncDeckMode\(\);/.test(html) && /"Commands\.State": function\(\) \{\s*checkDeathClearsQueue\(\);\s*syncDeckMode\(\);/.test(html), 'Commands.State\'s mode reaches the deck');
+check(/socket\.onclose = function\(event\) \{[\s\S]{0,300}if \(window\.Dashboard && Dashboard\.setMoves\) Dashboard\.setMoves\(null\);/.test(html), 'a closed connection clears the buttons');
+check(/TD\.cells\(model, s, this\._deckState\.level, this\._deckState\.page\)/.test(dash) && /TD\.render\(deck, cells, document\)/.test(dash), 'applyDeck draws the cells touchdeck.js lays out');
+check(/closest\("button\[data-cell\]"\)/.test(dash), 'one click handler serves every deck button');
+check(dash.indexOf('deck-slot') === -1, 'dashboard.js draws no empty slots of its own (touchdeck.js render draws every cell)');
+check(/\.deck-btn \{[^}]*touch-action: manipulation;/.test(css), 'a quick second tap is a tap, not a zoom');
+const tdScriptAt = html.indexOf('/static/js/touchdeck.js');
+const dashScriptAt = html.indexOf('/static/js/dashboard.js');
+check(tdScriptAt > 0 && dashScriptAt > tdScriptAt, 'touchdeck.js loads before dashboard.js (the tab bar draws its icons with TouchDeck.lineIcon)');
+
+check(html.indexOf('<p class="settings-note" id="touch-note">Buttons above the command box for walking. Automatic shows them on phones and tablets. Always shows them on every screen. Never hides them.</p>') > 0, 'the Touch controls note says what each choice does now (plan 2b)');
 
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails === 0 ? 0 : 1);

@@ -168,6 +168,7 @@
   --cmd: 16px;        /* the command box: iOS zooms the page on anything smaller */
   --nav-text: 20px;   /* the site's top bar */
   --foot-text: 16px;  /* the site's footer */
+  --deck-label: 12px; /* names on touch deck buttons (owner ruling 18): six letters fit a 44px button */
   --bold: 600;        /* the one bold: titles, quest names, your own name, room titles */
 
   /* Legacy table tokens kept so any stray references resolve */

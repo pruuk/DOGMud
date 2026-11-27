@@ -35,4 +35,7 @@ func TestWireFreeze_GMCPJSONFieldNames(t *testing.T) {
 	for _, k := range []string{"num", "dx", "dy", "dz", "details", "kind", "id"} {
 		assert.Contains(t, keysOf(GMCPRoomModule_Payload_Contents_ExitInfo{}), k)
 	}
+	// The deck button's text when it is not the exit's name (ruling 18);
+	// omitted otherwise.
+	assert.Contains(t, keysOf(GMCPRoomModule_Payload_Contents_ExitInfo{Label: "arena"}), "label")
 }

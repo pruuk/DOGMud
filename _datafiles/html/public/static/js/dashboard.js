@@ -57,8 +57,6 @@
     trig:   { label: "Automation", icon: ["M12 6a7 7 0 1 0 0 14a7 7 0 1 0 0-14z", "M12 9v4l3 2M9 3h6"] },
   };
 
-  var SVG_NS = "http://www.w3.org/2000/svg";
-
   // One round-icon tab bar with a single name pill (design 2026-11-01).
   // The pill rests on the open tab and slides to a hovered or keyboard-focused
   // circle as a preview, then slides back. Touch has no hover, so on touch the
@@ -82,16 +80,9 @@
       btn.dataset.panel = name;
       btn.setAttribute("aria-label", tab.label);
       btn.setAttribute("aria-pressed", "false");
-      var svg = document.createElementNS(SVG_NS, "svg");
-      svg.setAttribute("viewBox", "0 0 24 24");
-      svg.setAttribute("aria-hidden", "true");
-      svg.setAttribute("focusable", "false");
-      tab.icon.forEach(function (d) {
-        var path = document.createElementNS(SVG_NS, "path");
-        path.setAttribute("d", d);
-        svg.appendChild(path);
-      });
-      btn.appendChild(svg);
+      // The client's one line-icon builder (touchdeck.js, which the page
+      // loads before this file).
+      if (window.TouchDeck) btn.appendChild(window.TouchDeck.lineIcon(document, 24, tab.icon));
       btn.addEventListener("click", function () { onPick(name); });
       bar.appendChild(btn);
     });
@@ -167,6 +158,18 @@
     _drawerClose: null, // the phone card's ✕ button
     _slot: null,        // #touch-slot, under the game text (touch frame plan 1a)
     _deck: null,        // #touch-deck, inside the slot
+    // Moving by touch (plan 2b): the last Room.Info and Commands.State mode,
+    // the deck's level and tap memory (touchdeck.js tap), the cells drawn,
+    // and the page's senders (setDeckSender).
+    _moves: null,
+    _movesNum: null,
+    _deckMode: "",
+    _deckState: { level: "top", page: 0, guardUntil: 0 },
+    _deckCells: [],
+    _deckSig: "",
+    _deckDrawnLevel: "top",
+    _deckPress: null,
+    _deckType: null,
 
     // ---------------------------------------------------------------
     // Public entry point
@@ -189,6 +192,15 @@
       // The touch slot and its deck (plan 1a). Absent in a page without them.
       this._slot = document.getElementById("touch-slot");
       this._deck = document.getElementById("touch-deck");
+      // One click handler for every deck button (plan 2b). A disabled
+      // button gets no click.
+      if (this._deck) {
+        var deckOwner = this;
+        this._deck.addEventListener("click", function (e) {
+          var b = e.target && e.target.closest ? e.target.closest("button[data-cell]") : null;
+          if (b && !b.disabled) deckOwner._deckTap(Number(b.getAttribute("data-cell")));
+        });
+      }
 
       // Apply the first mode, from the page's game width (pageGameWidth).
       this.setGameWidth(this.pageGameWidth());
@@ -667,15 +679,71 @@
       deck.style.setProperty("--deck-pad", s.pad + "px");
       // The deck's height with its 2px top rule: a short tab keeps it.
       slot.style.setProperty("--deck-h", (s.height + 2) + "px");
-      var want = s.rows * s.cols;
-      if (deck.childElementCount !== want) {
-        while (deck.firstChild) deck.removeChild(deck.firstChild);
-        for (var i = 0; i < want; i++) {
-          var cell = document.createElement("span");
-          cell.className = "deck-slot";
-          deck.appendChild(cell);
+      // The buttons (plan 2b): touchdeck.js lays the last Room.Info out in
+      // this shape and draws it, again only when a cell changes.
+      var model = TD.moves(this._moves, this._deckMode);
+      var cells = TD.cells(model, s, this._deckState.level, this._deckState.page);
+      deck.classList.toggle("deck-small", s.button < TD.BTN);
+      deck.classList.toggle("deck-dark", model.dark);
+      var sig = JSON.stringify(cells);
+      if (sig !== this._deckSig || deck.childElementCount !== cells.length) {
+        // render rebuilds every button, so a focused one would drop the
+        // keyboard and screen reader focus to the page: hand it on
+        // (touchdeck.js focusAfter).
+        var had = active && active !== deck && deck.contains(active) && active.getAttribute
+          ? active.getAttribute("data-cell") : null;
+        var levelWas = this._deckDrawnLevel;
+        this._deckSig = sig;
+        this._deckCells = cells;
+        this._deckDrawnLevel = this._deckState.level;
+        TD.render(deck, cells, document);
+        if (had !== null) {
+          var to = deck.children[TD.focusAfter(cells, Number(had), levelWas, this._deckState.level)];
+          if (to && to.focus) to.focus();
         }
       }
+    },
+
+    // The page hands over how the deck sends (plan 2b): press(id) sends a
+    // Char.Button.Press, type(line) sends a command as if typed (the Dark
+    // tile's look).
+    setDeckSender: function (press, type) {
+      this._deckPress = press;
+      this._deckType = type;
+    },
+
+    // A Room.Info arrived, or null when the connection closed. After a move
+    // the deck returns to the T (touchdeck.js levelAfter).
+    setMoves: function (info) {
+      var TD = window.TouchDeck;
+      if (!TD) return;
+      var num = info ? info.num : null;
+      var level = TD.levelAfter(this._deckState.level, this._movesNum, num, TD.moves(info, this._deckMode));
+      if (level !== this._deckState.level) {
+        this._deckState = { level: level, page: 0, guardUntil: this._deckState.guardUntil };
+      }
+      this._moves = info;
+      this._movesNum = num;
+      this.applyDeck();
+    },
+
+    // Commands.State's mode: in a fight the movement buttons dim.
+    setDeckMode: function (mode) {
+      var m = mode || "";
+      if (m === this._deckMode) return;
+      this._deckMode = m;
+      this.applyDeck();
+    },
+
+    // A tap on the deck's cell i; touchdeck.js tap decides what it does.
+    _deckTap: function (i) {
+      var TD = window.TouchDeck, c = this._deckCells[i];
+      if (!TD || !c) return;
+      var r = TD.tap(this._deckState, c, Date.now());
+      this._deckState = { level: r.level, page: r.page, guardUntil: r.guardUntil };
+      if (r.send && this._deckPress) this._deckPress(r.send);
+      if (r.typed && this._deckType) this._deckType(r.typed);
+      this.applyDeck();
     },
 
     _buildPhone: function () {

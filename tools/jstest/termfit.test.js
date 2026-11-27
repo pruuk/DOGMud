@@ -531,8 +531,17 @@ function listenerChecks() {
     check('a throwing font lookup does not escape the fit', !threw, 'threw');
 }
 
+// Owner ruling 2026-11-26: no client-side text wrapper. Wrapping belongs to
+// the server's unified messaging (it wraps to the column count this module
+// reports), so termfit.js fits the window and wraps nothing.
+function noWrapperChecks() {
+    check('termfit.js exports only create (no text wrapper, owner ruling 2026-11-26)',
+        JSON.stringify(Object.keys(TermFit)) === JSON.stringify(['create']), JSON.stringify(Object.keys(TermFit)));
+}
+
 function run() {
     syncChecks();
+    noWrapperChecks();
 
     // A phone panel full of scrollback: the case that lost lines.
     var phone = makePage(360, 500, { text: 14, minFont: 1 });

@@ -12,9 +12,10 @@ import (
 )
 
 // The web client and the site use one font, two text sizes, no italics and one
-// bold (spec 2026-11-09, rulings 4 to 8a). Sizes come from tokens in gomud.css
-// and nothing else. The builder, the admin pages and the architecture diagrams
-// keep their own styling and are not in this list.
+// bold (spec 2026-11-09, rulings 4 to 8a), plus 12px for the names on touch
+// deck buttons (--deck-label, owner ruling 18, 2026-11-26). Sizes come from
+// tokens in gomud.css and nothing else. The builder, the admin pages and the
+// architecture diagrams keep their own styling and are not in this list.
 
 const typePublic = "_datafiles/html/public/"
 const typeHelp = "modules/webhelp/files/datafiles/html/public/"
@@ -65,11 +66,11 @@ var typeExemptLines = map[string]string{
 var (
 	typeComment   = regexp.MustCompile(`(?s)/\*.*?\*/`)
 	typeSizeDecl  = regexp.MustCompile(`font-size\s*:\s*([^;}]+)`)
-	typeSizeOK    = regexp.MustCompile(`^var\(--(text|title|cmd|nav-text|foot-text)\)$`)
+	typeSizeOK    = regexp.MustCompile(`^var\(--(text|title|cmd|nav-text|foot-text|deck-label)\)$`)
 	typeShort     = regexp.MustCompile(`(^|[\s;{"'])font\s*:\s*[^;]`)
 	typeItalic    = regexp.MustCompile(`font-style['"]?\s*[:=]\s*['"]?(italic|oblique)|font\s*:\s*['"]?italic`)
 	typeStyleProp = regexp.MustCompile(`\.style\.font(Size|Weight|Style|Family)\b`)
-	typeTokenDef  = regexp.MustCompile(`(^|[\s;{])--(text|title|cmd|nav-text|foot-text|bold)\s*:`)
+	typeTokenDef  = regexp.MustCompile(`(^|[\s;{])--(text|title|cmd|nav-text|foot-text|deck-label|bold)\s*:`)
 	typeFamily    = regexp.MustCompile(`font-family\s*:\s*([^;}]+)`)
 	typeFamilyOK  = regexp.MustCompile(`^var\(--font-(body|heading|mono)\)$`)
 	typeWeight    = regexp.MustCompile(`font-weight\s*:\s*([^;}]+)`)
@@ -132,6 +133,7 @@ func TestClientTypeRulesCanFail(t *testing.T) {
 		`--font-body: "Source Sans 3";`:          "retired font name",
 		`<text font-style="italic">`:             "italic",
 		`el.style.fontSize = '9px';`:             "font set from script",
+		`  font-size: var(--deck-labels);`:       "font-size var(--deck-labels)",
 	} {
 		if got := strings.Join(typeLineFaults(line), ","); !strings.Contains(got, want) {
 			t.Errorf("probe %q: got %q, want it to contain %q", line, got, want)
@@ -141,12 +143,13 @@ func TestClientTypeRulesCanFail(t *testing.T) {
 		`  font-size: var(--text);`, `font-size: var(--title);`, `font-family: var(--font-mono);`,
 		`font-weight: var(--bold);`, `font-weight: 400;`, `.qonmap { font-style:normal; }`,
 		`el.style.cssText = "font-size:var(--text)";`,
+		`font-size: var(--deck-label);`,
 	} {
 		if got := typeLineFaults(line); len(got) != 0 {
 			t.Errorf("probe %q should pass, got %v", line, got)
 		}
 	}
-	if !typeTokenDef.MatchString(`  --text: 12px;`) || typeTokenDef.MatchString(`--text-primary: #fff;`) || typeTokenDef.MatchString(`--title-gold: #fff;`) {
+	if !typeTokenDef.MatchString(`  --text: 12px;`) || !typeTokenDef.MatchString(`  --deck-label: 12px;`) || typeTokenDef.MatchString(`--text-primary: #fff;`) || typeTokenDef.MatchString(`--title-gold: #fff;`) {
 		t.Error("probe: the token definition pattern is wrong")
 	}
 }
@@ -211,6 +214,7 @@ func TestTypeTokensHoldTheRuledSizes(t *testing.T) {
 		"--cmd: 16px;",
 		"--nav-text: 20px;",
 		"--foot-text: 16px;",
+		"--deck-label: 12px;",
 		"--bold: 600;",
 		":root.upright-phone { --text: 14px; --title: 18px; }",
 		"@media (max-width: 767px), (max-height: 500px) { :root { --nav-text: 16px; --foot-text: 14px; } }",

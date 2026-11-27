@@ -299,11 +299,12 @@
             <label class="theme-choice"><input type="radio" name="site-theme" value="device"> Match my device</label>
           </fieldset>
           <!-- Touch controls (touch frame plan 1a): buttons above the command
-               box, on this device. Automatic stays off until the deck has
-               buttons (owner, 2026-11-21); Always shows the empty frame now. -->
+               box, on this device. Automatic shows them on a touch screen
+               since plan 2b gave the deck its movement buttons; Always shows
+               them on every screen, Never hides them. -->
           <fieldset id="settings-touch" aria-describedby="touch-note">
             <legend>Touch controls</legend>
-            <p class="settings-note" id="touch-note">Buttons above the command box for moving and acting. Automatic turns them on for phones and tablets once they have buttons. Always shows them now.</p>
+            <p class="settings-note" id="touch-note">Buttons above the command box for walking. Automatic shows them on phones and tablets. Always shows them on every screen. Never hides them.</p>
             <label class="theme-choice"><input type="radio" name="touch-controls" value="auto"> Automatic</label>
             <label class="theme-choice"><input type="radio" name="touch-controls" value="always"> Always</label>
             <label class="theme-choice"><input type="radio" name="touch-controls" value="never"> Never</label>
@@ -326,10 +327,11 @@
         </section>
 
         <!-- Touch frame (plan 1a): the slot under the game text holds the
-             controls deck, or on a phone the open tab (dashboard.js moves
-             #dash-drawer in). Hidden while it holds neither. -->
+             controls deck (plan 2b: its movement buttons), or on a phone
+             the open tab (dashboard.js moves #dash-drawer in). Hidden while
+             it holds neither. -->
         <div id="touch-slot" hidden>
-          <div id="touch-deck" aria-hidden="true"></div>
+          <div id="touch-deck" role="group" aria-label="Movement"></div>
         </div>
 
         <section class="dash-panel" id="panel-cmd" data-panel="cmd">
@@ -888,6 +890,11 @@
                     return;
                 }
 
+                // The touch deck's movement buttons read the same Room.Info
+                // (plan 2b). First, so nothing in the map code below can
+                // keep them from updating.
+                if (window.Dashboard && Dashboard.setMoves) Dashboard.setMoves(obj.Info);
+
                 if ( obj.Info ) {
 
                     var coords = obj.Info.coords.split(",");
@@ -1207,9 +1214,11 @@
             "Commands": function() {
                 drainQueue();
                 checkDeathClearsQueue();
+                syncDeckMode();
             },
             "Commands.State": function() {
                 checkDeathClearsQueue();
+                syncDeckMode();
                 // First per-round push after login → the connection has settled and
                 // player state is loaded; release the queue's login-burst hold.
                 queueLoginSettled = true;
@@ -2261,8 +2270,19 @@
 
         // Death-clear: when mode transitions to "dead", wipe the queue.
         var _lastMode = "";
+        // Commands.State's mode: exploration, combat or dead.
+        function commandsMode() {
+            return (((GMCPStructs["Commands"] || {}).State) || {}).mode || "";
+        }
+
+        // The mode reaches the touch deck: in a fight its movement buttons
+        // dim (plan 2b).
+        function syncDeckMode() {
+            if (window.Dashboard && Dashboard.setDeckMode) Dashboard.setDeckMode(commandsMode());
+        }
+
         function checkDeathClearsQueue() {
-            var mode = (((GMCPStructs["Commands"] || {}).State) || {}).mode || "";
+            var mode = commandsMode();
             if (mode === "dead" && _lastMode !== "dead") clearActionQueue();
             _lastMode = mode;
         }
@@ -3430,6 +3450,7 @@
             socket.onclose = function(event) {
                 stopAutomation(); // nothing fires at the login prompts (#375)
                 setInputQueueFull(false); // the next connection's queue starts empty
+                if (window.Dashboard && Dashboard.setMoves) Dashboard.setMoves(null); // no buttons until the next Room.Info (plan 2b)
                 // Logged out: hide the companion key button and its form.
                 if (companionGlue) { companionGlue.disconnected(); }
 
@@ -3598,12 +3619,23 @@
             }
         });
 
+        // What the page does once a player action is sent: a typed command
+        // (SendData) or a touch deck press (sendButtonPress). quit: the
+        // action is the quit command itself.
+        function playerActed(quit) {
+            // Any command cancels the quit meditation server side.
+            if (leavingGame && !quit) setSessionState('connected');
+            // Snap the view back to the newest output whenever the player acts.
+            // Without this, scrolling up to re-read and then moving (or any
+            // command) leaves you stranded in the backlog instead of showing
+            // the room you just walked into.
+            if (term) { term.scrollToBottom(); }
+        }
+
         function SendData(dataToSend) {
             if (!socket || socket.readyState !== WebSocket.OPEN) {
                 return false;
             }
-            // Any command cancels the quit meditation server side.
-            if (leavingGame && dataToSend !== 'quit') setSessionState('connected');
             payloadsSent++;
             totalBytesSent += dataToSend.length;
             linesSent++;
@@ -3611,11 +3643,7 @@
             // The server echoes every line; the screen reader skips the echo
             // (a password box's echo is masked).
             screenReader.sent(dataToSend, textInput.type === 'password');
-            // Snap the view back to the newest output whenever the player acts.
-            // Without this, scrolling up to re-read and then moving (or any
-            // command) leaves you stranded in the backlog instead of showing
-            // the room you just walked into.
-            if (term) { term.scrollToBottom(); }
+            playerActed(dataToSend === 'quit');
             return true;
         }
 
@@ -3630,6 +3658,19 @@
             frame.set(bodyBytes, 3);
             frame[frame.length - 2] = 255; frame[frame.length - 1] = 240; // IAC SE
             socket.send(frame);
+            return true;
+        }
+
+        // A touch deck press (plan 2b): only the button's id, as
+        // Char.Button.Press (the client never builds a command). While the
+        // server holds a full queue it sends nothing, like the automation
+        // rows: the deck's grey-out is only CSS, and Enter, Space or a screen
+        // reader still activate a button. Once sent it is a player action
+        // like a typed command (playerActed).
+        function sendButtonPress(id) {
+            if (inputQueueFull) return false;
+            if (!SendGMCP("Char.Button.Press", { id: id })) return false;
+            playerActed(false);
             return true;
         }
 
@@ -3998,6 +4039,15 @@
 
             // 5) Fit the terminal to its new panel container
             resizeTerminal();
+
+            // 5b) A touch deck button sends only its id (sendButtonPress,
+            // plan 2b). The Dark tile types look through the typed command
+            // path (playerSend), and the server answers with its own line
+            // (owner ruling 2026-11-26: the client writes no text of its own
+            // for the deck, and wraps none).
+            if (window.Dashboard && Dashboard.setDeckSender) {
+                Dashboard.setDeckSender(sendButtonPress, playerSend);
+            }
 
             // 6) Play in Browser already said yes, so join straight away. Join
             // Game stays for after a player leaves or the connection drops.

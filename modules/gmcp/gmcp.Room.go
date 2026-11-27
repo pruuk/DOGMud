@@ -306,7 +306,11 @@ func buildRoomExitsInfo(user *users.UserRecord, room *rooms.Room, sight messagin
 		Moves:     buttons.FixedIds(),
 		DarkMarks: buttons.DarkMarks(user.UserId, room.RoomId, known.Dark),
 	}
-	ids := buttons.MovementIds(user.UserId, room, known)
+	// The deck's buttons: every known exit the viewer may enter (rooms.ForDeck,
+	// owner ruling 18 and R2). An instance portal they may not enter stays in
+	// the exit maps, as on the exits line, with no id.
+	deck, labels := rooms.ForDeck(known, user.UserId)
+	ids := buttons.MovementIds(user.UserId, room, deck)
 	for _, ke := range known.Exits {
 		// A temporary exit named like a permanent one is reached by the
 		// permanent one's name (Room.FindExitByName), so it is listed once.
@@ -328,6 +332,15 @@ func buildRoomExitsInfo(user *users.UserRecord, room *rooms.Room, sight messagin
 			Details: []string{},
 			Kind:    string(ke.Kind),
 			Id:      ids[ke.Name],
+		}
+		if label, ok := labels[ke.Name]; ok {
+			v2.Label = label
+		}
+		// The viewer's own instance portal: the deck lists it first among
+		// portals to one zone (plan 2b D3; the client has no user id). Only
+		// when it has a button: a revoked portal is not offered.
+		if v2.Id != `` && rooms.IsOwnPortal(ke, user.UserId) {
+			v2.Details = append(v2.Details, `own_portal`)
 		}
 		if ke.Exit.Secret {
 			v2.Details = append(v2.Details, `secret`)
@@ -654,8 +667,9 @@ type GMCPRoomModule_Payload_Contents_ExitInfo struct {
 	DeltaY  int      `json:"dy"`
 	DeltaZ  int      `json:"dz"`
 	Details []string `json:"details"`
-	Kind    string   `json:"kind"` // compass, vertical, diagonal, named or temporary (rooms.ExitKind)
-	Id      string   `json:"id"`   // the movement button's id (internal/buttons)
+	Kind    string   `json:"kind"`            // compass, vertical, diagonal, named or temporary (rooms.ExitKind)
+	Id      string   `json:"id"`              // the movement button's id (internal/buttons)
+	Label   string   `json:"label,omitempty"` // the deck button's text when it is not the exit's name: an instance portal's zone (ruling 18)
 }
 
 // /////////////////
