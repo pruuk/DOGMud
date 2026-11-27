@@ -130,6 +130,12 @@ All colours come from the palette spec. The roles that define the brand:
   (`--deck-label`), JetBrains Mono, regular weight. In a pitch-dark room the
   movement buttons turn olive grey with a dashed edge (touch arc spec 2,
   ruling 11). Red only for warnings; green and blue never carry meaning.
+  **Menu** (touch arc plan 2c, #938): on a sideways phone the session bar
+  and tab bar fold away and the side column's last button, Menu, brings
+  them back. It is brass like the rest, with three lines drawn as a stroke
+  path over the word "Menu", never an emoji. **The Map tab's buttons** (plan
+  2c): on a phone, the same T and exits button beside the map, at the
+  deck's own button size (a column 176px wide upright, with its padding).
 - **The Map on touch screens** (Calabe, 2026-11-15): no Fit, Center, zoom
   or Legend row on any touch screen, phone or tablet, either way up. The
   map follows the player's room on every step, and the row took most of a

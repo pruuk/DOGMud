@@ -1,5 +1,10 @@
 # DOGMud Patch Notes
 
+## 2026-11-27: Walk from the Map, and more room sideways
+
+- On a phone, the Map tab now has the same walking buttons as the buttons above the command box, beside the map. The exits button opens the room's other ways out there too, and the map stays in view.
+- With your phone on its side, the bar at the top and the tab buttons at the bottom fold away, so the game has more room. Tap Menu, the last button beside the game, to bring them back. Pick something or tap anywhere else and they fold away again.
+
 ## 2026-11-26: Walk by touch
 
 - On a phone or tablet, buttons above the command box let you walk without typing. Tap an arrow to go that way; the stairs go up or down.
