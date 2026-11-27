@@ -71,6 +71,15 @@ var ten = {};
 'abcdefghij'.split('').forEach(function (ch, i) { ten['door' + ch] = e('named', 'x' + i); });
 check('ten exits fit: no More', kinds(TD.cells(TD.moves(room(ten), ''), SIDE, 'exits', 0)),
     ['back', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'menu']);
+var eleven = {};
+'abcdefghijk'.split('').forEach(function (ch, i) { eleven['door' + ch] = e('named', 'x' + i); });
+var m11 = TD.moves(room(eleven), '');
+check('eleven exits overflow the side column: Back, nine exits, More in slot 10, Menu in 11',
+    kinds(TD.cells(m11, SIDE, 'exits', 0)),
+    ['back', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'more', 'menu']);
+check('eleven exits, page two: the remaining two',
+    kinds(TD.cells(m11, SIDE, 'exits', 1)),
+    ['back', 'exit', 'exit', 'empty', 'empty', 'empty', 'empty', 'empty', 'empty', 'empty', 'more', 'menu']);
 check('the upright deck keeps More in its last slot (plan 2b)',
     kinds(TD.cells(big, PHONE, 'exits', 0)).slice(-1), ['more']);
 
@@ -85,6 +94,26 @@ check('Map sideways: the exits button beside the T',
 check('Map upright, exits: Back and the list, the map stays (the list replaces only the buttons)',
     kinds(TD.cells(TD.moves(tower, ''), mapUp, 'exits', 0)),
     ['back', 'exit', 'exit', 'empty', 'empty', 'empty', 'empty', 'empty', 'empty']);
+
+// Map tab paging: the list replaces the buttons and pages like the deck's.
+var nine = {};
+'abcdefghi'.split('').forEach(function (ch, i) { nine['door' + ch] = e('named', 'x' + i); });
+var m9 = TD.moves(room(nine), '');
+check('Map upright, 9 exits, page one: Back, seven exits, More last',
+    kinds(TD.cells(m9, mapUp, 'exits', 0)),
+    ['back', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'more']);
+check('Map upright, 9 exits, page two: Back, the last two, More last',
+    kinds(TD.cells(m9, mapUp, 'exits', 1)),
+    ['back', 'exit', 'exit', 'empty', 'empty', 'empty', 'empty', 'empty', 'more']);
+var eight = {};
+'abcdefgh'.split('').forEach(function (ch, i) { eight['door' + ch] = e('named', 'x' + i); });
+var m8 = TD.moves(room(eight), '');
+check('Map sideways, 8 exits, page one: Back, six exits, More last',
+    kinds(TD.cells(m8, mapSide, 'exits', 0)),
+    ['back', 'exit', 'exit', 'exit', 'exit', 'exit', 'exit', 'more']);
+check('Map sideways, 8 exits, page two: Back, the last two, More last',
+    kinds(TD.cells(m8, mapSide, 'exits', 1)),
+    ['back', 'exit', 'exit', 'empty', 'empty', 'empty', 'empty', 'more']);
 
 // --- a Menu tap ----------------------------------------------------------------
 

@@ -255,9 +255,11 @@
 
     // The deck's cells for one model, in slot order (row by row), for a
     // shape from shape(). level: 'top' (the T) or 'exits' (the other-exits
-    // list, which replaces the whole deck: Back top-left, More bottom-right
-    // only when the list does not fit). page: which page of the list.
-    // kind: 'empty', 'move', 'other', 'dark', 'back', 'exit', 'more' or 'menu' (the side column's last slot, when s.menu).
+    // list, which replaces the whole deck: Back top-left, More in the last
+    // slot only when the list does not fit; on the side column that is the
+    // slot before Menu). page: which page of the list.
+    // kind: 'empty', 'move', 'other', 'dark', 'back', 'exit', 'more' or
+    // 'menu' (the side column's last slot, when s.menu).
     function cells(model, s, level, page) {
         var n = s.rows * s.cols, room = s.menu ? n - 1 : n, out = [], i;
         for (i = 0; i < n; i++) out.push({ kind: 'empty' });
