@@ -58,7 +58,8 @@ check(/#panel-map \.map-body:has\(> #map-deck:not\(\[hidden\]\)\) \{[^}]*display
 check(/#touch-slot #dash-drawer \{[^}]*position: static;/.test(css), 'an open tab in the slot is part of the stack, not floating');
 check(/#touch-slot #dash-drawer:not\(\.open\) \{ display: none; \}/.test(css), 'a closed tab takes no room in the slot');
 check(/#touch-slot\[data-shows="tab"\] #touch-deck \{ display: none; \}/.test(css), 'an open tab takes the deck\'s place');
-check(/#touch-slot\.deck-on #dash-drawer\.open \{ min-height: var\(--deck-h\); \}/.test(css), 'a short tab keeps the deck\'s height');
+check(/#dashboard:not\(\[data-bars\]\) #touch-slot\.deck-on #dash-drawer\.open \{ min-height: var\(--deck-h\); \}/.test(css), 'a short tab keeps the deck\'s height, except sideways where the deck is a side column and the height would be an empty band');
+check(!/(^|\n)#touch-slot\.deck-on #dash-drawer\.open \{ min-height/.test(css), 'no unscoped min-height rule for a tab over the deck remains');
 
 // dashboard.js.
 check(/_placeDrawer\(true\)/.test(dash) && /_placeDrawer\(false\)/.test(dash), 'a phone moves its tab card into the slot and back out');

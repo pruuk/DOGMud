@@ -38,10 +38,12 @@ check('a tablet deck does not', TD.shape(788, 1000, false, false).menu, false);
 var mapUp = TD.mapShape(PHONE, false);
 check('the Map tab upright: 3 rows of 3 at the deck size (frame 7, D1)',
     [mapUp.rows, mapUp.cols, mapUp.button, mapUp.gap, mapUp.menu], [3, 3, 48, 8, false]);
-// width counts the deck's 8px padding each side: 3 buttons and 2 gaps are
-// 160px, as frame 7; with padding the box is 176.
-check('the Map column is 160px of buttons at 48px, as frame 7', mapUp.width - 2 * mapUp.pad, 160);
+// The Map grid has no padding of its own (the Map card's body has its own),
+// so its width is 3 buttons and 2 gaps: 160px, as frame 7.
+check('the Map column is 160px wide at 48px, as frame 7', mapUp.width, 160);
+check('the Map grid has no padding of its own', mapUp.pad, 0);
 var mapSide = TD.mapShape(SIDE, true);
+check('the Map tab sideways is 104px tall (2 x 48 + 8)', mapSide.height, 104);
 check('the Map tab sideways: 2 rows of 4 (D1)', [mapSide.rows, mapSide.cols], [2, 4]);
 check('the Map tab takes the small size with a small deck (D11)',
     [TD.mapShape(SMALL, false).button, TD.mapShape(SMALL, false).gap], [44, 5]);

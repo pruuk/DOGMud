@@ -1304,7 +1304,9 @@ html.layout-column.keyboard-open #dash-drawer {
 #touch-slot #dash-drawer:not(.open) { display: none; }
 /* A tab shorter than the deck keeps the deck's height, so opening Health or
    Quests does not make the game text jump. */
-#touch-slot.deck-on #dash-drawer.open { min-height: var(--deck-h); }
+/* Not sideways (data-bars): there the deck is a side column beside the game,
+   so its height keeps nothing from jumping and only leaves an empty band. */
+#dashboard:not([data-bars]) #touch-slot.deck-on #dash-drawer.open { min-height: var(--deck-h); }
 
 /* ------------------------------------------------------------------ */
 /* Sub-tabs: Chat channels, Inventory, Automation (Malia 2026-11-01)   */

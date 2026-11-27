@@ -69,10 +69,13 @@
     // The length n buttons take in a line, with the deck's padding.
     function span(n, btn, gap) { return n * btn + (n - 1) * gap + 2 * PAD; }
 
-    function make(rows, cols, btn, gap, side, menu) {
+    // pad: the grid's own padding, PAD unless given (the Map tab's grid sits
+    // in a card body that has its own).
+    function make(rows, cols, btn, gap, side, menu, pad) {
+        var p = pad === undefined ? PAD : pad;
         return {
-            rows: rows, cols: cols, button: btn, gap: gap, pad: PAD, side: side, menu: !!menu,
-            width: span(cols, btn, gap), height: span(rows, btn, gap)
+            rows: rows, cols: cols, button: btn, gap: gap, pad: p, side: side, menu: !!menu,
+            width: cols * btn + (cols - 1) * gap + 2 * p, height: rows * btn + (rows - 1) * gap + 2 * p
         };
     }
 
@@ -98,10 +101,11 @@
     // 7), at the deck's own button size (one size rule, guard 6). Upright:
     // three rows of three, the exits button under the T (160px wide at
     // 48px). Sideways: the Map card is too short for three rows, so two
-    // rows of four, the exits button beside the T.
+    // rows of four, the exits button beside the T. No padding of its own:
+    // the Map card's body has some (160px wide upright, 104px tall sideways).
     function mapShape(deck, sideways) {
-        return sideways ? make(2, 4, deck.button, deck.gap, false, false)
-                        : make(3, 3, deck.button, deck.gap, false, false);
+        return sideways ? make(2, 4, deck.button, deck.gap, false, false, 0)
+                        : make(3, 3, deck.button, deck.gap, false, false, 0);
     }
 
     // What the slot under the game text holds: 'tab', 'deck' or 'empty'.
