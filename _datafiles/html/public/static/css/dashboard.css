@@ -1480,7 +1480,11 @@ html.layout-column.keyboard-open #dash-drawer {
    game takes their rows. Menu, the side column's last button, brings both
    back over the game (D6): the session bar across the top, the tab bar in
    its usual place, until the player picks something or taps away. */
-#dashboard[data-bars] {
+/* #dashboard three times over: a tab open sets #dash-tabbar.named, whose
+   padding rule (html:not(.keyboard-open):has(#dash-tabbar.named)
+   #dashboard[data-mode="phone"], specificity 2,3,1) would otherwise put the
+   tab bar's room back under a folded bar and leave an empty strip. */
+#dashboard#dashboard#dashboard[data-bars] {
   padding-bottom: 6px;
   grid-template-rows: minmax(0, 1fr);
   grid-template-areas: "center";

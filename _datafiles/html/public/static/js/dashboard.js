@@ -187,6 +187,62 @@
       if (state) dash.dataset.bars = state; else delete dash.dataset.bars;
     },
 
+    // The bars Menu brought back (#938) fold again when the player picks
+    // something in them, unless the pick left one of their own dialogs
+    // open (Settings, Leave Game's question; plan 2c D5), or taps anywhere
+    // else. Escape folds them and hands the focus back to Menu (D7).
+    _wireBars: function () {
+      var self = this;
+      // A live deck button is left to its own tap (_deckTap folds the bars);
+      // a gap in the deck, or a disabled slot, is a tap elsewhere.
+      document.addEventListener("pointerdown", function (e) {
+        if (!self._barsShown) return;
+        var t = e.target;
+        if (t && t.closest && t.closest("#dash-session, #dash-tabbar, .deck-menu, .deck-grid button[data-cell]:not(:disabled)")) return;
+        self._foldBars(false);
+      }, true);
+      document.addEventListener("click", function (e) {
+        if (!self._barsShown) return;
+        var t = e.target;
+        if (!(t && t.closest && t.closest("#dash-session button, #dash-tabbar button"))) return;
+        // After the page's own handler has opened or closed its dialog.
+        setTimeout(function () {
+          if (!self._barsShown) return;
+          var menu = document.getElementById("settings-menu");
+          var confirm = document.getElementById("sess-confirm");
+          if (window.TouchDeck.barsStayAfterPick(!!menu && !menu.hidden,
+              !!confirm && confirm.style.display !== "none")) return;
+          self._foldBars(false);
+        }, 0);
+      });
+      // Capture phase: the page's own Escape handlers (Settings) run after
+      // this, so a dialog still open here is the one this Escape belongs to.
+      // The bars stay for it; the next Escape folds them (D7).
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "Escape" || !self._barsShown) return;
+        var menu = document.getElementById("settings-menu");
+        var confirm = document.getElementById("sess-confirm");
+        if (window.TouchDeck.barsStayAfterPick(!!menu && !menu.hidden,
+            !!confirm && confirm.style.display !== "none")) return;
+        self._foldBars(true);
+      }, true);
+    },
+
+    // Folds the bars Menu brought back. The focus goes to Menu when it was
+    // inside the bars (they are display:none once folded) or when force says
+    // so (Escape), so a keyboard player is never left on nothing.
+    _foldBars: function (force) {
+      var a = document.activeElement;
+      var inBars = !!a && ["dash-session", "dash-tabbar"].some(function (id) {
+        var bar = document.getElementById(id);
+        return !!bar && !!bar.contains && bar.contains(a);
+      });
+      this._showBars(false);
+      if (!force && !inBars) return;
+      var menuBtn = document.querySelector(".deck-menu");
+      if (menuBtn) menuBtn.focus();
+    },
+
     // Menu shows the bars, or folds them again.
     _showBars: function (on) {
       this._barsShown = !!on;
@@ -279,37 +335,7 @@
       };
       document.addEventListener("focusin", onFocusMove);
       document.addEventListener("focusout", onFocusMove);
-
-      // The bars Menu brought back (#938) fold again when the player picks
-      // something in them, unless the pick left one of their own dialogs
-      // open (Settings, Leave Game's question; plan 2c D5), or taps anywhere
-      // else. Escape folds them and hands the focus back to Menu (D7).
-      document.addEventListener("pointerdown", function (e) {
-        if (!self._barsShown) return;
-        var t = e.target;
-        if (t && t.closest && t.closest("#dash-session, #dash-tabbar, .deck-menu")) return;
-        self._showBars(false);
-      }, true);
-      document.addEventListener("click", function (e) {
-        if (!self._barsShown) return;
-        var t = e.target;
-        if (!(t && t.closest && t.closest("#dash-session button, #dash-tabbar button"))) return;
-        // After the page's own handler has opened or closed its dialog.
-        setTimeout(function () {
-          if (!self._barsShown) return;
-          var menu = document.getElementById("settings-menu");
-          var confirm = document.getElementById("sess-confirm");
-          if (window.TouchDeck.barsStayAfterPick(!!menu && !menu.hidden,
-              !!confirm && confirm.style.display !== "none")) return;
-          self._showBars(false);
-        }, 0);
-      });
-      document.addEventListener("keydown", function (e) {
-        if (e.key !== "Escape" || !self._barsShown) return;
-        self._showBars(false);
-        var menuBtn = document.querySelector(".deck-menu");
-        if (menuBtn) menuBtn.focus();
-      });
+      this._wireBars();
 
       // Folding, pop-out and the saved layout
       this.initCollapse   && this.initCollapse();
@@ -758,11 +784,17 @@
       // this shape and draws it, again only when a cell changes.
       var model = TD.moves(this._moves, this._deckMode);
       var st = this._deckState, bars = this._barsShown;
-      var cells = TD.cells(model, s, st.level, st.page).map(function (c) {
-        return c.kind === "menu" ? { kind: "menu", open: bars } : c;
-      });
+      var cells = TD.cells(model, s, st.level, st.page);
       deck.classList.toggle("deck-dark", model.dark);
       this._drawDeck(deck, this._deckMemo, cells, active);
+      // Whether Menu is open is set on its button in place, never through the
+      // cells: a change of cells rebuilds every button, and a rebuild while a
+      // finger is down on one loses that tap.
+      for (var mi = 0; mi < cells.length; mi++) {
+        if (cells[mi].kind === "menu" && deck.children[mi] && deck.children[mi].setAttribute) {
+          deck.children[mi].setAttribute("aria-expanded", bars ? "true" : "false");
+        }
+      }
 
       // The Map tab's buttons (plan 2c): on a phone an open tab takes the
       // deck's place, so the Map tab carries the same T beside the map,
@@ -849,6 +881,10 @@
       if (r.send && this._deckPress) this._deckPress(r.send);
       if (r.typed && this._deckType) this._deckType(r.typed);
       if (r.menu) { this._showBars(!this._barsShown); return; }
+      // A tap on any other deck button is a pick: the bars Menu brought back
+      // fold (D5). Done here, after the tap, not on the finger going down,
+      // which would redraw under it.
+      this._barsShown = false;
       this.applyDeck();
     },
 

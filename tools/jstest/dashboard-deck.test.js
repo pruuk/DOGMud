@@ -71,13 +71,39 @@ doc = {
     getElementById: function (id) {
         if (id === 'dashboard') return dash;
         if (id === 'dash-col-center') return col;
+        if (id === 'dash-session') return sess;
+        if (id === 'settings-menu') return settingsMenu;
+        if (id === 'sess-confirm') return confirmEl;
         return null;
     },
     createElement: function (t) { return new FakeEl(t); },
     createElementNS: function (ns, t) { return new FakeEl(t, ns); },
-    addEventListener: function () {},
+    // Document listeners are recorded so a test can fire an event at them
+    // (init's bars listeners: dispatch below); the real init is not run.
+    addEventListener: function (type, fn) { listeners.push({ type: type, fn: fn }); },
+    querySelector: function (sel) {
+        if (sel !== '.deck-menu') return null;
+        return D._deck.children.filter(function (b) { return /deck-menu/.test(b.className); })[0] || null;
+    },
     querySelectorAll: function () { return []; }
 };
+var listeners = [];
+// The session bar and the two dialogs the bars keep open (plan 2c D5).
+var sess = new FakeEl('div');
+var settingsMenu = new FakeEl('div'); settingsMenu.hidden = true;
+var confirmEl = new FakeEl('span'); confirmEl.style = { display: 'none' };
+// A document event: fire(type, target needles) reaches every listener. A
+// target answers closest(sel) when sel names one of its needles.
+function fire(type, needles, extra) {
+    var ev = { type: type, key: extra && extra.key, target: {
+        closest: function (sel) {
+            var self = this;
+            return (needles || []).some(function (n) { return sel.indexOf(n) >= 0; }) ? self : null;
+        } } };
+    listeners.forEach(function (l) { if (l.type === type) l.fn(ev); });
+}
+var timers = [];
+function flushTimers() { var t = timers; timers = []; t.forEach(function (f) { f(); }); }
 doc.activeElement = doc.body;
 
 // Count real renders: the deck redraws only when a cell changes.
@@ -90,7 +116,7 @@ var win = {
     localStorage: { getItem: function () { return 'always'; }, setItem: function () {} },
     innerWidth: 360, innerHeight: 800
 };
-var sandbox = { window: win, document: doc, console: console };
+var sandbox = { window: win, document: doc, console: console, setTimeout: function (f) { timers.push(f); } };
 vm.createContext(sandbox);
 vm.runInContext(SRC, sandbox, { filename: 'dashboard.js' });
 var D = win.Dashboard;
@@ -265,20 +291,96 @@ check('sideways with the deck on: the bars fold', dash.dataset.bars, 'folded');
 var menuAt = D._deckMemo.cells.findIndex(function (c) { return c.kind === 'menu'; });
 check('Menu is the side column\'s last slot', menuAt, 11);
 D._deckState.guardUntil = 0;   // Back's hold from the Map section above
+D._wireBars();
+var menuBtn = deck.children[menuAt];
 D._deckTap(menuAt);
-check('Menu shows the bars', [dash.dataset.bars, D._deckMemo.cells[menuAt].open], ['shown', true]);
+check('Menu shows the bars', [dash.dataset.bars, menuBtn.getAttribute('aria-expanded')], ['shown', 'true']);
+check('showing the bars does not rebuild the deck: Menu is the same button', deck.children[menuAt] === menuBtn, true);
 D._deckTap(menuAt);
-check('Menu again folds them', [dash.dataset.bars, D._deckMemo.cells[menuAt].open], ['folded', false]);
+check('Menu again folds them', [dash.dataset.bars, menuBtn.getAttribute('aria-expanded')], ['folded', 'false']);
+check('folding them does not rebuild the deck either', deck.children[menuAt] === menuBtn, true);
+
+// Review of 7deb3afa4, Important 1: a deck tap while the bars show is a pick.
+D._deckTap(menuAt);
+var sentBefore = pressed.length, rendersBefore = renders;
+fire('pointerdown', ['.deck-grid button']);
+check('a finger down on a deck button leaves the bars alone (its click is still to come)', dash.dataset.bars, 'shown');
+D._deckState.guardUntil = 0;
+D._deckTap(at('move', WEST));
+check('the tap walks, and the pick folds the bars', [pressed.slice(sentBefore), dash.dataset.bars], [['m4'], 'folded']);
+check('without one rebuild of the deck', renders, rendersBefore);
+D._deckTap(menuAt);
+fire('pointerdown', []);
+check('a tap in a gap of the deck is a tap outside: it folds', dash.dataset.bars, 'folded');
+
+// The three listeners of _wireBars.
+D._deckTap(menuAt);
+fire('pointerdown', ['#dash-tabbar']);
+check('a finger down in the tab bar keeps the bars', dash.dataset.bars, 'shown');
+fire('pointerdown', ['.deck-menu']);
+check('and so does Menu itself', dash.dataset.bars, 'shown');
+fire('pointerdown', []);
+check('a tap elsewhere folds them', dash.dataset.bars, 'folded');
+
+D._deckTap(menuAt);
+fire('click', ['#dash-session']); flushTimers();
+check('a pick in the session bar folds them', dash.dataset.bars, 'folded');
+D._deckTap(menuAt);
+settingsMenu.hidden = false;
+fire('click', ['#dash-session']); flushTimers();
+check('Settings left open: the bars stay (D5)', dash.dataset.bars, 'shown');
+settingsMenu.hidden = true;
+confirmEl.style.display = 'inline-flex';
+fire('click', ['#dash-session']); flushTimers();
+check('Leave Game\'s question left open: the bars stay (D5)', dash.dataset.bars, 'shown');
+confirmEl.style.display = 'none';
+fire('click', ['#dash-tabbar']); flushTimers();
+check('a pick in the tab bar folds them', dash.dataset.bars, 'folded');
+
+// Focus after a pick: the bars it was in are display:none now.
+D._deckTap(menuAt);
+var inBar = new FakeEl('button'); sess.appendChild(inBar); inBar.focus();
+fire('click', ['#dash-session']); flushTimers();
+check('a pick that folds the bars moves the focus from them to Menu', [dash.dataset.bars, doc.activeElement === menuBtn], ['folded', true]);
+doc.activeElement = other;
+D._deckTap(menuAt);
+fire('click', ['#dash-session']); flushTimers();
+check('a pick with the focus elsewhere leaves it there', doc.activeElement === other, true);
+doc.activeElement = doc.body;
+
+// Escape: layered over the page's own Escape handlers (Settings), which run after.
+D._deckTap(menuAt);
+settingsMenu.hidden = false;
+fire('keydown', [], { key: 'Escape' });
+check('Escape with Settings open leaves the bars (Settings takes it)', dash.dataset.bars, 'shown');
+settingsMenu.hidden = true;
+fire('keydown', [], { key: 'Escape' });
+check('the next Escape folds them and focuses Menu', [dash.dataset.bars, doc.activeElement === menuBtn], ['folded', true]);
+D._deckTap(menuAt);
+confirmEl.style.display = 'inline-flex';
+fire('keydown', [], { key: 'Escape' });
+check('Escape with Leave Game\'s question open leaves the bars', dash.dataset.bars, 'shown');
+confirmEl.style.display = 'none';
+fire('keydown', [], { key: 'a' });
+check('another key does nothing', dash.dataset.bars, 'shown');
+
+// Turn the phone upright from a shown state: the bars are as always, and Menu is forgotten.
+win.screen = { width: 360, height: 800 };
+sandbox.screen = win.screen;
+win.ViewportFit.isSidewaysPhone = function () { return false; };
+check('(from a shown sideways state)', [dash.dataset.bars, D._barsShown], ['shown', true]);
+D.applyDeck();
+check('upright again: the bars as always, and not shown behind the player\'s back', [dash.dataset.bars, D._barsShown], [undefined, false]);
+win.screen = { width: 800, height: 360 };
+sandbox.screen = win.screen;
+win.ViewportFit.isSidewaysPhone = function () { return true; };
+D.applyDeck();
+check('sideways again: folded, not shown', dash.dataset.bars, 'folded');
 D._showBars(true);
 win.localStorage = { getItem: function () { return 'never'; }, setItem: function () {} };
 D.applyDeck();
 check('Touch controls on Never: no deck, no Menu, the bars as always (D4)', [dash.dataset.bars, D._barsShown], [undefined, false]);
 win.localStorage = { getItem: function () { return 'always'; }, setItem: function () {} };
-win.screen = { width: 360, height: 800 };
-sandbox.screen = win.screen;
-win.ViewportFit.isSidewaysPhone = function () { return false; };
-D.applyDeck();
-check('upright again: the bars as always', dash.dataset.bars, undefined);
 delete win.ViewportFit;
 win.screen = undefined;
 D.setMoves(null);

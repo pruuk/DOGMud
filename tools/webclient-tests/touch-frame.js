@@ -117,6 +117,13 @@ check(html.indexOf('<p class="settings-note" id="touch-note">Buttons above the c
 
 check(/#dashboard\[data-bars="folded"\] #dash-session \{ display: none; \}/.test(css), 'folded: no session bar (#938)');
 check(/html:has\(#dashboard\[data-bars="folded"\]\) #dash-tabbar \{ display: none !important; \}/.test(css), 'folded: no tab bar (#938)');
+// Review of 7deb3afa4: a tab open sets #dash-tabbar.named, whose rule
+// (html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"],
+// specificity 2,3,1) put the tab bar's padding back under a folded bar. The
+// data-bars rule repeats #dashboard three times (3,1,0) to win over every one.
+check(/#dashboard#dashboard#dashboard\[data-bars\] \{[^}]*padding-bottom: 6px;[^}]*grid-template-rows: minmax\(0, 1fr\);[^}]*grid-template-areas: "center";/.test(css), 'data-bars: no tab bar padding, one grid row, whatever else sets them (specificity 3,1,0 beats the .named rule)');
+check(!/^#dashboard\[data-bars\] \{/m.test(css), 'no weaker data-bars rule left beside it');
+check(/menu\.style\.top = \(\(getComputedStyle\(strip\)\.position === 'fixed' \? 0 : strip\.offsetTop\) \+ strip\.offsetHeight \+ 4\) \+ 'px';/.test(html), 'the Settings menu sits 4px under a fixed session bar, not 6px lower (offsetTop counted twice)');
 check(/#dashboard\[data-bars="shown"\] #dash-session \{[^}]*position: fixed;/.test(css), 'shown: the session bar over the game (#938, D6)');
 
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');

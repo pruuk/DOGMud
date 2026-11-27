@@ -3865,7 +3865,9 @@
             // Just below the session strip, which is taller on phones (48px
             // buttons) than the 40px the stylesheet assumes.
             const strip = document.getElementById('dash-session');
-            menu.style.top = (strip.offsetTop + strip.offsetHeight + 4) + 'px';
+            // A fixed strip (the bars Menu brought back, #938) is the menu's
+            // own containing block, so its offsetTop must not be counted.
+            menu.style.top = ((getComputedStyle(strip).position === 'fixed' ? 0 : strip.offsetTop) + strip.offsetHeight + 4) + 'px';
             menu.hidden = false;
             document.getElementById('btn-settings').setAttribute('aria-expanded', 'true');
             document.getElementById('sound-on').focus();
