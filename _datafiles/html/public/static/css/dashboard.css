@@ -379,11 +379,28 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 #panel-map .map-body:has(> #map-deck:not([hidden])) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  /* Row 1 takes the card's remaining height (.map-body is a flex item of
+     #panel-map, whose height is set, so it is definite) and the legend and
+     where-you-are rows take what they need, as the flex column did. */
+  grid-template-rows: minmax(0, 1fr);
+  grid-auto-rows: auto;
   column-gap: 8px;
   align-items: start;
 }
 #panel-map .map-body:has(> #map-deck:not([hidden])) > * { grid-column: 1 / -1; }
-#panel-map .map-body:has(> #map-deck:not([hidden])) > #map-render { grid-column: 1; grid-row: 1; }
+/* The map is sized by the height it has, as in the flex column (it gave up
+   height first), and takes its width from its 320 by 300 shape, capped at
+   its column. border-box so height: 100% includes the padding; the
+   aspect-ratio then shapes the border box (the leather letterboxes by the
+   padding, 4px on touch). */
+#panel-map .map-body:has(> #map-deck:not([hidden])) > #map-render {
+  grid-column: 1; grid-row: 1;
+  box-sizing: border-box;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  justify-self: center;
+}
 #panel-map .map-body:has(> #map-deck:not([hidden])) > #map-deck { grid-column: 2; grid-row: 1; }
 #map-deck { background: transparent; }
 /* The divider between the deck and the command box: a wider gap and a line

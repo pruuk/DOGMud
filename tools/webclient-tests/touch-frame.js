@@ -52,6 +52,9 @@ check(!/#panel-feed(\.sight-\w+)?\s*\+\s*#panel-cmd/.test(css), 'no rule still n
     'the slot takes the ' + b + ' sight colour');
 });
 check(/#touch-slot\[hidden\] \{ display: none; \}/.test(css), 'an empty slot takes no room');
+check(/\.deck-grid\[hidden\] \{ display: none; \}/.test(css), 'a hidden deck grid stays hidden although .deck-grid sets display (plan 2c)');
+check(/#touch-deck \{ border-top: 2px solid var\(--gold-rule\); \}/.test(css), 'the deck in the slot keeps the rule above it, the Map tab buttons do not (plan 2c)');
+check(/#panel-map \.map-body:has\(> #map-deck:not\(\[hidden\]\)\) \{[^}]*display: grid;[^}]*grid-template-rows: minmax\(0, 1fr\);/.test(css), 'the Map body is a grid with the map in a row of the remaining height while the Map tab buttons show (plan 2c)');
 check(/#touch-slot #dash-drawer \{[^}]*position: static;/.test(css), 'an open tab in the slot is part of the stack, not floating');
 check(/#touch-slot #dash-drawer:not\(\.open\) \{ display: none; \}/.test(css), 'a closed tab takes no room in the slot');
 check(/#touch-slot\[data-shows="tab"\] #touch-deck \{ display: none; \}/.test(css), 'an open tab takes the deck\'s place');
