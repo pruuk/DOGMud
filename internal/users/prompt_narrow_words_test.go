@@ -14,7 +14,8 @@ import (
 // Owner ruling, 2026-11-26 (Malia's Galaxy S21 check): a prompt whose
 // health, stamina and conviction bars would make it wider than the player's
 // screen is drawn with the words a screen reader account hears instead
-// (vitalWord). Wide screens keep the bars. A go-ahead client and an AI port
+// (vitalWord), below 80 columns only. An 80 column (desktop) screen keeps
+// the bars even when the prompt wraps. A go-ahead client and an AI port
 // connection keep the prompt whole and unchanged, bars and all. A screen
 // reader account hears words at any width.
 
@@ -88,10 +89,19 @@ func TestCommandPromptBody_FightPromptWordsWhenTheBarsDoNotFit(t *testing.T) {
 	require.NotContains(t, fx.player.CommandPromptBody(), "\n")
 
 	// With someone else tanking, the tank block makes the bar form wider
-	// than 80, so even an 80 column screen gets the words.
+	// than 80. An 80 column screen is a desktop: it keeps the bars and the
+	// prompt wraps (owner, 2026-11-26). One column narrower gets the words.
 	fx.mob.Character.SetAggro(fx.tank.UserId, 0, characters.DefaultAttack)
 	require.Greater(t, util.WidestLine(fx.player.ProcessPromptString(tmpl)), 80)
-	requireWords(t, fx.player.CommandPromptBody(), `Thp:badly hurt`)
+	require.Equal(t, 80, fx.player.WrapWidth())
+	at80 := fx.player.CommandPromptBody()
+	requireBars(t, at80)
+	require.Contains(t, at80, "\n", "the bar form wraps at 80")
+	require.Contains(t, promptVisible(at80), `Thp:`, "the tank block shows with its bar")
+
+	// At 79 the word form itself is a column too wide, so it wraps too.
+	fx.player.LineWidth = 79
+	requireWords(t, fx.player.CommandPromptBody(), `unhurt`, `Thp:badly`)
 
 	fx.player.LineWidth = 38
 	got := fx.player.CommandPromptBody()

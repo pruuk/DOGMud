@@ -482,9 +482,11 @@ func (u *UserRecord) CommandPromptBody() string {
 		// as few lines as it can (owner, 2026-11-26, from Malia's Galaxy S21
 		// check). Only where the prompt wraps: a go-ahead client and an AI
 		// port connection get it whole and unchanged, bars and all. A screen
-		// reader account has words already.
+		// reader account has words already. Only below MaxAutoWrapWidth
+		// columns too: a desktop screen keeps the bars and lets a long line
+		// (the fight prompt with its tank block) wrap (owner, 2026-11-26).
 		promptOut = render(u.ScreenReader)
-		if wraps && !u.ScreenReader && util.WidestLine(promptOut) > width {
+		if wraps && !u.ScreenReader && width < MaxAutoWrapWidth && util.WidestLine(promptOut) > width {
 			promptOut = render(true)
 		}
 

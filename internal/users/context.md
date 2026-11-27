@@ -677,15 +677,16 @@ between words, never mid-bar. It clears nothing.
 Words when the bars will not fit (owner, 2026-11-26, from Malia's Galaxy
 S21 check): the player's prompt is rendered with its bars first, and when
 its widest line (`util.WidestLine`, the measure `templates.WidestLine` also
-is) is wider than `WrapWidth()`, it is rendered again with the word form a
+is) is wider than `WrapWidth()` and `WrapWidth()` is below
+`MaxAutoWrapWidth` (80), it is rendered again with the word form a
 screen reader account hears (`processPromptString(s, true)`: `{hpbar}`,
 `{stbar}`, `{cvbar}` and `{tankbar}` become `vitalWord`s), then wrapped as
 any prompt is. Any client, telnet included. A go-ahead client and an AI
 port connection, which get the prompt whole, keep the bars at any width; a
 screen reader account has words at any width. The question and the stop
-line have no bars and are not affected. The shipped fight prompt with its
-tank block is wider than 80, so a player at 80 columns sees words while
-someone else tanks their target. Every sender draws it with
+line have no bars and are not affected. An 80 column (desktop) screen keeps
+the bars always: the shipped fight prompt with its tank block is wider than
+80 and wraps there with its bars (owner, 2026-11-26). Every sender draws it with
 `SendCommandPrompt(connId, prompt, sent)`, which hands it to
 `connections.SendPrompt` with its last line's width from `PromptCols(prompt)`
 (tags, escapes and the go-ahead take no columns, every other character one:
