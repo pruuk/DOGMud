@@ -24,7 +24,7 @@ import (
 )
 
 // promptRendererCases returns every string literal a case of
-// ProcessPromptString's token switch matches, read from the source.
+// processPromptString's token switch matches, read from the source.
 func promptRendererCases(t *testing.T) map[string]bool {
 	t.Helper()
 	_, here, _, ok := runtime.Caller(0)
@@ -39,7 +39,7 @@ func promptRendererCases(t *testing.T) map[string]bool {
 	cases := map[string]bool{}
 	for _, decl := range f.Decls {
 		fn, ok := decl.(*ast.FuncDecl)
-		if !ok || fn.Name.Name != "ProcessPromptString" {
+		if !ok || fn.Name.Name != "processPromptString" {
 			continue
 		}
 		ast.Inspect(fn.Body, func(n ast.Node) bool {
@@ -92,7 +92,7 @@ func shippedTextFormats(t *testing.T) (prompt, fightPrompt string) {
 // {tankpos} and {tankbar} for eight months after their renderer cases were
 // deleted, and they printed nothing. Every token in every prompt the game
 // ships (config.yaml, the Go defaults, and the toggle-built fight prompt)
-// must have a case in ProcessPromptString.
+// must have a case in processPromptString.
 func TestShippedPromptTokensAllRender(t *testing.T) {
 	cases := promptRendererCases(t)
 
