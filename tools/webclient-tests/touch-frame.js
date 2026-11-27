@@ -105,7 +105,7 @@ check(/Dashboard\.setDeckSender\(sendButtonPress, playerSend\)/.test(html), 'a d
 check(/function sendButtonPress\(id\) \{[\s\S]{0,400}SendGMCP\("Char\.Button\.Press", \{ id: id \}\)/.test(html), 'sendButtonPress sends only the id');
 check(/"Commands": function\(\) \{[^}]*syncDeckMode\(\);/.test(html) && /"Commands\.State": function\(\) \{\s*checkDeathClearsQueue\(\);\s*syncDeckMode\(\);/.test(html), 'Commands.State\'s mode reaches the deck');
 check(/socket\.onclose = function\(event\) \{[\s\S]{0,300}if \(window\.Dashboard && Dashboard\.setMoves\) Dashboard\.setMoves\(null\);/.test(html), 'a closed connection clears the buttons');
-check(/TD\.cells\(model, s, this\._deckState\.level, this\._deckState\.page\)/.test(dash) && /TD\.render\(deck, cells, document\)/.test(dash), 'applyDeck draws the cells touchdeck.js lays out');
+check(/TD\.cells\(model, s, st\.level, st\.page\)/.test(dash) && /TD\.cells\(model, ms, st\.level, st\.page\)/.test(dash) && /TD\.render\(el, cells, document\)/.test(dash), 'applyDeck draws the cells touchdeck.js lays out, in both grids');
 check(/closest\("button\[data-cell\]"\)/.test(dash), 'one click handler serves every deck button');
 check(dash.indexOf('deck-slot') === -1, 'dashboard.js draws no empty slots of its own (touchdeck.js render draws every cell)');
 check(/\.deck-btn \{[^}]*touch-action: manipulation;/.test(css), 'a quick second tap is a tap, not a zoom');

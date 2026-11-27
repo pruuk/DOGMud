@@ -59,6 +59,7 @@ Object.defineProperty(FakeEl.prototype, 'firstChild', { get: function () { retur
 Object.defineProperty(FakeEl.prototype, 'childElementCount', { get: function () { return this.children.length; } });
 
 var parent = new FakeEl('main');
+var dash = new FakeEl('div'); dash.parentNode = parent;
 var col = new FakeEl('div');
 col.clientWidth = 346;   // 344 inside the slot's borders: six 48px columns
 col.clientHeight = 600;
@@ -68,7 +69,7 @@ doc = {
     activeElement: null,
     documentElement: new FakeEl('html'),
     getElementById: function (id) {
-        if (id === 'dashboard') return { parentNode: parent };
+        if (id === 'dashboard') return dash;
         if (id === 'dash-col-center') return col;
         return null;
     },
@@ -99,6 +100,9 @@ var slot = new FakeEl('div');
 slot.appendChild(deck);
 D._slot = slot;
 D._deck = deck;
+var mapDeck = new FakeEl('div');
+mapDeck.hidden = true;
+D._mapDeck = mapDeck;
 
 var pressed = [], typed = [];
 D.setDeckSender(function (id) { pressed.push(id); }, function (line) { typed.push(line); });
@@ -111,7 +115,7 @@ function room(num, v2, extra) {
 }
 function e(kind, id) { return { num: 1, dx: 0, dy: 0, dz: 0, details: [], kind: kind, id: id }; }
 function at(kind, pred) {
-    return D._deckCells.findIndex(function (c) { return c.kind === kind && (!pred || pred(c)); });
+    return D._deckMemo.cells.findIndex(function (c) { return c.kind === kind && (!pred || pred(c)); });
 }
 function focused() { return deck.contains(doc.activeElement) ? doc.activeElement.getAttribute('data-cell') : 'outside'; }
 var tower = room(5243, { west: e('compass', 'm4'), shrine: e('named', 'xaaaa0001'), ledge: e('named', 'xaaaa0002') });
@@ -171,14 +175,47 @@ D.setMoves(room(5347, { up: e('vertical', 'm5') }));
 check('a button that is gone hands the focus to the first button', focused(), String(at('move', function (c) { return c.dir === 'up'; })));
 
 D.setDeckMode('combat');
-check('combat reaches the cells', D._deckCells[1].combat, true);
+check('combat reaches the cells', D._deckMemo.cells[1].combat, true);
 D.setMoves(room(6418, {}, { dark: true, darkmarks: { north: 'wall' } }));
 check('a pitch-dark room: the deck takes deck-dark', deck.classList.contains('deck-dark'), true);
 D._deckTap(at('dark'));
 check('the Dark tile types look through the page, and presses nothing', [typed, pressed.length], [['look'], 4]);
 D.setMoves(null);
-check('a closed connection leaves only empty slots', D._deckCells.every(function (c) { return c.kind === 'empty'; }), true);
+check('a closed connection leaves only empty slots', D._deckMemo.cells.every(function (c) { return c.kind === 'empty'; }), true);
 check('and the deck is light again', deck.classList.contains('deck-dark'), false);
+
+// --- the Map tab's buttons (plan 2c) -------------------------------------------
+
+D.mode = 'phone';   // the Map tab's buttons are a phone's (D9)
+D.setDeckMode('');
+D.setMoves(tower);
+check('Map tab closed: its buttons stay hidden', mapDeck.hidden, true);
+D._drawerActive = 'map';
+D.applyDeck();
+check('Map tab open on a phone: its buttons show, 3 by 3 at the deck size (D1, D11)',
+    [mapDeck.hidden, mapDeck.children.length, mapDeck.style.getPropertyValue('--deck-cols'), mapDeck.style.getPropertyValue('--deck-btn')],
+    [false, 9, '3', '48px']);
+function atMap(kind, pred) {
+    return D._mapMemo.cells.findIndex(function (c) { return c.kind === kind && (!pred || pred(c)); });
+}
+var sent = pressed.length;
+D._deckTap(atMap('move', WEST), 'map');
+check('a Map tab arrow sends the same fixed id as the deck', pressed.slice(sent), ['m4']);
+D._deckTap(atMap('other'), 'map');
+check('the Map tab exits button opens the list, shared with the deck (D2)', [D._deckState.level, D._mapMemo.cells[0].kind], ['exits', 'back']);
+D._deckState.guardUntil = 0;
+D._deckTap(atMap('back'), 'map');
+check('Back returns both to the T', D._deckState.level, 'top');
+D.setMoves(room(6418, {}, { dark: true }));
+check('a pitch-dark room: the Map tab buttons go dark too', mapDeck.classList.contains('deck-dark'), true);
+D.mode = 'column';
+D.applyDeck();
+check('outside phone mode the Map tab buttons hide (D9)', mapDeck.hidden, true);
+D.mode = 'phone';
+D._drawerActive = null;
+D.applyDeck();
+check('Map tab closed again: hidden', mapDeck.hidden, true);
+D.setMoves(null);
 
 // --- the tab bar draws its icons with touchdeck.js lineIcon -----------------
 // One stroke-path icon builder for the client (unify rule): the phone tab
