@@ -265,7 +265,7 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   transition: border-color 0.4s ease;
 }
 #touch-slot[hidden] { display: none; }
-#touch-deck {
+.deck-grid {
   display: grid;
   grid-template-columns: repeat(var(--deck-cols, 6), var(--deck-btn, 48px));
   grid-auto-rows: var(--deck-btn, 48px);
@@ -273,7 +273,6 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   padding: var(--deck-pad, 8px);
   justify-content: center;
   background: var(--ink-deep);
-  border-top: 2px solid var(--gold-rule);
   /* Moving by touch (plan 2b). Lit buttons are the site brass (.brass,
      owner ruling R1): --brass-text #1a1206 is 12.69 and 8.19 on the
      client's two brass stops, --brass-border 7.55 and 4.87, and the brass
@@ -289,6 +288,10 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   --deck-darktile-edge: #969889; /* 6.23 on --deck-blind-bg */
   --deck-darktile-text: #cec6aa; /* 9.48 on --deck-darktile-bg */
 }
+/* An element that sets display wins over [hidden]; a hidden grid stays hidden. */
+.deck-grid[hidden] { display: none; }
+/* The deck in the slot has the rule above it; the Map tab's buttons do not. */
+#touch-deck { border-top: 2px solid var(--gold-rule); }
 #touch-slot[data-shows="tab"] #touch-deck { display: none; }
 #touch-slot[data-shows="empty"] #touch-deck { display: none; }
 /* An empty slot: one the server sends no button for (the command slots until spec 3). */
@@ -360,12 +363,29 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 .deck-name { font-size: var(--deck-label); line-height: 1.1; }
 .deck-name { white-space: nowrap; }
 /* At 44px six letters (43.2px at 12px) would touch the 1px edges. */
-#touch-deck.deck-small .deck-name { letter-spacing: -0.5px; }
+.deck-grid.deck-small .deck-name { letter-spacing: -0.5px; }
 .deck-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 /* The padlock in the button's own text colour: 8.19 to 12.69 on brass,
    5.19 on a pitch-dark tile. */
 .deck-lock { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.3; }
-#touch-deck.deck-dark { background: var(--deck-blind-bg); }
+.deck-grid.deck-dark { background: var(--deck-blind-bg); }
+/* Menu, the side column's last button on a sideways phone (#938): three
+   lines over its word, the site brass like every lit deck button. */
+.deck-menu { gap: 2px; }
+/* The Map tab's buttons (plan 2c, mockup frame 7): a column beside the
+   map, which keeps the rest of the card's width (and its 320 by 300 shape,
+   so a narrower map is also shorter). Only while they show. The other
+   parts of the map body (the legend, where you are) span both columns. */
+#panel-map .map-body:has(> #map-deck:not([hidden])) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+  align-items: start;
+}
+#panel-map .map-body:has(> #map-deck:not([hidden])) > * { grid-column: 1 / -1; }
+#panel-map .map-body:has(> #map-deck:not([hidden])) > #map-render { grid-column: 1; grid-row: 1; }
+#panel-map .map-body:has(> #map-deck:not([hidden])) > #map-deck { grid-column: 2; grid-row: 1; }
+#map-deck { background: transparent; }
 /* The divider between the deck and the command box: a wider gap and a line
    (roadmap fat-finger rules), only while the deck is on. */
 #touch-slot.deck-on::after {
@@ -2018,12 +2038,12 @@ html.layout-column.keyboard-open #dash-drawer {
    frees. The page also ignores their clicks (setInputQueueFull). */
 body.input-queue-full .auto-chip,
 body.input-queue-full .auto-row,
-body.input-queue-full #touch-deck {
+body.input-queue-full .deck-grid {
   opacity: 0.45;
   filter: grayscale(1);
   cursor: not-allowed;
 }
-body.input-queue-full #touch-deck { pointer-events: none; }
+body.input-queue-full .deck-grid { pointer-events: none; }
 
 /* ── Action queue UI — queued/pending trigger rows, badges, status bar ──── */
 

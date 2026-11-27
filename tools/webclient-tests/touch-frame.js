@@ -32,7 +32,10 @@ const cmdAt = html.indexOf('id="panel-cmd"');
 check(feedAt > 0 && slotAt > feedAt && cmdAt > slotAt, 'the slot sits between the game text and the command box');
 check(deckAt > slotAt && deckAt < cmdAt, 'the deck is inside the slot');
 check(/<div id="touch-slot" hidden>/.test(html), 'the slot starts hidden');
-check(/<div id="touch-deck" role="group" aria-label="Movement"><\/div>/.test(html), 'the deck starts empty and is one labelled group of buttons (plan 2b)');
+check(/<div id="touch-deck" class="deck-grid" role="group" aria-label="Movement"><\/div>/.test(html), 'the deck starts empty and is one labelled group of buttons (plan 2b), styled as a deck grid (plan 2c)');
+check(/<div id="map-deck" class="deck-grid" role="group" aria-label="Movement" hidden><\/div>/.test(html), 'the Map tab has its own movement buttons, hidden until the Map tab opens on a phone (plan 2c)');
+check(html.indexOf('id="map-render"') >= 0 && html.indexOf('id="map-deck"') > html.indexOf('id="map-render"') &&
+      html.indexOf('id="map-deck"') < html.indexOf('id="map-controls"'), 'the Map tab buttons sit right after the map');
 const scriptAt = html.indexOf('/static/js/touchdeck.js');
 const wiringAt = html.indexOf("querySelectorAll('input[name=\"touch-controls\"]')");
 check(scriptAt > 0 && wiringAt > scriptAt, 'touchdeck.js loads before the Settings code reads it');

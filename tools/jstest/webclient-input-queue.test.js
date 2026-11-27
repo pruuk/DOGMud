@@ -61,7 +61,7 @@ check('a closed socket clears the full state', onclose.indexOf('setInputQueueFul
 
 // The grey-out covers the touch deck, the trigger and tick rows and the
 // macro and alias chips.
-['.auto-chip', '.auto-row', '#touch-deck'].forEach(function (sel) {
+['.auto-chip', '.auto-row', '.deck-grid'].forEach(function (sel) {
     check('dashboard.css greys ' + sel, css.indexOf('body.input-queue-full ' + sel) >= 0, sel);
 });
 

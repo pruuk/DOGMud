@@ -77,7 +77,7 @@ check('the guard fails a deck wider than its box',
 
 // The stylesheet sizes the deck from touchdeck.js (dashboard.js sets the
 // variables), never with numbers of its own.
-var deckRule = (/#touch-deck \{[^}]*\}/.exec(css) || [''])[0];
+var deckRule = (/\.deck-grid \{[^}]*\}/.exec(css) || [''])[0];
 check('the deck grid takes its button size from --deck-btn', /var\(--deck-btn/.test(deckRule));
 check('the deck grid takes its gap from --deck-gap', /var\(--deck-gap/.test(deckRule));
 var slotRule = (/\.deck-slot \{[^}]*\}/.exec(css) || [''])[0];
@@ -95,7 +95,7 @@ check('a deck button sets no size of its own', btnRule !== '' && !/(^|[;{\s])(wi
 // Task 11 of plan 2b measures it in the browser too.
 var gomud = fs.readFileSync(path.join(js, '..', 'css', 'gomud.css'), 'utf8');
 var labelPx = Number((/--deck-label:\s*(\d+)px;/.exec(gomud) || [])[1]);
-var tight = Number((/#touch-deck\.deck-small \.deck-name \{[^}]*letter-spacing:\s*(-?[\d.]+)px/.exec(css) || [])[1]);
+var tight = Number((/\.deck-grid\.deck-small \.deck-name \{[^}]*letter-spacing:\s*(-?[\d.]+)px/.exec(css) || [])[1]);
 var heavyEdge = Number((/\.deck-back,\s*\.deck-more \{[^}]*border:\s*(\d+)px solid/.exec(css) || [])[1]);
 var LETTER = 0.6 * labelPx, EDGES = 2, HEAVY_EDGES = 2 * heavyEdge;
 // Whether a label of n letters, with spacing px between letters, fits
