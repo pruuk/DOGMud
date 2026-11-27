@@ -203,9 +203,40 @@ D._deckTap(atMap('move', WEST), 'map');
 check('a Map tab arrow sends the same fixed id as the deck', pressed.slice(sent), ['m4']);
 D._deckTap(atMap('other'), 'map');
 check('the Map tab exits button opens the list, shared with the deck (D2)', [D._deckState.level, D._mapMemo.cells[0].kind], ['exits', 'back']);
+check('and the deck draws the same list, Back first', D._deckMemo.cells[0].kind, 'back');
 D._deckState.guardUntil = 0;
 D._deckTap(atMap('back'), 'map');
-check('Back returns both to the T', D._deckState.level, 'top');
+check('Back returns both to the T', [D._deckState.level, D._deckMemo.cells[0].kind, D._mapMemo.cells[0].kind, atMap('other') >= 0, at('other') >= 0],
+    ['top', 'move', 'move', true, true]);
+
+// Different pages per grid (review point 1): the Map tab holds fewer exits per
+// page, so its page number means nothing to the deck.
+var many = {};
+for (var n = 0; n < 15; n++) many['x' + n] = e('named', 'xcccc00' + (10 + n));
+D.setMoves(room(7001, many));
+D._deckState.guardUntil = 0;
+D._deckTap(atMap('other'), 'map');
+D._deckState.guardUntil = 0;
+D._deckTap(atMap('more'), 'map');
+check('the Map tab is on page 1 of a long list', D._deckState.page, 1);
+D._drawerActive = null;
+D.applyDeck();
+check('closing the tab: the deck shows page 0, not the map\'s page', D._deckState.page, 0);
+check('and the level is kept (D2)', D._deckState.level, 'exits');
+D._deckState.guardUntil = 0;
+D._deckTap(at('back'));
+D._drawerActive = 'map';
+D.applyDeck();
+D._deckState.guardUntil = 0;
+
+// The keyboard (review point 2): the deck would not show, so neither does the Map grid.
+doc.documentElement.classList.add('keyboard-open');
+D.applyDeck();
+check('keyboard up for another field: the Map tab buttons hide', mapDeck.hidden, true);
+doc.documentElement.classList.remove('keyboard-open');
+D.applyDeck();
+check('keyboard down: they show again', mapDeck.hidden, false);
+D.setMoves(tower);
 D.setMoves(room(6418, {}, { dark: true }));
 check('a pitch-dark room: the Map tab buttons go dark too', mapDeck.classList.contains('deck-dark'), true);
 D.mode = 'column';

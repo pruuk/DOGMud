@@ -171,6 +171,7 @@
     _deckMemo: { sig: "", cells: [], level: "top" },
     _mapDeck: null,     // #map-deck, beside the map (plan 2c)
     _mapMemo: { sig: "", cells: [], level: "top" },
+    _gridInView: "deck", // "map" while the Map tab's buttons show, else "deck"
     _barsShown: false,  // Task 4 replaces these two stubs
     _setBars: function () {},
     _showBars: function () {},
@@ -674,8 +675,23 @@
       slot.classList.toggle("deck-on", on);
       if (!on) {
         if (this._mapDeck) this._mapDeck.hidden = true;
+        this._gridInView = "deck";
         this._setBars(false);
         return;
+      }
+
+      // The Map tab's buttons show where the deck would (no keyboard) and
+      // only on a phone with the Map tab open (spec 2c, D9).
+      var showMap = !!this._mapDeck && !keyboard && this.mode === "phone" && this._drawerActive === "map";
+      // The grids page differently (the Map's holds fewer exits), so a page
+      // number means nothing to the other grid: a change of grid starts at
+      // page 0. The level stays shared (D2).
+      var inView = showMap ? "map" : "deck";
+      if (inView !== this._gridInView) {
+        this._gridInView = inView;
+        if (this._deckState.page !== 0) {
+          this._deckState = { level: this._deckState.level, page: 0, guardUntil: this._deckState.guardUntil };
+        }
       }
 
       var sw = window.screen ? screen.width : 0, sh = window.screen ? screen.height : 0;
@@ -705,7 +721,6 @@
       // from the same model and state (D2), in phone mode only (D9).
       var mapDeck = this._mapDeck;
       if (!mapDeck) return;
-      var showMap = this.mode === "phone" && this._drawerActive === "map";
       mapDeck.hidden = !showMap;
       if (!showMap) return;
       var ms = TD.mapShape(s, sideways);
