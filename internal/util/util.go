@@ -233,6 +233,17 @@ func VisibleWidth(s string) int {
 	return runewidth.StringWidth(ansiTagRegex.ReplaceAllString(s, ``))
 }
 
+// WidestLine is the display width of the longest line in s, colour tags
+// not counted (VisibleWidth per line). templates.WidestLine is this; it
+// lives here so internal/users, which templates imports, can measure too.
+func WidestLine(s string) int {
+	widest := 0
+	for line := range strings.SplitSeq(strings.ReplaceAll(s, "\r\n", "\n"), "\n") {
+		widest = max(widest, VisibleWidth(line))
+	}
+	return widest
+}
+
 const ansiCloseTag = `</ansi>`
 
 // startsWithPunctuation reports whether the token's first rune is punctuation

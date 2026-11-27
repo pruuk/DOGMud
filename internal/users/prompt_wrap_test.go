@@ -28,32 +28,36 @@ func requireWrappedBetweenWords(t *testing.T, prompt, unwrapped string, width in
 		"a word was broken: %q", shown)
 }
 
-// The shipped default prompt on a 38-column phone (Malia's S21) breaks
-// between its bars, never inside one.
+// The shipped default prompt fits 80 columns unchanged. At 30 its bars do
+// not fit, so it shows its vitals as words (prompt_narrow_words_test.go),
+// and those break between words, never inside one ("near death" too).
 func TestCommandPromptBody_WrapsTheDefaultPromptBetweenWords(t *testing.T) {
 	yamlPrompt, _ := shippedTextFormats(t)
+	tmpl := util.ConvertColorShortTags(yamlPrompt)
 	u := NewTestUser(7111, "phone", "Phonia", 0)
-	u.SetConfigOption(`prompt-compiled`, util.ConvertColorShortTags(yamlPrompt))
+	u.SetConfigOption(`prompt-compiled`, tmpl)
 
 	wide := u.CommandPromptBody()
 	require.NotContains(t, wide, "\n", "at 80 columns the default prompt fits one line")
-	require.Equal(t, u.ProcessPromptString(util.ConvertColorShortTags(yamlPrompt)), wide,
+	require.Equal(t, u.ProcessPromptString(tmpl), wide,
 		"a prompt that fits is unchanged byte for byte")
 
-	u.LineWidth = 38
-	require.Equal(t, 38, u.WrapWidth())
-	requireWrappedBetweenWords(t, u.CommandPromptBody(), wide, 38)
+	u.LineWidth = 30
+	require.Equal(t, 30, u.WrapWidth())
+	requireWrappedBetweenWords(t, u.CommandPromptBody(), wordForm(u, tmpl), 30)
 }
 
-// The shipped fight prompt, with a tank, at 38 columns.
+// The shipped fight prompt, with a tank, at 38 columns (Malia's S21): the
+// word form, broken between words.
 func TestCommandPromptBody_WrapsTheFightPromptBetweenWords(t *testing.T) {
 	defer SetPromptSightCheck(nil)
 	_, fight := shippedTextFormats(t)
+	tmpl := util.ConvertColorShortTags(fight)
 	fx := newTankFixture(t)
-	fx.player.SetConfigOption(`fprompt-compiled`, util.ConvertColorShortTags(fight))
+	fx.player.SetConfigOption(`fprompt-compiled`, tmpl)
 	require.True(t, fx.player.Character.IsInCombat())
 
-	unwrapped := fx.player.ProcessPromptString(util.ConvertColorShortTags(fight))
+	unwrapped := wordForm(fx.player, tmpl)
 	require.Contains(t, promptVisible(unwrapped), "T:Tanker", "the fixture's tank block shows")
 
 	fx.player.LineWidth = 38
