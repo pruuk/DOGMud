@@ -497,10 +497,11 @@
             } else if (c.kind === 'menu') {
                 b.appendChild(svgIcon(doc, 'menu', 'deck-icon'));
                 b.appendChild(textEl(doc, 'deck-name', 'Menu'));
-                // What it opens, and whether it is open (dashboard.js sets
-                // open from the bars, #938).
+                // What it opens. It is drawn closed; dashboard.js updates
+                // aria-expanded in place on this button after drawing, so the
+                // deck is not rebuilt (#938).
                 b.setAttribute('aria-controls', 'dash-session dash-tabbar');
-                b.setAttribute('aria-expanded', c.open ? 'true' : 'false');
+                b.setAttribute('aria-expanded', 'false');
             }
             if (c.locked || c.mark === 'locked') b.appendChild(svgIcon(doc, 'lock', 'deck-lock'));
             deck.appendChild(b);

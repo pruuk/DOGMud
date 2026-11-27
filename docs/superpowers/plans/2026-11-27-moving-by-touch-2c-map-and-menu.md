@@ -282,6 +282,8 @@ Expected: FAIL from the first check (`SIDE.menu` is `undefined`), then a `TypeEr
     }
 ```
 
+**As built (2026-11-27):** `mapShape` passes pad 0 as a seventh argument to `make` (`make(2, 4, deck.button, deck.gap, false, false, 0)` and `make(3, 3, ..., 0)`). The Map grid lost its own padding after the headless run: the card body has the padding, so the grid's width is three buttons and two gaps (160 at 48px), not 176.
+
 3b. In `cells` (`touchdeck.js:249-282`), replace the body from `var n = ...` through the exits level's `return out;` with:
 
 ```js
@@ -1016,7 +1018,7 @@ Expected: as plan 2b's table, except 800x360: `48x48`, gap 8 (the bars' height i
 (() => { const m = document.getElementById('map-deck'); const r = document.getElementById('map-render').getBoundingClientRect(); const b = m.getBoundingClientRect(); return JSON.stringify({ hidden: m.hidden, n: m.children.length, lit: [...m.querySelectorAll('.deck-move:not(.deck-dim)')].map(x => x.getAttribute('aria-label')), mapW: Math.round(r.width), mapH: Math.round(r.height), colW: Math.round(b.width), right: Math.round(b.right), vw: innerWidth, pageW: document.documentElement.scrollWidth }); })()
 ```
 
-Expected: `hidden` false, `n` 9, `lit` `["Go west"]`, `colW` 160 at 360 (158 at 320), `mapW` at least 120, `right <= vw`, `pageW <= vw`. Shot `map`. Then click `#map-deck .deck-other`, wait 600, eval `[...document.querySelectorAll('#map-deck .deck-exit')].map(b => b.textContent)` expect `["ledge","shrine"]` and `!!document.querySelector('#map-render svg')` expect `true` (the map stays); shot `map-exits`; click the `shrine` button, wait 2500, eval `!!document.querySelector('#map-deck .deck-back')` expect `false`; shot `map-after-move`.
+Expected: `hidden` false, `n` 9, `lit` `["Go west"]`, `colW` 160 at 360 (158 at 320), `mapW` at least 120, `right <= vw`, `pageW <= vw`. Shot `map`. (As built, 2026-11-27: `colW` at 320 is 142, not 158. 320 takes 44px buttons, so 3x44 + 2x5 = 142; the Map grid has no padding of its own, the card body has it.) Then click `#map-deck .deck-other`, wait 600, eval `[...document.querySelectorAll('#map-deck .deck-exit')].map(b => b.textContent)` expect `["ledge","shrine"]` and `!!document.querySelector('#map-render svg')` expect `true` (the map stays); shot `map-exits`; click the `shrine` button, wait 2500, eval `!!document.querySelector('#map-deck .deck-back')` expect `false`; shot `map-after-move`.
 
 - [ ] **Step 3: Menu at 800x360** (`junction` login, any room). Steps: wait 3500; shot `side-folded`; click `#touch-deck .deck-menu`; wait 300; eval `document.getElementById('dashboard').dataset.bars + '|' + getComputedStyle(document.getElementById('dash-session')).position + '|' + getComputedStyle(document.getElementById('dash-tabbar')).display` expect `shown|fixed|block`; shot `side-menu`; click `.gtab[data-panel="map"]`; wait 800; eval `document.getElementById('dashboard').dataset.bars + '|' + document.getElementById('map-deck').children.length + '|' + getComputedStyle(document.getElementById('map-deck')).gridTemplateColumns.split(' ').length` expect `folded|8|4` (a pick folds them; the Map tab sideways is 2 by 4); shot `side-map`. Then reopen Menu, click `#btn-settings`, wait 300, eval `dataset.bars` expect `shown` (Settings keeps them, D5); click `#settings-close`, wait 300, expect `folded`. Reopen Menu; dispatch a pointerdown on `#terminal` (`document.getElementById('terminal').dispatchEvent(new PointerEvent('pointerdown', {bubbles: true}))`), expect `folded` (tap away).
 
@@ -1082,7 +1084,7 @@ The body (written with the Write tool): what tasks 1 to 6 built, the Task 8 numb
 
 **Placeholder scan:** none; the patch note's date is the build day.
 
-**Type consistency:** `shape(...)` and `mapShape(deck, sideways)` return `{rows, cols, button, gap, pad, side, menu, width, height}`; `cells` kinds add `menu` (`{kind:'menu', open}` after dashboard.js marks it); `tap` returns `{level, page, guardUntil, send, typed, menu}`; `barsState(folds, shown)` returns `'' | 'folded' | 'shown'`; `barsStayAfterPick(settingsOpen, confirmOpen)`. Dashboard: `_deckMemo`, `_mapMemo` (`{sig, cells, level}`), `_mapDeck`, `_barsShown`, `_sizeDeck(el, s)`, `_drawDeck(el, memo, cells, active)`, `_setBars(folds)`, `_showBars(on)`, `_deckTap(i, which)`.
+**Type consistency:** `shape(...)` and `mapShape(deck, sideways)` return `{rows, cols, button, gap, pad, side, menu, width, height}`; `cells` kinds add `menu` (`{kind:'menu', open}` after dashboard.js marks it [As built, 2026-11-27: no caller puts `open` on a cell. `render` always writes `aria-expanded="false"` and `dashboard.js` sets it in place on the Menu button after drawing, so the deck is not rebuilt]); `tap` returns `{level, page, guardUntil, send, typed, menu}`; `barsState(folds, shown)` returns `'' | 'folded' | 'shown'`; `barsStayAfterPick(settingsOpen, confirmOpen)`. Dashboard: `_deckMemo`, `_mapMemo` (`{sig, cells, level}`), `_mapDeck`, `_barsShown`, `_sizeDeck(el, s)`, `_drawDeck(el, memo, cells, active)`, `_setBars(folds)`, `_showBars(on)`, `_deckTap(i, which)`.
 
 ## Open questions for the owner
 

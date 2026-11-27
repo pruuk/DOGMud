@@ -2086,12 +2086,14 @@ html:has(#dashboard[data-bars="folded"]) #dash-tabbar { display: none !important
    frees. The page also ignores their clicks (setInputQueueFull). */
 body.input-queue-full .auto-chip,
 body.input-queue-full .auto-row,
-body.input-queue-full .deck-grid {
+body.input-queue-full .deck-grid > :not(.deck-menu) {
   opacity: 0.45;
   filter: grayscale(1);
   cursor: not-allowed;
 }
-body.input-queue-full .deck-grid { pointer-events: none; }
+/* Menu keeps its slot in every state and sends nothing (D3), so the grey-out
+   is per cell, never on the grid (a child cannot undo its parent's opacity). */
+body.input-queue-full .deck-grid > :not(.deck-menu) { pointer-events: none; }
 
 /* ── Action queue UI — queued/pending trigger rows, badges, status bar ──── */
 

@@ -152,7 +152,7 @@ check('Menu tells a screen reader what it opens and whether it is open',
     [m.attrs['aria-label'], m.attrs['aria-expanded'], m.attrs['aria-controls']], ['Menu', 'false', 'dash-session dash-tabbar']);
 check('Menu draws a line icon and its word', [m.children[0].tagName, m.children[1].textContent], ['svg', 'Menu']);
 TD.render(deck, [{ kind: 'menu', open: true }], doc);
-check('open: aria-expanded true', deck.children[0].attrs['aria-expanded'], 'true');
+check('render always writes aria-expanded false (dashboard.js updates it in place)', deck.children[0].attrs['aria-expanded'], 'false');
 check('Menu is never disabled', deck.children[0].disabled, false);
 
 process.exit(failures ? 1 : 0);

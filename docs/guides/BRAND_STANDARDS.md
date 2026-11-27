@@ -135,7 +135,7 @@ All colours come from the palette spec. The roles that define the brand:
   them back. It is brass like the rest, with three lines drawn as a stroke
   path over the word "Menu", never an emoji. **The Map tab's buttons** (plan
   2c): on a phone, the same T and exits button beside the map, at the
-  deck's own button size (a column 176px wide upright, with its padding).
+  deck's own button size (a column 160px wide upright: three buttons and two gaps; the card body has the padding).
 - **The Map on touch screens** (Calabe, 2026-11-15): no Fit, Center, zoom
   or Legend row on any touch screen, phone or tablet, either way up. The
   map follows the player's room on every step, and the row took most of a
