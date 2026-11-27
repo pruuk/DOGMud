@@ -361,9 +361,6 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
 .deck-name { white-space: nowrap; }
 /* At 44px six letters (43.2px at 12px) would touch the 1px edges. */
 #touch-deck.deck-small .deck-name { letter-spacing: -0.5px; }
-/* Back and More have 2px edges: their six letters need a little more. */
-#touch-deck.deck-small .deck-back .deck-name,
-#touch-deck.deck-small .deck-more .deck-name { letter-spacing: -0.6px; }
 .deck-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 /* The padlock in the button's own text colour: 8.19 to 12.69 on brass,
    5.19 on a pitch-dark tile. */

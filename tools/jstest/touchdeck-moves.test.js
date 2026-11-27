@@ -271,7 +271,7 @@ check('frame 6: combat dims by class and keeps the button live',
     [has(deck.children[6], 'deck-combat'), deck.children[6].disabled], [true, false]);
 
 TD.render(deck, list, doc);
-check('frame 2: Back and the names', [words(deck.children[0]), words(deck.children[1]), words(deck.children[2])], ['‹ Back', 'ledge', 'shrine']);
+check('frame 2: Back and the names', [words(deck.children[0]), words(deck.children[1]), words(deck.children[2])], ['‹Back', 'ledge', 'shrine']);
 check('frame 2: a name is a deck-name span (12px in CSS)', deck.children[1].children[0].className, 'deck-name');
 check('an exit name reaches the page as text, never markup', (function () {
     var evil = TD.cells(TD.moves(info(3, { '<b>x': ex('named', 'x12345678') }), ''), PHONE, 'exits', 0);
@@ -279,7 +279,7 @@ check('an exit name reaches the page as text, never markup', (function () {
     return deck.children[1].children[0].textContent;
 }()), '<b>x');
 TD.render(deck, page0, doc);
-check('More reads More', words(deck.children[11]), 'More ›');
+check('More reads More', words(deck.children[11]), 'More›');
 check('Back and More wear the brass too', [has(deck.children[0], 'brass'), has(deck.children[11], 'brass')], [true, true]);
 TD.render(deck, TD.cells(TD.moves(portals, ''), PHONE, 'exits', 0), doc);
 check('two portals to one zone: the same label, the player\'s own first and named so for a screen reader',
@@ -297,6 +297,6 @@ check('a cell that is now an empty slot does too (Tower Top: up, north, down are
 check('opening the list focuses Back', TD.focusAfter(list, 3, 'top', 'exits'), 0);
 check('closing the list focuses the exits button', TD.focusAfter(top, 0, 'exits', 'top'), 3);
 check('no button left: nothing to focus', TD.focusAfter(TD.cells(null, PHONE, 'top', 0), 6, 'top', 'top'), -1);
-check('Back and More read as render draws them', [TD.BACK_LABEL, TD.MORE_LABEL], ['‹ Back', 'More ›']);
+check('Back and More read as render draws them', [TD.BACK_LABEL, TD.MORE_LABEL], ['‹Back', 'More›']);
 
 process.exit(failures ? 1 : 0);

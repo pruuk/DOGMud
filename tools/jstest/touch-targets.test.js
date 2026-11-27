@@ -96,7 +96,6 @@ check('a deck button sets no size of its own', btnRule !== '' && !/(^|[;{\s])(wi
 var gomud = fs.readFileSync(path.join(js, '..', 'css', 'gomud.css'), 'utf8');
 var labelPx = Number((/--deck-label:\s*(\d+)px;/.exec(gomud) || [])[1]);
 var tight = Number((/#touch-deck\.deck-small \.deck-name \{[^}]*letter-spacing:\s*(-?[\d.]+)px/.exec(css) || [])[1]);
-var heavyTight = Number((/#touch-deck\.deck-small \.deck-back \.deck-name,\s*#touch-deck\.deck-small \.deck-more \.deck-name \{[^}]*letter-spacing:\s*(-?[\d.]+)px/.exec(css) || [])[1]);
 var heavyEdge = Number((/\.deck-back,\s*\.deck-more \{[^}]*border:\s*(\d+)px solid/.exec(css) || [])[1]);
 var LETTER = 0.6 * labelPx, EDGES = 2, HEAVY_EDGES = 2 * heavyEdge;
 // Whether a label of n letters, with spacing px between letters, fits
@@ -110,9 +109,12 @@ check('a ' + TD.NAME_LETTERS + '-letter name fits a ' + TD.SMALL_BTN + 'px butto
 check('the fit check can fail: seven letters do not fit at the small size', !fits(7, tight, TD.SMALL_BTN, EDGES));
 [TD.BACK_LABEL, TD.MORE_LABEL].forEach(function (label) {
     check('"' + label + '" fits its heavy-edged ' + TD.BTN + 'px button', fits(label.length, 0, TD.BTN, HEAVY_EDGES));
-    check('"' + label + '" fits its heavy-edged ' + TD.SMALL_BTN + 'px button with its small spacing',
-        fits(label.length, heavyTight, TD.SMALL_BTN, HEAVY_EDGES));
+    check('"' + label + '" fits its heavy-edged ' + TD.SMALL_BTN + 'px button with the small spacing',
+        fits(label.length, tight, TD.SMALL_BTN, HEAVY_EDGES));
 });
-check('the heavy fit check can fail: the name spacing alone leaves Back 0.2px too wide', !fits(TD.BACK_LABEL.length, tight, TD.SMALL_BTN, HEAVY_EDGES));
+check('Back and More have no space before or after the arrow (Malia, S21 check)',
+    [TD.BACK_LABEL, TD.MORE_LABEL].every(function (l) { return l.indexOf(' ') === -1; }));
+check('the heavy fit check can fail: six characters do not fit a heavy-edged small button',
+    !fits(6, tight, TD.SMALL_BTN, HEAVY_EDGES));
 
 process.exit(failures ? 1 : 0);

@@ -421,7 +421,9 @@
 
     // Back's and More's words; touch-targets.test.js checks they fit their
     // heavy-edged buttons at both sizes.
-    var BACK_LABEL = '‹ Back', MORE_LABEL = 'More ›';
+    // No space beside the arrow (Malia, S21 check 2026-11-26): in the
+    // monospaced deck font a space is a whole letter wide.
+    var BACK_LABEL = '‹Back', MORE_LABEL = 'More›';
 
     // Draws cells into the deck element, replacing what it held. Text goes
     // in as textContent, never as markup (an exit name is server data). Each
