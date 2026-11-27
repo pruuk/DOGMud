@@ -17,7 +17,8 @@
 //   rowFade / scrollLeftToShow  a phone's sideways-scrolling sub-tab row (plan 1c)
 //   moves / cells / levelAfter / tap / render / focusAfter  moving by touch (plan 2b)
 //   lineIcon              a stroke-path icon (the deck and dashboard.js's tab bar)
-// Tested by tools/jstest/touchdeck.test.js, touchdeck-moves.test.js and touch-targets.test.js.
+//   mapShape / barsState / barsStayAfterPick  the Map tab's buttons and the sideways bars (plan 2c)
+// Tested by tools/jstest/touchdeck.test.js, touchdeck-moves.test.js, touchdeck-menu-map.test.js and touch-targets.test.js.
 
 (function (root, factory) {
     var api = factory();
@@ -68,9 +69,9 @@
     // The length n buttons take in a line, with the deck's padding.
     function span(n, btn, gap) { return n * btn + (n - 1) * gap + 2 * PAD; }
 
-    function make(rows, cols, btn, gap, side) {
+    function make(rows, cols, btn, gap, side, menu) {
         return {
-            rows: rows, cols: cols, button: btn, gap: gap, pad: PAD, side: side,
+            rows: rows, cols: cols, button: btn, gap: gap, pad: PAD, side: side, menu: !!menu,
             width: span(cols, btn, gap), height: span(rows, btn, gap)
         };
     }
@@ -78,18 +79,29 @@
     // The deck's shape for the room it has. boxW, boxH: that room in CSS px,
     // inside the slot's side borders. phone: an upright phone (six columns,
     // so a button keeps its slot on every phone). sideways: a phone on its
-    // side (a side column beside the game, four rows of three).
+    // side (a side column beside the game, four rows of three, whose last
+    // slot is Menu: the session bar and tab bar fold away there, #938).
     function shape(boxW, boxH, phone, sideways) {
         if (sideways) {
             var tall = span(SIDE_ROWS, BTN, GAP) <= boxH;
-            return make(SIDE_ROWS, SIDE_COLS, tall ? BTN : SMALL_BTN, tall ? GAP : SMALL_GAP, true);
+            return make(SIDE_ROWS, SIDE_COLS, tall ? BTN : SMALL_BTN, tall ? GAP : SMALL_GAP, true, true);
         }
         var fit = Math.floor((boxW - 2 * PAD + GAP) / (BTN + GAP));
         if (phone || fit < PHONE_COLS) {
             var wide = span(PHONE_COLS, BTN, GAP) <= boxW;
-            return make(ROWS, PHONE_COLS, wide ? BTN : SMALL_BTN, wide ? GAP : SMALL_GAP, false);
+            return make(ROWS, PHONE_COLS, wide ? BTN : SMALL_BTN, wide ? GAP : SMALL_GAP, false, false);
         }
-        return make(ROWS, fit, BTN, GAP, false);
+        return make(ROWS, fit, BTN, GAP, false, false);
+    }
+
+    // The Map tab's buttons beside the map (plan 2c, spec 2c, mockup frame
+    // 7), at the deck's own button size (one size rule, guard 6). Upright:
+    // three rows of three, the exits button under the T (160px wide at
+    // 48px). Sideways: the Map card is too short for three rows, so two
+    // rows of four, the exits button beside the T.
+    function mapShape(deck, sideways) {
+        return sideways ? make(2, 4, deck.button, deck.gap, false, false)
+                        : make(3, 3, deck.button, deck.gap, false, false);
     }
 
     // What the slot under the game text holds: 'tab', 'deck' or 'empty'.
@@ -245,14 +257,18 @@
     // shape from shape(). level: 'top' (the T) or 'exits' (the other-exits
     // list, which replaces the whole deck: Back top-left, More bottom-right
     // only when the list does not fit). page: which page of the list.
-    // kind: 'empty', 'move', 'other', 'dark', 'back', 'exit' or 'more'.
+    // kind: 'empty', 'move', 'other', 'dark', 'back', 'exit', 'more' or 'menu' (the side column's last slot, when s.menu).
     function cells(model, s, level, page) {
-        var n = s.rows * s.cols, out = [], i;
+        var n = s.rows * s.cols, room = s.menu ? n - 1 : n, out = [], i;
         for (i = 0; i < n; i++) out.push({ kind: 'empty' });
+        // Menu keeps the side column's last slot in every state (plan 2c
+        // D3): Leave Game and Settings stay in reach before the first
+        // Room.Info, in the dark and in the exits list.
+        if (s.menu) out[n - 1] = { kind: 'menu' };
         if (!model || !model.ready) return out;
         if (level === 'exits' && !model.dark && model.others.length) {
-            var more = model.others.length > n - 1;
-            var per = more ? n - 2 : n - 1;
+            var more = model.others.length > room - 1;
+            var per = more ? room - 2 : room - 1;
             var pages = Math.ceil(model.others.length / per);
             var p = (((page || 0) % pages) + pages) % pages;
             out[0] = { kind: 'back' };
@@ -262,7 +278,7 @@
                     locked: o.locked, own: o.own, combat: model.combat
                 };
             });
-            if (more) out[n - 1] = { kind: 'more' };
+            if (more) out[room - 1] = { kind: 'more' };
             return out;
         }
         T_DIRS.forEach(function (dir) {
@@ -292,10 +308,11 @@
 
     // What a tap on cell c does. st: { level, page, guardUntil }; now in ms.
     // Returns the next state with send (an id for Char.Button.Press, or '')
-    // and typed (a command to send as if typed, or ''). A tap before
-    // guardUntil is ignored (DOUBLE_TAP_MS).
+    // typed (a command to send as if typed, or '') and menu (true: show or
+    // fold the bars, #938). A tap before guardUntil is ignored
+    // (DOUBLE_TAP_MS).
     function tap(st, c, now) {
-        var r = { level: st.level, page: st.page, guardUntil: st.guardUntil || 0, send: '', typed: '' };
+        var r = { level: st.level, page: st.page, guardUntil: st.guardUntil || 0, send: '', typed: '', menu: false };
         if (!c || now < r.guardUntil) return r;
         switch (c.kind) {
         case 'move':
@@ -318,6 +335,11 @@
             r.page = (st.page || 0) + 1;
             r.guardUntil = now + DOUBLE_TAP_MS;
             break;
+        case 'menu':
+            // The bars (#938): dashboard.js shows or folds them. No hold
+            // (plan 2c D10): nothing new lands under the finger in the deck.
+            r.menu = true;
+            break;
         case 'dark':
             r.typed = DARK_COMMAND;
             break;
@@ -330,13 +352,15 @@
     // Line icons as stroke paths, like the tab bar's (dashboard.js
     // PANEL_TABS), never emoji (brand). Drawn from the approved mockup: the
     // ISO 7001 style stairs (ruling 10), the padlock (ruling 3) and the
-    // closed eye of the Dark tile (ruling 11).
+    // closed eye of the Dark tile (ruling 11), and Menu's three lines (plan
+    // 2c D12).
     var ICONS = {
         'stairs-up': { box: 26, paths: ['M3 22h5v-5h5v-5h5V7h5', 'M16 4h6v6'] },
         'stairs-down': { box: 26, paths: ['M3 7h5v5h5v5h5v5h5', 'M22 16v6h-6'] },
         lock: { box: 12, paths: ['M3 5.5h6a1 1 0 0 1 1 1v3.5a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1z',
                                  'M4 5.5V4a2 2 0 0 1 4 0v1.5'] },
-        eye: { box: 26, paths: ['M3 12c3 4 7 6 10 6s7-2 10-6', 'M6 16l-2 3M10 18l-1 3.5M16 18l1 3.5M20 16l2 3'] }
+        eye: { box: 26, paths: ['M3 12c3 4 7 6 10 6s7-2 10-6', 'M6 16l-2 3M10 18l-1 3.5M16 18l1 3.5M20 16l2 3'] },
+        menu: { box: 26, paths: ['M5 8h16', 'M5 13h16', 'M5 18h16'] }
     };
 
     // One line icon: stroke paths in a box-wide square, hidden from screen
@@ -393,6 +417,8 @@
             k.push('deck-back');
         } else if (c.kind === 'more') {
             k.push('deck-more');
+        } else if (c.kind === 'menu') {
+            k.push('deck-menu');
         }
         return k.join(' ');
     }
@@ -410,6 +436,7 @@
         case 'dark': return 'Too dark to see the exits';
         case 'back': return 'Back to the directions';
         case 'more': return 'More exits';
+        case 'menu': return 'Menu';
         }
         return '';
     }
@@ -461,6 +488,13 @@
                 b.appendChild(textEl(doc, 'deck-name', BACK_LABEL));
             } else if (c.kind === 'more') {
                 b.appendChild(textEl(doc, 'deck-name', MORE_LABEL));
+            } else if (c.kind === 'menu') {
+                b.appendChild(svgIcon(doc, 'menu', 'deck-icon'));
+                b.appendChild(textEl(doc, 'deck-name', 'Menu'));
+                // What it opens, and whether it is open (dashboard.js sets
+                // open from the bars, #938).
+                b.setAttribute('aria-controls', 'dash-session dash-tabbar');
+                b.setAttribute('aria-expanded', c.open ? 'true' : 'false');
             }
             if (c.locked || c.mark === 'locked') b.appendChild(svgIcon(doc, 'lock', 'deck-lock'));
             deck.appendChild(b);
@@ -485,6 +519,23 @@
         return -1;
     }
 
+    // ---- The sideways bars (#938, plan 2c) --------------------------------
+    // A sideways phone with the deck on folds the session bar and the tab
+    // bar away; Menu brings both back over the game. folds: the deck shows
+    // Menu now. shown: Menu brought them back. 'folded', 'shown', or '' for
+    // the bars as always (dashboard.js sets it as #dashboard's data-bars).
+    function barsState(folds, shown) {
+        if (!folds) return '';
+        return shown ? 'shown' : 'folded';
+    }
+
+    // After a click on a button in the bars: they fold again once the player
+    // has picked something, unless the pick left one of the bars' own
+    // dialogs open: the Settings menu, or Leave Game's question (plan 2c D5).
+    function barsStayAfterPick(settingsOpen, confirmOpen) {
+        return !!(settingsOpen || confirmOpen);
+    }
+
     return {
         KEY: KEY, AUTOMATIC_SHOWS: AUTOMATIC_SHOWS,
         readPref: readPref, writePref: writePref, deckOn: deckOn,
@@ -493,6 +544,7 @@
         moves: moves, T_DIRS: T_DIRS, DIAGONALS: DIAGONALS, NAME_LETTERS: NAME_LETTERS,
         cells: cells, levelAfter: levelAfter, tap: tap, DOUBLE_TAP_MS: DOUBLE_TAP_MS,
         render: render, lineIcon: lineIcon, focusAfter: focusAfter, BACK_LABEL: BACK_LABEL, MORE_LABEL: MORE_LABEL,
+        mapShape: mapShape, barsState: barsState, barsStayAfterPick: barsStayAfterPick,
         BTN: BTN, GAP: GAP, SMALL_BTN: SMALL_BTN, SMALL_GAP: SMALL_GAP, PAD: PAD
     };
 }));
