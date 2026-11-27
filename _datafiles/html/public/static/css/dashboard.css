@@ -446,6 +446,10 @@ html.keyboard-open #cmd-close-kbd { display: flex; }
   min-height: 0;
   width: 100%;
 }
+/* The map's svg as a block: inline, its line box added a few pixels under
+   it, so a card body sized to the map scrolled by 3px (plan 2c headless,
+   800x360). */
+#panel-map #map-render > svg { display: block; }
 /* Map buttons (Fit, Center, −, +): a row under the map, not over its rooms
    (Malia 2026-11-02). Label #1a1206 (master's darker brass text, #774) on the
    brass: 5.45 at the middle stop, 13.77 on the highlight. The ID beats the
