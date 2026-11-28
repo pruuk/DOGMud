@@ -10,7 +10,7 @@
 
 **Tech Stack:** Plain ES5 browser JavaScript (UMD, no build step), Node 24 jstests with no test runner, CSS in `dashboard.css` with tokens in `gomud.css`; Go 1.25 (module `github.com/GoMudEngine/GoMud`) and testify for the one server task.
 
-**Spec:** `docs/superpowers/specs/2026-11-22-moving-by-touch-design.md` (issue #781, epic #783), section "2b: deck movement", rulings 3, 4, 8, 10, 11 and 18, and the client half of "Tests and checks". Roadmap row 2 of `docs/roadmaps/TOUCH_ARC_ROADMAP.md`. Mockup `docs/roadmaps/touch-arc-mocks/s21-moving-by-touch.html`: frames 1 to 6 and 8 are this plan; frames 7 (the Map tab) and 9's Menu button are plan 2c. **Not here:** the Map tab's copy of the T, the sideways phone's folded bars and Menu (#938), Flee and the combat swap (plan 3d), the command slots on the right (spec 3).
+**Spec:** `docs/superpowers/specs/completed/2026-11-22-moving-by-touch-design.md` (issue #781, epic #783), section "2b: deck movement", rulings 3, 4, 8, 10, 11 and 18, and the client half of "Tests and checks". Roadmap row 2 of `docs/roadmaps/TOUCH_ARC_ROADMAP.md`. Mockup `docs/roadmaps/touch-arc-mocks/s21-moving-by-touch.html`: frames 1 to 6 and 8 are this plan; frames 7 (the Map tab) and 9's Menu button are plan 2c. **Not here:** the Map tab's copy of the T, the sideways phone's folded bars and Menu (#938), Flee and the combat swap (plan 3d), the command slots on the right (spec 3).
 
 **Before building.** Ruling 12 asked for Malia's look at the mockup before 2b is built: she reviewed it on 2026-11-26 and her one change is ruling 18 (shipped in PR #963). The `Room.Info` lag measurement the spec asked for before 2b ships was done in plan 2a Task 16: nil lag (fact F44).
 
@@ -584,7 +584,7 @@ Create `tools/jstest/touchdeck-moves.test.js`:
 
 ```js
 // touchdeck-moves.test.js: moving by touch on the deck (touch arc plan 2b,
-// docs/superpowers/specs/2026-11-22-moving-by-touch-design.md, mockup
+// docs/superpowers/specs/completed/2026-11-22-moving-by-touch-design.md, mockup
 // docs/roadmaps/touch-arc-mocks/s21-moving-by-touch.html). The Room.Info
 // shapes below are plan 2a's (modules/gmcp/gmcp.Room.go).
 //
@@ -715,7 +715,7 @@ In `touchdeck.js`, directly before `    return {` (`:134`), add:
 
 ```js
     // ---- Moving by touch (plan 2b, #781) ---------------------------------
-    // Spec docs/superpowers/specs/2026-11-22-moving-by-touch-design.md;
+    // Spec docs/superpowers/specs/completed/2026-11-22-moving-by-touch-design.md;
     // mockup docs/roadmaps/touch-arc-mocks/s21-moving-by-touch.html. The
     // server builds every button (Room.Info exitsv2, moves, darkmarks and
     // dark, plan 2a); the client lays them out and sends back only an id
@@ -2136,7 +2136,7 @@ EOF
 - Beside the 2a plan row (`superpowers/plans/2026-11-22-moving-by-touch-2a-server.md`, about line 390) add:
 
 ```markdown
-| [`superpowers/plans/2026-11-26-moving-by-touch-2b-deck.md`](superpowers/plans/2026-11-26-moving-by-touch-2b-deck.md) | Touch arc plan 2b (#781), the deck walks: `touchdeck.js` `moves`, `cells`, `levelAfter`, `tap`, `render` (the inverted T, the other-exits level with Back and More, locked, dark and combat states); `dashboard.js` draws them from `Room.Info` and sends `Char.Button.Press`; the `--deck-label` 12px token (ruling 18); an instance portal's button reads its zone (`rooms.ForDeck`, `exitsv2` `label`); Automatic on for touch screens; headless size matrix and Malia's S21 check |
+| [`superpowers/plans/completed/2026-11-26-moving-by-touch-2b-deck.md`](superpowers/plans/completed/2026-11-26-moving-by-touch-2b-deck.md) | Touch arc plan 2b (#781), the deck walks: `touchdeck.js` `moves`, `cells`, `levelAfter`, `tap`, `render` (the inverted T, the other-exits level with Back and More, locked, dark and combat states); `dashboard.js` draws them from `Room.Info` and sends `Char.Button.Press`; the `--deck-label` 12px token (ruling 18); an instance portal's button reads its zone (`rooms.ForDeck`, `exitsv2` `label`); Automatic on for touch screens; headless size matrix and Malia's S21 check |
 ```
 
 - In the `tools/jstest/` row, at the end, add: `Added 2026-11-26 (touch arc plan 2b): \`touchdeck-moves.test.js\` (the deck's movement model from \`Room.Info\`, its cells at every shape, the other-exits level with Back and More, the T after a move, taps (a quick double tap on the T walks twice, on an other exit once), the drawn buttons and their screen reader words, and a check that the client's diagonal order is the server's \`exitOrder\`), \`dashboard-deck.test.js\` (loads the real \`dashboard.js\` and \`touchdeck.js\`: \`Room.Info\` and the mode in, a tap's id out, the Dark tile's line, the buttons cleared on a closed connection); \`touchdeck.test.js\` now checks Automatic is on for touch screens; \`touch-targets.test.js\` checks a deck button sets no size and a six-letter name fits at 48px and 44px; \`webclient-colours.test.js\` measures every deck colour.`

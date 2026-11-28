@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25 (module `github.com/GoMudEngine/GoMud`), testify, Go AST guards in `internal/guards`, plain Node 24 jstests for the one client change.
 
-**Spec:** `docs/superpowers/specs/2026-11-22-moving-by-touch-design.md` (issue #781, epic #783). This plan covers "2a: the server", the server half of "The button protocol slice", the server and protocol parts of "Tests and checks", owner rulings 1, 2, 3 (server state), 4 (dark marks, server side), 6, 7, 8 and 13, and the measurement. Client rendering (2b) and the Map tab and sideways phone (2c) are not here. The only client change is the `Room.Info` handler not re-centring the map when the room is unchanged (spec "Kept current").
+**Spec:** `docs/superpowers/specs/completed/2026-11-22-moving-by-touch-design.md` (issue #781, epic #783). This plan covers "2a: the server", the server half of "The button protocol slice", the server and protocol parts of "Tests and checks", owner rulings 1, 2, 3 (server state), 4 (dark marks, server side), 6, 7, 8 and 13, and the measurement. Client rendering (2b) and the Map tab and sideways phone (2c) are not here. The only client change is the `Room.Info` handler not re-centring the map when the room is unchanged (spec "Kept current").
 
 **Branch.** Execute on `feature/781-moving-by-touch-2a`, branched from `docs/spec-moving-by-touch` (or from `master` once the spec PR has merged). Every commit below builds and passes its tests.
 

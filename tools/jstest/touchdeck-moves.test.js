@@ -1,5 +1,5 @@
 // touchdeck-moves.test.js: moving by touch on the deck (touch arc plan 2b,
-// docs/superpowers/specs/2026-11-22-moving-by-touch-design.md, mockup
+// docs/superpowers/specs/completed/2026-11-22-moving-by-touch-design.md, mockup
 // docs/roadmaps/touch-arc-mocks/s21-moving-by-touch.html). The Room.Info
 // shapes below are plan 2a's (modules/gmcp/gmcp.Room.go).
 //

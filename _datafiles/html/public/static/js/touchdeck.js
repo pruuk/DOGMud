@@ -153,7 +153,7 @@
     }
 
     // ---- Moving by touch (plan 2b, #781) ---------------------------------
-    // Spec docs/superpowers/specs/2026-11-22-moving-by-touch-design.md;
+    // Spec docs/superpowers/specs/completed/2026-11-22-moving-by-touch-design.md;
     // mockup docs/roadmaps/touch-arc-mocks/s21-moving-by-touch.html. The
     // server builds every button (Room.Info exitsv2, moves, darkmarks and
     // dark, plan 2a); the client lays them out and sends back only an id
