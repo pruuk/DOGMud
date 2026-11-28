@@ -8,7 +8,7 @@
 
 **Tech Stack:** plain browser JS (no build), CSS, Node jstests (`tools/jstest`), headless Edge (`tools/webshot/live-shot.js`).
 
-**Spec:** `docs/superpowers/specs/2026-11-22-moving-by-touch-design.md`, section "2c: the Map tab and the sideways phone". **Mockup:** `docs/roadmaps/touch-arc-mocks/s21-moving-by-touch.html`, frames 7 (Map tab) and 9 (sideways). **Ruling:** #938, owner 2026-11-22, option A.
+**Spec:** `docs/superpowers/specs/completed/2026-11-22-moving-by-touch-design.md`, section "2c: the Map tab and the sideways phone". **Mockup:** `docs/roadmaps/touch-arc-mocks/s21-moving-by-touch.html`, frames 7 (Map tab) and 9 (sideways). **Ruling:** #938, owner 2026-11-22, option A.
 
 **Base:** branch `feature/moving-by-touch-2b` at `b9166fd67` (PR #965, merged 2026-11-27 as `6cb8e62ed`). Plan 2c builds on 2b's code. Branch `feature/moving-by-touch-2c` from master.
 
@@ -953,7 +953,7 @@ git commit -m "test(webclient): guard 6 covers the Map tab's buttons and the fol
 ### Task 6: Docs
 
 **Files:**
-- Modify: `docs/PATCH_NOTES.md`, `docs/README.md`, `docs/BRAND_STANDARDS.md`, `docs/roadmaps/TOUCH_ARC_ROADMAP.md`, `docs/superpowers/specs/2026-11-22-moving-by-touch-design.md`
+- Modify: `docs/PATCH_NOTES.md`, `docs/README.md`, `docs/BRAND_STANDARDS.md`, `docs/roadmaps/TOUCH_ARC_ROADMAP.md`, `docs/superpowers/specs/completed/2026-11-22-moving-by-touch-design.md`
 
 - [ ] **Step 1: PATCH_NOTES** (top, dated the day it is built):
 
@@ -973,7 +973,7 @@ git commit -m "test(webclient): guard 6 covers the Map tab's buttons and the fol
 - [ ] **Step 5: Commit**
 
 ```bash
-git add docs/PATCH_NOTES.md docs/README.md docs/BRAND_STANDARDS.md docs/roadmaps/TOUCH_ARC_ROADMAP.md docs/superpowers/specs/2026-11-22-moving-by-touch-design.md
+git add docs/PATCH_NOTES.md docs/README.md docs/BRAND_STANDARDS.md docs/roadmaps/TOUCH_ARC_ROADMAP.md docs/superpowers/specs/completed/2026-11-22-moving-by-touch-design.md
 git commit -m "docs: touch arc plan 2c rows, patch note, brand doc (#781, #938)"
 ```
 

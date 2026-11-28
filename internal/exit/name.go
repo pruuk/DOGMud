@@ -9,7 +9,7 @@ import (
 
 // MaxNameLetters is the longest a named exit may be, in letters, so its name
 // fits a 48px deck button at 12px text (owner ruling 18, 2026-11-26, touch arc
-// spec docs/superpowers/specs/2026-11-22-moving-by-touch-design.md). The room
+// spec docs/superpowers/specs/completed/2026-11-22-moving-by-touch-design.md). The room
 // loader (rooms.Room.Validate), the mutator loader (mutators.MutatorSpec.
 // Validate), the builders, the behaviour-tree add_temp_exit check, the shipped
 // content guard (internal/guards/exit_name_length_guard_test.go) and the

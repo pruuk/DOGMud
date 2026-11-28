@@ -220,7 +220,7 @@ the deck returns to the T.
 ## 2c: the Map tab and the sideways phone
 
 *Built 2026-11-27 on `feature/moving-by-touch-2c`, plan
-`docs/superpowers/plans/2026-11-27-moving-by-touch-2c-map-and-menu.md` (PR
+`docs/superpowers/plans/completed/2026-11-27-moving-by-touch-2c-map-and-menu.md` (PR
 pending).*
 
 **Map tab.** On a phone, an open tab covers the deck, so the Map tab carries
